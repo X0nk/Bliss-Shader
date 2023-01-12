@@ -8,3 +8,12 @@ value.indirect_effect.4 = SSDO
 option.ambient_colortype = Coloring Type
 value.ambient_colortype.0 = Temperature
 value.ambient_colortype.1 = RGB
+
+option.DOF_QUALITY=Depth Of Field
+value.DOF_QUALITY.-1=Off
+value.DOF_QUALITY.0=Hexagonal
+value.DOF_QUALITY.1=Low
+value.DOF_QUALITY.2=Medium
+value.DOF_QUALITY.3=High
+value.DOF_QUALITY.4=Ultra
+option.DOF_ANAMORPHIC_RATIO=Anamorphic Ratio
