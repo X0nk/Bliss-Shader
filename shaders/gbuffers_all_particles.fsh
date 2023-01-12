@@ -19,7 +19,7 @@ uniform mat4 gbufferModelView;
 uniform mat4 shadowModelView;
 uniform mat4 shadowProjection;
 uniform vec3 cameraPosition;
-
+#include "lib/settings.glsl"
 #include "lib/Shadow_Params.glsl"
 #include "/lib/res_params.glsl"
 #include "lib/sky_gradient.glsl"
@@ -99,7 +99,13 @@ void main() {
 
 	vec4 TEXTURE = texture2D(texture, lmtexcoord.xy)*color;
 	
+#ifdef WEATHER
+	gl_FragData[1].a = TEXTURE.a; // for bloomy rain
+#endif
+
 #ifndef WEATHER
+
+	gl_FragData[1].a = 0.0; // for bloomy rain
 	gl_FragData[0] = TEXTURE;
 	vec2 tempOffset = offsets[framemod8];
 	float avgBlockLum = luma(texture2DLod(texture, lmtexcoord.xy,128).rgb*color.rgb);
@@ -142,8 +148,6 @@ void main() {
 	vec3 DirectLight = DirectLightCol * phase * lightleakfix;
 	
 	gl_FragData[0].rgb = (AmbientLight + DirectLight) * albedo;
-#endif
 
-	gl_FragData[1].a = TEXTURE.a; // for bloomy rain
-	// gl_FragData[1].a = 1;
+#endif
 }

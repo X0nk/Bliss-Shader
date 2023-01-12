@@ -2,58 +2,11 @@
 //Render sky, volumetric clouds, direct lighting
 #extension GL_EXT_gpu_shader4 : enable
 
-#define Moon_temp 15000 // [1000 2000 3000 4000 5000 6000 7000 8000 9000 10000]
-#define CAVE_LIGHT_LEAK_FIX // Hackish way to remove sunlight incorrectly leaking into the caves. Can inacurrately create shadows in some places
-#define CLOUDS_SHADOWS
-#define CLOUDS_QUALITY 0.5 //[0.1 0.125 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.9 1.0]
-#define TORCH_R 1.0 // [0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
-#define TORCH_G 0.75 // [0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
-#define TORCH_B 0.5 // [0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
+#include "lib/settings.glsl"
 
-#define ambient_colortype 0 // Toggle which method you want to change the color of ambient light with. [0 1]
-#define ambient_temp 9000 // [1000 2000 3000 4000 5000 6000 7000 8000 9000 10000 15000 50000]
-#define ambient_brightness 1.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
-#define AmbientLight_R  0.91 // [0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
-#define AmbientLight_G 0.86 // [0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
-#define AmbientLight_B 1.0 // [0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
-
-
-#define Sub_surface_scattering // (place the flashlight on your hand example here)
-// #define LabPBR_subsurface_scattering
-#define LabSSS_Curve 1.0 // i just really like how it looks at 2.0, so i made it an option. [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
-#define Strong_SSS_strength 45 // [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2 3 4 5 6 7 8 9 10 15 20 30 35 40 45 50]
-#define Medium_SSS_strength 30 // [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2 3 4 5 6 7 8 9 10 15 20 30 35 40 45 50]
-
-#define indirect_effect 1 // Choose what effect is applied to indirect light. [0 1 2 3]
-#define AO_Strength 0.8 // strength of shadowed areas   [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
-#define GI_Strength 5.0 // strength of bounced light areas [ 1 2 3 4 5 6 7 8 9 10]
-// #define HQ_SSGI
-
-
-// #define LabPBR_Emissives
-#define Emissive_Brightness 10.0 // [1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 15. 20. 25. 30. 35. 40. 45. 50. 100.]
-#define Emissive_Curve 2.0 // yes i blatantly copied kappa here. [1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
-
-#define Puddle_Size 1.0 // [0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5]
-#ifdef Specular_Reflections
-	#define Puddles // yes
-#else
-	// #define Puddles // yes
-#endif
-// #define Porosity
-
-
-// #define Allow_Vanilla_sky // allow the vanilla sky to appear. may appear broken with some resourcepacks.
-
-// #define WhiteWorld // THIS IS A DEBUG VIEW. uses to see AO easier. used to see fake GI better (green light)
-// #define ambientLight_only // THIS IS A DEBUG VIEW. turn the sunlight off. DOES NOT increase performance, the shadows are still working in the background
-#define MIN_LIGHT_AMOUNT 1.0 //[0.0 0.5 1.0 1.5 2.0 3.0 4.0 5.0]
-
-
-// #define Glass_Tint // multiply the background through glass by the color of the glass for a strong tint.
-
-// #define Horrible_slope_normals // awful
-
+const bool colortex5MipmapEnabled = true;
+// const bool colortex4MipmapEnabled = true;
+\
 const bool shadowHardwareFiltering = true;
 flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
 flat varying vec3 ambientUp;
@@ -178,10 +131,19 @@ vec3 blackbody2(float Temp)
     return srgbToLinear2(col);
 }
 
+vec3 normVec (vec3 vec){
+	return vec*inversesqrt(dot(vec,vec));
+}
+vec3 viewToWorld(vec3 viewPosition) {
+    vec4 pos;
+    pos.xyz = viewPosition;
+    pos.w = 0.0;
+    pos = gbufferModelViewInverse * pos;
+    return pos.xyz;
+}
 // #include "lib/settings.glsl"
 // #include "lib/biome_specifics.glsl"
 #include "lib/res_params.glsl"
-#include "lib/waterOptions.glsl"
 #include "lib/Shadow_Params.glsl"
 #include "lib/color_transforms.glsl"
 #include "lib/sky_gradient.glsl"
@@ -192,9 +154,6 @@ vec3 blackbody2(float Temp)
 // #include "/lib/climate_settings.glsl"
 
 
-vec3 normVec (vec3 vec){
-	return vec*inversesqrt(dot(vec,vec));
-}
 float lengthVec (vec3 vec){
 	return sqrt(dot(vec,vec));
 }
@@ -279,13 +238,7 @@ vec2 tapLocation(int sampleNumber, float spinAngle,int nb, float nbRot,float r0)
     return vec2(cos_v, sin_v)*ssR;
 }
 
-vec3 viewToWorld(vec3 viewPosition) {
-    vec4 pos;
-    pos.xyz = viewPosition;
-    pos.w = 0.0;
-    pos = gbufferModelViewInverse * pos;
-    return pos.xyz;
-}
+
 void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estEndDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient, vec3 lightSource, float VdotL){
 		inColor *= exp(-rayLength * waterCoefs);	//No need to take the integrated value
 		int spCount = rayMarchSampleCount;
@@ -433,6 +386,24 @@ vec2 tapLocation_alternate(
 
     return vec2(cos_v, sin_v)*ssR;
 }
+vec2 hash21(float p)
+{
+	vec3 p3 = fract(vec3(p) * vec3(.1031, .1030, .0973));
+	p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.xx+p3.yz)*p3.zy);
+
+}
+
+vec2 vogel_disk_7[7] = vec2[](
+   vec2(0.2506005557551467	, -0.08481388042204699) ,
+   vec2(-0.3579961502930998	, 0.22787736539225004)	,
+   vec2(0.035586177529474045, -0.6801399443380787)	,
+   vec2(0.4135705583782951	, 0.4763465923710499)	,
+   vec2(-0.8061879331972175	, -0.2244701335533563)	,
+   vec2(0.7312484456783402	, -0.560572449689252)	,
+   vec2(-0.26682165385093876, 0.8457724502394341)	
+);
+
 void ssAO(inout vec3 lighting,	vec3 fragpos,float mulfov, vec2 noise, vec3 normal, vec2 texcoord, vec3 ambientCoefs, vec2 lightmap, float sunlight){
 
 	ivec2 pos = ivec2(gl_FragCoord.xy);
@@ -458,12 +429,14 @@ void ssAO(inout vec3 lighting,	vec3 fragpos,float mulfov, vec2 noise, vec3 norma
 	for (int j = 0; j < 7 ;j++) {
 		
 		vec2 sp = tapLocation_alternate(j, 0.0, 7, 20, randomDir);
-		float thing = sp.y < 0.0 && clamp(floor(abs(NormalSpecific.y)*2.0),0.0,1.0) < 1.0 ? rd * 10: rd;
+		// vec2 sp = vogel_disk_7[j];
+		// float thing = sp.y < 0.0 && clamp(floor(abs(NormalSpecific.y)*2.0),0.0,1.0) < 1.0 ? rd * 10: rd;
 
 
-		vec2 sampleOffset = sp*thing;
-		vec2 sampleOffset2 =  sp*rd ;
-		sampleOffset = min(sampleOffset, sampleOffset2);
+		// vec2 sampleOffset = sp*thing;
+		// vec2 sampleOffset2 =  sp*rd ;
+		// sampleOffset = min(sampleOffset, sampleOffset2);
+		vec2 sampleOffset = sp*rd;
 
 		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio)*RENDER_SCALE);
 
@@ -485,14 +458,84 @@ void ssAO(inout vec3 lighting,	vec3 fragpos,float mulfov, vec2 noise, vec3 norma
 		}
 	}
 
-	occlusion *= mix(2.5, 2.0 ,  clamp(floor(abs(NormalSpecific.y)*2.0),0.0,1.0));
-	occlusion = max(1.0 - occlusion/n, 0.0);
+	// occlusion *= mix(2.5, 2.0 ,  clamp(floor(abs(NormalSpecific.y)*2.0),0.0,1.0));
+	occlusion = max(1.0 - (occlusion*2.0)/n, 0.0);
 	// float skylight = clamp(abs(ambientCoefs.y+1),0.5,1.25) * clamp(abs(ambientCoefs.y+0.5),1.0,1.25);
 	float skylight = clamp(abs(ambientCoefs.y+1),0.5,2.0) ;
 	// lighting *= 0.5;
 	lighting *= mix(1.0,skylight,1);
 
 	lighting = lighting*max(occlusion,pow(lightmap.x,4));
+}
+vec3 DoContrast(vec3 Color){
+
+	float Contrast =  log(50.0);
+
+	return clamp(mix(vec3(0.5), Color, Contrast) ,0,255);
+}
+
+
+void ssDO(inout vec3 lighting,	vec3 fragpos,float mulfov, vec2 noise, vec3 normal, vec3 RPnormal, vec2 texcoord, vec3 ambientCoefs, vec2 lightmap, float sunlight){
+	const int Samples = 7;
+	vec3 Radiance = vec3(0);
+	float occlusion = 0.0;
+
+	ivec2 pos = ivec2(gl_FragCoord.xy);
+	const float tan70 = tan(70.*3.14/180.);
+
+	// float dist = 1.0 + clamp(fragpos.z*fragpos.z/50.0,0,2); // shrink sample size as distance increases
+
+	float mulfov2 = gbufferProjection[1][1]/(tan70   );
+	float maxR2 = fragpos.z*fragpos.z*mulfov2*2.*5/50.0;
+
+
+	float rd = mulfov2 * 0.1 ;
+
+
+	vec2 acc = -(TAA_Offset*(texelSize/2))*RENDER_SCALE ;
+
+	vec3 NormalSpecific = viewToWorld(normal);
+
+	
+	for (int j = 0; j < Samples ;j++) {
+		
+		vec2 sp = tapLocation_alternate(j, 0.0, 7, 20, blueNoise());
+		float thing = sp.y < 0.0 && clamp(floor(abs(NormalSpecific.y)*2.0),0.0,1.0) < 1.0 ? rd * 10: rd;
+
+
+		vec2 sampleOffset = sp*thing;
+		vec2 sampleOffset2 =  sp*rd ;
+		sampleOffset = sampleOffset2;
+
+		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio)*RENDER_SCALE);
+
+		if (offset.x >= 0 && offset.y >= 0 && offset.x < viewWidth*RENDER_SCALE.x && offset.y < viewHeight*RENDER_SCALE.y ) {
+			vec3 t0 = toScreenSpace(vec3(offset*texelSize+acc+0.5*texelSize,texelFetch2D(depthtex1,offset,0).x) * vec3(1.0/RENDER_SCALE, 1.0) );
+			
+
+			vec3 vec = t0.xyz - fragpos;
+			float dsquared = dot(vec,vec);
+
+				float NdotV2 = clamp(dot(vec*inversesqrt(dsquared), normalize(RPnormal)),0.,1.);
+
+				if (dsquared < maxR2){
+					// float NdotV = clamp(dot(vec*inversesqrt(dsquared), normalize(normal)),0.,1.);
+					// occlusion += NdotV * clamp(1.0-dsquared/maxR2,0.0,1.0);
+					
+
+					vec3 previousPosition = mat3(gbufferModelViewInverse) * t0 + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
+					previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
+					previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
+
+					if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0){
+						Radiance +=  NdotV2*texture2D(colortex5,previousPosition.xy).rgb ;
+					}
+
+				}
+		}
+	}
+	
+	lighting =  vec3(1) + Radiance/Samples;
 }
 
 vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes){
@@ -553,6 +596,7 @@ vec3 TangentToWorld(vec3 N, vec3 H, float roughness){
     return vec3((T * H.x) + (B * H.y) + (N * H.z));
 }
 
+
 void rtAO(inout vec3 lighting, vec3 normal, vec2 noise, vec3 fragpos, float lightmap, float inShadow){
 	int nrays = 4;
 	float occlude = 0.0;
@@ -574,23 +618,70 @@ void rtAO(inout vec3 lighting, vec3 normal, vec2 noise, vec3 fragpos, float ligh
 
 		// vec3 lightDir = normalize(vec3(0.2,0.8,0.2));
 		// float skyLightDir = dot(rayDir,lightDir); // the positons where the occlusion happens
-
+	
 		float skyLightDir = rayDir.y > 0.0 ? 1.0 : max(rayDir.y,1.0-indoor); // the positons where the occlusion happens
-		if (rayHit.z > 1.0) occlude += max(rayDir.y,1-AO_Strength);
+		// if (rayHit.z > 1.0) occlude += skyLightDir;
+
+		occlude += normalize(rayHit.z - 1.0) / (1.1-rayDir.y);
 
 
 	}
 	// occlude = mix( occlude,1, inShadow);
 	// occlude = occlude*0.5 + 0.5;
-	lighting *= 2.5;
-	lighting *= mix(occlude/nrays,1.0,0) ;
+	// lighting *= 2.5;
+	lighting *= occlude/nrays;
 }
+
+
+
+// void rtGI(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, float lightmap, vec3 albedo, float inShadow){
+// 	int nrays = RAY_COUNT;
+// 	vec3 intRadiance = vec3(0.0);
+// 	vec3 occlude = vec3(0.0);
+
+// 	lighting *= 1.50;
+// 	float indoor = clamp(pow(lightmap,2)*2,0.0,AO_Strength);
+	
+// 	for (int i = 0; i < nrays; i++){
+// 		int seed = (frameCounter%40000)*nrays+i;
+// 		vec2 ij = fract(R2_samples(seed) + noise );
+
+// 		vec3 rayDir = TangentToWorld(normal, normalize(cosineHemisphereSample(ij,1.0)) ,1.0);
+
+// 		#ifdef HQ_SSGI
+// 			vec3 rayHit = rayTrace_GI( mat3(gbufferModelView) * rayDir, fragpos,  blueNoise(), 50.); // ssr rt
+// 		#else
+// 			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, fragpos, blueNoise(), 30.);  // choc sspt 
+// 		#endif
+		
+// 		float skyLightDir = rayDir.y > 0.0 ? 1.0 : max(rayDir.y,1.0-indoor); // the positons where the occlusion happens
+	
+// 		if (rayHit.z < 1.){
+// 			vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
+// 			previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
+// 			previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
+// 			if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0)
+
+// 				intRadiance = DoContrast(texture2D(colortex5,previousPosition.xy).rgb) ;
+// 			else
+// 				intRadiance += lighting*skyLightDir; // make sure ambient light exists but at screen edges when you turn
+			
+
+// 		}else{
+// 			intRadiance += lighting*skyLightDir; 
+// 		}
+// 	}
+// 	lighting = intRadiance/nrays; 
+// }
+
+
 void rtGI(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, float lightmap, vec3 albedo, float inShadow){
 	int nrays = RAY_COUNT;
 	vec3 intRadiance = vec3(0.0);
-	vec3 occlude = vec3(0.0);
+	vec3 occlusion = vec3(0.0);
+	vec3 sunlight =vec3(0);
 
-	lighting *= 1.50;
+	// lighting *= 1.50;
 	float indoor = clamp(pow(lightmap,2)*2,0.0,AO_Strength);
 	
 	for (int i = 0; i < nrays; i++){
@@ -604,24 +695,51 @@ void rtGI(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, float lightm
 		#else
 			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, fragpos, blueNoise(), 30.);  // choc sspt 
 		#endif
+
+		// float skyLightDir = rayDir.y > 0.0 ? 1.0 : max(rayDir.y,1.0-indoor); // the positons where the occlusion happens
 		
-		float skyLightDir = rayDir.y > 0.0 ? 1.0 : max(rayDir.y,1.0-indoor); // the positons where the occlusion happens
-	
-		if (rayHit.z < 1.){
-			vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
+		// vec3 AO = lighting * (normalize(rayHit.z - 1.0) / (1.1-rayDir.y));
+		if (rayHit.z < 1){
+			vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit)+ gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
+		
 			previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
 			previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
-			if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0)
-				intRadiance = 0 + texture2D(colortex5,previousPosition.xy).rgb * GI_Strength ;
-			else
-				intRadiance += lighting*skyLightDir; // make sure ambient light exists but at screen edges when you turn
-				
-		}else{
-			intRadiance += lighting*skyLightDir; 
+
+			if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0){
+				intRadiance = DoContrast(texture2D(colortex5,previousPosition.xy).rgb ) ;
+			}
+
+		
 		}
+		occlusion = lighting * (normalize(rayHit.z - 1.0)/(1.1-rayDir.y));
+
+		//  sunlight = lightCol.rgb * min( normalize(rayHit.z - 1.0)  / (1.001-dot(rayDir,WsunVec) ) ,0.1)	;
+
+
+
+		// if (rayHit.z < 1.){
+		// 	vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
+		// 	previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
+		// 	previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
+		// 	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0){
+		// 		intRadiance += DoContrast(texture2D(colortex5,previousPosition.xy).rgb) ;
+		// 	}else{
+		// 		intRadiance += lighting;
+		// 	}
+		// 	// occlude += 1.0;
+
+		// }else{
+		// 	intRadiance += lighting;
+		// }
+	
+		// occlude = (lighting/nrays)*(normalize(rayHit.z - 1.0) / (1.1-rayDir.y));
+
 	}
-	lighting = intRadiance/nrays; 
+	lighting = occlusion + intRadiance/nrays; 
 }
+
+
+
 float GetCloudShadow(vec3 eyePlayerPos){
 	vec3 p3 = (eyePlayerPos + cameraPosition) - Cloud_Height;
 	vec3 cloudPos = p3*Cloud_Size + WsunVec/abs(WsunVec.y) * ((3250 - 3250*0.35) - p3.y*Cloud_Size) ;
@@ -687,6 +805,7 @@ void GriAndEminShadowFix(
 	}
 }
 
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -708,8 +827,9 @@ void main() {
 	float z = texture2D(depthtex1,texcoord).x;
 
 	vec3 fragpos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
-	vec3 p3 = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
+	vec3 p3 = mat3(gbufferModelViewInverse) * fragpos;
 	vec3 np3 = normVec(p3);
+	p3 += gbufferModelViewInverse[3].xyz;
 	
 	float iswaterstuff = texture2D(colortex7,texcoord).a ;
 	bool iswater = iswaterstuff > 0.99;
@@ -754,10 +874,6 @@ void main() {
 	
 	vec3 filtered = vec3(1.412,1.0,0.0);
 	if (!hand) filtered = texture2D(colortex3,texcoord).rgb;
-
-	#ifdef WhiteWorld
-	 albedo = vec3(1);
-	#endif
 
 	float Diffuse_final = 1.0;
 
@@ -895,7 +1011,7 @@ void main() {
 
 		#ifdef Variable_Penumbra_Shadows
 			SSS = clamp(SSS, diffuseSun*shading, 1.0);
-			SSS = (phaseg(clamp(dot(np3, WsunVec),0.0,1.0), 0.5) * 10.0 + 0.25 ) * SSS ;
+			SSS = (phaseg(clamp(dot(np3, WsunVec),0.0,1.0), 0.5) * 10.0 + 1.0 ) * SSS ;
 		#endif
 		#else
 		 SSS = 0.0;
@@ -955,17 +1071,19 @@ void main() {
 			ambientLight *= skylight;
 		#endif
 		#if indirect_effect == 1
-			ambientLight *=  mix(1.0 - exp2(-5 * pow(1-vanilla_AO,2)), 1.0, diffuseSun*shading) ;
+			// ambientLight *=  mix(1.0 - exp2(-5 * pow(1-vanilla_AO,2)), 1.0, diffuseSun*shading) ;
 			if (!hand) ssAO(ambientLight, fragpos, 1.0, blueNoise(gl_FragCoord.xy).rg,   FlatNormals , texcoord, ambientCoefs, lightmap.xy, diffuseSun*shading ) ;
 		#endif
 		#if indirect_effect == 2
 			if (!hand) rtAO(ambientLight, slope_normal, blueNoise(gl_FragCoord.xy).rg, fragpos, lightmap.y, diffuseSun*shading);
 		#endif
 		#if indirect_effect == 3
-			if (!hand) rtGI(ambientLight, slope_normal, blueNoise(gl_FragCoord.xy).rg, fragpos, lightmap.y, albedo, diffuseSun*shading);
+			if (!hand) rtGI(ambientLight, slope_normal, blueNoise(gl_FragCoord.xy).rg, fragpos, lightmap.y, (directLightCol/127.0), diffuseSun*shading);
+		#endif
+		#if indirect_effect == 4
+			if (!hand) ssDO(ambientLight, fragpos, 1.0, blueNoise(gl_FragCoord.xy).rg,   FlatNormals, worldToView(slope_normal) , texcoord, ambientCoefs, lightmap.xy, diffuseSun*shading ) ;
 		#endif
 		
-		Indirect_lighting = ambientLight;
 
 		vec3 waterabsorb_speculars = vec3(1);
 
@@ -1034,15 +1152,20 @@ void main() {
 			}
 		#endif
 		#endif
-		
+				// do this after water and stuff is done because yea
+
+		Indirect_lighting = ambientLight;
 		//combine all light sources 
+		Direct_lighting = (Diffuse_final + SSS) * (directLightCol/127.0) ;
 		// Direct_lighting = max(Diffuse_final ,SSS) * (directLightCol/127.0) ;
-		Direct_lighting = max(Diffuse_final ,SSS) * (directLightCol/127.0) ;
 		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * albedo;
 
-		// do this after water and stuff is done because yea
 		#ifdef Specular_Reflections	
-			MaterialReflections(gl_FragData[0].rgb, SpecularTex.r, SpecularTex.ggg, albedo, WsunVec, lightCol.rgb * waterabsorb_speculars, Diffuse_final , lightmap.y,  slope_normal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise()), hand);
+			vec3 fragpos_spec = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
+			vec3 p3_spec = mat3(gbufferModelViewInverse) * fragpos_spec;
+			vec3 np3_spec = normVec(p3_spec);
+
+			MaterialReflections(texcoord, gl_FragData[0].rgb, SpecularTex.r, SpecularTex.ggg, albedo, WsunVec, lightCol.rgb * waterabsorb_speculars, Diffuse_final , lightmap.y,  slope_normal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise()), hand);
 		#endif
 
 		#ifdef LabPBR_Emissives
@@ -1081,10 +1204,5 @@ void main() {
 		if (isEyeInWater == 0) waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth, estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));	
 	}
 
-
-	// gl_FragData[0].rgb =  vec3(1) * viewToWorld(FlatNormals);
-	
-	
-	
 	/* RENDERTARGETS:3 */
 }

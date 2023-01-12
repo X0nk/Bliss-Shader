@@ -1,6 +1,7 @@
 #version 120
 //downsample 1st pass (half res) for bloom
 
+#include "lib/settings.glsl"
 uniform sampler2D colortex5;
 // uniform sampler2D colortex8;
 uniform vec2 texelSize;

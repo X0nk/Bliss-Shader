@@ -1,15 +1,3 @@
-//#define Specular_Reflections // reflections on blocks. REQUIRES A PBR RESOURCEPACK.
-#define Screen_Space_Reflections // toggle screenspace reflections. if you want normal performance but still want a bit of shiny, the sun reflection stays on when this is turned off.
-#define Sky_reflection // just in case you dont want it i guess
-// #define Rough_reflections // turns the roughness GGXVNDF ON. sizable performance impact, and introduces alot of noise.
-
-#define Sun_specular_Strength 3 // increase for more sparkles [1 2 3 4 5 6 7 8 9 10]
-#define reflection_quality 30 // adjust the quality of the screenspace reflections. [6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 ]
-#define Roughness_Threshold 1.5 // using a curve on the roughness, make the reflections more or less visible on rough surfaces. good for hiding noise on rough materials [1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
-
-// #define SCREENSHOT_MODE // go render mode and accumulate frames for as long as you want for max image quality.
-
-
 
 uniform sampler2D gaux1;
 uniform int framemod8;
@@ -74,71 +62,71 @@ float linZ(float depth) {
 	// d = -((2n/l)-f-n)/(f-n)
 
 }
+vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
+
+    vec3 clipPosition = toClipSpace3(position);
+	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ? (-near -position.z) / dir.z : far*sqrt(3.);
+    vec3 direction = normalize(toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
+    direction.xy = normalize(direction.xy);
+
+    //get at which length the ray intersects with the edge of the screen
+    vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
+    float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z);
+
+
+    vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0);
+	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) + stepv*dither;
+
+	float minZ = clipPosition.z+stepv.z;
+	float maxZ = spos.z+stepv.z;
+	spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
+
+	float dist = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
+    for (int i = 0; i <= int(quality); i++) {
+
+		float sp = texelFetch2D(depthtex1,ivec2(spos.xy/texelSize),0).r;
+        if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ)) return vec3(spos.xy/RENDER_SCALE,sp);
+
+        spos += stepv;
+		//small bias
+		minZ = maxZ-(0.0001/dist)/ld(spos.z);
+		maxZ += stepv.z;
+    }
+
+    return vec3(1.1);
+}
 // vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 
-//   vec3 clipPosition = toClipSpace3(position);
-//   float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ?
-//                      (-near -position.z) / dir.z : far*sqrt(3.);
-//   vec3 direction = normalize(toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
-//   direction.xy = normalize(direction.xy);
+// 	vec3 clipPosition = toClipSpace3(position);
+// 	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ?
+// 	                   (-near -position.z) / dir.z : far*sqrt(3.);
+// 	vec3 direction = normalize(toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
+// 	direction.xy = normalize(direction.xy);
 
-//   //get at which length the ray intersects with the edge of the screen
-//   vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
-//   float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z);
+// 	//get at which length the ray intersects with the edge of the screen
+// 	vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
+// 	float mult = maxLengths.y;
 
-//   vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0);
-
+// 	vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0) * dither;
 // 	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) ;
 
-// 	float minZ = spos.z+stepv.z;
-// 	float maxZ = spos.z+stepv.z;
-
 // 	spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
-//   spos += stepv*dither ;
+
+// 	float biasdist =  clamp(position.z*position.z/50.0,1,2); // shrink sample size as distance increases
 
 // 	for(int i = 0; i < int(quality); i++){
+// 		spos += stepv;
 // 		float sp = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4),0).w/65000.0);
 // 		float currZ = linZ(spos.z);
+
 // 		if( sp < currZ) {
 // 			float dist = abs(sp-currZ)/currZ;
-// 			if (dist <= 0.05) return vec3(spos.xy, invLinZ(sp))/vec3(RENDER_SCALE,1.0);
+// 			if (abs(dist) < biasdist*0.05) return vec3(spos.xy, invLinZ(sp))/vec3(RENDER_SCALE,1.0);
 // 		}
-// 		spos += stepv ;
+// 		spos += stepv;
 // 	}
 //   return vec3(1.1);
 // }
-vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
-
-	vec3 clipPosition = toClipSpace3(position);
-	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ?
-	                   (-near -position.z) / dir.z : far*sqrt(3.);
-	vec3 direction = normalize(toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
-	direction.xy = normalize(direction.xy);
-
-	//get at which length the ray intersects with the edge of the screen
-	vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
-	float mult = maxLengths.y;
-
-	vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0) * dither;
-	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) ;
-
-	spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
-
-	float biasdist =  clamp(position.z*position.z/50.0,1,2); // shrink sample size as distance increases
-
-	for(int i = 0; i < int(quality); i++){
-		spos += stepv;
-		float sp = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4),0).w/65000.0);
-		float currZ = linZ(spos.z);
-
-		if( sp < currZ) {
-			float dist = abs(sp-currZ)/currZ;
-			if (abs(dist) < biasdist*0.05) return vec3(spos.xy, invLinZ(sp))/vec3(RENDER_SCALE,1.0);
-		}
-		spos += stepv;
-	}
-  return vec3(1.1);
-}
 
 void frisvad(in vec3 n, out vec3 f, out vec3 r){
     if(n.z < -0.9) {
@@ -180,9 +168,10 @@ vec3 sampleGGXVNDF(vec3 V_, float roughness, float U1, float U2){
 	// compute normal
 	vec3 N = P1*T1 + P2*T2 + sqrt(max(0.0, 1.0 - P1*P1 - P2*P2))*V;
 	// unstretch
-	N = normalize(vec3(roughness*N.x, roughness*N.y, max(0.0, N.z)));
+	N = normalize(vec3(roughness*N.x, roughness*N.y, N.z));
 	return N;
 }
+
 
 
 vec3 rayTraceSpeculars(vec3 dir,vec3 position,float dither, float quality, bool hand){
@@ -200,9 +189,9 @@ vec3 rayTraceSpeculars(vec3 dir,vec3 position,float dither, float quality, bool 
 
 	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) + stepv*dither;
 
-	float minZ = spos.z+stepv.z;
-	float maxZ = spos.z+stepv.z;
-
+	float minZ = spos.z;
+	float maxZ = spos.z;
+	
 	spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
 
 	float dist = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
@@ -226,6 +215,7 @@ vec3 rayTraceSpeculars(vec3 dir,vec3 position,float dither, float quality, bool 
   return vec3(1.1);
 }
 
+
 vec3 mix_vec3(vec3 X, vec3 Y, float A){
 	return X * (1.0 - A) + Y * A;
 }
@@ -236,6 +226,7 @@ float mix_float(float X, float Y, float A){
 
 // pain
 void MaterialReflections(
+	vec2 texcoord,
 	inout vec3 Output,
 	float roughness, 
 	vec3 f0,
@@ -258,8 +249,8 @@ void MaterialReflections(
 	roughness = unpackRoughness(roughness);
 	f0 = f0.y == 0.0 ? vec3(0.04) : f0;
 
-		// roughness = 0.0;
-		// f0 = vec3(0.9);
+		// roughness = 0.2;
+		// f0 = vec3(0.04);
 
 	mat3 basis = CoordBase(normal);
 	vec3 normSpaceView = -np3*basis ;
@@ -275,48 +266,72 @@ void MaterialReflections(
 		vec3 H = normalize(vec3(0.0,0.0,1.0));
 	#endif
 	
-	vec3 Ln = reflect(-normSpaceView, clamp(H,-1.0,1.0));
+	vec3 Ln = reflect(-normSpaceView, H);
 	vec3 L = basis * Ln;
 
 	// fresnel stuff
 	float fresnel = pow(clamp(1.0 + dot(-Ln, H),0.0,1.0),5.0);
+
+		float fresnel2 = dot(-np3, H);
+
 	// vec3 F = f0 + (1.0 - f0) * fresnel; 
 	
 	vec3 F = mix(f0, vec3(1.0), fresnel); 
 	vec3 rayContrib = F;
 
 			
-	float NdotV = clamp(normalize(dot(np3, normal))*10000.,0.,1.);
+	// float NdotV = clamp(normalize(dot(np3, L))*10000.,0.,1.);
     bool hasReflections = (f0.y * (1.0 - roughness * Roughness_Threshold)) > 0.01;
 
-	if (Roughness_Threshold == 1.0){ hasReflections = roughness > -1; NdotV = -1.0;}
+	if (Roughness_Threshold == 1.0){ hasReflections = roughness > -1; }
 
-	if (!hasReflections || NdotV > 0.0 ) Outdoors = 0.0;
+	if (!hasReflections  ) Outdoors = 0.0;
+
+
 	
+	// if(hand){
+	// 	LOD_controller = 6;
+	// 	// noise.b = 0.5; 
+	// }
+
 	// SSR, Sky, and Sun reflections
 	vec4 Reflections = vec4(0.0);
+	// vec3 SkyReflection = skyCloudsFromTex_Spec(L, colortex4,int(LOD_controller)).rgb / 150. * 5.;
 	vec3 SkyReflection = skyCloudsFromTex(L, colortex4).rgb / 150. * 5.;
-	vec3 SunReflection = diffuse * GGX2(clamp(normal,-1,1), -np3,  sunPos, roughness, f0) * 8./150./3. * sunCol * Sun_specular_Strength;
+
+	vec3 SunReflection = diffuse * GGX2(normal, -np3,  sunPos, roughness, f0) * 8./150./3. * sunCol * Sun_specular_Strength;
 
 	#ifndef Sky_reflection
 		SkyReflection = Reflections_Final;
 	#endif
 
+	
+
+
 	#ifdef Screen_Space_Reflections
-		if ( hasReflections	&& NdotV <= 0.0) { // Skip SSR if ray contribution is low
+		if ( hasReflections	) { // Skip SSR if ray contribution is low
+
+
 			#ifdef SCREENSHOT_MODE
 				float rayQuality = reflection_quality; 
 			#else
-				float rayQuality = mix_float(reflection_quality,0.0,sqrt(roughness)); // Scale quality with ray contribution
+				float rayQuality = mix_float(reflection_quality,0.0,dot(rayContrib,vec3(0.33))); // Scale quality with ray contribution
 			#endif
-			vec3 rtPos = rayTraceSpeculars( mat3(gbufferModelView) * L,fragpos.xyz,  noise.b, rayQuality, hand);
+
+			vec3 rtPos = rayTraceSpeculars( mat3(gbufferModelView) * L,fragpos.xyz,  noise.b, reflection_quality, hand);
+
+			// float test = dot(vec2(-rtPos.x,-rtPos.y), vec2(rtPos.x,rtPos.y));
+			// float LOD_controller =  clamp((1-pow(test*0.5+1.0,25))	* 10,0.0,6.0) ;
+
+			// LOD_controller = 0;
+
 			if (rtPos.z < 1. ){ // Reproject on previous frame
 				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rtPos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
 				previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
 				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
 				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0) {
 					Reflections.a = 1.0;
-					Reflections.rgb = texture2D(colortex5,previousPosition.xy).rgb;
+					Reflections.rgb = texture2DLod(colortex5,previousPosition.xy,0).rgb;
 				}
 			}
 		}
@@ -330,15 +345,17 @@ void MaterialReflections(
 	#ifdef Sky_reflection
 		SkyReflection *= Metals;
 	#endif
-	float lumaRayContrib = luma(rayContrib);
+	float lumaRayContrib = pow(luma(rayContrib),1.0);
+	float oneminus_lumaRayContrib = pow(1.0-luma(rayContrib),1.0);
 	// darken albedos, and stop darkening where the sky gets occluded indoors
-	Reflections_Final *= mix_float(1.0 - (Reflections.a*lumaRayContrib), 1.0 - lumaRayContrib, Outdoors);
+	Reflections_Final *= mix_float(1.0 - (Reflections.a*lumaRayContrib), oneminus_lumaRayContrib, Outdoors);
 	
 	// apply all reflections to the lighting
 	Reflections_Final += Reflections.rgb * lumaRayContrib;
 	Reflections_Final += SkyReflection * lumaRayContrib * (1.0-Reflections.a) * Outdoors ;
 
 	float visibilityFactor = clamp(exp2((pow(roughness,3.0) / f0.y) * -4),0,1);
+	
 	#ifdef Rough_reflections
 		Output = hand ? mix_vec3(Output,  Reflections_Final, visibilityFactor) : Reflections_Final;
 	#else
@@ -346,4 +363,7 @@ void MaterialReflections(
 	#endif
 
 	Output += SunReflection ;
+	// float aaaa = dot(vec2(-rtPos.x,-rtPos.y), vec2(rtPos.x,rtPos.y));
+	// test = pow(test*0.5+1.0,2);
+	// Output = vec3(0,test,0)  ;
 }

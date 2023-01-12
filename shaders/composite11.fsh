@@ -1,4 +1,5 @@
 #version 120
+#include "lib/settings.glsl"
 //6 Horizontal gaussian blurs and horizontal downsampling
 #include "lib/res_params.glsl"
 

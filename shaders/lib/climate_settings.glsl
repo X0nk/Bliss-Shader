@@ -1,46 +1,18 @@
 // this file contains all things for seasons, weather, and biome specific settings.
 // i gotta start centralizing shit someday. 
 
-#define Seasons
-#define Season_Length 24 // how long each season lasts in minecraft days. 91 is roughly how long each season is in reality. 1 will make a year last 4 days [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91]
-// #define Snowy_Winter // snow in the winter, yes or no?
 
-#define Summer_R 1.0 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Summer_G 1.0 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Summer_B 1.0 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Summer_Leaf_R 1.0 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Summer_Leaf_G 1.0 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Summer_Leaf_B 1.0 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
+uniform float Day;
 
-#define Fall_R 1.5 // the color of the plants during this season   [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Fall_G 1.0 // the color of the plants during this season   [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Fall_B 1.0 // the color of the plants during this season   [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Fall_Leaf_R 1.8 // the color of the plants during this season   [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Fall_Leaf_G 0.8 // the color of the plants during this season   [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Fall_Leaf_B 0.0 // the color of the plants during this season   [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-
-#define Winter_R 1.2 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Winter_G 0.8 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Winter_B 1.0 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Winter_Leaf_R 1.2 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Winter_Leaf_G 0.5 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Winter_Leaf_B 1.0 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-
-#define Spring_R 1.0 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Spring_G 0.9 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Spring_B 1.1 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Spring_Leaf_R 1.0 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Spring_Leaf_G 0.8 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-#define Spring_Leaf_B 0.8 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-
-
-#define Daily_Weather // different skies for different days, and fog.
-#define WeatherDay -1 // [-1 0 1 2 3 4 5 6 7]
-
-#define cloudCoverage 0.4 // Cloud coverage	[ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
-#define Rain_coverage 0.6 // how much the coverage of the clouds change during rain [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 3.0 4.0 5.0]
-
-#define Biome_specific_environment // makes the fog density and color look unique in certain biomes. (swamps, jungles, lush caves, giant pines, dark forests)
+// it's so symmetrical~
+float day0 = clamp(clamp(Day,   0.0,1.0)*clamp(2-Day, 0.0,1.0),0.0,1.0);
+float day1 = clamp(clamp(Day-1, 0.0,1.0)*clamp(3-Day, 0.0,1.0),0.0,1.0);
+float day2 = clamp(clamp(Day-2, 0.0,1.0)*clamp(4-Day, 0.0,1.0),0.0,1.0);
+float day3 = clamp(clamp(Day-3, 0.0,1.0)*clamp(5-Day, 0.0,1.0),0.0,1.0);
+float day4 = clamp(clamp(Day-4, 0.0,1.0)*clamp(6-Day, 0.0,1.0),0.0,1.0);
+float day5 = clamp(clamp(Day-5, 0.0,1.0)*clamp(7-Day, 0.0,1.0),0.0,1.0);
+float day6 = clamp(clamp(Day-6, 0.0,1.0)*clamp(8-Day, 0.0,1.0),0.0,1.0);
+float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -102,6 +74,8 @@
 ////////////////////////////// DAILY WEATHER //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+
 #ifdef WEATHERCLOUDS
 	uniform float CumulusCoverage;
 	uniform float CirrusCoverage;
@@ -111,26 +85,35 @@
 		float Coverage
 	){
 		
-		#ifdef Daily_Weather
-			int W_DAY = WeatherDay;
+		// #ifdef Daily_Weather
+		// 	int W_DAY = WeatherDay;
 
-			if(W_DAY > -1)	{
-				if(W_DAY == 0) Coverage += 0.1;
-				if(W_DAY == 1) Coverage += 0.5;
-				if(W_DAY == 2) Coverage += 0.2;
-				if(W_DAY == 3) Coverage += 0.8;
-				if(W_DAY == 4) Coverage += 0.1;
-				if(W_DAY == 5) Coverage += 0.6;
-				if(W_DAY == 6) Coverage += 0.0;
-				if(W_DAY == 7) Coverage += 1.0;
-			}else{
-				Coverage += mix(CumulusCoverage, Rain_coverage, rainStrength);
-			}
+		// 	if(W_DAY > -1)	{
+		// 		if(W_DAY == 0) Coverage += 0.1;
+		// 		if(W_DAY == 1) Coverage += 0.5;
+		// 		if(W_DAY == 2) Coverage += 0.2;
+		// 		if(W_DAY == 3) Coverage += 0.8;
+		// 		if(W_DAY == 4) Coverage += 0.1;
+		// 		if(W_DAY == 5) Coverage += 0.6;
+		// 		if(W_DAY == 6) Coverage += 0.0;
+		// 		if(W_DAY == 7) Coverage += 1.0;
+		// 	}else{
+		// 		Coverage += mix(CumulusCoverage, Rain_coverage, rainStrength);
+		// 	}
+		// #else
+		// 	Coverage += mix(cloudCoverage, Rain_coverage, rainStrength);
+		// #endif
+
+		#ifdef Daily_Weather
+			Coverage += day0 * 0.3	+	day1 * 0.8	+	day2 * 0.2	+	day3 * 0.0	+	day4 * 0.8	+	day5 * 0.5	+	day6 * -0.5	+	day7 * 0.6;
 		#else
-			Coverage += mix(cloudCoverage, Rain_coverage, rainStrength);
+			Coverage += cloudCoverage;
+			// Coverage = mix(Coverage, Rain_coverage, rainStrength);
 		#endif
 
 		return Coverage;
+
+
 	}
 
 	void DailyWeather_HighAltitude(
@@ -165,21 +148,11 @@
 #endif
 
 #ifdef Daily_Weather
-	uniform float Day;
 
 	void DailyWeather_FogDensity(
 		inout vec4 UniformDensity,
 		inout vec4 CloudyDensity
 	){
-		// it's so symmetrical~
-		float day0 = clamp(clamp(Day,   0.0,1.0)*clamp(2-Day, 0.0,1.0),0.0,1.0);
-		float day1 = clamp(clamp(Day-1, 0.0,1.0)*clamp(3-Day, 0.0,1.0),0.0,1.0);
-		float day2 = clamp(clamp(Day-2, 0.0,1.0)*clamp(4-Day, 0.0,1.0),0.0,1.0);
-		float day3 = clamp(clamp(Day-3, 0.0,1.0)*clamp(5-Day, 0.0,1.0),0.0,1.0);
-		float day4 = clamp(clamp(Day-4, 0.0,1.0)*clamp(6-Day, 0.0,1.0),0.0,1.0);
-		float day5 = clamp(clamp(Day-5, 0.0,1.0)*clamp(7-Day, 0.0,1.0),0.0,1.0);
-		float day6 = clamp(clamp(Day-6, 0.0,1.0)*clamp(8-Day, 0.0,1.0),0.0,1.0);
-		float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 
 		// set fog Profiles for each of the 8 days in the cycle.
 		// U = uniform fog  ||  C = cloudy fog
@@ -256,8 +229,8 @@
 		float Night   = clamp((Time-13000)/2000,0,1) * clamp((23000-Time)/2000,0,1) ;
 
 		// set densities.		   morn, noon, even, night
-		vec4 UniformDensity = vec4(1.0,	 0.0,	   1.0,	 10.0);
-		vec4 CloudyDensity =  vec4(5.0,	 0.0,	   5.0,	 25.0);
+		vec4 UniformDensity = vec4(0.0,	 0.0,	   0.0,	 0.0);
+		vec4 CloudyDensity =  vec4(0.0,	 0.0,	   0.0,	 0.0);
 
 		#ifdef Daily_Weather
 			DailyWeather_FogDensity(UniformDensity, CloudyDensity); // let daily weather influence fog densities.

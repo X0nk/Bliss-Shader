@@ -3,6 +3,7 @@ value.indirect_effect.0 = Vanilla AO
 value.indirect_effect.1 = SSAO
 value.indirect_effect.2 = RTAO
 value.indirect_effect.3 = SSGI
+value.indirect_effect.4 = SSDO
 
 option.ambient_colortype = Coloring Type
 value.ambient_colortype.0 = Temperature

@@ -30,7 +30,7 @@ uniform vec3 sunPosition;
 
 
 #define cloudCoverage 0.4 // Cloud coverage	[ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
-// #define Rain_coverage 0.8 // how much the coverage of the clouds change during rain [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 3.0 4.0 5.0]
+#define Rain_coverage 0.6 // how much the coverage of the clouds change during rain [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 3.0 4.0 5.0]
 
 ///////  shape
 #define cloudDensity 0.0514	// Cloud Density, 0.04-0.06 is around irl values	[0.0010 0.0011 0.0013 0.0015 0.0017 0.0020 0.0023 0.0026 0.0030 0.0034 0.0039 0.0045 0.0051 0.0058 0.0067 0.0077 0.0088 0.0101 0.0115 0.0132 0.0151 0.0173 0.0199 0.0228 0.0261 0.0299 0.0342 0.0392 0.0449 0.0514 0.0589 0.0675 0.0773 0.0885 0.1014 0.1162 0.1331 0.1524 0.1746 0.2000 0.3 0.35 0.4 0.45 0.5 0.6 0.7 0.8 0.9 1.0]

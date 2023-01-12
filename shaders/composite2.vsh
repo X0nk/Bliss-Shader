@@ -1,7 +1,7 @@
 #version 120
 #extension GL_EXT_gpu_shader4 : enable
-#define TAA
-#define SEPARATE_AO
+#include "lib/settings.glsl"
+
 flat varying vec3 WsunVec;
 flat varying vec3 avgAmbient;
 flat varying vec3 ambientUp;

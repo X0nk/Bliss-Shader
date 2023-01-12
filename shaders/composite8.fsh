@@ -3,19 +3,11 @@
 
 #extension GL_EXT_gpu_shader4 : enable
 
+#include "lib/settings.glsl"
 #include "lib/res_params.glsl"
 
 
 //TAA OPTIONS
-//#define NO_CLIP	//Removes all anti-ghosting techniques used and creates a sharp image (good for still screenshots)
-#define BLEND_FACTOR 0.05 //[0.01 0.02 0.03 0.04 0.05 0.06 0.08 0.1 0.12 0.14 0.16] higher values = more flickering but sharper image, lower values = less flickering but the image will be blurrier
-#define MOTION_REJECTION 0.0 //[0.0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.5] //Higher values=sharper image in motion at the cost of flickering
-#define ANTI_GHOSTING 0.0 //[0.0 0.25 0.5 0.75 1.0] High values reduce ghosting but may create flickering
-#define FLICKER_REDUCTION 0.5  //[0.0 0.25 0.5 0.75 1.0] High values reduce flickering but may reduce sharpness
-#define CLOSEST_VELOCITY //improves edge quality in motion at the cost of performance
-
-// #define SCREENSHOT_MODE // go render mode and accumulate frames for as long as you want for max image quality.
-// #define SPLIT_RENDER // AAAAAAAAAAAAAAAA
 
 const int noiseTextureResolution = 32;
 

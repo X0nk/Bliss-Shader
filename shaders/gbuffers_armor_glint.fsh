@@ -1,6 +1,6 @@
 #version 120
 #extension GL_EXT_gpu_shader4 : enable
-
+#include "lib/settings.glsl"
 
 varying vec4 lmtexcoord;
 varying vec4 color;
@@ -26,35 +26,6 @@ vec3 toLinear(vec3 sRGB){
 	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
 }
 
-#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
-vec3 toScreenSpace(vec3 p) {
-	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
-    vec3 p3 = p * 2. - 1.;
-    vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
-    return fragposition.xyz / fragposition.w;
-}
-float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
-}
-
-float facos(float sx){
-    float x = clamp(abs( sx ),0.,1.);
-    float a = sqrt( 1. - x ) * ( -0.16882 * x + 1.56734 );
-    return sx > 0. ? a : 3.14159265359 - a;
-}
-#define SHADOW_MAP_BIAS 0.8
-float calcDistort(vec2 worlpos){
-
-	vec2 pos = worlpos * 1.165;
-	vec2 posSQ = pos*pos;
-
-	float distb = pow(posSQ.x*posSQ.x*posSQ.x + posSQ.y*posSQ.y*posSQ.y, 1.0 / 6.0);
-	return 1.08695652/((1.0 - SHADOW_MAP_BIAS) + distb * SHADOW_MAP_BIAS);
-}
-
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -72,10 +43,6 @@ void main() {
 
 	vec3 col = albedo*exp(-exposure*3.);
 
-
 	gl_FragData[0].rgb = col*color.a;
 	gl_FragData[0].a = gl_FragData[0].a*0.1;
-
-
-
 }

@@ -1,40 +1,8 @@
 #version 120
 //Volumetric fog rendering
 #extension GL_EXT_gpu_shader4 : enable
-#define CLOUDS_SHADOWS
-#define VL_CLOUDS_SHADOWS // Casts shadows from clouds on VL (slow)
-#define CLOUDS_SHADOWS_STRENGTH 1.0 //[0.1 0.125 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.9 1.0]
-#define VL_SAMPLES 8 //[4 6 8 10 12 14 16 20 24 30 40 50]
-#define Ambient_Mult 1.0 //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.75 0.8 0.85 0.9 0.95 1.0 1.5 2.0 3.0 4.0 5.0 6.0 10.0]
-#define SEA_LEVEL 70 //[0 10 20 30 40 50 60 70 80 90 100 110 120 130 150 170 190]	//The volumetric light uses an altitude-based fog density, this is where fog density is the highest, adjust this value according to your world.
-#define ATMOSPHERIC_DENSITY 1.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 4.0 5.0 7.5 10.0 12.5 15.0 20.]
-#define fog_mieg1 0.40 //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.75 0.8 0.85 0.9 0.95 1.0]
-#define fog_mieg2 0.10 //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.75 0.8 0.85 0.9 0.95 1.0]
-#define fog_coefficientRayleighR 5.8 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-#define fog_coefficientRayleighG 1.35 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-#define fog_coefficientRayleighB 3.31 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
 
-#define fog_coefficientMieR 3.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-#define fog_coefficientMieG 3.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-#define fog_coefficientMieB 3.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
- 
-#define Cloudy_Fog_Density 5.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-#define Uniform_Fog_Density 1.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-
-#define uniformfog_fade 10 // does not change rain or cave fog [5 10 20 30 40 50 60 70 80  90 100]
-#define cloudyfog_fade 10 //  does not change rain or cave fog [5 10 20 30 40 50 60 70 80  90 100]
-
-#define RainFog_amount  5 // [0 1 2 3 4 5 6 7 8 9  10 15 20 25]
-#define CaveFog_amount  5 // [0 1 2 3 4 5 6 7 8 9  10 15 20 25]
-#define cloudray_amount 0.2 // rain boost this [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.75 0.8 0.85 0.9 0.95 1.0]
-
-#define UniformFog_amount 1.0 // [0.0 0.2 0.4 0.6 0.8 1.0 1.25 1.5 1.75 2.0 3.0 4.0 5.0 10.0 20.0 30.0 50.0 100.0 150.0 200.0]
-#define CloudyFog_amount 1.0 // [0.0 0.2 0.4 0.6 0.8 1.0 1.25 1.5 1.75 2.0 3.0 4.0 5.0 10 20 30 40 50 100 500 10000]
-#define TimeOfDayFog_multiplier 1.0 // Influence of time of day on fog amount [0.0 0.2 0.4 0.6 0.8 1.0 1.25 1.5 1.75 2.0 3.0 4.0 5.0] 
-#define Haze_amount 1.0 // [0.0 0.2 0.4 0.6 0.8 1.0 1.25 1.5 1.75 2.0 3.0 4.0 5.0]
-// #define fog_selfShadowing // make the fog cast a shadow onto itself
-
-
+#include "lib/settings.glsl"
 
 flat varying vec4 lightCol;
 flat varying vec3 ambientUp;
@@ -72,7 +40,6 @@ uniform int isEyeInWater;
 uniform vec2 texelSize;
 
 
-#include "lib/waterOptions.glsl"
 #include "lib/Shadow_Params.glsl"
 #include "lib/color_transforms.glsl"
 #include "lib/color_dither.glsl"
@@ -172,7 +139,7 @@ mat2x3 getVolumetricRays(
 	vec3 dV = fragposition-start;
 	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
 
-	float maxLength = min(length(dVWorld),far*5)/length(dVWorld);
+	float maxLength = min(length(dVWorld),far)/length(dVWorld);
 	dV *= maxLength;
 	dVWorld *= maxLength;
 

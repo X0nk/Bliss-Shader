@@ -1,26 +1,10 @@
 #extension GL_EXT_gpu_shader4 : enable
 #extension GL_ARB_shader_texture_lod : enable
-//#define Specular_Reflections // reflections on blocks. REQUIRES A PBR RESOURCEPACK.
-//#define POM
-#define POM_MAP_RES 128.0 // [16.0 32.0 64.0 128.0 256.0 512.0 1024.0] Increase to improve POM quality
-#define POM_DEPTH 0.1 // [0.025 0.05 0.075 0.1 0.125 0.15 0.20 0.25 0.30 0.50 0.75 1.0] //Increase to increase POM strength
-#define MAX_ITERATIONS 50 // [5 10 15 20 25 30 40 50 60 70 80 90 100 125 150 200 400] //Improves quality at grazing angles (reduces performance)
-#define MAX_DIST 25.0 // [5.0 10.0 15.0 20.0 25.0 30.0 40.0 50.0 60.0 70.0 80.0 90.0 100.0 125.0 150.0 200.0 400.0] //Increases distance at which POM is calculated
-//#define USE_LUMINANCE_AS_HEIGHTMAP	//Can generate POM on any texturepack (may look weird in some cases)
-#define Texture_MipMap_Bias -1.00 // Uses a another mip level for textures. When reduced will increase texture detail but may induce a lot of shimmering. [-5.00 -4.75 -4.50 -4.25 -4.00 -3.75 -3.50 -3.25 -3.00 -2.75 -2.50 -2.25 -2.00 -1.75 -1.50 -1.25 -1.00 -0.75 -0.50 -0.25 0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.25 2.50 2.75 3.00 3.25 3.50 3.75 4.00 4.25 4.50 4.75 5.00]
-#define DISABLE_ALPHA_MIPMAPS //Disables mipmaps on the transparency of alpha-tested things like foliage, may cost a few fps in some cases
+
+#include "lib/settings.glsl"
 
 
-#define SSAO // screen-space ambient occlusion. 
-#define texture_ao // ambient occlusion on the texture
 
-#define Puddle_Size 1.0 // [0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5]
-#ifdef Specular_Reflections
-	#define Puddles // yes
-#else
-	// #define Puddles // yes
-#endif
-// #define Porosity
 
 #ifndef USE_LUMINANCE_AS_HEIGHTMAP
 #ifndef MC_NORMAL_MAP
@@ -37,7 +21,6 @@ varying float VanillaAO;
 
 const float mincoord = 1.0/4096.0;
 const float maxcoord = 1.0-mincoord;
-const vec3 intervalMult = vec3(1.0, 1.0, 1.0/POM_DEPTH)/POM_MAP_RES * 1.0;
 
 const float MAX_OCCLUSION_DISTANCE = MAX_DIST;
 const float MIX_OCCLUSION_DISTANCE = MAX_DIST*0.9;
@@ -245,6 +228,9 @@ float densityAtPosSNOW(in vec3 pos){
 	vec2 xy = texture2D(noisetex, coord).yx;
 	return mix(xy.r,xy.g, f.y);
 }
+
+
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -272,7 +258,7 @@ void main() {
 	vec3 worldpos = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz + cameraPosition;
 
 
-	float lightmap = clamp( (lmtexcoord.w-0.66) * 5.0,0.,1.);
+	float lightmap = clamp( (lmtexcoord.w-0.8) * 10.0,0.,1.);
 
 	float rainfall = 0. ;
 	float Puddle_shape = 0.;
@@ -283,9 +269,15 @@ void main() {
 	#ifdef WORLD
 	#ifdef Puddles
 		rainfall = rainStrength ;
-		Puddle_shape =  1.0 - max(texture2D(noisetex, worldpos.xz * (0.015 * Puddle_Size)).b - (1.0-lightmap)  ,0.0);
-		puddle_shiny =   clamp( pow(1.0-Puddle_shape,2.0)*2,0.25,1.)   ;
-		puddle_normal =  clamp( pow(Puddle_shape,5.0) * 50.	,0.,1.)  ;
+		// Puddle_shape =  (1.0 - max(texture2D(noisetex, worldpos.xz * (0.015 * Puddle_Size)).b - (1.0-lightmap)  ,0.0) * clamp( viewToWorld(normal).y*0.5+0.5 ,0.0,1.0)) * rainfall;
+
+		
+		Puddle_shape = (1.0 - clamp(exp(-15 * pow(texture2D(noisetex, worldpos.xz * (0.015 * Puddle_Size)	).b  ,5)),0,1)) * lightmap		;
+
+		Puddle_shape *= clamp( viewToWorld(normal).y*0.5+0.5 ,0.0,1.0);
+		Puddle_shape *= rainfall;
+		// puddle_shiny =   clamp( pow(1.0-Puddle_shape,2.0)*2,0.25,1.)   * rainfall;
+		// puddle_normal =  clamp( pow(Puddle_shape,5.0) * 50.	,0.,1.)  * rainfall;
 	#endif
 	#endif
 	#endif
@@ -334,118 +326,120 @@ void main() {
 	    	}
 		#endif
 
-			// color
-			vec4 data0 = texture2DGradARB(texture, adjustedTexCoord.xy,dcdx,dcdy);
+		//////////////////////////////// 
+		//////////////////////////////// ALBEDO
+		//////////////////////////////// 
 
-	 		#ifdef DISABLE_ALPHA_MIPMAPS
-	 			data0.a = texture2DGradARB(texture, adjustedTexCoord.xy,vec2(0.),vec2(0.0)).a;
-	 		#endif
-			 
-			data0.rgb *= color.rgb;
-	  		float avgBlockLum = luma(texture2DLod(texture, adjustedTexCoord.xy,128).rgb*color.rgb);
-	  		data0.rgb = clamp(data0.rgb*pow(avgBlockLum,-0.33)*0.85,0.0,1.0);
+		vec4 Albedo = texture2DGradARB(texture, adjustedTexCoord.xy,dcdx,dcdy);
 
+	 	#ifdef DISABLE_ALPHA_MIPMAPS
+	 		Albedo.a = texture2DGradARB(texture, adjustedTexCoord.xy,vec2(0.),vec2(0.0)).a;
+	 	#endif
 
-			#ifdef WORLD
-				if (data0.a > 0.1) data0.a = normalMat.a;
-				else data0.a = 0.0;
-			#endif
+		#ifdef WORLD
+			if (Albedo.a > 0.1) Albedo.a = normalMat.a;
+			else Albedo.a = 0.0;
+		#endif
 
-			#ifdef HAND
-				if (data0.a > 0.1) data0.a = 0.75;
-				else data0.a = 0.0;
-			#endif
+		#ifdef HAND
+			if (Albedo.a > 0.1) Albedo.a = 0.75;
+			else Albedo.a = 0.0;
+		#endif
 
-			// normal
-			#ifdef MC_NORMAL_MAP
-				vec3 normalTex = texture2DGradARB(normals, adjustedTexCoord.xy, dcdx,dcdy).rgb;
-				normalTex.xy = normalTex.xy*2.0-1.0;
-				normalTex.z = clamp(sqrt(1.0 - dot(normalTex.xy, normalTex.xy)),0.0,1.0);
+		//////////////////////////////// 
+		//////////////////////////////// NORMAL
+		//////////////////////////////// 
 
-				normal = applyBump(tbnMatrix,normalTex, mix(1.0,puddle_normal,rainfall));
-			#endif
+		#ifdef MC_NORMAL_MAP
+			vec3 NormalTex = texture2DGradARB(normals, adjustedTexCoord.xy, dcdx,dcdy).rgb;
+			NormalTex.xy = NormalTex.xy*2.0-1.0;
+			NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0);
 
-			// specular
-			gl_FragData[2] = texture2DGradARB(specular, adjustedTexCoord.xy,dcdx,dcdy);
+			normal = applyBump(tbnMatrix,NormalTex, mix(1.0,Puddle_shape,rainfall));
+		#endif
 
-			// finalize
-			vec4 data1 = clamp(encode(viewToWorld(normal), lmtexcoord.zw),0.,1.0);
-			gl_FragData[0] = vec4(encodeVec2(data0.x,data1.x),encodeVec2(data0.y,data1.y),encodeVec2(data0.z,data1.z),encodeVec2(data1.w,data0.w));
-			
-			gl_FragData[1].a = 0.0;
+		//////////////////////////////// 
+		//////////////////////////////// SPECULAR
+		//////////////////////////////// 
+
+		gl_FragData[2] = texture2DGradARB(specular, adjustedTexCoord.xy,dcdx,dcdy);
+
+		//////////////////////////////// 
+		//////////////////////////////// FINALIZE
+		//////////////////////////////// 
+
+		vec4 data1 = clamp(encode(viewToWorld(normal), lmtexcoord.zw),0.,1.0);
+		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),encodeVec2(Albedo.y,data1.y),encodeVec2(Albedo.z,data1.z),encodeVec2(data1.w,Albedo.w));
+		
+		gl_FragData[1].a = 0.0;
 	#else
 
+		//////////////////////////////// 
+		//////////////////////////////// NORMAL
+		//////////////////////////////// 
 
-		// float Snow = texture2D(noisetex, worldpos.xz/100, Texture_MipMap_Bias).r; 
-		// Snow = clamp( exp(pow(Snow,2) * -25) ,0,1) ;
-		// Snow *=  clamp(pow(lmtexcoord.w,25)*5	,0,1);
-
-		// #ifdef ENTITIES
-		// 	Snow = 0;
-		// #endif
-		// #ifdef HAND
-		// 	Snow = 0;
-		// #endif
-
-		// normal 
 		#ifdef MC_NORMAL_MAP
-			vec4 normalTex = texture2D(normals, lmtexcoord.xy, Texture_MipMap_Bias).rgba;
-			normalTex.xy = normalTex.xy*2.0-1.0;
-			normalTex.z = clamp(sqrt(1.0 - dot(normalTex.xy, normalTex.xy)),0.0,1.0) ;
+			vec4 NormalTex = texture2D(normals, lmtexcoord.xy, Texture_MipMap_Bias).rgba;
+			NormalTex.xy = NormalTex.xy*2.0-1.0;
+			NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0) ;
 
-			normal = applyBump(tbnMatrix, normalTex.xyz,  mix(1.0,puddle_normal, rainfall)  );
+			normal = applyBump(tbnMatrix, NormalTex.xyz,  mix(1.0,1.0-Puddle_shape,rainfall)  );
 		#endif
 
-		// Snow *= clamp(viewToWorld(normal).y,0.0,1.0); 
 
+		//////////////////////////////// 
+		//////////////////////////////// SPECULAR
+		//////////////////////////////// 
 
+		vec4 SpecularTex = texture2D(specular, lmtexcoord.xy, Texture_MipMap_Bias).rgba;
 
-		// specular
-		vec4 specular = texture2D(specular, lmtexcoord.xy, Texture_MipMap_Bias).rgba;
-		vec4 specular_modded = vec4( max(specular.r,puddle_shiny), max(specular.g, puddle_shiny*0.1),specular.ba);
+		SpecularTex.r = max(SpecularTex.r, Puddle_shape);
+		SpecularTex.g = max(SpecularTex.g, Puddle_shape*0.04);
 
-		gl_FragData[2].rgba = mix(specular, specular_modded, rainfall);
+		gl_FragData[2] = SpecularTex;
+		
+		//////////////////////////////// 
+		//////////////////////////////// ALBEDO
+		//////////////////////////////// 
 
-		// gl_FragData[2].rg = mix(gl_FragData[2].rg, vec2(0.8,0.3), Snow);
+		vec4 Albedo = texture2D(texture, lmtexcoord.xy, Texture_MipMap_Bias) * color;
 
+		#ifdef WhiteWorld
+			Albedo.rgb = vec3(1.0);
+		#endif
 
-		// color
-		vec4 data0 = texture2D(texture, lmtexcoord.xy, Texture_MipMap_Bias) * color ;
-		// data0.rgb *= pow(VanillaAO.r,25);
+	  	#ifdef DISABLE_ALPHA_MIPMAPS
+	  		Albedo.a = texture2DLod(texture,lmtexcoord.xy,0).a;
+	  	#endif
 
 		#ifdef Puddles
-		
-		float porosity = specular.z >= 64.5/255.0 ? 0.0 : (specular.z*255.0/64.0)*0.65;
-		#ifndef Porosity
-			porosity = 0.5;
-		#endif
-
-			data0.rgb = mix(data0.rgb, vec3(0), puddle_shiny*porosity*rainfall);
-		#endif
-
-	  	float avgBlockLum = luma(texture2DLod(texture, lmtexcoord.xy,128).rgb*color.rgb);
-	  	data0.rgb = clamp(data0.rgb*pow(avgBlockLum,-0.33)*0.85,0.0,1.0);
-
-		#ifndef ENTITIES
-			if(TESTMASK.r==255) data0.rgb = vec3(0);
+			float porosity = 0.35;
+			#ifdef Porosity
+				porosity = specular.z >= 64.5/255.0 ? 0.0 : (specular.z*255.0/64.0)*0.65;
+			#endif
+			if(SpecularTex.g < 229.5/255.0) Albedo.rgb = mix(Albedo.rgb, vec3(0), Puddle_shape*porosity);
 		#endif
 		
-	  	#ifdef DISABLE_ALPHA_MIPMAPS
-	  		data0.a = texture2DLod(texture,lmtexcoord.xy,0).a;
-	  	#endif
 		#ifdef WORLD
-			if (data0.a > 0.1) data0.a = normalMat.a;
-			else data0.a = 0.0;
-			
+			if (Albedo.a > 0.1) Albedo.a = normalMat.a;
+			else Albedo.a = 0.0;
 		#endif
+
 		#ifdef HAND
-			if (data0.a > 0.1) data0.a = 0.75;
-			else data0.a = 0.0;
+			if (Albedo.a > 0.1) Albedo.a = 0.75;
+			else Albedo.a = 0.0;
 		#endif
+
+		//////////////////////////////// 
+		//////////////////////////////// FINALIZE
+		//////////////////////////////// 
+
+		// #ifndef ENTITIES
+		// 	if(TESTMASK.r==255) Albedo.rgb = vec3(0);
+		// #endif
 		
-		// finalize
 		vec4 data1 = clamp(blueNoise()/255.0 + encode(viewToWorld(normal), lmtexcoord.zw),0.0,1.0);
-		gl_FragData[0] = vec4(encodeVec2(data0.x,data1.x),	encodeVec2(data0.y,data1.y),	encodeVec2(data0.z,data1.z),	encodeVec2(data1.w,data0.w));
+		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
 
 		#ifdef WORLD
 			gl_FragData[1].a = 0.0;
@@ -453,13 +447,5 @@ void main() {
 	
 	#endif
 
-	gl_FragData[4] = vec4(FlatNormals* 0.5 + 0.5,VanillaAO);
-
-	
-	// #ifdef ENTITIES
-	// #ifdef WORLD
-	// 	gl_FragData[3].xyz = test_motionVectors;
-	// #endif
-	// #endif
-// gl_FragData[0].rgb = vec3(0,255,0);
+	gl_FragData[4] = vec4(FlatNormals* 0.5 + 0.5,VanillaAO);	
 }

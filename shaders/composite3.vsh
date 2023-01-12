@@ -1,6 +1,7 @@
 #version 120
 #extension GL_EXT_gpu_shader4 : enable
 
+#include "lib/settings.glsl"
 flat varying float tempOffsets;
 uniform int frameCounter;
 flat varying vec2 TAA_Offset;

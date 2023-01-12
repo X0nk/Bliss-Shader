@@ -1,6 +1,6 @@
 // #version 120
 #extension GL_EXT_gpu_shader4 : enable
-
+#include "lib/settings.glsl"
 #include "/lib/res_params.glsl"
 
 
@@ -31,7 +31,6 @@ flat varying vec3 WsunVec;
 uniform float sunElevation;
 
 varying vec4 tangent_other;
-#define SHADOW_MAP_BIAS 0.8
 
 flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
 

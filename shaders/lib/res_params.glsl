@@ -1,5 +1,3 @@
-#define TAA
-// #define TAA_UPSCALING // Lowers render resolution and uses TAA to combine several lower resolution images (greatly improves performance). USE THIS INSTEAD OF SHADER RENDER QUALITY OPTION IF YOU WANT TO INCREASE FPS (Leave it to 1). IF YOU WANT TO INCREASE QUALITY DISABLE THIS AND INCREASE SHADER RENDER QUALITY
 #ifndef TAA
   #undef TAA_UPSCALING
 #endif

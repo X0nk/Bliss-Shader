@@ -1,13 +1,14 @@
 #version 120
 #extension GL_EXT_gpu_shader4 : enable
 
-#define TAA
+#include "lib/settings.glsl"
 
-// #define LabPBR_subsurface_scattering
+
 flat varying vec3 WsunVec;
 flat varying vec2 TAA_Offset;
 #include "/lib/res_params.glsl"
 #include "lib/Shadow_Params.glsl"
+
 uniform sampler2D depthtex1;
 uniform sampler2D colortex1;
 uniform sampler2D colortex6; // Noise

@@ -1,25 +1,3 @@
-#define VL_CLOUDS_SHADOWS
-#define CLOUDS_SHADOWS
-#define CLOUDS_SHADOWS_STRENGTH 1.0 //[0.1 0.125 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.9 1.0]
-#define VL_SAMPLES2 6 //[4 6 8 10 12 14 16 20 24 30 40 50]
-#define Ambient_Mult 1.0 //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.75 0.8 0.85 0.9 0.95 1.0 1.5 2.0 3.0 4.0 5.0 6.0 10.0]
-#define SEA_LEVEL 70 //[0 10 20 30 40 50 60 70 80 90 100 110 120 130 150 170 190]	//The volumetric light uses an altitude-based fog density, this is where fog density is the highest, adjust this value according to your world.
-#define ATMOSPHERIC_DENSITY 1.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 4.0 5.0 7.5 10.0 12.5 15.0 20.]
-#define fog_mieg1 0.40 //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.75 0.8 0.85 0.9 0.95 1.0]
-#define fog_mieg2 0.10 //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.75 0.8 0.85 0.9 0.95 1.0]
-#define fog_coefficientRayleighR 5.8 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-#define fog_coefficientRayleighG 1.35 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-#define fog_coefficientRayleighB 3.31 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-
-#define fog_coefficientMieR 3.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-#define fog_coefficientMieG 3.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-#define fog_coefficientMieB 3.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
- 
-// #define Cloudy_Fog_Density 5.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-// #define Uniform_Fog_Density 1.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-
-// #define uniformfog_fade 10 // [5 10 20 30 40 50 60 70 80  90 100]
-// #define cloudyfog_fade 10 // [5 10 20 30 40 50 60 70 80  90 100]
 
 float luma(vec3 color) {
 	return dot(color,vec3(0.299, 0.587, 0.114));
@@ -148,7 +126,7 @@ mat2x3 getVolumetricRays(
 			// get the cloud density and apply it
 			cloudShadow = getCloudDensity(cloudPos, 1);
 			cloudShadow = exp(-cloudShadow*cloudDensity*200);
-			// cloudShadow *= max_height;
+			cloudShadow *= max_height;
 			// cloudShadow *= 1000; //debug 
 		#endif
 		#endif
@@ -174,7 +152,7 @@ mat2x3 getVolumetricRays(
 		vec3 vL0 =  (DirectLight +AmbientLight+AtmosphericFog + rainRays) * max(eyeBrightnessSmooth.y,0)/240.;
 		
 		#ifdef Biome_specific_environment
-		BiomeFogColor(vL0);
+			BiomeFogColor(vL0);
 		#endif
 		vL += (vL0 - vL0 * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*absorbance;
 		absorbance *= clamp(exp(-(rL+m)*dd*dL),0.0,1.0);

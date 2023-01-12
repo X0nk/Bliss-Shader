@@ -1,6 +1,5 @@
-#define DRAW_SUN //if not using custom sky
-#define SKY_BRIGHTNESS_DAY 1.0 //[0.0 0.5 0.75 1. 1.2 1.4 1.6 1.8 2.0]
-#define SKY_BRIGHTNESS_NIGHT 1.0 //[0.0 0.5 0.75 1. 1.2 1.4 1.6 1.8 2.0]
+
+
 #define ffstep(x,y) clamp((y - x) * 1e35,0.0,1.0)
 vec3 drawSun(float cosY, float sunInt,vec3 nsunlight,vec3 inColor){
 	return inColor+nsunlight/0.0008821203*pow(smoothstep(cos(0.0093084168595*3.2),cos(0.0093084168595*1.8),cosY),3.)*0.62;
@@ -81,4 +80,8 @@ vec4 texture2D_bicubic(sampler2D tex, vec2 uv)
 vec4 skyCloudsFromTex(vec3 pos,sampler2D sampler){
 	vec2 p = sphereToCarte(pos);
 	return texture2D(sampler,p*texelSize*256.+vec2(18.5+257.,1.5)*texelSize);
+}
+vec4 skyCloudsFromTex_Spec(vec3 pos,sampler2D sampler, int LOD){
+	vec2 p = sphereToCarte(pos);
+	return texture2DLod(sampler,p*texelSize*256.+vec2(18.5+257.,1.5)*texelSize, LOD);
 }
