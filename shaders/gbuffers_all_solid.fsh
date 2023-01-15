@@ -328,7 +328,32 @@ void main() {
 		//////////////////////////////// ALBEDO
 		//////////////////////////////// 
 
-		vec4 Albedo = texture2DGradARB(texture, adjustedTexCoord.xy,dcdx,dcdy);
+		vec4 Albedo = texture2DGradARB(texture, adjustedTexCoord.xy,dcdx,dcdy) * color;
+
+		#ifdef AEROCHROME_MODE
+			vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), AEROCHROME_PINKNESS);
+			float gray = dot(Albedo.rgb, vec3(0.2, 01.0, 0.07));
+			if(blockID == 10001 || blockID == 10003 || blockID == 10004 || blockID == 10006) {
+			// IR Reflective (Pink-red)
+				Albedo.rgb = mix(vec3(gray), aerochrome_color, 0.7);
+			}
+			else if(blockID == 10008) {
+			// Special handling for grass block
+				float strength = 1.0 - color.b;
+				Albedo.rgb = mix(Albedo.rgb, aerochrome_color, strength);
+			}
+			#ifdef AEROCHROME_WOOL_ENABLED
+				else if(blockID == 200) {
+				// Wool
+					Albedo.rgb = mix(Albedo.rgb, aerochrome_color, 0.3);
+				}
+			#endif
+			else if(blockID == 8 || blockID == 10002)
+			{
+			// IR Absorbsive? Dark.
+				Albedo.rgb = mix(Albedo.rgb, vec3(0.01, 0.08, 0.15), 0.5);
+			}
+		#endif
 
 	 	#ifdef DISABLE_ALPHA_MIPMAPS
 	 		Albedo.a = texture2DGradARB(texture, adjustedTexCoord.xy,vec2(0.),vec2(0.0)).a;
@@ -403,8 +428,7 @@ void main() {
 		vec4 Albedo = texture2D(texture, lmtexcoord.xy, Texture_MipMap_Bias) * color;
 
 		#ifdef AEROCHROME_MODE
-		float tmp = AEROCHROME_PINKNESS;
-			vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), tmp);
+			vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), AEROCHROME_PINKNESS);
 			float gray = dot(Albedo.rgb, vec3(0.2, 01.0, 0.07));
 			if(blockID == 10001 || blockID == 10003 || blockID == 10004 || blockID == 10006) {
 			// IR Reflective (Pink-red)
