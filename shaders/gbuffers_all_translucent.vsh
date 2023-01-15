@@ -2,6 +2,7 @@
 #extension GL_EXT_gpu_shader4 : enable
 #include "lib/settings.glsl"
 #include "/lib/res_params.glsl"
+#include "/lib/bokeh.glsl"
 
 
 /*
@@ -34,7 +35,11 @@ varying vec4 tangent_other;
 
 flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
 
-
+uniform int frameCounter;
+uniform float far;
+uniform float aspectRatio;
+uniform float viewHeight;
+uniform float viewWidth;
 
 uniform vec2 texelSize;
 uniform int framemod8;
@@ -112,4 +117,16 @@ void main() {
 	lightCol.rgb = sc;
 
 	WsunVec = lightCol.a*normalize(mat3(gbufferModelViewInverse) *sunPosition);
+
+	#ifdef DOF_JITTER
+		vec2 jitter = jitter_offsets[1024 - (frameCounter % 1024)];
+		jitter.y *= aspectRatio;
+
+		float focus = DOF_JITTER_FOCUS;
+		// vec2 coords = vec2(8.0/viewWidth, 256.0/viewHeight);
+		// float focus = texture2D(colortex4, coords).r;
+		// focus = pow(far + 1.0, focus) - 1.0;
+		float distanceToFocus = gl_Position.z - focus;
+		gl_Position.xy += jitter * distanceToFocus * 1e-2;
+	#endif
 }
