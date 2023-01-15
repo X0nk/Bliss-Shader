@@ -23,3 +23,9 @@ i wanted to emphasize a varying scene, where the lighting isn't always the same 
 
 # i will add more stuff one day
 nobody knows when, but it's in the future.
+
+**SPECIAL THANKS:**
+Womspace, for doing a DOF overhaul
+Emin, and Gri, for teaching me how to stop alot of light leaking
+Rre36, for the ideas to steal
+Chocapic, for the whole thing
