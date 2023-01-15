@@ -193,7 +193,7 @@ void main() {
 
 	normalMat = vec4(normalize(gl_NormalMatrix *gl_Normal),mc_Entity.x == 10004 || mc_Entity.x == 10003 ? 0.5 : mc_Entity.x == 10001 ? 0.6 : 1.0);
 
-	normalMat.a = mc_Entity.x == 10006 || mc_Entity.x == 200 ? 0.6 : normalMat.a; // 0.6 weak SSS
+	normalMat.a = mc_Entity.x == 10006 || mc_Entity.x == 200 || mc_Entity.x == 100061 ? 0.6 : normalMat.a; // 0.6 weak SSS
 	normalMat.a = blockEntityId == 10010 ? 0.65 : normalMat.a; // banners
 
 	#ifdef misc_block_SSS
