@@ -17,3 +17,8 @@ value.DOF_QUALITY.2=Medium
 value.DOF_QUALITY.3=High
 value.DOF_QUALITY.4=Ultra
 option.DOF_ANAMORPHIC_RATIO=Anamorphic Ratio
+
+option.AEROCHROME_MODE=Aerochrome Mode
+option.AEROCHROME_MODE.comment=Infrared Film. Google "Aerochrome" to get an idea of what it does.
+option.AEROCHROME_PINKNESS=Aerochrome Red:Pink Ratio
+option.AEROCHROME_PINKNESS.comment=Higher = Pink. Lower = Red

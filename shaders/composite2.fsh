@@ -816,10 +816,16 @@ void main() {
 	vec2 texcoord = gl_FragCoord.xy*texelSize;
 	float dirtAmount = Dirt_Amount;
 	vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
+
 	vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
 	vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;
 	vec3 scatterCoef = dirtAmount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / pi;
 	vec2 tempOffset=TAA_Offset;
+
+	#ifdef AEROCHROME_MODE
+		totEpsilon *= 10.0;
+		scatterCoef *= 0.1;
+	#endif
 
 	float noise = blueNoise();
 

@@ -364,6 +364,12 @@ void main() {
 		vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
 		vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;
 		vec3 scatterCoef = dirtAmount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B);
+
+		#ifdef AEROCHROME_MODE
+		totEpsilon *= 2.0;
+		scatterCoef *= 10.0;
+		#endif
+
 		vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
 		float z = texture2D(depthtex0,tc).x;
 		vec3 fragpos = toScreenSpace(vec3(tc/RENDER_SCALE,z));
@@ -371,6 +377,7 @@ void main() {
 		vec3 vl = vec3(0.0);
 		float estEyeDepth = clamp((14.0-eyeBrightnessSmooth.y/255.0*16.0)/14.0,0.,1.0);
 		estEyeDepth *= estEyeDepth*estEyeDepth*34.0;
+
 		#ifndef lightMapDepthEstimation
 			estEyeDepth = max(Water_Top_Layer - cameraPosition.y,0.0);
 		#endif
