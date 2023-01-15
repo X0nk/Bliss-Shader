@@ -22,3 +22,5 @@ option.AEROCHROME_MODE=Aerochrome Mode
 option.AEROCHROME_MODE.comment=Infrared Film. Google "Aerochrome" to get an idea of what it does.
 option.AEROCHROME_PINKNESS=Aerochrome Red:Pink Ratio
 option.AEROCHROME_PINKNESS.comment=Higher = Pink. Lower = Red
+option.AEROCHROME_WOOL_ENABLED=Aerochrome Wool
+option.AEROCHROME_WOOL_ENABLED.comment=Technically wool things should be affected but it ruins a lot of builds. Enable to be more technically correct.
