@@ -1,7 +1,7 @@
 #extension GL_EXT_gpu_shader4 : enable
 #extension GL_ARB_shader_texture_lod : enable
 
-#include "lib/settings.glsl"
+#include "/lib/settings.glsl"
 
 
 
@@ -69,7 +69,7 @@ uniform sampler2D noisetex;//depth
 uniform sampler2D depthtex0;
 in vec3 test_motionVectors;
 
-varying vec4 materialMask;
+flat varying float blockID;
 
 flat varying vec4 TESTMASK;
 
@@ -228,8 +228,6 @@ float densityAtPosSNOW(in vec3 pos){
 	vec2 xy = texture2D(noisetex, coord).yx;
 	return mix(xy.r,xy.g, f.y);
 }
-
-
 
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -403,6 +401,32 @@ void main() {
 		//////////////////////////////// 
 
 		vec4 Albedo = texture2D(texture, lmtexcoord.xy, Texture_MipMap_Bias) * color;
+
+		#ifdef AEROCHROME_MODE
+		float tmp = AEROCHROME_PINKNESS;
+			vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), tmp);
+			float gray = dot(Albedo.rgb, vec3(0.2, 01.0, 0.07));
+			if(blockID == 10001 || blockID == 10003 || blockID == 10004 || blockID == 10006) {
+			// IR Reflective (Pink-red)
+				Albedo.rgb = mix(vec3(gray), aerochrome_color, 0.7);
+			}
+			else if(blockID == 10008) {
+			// Special handling for grass block
+				float strength = 1.0 - color.b;
+				Albedo.rgb = mix(Albedo.rgb, aerochrome_color, strength);
+			}
+			#ifdef AEROCHROME_WOOL_ENABLED
+				else if(blockID == 200) {
+				// Wool
+					Albedo.rgb = mix(Albedo.rgb, aerochrome_color, 0.3);
+				}
+			#endif
+			else if(blockID == 8 || blockID == 10002)
+			{
+			// IR Absorbsive? Dark.
+				Albedo.rgb = mix(Albedo.rgb, vec3(0.01, 0.08, 0.15), 0.5);
+			}
+		#endif
 
 		#ifdef WhiteWorld
 			Albedo.rgb = vec3(1.0);

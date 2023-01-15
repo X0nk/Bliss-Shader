@@ -161,7 +161,7 @@ void main() {
 	
 	normalMat = vec4(normalize(gl_NormalMatrix *gl_Normal),mc_Entity.x == 10004 || mc_Entity.x == 10003 ? 0.5 : mc_Entity.x == 10001 ? 0.6 : 1.0);
 	normalMat.a = mc_Entity.x == 10006 ? 0.6 : normalMat.a;
-	normalMat.a = mc_Entity.x == 10007 ? 0.55 : normalMat.a;
+	normalMat.a = (mc_Entity.x == 10007 || mc_Entity.x == 10008) ? 0.55 : normalMat.a;
 
 	normalMat.a = mc_Entity.x == 10005 ? 0.8 : normalMat.a;
 	normalMat.a = mc_Entity.x == 99 ? 0.65 : normalMat.a;

@@ -48,7 +48,7 @@ attribute vec4 mc_Entity;
 uniform int blockEntityId;
 uniform int entityId;
 
-varying vec4 materialMask;
+flat varying float blockID;
 flat varying vec4 TESTMASK;
 flat varying int lightningBolt;
 
@@ -142,6 +142,7 @@ void main() {
 	
 	TESTMASK.r = blockEntityId == 222 ? 255 : TESTMASK.r;
 	
+	blockID = mc_Entity.x;
 
 	#ifdef ENTITIES
 		test_motionVectors = at_velocity;
@@ -196,7 +197,7 @@ void main() {
 	normalMat.a = blockEntityId == 10010 ? 0.65 : normalMat.a; // banners
 
 	#ifdef misc_block_SSS
-		normalMat.a = mc_Entity.x == 10007 ? 0.55 : normalMat.a; // 0.55 abnormal block strong sss
+		normalMat.a = (mc_Entity.x == 10007 || mc_Entity.x == 10008) ? 0.55 : normalMat.a; // 0.55 abnormal block strong sss
 	#endif
 
 	normalMat.a = mc_Entity.x == 10005 ? 0.8 : normalMat.a;

@@ -150,6 +150,10 @@ if (gl_FragCoord.x > 18. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257){
   vec3 WsunVec = mat3(gbufferModelViewInverse)*sunVec;
 	sky = calculateAtmosphere(avgSky*4000./2.0, viewVector, vec3(0.0,1.0,0.0), WsunVec, -WsunVec, planetSphere, skyAbsorb, 10, blueNoise());
 
+	#ifdef AEROCHROME_MODE
+		sky *= vec3(0.0, 0.18, 0.35);
+	#endif
+
   sky = mix(sky, vec3(0.5,0.5,0.5)*avgSky * 4000., clamp(1 - viewVector.y,0.0,1.0) * rainStrength  );
   // sky *= max(abs(viewVector.y+0.05),0.25);
   gl_FragData[0] = vec4(sky/4000.*Sky_Brightness,1.0);
