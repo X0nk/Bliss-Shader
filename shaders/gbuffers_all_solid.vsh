@@ -135,9 +135,6 @@ vec3 blackbody2(float Temp)
 	#define SEASONS_VSH
 	#include "/lib/climate_settings.glsl"
 
-mat2 rotate(float angle){
-    return mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-}
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -268,15 +265,12 @@ void main() {
 	#endif
 
 	#ifdef DOF_JITTER
-		vec2 jitter = clamp(jitter_offsets[1024 - (frameCounter % 1024)] ,-1.0,1.0) ;
-
-		jitter = rotate(frameTimeCounter) * jitter;
+		vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);
+		jitter = rotate(frameCounter) * jitter;
 		jitter.y *= aspectRatio;
+		jitter.x *= DOF_ANAMORPHIC_RATIO;
 
 		float focus = DOF_JITTER_FOCUS;
-		// vec2 coords = vec2(8.0/viewWidth, 256.0/viewHeight);
-		// float focus = texture2D(colortex4, coords).r;
-		// focus = pow(far + 1.0, focus) - 1.0;
 		float distanceToFocus = gl_Position.z - focus;
 		gl_Position.xy += (jitter * JITTER_STRENGTH) * distanceToFocus * 1e-2;
 	#endif

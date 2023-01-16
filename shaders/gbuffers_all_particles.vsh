@@ -2,6 +2,7 @@
 #extension GL_EXT_gpu_shader4 : enable
 #include "lib/settings.glsl"
 #include "/lib/res_params.glsl"
+#include "/lib/bokeh.glsl"
 
 /*
 !! DO NOT REMOVE !!
@@ -26,6 +27,12 @@ uniform mat4 gbufferModelViewInverse;
 uniform vec3 sunPosition;
 uniform float sunElevation;
 uniform sampler2D colortex4;
+
+uniform int frameCounter;
+uniform float far;
+uniform float aspectRatio;
+uniform float viewHeight;
+uniform float viewWidth;
 
 
 uniform vec2 texelSize;
@@ -71,5 +78,16 @@ void main() {
 	#endif
 	#ifdef TAA
 	gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+	#endif
+
+	#ifdef DOF_JITTER
+		vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);
+		jitter = rotate(frameCounter) * jitter;
+		jitter.y *= aspectRatio;
+		jitter.x *= DOF_ANAMORPHIC_RATIO;
+
+		float focus = DOF_JITTER_FOCUS;
+		float distanceToFocus = gl_Position.z - focus;
+		gl_Position.xy += (jitter * JITTER_STRENGTH) * distanceToFocus * 1e-2;
 	#endif
 }

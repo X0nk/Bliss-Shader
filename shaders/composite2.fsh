@@ -805,10 +805,6 @@ void GriAndEminShadowFix(
 		WorldPos += Bias;
 	}
 }
-
-mat2 rotate(float angle){
-    return mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-}
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -843,9 +839,10 @@ void main() {
 	
 
 	#ifdef DOF_JITTER
-		vec2 jitter = jitter_offsets[1024 - (frameCounter % 1024)];
-		jitter = rotate(frameTimeCounter) * jitter;
+		vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);
+		jitter = rotate(frameCounter) * jitter;
 		jitter.y *= aspectRatio;
+		jitter.x *= DOF_ANAMORPHIC_RATIO;
 		jitter.xy *= 0.004 * JITTER_STRENGTH;
 
 		vec3 fragpos_DOF = toScreenSpace(vec3((texcoord + jitter)/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
