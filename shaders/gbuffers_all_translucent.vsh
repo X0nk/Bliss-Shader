@@ -2,6 +2,7 @@
 #extension GL_EXT_gpu_shader4 : enable
 #include "lib/settings.glsl"
 #include "/lib/res_params.glsl"
+#include "/lib/bokeh.glsl"
 
 
 /*
@@ -34,7 +35,12 @@ varying vec4 tangent_other;
 
 flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
 
-
+uniform int frameCounter;
+uniform float frameTimeCounter;
+uniform float far;
+uniform float aspectRatio;
+uniform float viewHeight;
+uniform float viewWidth;
 
 uniform vec2 texelSize;
 uniform int framemod8;
@@ -50,6 +56,9 @@ uniform int framemod8;
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 vec4 toClipSpace3(vec3 viewSpacePosition) {
     return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
+}
+mat2 rotate(float angle){
+    return mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
 }
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -102,9 +111,25 @@ void main() {
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
 	#ifdef TAA
-	gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
 	#endif
 
+	#ifdef DOF_JITTER
+		vec2 jitter = clamp(jitter_offsets[1024 - (frameCounter % 1024)] ,-1.0,1.0) ;
+
+		jitter = rotate(frameTimeCounter) * jitter;
+		jitter.y *= aspectRatio;
+
+		float focus = DOF_JITTER_FOCUS;
+		// vec2 coords = vec2(8.0/viewWidth, 256.0/viewHeight);
+		// float focus = texture2D(colortex4, coords).r;
+		// focus = pow(far + 1.0, focus) - 1.0;
+		float distanceToFocus = gl_Position.z - focus;
+		gl_Position.xy += (jitter * JITTER_STRENGTH) * distanceToFocus * 1e-2;
+	#endif
+
+
+	
 	vec3 sc = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
 
 	
@@ -112,4 +137,5 @@ void main() {
 	lightCol.rgb = sc;
 
 	WsunVec = lightCol.a*normalize(mat3(gbufferModelViewInverse) *sunPosition);
+
 }

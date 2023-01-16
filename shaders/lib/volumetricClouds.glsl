@@ -176,14 +176,14 @@ vec3 Cloud_lighting(
 	float ambientShading = exp(-SkyShadowing * 50. + powder)*powder ;
 	vec3 ambientLighting = SkyColors * ambientShading;
 
-	// if(cloudType == 1) ambientLighting = SkyColors * powder;
 	
 	vec3 sunLighting = exp(-SunShadowing)*sunContribution	+	exp(-SunShadowing * 0.2)*sunContributionMulti;
 	sunLighting *= powder;
 	
-	vec3 moonLighting  = ( exp2(-MoonShadowing * 2.0 )*moonContribution + exp(-MoonShadowing * 0.2 )*moonContributionMulti  ) * powder;
+	vec3 moonLighting = exp(-MoonShadowing)*moonContribution	+	exp(-MoonShadowing * 0.2)*moonContributionMulti;
+	moonLighting *= powder;
 
-	return ambientLighting + sunLighting  ;
+	return ambientLighting + sunLighting + moonLighting;
 
 
  
@@ -286,10 +286,10 @@ vec4 renderClouds(
 	// float mieDay = mix(phaseg(SdotV,0.75), mieDayMulti,0.8)*3.14;
 
 	float mieDayMulti = phaseg(SdotV, 0.35);
-	float mieDay = (phaseg(SdotV,0.75) + mieDayMulti)*2.0;
+	float mieDay = phaseg(SdotV,0.75) + mieDayMulti;
 
-	float mieNightMulti = phaseg(-SdotV, 0.35)*3.14;
-	float mieNight = mix(phaseg(-SdotV,0.9), mieNightMulti,0.5)*3.14;
+	float mieNightMulti = phaseg(-SdotV, 0.35);
+	float mieNight = phaseg(-SdotV,0.75) + mieNightMulti;
 
 	vec3 sunContribution = mieDay*sunColor*3.14;
 	vec3 sunContributionMulti = mieDayMulti*sunColor*3.14;

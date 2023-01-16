@@ -1,6 +1,7 @@
 #extension GL_EXT_gpu_shader4 : enable
 #include "lib/settings.glsl"
 #include "/lib/res_params.glsl"
+#include "/lib/bokeh.glsl"
 
 
 #ifndef USE_LUMINANCE_AS_HEIGHTMAP
@@ -53,6 +54,12 @@ flat varying vec4 TESTMASK;
 flat varying int lightningBolt;
 
 
+uniform int frameCounter;
+uniform float far;
+uniform float aspectRatio;
+uniform float viewHeight;
+uniform float viewWidth;
+uniform sampler2D colortex4;
 
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
@@ -129,6 +136,9 @@ vec3 blackbody2(float Temp)
 	#define SEASONS_VSH
 	#include "/lib/climate_settings.glsl"
 
+mat2 rotate(float angle){
+    return mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+}
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -258,5 +268,17 @@ void main() {
 		gl_Position.xy += offsets[framemod8] * gl_Position.w * texelSize;
 	#endif
 
+	#ifdef DOF_JITTER
+		vec2 jitter = clamp(jitter_offsets[1024 - (frameCounter % 1024)] ,-1.0,1.0) ;
 
+		jitter = rotate(frameTimeCounter) * jitter;
+		jitter.y *= aspectRatio;
+
+		float focus = DOF_JITTER_FOCUS;
+		// vec2 coords = vec2(8.0/viewWidth, 256.0/viewHeight);
+		// float focus = texture2D(colortex4, coords).r;
+		// focus = pow(far + 1.0, focus) - 1.0;
+		float distanceToFocus = gl_Position.z - focus;
+		gl_Position.xy += (jitter * JITTER_STRENGTH) * distanceToFocus * 1e-2;
+	#endif
 }
