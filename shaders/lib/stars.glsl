@@ -42,7 +42,7 @@ float StableStarField( in vec2 vSamplePos, float fThreshhold )
 float stars(vec3 fragpos){
 
 	float elevation = clamp(fragpos.y,0.,1.);
-	vec2 uv = fragpos.xz/(2.0+elevation);
+	vec2 uv = fragpos.xz/(1.5+elevation);
 
 	return StableStarField(uv*1500.,0.999)*0.5*(0.3-0.3*rainStrength);
 }

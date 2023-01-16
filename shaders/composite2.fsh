@@ -6,7 +6,7 @@
 
 const bool colortex5MipmapEnabled = true;
 // const bool colortex4MipmapEnabled = true;
-
+\
 const bool shadowHardwareFiltering = true;
 flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
 flat varying vec3 ambientUp;
@@ -20,7 +20,7 @@ flat varying vec3 WsunVec;
 flat varying vec2 TAA_Offset;
 flat varying float tempOffsets;
 
-uniform int hideGUI;   
+
 /*
 const int colortex12Format = RGBA16F;			//Final output, transparencies id (gbuffer->composite4)
 const int colortex11Format = RGBA16F;			//Final output, transparencies id (gbuffer->composite4)
@@ -151,7 +151,6 @@ vec3 viewToWorld(vec3 viewPosition) {
 #include "lib/volumetricClouds.glsl"
 #include "lib/waterBump.glsl"
 #include "lib/specular.glsl"
-#include "lib/bokeh.glsl"
 // #include "/lib/climate_settings.glsl"
 
 
@@ -806,9 +805,7 @@ void GriAndEminShadowFix(
 	}
 }
 
-mat2 rotate(float angle){
-    return mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-}
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -835,29 +832,11 @@ void main() {
 	float z0 = texture2D(depthtex0,texcoord).x;
 	float z = texture2D(depthtex1,texcoord).x;
 
-		
 	vec3 fragpos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
 	vec3 p3 = mat3(gbufferModelViewInverse) * fragpos;
 	vec3 np3 = normVec(p3);
 	p3 += gbufferModelViewInverse[3].xyz;
 	
-
-	#ifdef DOF_JITTER
-		vec2 jitter = jitter_offsets[1024 - (frameCounter % 1024)];
-		jitter = rotate(frameTimeCounter) * jitter;
-		jitter.y *= aspectRatio;
-		jitter.xy *= 0.004 * JITTER_STRENGTH;
-
-		vec3 fragpos_DOF = toScreenSpace(vec3((texcoord + jitter)/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
-		vec3 p3_DOF = mat3(gbufferModelViewInverse) * fragpos_DOF;
-		vec3 np3_DOF = normVec(p3_DOF);
-		p3_DOF += gbufferModelViewInverse[3].xyz;
-	#else
-		vec2 jitter = vec2(0.0);
-		vec3 p3_DOF = p3;
-		vec3 np3_DOF = np3;
-	#endif
-
 	float iswaterstuff = texture2D(colortex7,texcoord).a ;
 	bool iswater = iswaterstuff > 0.99;
 	vec4 SpecularTex = texture2D(colortex8,texcoord);
@@ -910,24 +889,22 @@ void main() {
 
 	vec3 color = vec3(0.0);
 
-	vec3 skyTEX = skyFromTex(np3_DOF,colortex4)/150. ;
+	vec3 skyTEX = skyFromTex(np3,colortex4)/150. ;
 
 	float lightleakfix = clamp(eyeBrightness.y/240.0 + lightmap.y,0.0,1.0);
 
 	if ( z >= 1.) { //sky
-	
+		vec4 cloud = texture2D_bicubic(colortex0,texcoord*CLOUDS_QUALITY);
 
-		vec4 cloud = texture2D_bicubic(colortex0,(texcoord+jitter)*CLOUDS_QUALITY);
-
-		color += stars(np3_DOF);
+		color += stars(np3);
 
 		#ifndef ambientLight_only
 			// #ifdef Allow_Vanilla_sky
 			// 	vec3 SkyTextured = toLinear(texture2D(colortex12,texcoord).rgb);
 			// 	color += SkyTextured * (lightCol.a == 1 ? lightCol.rgb : 0.75 + blackbody2(Moon_temp)) * sqrt(luma(SkyTextured));
 			// #else
-				color += drawSun(dot(lightCol.a * WsunVec, np3_DOF),0, lightCol.rgb/150.,vec3(0.0)) ; // sun 
-				color += drawSun(dot(lightCol.a * -WsunVec, np3_DOF),0, blackbody2(Moon_temp)/500.,vec3(0.0)); // moon
+				color += drawSun(dot(lightCol.a * WsunVec, np3),0, lightCol.rgb/150.,vec3(0.0)) ; // sun 
+				color += drawSun(dot(lightCol.a * -WsunVec, np3),0, blackbody2(Moon_temp)/500.,vec3(0.0)); // moon
 			// #endif
 		#endif
 	
@@ -1232,13 +1209,6 @@ void main() {
 
 		if (isEyeInWater == 0) waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth, estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));	
 	}
-
-
-
-	#ifdef DOF_JITTER
-		if( hideGUI < 1.0) gl_FragData[0].rgb += vec3(0,25,0) * pow( clamp( 	 1.0-abs(DOF_JITTER_FOCUS-abs(fragpos.z))		,0,1),25) ;
-	#endif
-
 
 	/* RENDERTARGETS:3 */
 }
