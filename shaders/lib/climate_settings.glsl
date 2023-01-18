@@ -229,8 +229,8 @@ float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 		float Night   = clamp((Time-13000)/2000,0,1) * clamp((23000-Time)/2000,0,1) ;
 
 		// set densities.		   morn, noon, even, night
-		vec4 UniformDensity = vec4(0.0,	 0.0,	   0.0,	 0.0);
-		vec4 CloudyDensity =  vec4(0.0,	 0.0,	   0.0,	 0.0);
+		vec4 UniformDensity = vec4(1.0,	 0.5,	   0.3,	 1.0);
+		vec4 CloudyDensity =  vec4(1.0,	 1.0,	   1.0,	 1.0);
 
 		#ifdef Daily_Weather
 			DailyWeather_FogDensity(UniformDensity, CloudyDensity); // let daily weather influence fog densities.

@@ -57,6 +57,7 @@
 // #define DOF_JITTER
 #define DOF_JITTER_FOCUS 36.0 // [1.0 3.0 5.0 7.0 9.0 11.0 13.5 15.5 17.5 20.0 22.0 24.5 26.5 29.0 31.0 33.5 36.0 38.5 41.0 43.5 46.0 48.5 51.5 54.0 56.5 59.5 62.0 65.0 68.0 71.0 74.0 77.0 80.0 83.0 86.0 89.5 92.5 96.0 99.0 102.5 106.0 109.5 113.0 117.0 120.5 124.5 128.0 132.0 136.0 140.0 144.5 148.5 153.0 157.0 161.5 166.0 171.0 175.5 180.5 185.0 190.0 195.0 200.5 205.5 211.0 216.5 222.5 228.0 234.0 240.0 246.0 252.5 259.0 265.5 272.0 279.0 286.0 293.5 300.5 308.5 316.0 324.0 332.0 340.5 349.0 358.0 367.0 376.5 386.0 396.0 406.0 416.5 427.0 438.0 449.5 461.5 473.5 486.0 498.5 512.0]
 #define JITTER_STRENGTH 1.0 // sorry [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0 18.0 19.0 20.0]
+#define FOCUS_LASER_COLOR 1 // Red, Green, Blue, Pink, Yellow, White [0 1 2 3 4 5]
 
 // --- TAA ---
 
@@ -66,7 +67,7 @@
 #define ANTI_GHOSTING 0.0 //[0.0 0.25 0.5 0.75 1.0] High values reduce ghosting but may create flickering
 #define FLICKER_REDUCTION 0.5  //[0.0 0.25 0.5 0.75 1.0] High values reduce flickering but may reduce sharpness
 #define CLOSEST_VELOCITY //improves edge quality in motion at the cost of performance
-// #define SCREENSHOT_MODE // go render mode and accumulate frames for as long as you want for max image quality.
+#define SCREENSHOT_MODE // go render mode and accumulate frames for as long as you want for max image quality.
 // #define SPLIT_RENDER // AAAAAAAAAAAAAAAA
 
 // --- FOG/VOLUMETRICS ---

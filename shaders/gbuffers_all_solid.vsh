@@ -54,7 +54,6 @@ flat varying int lightningBolt;
 
 
 uniform int frameCounter;
-uniform float far;
 uniform float aspectRatio;
 uniform float viewHeight;
 uniform float viewWidth;
@@ -269,9 +268,8 @@ void main() {
 		jitter = rotate(frameCounter) * jitter;
 		jitter.y *= aspectRatio;
 		jitter.x *= DOF_ANAMORPHIC_RATIO;
-
-		float focus = DOF_JITTER_FOCUS;
-		float distanceToFocus = gl_Position.z - focus;
-		gl_Position.xy += (jitter * JITTER_STRENGTH) * distanceToFocus * 1e-2;
+		
+		float focusMul = gl_Position.z - DOF_JITTER_FOCUS;
+		gl_Position.xy += (jitter * JITTER_STRENGTH) * focusMul * 1e-2;
 	#endif
 }

@@ -1231,9 +1231,22 @@ void main() {
 	}
 
 
-
 	#ifdef DOF_JITTER
-		if( hideGUI < 1.0) gl_FragData[0].rgb += vec3(0,25,0) * pow( clamp( 	 1.0-abs(DOF_JITTER_FOCUS-abs(fragpos.z))		,0,1),25) ;
+		vec3 laserColor;
+		#if FOCUS_LASER_COLOR == 0 // Red
+		laserColor = vec3(25, 0, 0);
+		#elif FOCUS_LASER_COLOR == 1 // Green
+		laserColor = vec3(0, 25, 0);
+		#elif FOCUS_LASER_COLOR == 2 // Blue
+		laserColor = vec3(0, 0, 25);
+		#elif FOCUS_LASER_COLOR == 3 // Pink
+		laserColor = vec3(25, 10, 15);
+		#elif FOCUS_LASER_COLOR == 4 // Yellow
+		laserColor = vec3(25, 25, 0);
+		#elif FOCUS_LASER_COLOR == 5 // White
+		laserColor = vec3(25);
+		#endif
+		if( hideGUI < 1.0) gl_FragData[0].rgb += laserColor * pow( clamp( 	 1.0-abs(DOF_JITTER_FOCUS-abs(fragpos.z))		,0,1),25) ;
 	#endif
 
 
