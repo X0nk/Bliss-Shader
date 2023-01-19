@@ -59,6 +59,7 @@ uniform float viewHeight;
 uniform float viewWidth;
 uniform sampler2D colortex4;
 uniform int hideGUI;
+uniform float screenBrightness;
 
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
@@ -270,7 +271,12 @@ void main() {
 		jitter.y *= aspectRatio;
 		jitter.x *= DOF_ANAMORPHIC_RATIO;
 
+		#if DOF_JITTER_FOCUS < 0
+		float focusMul = gl_Position.z - mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
+		#else
 		float focusMul = gl_Position.z - DOF_JITTER_FOCUS;
+		#endif
+
 		vec2 totalOffset = (jitter * JITTER_STRENGTH) * focusMul * 1e-2;
 		gl_Position.xy += hideGUI >= 1 ? totalOffset : vec2(0);
 	#endif

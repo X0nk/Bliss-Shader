@@ -21,6 +21,7 @@ flat varying vec2 TAA_Offset;
 flat varying float tempOffsets;
 
 uniform int hideGUI;   
+uniform float screenBrightness;
 /*
 const int colortex12Format = RGBA16F;			//Final output, transparencies id (gbuffer->composite4)
 const int colortex11Format = RGBA16F;			//Final output, transparencies id (gbuffer->composite4)
@@ -1246,7 +1247,14 @@ void main() {
 		#elif FOCUS_LASER_COLOR == 5 // White
 		laserColor = vec3(25);
 		#endif
-		if( hideGUI < 1.0) gl_FragData[0].rgb += laserColor * pow( clamp( 	 1.0-abs(DOF_JITTER_FOCUS-abs(fragpos.z))		,0,1),25) ;
+
+		#if DOF_JITTER_FOCUS < 0
+		float focusDist = mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
+		#else
+		float focusDist = DOF_JITTER_FOCUS;
+		#endif
+
+		if( hideGUI < 1.0) gl_FragData[0].rgb += laserColor * pow( clamp( 	 1.0-abs(focusDist-abs(fragpos.z))		,0,1),25) ;
 	#endif
 
 
