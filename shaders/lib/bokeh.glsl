@@ -400,7 +400,7 @@
 		vec2(-0.992326501717018, -0.062069798758671524)
 	);
 #endif
-#ifdef DOF_JITTER // DOF_QUALITY == 5 && defined(SCREENSHOT_MODE)
+#if defined(DOF_JITTER) || defined(DOF_JITTER_SHADOW) // DOF_QUALITY == 5 && defined(SCREENSHOT_MODE)
 	const vec2 jitter_offsets[64] = vec2[](
 		vec2(0.08838834764831845, 0),
 		vec2(-0.1846432401149469, -0.8598513673187094),

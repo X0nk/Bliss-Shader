@@ -7,7 +7,7 @@
 #define reflection_quality 30 // adjust the quality of the screenspace reflections. [6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 ]
 #define Roughness_Threshold 1.5 // using a curve on the roughness, make the reflections more or less visible on rough surfaces. good for hiding noise on rough materials [1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
 
-// #define SCREENSHOT_MODE // go render mode and accumulate frames for as long as you want for max image quality.
+#define SCREENSHOT_MODE // go render mode and accumulate frames for as long as you want for max image quality.
 
 uniform sampler2D gaux1;
 uniform int framemod8;

@@ -11,6 +11,11 @@ Read the terms of modification and sharing before changing something below pleas
 #include "lib/settings.glsl"
 #include "lib/Shadow_Params.glsl"
 
+#include "/lib/bokeh.glsl"
+uniform int frameCounter;
+uniform float screenBrightness;
+uniform mat4 gbufferProjectionInverse;
+
 #define SHADOW_MAP_BIAS 0.5
 const float PI = 3.1415927;
 varying vec2 texcoord;
@@ -94,6 +99,38 @@ void main() {
 
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
 
+	// HHHHHHHHH ITS THE JITTER DOF HERE TO SAY HELLO
+	// It turns out 'position' above is just viewPos lmao
+	#ifdef DOF_JITTER_SHADOW
+		// This is in CLIP SPACE
+		vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);
+		jitter = rotate(radians(frameCounter)) * jitter;
+		jitter.y *= aspectRatio;
+		jitter.x *= DOF_ANAMORPHIC_RATIO;
+		
+		// SHADOW CLIP SPACE => CLIP SPACE
+		// vec3 shadowViewPos = (shadowProjectionInverse * position).xyz;
+		// vec3 feetPlayerPos = (shadowModelViewInverse * vec4(shadowViewPos, 1.0)).xyz;
+		// vec3 viewPos = (gbufferModelView * vec4(feetPlayerPos, 1.0)).xyz;
+		vec4 clipPos = gbufferProjection * vec4(position, 1.0);
+
+		// Calculate the distance from the fulcrum [CLIP SPACE]
+		#if DOF_JITTER_FOCUS < 0
+		float jitterMul = clipPos.z - mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
+		#else
+		float jitterMul = clipPos.z - DOF_JITTER_FOCUS;
+		#endif
+
+		// Apply jitter [CLIP SPACE]
+		clipPos.xy += jitter.xy * jitterMul * JITTER_STRENGTH * 1e-2;
+
+		// CLIP SPACE => SHADOW CLIP SPACE
+		position = (gbufferProjectionInverse * clipPos).xyz;
+		// feetPlayerPos = (gbufferModelViewInverse * vec4(viewPos, 1.0)).xyz;
+		// shadowViewPos = (shadowModelView * vec4(feetPlayerPos, 1.0)).xyz;
+		// position = gl_ProjectionMatrix * vec4(shadowViewPos, 1.0);
+	#endif
+
   
   //Check if the vertice is going to cast shadows
   // #ifdef SHADOW_FRUSTRUM_CULLING
@@ -119,9 +156,8 @@ void main() {
 	// gl_Position = BiasShadowProjection_altered(toClipSpace3(position),mat3(shadowProjection),mat3(shadowModelView), gl_NormalMatrix * gl_Normal);
 	
 	gl_Position = BiasShadowProjection(toClipSpace3(position));
-  
-  gl_Position.z /= 6.0;
 
+	gl_Position.z /= 6.0;
 
 	texcoord.xy = gl_MultiTexCoord0.xy;
 
