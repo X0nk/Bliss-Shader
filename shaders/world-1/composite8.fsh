@@ -8,7 +8,6 @@
 //#define FAST_TAA //disables bicubic resampling and closest velocity, improves fps especially at high resolutions
 
 //TAA OPTIONS
-//#define NO_CLIP	//Removes all anti-ghosting techniques used and creates a sharp image (good for still screenshots)
 #define BLEND_FACTOR 0.05 //[0.01 0.02 0.03 0.04 0.05 0.06 0.08 0.1 0.12 0.14 0.16] higher values = more flickering but sharper image, lower values = less flickering but the image will be blurrier
 #define MOTION_REJECTION 0.5 //[0.0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.5] //Higher values=sharper image in motion at the cost of flickering
 #define ANTI_GHOSTING 1.0 //[0.0 0.25 0.5 0.75 1.0] High values reduce ghosting but may create flickering

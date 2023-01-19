@@ -33,7 +33,7 @@ uniform float far;
 uniform float aspectRatio;
 uniform float viewHeight;
 uniform float viewWidth;
-
+uniform int hideGUI;
 
 uniform vec2 texelSize;
 uniform int framemod8;
@@ -88,6 +88,7 @@ void main() {
 
 		float focus = DOF_JITTER_FOCUS;
 		float focusMul = gl_Position.z - DOF_JITTER_FOCUS;
-		gl_Position.xy += (jitter * JITTER_STRENGTH) * focusMul * 1e-2;
+		vec2 totalOffset = (jitter * JITTER_STRENGTH) * focusMul * 1e-2;
+		gl_Position.xy += hideGUI >= 1 ? totalOffset : vec2(0);
 	#endif
 }
