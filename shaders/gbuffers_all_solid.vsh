@@ -267,7 +267,7 @@ void main() {
 
 	#ifdef DOF_JITTER
 		vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);
-		jitter = rotate(radians(frameCounter)) * jitter;
+		jitter = rotate(radians(float(frameCounter))) * jitter;
 		jitter.y *= aspectRatio;
 		jitter.x *= DOF_ANAMORPHIC_RATIO;
 
