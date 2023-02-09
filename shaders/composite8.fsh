@@ -11,6 +11,14 @@
 
 const int noiseTextureResolution = 32;
 
+const int RGBA32F = 1;
+const int R11F_G11F_B10F = 1;
+#ifdef SCREENSHOT_MODE
+	const int colortex5Format = RGBA32F;			//TAA buffer (everything)
+#else
+	const int colortex5Format = R11F_G11F_B10F;			//TAA buffer (everything)
+#endif
+
 
 /*
 const int colortex0Format = RGBA16F;				// low res clouds (deferred->composite2) + low res VL (composite5->composite15)
