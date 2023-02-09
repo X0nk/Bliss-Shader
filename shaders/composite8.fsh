@@ -11,6 +11,14 @@
 
 const int noiseTextureResolution = 32;
 
+const int RGBA32F = 1;
+const int R11F_G11F_B10F = 1;
+#ifdef SCREENSHOT_MODE
+	const int colortex5Format = RGBA32F;			//TAA buffer (everything)
+#else
+	const int colortex5Format = R11F_G11F_B10F;			//TAA buffer (everything)
+#endif
+
 
 /*
 const int colortex0Format = RGBA16F;				// low res clouds (deferred->composite2) + low res VL (composite5->composite15)
@@ -18,12 +26,6 @@ const int colortex1Format = RGBA16;					//terrain gbuffer (gbuffer->composite2)
 const int colortex2Format = RGBA16F;				//forward + transparencies (gbuffer->composite4)
 const int colortex3Format = R11F_G11F_B10F;			//frame buffer + bloom (deferred6->final)
 const int colortex4Format = RGBA16F;				//light values and skyboxes (everything)
-
-#ifdef SCREENSHOT_MODE
-	const int colortex5Format = RGBA32F;			//TAA buffer (everything)
-#else
-	const int colortex5Format = R11F_G11F_B10F;			//TAA buffer (everything)
-#endif
 
 const int colortex6Format = R11F_G11F_B10F;			//additionnal buffer for bloom (composite3->final)
 const int colortex7Format = RGBA8;			//Final output, transparencies id (gbuffer->composite4)
