@@ -151,12 +151,6 @@ void main() {
 		if(mc_Entity.x == 10005) EMISSIVE = 1;
 	#endif
 
-	#ifdef SPIDEREYES
-		// gl_Position.xy = gl_Position.xy * 0.9 + 0.9 * gl_Position.w - gl_Position.w;
-		if(gl_Color.a < 1.0 ) gl_Position = vec4(10,10,10,1);
-		EMISSIVE = 1;
-	#endif
-
 
 	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
 	FlatNormals = normalize(gl_NormalMatrix * gl_Normal);

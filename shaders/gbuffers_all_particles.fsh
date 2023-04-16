@@ -97,12 +97,12 @@ void main() {
 
 	vec4 TEXTURE = texture2D(texture, lmtexcoord.xy)*color;
 	
-#ifdef WEATHER
-	gl_FragData[1].a = TEXTURE.a; // for bloomy rain
-#endif
+	#ifdef WEATHER
+		gl_FragData[1].a = TEXTURE.a; // for bloomy rain
+	#endif
 
 #ifndef WEATHER
-	gl_FragData[1].a = 0.0; // for bloomy rain
+	gl_FragData[1].a = pow(1.0-TEXTURE.a,2.0); // for bloomy rain
 	gl_FragData[0] = TEXTURE;
 	vec3 Albedo = toLinear(gl_FragData[0].rgb);
 

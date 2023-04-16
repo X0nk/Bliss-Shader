@@ -70,38 +70,35 @@ vec2 R2_samples_spec(int n){
 
 vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 
-    vec3 clipPosition = toClipSpace3(position);
-	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ? (-near -position.z) / dir.z : far*sqrt(3.);
-    vec3 direction = normalize(toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
-    direction.xy = normalize(direction.xy);
+	vec3 clipPosition = toClipSpace3(position);
+	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ?
+	                   (-near -position.z) / dir.z : far*sqrt(3.);
+	vec3 direction = normalize(toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
+	direction.xy = normalize(direction.xy);
 
-    //get at which length the ray intersects with the edge of the screen
-    vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
-    float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z);
+	//get at which length the ray intersects with the edge of the screen
+	vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
+	float mult = maxLengths.y;
 
+	vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0) * dither;
+	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) ;
 
-    vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0);
-	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) + stepv*dither;
-
-	float minZ = clipPosition.z+stepv.z;
-	float maxZ = spos.z+stepv.z;
 	spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
 
-	float dist = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
-    for (int i = 0; i <= int(quality); i++) {
+	float biasdist =  clamp(position.z*position.z/50.0,1,2); // shrink sample size as distance increases
 
-		float sp = texelFetch2D(depthtex1,ivec2(spos.xy/texelSize),0).r;
+	for(int i = 0; i < int(quality); i++){
+		spos += stepv;
+		float sp = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4),0).w/65000.0);
+		float currZ = linZ(spos.z);
 
-
-        if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ)) return vec3(spos.xy/RENDER_SCALE,sp);
-
-        spos += stepv;
-		//small bias
-		minZ = maxZ-(0.0001/dist)/ld(spos.z);
-		maxZ += stepv.z;
-    }
-
-    return vec3(1.1);
+		if( sp < currZ) {
+			float dist = abs(sp-currZ)/currZ;
+			if (abs(dist) < biasdist*0.05) return vec3(spos.xy, invLinZ(sp))/vec3(RENDER_SCALE,1.0);
+		}
+		spos += stepv;
+	}
+  return vec3(1.1);
 }
 
 vec3 rayTraceSpeculars(vec3 dir,vec3 position,float dither, float quality, bool hand, inout float reflectLength){

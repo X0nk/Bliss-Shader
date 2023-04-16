@@ -140,15 +140,6 @@ vec4 encode (vec3 n, vec2 lightmaps){
     return vec4(encn,vec2(lightmaps.x,lightmaps.y));
 }
 
-
-#ifdef MC_NORMAL_MAP
-	vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
-		float bumpmult = clamp(puddle_values,0.0,1.0);
-		bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
-		return normalize(bump*tbnMatrix);
-	}
-#endif
-
 //encoding by jodie
 float encodeVec2(vec2 a){
     const vec2 constant1 = vec2( 1., 256.) / 65535.;
@@ -158,6 +149,15 @@ float encodeVec2(vec2 a){
 float encodeVec2(float x,float y){
     return encodeVec2(vec2(x,y));
 }
+
+#ifdef MC_NORMAL_MAP
+	vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
+		float bumpmult = clamp(puddle_values,0.0,1.0);
+		bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
+		return normalize(bump*tbnMatrix);
+	}
+#endif
+
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
@@ -419,11 +419,14 @@ void main() {
 		gl_FragData[1].a = 0.0;
 
 	#else
+
 		float bias = Texture_MipMap_Bias - blueNoise()*0.5;
+
 		//////////////////////////////// 
 		//////////////////////////////// NORMAL
 		//////////////////////////////// 
-
+	
+	#ifdef WORLD
 		#ifdef MC_NORMAL_MAP
 			vec4 NormalTex = texture2D(normals, lmtexcoord.xy, bias).rgba;
 			NormalTex.xy = NormalTex.xy*2.0-1.0;
@@ -439,12 +442,13 @@ void main() {
 			#endif
 
 		#endif
-
+	#endif
 
 		//////////////////////////////// 
 		//////////////////////////////// SPECULAR
 		//////////////////////////////// 
-
+	
+	#ifdef WORLD
 		vec4 SpecularTex = texture2D(specular, lmtexcoord.xy, bias);
 
 		SpecularTex.r = max(SpecularTex.r, Puddle_shape);
@@ -456,17 +460,17 @@ void main() {
 		#endif
 
 		gl_FragData[2] = SpecularTex;
-		
+	#endif
+
 		if(EMISSIVE > 0) gl_FragData[2].a = 0.9;
 		
 		//////////////////////////////// 
 		//////////////////////////////// ALBEDO
 		//////////////////////////////// 
 	
+	#ifdef WORLD
 		vec4 Albedo = texture2D(texture, lmtexcoord.xy, bias) * color;
 
-		// pain in my ass
-	
 		#ifdef AEROCHROME_MODE
 			vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), AEROCHROME_PINKNESS);
 			float gray = dot(Albedo.rgb, vec3(0.2, 01.0, 0.07));
@@ -527,9 +531,10 @@ void main() {
 		gl_FragData[0] =  vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
 
 		gl_FragData[1].a = 0.0;
-
 	#endif
-
+	#endif
+	
+	#ifdef WORLD
 	gl_FragData[5].x = 0;
 
 	#ifdef ENTITIES
@@ -537,4 +542,5 @@ void main() {
 	#endif
 
 	gl_FragData[3] = vec4(FlatNormals * 0.5 + 0.5,VanillaAO);	
+	#endif
 }

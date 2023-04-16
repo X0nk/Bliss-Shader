@@ -610,43 +610,6 @@ vec3 TangentToWorld(vec3 N, vec3 H, float roughness){
     return vec3((T * H.x) + (B * H.y) + (N * H.z));
 }
 
-
-// void rtAO(inout vec3 lighting, vec3 normal, vec2 noise, vec3 fragpos, float lightmap, float inShadow){
-// 	int nrays = 4;
-// 	float occlude = 0.0;
-
-// 	float indoor = clamp(pow(lightmap,2)*2,0.0,AO_Strength);
-	
-// 	for (int i = 0; i < nrays; i++){
-// 		int seed = (frameCounter%40000)*nrays+i;
-// 		vec2 ij = fract(R2_samples(seed) + noise.rg);
-
-
-// 		vec3 rayDir = TangentToWorld(  normal, normalize(cosineHemisphereSample(ij,1.0)) ,1.0) ;
-		
-// 		#ifdef HQ_SSGI
-// 			vec3 rayHit = rayTrace_GI( mat3(gbufferModelView) * rayDir, fragpos,  blueNoise(), 30.); // ssr rt
-// 		#else
-// 			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, fragpos, blueNoise(), 24.);  // choc sspt 
-// 		#endif
-
-// 		// vec3 lightDir = normalize(vec3(0.2,0.8,0.2));
-// 		// float skyLightDir = dot(rayDir,lightDir); // the positons where the occlusion happens
-	
-// 		float skyLightDir = rayDir.y > 0.0 ? 1.0 : max(rayDir.y,1.0-indoor); // the positons where the occlusion happens
-// 		// if (rayHit.z > 1.0) occlude += skyLightDir;
-
-// 		occlude += normalize(rayHit.z - 1.0) / (1.1-rayDir.y);
-
-
-// 	}
-// 	// occlude = mix( occlude,1, inShadow);
-// 	// occlude = occlude*0.5 + 0.5;
-// 	// lighting *= 2.5;
-// 	lighting *= occlude/nrays;
-// }
-
-
 void rtAO(inout vec3 lighting, vec3 normal, vec2 noise, vec3 fragpos, float lightmap, float inShadow){
 	int nrays = 4;
 	float occlude = 0.0;
@@ -680,53 +643,12 @@ void rtAO(inout vec3 lighting, vec3 normal, vec2 noise, vec3 fragpos, float ligh
 	lighting *= mix(occlude/nrays,1.0,0) ;
 }
 
-// void rtGI(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, float lightmap, vec3 albedo, float inShadow){
-// 	int nrays = RAY_COUNT;
-// 	vec3 intRadiance = vec3(0.0);
-// 	vec3 occlude = vec3(0.0);
-
-// 	lighting *= 1.50;
-// 	float indoor = clamp(pow(lightmap,2)*2,0.0,AO_Strength);
-	
-// 	for (int i = 0; i < nrays; i++){
-// 		int seed = (frameCounter%40000)*nrays+i;
-// 		vec2 ij = fract(R2_samples(seed) + noise );
-
-// 		vec3 rayDir = TangentToWorld(normal, normalize(cosineHemisphereSample(ij,1.0)) ,1.0);
-
-// 		#ifdef HQ_SSGI
-// 			vec3 rayHit = rayTrace_GI( mat3(gbufferModelView) * rayDir, fragpos,  blueNoise(), 50.); // ssr rt
-// 		#else
-// 			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, fragpos, blueNoise(), 30.);  // choc sspt 
-// 		#endif
-		
-// 		float skyLightDir = rayDir.y > 0.0 ? 1.0 : max(rayDir.y,1.0-indoor); // the positons where the occlusion happens
-	
-// 		if (rayHit.z < 1.){
-// 			vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
-// 			previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
-// 			previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
-// 			if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0)
-
-// 				intRadiance = DoContrast(texture2D(colortex5,previousPosition.xy).rgb) ;
-// 			else
-// 				intRadiance += lighting*skyLightDir; // make sure ambient light exists but at screen edges when you turn
-			
-
-// 		}else{
-// 			intRadiance += lighting*skyLightDir; 
-// 		}
-// 	}
-// 	lighting = intRadiance/nrays; 
-// }
-
-
 void rtGI(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, float lightmap, vec3 albedo){
 	int nrays = RAY_COUNT;
 	vec3 intRadiance = vec3(0.0);
-	float occlusion = 0.0;
+	vec3 occlude = vec3(0.0);
 
-	// lighting *= 1.50;
+	lighting *= 1.50;
 	float indoor = clamp(pow(lightmap,2)*2,0.0,AO_Strength);
 	
 	for (int i = 0; i < nrays; i++){
@@ -740,31 +662,24 @@ void rtGI(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, float lightm
 		#else
 			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, fragpos, blueNoise(), 30.);  // choc sspt 
 		#endif
-
-		float skyLightDir = rayDir.y > 0.0 ? 0.0 : 0.0; // the positons where the occlusion happens
 		
-		// vec3 AO = lighting * (normalize(rayHit.z - 1.0) / (1.1-rayDir.y));
-		if (rayHit.z < 1){
-			vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit)+ gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
-		
+		float skyLightDir = rayDir.y > 0.0 ? 1.0 : max(rayDir.y,1.0-indoor); // the positons where the occlusion happens
+	
+		if (rayHit.z < 1.){
+			vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
 			previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
 			previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
-
-			if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0){
-				// intRadiance = DoContrast(texture2DLod(colortex5,previousPosition.xy,0).rgb, 55.0 ) * GI_Strength ;
-				intRadiance = texture2DLod(colortex5,previousPosition.xy,0).rgb * GI_Strength ;
-			}
-
-		
-			occlusion += 1.0;
+			if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0)
+				intRadiance = 0 + texture2D(colortex5,previousPosition.xy).rgb * GI_Strength ;
+			else
+				intRadiance += lighting*skyLightDir; // make sure ambient light exists but at screen edges when you turn
+				
+		}else{
+			intRadiance += lighting*skyLightDir; 
 		}
-
 	}
-	lighting = lighting * (1.0-occlusion/nrays) + intRadiance/nrays; 
+	lighting = intRadiance/nrays; 
 }
-
-
-
 
 
 void SubsurfaceScattering(inout float SSS, float Scattering, float Density, float LabDenisty){
@@ -1146,7 +1061,7 @@ void main() {
 
 		// SSGI
 		#if indirect_effect == 4
-			if (!hand) rtGI(gl_FragData[0].rgb, normal, blueNoise(gl_FragCoord.xy).rg, fragpos, newLightmap.y, albedo);
+			if (!hand) rtGI(Indirect_lighting, normal, blueNoise(gl_FragCoord.xy).rg, fragpos, newLightmap.y, albedo);
 		#endif
 
 		#ifndef AO_in_sunlight
@@ -1218,8 +1133,8 @@ void main() {
 
 
 		//combine all light sources 
-		vec3 FINAL_COLOR = Direct_lighting + Indirect_lighting;
-
+		vec3 FINAL_COLOR = Indirect_lighting + Direct_lighting;
+		
 		#ifdef Variable_Penumbra_Shadows
 			FINAL_COLOR += SSS*DirectLightColor;
 		#endif
