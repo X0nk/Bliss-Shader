@@ -195,7 +195,6 @@ void main() {
 		float LabSSS = 0.0;
 	#endif
 
-
 	#ifndef Variable_Penumbra_Shadows
 		if (translucent  && !hand)  minshadowfilt += 25;
 	#endif
@@ -217,7 +216,7 @@ void main() {
 
 		#ifdef Variable_Penumbra_Shadows
 
-			if (NdotL > 0.000 || LabSSS > 0.0 || translucent || translucent2 || translucent3 || translucent4) {
+			if (NdotL > 0.0 || LabSSS >= 0.0) {
 
 				vec3 p3 = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
 

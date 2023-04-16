@@ -8,7 +8,7 @@ varying vec4 normalMat;
 
 
 uniform sampler2D texture;
-
+uniform sampler2D gaux1;
 uniform vec4 lightCol;
 uniform vec3 sunVec;
 
@@ -66,34 +66,15 @@ void main() {
 
 	gl_FragData[0] = texture2D(texture, lmtexcoord.xy);
 
+	vec3 albedo = toLinear(gl_FragData[0].rgb*color.rgb);
 
-		vec3 albedo = toLinear(gl_FragData[0].rgb*color.rgb);
+	float exposure = texelFetch2D(gaux1,ivec2(10,37),0).r;
 
-		vec3 normal = normalMat.xyz;
-		vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize,1.0));
-
-
-
-		float NdotL = lightCol.a*dot(normal,sunVec);
-
-		float diffuseSun = clamp(NdotL,0.0f,1.0f);
-
-		vec3 direct = lightCol.rgb;
+	vec3 col = albedo*exp(-exposure*3.);
 
 
-		direct *= (diffuseSun*lmtexcoord.w)*10.;
-
-		float torch_lightmap = ((lmtexcoord.z*lmtexcoord.z)*(lmtexcoord.z*lmtexcoord.z))*(lmtexcoord.z*20.)+lmtexcoord.z;
-
-		vec3 ambient = (lightCol.a*sunElevation)*(-NdotL*0.45+0.9)*lightCol.rgb*0.6 + (1.2*skyIntensity)*vec3(0.65,0.7,1.)*30. + skyIntensityNight*vec3(0.09,0.1,0.15)/1.5;
-
-		vec3 diffuseLight = (lmtexcoord.w)*ambient + vec3(1.,0.4,0.1)*torch_lightmap*0.08*1.0 + 0.0006;
-
-		vec3 col = dot(diffuseLight,vec3(1.0/3))*albedo;
-
-
-		gl_FragData[0].rgb = col*color.a;
-		gl_FragData[0].a = 0.0;
+	gl_FragData[0].rgb = col*color.a;
+	gl_FragData[0].a = gl_FragData[0].a*0.1;
 
 
 

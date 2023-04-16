@@ -12,39 +12,18 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 									vec2(7.,-7.)/8.);
 
 
-// sun specular stuff
+
+vec3 mix_vec3(vec3 X, vec3 Y, float A){
+	return X * (1.0 - A) + Y * A;
+}
+float mix_float(float X, float Y, float A){
+	return X * (1.0 - A) + Y * A;
+}
 float square(float x){
   return x*x;
 }
-float g(float NdotL, float roughness){
-    float alpha = square(max(roughness, 0.02));
-    return 2.0 * NdotL / (NdotL + sqrt(square(alpha) + (1.0 - square(alpha)) * square(NdotL)));
-}
-float gSimple(float dp, float roughness){
-  float k = roughness + 1;
-  k *= k/8.0;
-  return dp / (dp * (1.0-k) + k);
-}
-vec3 GGX2(vec3 n, vec3 v, vec3 l, float r, vec3 F0) {
-
-  float roughness = r; // when roughness is zero it fucks up
-  float alpha = square(roughness) + 1e-5;
-
-  vec3 h = normalize(l + v) ;
-
-  float dotLH = clamp(dot(h,l),0.,1.);
-  float dotNH = clamp(dot(h,n),0.,1.);
-  float dotNL = clamp(dot(n,l),0.,1.);
-  float dotNV = clamp(dot(n,v),0.,1.);
-  float dotVH = clamp(dot(h,v),0.,1.);
 
 
-  float D = alpha / (3.141592653589793*square(square(dotNH) * (alpha - 1.0) + 1.0));
-  float G = gSimple(dotNV, roughness) * gSimple(dotNL, roughness);
-  vec3 F = F0 + (1. - F0) * exp2((-5.55473*dotVH-6.98316)*dotVH);
-
-  return dotNL * F * (G * D / (4 * dotNV * dotNL + 1e-7));
-}
 
 
 // other shit
@@ -62,71 +41,7 @@ float linZ(float depth) {
 	// d = -((2n/l)-f-n)/(f-n)
 
 }
-vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 
-    vec3 clipPosition = toClipSpace3(position);
-	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ? (-near -position.z) / dir.z : far*sqrt(3.);
-    vec3 direction = normalize(toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
-    direction.xy = normalize(direction.xy);
-
-    //get at which length the ray intersects with the edge of the screen
-    vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
-    float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z);
-
-
-    vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0);
-	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) + stepv*dither;
-
-	float minZ = clipPosition.z+stepv.z;
-	float maxZ = spos.z+stepv.z;
-	spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
-
-	float dist = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
-    for (int i = 0; i <= int(quality); i++) {
-
-		float sp = texelFetch2D(depthtex1,ivec2(spos.xy/texelSize),0).r;
-        if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ)) return vec3(spos.xy/RENDER_SCALE,sp);
-
-        spos += stepv;
-		//small bias
-		minZ = maxZ-(0.0001/dist)/ld(spos.z);
-		maxZ += stepv.z;
-    }
-
-    return vec3(1.1);
-}
-// vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
-
-// 	vec3 clipPosition = toClipSpace3(position);
-// 	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ?
-// 	                   (-near -position.z) / dir.z : far*sqrt(3.);
-// 	vec3 direction = normalize(toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
-// 	direction.xy = normalize(direction.xy);
-
-// 	//get at which length the ray intersects with the edge of the screen
-// 	vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
-// 	float mult = maxLengths.y;
-
-// 	vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0) * dither;
-// 	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) ;
-
-// 	spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
-
-// 	float biasdist =  clamp(position.z*position.z/50.0,1,2); // shrink sample size as distance increases
-
-// 	for(int i = 0; i < int(quality); i++){
-// 		spos += stepv;
-// 		float sp = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4),0).w/65000.0);
-// 		float currZ = linZ(spos.z);
-
-// 		if( sp < currZ) {
-// 			float dist = abs(sp-currZ)/currZ;
-// 			if (abs(dist) < biasdist*0.05) return vec3(spos.xy, invLinZ(sp))/vec3(RENDER_SCALE,1.0);
-// 		}
-// 		spos += stepv;
-// 	}
-//   return vec3(1.1);
-// }
 
 void frisvad(in vec3 n, out vec3 f, out vec3 r){
     if(n.z < -0.9) {
@@ -153,28 +68,44 @@ vec2 R2_samples_spec(int n){
 	return fract(alpha * n);
 }
 
-vec3 sampleGGXVNDF(vec3 V_, float roughness, float U1, float U2){
-	// stretch view
-	vec3 V = normalize(vec3(roughness * V_.x, roughness * V_.y, V_.z));
-	// orthonormal basis
-	vec3 T1 = (V.z < 0.9999) ? normalize(cross(V, vec3(0,0,1))) : vec3(1,0,0);
-	vec3 T2 = cross(T1, V);
-	// sample point with polar coordinates (r, phi)
-	float a = 1.0 / (1.0 + V.z);
-	float r = sqrt(U1*0.25);
-	float phi = (U2<a) ? U2/a * 3.141592653589793 : 3.141592653589793 + (U2-a)/(1.0-a) * 3.141592653589793;
-	float P1 = r*cos(phi);
-	float P2 = r*sin(phi)*((U2<a) ? 1.0 : V.z);
-	// compute normal
-	vec3 N = P1*T1 + P2*T2 + sqrt(max(0.0, 1.0 - P1*P1 - P2*P2))*V;
-	// unstretch
-	N = normalize(vec3(roughness*N.x, roughness*N.y, N.z));
-	return N;
+vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
+
+    vec3 clipPosition = toClipSpace3(position);
+	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ? (-near -position.z) / dir.z : far*sqrt(3.);
+    vec3 direction = normalize(toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
+    direction.xy = normalize(direction.xy);
+
+    //get at which length the ray intersects with the edge of the screen
+    vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
+    float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z);
+
+
+    vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0);
+	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) + stepv*dither;
+
+	float minZ = clipPosition.z+stepv.z;
+	float maxZ = spos.z+stepv.z;
+	spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
+
+	float dist = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
+    for (int i = 0; i <= int(quality); i++) {
+
+		float sp = texelFetch2D(depthtex1,ivec2(spos.xy/texelSize),0).r;
+
+
+        if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ)) return vec3(spos.xy/RENDER_SCALE,sp);
+
+        spos += stepv;
+		//small bias
+		minZ = maxZ-(0.0001/dist)/ld(spos.z);
+		maxZ += stepv.z;
+    }
+
+    return vec3(1.1);
 }
 
+vec3 rayTraceSpeculars(vec3 dir,vec3 position,float dither, float quality, bool hand, inout float reflectLength){
 
-
-vec3 rayTraceSpeculars(vec3 dir,vec3 position,float dither, float quality, bool hand){
 	vec3 clipPosition = toClipSpace3(position);
 	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ?
 	                   (-near -position.z) / dir.z : far*sqrt(3.);
@@ -197,11 +128,10 @@ vec3 rayTraceSpeculars(vec3 dir,vec3 position,float dither, float quality, bool 
 	float dist = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
   	for (int i = 0; i <= int(quality); i++) {
 
-		// decode depth buffer
 		vec2 testthing = hand ? spos.xy*texelSize : spos.xy/texelSize/4.0; // fix for ssr on hand
-		float sp = sqrt(texelFetch2D(gaux1,ivec2(testthing),0).w/65000.0);
+		float sp = sqrt((texelFetch2D(colortex4,ivec2(testthing),0).a+0.1)/65000.0);
 		sp = invLinZ(sp);
-		
+
 		if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ) ) return vec3(spos.xy/RENDER_SCALE,sp);
 		spos += stepv;
 		
@@ -209,58 +139,94 @@ vec3 rayTraceSpeculars(vec3 dir,vec3 position,float dither, float quality, bool 
 		float biasamount = 0.0002 / dist;
 		if(hand) biasamount = 0.01;
 		minZ = maxZ-biasamount / ld(spos.z);
-		
 		maxZ += stepv.z;
+
+		reflectLength += 1.0 / quality; // for shit
   	}
+
+
   return vec3(1.1);
 }
 
-
-vec3 mix_vec3(vec3 X, vec3 Y, float A){
-	return X * (1.0 - A) + Y * A;
+vec3 sampleGGXVNDF(vec3 V_, float roughness, float U1, float U2){
+	// stretch view
+	vec3 V = normalize(vec3(roughness * V_.x, roughness * V_.y, V_.z));
+	// orthonormal basis
+	vec3 T1 = (V.z < 0.9999) ? normalize(cross(V, vec3(0,0,1))) : vec3(1,0,0);
+	vec3 T2 = cross(T1, V);
+	// sample point with polar coordinates (r, phi)
+	float a = 1.0 / (1.0 + V.z);
+	float r = sqrt(U1*0.25);
+	float phi = (U2<a) ? U2/a * 3.141592653589793 : 3.141592653589793 + (U2-a)/(1.0-a) * 3.141592653589793;
+	float P1 = r*cos(phi);
+	float P2 = r*sin(phi)*((U2<a) ? 1.0 : V.z);
+	// compute normal
+	vec3 N = P1*T1 + P2*T2 + sqrt(max(0.0, 1.0 - P1*P1 - P2*P2))*V;
+	// unstretch
+	N = normalize(vec3(roughness*N.x, roughness*N.y, N.z));
+	return N;
 }
-float mix_float(float X, float Y, float A){
-	return X * (1.0 - A) + Y * A;
-}
 
+vec3 GGX (vec3 n, vec3 v, vec3 l, float r, vec3 F0) {
+  r = pow(r,2.5);
+//   r*=r;
+
+  vec3 h = l + v;
+  float hn = inversesqrt(dot(h, h));
+
+  float dotLH = clamp(dot(h,l)*hn,0.,1.);
+  float dotNH = clamp(dot(h,n)*hn,0.,1.) ;
+  float dotNL = clamp(dot(n,l),0.,1.);
+  float dotNHsq = dotNH*dotNH;
+
+  float denom = dotNHsq * r - dotNHsq + 1.;
+  float D = r / (3.141592653589793 * denom * denom);
+  vec3 F = F0 + (1. - F0) * exp2((-5.55473*dotLH-6.98316)*dotLH);
+  float k2 = .25 * r;
+
+  return dotNL * D * F / (dotLH*dotLH*(1.0-k2)+k2);
+}
 
 // pain
 void MaterialReflections(
-	vec2 texcoord,
 	inout vec3 Output,
 	float roughness, 
 	vec3 f0,
 	vec3 albedo,
     vec3 sunPos,
-    vec3 sunCol,
-    float diffuse,
+	vec3 directlighting,
     float lightmap,
 	vec3 normal,
 	vec3 np3,
 	vec3 fragpos,
     vec3 noise,
-    bool hand
+    bool hand,
+	bool isEntities
 ){
 	vec3 Reflections_Final = Output;
+	vec3 SkyReflection = Output;
+	vec3 SunReflection;
+	vec4 Reflections;
 
+	float reflectLength;
 	float Outdoors = clamp((lightmap-0.6)*5.0, 0.0,1.0);
-	// float Outdoors = clamp((lightmap-0.5) * , 0.0,1.0);
 	
 	roughness = unpackRoughness(roughness);
-	f0 = f0.y == 0.0 ? vec3(0.04) : f0;
+	f0 = f0.y == 0.0 ? vec3(0.02) : f0;
 
-		// roughness = 0.2;
-		// f0 = vec3(0.04);
+
+	// f0 = vec3(0.0);
+	// roughness = 0.0;
 
 	mat3 basis = CoordBase(normal);
 	vec3 normSpaceView = -np3*basis ;
 
 	// roughness stuff
 	#ifdef Rough_reflections
-		int seed = (frameCounter%40000);
+		int seed = frameCounter%40000;
 		vec2  ij = fract(R2_samples_spec(seed) + noise.rg) ;
-
 		vec3 H = sampleGGXVNDF(normSpaceView, roughness, ij.x, ij.y);
+
 		if(hand) H = normalize(vec3(0.0,0.0,1.0));
 	#else
 		vec3 H = normalize(vec3(0.0,0.0,1.0));
@@ -271,59 +237,137 @@ void MaterialReflections(
 
 	// fresnel stuff
 	float fresnel = pow(clamp(1.0 + dot(-Ln, H),0.0,1.0),5.0);
+	vec3 F = mix_vec3(f0, vec3(1.0), fresnel); 
+	vec3 rayContrib = F;
 
-		float fresnel2 = dot(-np3, H);
+	float VisibilityFactor = rayContrib.x * pow(1.0-roughness,3.0);
 
-	// vec3 F = f0 + (1.0 - f0) * fresnel; 
+    bool hasReflections = Roughness_Threshold == 1.0 ? true : (f0.y * (1.0 - roughness * Roughness_Threshold)) > 0.01;
+    float hasReflections2 = max(1.0 - roughness*1.75,0.0);
+
+
+	// // if (!hasReflections) Outdoors = 0.0;
 	
+	// SunReflection = directlighting *  SunGGX(normal, -np3, sunPos, roughness, f0.y) / 5.0; 
+	SunReflection = directlighting *  GGX(normal, -np3, sunPos, roughness, f0.yyy);
+// 
+	if (hasReflections) { // Skip sky reflection and SSR if its just not very visible anyway
+		#ifdef Sky_reflection
+			SkyReflection = skyCloudsFromTex(L, colortex4).rgb / 150. * 5.;
+		#endif
+
+		#ifdef Screen_Space_Reflections
+			// #ifdef SCREENSHOT_MODE
+			// 	float rayQuality = reflection_quality; 
+			// #else
+				float rayQuality = mix_float(reflection_quality,4,luma(rayContrib)); // Scale quality with ray contribution
+			// #endif
+			// float rayQuality = reflection_quality; 
+
+			vec3 rtPos = rayTraceSpeculars( mat3(gbufferModelView) * L,fragpos.xyz,  noise.b, reflection_quality, hand, reflectLength);
+
+			float LOD = clamp(reflectLength * 6.0, 0.0,6.0) ;
+			if(hand || isEntities) LOD = 6.0;
+
+			if (rtPos.z < 1.) { // Reproject on previous frame
+				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rtPos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
+				previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
+				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
+				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0) {
+					Reflections.a = 1.0;
+					Reflections.rgb = texture2DLod(colortex5,previousPosition.xy,LOD).rgb;
+				}
+			}
+		#endif
+	}
+
+	// check if the f0 is within the metal ranges, then tint by albedo if it's true.
+	vec3 Metals = f0.y > 229.5/255.0 ? clamp(albedo + fresnel,0.0,1.0) : vec3(1.0);
+
+	SunReflection *= Metals;
+	
+	#ifdef Sky_reflection
+		SkyReflection *= Metals;
+	#endif
+	#ifdef Screen_Space_Reflections
+		Reflections.rgb *= Metals;
+	#endif
+
+	// background reflections
+	SkyReflection = mix_vec3(Output, SkyReflection, Outdoors); 
+
+	// composite background and SSR.
+	Reflections.rgb = mix_vec3(SkyReflection, Reflections.rgb, Reflections.a); 
+
+	// put reflections onto the scene
+	#ifdef Rough_reflections
+		Output = hand ? mix_vec3(Output,  Reflections.rgb, VisibilityFactor) : mix_vec3(Output,  Reflections.rgb, luma(rayContrib));
+	#else
+		Output = mix_vec3(Output,  Reflections.rgb, VisibilityFactor);
+	#endif
+	
+	Output += SunReflection;
+}
+
+void MaterialReflections_N(
+	inout vec3 Output,
+	float roughness, 
+	vec3 f0,
+	vec3 albedo,
+	vec3 normal,
+	vec3 np3,
+	vec3 fragpos,
+    vec3 noise,
+    bool hand
+){
+	vec3 Reflections_Final = Output;
+	float reflectLength = 0.0;
+	
+	roughness = unpackRoughness(roughness);
+	f0 = f0.y == 0.0 ? vec3(0.02) : f0;
+
+	// roughness = 0.0;
+	// f0 = vec3(0.9);
+
+	float visibilityFactor = clamp(exp2((pow(roughness,3.0) / f0.y) * -4),0,1);
+
+	mat3 basis = CoordBase(normal);
+	vec3 normSpaceView = -np3*basis ;
+
+	// roughness stuff
+	#ifdef Rough_reflections
+		int seed = (frameCounter%40000);
+		vec2  ij = fract(R2_samples_spec(seed) + noise.rg) ;
+		vec3 H = sampleGGXVNDF(normSpaceView, roughness, ij.x, ij.y);
+
+		if(hand) H = normalize(vec3(0.0,0.0,1.0));
+	#else
+		vec3 H = normalize(vec3(0.0,0.0,1.0));
+	#endif
+
+	vec3 Ln = reflect(-normSpaceView, H);
+	vec3 L = basis * Ln;
+
+	// fresnel stuff
+	float fresnel = pow(clamp(1.0 + dot(-Ln, H),0.0,1.0),5.0);
 	vec3 F = mix(f0, vec3(1.0), fresnel); 
 	vec3 rayContrib = F;
 
-			
 	// float NdotV = clamp(normalize(dot(np3, L))*10000.,0.,1.);
-    bool hasReflections = (f0.y * (1.0 - roughness * Roughness_Threshold)) > 0.01;
+    bool hasReflections = (f0.y * (1.0 - roughness * Roughness_Threshold)) >= 0.0;
+	if (Roughness_Threshold == 1.0){ hasReflections = true; }
 
-	if (Roughness_Threshold == 1.0){ hasReflections = roughness > -1; }
-
-	if (!hasReflections  ) Outdoors = 0.0;
-
-
-	
-	// if(hand){
-	// 	LOD_controller = 6;
-	// 	// noise.b = 0.5; 
-	// }
 
 	// SSR, Sky, and Sun reflections
 	vec4 Reflections = vec4(0.0);
-	// vec3 SkyReflection = skyCloudsFromTex_Spec(L, colortex4,int(LOD_controller)).rgb / 150. * 5.;
-	vec3 SkyReflection = skyCloudsFromTex(L, colortex4).rgb / 150. * 5.;
-
-	vec3 SunReflection = diffuse * GGX2(normal, -np3,  sunPos, roughness, f0) * 8./150./3. * sunCol * Sun_specular_Strength;
-
-	#ifndef Sky_reflection
-		SkyReflection = Reflections_Final;
-	#endif
-
-	
-
-
+	vec3 FogReflection = vec3(0.0);
 	#ifdef Screen_Space_Reflections
 		if ( hasReflections	) { // Skip SSR if ray contribution is low
 
-
-			#ifdef SCREENSHOT_MODE
-				float rayQuality = reflection_quality; 
-			#else
-				float rayQuality = mix_float(reflection_quality,0.0,dot(rayContrib,vec3(0.33))); // Scale quality with ray contribution
-			#endif
-
-			vec3 rtPos = rayTraceSpeculars( mat3(gbufferModelView) * L,fragpos.xyz,  noise.b, reflection_quality, hand);
-
-			// float test = dot(vec2(-rtPos.x,-rtPos.y), vec2(rtPos.x,rtPos.y));
-			// float LOD_controller =  clamp((1-pow(test*0.5+1.0,25))	* 10,0.0,6.0) ;
-
-			// LOD_controller = 0;
+			float rayQuality = reflection_quality; 
+			vec3 rtPos = rayTraceSpeculars( mat3(gbufferModelView) * L,fragpos.xyz,  noise.b, reflection_quality, hand, reflectLength);
+			
+			float LOD = clamp( reflectLength * 6.0 ,0.0,6.0);
 
 			if (rtPos.z < 1. ){ // Reproject on previous frame
 				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rtPos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
@@ -331,39 +375,137 @@ void MaterialReflections(
 				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
 				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0) {
 					Reflections.a = 1.0;
-					Reflections.rgb = texture2DLod(colortex5,previousPosition.xy,0).rgb;
+					Reflections.rgb = texture2DLod(colortex5,previousPosition.xy,LOD).rgb;
 				}
 			}
 		}
 	#endif
 
+
 	// check if the f0 is within the metal ranges, then tint by albedo if it's true.
 	vec3 Metals = f0.y > 229.5/255.0 ? clamp(albedo + fresnel,0.0,1.0) : vec3(1.0);
-
 	Reflections.rgb *= Metals;
-	SunReflection *= Metals;
-	#ifdef Sky_reflection
-		SkyReflection *= Metals;
-	#endif
-	float lumaRayContrib = pow(luma(rayContrib),1.0);
-	float oneminus_lumaRayContrib = pow(1.0-luma(rayContrib),1.0);
-	// darken albedos, and stop darkening where the sky gets occluded indoors
-	Reflections_Final *= mix_float(1.0 - (Reflections.a*lumaRayContrib), oneminus_lumaRayContrib, Outdoors);
-	
-	// apply all reflections to the lighting
-	Reflections_Final += Reflections.rgb * lumaRayContrib;
-	Reflections_Final += SkyReflection * lumaRayContrib * (1.0-Reflections.a) * Outdoors ;
 
-	float visibilityFactor = clamp(exp2((pow(roughness,3.0) / f0.y) * -4),0,1);
-	
+	#ifdef Sky_reflection
+		// reflect nether fog color instead of a sky.
+		FogReflection = gl_Fog.color.rgb * 0.5 * NetherFog_brightness;
+		FogReflection *= 1.0 + sqrt(roughness) * 15.0; // brighten rough spots for some highlights that look neat
+		FogReflection *= Metals;
+
+		FogReflection = mix(Output, FogReflection, pow(fresnel, 0.2)+0.1); // make sure the background contains the fog reflection.
+	#else
+		FogReflection = Output;
+	#endif
+
+	Reflections.rgb = mix(FogReflection, Reflections.rgb, Reflections.a); // make background only where ssr is not.
+	Reflections_Final = mix(Output, Reflections.rgb, luma(rayContrib)); // apply reflections to final scene color.
+
 	#ifdef Rough_reflections
 		Output = hand ? mix_vec3(Output,  Reflections_Final, visibilityFactor) : Reflections_Final;
 	#else
 		Output = mix_vec3(Output,  Reflections_Final, visibilityFactor);
 	#endif
 
-	Output += SunReflection ;
-	// float aaaa = dot(vec2(-rtPos.x,-rtPos.y), vec2(rtPos.x,rtPos.y));
-	// test = pow(test*0.5+1.0,2);
-	// Output = vec3(0,test,0)  ;
+	// Output = vec3(reflectLength);
+}
+
+void MaterialReflections_E(
+	inout vec3 Output,
+	float roughness, 
+	vec3 f0,
+	vec3 albedo,
+	vec3 normal,
+	vec3 np3,
+	vec3 fragpos,
+    vec3 noise,
+    bool hand,
+	vec3 lightCol,
+	vec3 lightDir,
+	bool isEntities
+){
+	vec3 Reflections_Final = Output;
+	float reflectLength = 0.0;
+	
+	roughness = unpackRoughness(roughness);
+	f0 = f0.y == 0.0 ? vec3(0.02) : f0;
+
+	// roughness = 0.0;
+	// f0 = vec3(0.9);
+
+	float visibilityFactor = clamp(exp2((pow(roughness,3.0) / f0.y) * -4),0,1);
+
+	mat3 basis = CoordBase(normal);
+	vec3 normSpaceView = -np3*basis ;
+
+	// roughness stuff
+	#ifdef Rough_reflections
+		int seed = (frameCounter%40000);
+		vec2  ij = fract(R2_samples_spec(seed) + noise.rg) ;
+		vec3 H = sampleGGXVNDF(normSpaceView, roughness, ij.x, ij.y);
+
+		if(hand) H = normalize(vec3(0.0,0.0,1.0));
+	#else
+		vec3 H = normalize(vec3(0.0,0.0,1.0));
+	#endif
+
+	vec3 Ln = reflect(-normSpaceView, H);
+	vec3 L = basis * Ln;
+
+	// fresnel stuff
+	float fresnel = pow(clamp(1.0 + dot(-Ln, H),0.0,1.0),5.0);
+	vec3 F = mix(f0, vec3(1.0), fresnel); 
+	vec3 rayContrib = F;
+
+	// float NdotV = clamp(normalize(dot(np3, L))*10000.,0.,1.);
+    bool hasReflections = (f0.y * (1.0 - roughness * Roughness_Threshold)) >= 0.0;
+	if (Roughness_Threshold == 1.0){ hasReflections = true; }
+
+
+	vec3 Ln_2 = reflect(-normSpaceView, normalize(vec3(0.0,0.0,1.0)));
+	vec3 L_2 = basis * Ln_2;
+
+	vec3 FogReflection = skyCloudsFromTexLOD(L_2, colortex4, sqrt(roughness) * 9.0).rgb / 150.0;
+	FogReflection = mix(FogReflection, lightCol * 2 * clamp(dot(L_2, lightDir),0,1), roughness);
+	
+	
+	FogReflection *= 1.0 + roughness * 2.0;
+	vec4 Reflections = vec4(0.0);
+	
+	#ifdef Screen_Space_Reflections
+		if ( hasReflections	) { // Skip SSR if ray contribution is low
+
+			float rayQuality = reflection_quality; 
+			vec3 rtPos = rayTraceSpeculars( mat3(gbufferModelView) * L,fragpos.xyz,  noise.b, reflection_quality, hand, reflectLength);
+			
+			float LOD = clamp( reflectLength * 6.0 ,0.0,6.0);
+
+			if(hand) LOD = 6.0;
+			if(isEntities) LOD = 4.0;
+
+			if (rtPos.z < 1. ){ // Reproject on previous frame
+				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rtPos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
+				previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
+				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
+				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0) {
+					Reflections.a = 1.0;
+					Reflections.rgb = texture2DLod(colortex5,previousPosition.xy,LOD).rgb;
+				}
+			}
+		}
+	#endif
+
+
+	// check if the f0 is within the metal ranges, then tint by albedo if it's true.
+	vec3 Metals = f0.y > 229.5/255.0 ? clamp(albedo + fresnel,0.0,1.0) : vec3(1.0);
+	Reflections.rgb *= Metals;
+	FogReflection *= Metals;
+
+	Reflections.rgb = mix(FogReflection, Reflections.rgb, Reflections.a); // make background only where ssr is not.
+	Reflections_Final = mix(Output, Reflections.rgb, luma(rayContrib)); // apply reflections to final scene color.
+
+	#ifdef Rough_reflections
+		Output = hand ? mix_vec3(Output,  Reflections_Final, visibilityFactor) : Reflections_Final;
+	#else
+		Output = mix_vec3(Output,  Reflections_Final, visibilityFactor);
+	#endif
 }

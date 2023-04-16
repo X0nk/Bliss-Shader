@@ -4,6 +4,9 @@
 //Computes volumetric clouds at variable resolution (default 1/4 res)
 
 
+uniform float far;
+uniform float near;
+flat varying vec4 lightCol;
 flat varying vec3 sunColor;
 flat varying vec3 moonColor;
 flat varying vec3 avgAmbient;
@@ -13,6 +16,7 @@ uniform sampler2D depthtex0;
 // uniform sampler2D colortex4;
 uniform sampler2D noisetex;
 
+flat varying vec3 WsunVec;
 uniform vec3 sunVec;
 uniform vec2 texelSize;
 uniform float frameTimeCounter;
@@ -74,26 +78,26 @@ vec3 normVec (vec3 vec){
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 
+
 void main() {
 /* DRAWBUFFERS:0 */
-float phi = 2 * 3.14159265359;
-float noise = fract(fract(frameCounter * (1.0 / phi)) + interleaved_gradientNoise() )	;
+
+#ifdef VOLUMETRIC_CLOUDS
+	// vec2 halfResTC = vec2(floor(gl_FragCoord.xy)/CLOUDS_QUALITY/RENDER_SCALE+0.5+(vec2(tempOffsets)*(texelSize/4))*CLOUDS_QUALITY*RENDER_SCALE*0.5);
+
+	vec2 halfResTC = vec2(floor(gl_FragCoord.xy)/CLOUDS_QUALITY/RENDER_SCALE+0.5+offsets[framemod8]*CLOUDS_QUALITY*RENDER_SCALE*0.5);
+
+	float z = texture2D(depthtex0,halfResTC*texelSize).x;
+
+	vec3 fragpos = toScreenSpace(vec3(halfResTC*texelSize,1));
 
 
-	#ifdef VOLUMETRIC_CLOUDS
-	vec2 halfResTC = vec2(floor(gl_FragCoord.xy)/CLOUDS_QUALITY/RENDER_SCALE+0.5+(vec2(tempOffsets)*(texelSize/4))*CLOUDS_QUALITY*RENDER_SCALE*0.5);
+	vec4 currentClouds = renderClouds(fragpos,vec2(R2_dither(),blueNoise2()), lightCol.rgb/80., moonColor/150., (avgAmbient*2.0)* 8./150./3.);
+	
+	gl_FragData[0] = currentClouds;
+	
 
-	vec3 fragpos = toScreenSpace(vec3(halfResTC*texelSize,1.0));
-	vec3 p3 = mat3(gbufferModelViewInverse) * fragpos;
-	vec3 np3 = normVec(p3);
-
-
-	vec4 currentClouds = renderClouds(fragpos,vec3(0.), R2_dither(),sunColor/150.,moonColor/150.,avgAmbient/150.,blueNoise2());
-	gl_FragData[0] = currentClouds ;
-
-
-	#else
-		gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);
-	#endif
-
+#else
+	gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);
+#endif
 }

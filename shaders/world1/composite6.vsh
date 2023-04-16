@@ -1,10 +1,7 @@
 #version 120
-#extension GL_EXT_gpu_shader4 : enable
 
-varying vec2 texcoord;
-flat varying vec3 zMults;
-uniform float far;
-uniform float near;
+uniform float viewWidth;
+uniform float viewHeight;
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -12,8 +9,9 @@ uniform float near;
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-	zMults = vec3(1.0/(far * near),far+near,far-near);
+	//Improves performances and makes sure bloom radius stays the same at high resolution (>1080p)
+	vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
 	gl_Position = ftransform();
-	texcoord = gl_MultiTexCoord0.xy;
-
+	//*0.51 to avoid errors when sampling outside since clearing is disabled
+	gl_Position.xy = (gl_Position.xy*0.5+0.5)*0.26/clampedRes*vec2(1920.0,1080.)*2-1.0;
 }

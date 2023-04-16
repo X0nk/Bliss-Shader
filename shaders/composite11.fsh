@@ -1,62 +1,149 @@
 #version 120
-#include "lib/settings.glsl"
-//6 Horizontal gaussian blurs and horizontal downsampling
-#include "lib/res_params.glsl"
+//Vignetting, applies bloom, applies exposure and tonemaps the final image
+#extension GL_EXT_gpu_shader4 : enable
 
-uniform sampler2D colortex6;
-uniform vec2 texelSize;
+#include "/lib/settings.glsl"
+
+#include "/lib/res_params.glsl"
+
+
+flat varying vec4 exposure;
+flat varying vec2 rodExposureDepth;
 varying vec2 texcoord;
+
+const bool colortex5MipmapEnabled = true;
+// uniform sampler2D colortex4;
+uniform sampler2D colortex5;
+uniform sampler2D colortex3;
+// uniform sampler2D colortex6;
+uniform sampler2D colortex7;
+// uniform sampler2D colortex10;
+// uniform sampler2D colortex8; // specular
+// uniform sampler2D colortex9; // specular
+uniform sampler2D depthtex0;
+uniform sampler2D depthtex1;
+uniform sampler2D noisetex;
+uniform vec2 texelSize;
+
+uniform ivec2 eyeBrightnessSmooth;
 uniform float viewWidth;
 uniform float viewHeight;
-vec2 resScale = vec2(1920.,1080.)/max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.))*BLOOM_QUALITY;
-vec3 gauss1D(vec2 coord,vec2 dir,float alpha,int maxIT){
-	vec4 tot = vec4(0.);
-	float maxTC = 0.25*resScale.x;
-	float minTC = 0.;
-	for (int i = -maxIT;i<maxIT+1;i++){
-		float weight = exp2(-i*i*alpha*4.0);
-		//here we take advantage of bilinear filtering for 2x less sample, as a side effect the gaussian won't be totally centered for small blurs
-		vec2 spCoord = coord+dir*texelSize*(2.0*i+0.5);
-		tot += vec4(texture2D(colortex6,spCoord).rgb,1.0)*weight*float(spCoord.x > minTC && spCoord.x < maxTC);
-	}
-	return  tot.rgb/max(1.0,tot.a);
+uniform float frameTimeCounter;
+uniform int frameCounter;
+uniform int isEyeInWater;
+uniform float near;
+uniform float aspectRatio;
+uniform float far;
+uniform float rainStrength;
+uniform float screenBrightness;
+uniform vec4 Moon_Weather_properties; // R = cloud coverage 		G = fog density
+
+uniform int framemod8;
+const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
+							vec2(-1.,3.)/8.,
+							vec2(5.0,1.)/8.,
+							vec2(-3,-5.)/8.,
+							vec2(-5.,5.)/8.,
+							vec2(-7.,-1.)/8.,
+							vec2(3,7.)/8.,
+							vec2(7.,-7.)/8.);
+
+uniform mat4 gbufferModelViewInverse;
+uniform mat4 gbufferProjectionInverse;
+vec4 Weather_properties = Moon_Weather_properties;
+
+#include "/lib/color_transforms.glsl"
+#include "/lib/color_dither.glsl"
+// #include "lib/biome_specifics.glsl"
+#include "/lib/bokeh.glsl"
+
+float cdist(vec2 coord) {
+	return max(abs(coord.s-0.5),abs(coord.t-0.5))*2.0;
+}
+float blueNoise(){
+  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+}
+float ld(float depth) {
+    return (2.0 * near) / (far + near - depth * (far - near));		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
 }
 
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
+// blindness fogs
+uniform float blindness;
+uniform float darknessFactor;
 
 void main() {
-/* DRAWBUFFERS:6 */
+  /* DRAWBUFFERS:7 */
+	float vignette = (1.5-dot(texcoord-0.5,texcoord-0.5)*2.);
+	vec3 col = texture2D(colortex5,texcoord).rgb;
 
-vec2 texcoord = (gl_FragCoord.xy*vec2(2.0,4.0))*texelSize;
-vec2 gaussDir = vec2(1.0,0.0);
-gl_FragData[0].rgb = vec3(0.0);
-vec2 tc2 = texcoord*vec2(2.0,1.)/2.;
-if (tc2.x < 1.0*resScale.x && tc2.y <1.0*resScale.y)
-gl_FragData[0].xyz = gauss1D(tc2/2,gaussDir,0.16,0);
+	#if DOF_QUALITY >= 0
+		/*--------------------------------*/
+		float z = ld(texture2D(depthtex0, texcoord.st*RENDER_SCALE).r)*far;
+		#ifdef AUTOFOCUS
+			float focus = rodExposureDepth.y*far;
+		#else
+			float focus = MANUAL_FOCUS*screenBrightness;
+		#endif
+		float pcoc = min(abs(aperture * (focal/100.0 * (z - focus)) / (z * (focus - focal/100.0))),texelSize.x*15.0);
+		#ifdef FAR_BLUR_ONLY
+			pcoc *= float(z > focus);
+		#endif
+		float noise = blueNoise()*6.28318530718;
+		mat2 noiseM = mat2( cos( noise ), -sin( noise ),
+	                       sin( noise ), cos( noise )
+	                         );
+		vec3 bcolor = vec3(0.);
+		float nb = 0.0;
+		vec2 bcoord = vec2(0.0);
+		/*--------------------------------*/
+		float dofLodLevel = pcoc * 200.0;
+		for ( int i = 0; i < BOKEH_SAMPLES; i++) {
+			bcolor += texture2DLod(colortex5, texcoord.xy + bokeh_offsets[i]*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).rgb;
+		}
+		col = bcolor/BOKEH_SAMPLES;
+	#endif
 
-vec2 tc4 = texcoord*vec2(4.0,1.)/2.-vec2(0.5*resScale.x+4.0*texelSize.x,0.)*2.0;
-if (tc4.x > 0.0 && tc4.y > 0.0 && tc4.x < 1.0*resScale.x && tc4.y <1.0*resScale.y)
-gl_FragData[0].xyz = gauss1D(tc4/2,gaussDir,0.16,3);
+	vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
 
-vec2 tc8 = texcoord*vec2(8.0,1.)/2.-vec2(0.75*resScale.x+8.*texelSize.x,0.)*4.0;
-if (tc8.x > 0.0 && tc8.y > 0.0 && tc8.x < 1.0*resScale.x && tc8.y <1.0*resScale.y)
-gl_FragData[0].xyz = gauss1D(tc8/2,gaussDir,0.035,6);
 
-vec2 tc16 = texcoord*vec2(8.0,1./2.)-vec2(0.875*resScale.x+12.*texelSize.x,0.)*8.0;
-if (tc16.x > 0.0 && tc16.y > 0.0 && tc16.x < 1.0*resScale.x && tc16.y <1.0*resScale.y)
-gl_FragData[0].xyz = gauss1D(tc16/2,gaussDir,0.0085,12);
 
-vec2 tc32 = texcoord*vec2(16.0,1./2.)-vec2(0.9375*resScale.x+16.*texelSize.x,0.)*16.0;
-if (tc32.x > 0.0 && tc32.y > 0.0 && tc32.x < 1.0*resScale.x && tc32.y <1.0*resScale.y)
-gl_FragData[0].xyz = gauss1D(tc32/2,gaussDir,0.002,28);
+	vec3 bloom = texture2D(colortex3,texcoord/clampedRes*vec2(1920.,1080.)*0.5*BLOOM_QUALITY).rgb/2./7.0;
 
-vec2 tc64 = texcoord*vec2(32.0,1./2.)-vec2(0.96875*resScale.x+20.*texelSize.x,0.)*32.0;
-if (tc64.x > 0.0 && tc64.y > 0.0 && tc64.x < 1.0*resScale.x && tc64.y <1.0*resScale.y)
-gl_FragData[0].xyz = gauss1D(tc64/2,gaussDir,0.0005,60);
+	float lightScat = clamp(BLOOM_STRENGTH  * 0.05 * pow(exposure.a ,0.2)  ,0.0,1.0)*vignette;
 
-gl_FragData[0].rgb = clamp(gl_FragData[0].rgb,0.0,65000.);
+ 	float VL_abs = texture2D(colortex7,texcoord*RENDER_SCALE).r;
+	float purkinje = rodExposureDepth.x/(1.0+rodExposureDepth.x)*Purkinje_strength;
+
+ 	VL_abs = clamp( (1.0-VL_abs)*BLOOMY_FOG*0.75*(1.0-purkinje),0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
+
+	float lightleakfix = clamp(eyeBrightnessSmooth.y/240.0,0.0,1.0);
+
+	col = (mix(col,bloom,VL_abs)+bloom*lightScat)*	mix(exposure.rgb,min(exposure.rgb,0.01), 0);
+
+	//Purkinje Effect
+  	float lum = dot(col,vec3(0.15,0.3,0.55));
+	float lum2 = dot(col,vec3(0.85,0.7,0.45))/2;
+	float rodLum = lum2*400.;
+	float rodCurve = mix(1.0, rodLum/(2.5+rodLum), purkinje);
+	col = mix(clamp(lum,0.0,0.05)*Purkinje_Multiplier*vec3(Purkinje_R, Purkinje_G, Purkinje_B)+1.5e-3, col, rodCurve);
+
+//   #ifdef display_LUT
+//   	vec2 movedTC = texcoord ;
+//     if(movedTC.x < 0.4 ) col.rgb =  texture2D(colortex4,movedTC/2).rgb * 0.001;
+//   #endif
+
+  
+
+
+	#ifndef USE_ACES_COLORSPACE_APPROXIMATION
+  		col = LinearTosRGB(TONEMAP(col));
+	#else
+		col = col * ACESInputMat;
+		col = TONEMAP(col);
+
+		col = LinearTosRGB(clamp(col * ACESOutputMat, 0.0, 1.0));
+	#endif
+
+
+	gl_FragData[0].rgb = clamp(int8Dither(col,texcoord),0.0,1.0);
 }

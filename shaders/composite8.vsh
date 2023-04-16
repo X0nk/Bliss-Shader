@@ -1,18 +1,21 @@
 #version 120
-#extension GL_EXT_gpu_shader4 : enable
-
 #include "lib/settings.glsl"
-
+#include "lib/res_params.glsl"
+uniform float viewWidth;
+uniform float viewHeight;
 varying vec2 texcoord;
-flat varying float exposureA;
-flat varying float tempOffsets;
-uniform sampler2D colortex4;
-uniform int frameCounter;
-#include "/lib/util.glsl"
-void main() {
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
 
-	tempOffsets = HaltonSeq2(frameCounter%10000);
+void main() {
+	vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.0))/BLOOM_QUALITY;
 	gl_Position = ftransform();
-	texcoord = gl_MultiTexCoord0.xy;
-	exposureA = texelFetch2D(colortex4,ivec2(10,37),0).r;
+	//0-0.25
+	gl_Position.y = (gl_Position.y*0.5+0.5)*0.25/clampedRes.y*1080.0*2.0-1.0;
+	//0-0.5
+	gl_Position.x = (gl_Position.x*0.5+0.5)*0.5/clampedRes.x*1920.0*2.0-1.0;
+	texcoord = gl_MultiTexCoord0.xy/clampedRes*vec2(1920.,1080.);
 }

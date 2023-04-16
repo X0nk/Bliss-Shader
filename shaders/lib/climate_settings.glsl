@@ -3,8 +3,10 @@
 
 
 uniform float Day;
+uniform float worldDay;
 
 // it's so symmetrical~
+
 float day0 = clamp(clamp(Day,   0.0,1.0)*clamp(2-Day, 0.0,1.0),0.0,1.0);
 float day1 = clamp(clamp(Day-1, 0.0,1.0)*clamp(3-Day, 0.0,1.0),0.0,1.0);
 float day2 = clamp(clamp(Day-2, 0.0,1.0)*clamp(4-Day, 0.0,1.0),0.0,1.0);
@@ -23,23 +25,36 @@ float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 /////////////////////////////////////////////////////////////////////////////// VERTEX SHADER
 #ifdef Seasons
 	#ifdef SEASONS_VSH
+
 	    varying vec4 seasonColor;
+
 	    void YearCycleColor (
 	        inout vec3 FinalColor,
 	        vec3 glcolor
 	    ){
 	    	// colors for things that arent leaves and using the tint index.
-	    	vec3 SummerCol = vec3(Summer_R, Summer_G, Summer_B) * glcolor;
-	    	vec3 AutumnCol = vec3(Fall_R, Fall_G, Fall_B) * glcolor;
+	    	vec3 SummerCol = vec3(Summer_R, Summer_G, Summer_B);
+	    	vec3 AutumnCol = vec3(Fall_R, Fall_G, Fall_B);
 	    	vec3 WinterCol = vec3(Winter_R, Winter_G, Winter_B) ;
-	    	vec3 SpringCol = vec3(Spring_R, Spring_G, Spring_B) * glcolor;
+	    	vec3 SpringCol = vec3(Spring_R, Spring_G, Spring_B);
+			
+			// decide if you want to replace biome colors or tint them.
+			SummerCol *= glcolor;
+			AutumnCol *= glcolor;
+			WinterCol *= glcolor;
+			SpringCol *= glcolor;
 
 	    	// do leaf colors different because thats cool and i like it
 	    	if(mc_Entity.x == 10003){
-	    		SummerCol = vec3(Summer_Leaf_R, Summer_Leaf_G, Summer_Leaf_B) * glcolor;
-	    	    AutumnCol = vec3(Fall_Leaf_R, Fall_Leaf_G, Fall_Leaf_B) * glcolor;
-	    		WinterCol = vec3(Winter_Leaf_R, Winter_Leaf_G, Winter_Leaf_B) ;
-	    		SpringCol = vec3(Spring_Leaf_R, Spring_Leaf_G, Spring_Leaf_B)* glcolor;
+	    		SummerCol = vec3(Summer_Leaf_R, Summer_Leaf_G, Summer_Leaf_B);
+	    	    AutumnCol = vec3(Fall_Leaf_R, Fall_Leaf_G, Fall_Leaf_B);
+	    		WinterCol = vec3(Winter_Leaf_R, Winter_Leaf_G, Winter_Leaf_B);
+	    		SpringCol = vec3(Spring_Leaf_R, Spring_Leaf_G, Spring_Leaf_B);
+
+				SummerCol *= glcolor;
+				AutumnCol *= glcolor;
+				WinterCol *= glcolor;
+				SpringCol *= glcolor;
 	    	}
 
 			// length of each season in minecraft days
@@ -64,7 +79,7 @@ float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 			bool IsTintIndex = floor(dot(glcolor,vec3(0.5))) < 1.0;  
 
 	    	// multiply final color by the final lerped color, because it contains all the other colors.
-	    	if (IsTintIndex && mc_Entity.x != 200) FinalColor = SpringToSummer;
+	    	FinalColor = SpringToSummer;
 	    }
 	#endif
 #endif
@@ -107,7 +122,7 @@ float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 		#ifdef Daily_Weather
 			Coverage += day0 * 0.3	+	day1 * 0.8	+	day2 * 0.2	+	day3 * 0.0	+	day4 * 0.8	+	day5 * 0.5	+	day6 * -0.5	+	day7 * 0.6;
 		#else
-			Coverage += cloudCoverage;
+			Coverage += mix(Cumulus_coverage, Rain_coverage, rainStrength);
 			// Coverage = mix(Coverage, Rain_coverage, rainStrength);
 		#endif
 
@@ -138,7 +153,7 @@ float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 				Thickness = CirrusThickness;
 			}
 		#else
-			Coverage  = 0.5;
+			Coverage  = 0.7;
 			Thickness = 0.05;
 		#endif
 
@@ -187,7 +202,7 @@ float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 		BiomeColors.b = isSwamps*0.35 + isJungles*0.8;
 
 		// insure the biome colors are locked to the fog shape and lighting, but not its orignal color.
-		BiomeColors *= dot(FinalFogColor,vec3(0.5)); 
+		BiomeColors *= dot(FinalFogColor,vec3(0.33)); 
 		
 		// these range 0.0-1.0. they will never overlap.
 		float Inbiome = isJungles+isSwamps;
@@ -204,8 +219,8 @@ float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 		float Inbiome = isJungles+isSwamps;
 
 		vec2 BiomeFogDensity; // x = uniform  ||  y = cloudy
-		BiomeFogDensity.x = isSwamps*5  + isJungles*5;
-		BiomeFogDensity.y = isSwamps*50 + isJungles*2;
+		BiomeFogDensity.x = isSwamps*1  + isJungles*5;
+		BiomeFogDensity.y = isSwamps*5 + isJungles*2;
 
 		UniformDensity = mix(UniformDensity, vec4(BiomeFogDensity.x), Inbiome);
 		CloudyDensity  = mix(CloudyDensity,  vec4(BiomeFogDensity.y), Inbiome);
@@ -229,8 +244,9 @@ float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 		float Night   = clamp((Time-13000)/2000,0,1) * clamp((23000-Time)/2000,0,1) ;
 
 		// set densities.		   morn, noon, even, night
-		vec4 UniformDensity = vec4(0.0,	 0.0,	   0.0,	 0.0);
-		vec4 CloudyDensity =  vec4(0.0,	 0.0,	   0.0,	 0.0);
+		vec4 UniformDensity = TOD_Fog_mult * vec4(Morning_Uniform_Fog, Noon_Uniform_Fog, Evening_Uniform_Fog, Night_Uniform_Fog);
+		vec4 CloudyDensity =  TOD_Fog_mult * vec4(Morning_Cloudy_Fog, Noon_Cloudy_Fog, Evening_Cloudy_Fog, Night_Cloudy_Fog);
+
 
 		#ifdef Daily_Weather
 			DailyWeather_FogDensity(UniformDensity, CloudyDensity); // let daily weather influence fog densities.

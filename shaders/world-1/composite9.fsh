@@ -2,7 +2,6 @@
 //downsample 1st pass (half res) for bloom
 
 uniform sampler2D colortex5;
-uniform sampler2D colortex8;
 uniform vec2 texelSize;
 uniform float viewWidth;
 uniform float viewHeight;
@@ -18,9 +17,6 @@ void main() {
 vec2 resScale = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.))/vec2(1920.,1080.);
 vec2 quarterResTC = gl_FragCoord.xy*2.*resScale*texelSize;
 
-float emissives	= texture2D(colortex8,quarterResTC).a;
-if(emissives == 1.0) emissives = 0.0;
-emissives *= 5;
 		//0.5
 		gl_FragData[0] = texture2D(colortex5,quarterResTC-1.0*vec2(texelSize.x,texelSize.y))/4.*0.5;
 		gl_FragData[0] += texture2D(colortex5,quarterResTC+1.0*vec2(texelSize.x,texelSize.y))/4.*0.5;
@@ -43,10 +39,6 @@ emissives *= 5;
 		gl_FragData[0] += texture2D(colortex5,quarterResTC)*0.125;
 
 		gl_FragData[0].rgb = clamp(gl_FragData[0].rgb,0.0,65000.);
-
-		// gl_FragData[0].rgb += 	gl_FragData[0].rgb*emissives;
-
-
 		if (quarterResTC.x > 1.0 - 3.5*texelSize.x || quarterResTC.y > 1.0 -3.5*texelSize.y || quarterResTC.x < 3.5*texelSize.x || quarterResTC.y < 3.5*texelSize.y) gl_FragData[0].rgb = vec3(0.0);
 
 

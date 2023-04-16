@@ -1,9 +1,24 @@
 #version 120
+#extension GL_EXT_gpu_shader4 : enable
 #include "lib/settings.glsl"
-#include "lib/res_params.glsl"
-uniform float viewWidth;
-uniform float viewHeight;
+
+
 varying vec2 texcoord;
+flat varying vec4 exposure;
+flat varying vec2 rodExposureDepth;
+uniform sampler2D colortex4;
+
+uniform vec2 texelSize;
+uniform int framemod8;
+const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
+							vec2(-1.,3.)/8.,
+							vec2(5.0,1.)/8.,
+							vec2(-3,-5.)/8.,
+							vec2(-5.,5.)/8.,
+							vec2(-7.,-1.)/8.,
+							vec2(3,7.)/8.,
+							vec2(7.,-7.)/8.);
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -11,11 +26,13 @@ varying vec2 texcoord;
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-	vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.0))/BLOOM_QUALITY;
+
+
 	gl_Position = ftransform();
-	//0-0.25
-	gl_Position.y = (gl_Position.y*0.5+0.5)*0.25/clampedRes.y*1080.0*2.0-1.0;
-	//0-0.5
-	gl_Position.x = (gl_Position.x*0.5+0.5)*0.5/clampedRes.x*1920.0*2.0-1.0;
-	texcoord = gl_MultiTexCoord0.xy/clampedRes*vec2(1920.,1080.);
+
+
+	texcoord = gl_MultiTexCoord0.xy;
+	exposure=vec4(texelFetch2D(colortex4,ivec2(10,37),0).r*vec3(FinalR,FinalG,FinalB),texelFetch2D(colortex4,ivec2(10,37),0).r);
+	rodExposureDepth = texelFetch2D(colortex4,ivec2(14,37),0).rg;
+	rodExposureDepth.y = sqrt(rodExposureDepth.y/65000.0);
 }
