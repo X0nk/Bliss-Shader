@@ -15,7 +15,8 @@ varying vec4 lmtexcoord;
 varying vec4 color;
 varying vec4 normalMat;
 varying vec3 binormal;
-varying vec3 tangent;
+varying vec4 tangent;
+
 uniform mat4 gbufferModelViewInverse;
 varying vec3 viewVector;
 
@@ -84,12 +85,16 @@ void main() {
 	}
 
 	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
-	vec2 lmcoord = gl_MultiTexCoord1.xy/255.;
+	vec2 lmcoord = gl_MultiTexCoord1.xy / 255.0; // is this even correct? lol
 	lmtexcoord.zw = lmcoord;
+
+
 
  	vec3 position = mat3(gl_ModelViewMatrix) * vec3(Swtich_gl_vertex) + gl_ModelViewMatrix[3].xyz;
  	gl_Position = toClipSpace3(position);
-	color = gl_Color;
+
+	color = vec4(gl_Color.rgb,1.0);
+
 	float mat = 0.0;
 	
 	if(mc_Entity.x == 8.0 || mc_Entity.x == 9.0) {
@@ -106,18 +111,21 @@ void main() {
 	#endif
 
 	
-	normalMat = vec4(normalize( gl_NormalMatrix*gl_Normal),mat);
+	tangent = vec4(normalize(gl_NormalMatrix *at_tangent.rgb),at_tangent.w);
+
+	normalMat = vec4(normalize(gl_NormalMatrix *gl_Normal), 1.0);
+	normalMat.a = mat;
 
 
 
-	tangent_other = vec4(normalize(gl_NormalMatrix * at_tangent.rgb),normalMat.a);
 
-	tangent = normalize( gl_NormalMatrix *at_tangent.rgb);
-	binormal = normalize(cross(tangent.rgb,normalMat.xyz)*at_tangent.w);
 
-	mat3 tbnMatrix = mat3(tangent.x, binormal.x, normalMat.x,
-								  tangent.y, binormal.y, normalMat.y,
-						     	  tangent.z, binormal.z, normalMat.z);
+	vec3 tangent2 = normalize( gl_NormalMatrix *at_tangent.rgb);
+	binormal = normalize(cross(tangent2.rgb,normalMat.xyz)*at_tangent.w);
+
+	mat3 tbnMatrix = mat3(tangent2.x, binormal.x, normalMat.x,
+								  tangent2.y, binormal.y, normalMat.y,
+						     	  tangent2.z, binormal.z, normalMat.z);
 
 	viewVector = ( gl_ModelViewMatrix * Swtich_gl_vertex).xyz;
 	viewVector = normalize(tbnMatrix * viewVector);

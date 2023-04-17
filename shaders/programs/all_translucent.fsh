@@ -447,7 +447,7 @@ void main() {
 
 		
 
-		gl_FragData[4] = vec4(Albedo, gl_FragData[0].a);
+		// gl_FragData[4] = vec4(Albedo, gl_FragData[0].a);
 
 
 		vec2 tempOffset=offsets[framemod8];

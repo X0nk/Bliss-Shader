@@ -41,13 +41,15 @@ varying vec4 color;
 varying vec4 NoSeasonCol;
 varying vec4 seasonColor;
 uniform float far;
+
+
+uniform float wetness;
 varying vec4 normalMat;
 
 
 #ifdef MC_NORMAL_MAP
-varying vec4 tangent;
-uniform float wetness;
 uniform sampler2D normals;
+varying vec4 tangent;
 varying vec3 FlatNormals;
 #endif
 
@@ -99,11 +101,7 @@ float R2_dither(){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter) ;
 }
-vec2 decodeVec2(float a){
-    const vec2 constant1 = 65535. / vec2( 256., 65536.);
-    const float constant2 = 256. / 255.;
-    return fract( a * constant1 ) * constant2 ;
-}
+
 mat3 inverse(mat3 m) {
   float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
   float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];
@@ -242,12 +240,7 @@ float densityAtPosSNOW(in vec3 pos){
 /* RENDERTARGETS: 1,7,8,15 */
 void main() {
 
-
-    float phi = 2 * 3.14159265359;
-	float noise = fract(fract(frameCounter * (1.0 / phi)) + interleaved_gradientNoise() )	;
-
 	vec3 normal = normalMat.xyz;
-	vec3 normal2 = normalMat.xyz;
 
 	#ifdef MC_NORMAL_MAP
 		vec3 tangent2 = normalize(cross(tangent.rgb,normal)*tangent.w);
@@ -434,9 +427,6 @@ void main() {
 
 			normal = applyBump(tbnMatrix, NormalTex.xyz,  mix(1.0,1.0-Puddle_shape,rainfall)  );
 			
-			// #ifdef ENTITIES
-			// 	if(NameTags == 1 || NameTags == 2) normal = normal2;
-			// #endif
 			#ifdef ENTITIES
 				if(NameTags == 1) normal = vec3(1);
 			#endif
@@ -528,7 +518,7 @@ void main() {
 		//////////////////////////////// 
 
 		vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*lmtexcoord.zw/30.0) + lmtexcoord.zw),	0.0,	1.0);
-		gl_FragData[0] =  vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
+		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
 
 		gl_FragData[1].a = 0.0;
 	#endif

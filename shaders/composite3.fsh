@@ -131,7 +131,6 @@ vec3 decode (vec2 encn){
     n.xy = n.z <= 0.0 ? (1.0 - n.yx) * sign(encn) : encn;
     return clamp(normalize(n.xyz),-1.0,1.0);
 }
-
 vec2 decodeVec2(float a){
     const vec2 constant1 = 65535. / vec2( 256., 65536.);
     const float constant2 = 256. / 255.;
@@ -167,8 +166,9 @@ vec3 viewToWorld(vec3 viewPosition) {
 }
 
 void main() {
-  vec2 texcoord = gl_FragCoord.xy*texelSize;
   /* DRAWBUFFERS:73 */
+
+  vec2 texcoord = gl_FragCoord.xy*texelSize;
 
   vec4 trpData = texture2D(colortex7,texcoord);
 
@@ -186,24 +186,21 @@ void main() {
   // vec4 vl = texture2D(colortex0,texcoord * 0.5);
 
 
-	vec4 data = texture2D(colortex11,texcoord); // translucents
-  vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y));
-	vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w));
 
-	vec3 normals = mat3(gbufferModelViewInverse) * worldToView(decode(dataUnpacked0.yw) );
+	////// --------------- UNPACK TRANSLUCENT GBUFFERS --------------- //////
 
-	vec4 data_terrain = texture2D(colortex1,texcoord); // terraom
-	vec4 dataUnpacked1_terrain = vec4(decodeVec2(data_terrain.z),decodeVec2(data_terrain.w));
+	vec3 data = texture2D(colortex11,texcoord).rgb;
 
-	bool hand = (abs(dataUnpacked1_terrain.w-0.75) < 0.01);
+	vec4 unpack0 =  vec4(decodeVec2(data.r),decodeVec2(data.g)) ;
+	vec4 unpack1 = vec4(decodeVec2(data.b),0,0) ;
+	
+	vec2 tangentNormals = unpack0.xy*2.0-1.0;
+	vec4 albedo = vec4(unpack0.ba,unpack1.rg);
+
+  vec4 TranslucentShader = texture2D(colortex2,texcoord);
 
 	float lightleakfix = clamp((eyeBrightnessSmooth.y )/240.0,0.0,1.0);
 
-  
-  float rainDrops =  clamp(texture2D(colortex9,texcoord).a,  0.0,1.0); // bloomy rain effect
-
-
-  vec4 Translucent_Programs = texture2D(colortex2,texcoord); // the shader for all translucent progams.
 
 	vec2 tempOffset = TAA_Offset;
 	vec3 fragpos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
@@ -213,19 +210,15 @@ void main() {
 
 
   vec2 refractedCoord = texcoord;
-  float glassdepth = clamp((ld(z2) - ld(z)) * 0.5,0.0,0.15);
     
   #ifdef Refraction
-    refractedCoord += (normals.xy * glassdepth) * RENDER_SCALE;
-    
-    float refractedalpha = texture2D(colortex13,refractedCoord).a;
-    if(refractedalpha <= 0.0) refractedCoord = texcoord; // remove refracted coords on solids
+    refractedCoord += (tangentNormals * clamp((ld(z2) - ld(z)) * 0.5,0.0,0.15)) * RENDER_SCALE;
+
+    if(decodeVec2(texture2D(colortex11,refractedCoord).b).g < 0.01 ) refractedCoord = texcoord; // remove refracted coords on solids
   #endif
   
-  // underwater squiggles
-  // if(isEyeInWater == 1 && !iswater) refractedCoord = texcoord + pow(texture2D(noisetex,texcoord  -  vec2(0,frameTimeCounter/25)).b - 0.5, 2.0)*0.05;
-
-
+  /// --- MAIN COLOR BUFFER --- ///
+  // it is sampled with distorted texcoords 
   vec3 color = texture2D(colortex3,refractedCoord).rgb;
 
   #ifdef BorderFog
@@ -233,18 +226,18 @@ void main() {
   	float fog = 1.0 - clamp(exp(-pow(length(fragpos / far),10.)*4.0)  ,0.0,1.0);
   	float heightFalloff = clamp( pow(abs(np3.y-1.01),5) ,0,1)	;
 
-    if(z < 1.0 && isEyeInWater == 0) color.rgb = mix(color.rgb, sky, fog*heightFalloff* lightleakfix);
+    if(z < 1.0 && isEyeInWater == 0) color.rgb = mix(color.rgb, sky, fog * heightFalloff* lightleakfix);
   #endif
 
-  vec4 vl = BilateralUpscale(colortex0,depthtex1,gl_FragCoord.xy,frDepth, vec2(0.0));
+  vec4 vl = BilateralUpscale(colortex0, depthtex1, gl_FragCoord.xy, frDepth, vec2(0.0));
 
-  if (Translucent_Programs.a > 0.0){
+  if (TranslucentShader.a > 0.0){
 		#ifdef Glass_Tint
-	    vec3 GlassAlbedo = texture2D(colortex13,texcoord).rgb * 5.0;
-      color = color*GlassAlbedo.rgb + color * clamp(pow(1.0-luma(GlassAlbedo.rgb),10.),0.0,1.0);
+      // if(albedo.a < 0) color = color*albedo.rgb + color * clamp(pow(1.0-luma(albedo.rgb),10.),0.0,1.0);
+      if(albedo.a > 0.2) color = color*albedo.rgb + color * clamp(pow(1.0-luma(albedo.rgb),20.),0.0,1.0);
     #endif
 
-    color = color*(1.0-Translucent_Programs.a) + Translucent_Programs.rgb; 
+    color = color*(1.0-TranslucentShader.a) + TranslucentShader.rgb; 
 
     #ifdef BorderFog
         if(z < 1.0 && isEyeInWater == 0) color.rgb = mix(color.rgb, sky, fog * heightFalloff * lightleakfix);
@@ -271,10 +264,12 @@ void main() {
     vl.a *= fogfade*0.70+0.3  ;
   }
 
-  
   color *= vl.a;
   color += vl.rgb;
 
+
+
+  float rainDrops =  clamp(texture2D(colortex9,texcoord).a,  0.0,1.0); // bloomy rain effect
   if(rainDrops > 0.0) vl.a *= clamp(exp2(-rainDrops*5),0.,1.); // bloomy rain effect
   gl_FragData[0].r = vl.a;
   
@@ -300,6 +295,10 @@ void main() {
     if(texcoord.x < 0.45 ) color.rgb =  texture2D(colortex4,movedTC).rgb / 150. * 5.0;
   #endif
 
+
   gl_FragData[1].rgb = clamp(color.rgb,0.0,68000.0);
+
+  // gl_FragData[1].rgb = vec3(albedo.rgb*albedo.a);
+  // if(texcoord.x > 0.5) gl_FragData[1].rgb = vec3(tangentNormals,0.0);
 
 }

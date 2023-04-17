@@ -143,6 +143,7 @@ void main() {
 
 	NameTags = 0;
 
+	blockID = mc_Entity.x;
 	velocity = at_velocity;
 
 	// emission and shit...
@@ -153,10 +154,6 @@ void main() {
 
 
 	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
-	FlatNormals = normalize(gl_NormalMatrix * gl_Normal);
-
-	blockID = mc_Entity.x;
-
 
 	#ifdef POM
 		vec2 midcoord = (gl_TextureMatrix[0] *  mc_midTexCoord).st;
@@ -167,11 +164,13 @@ void main() {
 	#endif
 
 	vec2 lmcoord = gl_MultiTexCoord1.xy / 255.0; // is this even correct? lol
-	
 	lmtexcoord.zw = lmcoord;
+
+
 
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
 	
+	FlatNormals = normalize(gl_NormalMatrix * gl_Normal);
 	color = gl_Color;
 	
 	VanillaAO = 1.0 - clamp(color.a,0,1);

@@ -11,21 +11,15 @@ const bool colortex12MipmapEnabled = true;
 const bool shadowHardwareFiltering = true;
 flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
 flat varying vec3 avgAmbient;
-// flat varying vec3 ambientUp;
-// flat varying vec3 ambientLeft;
-// flat varying vec3 ambientRight;
-// flat varying vec3 ambientB;
-// flat varying vec3 ambientF;
-// flat varying vec3 ambientDown;
 flat varying vec3 WsunVec;
 flat varying vec2 TAA_Offset;
 flat varying float tempOffsets;
 
 
 uniform float eyeAltitude;
+
 /*
 const int colortex12Format = RGBA16F;			//Final output, transparencies id (gbuffer->composite4)
-const int colortex11Format = RGBA16F;			//Final output, transparencies id (gbuffer->composite4)
 const int colortex15Format = RGBA16F;			//Final output, transparencies id (gbuffer->composite4)
 */
 
@@ -40,11 +34,11 @@ uniform sampler2D colortex7; // normal
 uniform sampler2D colortex6; // Noise
 uniform sampler2D colortex8; // specular
 // uniform sampler2D colortex9; // specular
-uniform sampler2D colortex10; // specular
 uniform sampler2D colortex11; // specular
+uniform sampler2D colortex10; // specular
 uniform sampler2D colortex12; // specular
 uniform sampler2D colortex13; // specular
-uniform sampler2D colortex14; // specular
+// uniform sampler2D colortex14; // specular
 uniform sampler2D colortex15; // specular
 uniform sampler2D colortex16; // specular
 uniform sampler2D depthtex1;//depth
@@ -820,19 +814,25 @@ void main() {
 	float iswaterstuff = texture2D(colortex7,texcoord).a ;
 	bool iswater = iswaterstuff > 0.99;
 
-	vec4 data = texture2D(colortex1,texcoord); // terraom
-	vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y));
-	vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w));
-	vec4 dataUnpacked2 = vec4(decodeVec2(data.z),decodeVec2(data.w));
-	vec3 normal = decode(dataUnpacked0.yw);
-	// Color //
+	////// --------------- UNPACK OPAQUE GBUFFERS --------------- //////
+	vec4 data = texture2D(colortex1,texcoord);
+	vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y)); // albedo, masks
+	vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w)); // normals, lightmaps
+	// vec4 dataUnpacked2 = vec4(decodeVec2(data.z),decodeVec2(data.w));
+	
 	vec3 albedo = toLinear(vec3(dataUnpacked0.xz,dataUnpacked1.x));
-	vec4 translucentCol = texture2D(colortex13,texcoord); // translucents
+	vec2 lightmap = dataUnpacked1.yz;
+	vec3 normal = decode(dataUnpacked0.yw);
 
-	// Specular //
+	////// --------------- UNPACK TRANSLUCENT GBUFFERS --------------- //////
+	// vec4 dataTranslucent = texture2D(colortex11,texcoord); 
+	// vec4 dataT_Unpacked0 = vec4(decodeVec2(dataTranslucent.x),decodeVec2(dataTranslucent.y));
+	// vec4 dataT_Unpacked1 = vec4(decodeVec2(dataTranslucent.z),decodeVec2(dataTranslucent.w));
+	// vec4 dataT_Unpacked2 = vec4(decodeVec2(dataTranslucent.z),decodeVec2(dataTranslucent.w));
+
+	////// --------------- UNPACK MISC --------------- //////
 	vec4 SpecularTex = texture2D(colortex8,texcoord);
 
-	// Normal //
 	vec4 normalAndAO = texture2D(colortex15,texcoord);
 	vec3 FlatNormals = normalAndAO.rgb * 2.0 - 1.0;
 	vec3 slopednormal = normal;
@@ -848,7 +848,6 @@ void main() {
 	normalAndAO.a = clamp(pow(normalAndAO.a*5,4),0,1);
 
 
-	vec2 lightmap = dataUnpacked1.yz;
 
 	bool translucent = abs(dataUnpacked1.w-0.5) <0.01;	// Strong translucency
 	bool translucent2 = abs(dataUnpacked1.w-0.6) <0.01;	// Weak translucency
@@ -1164,9 +1163,9 @@ void main() {
 		float estimatedDepth = Vdiff * abs(VdotU) ;	//assuming water plane
 		float estimatedSunDepth = estimatedDepth/abs(WsunVec.y); //assuming water plane
 	
-		float custom_lightmap_T = texture2D(colortex14, texcoord).x; // y = torch
+		// float custom_lightmap_T = texture2D(colortex14, texcoord).x;  * max(custom_lightmap_T,0.005)// y = torch
 	
-		vec3 ambientColVol = (avgAmbient * 8./150./1.5) * max(custom_lightmap_T,0.005);
+		vec3 ambientColVol = (avgAmbient * 8./150./1.5);
 		vec3 lightColVol = (lightCol.rgb / 80.) ;
 	
 		if (isEyeInWater == 0) waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));		
