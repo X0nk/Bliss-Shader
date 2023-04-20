@@ -38,6 +38,9 @@ uniform vec3 sunVec;
 uniform float far;
 uniform float near;
 uniform int frameCounter;
+uniform float aspectRatio;
+uniform float screenBrightness;
+uniform float hideGUI;
 uniform float rainStrength;
 uniform float sunElevation;
 uniform ivec2 eyeBrightnessSmooth;
@@ -195,14 +198,7 @@ void main() {
 		jitter.x *= DOF_ANAMORPHIC_RATIO;
 		jitter.xy *= 0.004 * JITTER_STRENGTH;
 
-		vec3 fragpos_DOF = toScreenSpace(vec3((texcoord + jitter)/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
-		vec3 p3_DOF = mat3(gbufferModelViewInverse) * fragpos_DOF;
-		vec3 np3_DOF = normVec(p3_DOF);
-		p3_DOF += gbufferModelViewInverse[3].xyz;
-	#else
-		vec2 jitter = vec2(0.0);
-		vec3 p3_DOF = p3;
-		vec3 np3_DOF = np3;
+		vec3 fragpos_DOF = toScreenSpace(vec3((tc + jitter)/RENDER_SCALE,z));
 	#endif
 		
 	if (isEyeInWater == 0){
