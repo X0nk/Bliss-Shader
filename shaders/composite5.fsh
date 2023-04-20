@@ -76,6 +76,7 @@ uniform vec2 texelSize;
 uniform float frameTimeCounter;
 uniform float viewHeight;
 uniform float viewWidth;
+uniform int hideGUI;
 uniform int frameCounter;
 uniform int framemod8;
 uniform vec3 previousCameraPosition;
@@ -454,8 +455,12 @@ void main() {
 #ifndef SPLIT_RENDER
 	#ifdef SCREENSHOT_MODE
 
-
-		vec4 color = TAA_hq_render();
+		vec4 color;
+		if(hideGUI >= 1) {
+			color = TAA_hq_render();
+		} else { 
+			color = vec4(clamp(fp10Dither(texture2D(colortex3,texcoord).rgb,triangularize(interleaved_gradientNoise())),0.,65000.), 0.0);
+		}
 		gl_FragData[0] = color;
 
 
