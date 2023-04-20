@@ -1,388 +1,522 @@
 #version 120
-//Volumetric fog rendering
+//Temporal Anti-Aliasing + Dynamic exposure calculations (vertex shader)
+
 #extension GL_EXT_gpu_shader4 : enable
 
 #include "lib/settings.glsl"
+#include "lib/res_params.glsl"
 
-flat varying vec4 lightCol;
-flat varying vec3 ambientUp;
-flat varying vec3 ambientLeft;
-flat varying vec3 ambientRight;
-flat varying vec3 ambientB;
-flat varying vec3 ambientF;
-flat varying vec3 ambientDown;
-flat varying vec3 avgAmbient;
+
+//TAA OPTIONS
+
+const int noiseTextureResolution = 32;
+
+
+/*
+const int colortex0Format = RGBA16F;				// low res clouds (deferred->composite2) + low res VL (composite5->composite15)
+const int colortex1Format = RGBA16;					//terrain gbuffer (gbuffer->composite2)
+const int colortex2Format = RGBA16F;				//forward + transparencies (gbuffer->composite4)
+const int colortex3Format = R11F_G11F_B10F;			//frame buffer + bloom (deferred6->final)
+const int colortex4Format = RGBA16F;				//light values and skyboxes (everything)
+
+
+const int colortex11Format = RGBA16;			//Final output, transparencies id (gbuffer->composite4)
+
+const int colortex13Format = RGBA8;			//Final output, transparencies id (gbuffer->composite4)
+
+const int colortex6Format = R11F_G11F_B10F;			//additionnal buffer for bloom (composite3->final)
+const int colortex7Format = RGBA8;			//Final output, transparencies id (gbuffer->composite4)
+const int colortex8Format = RGBA16F;			//Final output, transparencies id (gbuffer->composite4)
+const int colortex9Format = RGBA8;			//Final output, transparencies id (gbuffer->composite4)
+const int colortex10Format = RGBA16F;			//Final output, transparencies id (gbuffer->composite4)
+
+// const int colortex15Format = RGBA16F;			// flat normals and vanilla 
+*/
+
+//no need to clear the buffers, saves a few fps
+/*
+const bool colortex0Clear = false;
+const bool colortex1Clear = false;
+const bool colortex2Clear = true;
+const bool colortex3Clear = false;
+const bool colortex4Clear = false;
+const bool colortex5Clear = false;
+const bool colortex6Clear = false;
+const bool colortex7Clear = false;
+*/
+
+
+
+#ifdef SCREENSHOT_MODE
+	/*
+	const int colortex5Format = RGBA32F;			//TAA buffer (everything)
+	*/
+#else
+	/*
+	const int colortex5Format = R11F_G11F_B10F;			//TAA buffer (everything)
+	*/
+#endif
+
+varying vec2 texcoord;
+flat varying float exposureA;
 flat varying float tempOffsets;
-flat varying float fogAmount;
-flat varying float VFAmount;
-flat varying float FogSchedule;
-uniform sampler2D noisetex;
+
+uniform sampler2D colortex0;
+uniform sampler2D colortex1;
+uniform sampler2D colortex3;
+uniform sampler2D colortex5;
+uniform sampler2D colortex6;
+// uniform sampler2D colortex10;
+uniform sampler2D colortex13;
+
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
-uniform sampler2DShadow shadow;
-flat varying vec3 refractedSunVec;
-flat varying vec3 WsunVec;
 
-uniform sampler2D colortex1;
-uniform sampler2D colortex2;
-uniform sampler2D colortex3;
-// uniform sampler2D colortex4;
-
-uniform vec3 sunVec;
-uniform float far;
-uniform float near;
-uniform int frameCounter;
-uniform float rainStrength;
-uniform float sunElevation;
-uniform ivec2 eyeBrightnessSmooth;
-uniform float frameTimeCounter;
-uniform int isEyeInWater;
 uniform vec2 texelSize;
-
-
-#include "lib/Shadow_Params.glsl"
-#include "lib/color_transforms.glsl"
-#include "lib/color_dither.glsl"
+uniform float frameTimeCounter;
+uniform float viewHeight;
+uniform float viewWidth;
+uniform int frameCounter;
+uniform int framemod8;
+uniform vec3 previousCameraPosition;
+uniform mat4 gbufferPreviousModelView;
+#define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
 #include "lib/projections.glsl"
-#include "lib/sky_gradient.glsl"
-#include "/lib/res_params.glsl"
-// #include "lib/biome_specifics.glsl"
-
-#define TIMEOFDAYFOG
-#include "lib/volumetricClouds.glsl"
 
 
-float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+float luma(vec3 color) {
+	return dot(color,vec3(0.21, 0.72, 0.07));
+}
+float interleaved_gradientNoise(){
+	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+tempOffsets);
+}
+float triangularize(float dither)
+{
+    float center = dither*2.0-1.0;
+    dither = center*inversesqrt(abs(center));
+    return clamp(dither-fsign(center),0.0,1.0);
+}
+vec3 fp10Dither(vec3 color,float dither){
+	const vec3 mantissaBits = vec3(6.,6.,5.);
+	vec3 exponent = floor(log2(color));
+	return color + dither*exp2(-mantissaBits)*exp2(exponent);
+}
+
+
+//returns the projected coordinates of the closest point to the camera in the 3x3 neighborhood
+vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth)
+{
+	vec2 du = vec2(texelSize.x*2., 0.0);
+	vec2 dv = vec2(0.0, texelSize.y*2.);
+
+	vec3 dtl = vec3(texcoord,0.) + vec3(-texelSize, texture2D(depth, texcoord - dv - du).x);
+	vec3 dtr = vec3(texcoord,0.) +  vec3( texelSize.x, -texelSize.y, texture2D(depth, texcoord - dv + du).x);
+	vec3 dmc = vec3(texcoord,0.) + vec3( 0.0, 0.0, texture2D(depth, texcoord).x);
+	vec3 dbl = vec3(texcoord,0.) + vec3(-texelSize.x, texelSize.y, texture2D(depth, texcoord + dv - du).x);
+	vec3 dbr = vec3(texcoord,0.) + vec3( texelSize.x, texelSize.y, texture2D(depth, texcoord + dv + du).x);
+
+	vec3 dmin = dmc;
+	dmin = dmin.z > dtr.z? dtr : dmin;
+	dmin = dmin.z > dtl.z? dtl : dmin;
+	dmin = dmin.z > dbl.z? dbl : dmin;
+	dmin = dmin.z > dbr.z? dbr : dmin;
+	#ifdef TAA_UPSCALING
+	dmin.xy = dmin.xy/RENDER_SCALE;
+	#endif
+	return dmin;
+}
+
+//Modified texture interpolation from inigo quilez
+vec4 smoothfilter(in sampler2D tex, in vec2 uv)
+{
+	vec2 textureResolution = vec2(viewWidth,viewHeight);
+	uv = uv*textureResolution + 0.5;
+	vec2 iuv = floor( uv );
+	vec2 fuv = fract( uv );
+	uv = iuv + fuv*fuv*fuv*(fuv*(fuv*6.0-15.0)+10.0);
+	uv = (uv - 0.5)/textureResolution;
+	return texture2D( tex, uv);
+}
+//Due to low sample count we "tonemap" the inputs to preserve colors and smoother edges
+vec3 weightedSample(sampler2D colorTex, vec2 texcoord){
+	vec3 wsample = texture2D(colorTex,texcoord).rgb*exposureA;
+	return wsample/(1.0+luma(wsample));
+
+}
+
+
+//from : https://gist.github.com/TheRealMJP/c83b8c0f46b63f3a88a5986f4fa982b1
+vec4 SampleTextureCatmullRom(sampler2D tex, vec2 uv, vec2 texSize )
+{
+    // We're going to sample a a 4x4 grid of texels surrounding the target UV coordinate. We'll do this by rounding
+    // down the sample location to get the exact center of our "starting" texel. The starting texel will be at
+    // location [1, 1] in the grid, where [0, 0] is the top left corner.
+    vec2 samplePos = uv * texSize;
+    vec2 texPos1 = floor(samplePos - 0.5) + 0.5;
+
+    // Compute the fractional offset from our starting texel to our original sample location, which we'll
+    // feed into the Catmull-Rom spline function to get our filter weights.
+    vec2 f = samplePos - texPos1;
+
+    // Compute the Catmull-Rom weights using the fractional offset that we calculated earlier.
+    // These equations are pre-expanded based on our knowledge of where the texels will be located,
+    // which lets us avoid having to evaluate a piece-wise function.
+    vec2 w0 = f * ( -0.5 + f * (1.0 - 0.5*f));
+    vec2 w1 = 1.0 + f * f * (-2.5 + 1.5*f);
+    vec2 w2 = f * ( 0.5 + f * (2.0 - 1.5*f) );
+    vec2 w3 = f * f * (-0.5 + 0.5 * f);
+
+    // Work out weighting factors and sampling offsets that will let us use bilinear filtering to
+    // simultaneously evaluate the middle 2 samples from the 4x4 grid.
+    vec2 w12 = w1 + w2;
+    vec2 offset12 = w2 / (w1 + w2);
+
+    // Compute the final UV coordinates we'll use for sampling the texture
+    vec2 texPos0 = texPos1 - vec2(1.0);
+    vec2 texPos3 = texPos1 + vec2(2.0);
+    vec2 texPos12 = texPos1 + offset12;
+
+    texPos0 *= texelSize;
+    texPos3 *= texelSize;
+    texPos12 *= texelSize;
+
+    vec4 result = vec4(0.0);
+    result += texture2D(tex, vec2(texPos0.x,  texPos0.y)) * w0.x * w0.y;
+    result += texture2D(tex, vec2(texPos12.x, texPos0.y)) * w12.x * w0.y;
+    result += texture2D(tex, vec2(texPos3.x,  texPos0.y)) * w3.x * w0.y;
+
+    result += texture2D(tex, vec2(texPos0.x,  texPos12.y)) * w0.x * w12.y;
+    result += texture2D(tex, vec2(texPos12.x, texPos12.y)) * w12.x * w12.y;
+    result += texture2D(tex, vec2(texPos3.x,  texPos12.y)) * w3.x * w12.y;
+
+    result += texture2D(tex, vec2(texPos0.x,  texPos3.y)) * w0.x * w3.y;
+    result += texture2D(tex, vec2(texPos12.x, texPos3.y)) * w12.x * w3.y;
+    result += texture2D(tex, vec2(texPos3.x,  texPos3.y)) * w3.x * w3.y;
+
+    return result;
 }
 float R2_dither(){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter) ;
+	return fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter);
 }
-float R2_dither2(){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x *(1- gl_FragCoord.x) + alpha.y * (1-gl_FragCoord.y) + 1.0/1.6180339887 * frameCounter) ;
-}
-float interleaved_gradientNoise(){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	vec2 coord = vec2(alpha.x * gl_FragCoord.x,alpha.y * gl_FragCoord.y)+ 1.0/1.6180339887 * frameCounter;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
-}
+//approximation from SMAA presentation from siggraph 2016
+vec3 FastCatmulRom(sampler2D colorTex, vec2 texcoord, vec4 rtMetrics, float sharpenAmount)
+{
+    vec2 position = rtMetrics.zw * texcoord;
+    vec2 centerPosition = floor(position - 0.5) + 0.5;
+    vec2 f = position - centerPosition;
+    vec2 f2 = f * f;
+    vec2 f3 = f * f2;
 
-float phaseRayleigh(float cosTheta) {
-	const vec2 mul_add = vec2(0.1, 0.28) /acos(-1.0);
-	return cosTheta * mul_add.x + mul_add.y; // optimized version from [Elek09], divided by 4 pi for energy conservation
-}
+    float c = sharpenAmount;
+    vec2 w0 =        -c  * f3 +  2.0 * c         * f2 - c * f;
+    vec2 w1 =  (2.0 - c) * f3 - (3.0 - c)        * f2         + 1.0;
+    vec2 w2 = -(2.0 - c) * f3 + (3.0 -  2.0 * c) * f2 + c * f;
+    vec2 w3 =         c  * f3 -                c * f2;
 
-float GetCloudShadow(vec3 eyePlayerPos){
-	vec3 worldPos = (eyePlayerPos + cameraPosition) - Cloud_Height;
-	vec3 cloudPos = worldPos*Cloud_Size + WsunVec/abs(WsunVec.y) * ((3250 - 3250*0.35) - worldPos.y*Cloud_Size) ;
-	float shadow = getCloudDensity(cloudPos, 1);
+    vec2 w12 = w1 + w2;
+    vec2 tc12 = rtMetrics.xy * (centerPosition + w2 / w12);
+    vec3 centerColor = texture2D(colorTex, vec2(tc12.x, tc12.y)).rgb;
 
-	shadow = clamp(exp(-shadow*5),0.0,1.0);
+    vec2 tc0 = rtMetrics.xy * (centerPosition - 1.0);
+    vec2 tc3 = rtMetrics.xy * (centerPosition + 2.0);
+    vec4 color = vec4(texture2D(colorTex, vec2(tc12.x, tc0.y )).rgb, 1.0) * (w12.x * w0.y ) +
+                   vec4(texture2D(colorTex, vec2(tc0.x,  tc12.y)).rgb, 1.0) * (w0.x  * w12.y) +
+                   vec4(centerColor,                                      1.0) * (w12.x * w12.y) +
+                   vec4(texture2D(colorTex, vec2(tc3.x,  tc12.y)).rgb, 1.0) * (w3.x  * w12.y) +
+                   vec4(texture2D(colorTex, vec2(tc12.x, tc3.y )).rgb, 1.0) * (w12.x * w3.y );
+	return color.rgb/color.a;
 
-	return shadow ;
-}
-
-float densityAtPosFog(in vec3 pos){
-	pos /= 18.;
-	pos.xz *= 0.5;
-	vec3 p = floor(pos);
-	vec3 f = fract(pos);
-	f = (f*f) * (3.-2.*f);
-	vec2 uv =  p.xz + f.xz + p.y * vec2(0.0,193.0);
-	vec2 coord =  uv / 512.0;
-	vec2 xy = texture2D(noisetex, coord).yx;
-	return mix(xy.r,xy.g, f.y);
 }
 
-float fog_densities_atmospheric = 24 * Haze_amount; // this is seperate from the cloudy and uniform fog.
+vec3 clip_aabb(vec3 q,vec3 aabb_min, vec3 aabb_max)
+	{
+		vec3 p_clip = 0.5 * (aabb_max + aabb_min);
+		vec3 e_clip = 0.5 * (aabb_max - aabb_min) + 0.00000001;
 
-float cloudVol(in vec3 pos){
+		vec3 v_clip = q - vec3(p_clip);
+		vec3 v_unit = v_clip.xyz / e_clip;
+		vec3 a_unit = abs(v_unit);
+		float ma_unit = max(a_unit.x, max(a_unit.y, a_unit.z));
 
-	vec3 samplePos = pos*vec3(1.0,1./24.,1.0);
-	vec3 samplePos2 = pos*vec3(1.0,1./48.,1.0);
-
-
-	float mult = exp( -max((pos.y - SEA_LEVEL) / 35.,0.0));
-
-	float fog_shape = 1-densityAtPosFog(samplePos * 24.0);
-	float fog_eroded = 1-densityAtPosFog(	samplePos2 * 200.0);
-
-	float CloudyFog = max(	(fog_shape*2.0 - fog_eroded*0.5) - 1.2, 0.0) * mult;
-	float UniformFog = exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0));
-	
-	float RainFog = max(fog_shape*10. - 7.,0.5) * exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0)) * 5. * rainStrength;
-	
-	TimeOfDayFog(UniformFog, CloudyFog);
-
-	return CloudyFog + UniformFog + RainFog;
-}
-
-mat2x3 getVolumetricRays(
-	float dither,
-	vec3 fragpos,
-	float dither2
-){
-	//project pixel position into projected shadowmap space
-	vec3 wpos = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
-	vec3 fragposition = mat3(shadowModelView) * wpos + shadowModelView[3].xyz;
-	fragposition = diagonal3(shadowProjection) * fragposition + shadowProjection[3].xyz;
-
-	//project view origin into projected shadowmap space
-	vec3 start = toShadowSpaceProjected(vec3(0.));
-
-	//rayvector into projected shadow map space
-	//we can use a projected vector because its orthographic projection
-	//however we still have to send it to curved shadow map space every step
-	vec3 dV = fragposition-start;
-	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
-
-	float maxLength = min(length(dVWorld),far)/length(dVWorld);
-	dV *= maxLength;
-	dVWorld *= maxLength;
-
-	//apply dither
-	vec3 progress = start.xyz;
-	vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition;
-
-	vec3 vL = vec3(0.);
-
-	float SdotV = dot(sunVec,normalize(fragpos))*lightCol.a;
-	float dL = length(dVWorld);
-
-	//Mie phase + somewhat simulates multiple scattering (Horizon zero down cloud approx)
-	float mie = phaseg(SdotV,0.7)*5.0 + 1.0;
-	float rayL = phaseRayleigh(SdotV);
-
-	// Makes fog more white idk how to simulate it correctly
-	vec3 sunColor = lightCol.rgb / 127.0;
-	vec3 skyCol0 = (ambientUp / 150. * 5.); // * max(abs(WsunVec.y)/150.0,0.);
-
-	vec3 rC = vec3(fog_coefficientRayleighR*1e-6, fog_coefficientRayleighG*1e-5, fog_coefficientRayleighB*1e-5);
-	vec3 mC = vec3(fog_coefficientMieR*1e-6, fog_coefficientMieG*1e-6, fog_coefficientMieB*1e-6);
-
-	float mu = 1.0;
-	float muS = mu;
-	vec3 absorbance = vec3(1.0);
-	float expFactor = 11.0;
-	vec3 WsunVec = mat3(gbufferModelViewInverse) * sunVec * lightCol.a;
-
-	float cloudShadow = 1.0;
-
-	for (int i=0;i<VL_SAMPLES;i++) {
-		float d = (pow(expFactor, float(i+dither)/float(VL_SAMPLES))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
-		float dd = pow(expFactor, float(i+dither)/float(VL_SAMPLES)) * log(expFactor) / float(VL_SAMPLES)/(expFactor-1.0);
-		progress = start.xyz + d*dV;
-		progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
-		//project into biased shadowmap space
-		float distortFactor = calcDistort(progress.xy);
-		vec3 pos = vec3(progress.xy*distortFactor, progress.z);
-		float densityVol = cloudVol(progressW);
-		float sh = 1.0;
-		if (abs(pos.x) < 1.0-0.5/2048. && abs(pos.y) < 1.0-0.5/2048){
-			pos = pos*vec3(0.5,0.5,0.5/6.0)+0.5;
-			sh = shadow2D( shadow, pos).x;
-		}
-		#ifdef VOLUMETRIC_CLOUDS
-		#ifdef CLOUDS_SHADOWS
-		#ifdef VL_CLOUDS_SHADOWS
-			float max_height = clamp(400.0 - progressW.y, 0.0,1.0); // so it doesnt go beyond the height of the clouds
-			vec3 campos = (progressW)-319;
-			// get cloud position
-			vec3 cloudPos = campos*Cloud_Size + WsunVec/abs(WsunVec.y) * (2250 - campos.y*Cloud_Size);
-			// get the cloud density and apply it
-			cloudShadow = getCloudDensity(cloudPos, 1);
-			cloudShadow = exp(-cloudShadow*cloudDensity*200);
-			cloudShadow *= max_height;
-			// cloudShadow *= 1000; //debug 
-		#endif
-		#endif
-		#endif
-
-		//Water droplets(fog)
-		float density = densityVol*ATMOSPHERIC_DENSITY*mu*300.;
-
-		//Just air
-		vec2 airCoef = exp(-max(progressW.y-SEA_LEVEL,0.0)/vec2(8.0e3, 1.2e3)*vec2(6.,7.0)) * 24;
-
-		//Pbr for air, yolo mix between mie and rayleigh for water droplets
-		vec3 rL = rC*airCoef.x;
-		vec3 m = (airCoef.y+density)*mC;
-
-
-		vec3 DirectLight =  (sunColor*sh*cloudShadow) * (rayL*rL+m*mie);
-		vec3 AmbientLight =  skyCol0 * m;
-		vec3 AtmosphericFog = skyCol0 * (rL+m)  ;
-
-		// extra fog effects
-		vec3 rainRays =   (sunColor*sh*cloudShadow) * (rayL*phaseg(SdotV,0.6)) * clamp(pow(WsunVec.y,5)*2,0.0,1) * rainStrength;
-		vec3 CaveRays = (sunColor*sh*cloudShadow)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - max(eyeBrightnessSmooth.y,0)/240.);
-
-		vec3 vL0 = ( DirectLight + AmbientLight + AtmosphericFog + rainRays) * max(eyeBrightnessSmooth.y,0)/240. + CaveRays ;
-		
-		#ifdef Biome_specific_environment
-			BiomeFogColor(vL0); // ?????
-		#endif
-
-		vL += (vL0 - vL0 * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*absorbance;
-		absorbance *= clamp(exp(-(rL+m)*dd*dL),0.0,1.0);
-
+		if (ma_unit > 1.0)
+			return vec3(p_clip) + v_clip / ma_unit;
+		else
+			return q;
 	}
-	return mat2x3(vL,absorbance);
+vec3 toClipSpace3Prev(vec3 viewSpacePosition) {
+    return projMAD(gbufferPreviousProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 }
 
-float waterCaustics(vec3 wPos, vec3 lightSource) { // water waves
-
-	vec2 pos = wPos.xz + (lightSource.xz/lightSource.y*wPos.y);
-	if(isEyeInWater==1) pos = wPos.xz - (lightSource.xz/lightSource.y*wPos.y); // fix the fucky
-	vec2 movement = vec2(-0.035*frameTimeCounter);
-	float caustic = 0.0;
-	float weightSum = 0.0;
-	float radiance =  2.39996;
-	mat2 rotationMatrix  = mat2(vec2(cos(radiance),  -sin(radiance)),  vec2(sin(radiance),  cos(radiance)));
-
-	const vec2 wave_size[4] = vec2[](
-		vec2(64.),
-		vec2(32.,16.),
-		vec2(16.,32.),
-		vec2(48.)
-	);
-
-	for (int i = 0; i < 4; i++){
-		pos = rotationMatrix * pos;
-
-		vec2 speed = movement;
-		float waveStrength = 1.0;
-		
-		if( i == 0) {
-			speed *= 0.15;
-			waveStrength = 2.0;
-		}
-
-		float small_wave = texture2D(noisetex, pos / wave_size[i] + speed ).b * waveStrength;
-
-		caustic +=  max( 1.0-sin( 1.0-pow(	0.5+sin( small_wave*3.0	)*0.5,	25.0)	),	0);
-
-		weightSum -= exp2(caustic*0.1);
-	}
-	return caustic / weightSum;
+vec3 tonemap(vec3 col){
+	return col/(1+luma(col));
 }
-vec3 normVec (vec3 vec){
-	return vec*inversesqrt(dot(vec,vec));
+vec3 invTonemap(vec3 col){
+	return col/(1-luma(col));
 }
-void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estEyeDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient, vec3 lightSource, float VdotL){
-		int spCount = 8;
+const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
+							vec2(-1.,3.)/8.,
+							vec2(5.0,1.)/8.,
+							vec2(-3,-5.)/8.,
+							vec2(-5.,5.)/8.,
+							vec2(-7.,-1.)/8.,
+							vec2(3,7.)/8.,
+							vec2(7.,-7.)/8.);
 
-		vec3 start = toShadowSpaceProjected(rayStart);
-		vec3 end = toShadowSpaceProjected(rayEnd);
-		vec3 dV = (end-start);
 
-		//limit ray length at 32 blocks for performance and reducing integration error
-		//you can't see above this anyway
-		float maxZ = min(rayLength,32.0)/(1e-8+rayLength);
-		dV *= maxZ;
-		vec3 dVWorld = mat3(gbufferModelViewInverse) * (rayEnd - rayStart) * maxZ;
-		rayLength *= maxZ;
-		float dY = normalize(mat3(gbufferModelViewInverse) * rayEnd).y * rayLength;
-		vec3 absorbance = vec3(1.0);
-		vec3 vL = vec3(0.0);
-		float phase =  2*mix(phaseg(VdotL, 0.4),phaseg(VdotL, 0.8),0.5);
-		float expFactor = 11.0;
-		vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition;
-		vec3 WsunVec = mat3(gbufferModelViewInverse) * sunVec * lightCol.a;
-		float cloudShadow = 1;
-		for (int i=0;i<spCount;i++) {
-			float d = (pow(expFactor, float(i+dither)/float(spCount))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);		// exponential step position (0-1)
-			float dd = pow(expFactor, float(i+dither)/float(spCount)) * log(expFactor) / float(spCount)/(expFactor-1.0);	//step length (derivative)
-			vec3 spPos = start.xyz + dV*d;
-			progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
-			//project into biased shadowmap space
-			float distortFactor = calcDistort(spPos.xy);
-			vec3 pos = vec3(spPos.xy*distortFactor, spPos.z);
-			float sh = 1.0;
-			if (abs(pos.x) < 1.0-0.5/2048. && abs(pos.y) < 1.0-0.5/2048){
-				pos = pos*vec3(0.5,0.5,0.5/6.0)+0.5;
-				sh =  shadow2D( shadow, pos).x;
-			}
-			
-			#ifdef VOLUMETRIC_CLOUDS
-			#ifdef CLOUDS_SHADOWS
-				vec3 campos = (progressW)-319;
-				// get cloud position
-				vec3 cloudPos = campos*Cloud_Size + WsunVec/abs(WsunVec.y) * (2250 - campos.y*Cloud_Size);
-				// get the cloud density and apply it
-				float cloudShadow = getCloudDensity(cloudPos, 1);
-				// cloudShadow = exp(-cloudShadow*sqrt(cloudDensity)*50);
-				cloudShadow = clamp(exp(-cloudShadow*6),0.0,1.0);
-				sh *= cloudShadow;
-			#endif
-			#endif
 
-			vec3 p3 = mat3(gbufferModelViewInverse) * rayEnd;
-			vec3 np3 = normVec(p3);
-			float ambfogfade =  clamp(exp(np3.y*1.5 - 1.5),0.0,1.0) ;
+// float maxOf(vec2 v) { return max(v.x, v.y); }
+// float maxOf(vec3 v) { return max(v.x, max(v.y, v.z)); }
+// float maxOf(vec4 v) { return max(v.x, max(v.y, max(v.z, v.w))); }
+// const float eps         = 1e-6;
 
-			vec3 ambientMul = exp(-max(estEyeDepth - dY * d,0.0) * waterCoefs) + ambfogfade*0.5 ;
-			vec3 sunMul = exp(-max((estEyeDepth - dY * d) ,0.0)/abs(refractedSunVec.y) * waterCoefs)*cloudShadow;
-			
-			float sunCaustics = waterCaustics(progressW, WsunVec);
-			sunCaustics =  max(pow(sunCaustics*3,2),0.5);
+// vec3 reproject(vec3 screenPos, sampler2D velocitySampler) {
+// 	vec3 velocity = texelFetch(velocitySampler, ivec2(screenPos.xy), 0).xyz;
 
-			vec3 light = (sh * lightSource * phase * sunCaustics * sunMul  +  (ambient*ambientMul))*scatterCoef;
-			vL += (light - light * exp(-waterCoefs * dd * rayLength)) / waterCoefs *absorbance;
-			absorbance *= exp(-dd * rayLength * waterCoefs);
-		}
-		inColor += vL;
+// 	if (maxOf(abs(velocity)) < r) {
+// 		return reproject(screenPos);
+// 	} else {
+// 		vec3 pos = screenToViewSpace(screenPos, false);
+// 		     pos = pos - velocity;
+// 		     pos = toScreenSpace(pos, false);
+
+// 		return pos;
+// 	}
+// }
+vec3 worldToView(vec3 p3) {
+    vec4 pos = vec4(p3, 0.0);
+    pos = gbufferModelView * pos;
+    return pos.xyz;
 }
 
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
+vec3 viewToWorld(vec3 viewPosition) {
+    vec4 pos;
+    pos.xyz = viewPosition;
+    pos.w = 0.0;
+    pos = gbufferModelViewInverse * pos;
+    return pos.xyz;
+}
+vec3 projectAndDivide(mat4 projectionMatrix, vec3 position){
+	vec4 homogeneousPos = projectionMatrix * vec4(position, 1.0);
+	return homogeneousPos.xyz / homogeneousPos.w;
+}
+
+vec3 TAA_hq(bool hand, bool istranslucent, vec3 EntityVelocity, inout vec3 DEBUG){
+	#ifdef TAA_UPSCALING
+	vec2 adjTC = clamp(texcoord*RENDER_SCALE, vec2(0.0),RENDER_SCALE-texelSize*2.);
+	#else
+	vec2 adjTC = texcoord;
+	#endif
+
+	//use velocity from the nearest texel from camera in a 3x3 box in order to improve edge quality in motion
+	#ifdef CLOSEST_VELOCITY
+		vec3 closestToCamera = closestToCamera5taps(adjTC,	depthtex0);
+	#endif
+	// if(	EntityVelocity > vec3(0.0)	) closestToCamera = closestToCamera - EntityVelocity;
+
+	#ifndef CLOSEST_VELOCITY
+		vec3 closestToCamera = vec3(texcoord,texture2D(depthtex1,adjTC).x);
+	#endif
+
+	//reproject previous frame
+	vec3 fragposition = toScreenSpace(closestToCamera);
+	fragposition = mat3(gbufferModelViewInverse) * fragposition + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
+
+	vec3 previousPosition = mat3(gbufferPreviousModelView) * fragposition + gbufferPreviousModelView[3].xyz;
+	previousPosition = toClipSpace3Prev(previousPosition) ;
+
+
+
+
+	vec2 velocity = previousPosition.xy - closestToCamera.xy;
+	previousPosition.xy = texcoord + velocity ;
+	// previousPosition -= abs(EntityVelocity);
+
+	DEBUG = previousPosition;
+
+	//reject history if off-screen and early exit
+	if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0)
+		return smoothfilter(colortex3, adjTC + offsets[framemod8]*texelSize*0.5).xyz;
+
+	#ifdef TAA_UPSCALING
+	vec3 albedoCurrent0 = smoothfilter(colortex3, adjTC + offsets[framemod8]*texelSize*0.5).xyz;
+	// Interpolating neighboorhood clampling boundaries between pixels
+	vec3 cMax = texture2D(colortex0, adjTC).rgb;
+	vec3 cMin = texture2D(colortex6, adjTC).rgb;
+	#else
+	vec3 albedoCurrent0 = texture2D(colortex3, adjTC).rgb;
+	vec3 albedoCurrent1 = texture2D(colortex3, adjTC + vec2(texelSize.x,texelSize.y)).rgb;
+	vec3 albedoCurrent2 = texture2D(colortex3, adjTC + vec2(texelSize.x,-texelSize.y)).rgb;
+	vec3 albedoCurrent3 = texture2D(colortex3, adjTC + vec2(-texelSize.x,-texelSize.y)).rgb;
+	vec3 albedoCurrent4 = texture2D(colortex3, adjTC + vec2(-texelSize.x,texelSize.y)).rgb;
+	vec3 albedoCurrent5 = texture2D(colortex3, adjTC + vec2(0.0,texelSize.y)).rgb;
+	vec3 albedoCurrent6 = texture2D(colortex3, adjTC + vec2(0.0,-texelSize.y)).rgb;
+	vec3 albedoCurrent7 = texture2D(colortex3, adjTC + vec2(-texelSize.x,0.0)).rgb;
+	vec3 albedoCurrent8 = texture2D(colortex3, adjTC + vec2(texelSize.x,0.0)).rgb;
+	//Assuming the history color is a blend of the 3x3 neighborhood, we clamp the history to the min and max of each channel in the 3x3 neighborhood
+	vec3 cMax = max(max(max(albedoCurrent0,albedoCurrent1),albedoCurrent2),max(albedoCurrent3,max(albedoCurrent4,max(albedoCurrent5,max(albedoCurrent6,max(albedoCurrent7,albedoCurrent8))))));
+	vec3 cMin = min(min(min(albedoCurrent0,albedoCurrent1),albedoCurrent2),min(albedoCurrent3,min(albedoCurrent4,min(albedoCurrent5,min(albedoCurrent6,min(albedoCurrent7,albedoCurrent8))))));
+	albedoCurrent0 = smoothfilter(colortex3, adjTC + offsets[framemod8]*texelSize*0.5).rgb;
+	#endif
+
+	#ifndef NO_CLIP
+	vec3 albedoPrev = max(FastCatmulRom(colortex5, previousPosition.xy,vec4(texelSize, 1.0/texelSize), 0.75).xyz, 0.0);
+	vec3 finalcAcc = clamp(albedoPrev,cMin,cMax);
+
+	//Increases blending factor when far from AABB and in motion, reduces ghosting
+	float isclamped = distance(albedoPrev,finalcAcc)/luma(albedoPrev) * 0.5;
+	float movementRejection = (0.12+isclamped)*clamp(length(velocity/texelSize),0.0,1.0);
+	
+	float test = 0.05;
+	if(hand) movementRejection *= 5;
+	if(istranslucent) test = 0.1;
+
+	//Blend current pixel with clamped history, apply fast tonemap beforehand to reduce flickering
+	// vec3 supersampled = invTonemap(mix(tonemap(finalcAcc),tonemap(albedoCurrent0),clamp(BLEND_FACTOR + movementRejection, min(luma(motionVector) *255,1.0),1.)));
+	
+	vec3 supersampled = invTonemap(mix(tonemap(finalcAcc),tonemap(albedoCurrent0),clamp(BLEND_FACTOR + movementRejection, test,1.)));
+	#endif
+
+
+	#ifdef NO_CLIP
+	vec3 albedoPrev = texture2D(colortex5, previousPosition.xy).xyz;
+	vec3 supersampled =  mix(albedoPrev,albedoCurrent0,clamp(0.05,0.,1.));
+	#endif
+
+	//De-tonemap
+	return supersampled;
+}
+
+
+vec3 decode (vec2 encn){
+    vec3 n = vec3(0.0);
+    encn = encn * 2.0 - 1.0;
+    n.xy = abs(encn);
+    n.z = 1.0 - n.x - n.y;
+    n.xy = n.z <= 0.0 ? (1.0 - n.yx) * sign(encn) : encn;
+    return clamp(normalize(n.xyz),-1.0,1.0);
+}
+vec2 decodeVec2(float a){
+    const vec2 constant1 = 65535. / vec2( 256., 65536.);
+    const float constant2 = 256. / 255.;
+    return fract( a * constant1 ) * constant2 ;
+}
+vec2 R2_samples(int n){
+	vec2 alpha = vec2(0.75487765, 0.56984026);
+	return fract(alpha * n)*2.-1.0;
+}
+vec4 TAA_hq_render(){
+	#ifdef TAA_UPSCALING
+	vec2 adjTC = clamp(texcoord*RENDER_SCALE, vec2(0.0),RENDER_SCALE-texelSize*2.);
+	#else
+	vec2 adjTC = texcoord;
+	#endif
+
+	//use velocity from the nearest texel from camera in a 3x3 box in order to improve edge quality in motion
+	#ifdef CLOSEST_VELOCITY
+	vec3 closestToCamera = closestToCamera5taps(adjTC,depthtex0);
+	#endif
+
+	#ifndef CLOSEST_VELOCITY
+	vec3 closestToCamera = vec3(texcoord,texture2D(depthtex0,adjTC).x);
+	#endif
+
+	//reproject previous frame
+	vec3 fragposition = toScreenSpace(closestToCamera);
+	fragposition = mat3(gbufferModelViewInverse) * fragposition + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
+	vec3 previousPosition = mat3(gbufferPreviousModelView) * fragposition + gbufferPreviousModelView[3].xyz;
+	previousPosition = toClipSpace3Prev(previousPosition);
+	vec2 velocity = previousPosition.xy - closestToCamera.xy;
+	previousPosition.xy = texcoord + velocity;
+
+	// //reject history if off-screen and early exit
+	if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0)
+		return vec4(smoothfilter(colortex3, adjTC + R2_samples(frameCounter)*texelSize*0.5).xyz, 1.0);
+
+	vec3 albedoCurrent0 = smoothfilter(colortex3, adjTC + R2_samples(frameCounter)*texelSize*0.5).xyz;
+
+	float rej = 0.0;
+	vec4 albedoPrev = texture2D(colortex5, previousPosition.xy);
+	vec3 supersampled =  albedoPrev.rgb * albedoPrev.a + albedoCurrent0;
+
+	if (length(velocity) > 1e-6) return vec4(albedoCurrent0,1.0);
+	return vec4(supersampled/(albedoPrev.a+1.0), albedoPrev.a+1.0);
+}
 
 void main() {
-/* DRAWBUFFERS:0 */
-	float lightleakfix = max(eyeBrightnessSmooth.y,0)/240.;
 
-	if (isEyeInWater == 0){
+/* DRAWBUFFERS:5 */
 
-		vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
-		float z = texture2D(depthtex0,tc).x;
-		vec3 fragpos = toScreenSpace(vec3(tc/RENDER_SCALE,z));
-		float noise = blueNoise();
-		mat2x3 vl = getVolumetricRays(noise,fragpos,blueNoise());
-		float absorbance = dot(vl[1],vec3(0.22,0.71,0.07));
-		gl_FragData[0] = clamp(vec4(vl[0],absorbance),0.000001,65000.);
 
-	} else {
 
-		float dirtAmount = Dirt_Amount;
-		vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
-		vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
-		vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;
-		vec3 scatterCoef = dirtAmount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B);
 
-		#ifdef AEROCHROME_MODE
-		totEpsilon *= 2.0;
-		scatterCoef *= 10.0;
+	gl_FragData[0].a = 1.0;
+#ifndef SPLIT_RENDER
+	#ifdef SCREENSHOT_MODE
+
+
+		vec4 color = TAA_hq_render();
+		gl_FragData[0] = color;
+
+
+	#else
+		#ifdef TAA
+			vec4 data = texture2D(colortex1,texcoord* RENDER_SCALE); // terraom
+			vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w));
+			bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
+			bool translucentCol = texture2D(colortex13,texcoord * RENDER_SCALE).a > 0.0; // translucents
+			vec3 color = vec3(0.0);
+
+			// vec3 motionVector = texture2D(colortex10,texcoord).xyz  ;
+			// vec3 motionVector = texelFetch(colortex10, ivec2(gl_FragCoord.xy), 0).xyz * 2 - 1;
+
+			// if((motionVector.x+motionVector.y+motionVector.z) / 3 < 0.00001) motionVector = vec3(0.0);
+			// vec3 viewpos = motionVector;
+			// // vec3 eyepos =  mat3(gbufferModelViewInverse) * viewpos; 
+			// // vec3 worldPos = eyepos + (cameraPosition + gbufferModelViewInverse[3].xyz);
+			// // vec3 feetPos = worldPos - cameraPosition;
+
+			// vec4 clippos = gbufferProjection * vec4(motionVector,1.0);
+
+			// vec3 ndcPos = projectAndDivide(gbufferProjectionInverse, viewpos);
+			// vec3 screenPos = ndcPos * 0.5 + 0.5;
+
+
+			vec3 DEBUG = vec3(0.0);
+			color += TAA_hq(hand, translucentCol, vec3(0.0),DEBUG);
+
+			
+			gl_FragData[0].rgb = clamp(fp10Dither(color ,triangularize(R2_dither())),6.11*1e-5,65000.0);
+			// gl_FragData[0].rgb = motionVector;
 		#endif
 
-		vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
-		float z = texture2D(depthtex0,tc).x;
-		vec3 fragpos = toScreenSpace(vec3(tc/RENDER_SCALE,z));
-		float noise = R2_dither();
-		vec3 vl = vec3(0.0);
-		float estEyeDepth = clamp((14.0-eyeBrightnessSmooth.y/255.0*16.0)/14.0,0.,1.0);
-		estEyeDepth *= estEyeDepth*estEyeDepth*34.0;
-
-		#ifndef lightMapDepthEstimation
-			estEyeDepth = max(Water_Top_Layer - cameraPosition.y,0.0);
+		#ifndef TAA
+			vec3 color = clamp(fp10Dither(texture2D(colortex3,texcoord).rgb,triangularize(interleaved_gradientNoise())),0.,65000.);
+			gl_FragData[0].rgb = color;
 		#endif
+	#endif
+#endif
 
-		waterVolumetrics(vl, vec3(0.0), fragpos, estEyeDepth, estEyeDepth, length(fragpos), noise, totEpsilon, scatterCoef, (ambientUp*8./150./3.*0.5) , lightCol.rgb*8./150./3.0*(1.0-pow(1.0-sunElevation*lightCol.a,5.0)), dot(normalize(fragpos), normalize(sunVec)	));
-		gl_FragData[0] = clamp(vec4(vl,1.0),0.000001,65000.);
+
+
+
+#ifdef SPLIT_RENDER
+	if(texcoord.x > 0.5){
+
+		vec4 color = TAA_hq_render();
+		gl_FragData[0] = color;
+
+	}else{
+			vec4 data = texture2D(colortex1,texcoord* RENDER_SCALE); // terraom
+			vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w));
+			bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
+			bool translucentCol = texture2D(colortex13,texcoord * RENDER_SCALE).a > 0.0; // translucents
+
+
+
+			vec3 color = TAA_hq(hand, translucentCol);
+			gl_FragData[0].rgb = clamp(fp10Dither(color ,triangularize(R2_dither())),6.11*1e-5,65000.0);
+
 	}
+#endif
 }

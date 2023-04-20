@@ -1,7 +1,13 @@
 #version 120
+#extension GL_EXT_gpu_shader4 : enable
 
-uniform float viewWidth;
-uniform float viewHeight;
+#include "/lib/settings.glsl"
+
+varying vec2 texcoord;
+flat varying vec4 exposure;
+flat varying float rodExposure;
+uniform sampler2D colortex4;
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -9,9 +15,9 @@ uniform float viewHeight;
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-	//Improves performances and makes sure bloom radius stays the same at high resolution (>1080p)
-	vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
+
 	gl_Position = ftransform();
-	//*0.51 to avoid errors when sampling outside since clearing is disabled
-	gl_Position.xy = (gl_Position.xy*0.5+0.5)*0.26/clampedRes*vec2(1920.0,1080.)*2-1.0;
+	texcoord = gl_MultiTexCoord0.xy;
+	exposure=vec4(texelFetch2D(colortex4,ivec2(10,37),0).r*vec3(FinalR,FinalG,FinalB),texelFetch2D(colortex4,ivec2(10,37),0).r);
+	rodExposure = texelFetch2D(colortex4,ivec2(14,37),0).r;
 }

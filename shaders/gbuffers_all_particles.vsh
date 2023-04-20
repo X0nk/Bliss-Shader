@@ -22,7 +22,9 @@ varying vec4 normalMat;
 #endif
 
 flat varying vec3 WsunVec;
-flat varying vec4 lightCol;
+flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
+flat varying vec3 avgAmbient;
+
 uniform mat4 gbufferModelViewInverse;
 uniform vec3 sunPosition;
 uniform float sunElevation;
@@ -61,6 +63,7 @@ void main() {
 	gl_Position = ftransform();
 	color = gl_Color;
 
+	avgAmbient = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 	vec3 sc = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
 	lightCol.a = float(sunElevation > 1e-5)*2-1.;
 	lightCol.rgb = sc;
@@ -69,11 +72,13 @@ void main() {
 
 
 	FlatNormals = normalize(gl_NormalMatrix *gl_Normal);
+
 	#ifdef MC_NORMAL_MAP
 		tangent = vec4(normalize(gl_NormalMatrix *at_tangent.rgb),at_tangent.w);
 	#endif
 
 	normalMat = vec4(normalize(gl_NormalMatrix *gl_Normal),1.0);
+	
 	#ifdef TAA_UPSCALING
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif

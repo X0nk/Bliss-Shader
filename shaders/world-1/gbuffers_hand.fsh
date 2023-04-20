@@ -1,4 +1,4 @@
 #version 120
 
 #define HAND
-#include "gbuffers_all_solid.fsh"
+#include "/programs/all_solid.fsh"

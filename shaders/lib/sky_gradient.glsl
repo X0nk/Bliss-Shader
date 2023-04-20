@@ -81,7 +81,7 @@ vec4 skyCloudsFromTex(vec3 pos,sampler2D sampler){
 	vec2 p = sphereToCarte(pos);
 	return texture2D(sampler,p*texelSize*256.+vec2(18.5+257.,1.5)*texelSize);
 }
-vec4 skyCloudsFromTex_Spec(vec3 pos,sampler2D sampler, int LOD){
+vec4 skyCloudsFromTexLOD(vec3 pos,sampler2D sampler, float LOD){
 	vec2 p = sphereToCarte(pos);
-	return texture2DLod(sampler,p*texelSize*256.+vec2(18.5+257.,1.5)*texelSize, LOD);
+	return texture2DLod(sampler,p*texelSize*256.+vec2(18.5+257.,1.5)*texelSize,LOD);
 }

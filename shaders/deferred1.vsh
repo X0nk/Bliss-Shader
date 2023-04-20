@@ -5,15 +5,20 @@
 
 flat varying vec3 sunColor;
 flat varying vec3 moonColor;
+flat varying vec4 lightCol;
 flat varying vec3 avgAmbient;
 flat varying float tempOffsets;
 
+flat varying vec3 WsunVec;
 flat varying vec3 ambientUp;
 flat varying vec3 ambientLeft;
 flat varying vec3 ambientRight;
 flat varying vec3 ambientB;
 flat varying vec3 ambientF;
 flat varying vec3 ambientDown;
+uniform mat4 gbufferModelViewInverse;
+uniform vec3 sunPosition;
+uniform float sunElevation;
 
 uniform sampler2D colortex4;
 uniform int frameCounter;
@@ -35,6 +40,12 @@ void main() {
 	sunColor = texelFetch2D(colortex4,ivec2(12,37),0).rgb;
 	moonColor = texelFetch2D(colortex4,ivec2(13,37),0).rgb;
 	// avgAmbient = texelFetch2D(colortex4,ivec2(11,37),0).rgb;
+	
+	vec3 sc = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
+	lightCol.a = float(sunElevation > 1e-5)*2-1.;
+	lightCol.rgb = sc;
+
+	WsunVec = lightCol.a*normalize(mat3(gbufferModelViewInverse) *sunPosition);
 
 	// ambientUp = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 	// ambientDown = texelFetch2D(colortex4,ivec2(1,37),0).rgb;

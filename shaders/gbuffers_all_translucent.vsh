@@ -16,8 +16,8 @@ varying vec4 lmtexcoord;
 varying vec4 color;
 varying vec4 normalMat;
 varying vec3 binormal;
-varying vec3 tangent;
-varying float dist;
+varying vec4 tangent;
+
 uniform mat4 gbufferModelViewInverse;
 varying vec3 viewVector;
 
@@ -27,6 +27,7 @@ attribute vec4 at_tangent;
 attribute vec4 mc_Entity;
 
 uniform sampler2D colortex4;
+
 uniform vec3 sunPosition;
 flat varying vec3 WsunVec;
 uniform float sunElevation;
@@ -36,13 +37,12 @@ varying vec4 tangent_other;
 flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
 
 uniform int frameCounter;
-uniform float frameTimeCounter;
 uniform float far;
 uniform float aspectRatio;
-uniform float viewHeight;
-uniform float viewWidth;
 uniform int hideGUI;
 uniform float screenBrightness;
+flat varying vec3 avgAmbient;
+
 
 uniform vec2 texelSize;
 uniform int framemod8;
@@ -59,6 +59,17 @@ uniform int framemod8;
 vec4 toClipSpace3(vec3 viewSpacePosition) {
     return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
 }
+
+
+
+
+
+
+
+
+#define PHYSICSMOD_VERTEX
+#include "/lib/oceans.glsl"
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -66,42 +77,64 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
+
+	vec4 Swtich_gl_vertex = gl_Vertex;
+
+	if(physics_iterationsNormal > 0.0){
+    	// basic texture to determine how shallow/far away from the shore the water is
+    	physics_localWaviness = texelFetch(physics_waviness, ivec2(gl_Vertex.xz) - physics_textureOffset, 0).r;
+    	// transform gl_Vertex (since it is the raw mesh, i.e. not transformed yet)
+    	vec4 finalPosition = vec4(gl_Vertex.x, gl_Vertex.y + physics_waveHeight(gl_Vertex.xz, PHYSICS_ITERATIONS_OFFSET, physics_localWaviness, physics_gameTime), gl_Vertex.z, gl_Vertex.w);
+    	// pass this to the fragment shader to fetch the texture there for per fragment normals
+    	physics_localPosition = finalPosition.xyz;
+
+		Swtich_gl_vertex.xyz = finalPosition.xyz ;
+	}
+
 	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
-	vec2 lmcoord = gl_MultiTexCoord1.xy/255.;
+	vec2 lmcoord = gl_MultiTexCoord1.xy / 255.0; // is this even correct? lol
 	lmtexcoord.zw = lmcoord;
 
-  vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-  gl_Position = toClipSpace3(position);
-	color = gl_Color;
+
+
+ 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(Swtich_gl_vertex) + gl_ModelViewMatrix[3].xyz;
+ 	gl_Position = toClipSpace3(position);
+
+	color = vec4(gl_Color.rgb,1.0);
+
 	float mat = 0.0;
+	
 	if(mc_Entity.x == 8.0 || mc_Entity.x == 9.0) {
     mat = 1.0;
 
     gl_Position.z -= 1e-4;
   }
 
-
-	if (mc_Entity.x == 10002) mat = 0.01;
+	if (mc_Entity.x == 10002) mat = 0.2;
 	if (mc_Entity.x == 72) mat = 0.5;
+
+	#ifdef ENTITIES
+		mat = 0.2;
+	#endif
+
 	
-	// if (mc_Entity.x == 8) mat = 0.1;
-	
-	normalMat = vec4(normalize( gl_NormalMatrix*gl_Normal),mat);
+	tangent = vec4(normalize(gl_NormalMatrix *at_tangent.rgb),at_tangent.w);
+
+	normalMat = vec4(normalize(gl_NormalMatrix *gl_Normal), 1.0);
+	normalMat.a = mat;
 
 
 
-	tangent_other = vec4(normalize(gl_NormalMatrix * at_tangent.rgb),normalMat.a);
 
-	tangent = normalize( gl_NormalMatrix *at_tangent.rgb);
-	binormal = normalize(cross(tangent.rgb,normalMat.xyz)*at_tangent.w);
 
-	mat3 tbnMatrix = mat3(tangent.x, binormal.x, normalMat.x,
-								  tangent.y, binormal.y, normalMat.y,
-						     	  tangent.z, binormal.z, normalMat.z);
+	vec3 tangent2 = normalize( gl_NormalMatrix *at_tangent.rgb);
+	binormal = normalize(cross(tangent2.rgb,normalMat.xyz)*at_tangent.w);
 
-	dist = length(gl_ModelViewMatrix * gl_Vertex);
+	mat3 tbnMatrix = mat3(tangent2.x, binormal.x, normalMat.x,
+								  tangent2.y, binormal.y, normalMat.y,
+						     	  tangent2.z, binormal.z, normalMat.z);
 
-	viewVector = ( gl_ModelViewMatrix * gl_Vertex).xyz;
+	viewVector = ( gl_ModelViewMatrix * Swtich_gl_vertex).xyz;
 	viewVector = normalize(tbnMatrix * viewVector);
 
 
@@ -137,4 +170,6 @@ void main() {
 		gl_Position.xy += hideGUI >= 1 ? totalOffset : vec2(0);
 	#endif
 
+	
+	avgAmbient = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 }

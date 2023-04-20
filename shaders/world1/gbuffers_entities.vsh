@@ -3,4 +3,4 @@
 
 // #define WORLD
 #define ENTITIES
-#include "gbuffers_all_solid.vsh"
+#include "/programs/all_solid.vsh"

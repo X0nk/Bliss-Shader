@@ -1,32 +1,28 @@
 #version 120
 
-/*
-!! DO NOT REMOVE !!
-This code is from Chocapic13' shaders
-Read the terms of modification and sharing before changing something below please !
-!! DO NOT REMOVE !!
-*/
-
 
 varying vec4 color;
 varying vec2 texcoord;
 
 uniform sampler2D texture;
+
+//faster and actually more precise than pow 2.2
 vec3 toLinear(vec3 sRGB){
 	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
 }
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
+/* DRAWBUFFERS:18 */
 
 void main() {
-	vec4 albedo = texture2D(texture, texcoord);
 
-	albedo *= color;
-	albedo.rgb = toLinear(albedo.rgb)*0.33;
-/* DRAWBUFFERS:2 */
-	gl_FragData[0] = albedo;
-
+	vec3 albedo = (texture2D(texture, texcoord).rgb * color.rgb);
+   
+    gl_FragData[0].rgb = albedo;
+   
+   gl_FragData[1].a = 0.5;
 }

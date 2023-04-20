@@ -2,6 +2,13 @@
 #include "/lib/res_params.glsl"
 #include "/lib/bokeh.glsl"
 
+/*
+!! DO NOT REMOVE !!
+This code is from Chocapic13' shaders
+Read the terms of modification and sharing before changing something below please !
+!! DO NOT REMOVE !!
+*/
+
 
 #ifndef USE_LUMINANCE_AS_HEIGHTMAP
 #ifndef MC_NORMAL_MAP
@@ -13,32 +20,24 @@
 #define MC_NORMAL_MAP
 #endif
 
-/*
-!! DO NOT REMOVE !!
-This code is from Chocapic13' shaders
-Read the terms of modification and sharing before changing something below please !
-!! DO NOT REMOVE !!
-*/
-uniform int worldDay;
-varying vec4 lmtexcoord;
-varying vec4 color;
-varying float VanillaAO;
-varying vec4 NoSeasonCol;
-varying vec4 normalMat;
-#ifdef POM
-varying vec4 vtexcoordam; // .st for add, .pq for mul
-varying vec4 vtexcoord;
-#endif
 
+varying vec4 color;
+varying vec4 NoSeasonCol;
+varying float VanillaAO;
+
+varying vec4 lmtexcoord;
+varying vec4 normalMat;
+
+#ifdef POM
+	varying vec4 vtexcoordam; // .st for add, .pq for mul
+	varying vec4 vtexcoord;
+#endif
 
 #ifdef MC_NORMAL_MAP
 	varying vec4 tangent;
 	attribute vec4 at_tangent;
 	varying vec3 FlatNormals;
 #endif
-
-out vec3 test_motionVectors; 
-in vec3 at_velocity;  
 
 uniform float frameTimeCounter;
 const float PI48 = 150.796447372*WAVY_SPEED;
@@ -47,19 +46,19 @@ float pi2wt = PI48*frameTimeCounter;
 attribute vec4 mc_Entity;
 uniform int blockEntityId;
 uniform int entityId;
+flat varying int EMISSIVE;
 
 flat varying float blockID;
-flat varying vec4 TESTMASK;
 flat varying int lightningBolt;
 
+flat varying int NameTags;
 
 uniform int frameCounter;
 uniform float aspectRatio;
-uniform float viewHeight;
-uniform float viewWidth;
-uniform sampler2D colortex4;
 uniform int hideGUI;
 uniform float screenBrightness;
+in vec3 at_velocity;
+out vec3 velocity;
 
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
@@ -133,8 +132,8 @@ vec3 blackbody2(float Temp)
 // 	return dot(color,vec3(0.21, 0.72, 0.07));
 // }
 
-	#define SEASONS_VSH
-	#include "/lib/climate_settings.glsl"
+#define SEASONS_VSH
+#include "/lib/climate_settings.glsl"
 
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -143,17 +142,22 @@ vec3 blackbody2(float Temp)
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
-	FlatNormals = normalize(gl_NormalMatrix * gl_Normal);
-	TESTMASK = vec4(normalize(gl_NormalMatrix * gl_Normal), 1.0);
-	
-	TESTMASK.r = blockEntityId == 222 ? 255 : TESTMASK.r;
-	
-	blockID = mc_Entity.x;
 
-	#ifdef ENTITIES
-		test_motionVectors = at_velocity;
+	gl_Position = ftransform();
+
+	NameTags = 0;
+
+	blockID = mc_Entity.x;
+	velocity = at_velocity;
+
+	// emission and shit...
+	EMISSIVE = 0;
+	#ifndef LabPBR_Emissives
+		if(mc_Entity.x == 10005) EMISSIVE = 1;
 	#endif
+
+
+	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
 
 	#ifdef POM
 		vec2 midcoord = (gl_TextureMatrix[0] *  mc_midTexCoord).st;
@@ -163,15 +167,19 @@ void main() {
 		vtexcoord.xy    = sign(texcoordminusmid)*0.5+0.5;
 	#endif
 
-	vec2 lmcoord = gl_MultiTexCoord1.xy/255.;
+	vec2 lmcoord = gl_MultiTexCoord1.xy / 255.0; // is this even correct? lol
 	lmtexcoord.zw = lmcoord;
+
+
+
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
 	
+	FlatNormals = normalize(gl_NormalMatrix * gl_Normal);
 	color = gl_Color;
+	
 	VanillaAO = 1.0 - clamp(color.a,0,1);
 	if (color.a < 0.3) color.a = 1.0; // fix vanilla ao on some custom block models.
 
-	bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
 
 	#ifdef MC_NORMAL_MAP
 		tangent = vec4(normalize(gl_NormalMatrix *at_tangent.rgb),at_tangent.w);
@@ -187,13 +195,18 @@ void main() {
 			normalMat.a = entityId == 1200 ? 0.65 : normalMat.a;
 		#endif
 	#endif
+	// normalMat.a = 0.45;
 
-			normalMat.a = 0.45;
 
-	gl_Position = ftransform();
+	
+
+
+	// try and single out nametag text and then discard nametag background
+	if( dot(gl_Color.rgb, vec3(0.35)) < 1.0) NameTags = 1;
+
+	if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
 
 #endif
-
 
 
 #ifdef WORLD
@@ -207,20 +220,22 @@ void main() {
 		normalMat.a = (mc_Entity.x == 10007 || mc_Entity.x == 10008) ? 0.55 : normalMat.a; // 0.55 abnormal block strong sss
 	#endif
 
-	normalMat.a = mc_Entity.x == 10005 ? 0.8 : normalMat.a;
+	// normalMat.a = mc_Entity.x == 10005 ? 0.8 : normalMat.a;
 
 
 	#ifdef WAVY_PLANTS
+		bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
+
 		if ((mc_Entity.x == 10001 && istopv) && abs(position.z) < 64.0) {
-    vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
-		worldpos.xyz += calcMovePlants(worldpos.xyz)*lmtexcoord.w - cameraPosition;
-    position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
+    		vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
+			worldpos.xyz += calcMovePlants(worldpos.xyz)*lmtexcoord.w - cameraPosition;
+    		position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 		}
 
 		if (mc_Entity.x == 10003 && abs(position.z) < 64.0) {
-    vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
-		worldpos.xyz += calcMoveLeaves(worldpos.xyz, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*lmtexcoord.w  - cameraPosition;
-    position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
+   			vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
+			worldpos.xyz += calcMoveLeaves(worldpos.xyz, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*lmtexcoord.w  - cameraPosition;
+   			position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 		}
 	#endif
 
@@ -230,33 +245,17 @@ void main() {
 	}
 
 	gl_Position = toClipSpace3(position);
-	
-	
-	
-
-	#ifdef SEPARATE_AO
-
-		// #if indirect_effect == 1 || indirect_effect == 0
-		// 	lmtexcoord.zw *= sqrt(color.a);
-		// #endif
-		
-	#else
-		color.rgb *= color.a;
-	#endif	
-
-	// if (mc_Entity.x == 10099 ) seasonColor.rgb = (gl_Color.rgb * blackbody2(sin(frameTimeCounter)*12000 + 14000)) * (1.0 - floor(luma(gl_Color.rgb)+(1.0/255.)));
-
 #endif
 
-	// seasonColor = color;
 	NoSeasonCol.rgb = gl_Color.rgb;
+
 	#ifdef Seasons
 	#ifndef BLOCKENTITIES
 	#ifndef ENTITIES 
 		YearCycleColor(color.rgb, gl_Color.rgb);
 	#endif
 	#endif
-	#endif 
+	#endif
 
 	#ifdef TAA_UPSCALING
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;

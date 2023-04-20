@@ -5,6 +5,7 @@
 
 
 
+flat varying int NameTags;
 
 #ifndef USE_LUMINANCE_AS_HEIGHTMAP
 #ifndef MC_NORMAL_MAP
@@ -40,15 +41,21 @@ varying vec4 color;
 varying vec4 NoSeasonCol;
 varying vec4 seasonColor;
 uniform float far;
-varying vec4 normalMat;
-#ifdef MC_NORMAL_MAP
-varying vec4 tangent;
+
+
 uniform float wetness;
+varying vec4 normalMat;
+
+
+#ifdef MC_NORMAL_MAP
 uniform sampler2D normals;
-uniform sampler2D specular;
+varying vec4 tangent;
 varying vec3 FlatNormals;
 #endif
 
+// #ifdef SPECULARTEX
+uniform sampler2D specular;
+// #endif
 #ifdef POM
 	vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
 	vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
@@ -67,22 +74,26 @@ uniform vec3 cameraPosition;
 uniform float rainStrength;
 uniform sampler2D noisetex;//depth
 uniform sampler2D depthtex0;
-in vec3 test_motionVectors;
+
+in vec3 velocity;
 
 flat varying float blockID;
-
-flat varying vec4 TESTMASK;
+flat varying int EMISSIVE;
 
 // float interleaved_gradientNoise(){
 // 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
 // }
+// float interleaved_gradientNoise(){
+// 	vec2 alpha = vec2(0.75487765, 0.56984026);
+// 	vec2 coord = vec2(alpha.x * gl_FragCoord.x,alpha.y * gl_FragCoord.y)+ 1.0/1.6180339887 * frameCounter;
+// 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
+// 	return noise;
+// }
 float interleaved_gradientNoise(){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	vec2 coord = vec2(alpha.x * gl_FragCoord.x,alpha.y * gl_FragCoord.y)+ 1.0/1.6180339887 * frameCounter;
+	vec2 coord = gl_FragCoord.xy;
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 	return noise;
 }
-
 float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
@@ -90,11 +101,7 @@ float R2_dither(){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter) ;
 }
-vec2 decodeVec2(float a){
-    const vec2 constant1 = 65535. / vec2( 256., 65536.);
-    const float constant2 = 256. / 255.;
-    return fract( a * constant1 ) * constant2 ;
-}
+
 mat3 inverse(mat3 m) {
   float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
   float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];
@@ -131,20 +138,6 @@ vec4 encode (vec3 n, vec2 lightmaps){
     return vec4(encn,vec2(lightmaps.x,lightmaps.y));
 }
 
-
-#ifdef MC_NORMAL_MAP
-	// vec3 applyBump(mat3 tbnMatrix, vec3 bump){
-	// 	float bumpmult = 1.0;
-	// 	bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
-	// 	return normalize(bump*tbnMatrix);
-	// }
-	vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
-		float bumpmult = clamp(puddle_values,0.0,1.0);
-		bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
-		return normalize(bump*tbnMatrix);
-	}
-#endif
-
 //encoding by jodie
 float encodeVec2(vec2 a){
     const vec2 constant1 = vec2( 1., 256.) / 65535.;
@@ -154,6 +147,15 @@ float encodeVec2(vec2 a){
 float encodeVec2(float x,float y){
     return encodeVec2(vec2(x,y));
 }
+
+#ifdef MC_NORMAL_MAP
+	vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
+		float bumpmult = clamp(puddle_values,0.0,1.0);
+		bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
+		return normalize(bump*tbnMatrix);
+	}
+#endif
+
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
@@ -235,12 +237,8 @@ float densityAtPosSNOW(in vec3 pos){
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 
-/* RENDERTARGETS: 1,7,8,13,15 */
+/* RENDERTARGETS: 1,7,8,15 */
 void main() {
-
-
-    float phi = 2 * 3.14159265359;
-	float noise = fract(fract(frameCounter * (1.0 / phi)) + interleaved_gradientNoise() )	;
 
 	vec3 normal = normalMat.xyz;
 
@@ -250,6 +248,7 @@ void main() {
 							  tangent.y, tangent2.y, normal.y,
 							  tangent.z, tangent2.z, normal.z);
 	#endif
+
 	vec2 tempOffset=offsets[framemod8];
 
 	vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
@@ -293,19 +292,24 @@ void main() {
 	    	if (dist < MAX_OCCLUSION_DISTANCE) {
 
 				float depthmap = readNormal(vtexcoord.st).a;
+				float used_POM_DEPTH = 1.0;
 
 	   	 	if ( viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
 
-	  				// vec3 interval = viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS*POM_DEPTH;
-	  				vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * POM_DEPTH) * clamp(1.0-pow(depthmap,2),0.1,1.0) ;
-	  				
+	  				#ifdef Adaptive_Step_length
+						vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * POM_DEPTH) * clamp(1.0-pow(depthmap,2),0.1,1.0) ;
+						used_POM_DEPTH = 1.0;
+	  				#else
+	  					vec3 interval = viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS*POM_DEPTH;
+					#endif
 					vec3 coord = vec3(vtexcoord.st, 1.0);
-					coord += interval;
+
+					coord += interval * used_POM_DEPTH;
 
 					float sumVec = 0.5;
 					for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - POM_DEPTH + POM_DEPTH * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
-						coord = coord+interval; 
-						sumVec += 1; 
+						coord = coord+interval * used_POM_DEPTH; 
+						sumVec += 1.0 * used_POM_DEPTH; 
 					}
 	
 					if (coord.t < mincoord) {
@@ -330,6 +334,10 @@ void main() {
 
 		vec4 Albedo = texture2DGradARB(texture, adjustedTexCoord.xy,dcdx,dcdy) * color;
 
+		#ifdef ENTITIES
+			if(NameTags == 1) Albedo = texture2D(texture, lmtexcoord.xy, Texture_MipMap_Bias) * color;
+		#endif
+
 		#ifdef AEROCHROME_MODE
 			vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), AEROCHROME_PINKNESS);
 			float gray = dot(Albedo.rgb, vec3(0.2, 01.0, 0.07));
@@ -353,6 +361,10 @@ void main() {
 			// IR Absorbsive? Dark.
 				Albedo.rgb = mix(Albedo.rgb, vec3(0.01, 0.08, 0.15), 0.5);
 			}
+		#endif
+		
+		#ifdef WhiteWorld
+			Albedo.rgb = vec3(1.0);
 		#endif
 
 	 	#ifdef DISABLE_ALPHA_MIPMAPS
@@ -379,6 +391,10 @@ void main() {
 			NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0);
 
 			normal = applyBump(tbnMatrix,NormalTex, mix(1.0,Puddle_shape,rainfall));
+
+			#ifdef ENTITIES
+				if(NameTags == 1) normal = vec3(1);
+			#endif
 		#endif
 
 		//////////////////////////////// 
@@ -393,39 +409,57 @@ void main() {
 
 		vec4 data1 = clamp(encode(viewToWorld(normal), lmtexcoord.zw),0.,1.0);
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),encodeVec2(Albedo.y,data1.y),encodeVec2(Albedo.z,data1.z),encodeVec2(data1.w,Albedo.w));
-		
 		gl_FragData[1].a = 0.0;
+
 	#else
+
+		float bias = Texture_MipMap_Bias - blueNoise()*0.5;
 
 		//////////////////////////////// 
 		//////////////////////////////// NORMAL
 		//////////////////////////////// 
-
+	
+	#ifdef WORLD
 		#ifdef MC_NORMAL_MAP
-			vec4 NormalTex = texture2D(normals, lmtexcoord.xy, Texture_MipMap_Bias).rgba;
+			vec4 NormalTex = texture2D(normals, lmtexcoord.xy, bias).rgba;
 			NormalTex.xy = NormalTex.xy*2.0-1.0;
 			NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0) ;
 
 			normal = applyBump(tbnMatrix, NormalTex.xyz,  mix(1.0,1.0-Puddle_shape,rainfall)  );
-		#endif
+			
+			#ifdef ENTITIES
+				if(NameTags == 1) normal = vec3(1);
+			#endif
 
+		#endif
+	#endif
 
 		//////////////////////////////// 
 		//////////////////////////////// SPECULAR
 		//////////////////////////////// 
-
-		vec4 SpecularTex = texture2D(specular, lmtexcoord.xy, Texture_MipMap_Bias).rgba;
+	
+	#ifdef WORLD
+		vec4 SpecularTex = texture2D(specular, lmtexcoord.xy, bias);
 
 		SpecularTex.r = max(SpecularTex.r, Puddle_shape);
 		SpecularTex.g = max(SpecularTex.g, Puddle_shape*0.04);
 
+
+		#ifdef ENTITIES
+			if(NameTags == 1) SpecularTex = vec4(0.0);
+		#endif
+
 		gl_FragData[2] = SpecularTex;
+	#endif
+
+		if(EMISSIVE > 0) gl_FragData[2].a = 0.9;
 		
 		//////////////////////////////// 
 		//////////////////////////////// ALBEDO
 		//////////////////////////////// 
-
-		vec4 Albedo = texture2D(texture, lmtexcoord.xy, Texture_MipMap_Bias) * color;
+	
+	#ifdef WORLD
+		vec4 Albedo = texture2D(texture, lmtexcoord.xy, bias) * color;
 
 		#ifdef AEROCHROME_MODE
 			vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), AEROCHROME_PINKNESS);
@@ -473,6 +507,7 @@ void main() {
 			else Albedo.a = 0.0;
 		#endif
 
+
 		#ifdef HAND
 			if (Albedo.a > 0.1) Albedo.a = 0.75;
 			else Albedo.a = 0.0;
@@ -482,18 +517,20 @@ void main() {
 		//////////////////////////////// FINALIZE
 		//////////////////////////////// 
 
-		// #ifndef ENTITIES
-		// 	if(TESTMASK.r==255) Albedo.rgb = vec3(0);
-		// #endif
-		
-		vec4 data1 = clamp(blueNoise()/255.0 + encode(viewToWorld(normal), lmtexcoord.zw),0.0,1.0);
+		vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*lmtexcoord.zw/30.0) + lmtexcoord.zw),	0.0,	1.0);
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
 
-		#ifdef WORLD
-			gl_FragData[1].a = 0.0;
-		#endif
+		gl_FragData[1].a = 0.0;
+	#endif
+	#endif
 	
+	#ifdef WORLD
+	gl_FragData[5].x = 0;
+
+	#ifdef ENTITIES
+		gl_FragData[5].xyz = velocity *0.5+0.5;
 	#endif
 
-	gl_FragData[4] = vec4(FlatNormals* 0.5 + 0.5,VanillaAO);	
+	gl_FragData[3] = vec4(FlatNormals * 0.5 + 0.5,VanillaAO);	
+	#endif
 }

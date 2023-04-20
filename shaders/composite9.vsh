@@ -1,8 +1,10 @@
 #version 120
+
 #include "lib/settings.glsl"
 #include "lib/res_params.glsl"
 uniform float viewWidth;
 uniform float viewHeight;
+varying vec2 texcoord;
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -10,9 +12,12 @@ uniform float viewHeight;
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-	//Improves performances and makes sure bloom radius stays the same at high resolution (>1080p)
-	vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
+	vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.0))/BLOOM_QUALITY;
 	gl_Position = ftransform();
-	//*0.51 to avoid errors when sampling outside since clearing is disabled
-	gl_Position.xy = (gl_Position.xy*0.5+0.5)*0.51*BLOOM_QUALITY/clampedRes*vec2(1920.0,1080.)*2.0-1.0;
+	//0-0.25
+	gl_Position.y = (gl_Position.y*0.5+0.5)*0.25/clampedRes.y*1080.0*2.0-1.0;
+	//0-0.5
+	gl_Position.x = (gl_Position.x*0.5+0.5)*0.5/clampedRes.x*1920.0*2.0-1.0;
+	texcoord = gl_MultiTexCoord0.xy/clampedRes*vec2(1920.,1080.);
+
 }

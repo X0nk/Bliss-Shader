@@ -1,17 +1,43 @@
 #version 120
-#extension GL_EXT_gpu_shader4 : enable
-
-#include "lib/settings.glsl"
 
 varying vec4 lmtexcoord;
 varying vec4 color;
 
 uniform sampler2D texture;
-uniform sampler2D gaux1;
 
 //faster and actually more precise than pow 2.2
-vec3 toLinear(vec3 sRGB){
-	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
+// vec3 toLinear(vec3 sRGB){
+// 	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
+// }
+
+// vec3 viewToWorld(vec3 viewPosition) {
+//     vec4 pos;
+//     pos.xyz = viewPosition;
+//     pos.w = 0.0;
+//     pos = gbufferModelViewInverse * pos;
+//     return pos.xyz;
+// }
+// vec3 worldToView(vec3 worldPos) {
+//     vec4 pos = vec4(worldPos, 0.0);
+//     pos = gbufferModelView * pos;
+//     return pos.xyz;
+// }
+vec4 encode (vec3 n, vec2 lightmaps){
+	n.xy = n.xy / dot(abs(n), vec3(1.0));
+	n.xy = n.z <= 0.0 ? (1.0 - abs(n.yx)) * sign(n.xy) : n.xy;
+    vec2 encn = clamp(n.xy * 0.5 + 0.5,-1.0,1.0);
+	
+    return vec4(encn,vec2(lightmaps.x,lightmaps.y));
+}
+
+//encoding by jodie
+float encodeVec2(vec2 a){
+    const vec2 constant1 = vec2( 1., 256.) / 65535.;
+    vec2 temp = floor( a * 255. );
+	return temp.x*constant1.x+temp.y*constant1.y;
+}
+float encodeVec2(float x,float y){
+    return encodeVec2(vec2(x,y));
 }
 
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -19,17 +45,16 @@ vec3 toLinear(vec3 sRGB){
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
-/* DRAWBUFFERS:2 */
+/* DRAWBUFFERS:18 */
+
 void main() {
 
-	vec4 Albedo = texture2D(texture, lmtexcoord.xy)*color;
-	Albedo.a = 1.0;
-
-	float exposure = texelFetch2D(gaux1,ivec2(10,37),0).r;
-	Albedo.rgb *= 25.0 ;
-	Albedo.rgb *= clamp(0.5-exposure,0.05,1.0);
+    vec3 albedo = texture2D(texture, lmtexcoord.xy).rgb * color.rgb;
 
 
-	gl_FragData[0] = Albedo;
 
+	vec4 data1 = clamp(encode(vec3(0.0), vec2(lmtexcoord.z,1)),	0.0,	1.0);
+	gl_FragData[0] = vec4(encodeVec2(albedo.r,data1.x),	encodeVec2(albedo.g,data1.y),	encodeVec2(albedo.b,data1.z),	encodeVec2(data1.w,0.75));
+
+   gl_FragData[1].a = 0.9;
 }

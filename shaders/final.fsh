@@ -7,7 +7,7 @@
 varying vec2 texcoord;
 
 uniform sampler2D colortex7;
-uniform sampler2D noisetex;
+// uniform sampler2D noisetex;
 uniform vec2 texelSize;
 uniform float viewWidth;
 uniform float viewHeight;
@@ -94,6 +94,6 @@ void main() {
   float lum = luma(col);
   vec3 diff = col-lum;
   col = col + diff*(-lum*CROSSTALK + SATURATION);
-
+  
 	gl_FragColor.rgb = clamp(int8Dither(col,texcoord),0.0,1.0);
 }

@@ -1,4 +1,5 @@
 #version 120
 
 #define WORLD
-#include "gbuffers_all_solid.fsh"
+
+#include "/programs/all_solid.fsh"

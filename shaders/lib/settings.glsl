@@ -20,7 +20,7 @@
 #define Water_Top_Layer 62.90 // When under water and when lightMapDepthEstimate is turned off. Assumes the top layer of the water is at this height (minecraft y position) for underwater lighting calculations. If not set correctly, underwater will look incorrect.[0.90 1.90 2.90 3.90 4.90 5.90 6.90 7.90 8.90 9.90 10.90 11.90 12.90 13.90 14.90 15.90 16.90 17.90 18.90 19.90 20.90 21.90 22.90 23.90 24.90 25.90 26.90 27.90 28.90 29.90 30.90 31.90 32.90 33.90 34.90 35.90 36.90 37.90 38.90 39.90 40.90 41.90 42.90 43.90 44.90 45.90 46.90 47.90 48.90 49.90 50.90 51.90 52.90 53.90 54.90 55.90 56.90 57.90 58.90 59.90 60.90 61.90 62.90 63.90 64.90 65.90 66.90 67.90 68.90 69.90 70.90 71.90 72.90 73.90 74.90 75.90 76.90 77.90 78.90 79.90 80.90 81.90 82.90 83.90 84.90 85.90 86.90 87.90 88.90 89.90 90.90 91.90 92.90 93.90 94.90 95.90 96.90 97.90 98.90 99.90 100.90 101.90 102.90 103.90 104.90 105.90 106.90 107.90 108.90 109.90 110.90 111.90 112.90 113.90 114.90 115.90 116.90 117.90 118.90 119.90 120.90 121.90 122.90 123.90 124.90 125.90 126.90 127.90 128.90 129.90 130.90 131.90 132.90 133.90 134.90 135.90 136.90 137.90 138.90 139.90 140.90 141.90 142.90 143.90 144.90 145.90 146.90 147.90 148.90 149.90 150.90 151.90 152.90 153.90 154.90 155.90 156.90 157.90 158.90 159.90 160.90 161.90 162.90 163.90 164.90 165.90 166.90 167.90 168.90 169.90 170.90 171.90 172.90 173.90 174.90 175.90 176.90 177.90 178.90 179.90 180.90 181.90 182.90 183.90 184.90 185.90 186.90 187.90 188.90 189.90 190.90 191.90 192.90 193.90 194.90 195.90 196.90 197.90 198.90 199.90]
 //#define lightMapDepthEstimation // If turned off, will use the player eye position and the Water_Top_Layer option to determine how deep the player is in water. It can look wrong in a lot of cases, and using minecraft light levels instead improves this but will look worse in oceans, lakes and rivers.
 //#define Vanilla_like_water // vanilla water texture along with shader water stuff
-#define Texture_MipMap_Bias -1.00 // Uses a another mip level for textures. When reduced will increase texture detail but may induce a lot of shimmering. [-5.00 -4.75 -4.50 -4.25 -4.00 -3.75 -3.50 -3.25 -3.00 -2.75 -2.50 -2.25 -2.00 -1.75 -1.50 -1.25 -1.00 -0.75 -0.50 -0.25 0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.25 2.50 2.75 3.00 3.25 3.50 3.75 4.00 4.25 4.50 4.75 5.00]
+#define Texture_MipMap_Bias 0.0 // Uses a another mip level for textures. When reduced will increase texture detail but may induce a lot of shimmering. [-5.00 -4.75 -4.50 -4.25 -4.00 -3.75 -3.50 -3.25 -3.00 -2.75 -2.50 -2.25 -2.00 -1.75 -1.50 -1.25 -1.00 -0.75 -0.50 -0.25 0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.25 2.50 2.75 3.00 3.25 3.50 3.75 4.00 4.25 4.50 4.75 5.00]
 
 // --- AMBIENT LIGHT ---
 
@@ -42,6 +42,7 @@
 #define TORCH_R 1.0 // [0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
 #define TORCH_G 0.75 // [0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
 #define TORCH_B 0.5 // [0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
+#define AO_in_sunlight // control if ambient occlusion appears in sunlit areas.
 
 // --- DOF ---
 
@@ -80,8 +81,7 @@
 #define CaveFogColor_G 0.2  //  [0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
 #define CaveFogColor_B 0.5   //  [0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
 // #define display_LUT // aaaaaaaaaaaaaaaaaaaaaaa
-#define CLOUDS_SHADOWS
-#define VL_CLOUDS_SHADOWS // Casts shadows from clouds on VL (slow)
+
 #define CLOUDS_SHADOWS_STRENGTH 1.0 //[0.1 0.125 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.9 1.0]
 #define VL_SAMPLES 8 //[4 6 8 10 12 14 16 20 24 30 40 50]
 #define SEA_LEVEL 70 //[0 10 20 30 40 50 60 70 80 90 100 110 120 130 150 170 190]	//The volumetric light uses an altitude-based fog density, this is where fog density is the highest, adjust this value according to your world.
@@ -94,29 +94,38 @@
 #define fog_coefficientMieR 3.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
 #define fog_coefficientMieG 3.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]intervalMult
 #define fog_coefficientMieB 3.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-#define Cloudy_Fog_Density 5.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-#define Uniform_Fog_Density 1.0 //[0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
-#define uniformfog_fade 10 // does not change rain or cave fog [5 10 20 30 40 50 60 70 80  90 100]
-#define cloudyfog_fade 10 //  does not change rain or cave fog [5 10 20 30 40 50 60 70 80  90 100]
-#define RainFog_amount  5 // [0 1 2 3 4 5 6 7 8 9  10 15 20 25]
-#define CaveFog_amount  5 // [0 1 2 3 4 5 6 7 8 9  10 15 20 25]
+
 #define cloudray_amount 0.2 // rain boost this [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.75 0.8 0.85 0.9 0.95 1.0]
-#define UniformFog_amount 1.0 // [0.0 0.2 0.4 0.6 0.8 1.0 1.25 1.5 1.75 2.0 3.0 4.0 5.0 10.0 20.0 30.0 50.0 100.0 150.0 200.0]
-#define CloudyFog_amount 1.0 // [0.0 0.2 0.4 0.6 0.8 1.0 1.25 1.5 1.75 2.0 3.0 4.0 5.0 10 20 30 40 50 100 500 10000]
-#define TimeOfDayFog_multiplier 1.0 // Influence of time of day on fog amount [0.0 0.2 0.4 0.6 0.8 1.0 1.25 1.5 1.75 2.0 3.0 4.0 5.0] 
-#define Haze_amount 1.0 // [0.0 0.2 0.4 0.6 0.8 1.0 1.25 1.5 1.75 2.0 3.0 4.0 5.0]
-// #define fog_selfShadowing // make the fog cast a shadow onto itself
+
 #define HQ_CLOUDS	//Renders detailled clouds for viewport
 #define CLOUDS_QUALITY 0.5 //[0.1 0.125 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.9 1.0]
-#define BASE_FOG_AMOUNT 1.0 //[0.0 0.2 0.4 0.6 0.8 1.0 1.25 1.5 1.75 2.0 3.0 4.0 5.0 10.0 20.0 30.0 50.0 100.0 150.0 200.0]  Base fog amount amount (does not change the "cloudy" fog)
-#define CLOUDY_FOG_AMOUNT 1.0 //[0.0 0.2 0.4 0.6 0.8 1.0 1.25 1.5 1.75 2.0 3.0 4.0 5.0]
-#define FOG_TOD_MULTIPLIER 1.0 //[0.0 0.2 0.4 0.6 0.8 1.0 1.25 1.5 1.75 2.0 3.0 4.0 5.0] //Influence of time of day on fog amount
-#define FOG_RAIN_MULTIPLIER 1.0 //[0.0 0.2 0.4 0.6 0.8 1.0 1.25 1.5 1.75 2.0 3.0 4.0 5.0] //Influence of rain on fog amount
+
 #define BLOOMY_FOG 2.0 //[0.0 0.25 0.5 0.75 1.0 1.25 1.5 1.75 2.0 3.0 4.0 6.0 10.0 15.0 20.0]
 #define BLOOM_STRENGTH  4.0 //[0.0 0.25 0.5 0.75 1.0 1.25 1.5 1.75 2.0 3.0 4.0]
 
-// --- LABPBR ---
 
+#define Haze_amount 1.0 // [0.0 0.2 0.4 0.6 0.8 1.0 1.25 1.5 1.75 2.0 3.0 4.0 5.0]
+#define RainFog_amount  5 // [0 1 2 3 4 5 6 7 8 9  10 15 20 25]
+#define CaveFog_amount  5 // [0 1 2 3 4 5 6 7 8 9  10 15 20 25]
+
+#define Morning_Uniform_Fog 1.0 //  [0. 1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 15. 20. 25. 30. 35. 40. 45. 50. 75. 100. 125. 150. 175. 200. 255.]
+#define Noon_Uniform_Fog 0.0 //  [0. 1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 15. 20. 25. 30. 35. 40. 45. 50. 75. 100. 125. 150. 175. 200. 255.]
+#define Evening_Uniform_Fog 10.0 //  [0. 1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 15. 20. 25. 30. 35. 40. 45. 50. 75. 100. 125. 150. 175. 200. 255.]
+#define Night_Uniform_Fog 10.0 //  [0. 1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 15. 20. 25. 30. 35. 40. 45. 50. 75. 100. 125. 150. 175. 200. 255.]
+
+#define Morning_Cloudy_Fog 1.0 //  [0. 1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 15. 20. 25. 30. 35. 40. 45. 50. 75. 100. 125. 150. 175. 200. 255.]
+#define Noon_Cloudy_Fog 0.0 //  [0. 1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 15. 20. 25. 30. 35. 40. 45. 50. 75. 100. 125. 150. 175. 200. 255.]
+#define Evening_Cloudy_Fog 50.0 //  [0. 1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 15. 20. 25. 30. 35. 40. 45. 50. 75. 100. 125. 150. 175. 200. 255.]
+#define Night_Cloudy_Fog 5.0 //  [0. 1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 15. 20. 25. 30. 35. 40. 45. 50. 75. 100. 125. 150. 175. 200. 255.]
+
+#define TOD_Fog_mult 1.0 // [0.0 0.25 0.5 0.75 1.0 2.0 3.0 4.0 5.0 10.0 15.0 20.0 25.0 50.0 75.0 100.0]
+
+
+
+
+#define NetherFog_brightness 0.5 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.75 0.8 0.85 0.9 0.95 1.0]
+// --- LABPBR ---
+//#define SPECULARTEX 
 #define Sub_surface_scattering // (place the flashlight on your hand example here)
 // #define LabPBR_subsurface_scattering
 #define LabSSS_Curve 1.0 // i just really like how it looks at 2.0, so i made it an option. [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
@@ -128,16 +137,16 @@
 // #define LabPBR_Emissives
 #define Emissive_Brightness 10.0 // [1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 15. 20. 25. 30. 35. 40. 45. 50. 100.]
 #define Emissive_Curve 2.0 // yes i blatantly copied kappa here. [1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
-//#define Horrible_slope_normals
+//#define Horrible_slope_normals // really only good on low resoltution packs. alot of aliasing/flickering at high resoltions
 //#define POM
 #define mob_SSS
 #define misc_block_SSS
-#define POM_DEPTH 0.25 // [0.025 0.05 0.075 0.1 0.125 0.15 0.20 0.25 0.30 0.50 0.75 1.0] //Increase to increase POM strength
+#define POM_DEPTH 0.25 // [0.025 0.05 0.075 0.1 0.125 0.15 0.20 0.25 0.30 0.50 0.75 1.0] // IN CENTIMETERS. Increase to increase POM strength.
+#define Adaptive_Step_length // make only used parts of the POM depth get samples, to increase overall quality. DOWNSIDE: at sheer angles, it looks kinda buggy.
 #define MAX_ITERATIONS 50 // [5 10 15 20 25 30 40 50 60 70 80 90 100 125 150 200 400] //Improves quality at grazing angles (reduces performance)
 #define MAX_DIST 25.0 // [5.0 10.0 15.0 20.0 25.0 30.0 40.0 50.0 60.0 70.0 80.0 90.0 100.0 125.0 150.0 200.0 400.0] //Increases distance at which POM is calculated
-#define DISABLE_ALPHA_MIPMAPS //Disables mipmaps on the transparency of alpha-tested things like foliage, may cost a few fps in some cases
+// #define DISABLE_ALPHA_MIPMAPS //Disables mipmaps on the transparency of alpha-tested things like foliage, may cost a few fps in some cases
 // #define Porosity
-#define texture_ao // ambient occlusion on the texture
 
 // --- WEATHER/SKY ---
 
@@ -160,6 +169,7 @@
 #define moonColorR 0.9080 //[0.0 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0 ]
 #define moonColorG 0.9121 //[0.0 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0 ]
 #define moonColorB 0.8948 //[0.0 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0 ]
+
 #if colortype == 1
 	#define sunColorBase vec3(sunColorR,sunColorG,sunColorB) * sun_illuminance
 	#define moonColorBase vec3(moonColorR,moonColorG,moonColorB) * moon_illuminance    //Fake Purkinje effect
@@ -167,6 +177,8 @@
 	#define sunColorBase blackbody(Sun_temp) * sun_illuminance
 	#define moonColorBase blackbody(Moon_temp) * moon_illuminance    //Fake Purkinje effect
 #endif
+
+
 // #define Allow_Vanilla_sky // allow the vanilla sky to appear. may appear broken with some resourcepacks.
 // #define WhiteWorld // THIS IS A DEBUG VIEW. uses to see AO easier. used to see fake GI better (green light)
 #define TAA
@@ -201,9 +213,9 @@
 #define Daily_Weather // different skies for different days, and fog.
 #define WeatherDay -1 // [-1 0 1 2 3 4 5 6 7]
 #define cloudCoverage 0.4 // Cloud coverage	[ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
-#define Rain_coverage 0.6 // how much the coverage of the clouds change during rain [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 3.0 4.0 5.0]
+#define Rain_coverage 0.8 // how much the coverage of the clouds change during rain [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 3.0 4.0 5.0]
 #define Biome_specific_environment // makes the fog density and color look unique in certain biomes. (swamps, jungles, lush caves, giant pines, dark forests)
-const float ambientOcclusionLevel = 0.15; //[0.0 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0 ]
+const float ambientOcclusionLevel = 1.0; //[0.0 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0 ]
 const float	sunPathRotation	= -35;	//[-90 -89 -88 -87 -86 -85 -84 -83 -82 -81 -80 -79 -78 -77 -76 -75 -74 -73 -72 -71 -70 -69 -68 -67 -66 -65 -64 -63 -62 -61 -60 -59 -58 -57 -56 -55 -54 -53 -52 -51 -50 -49 -48 -47 -46 -45 -44 -43 -42 -41 -40 -39 -38 -37 -36 -35 -34 -33 -32 -31 -30 -29 -28 -27 -26 -25 -24 -23 -22 -21 -20 -19 -18 -17 -16 -15 -14 -13 -12 -11 -10 -9 -8 -7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 ]
 #define Puddle_Size 1.0 // [0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5]
 
@@ -223,11 +235,11 @@ const float shadowDistanceRenderMul = -1.0; //[-1.0 1.0] Can help to increase sh
 #define SHADOW_DISABLE_ALPHA_MIPMAPS // Disables mipmaps on the transparency of alpha-tested things like foliage, may cost a few fps in some cases
 #define Stochastic_Transparent_Shadows // Highly recommanded to enable SHADOW_DISABLE_ALPHA_MIPMAPS with it. Uses noise to simulate transparent objects' shadows (not colored). It is also recommended to increase Min_Shadow_Filter_Radius with this.
 
+
 // --- SSGI/RTAO ---
 
-// #define SSGI
-//#define RTAO // I recommend turning ambientOcclusionLevel to zero with this on. like ssao, but rt, nicer, noiser, and slower. SSAO will turn OFF when this is ON
-#define indirect_effect 1 // 0 = none. 1 = SSAO. 2 = RTAO. 3 = SSGI. [0 1 2 3 4]
+#define indirect_effect 1 // vanilla AO is what minecraft normally uses. SSAO is basic, and fast, this setting includes vanilla AO. GTAO is high quality, low noise, medium speed. RTAO is raytraced ambient occlusion, noisy and slow. SSGI is raytraced global illumination, and ambient occlusion, very slow and noisy. [0 1 2 3 4]
+
 #define RAY_COUNT 4 // [1 2 3 4 5 6 7 8 9 10 12 14 16 18 21 24 28 32 37 43 49 57 65 75 86 100]
 #define STEPS 8	// [ 6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99]
 #define STEP_LENGTH 12.	// [ 4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20. 21. 22. 23. 24. 25. 26. 27. 28. 29. 30.]
@@ -235,7 +247,7 @@ const float shadowDistanceRenderMul = -1.0; //[-1.0 1.0] Can help to increase sh
 #define DRAW_SUN //if not using custom sky
 #define SKY_BRIGHTNESS_DAY 1.0 //[0.0 0.5 0.75 1. 1.2 1.4 1.6 1.8 2.0]
 #define SKY_BRIGHTNESS_NIGHT 1.0 //[0.0 0.5 0.75 1. 1.2 1.4 1.6 1.8 2.0]
-#define SSAO // screen-space ambient occlusion. 
+
 
 // --- REFLECTIONS ---
 
@@ -253,7 +265,30 @@ const float shadowDistanceRenderMul = -1.0; //[-1.0 1.0] Can help to increase sh
 
 // --- CLOUDS ---
 
-#define VOLUMETRIC_CLOUDS// if you don't like the noise on the default cloud settings, turn up the cloud samples. if that hurts performance too much, turn down the clouds quality.
+#define VOLUMETRIC_CLOUDS // if you don't like the noise on the default cloud settings, turn up the cloud samples. if that hurts performance too much, turn down the clouds quality.
+
+#define CLOUDS_SHADOWS // Casts shadows from clouds on the world
+#ifndef VOLUMETRIC_CLOUDS
+	#undef CLOUDS_SHADOWS
+#endif
+
+#define VL_CLOUDS_SHADOWS // Casts shadows from clouds on VL
+#ifndef CLOUDS_SHADOWS
+	#undef VL_CLOUDS_SHADOWS
+#endif
+
+#define Cumulus // a layer of puffy clouds up yonder.
+#define Cumulus_coverage 0.4 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
+#define Cumulus_density  0.5 // [0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.00]
+
+
+
+#define Altostratus // a layer of clouds WAAAY up yonder
+#define Alto_coverage 0.5 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
+#define Alto_density 	0.05 // [0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.00]
+
+
+
 #define cloud_LevelOfDetail 1		// Number of fbm noise iterations for on-screen clouds (-1 is no fbm)	[-1 0 1 2 3 4 5 6 7 8]
 #define cloud_ShadowLevelOfDetail 0	// Number of fbm noise iterations for the shadowing of on-screen clouds (-1 is no fbm)	[-1 0 1 2 3 4 5 6 7 8]
 #define cloud_LevelOfDetailLQ 1	// Number of fbm noise iterations for reflected clouds (-1 is no fbm)	[-1 0 1 2 3 4 5 6 7 8]
@@ -267,19 +302,17 @@ const float shadowDistanceRenderMul = -1.0; //[-1.0 1.0] Can help to increase sh
 #define cloudMie2Multiplier 0.7 // Multiplier for multiple scattering approximation  [0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 ]
 #define Cloud_top_cutoff 1.0  // the cutoff point on the top part of the cloud. [ 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.5 3.0 4 5 6 7 8 9] 
 #define Cloud_base_cutoff 5.0 // the cutoff point on the base of the cloud. [0.1 1 2 4 6 8 10 12 14 16 18 20]
-#define cloudDensity 0.0514	// Cloud Density, 0.04-0.06 is around irl values	[0.0010 0.0011 0.0013 0.0015 0.0017 0.0020 0.0023 0.0026 0.0030 0.0034 0.0039 0.0045 0.0051 0.0058 0.0067 0.0077 0.0088 0.0101 0.0115 0.0132 0.0151 0.0173 0.0199 0.0228 0.0261 0.0299 0.0342 0.0392 0.0449 0.0514 0.0589 0.0675 0.0773 0.0885 0.1014 0.1162 0.1331 0.1524 0.1746 0.2000 0.3 0.35 0.4 0.45 0.5 0.6 0.7 0.8 0.9 1.0]
+#define cloudDensity 0.5	// Cloud Density, 0.04-0.06 is around irl values	[0.0010 0.0011 0.0013 0.0015 0.0017 0.0020 0.0023 0.0026 0.0030 0.0034 0.0039 0.0045 0.0051 0.0058 0.0067 0.0077 0.0088 0.0101 0.0115 0.0132 0.0151 0.0173 0.0199 0.0228 0.0261 0.0299 0.0342 0.0392 0.0449 0.0514 0.0589 0.0675 0.0773 0.0885 0.1014 0.1162 0.1331 0.1524 0.1746 0.2000 0.3 0.35 0.4 0.45 0.5 0.6 0.7 0.8 0.9 1.0]
 #define fbmAmount 0.50 		// Amount of noise added to the cloud shape	[0.00 0.02 0.04 0.06 0.08 0.10 0.12 0.14 0.16 0.18 0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.42 0.44 0.46 0.48 0.50 0.52 0.54 0.56 0.58 0.60 0.62 0.64 0.66 0.68 0.70 0.72 0.74 0.76 0.78 0.80 0.82 0.84 0.86 0.88 0.90 0.92 0.94 0.96 0.98 1.00 1.02 1.04 1.06 1.08 1.10 1.12 1.14 1.16 1.18 1.20 1.22 1.24 1.26 1.28 1.30 1.32 1.34 1.36 1.38 1.40 1.42 1.44 1.46 1.48 1.50 1.52 1.54 1.56 1.58 1.60 1.62 1.64 1.66 1.68 1.70 1.72 1.74 1.76 1.78 1.80 1.82 1.84 1.86 1.88 1.90 1.92 1.94 1.96 1.98 2.00 2.02 2.04 2.06 2.08 2.10 2.12 2.14 2.16 2.18 2.20 2.22 2.24 2.26 2.28 2.30 2.32 2.34 2.36 2.38 2.40 2.42 2.44 2.46 2.48 2.50 2.52 2.54 2.56 2.58 2.60 2.62 2.64 2.66 2.68 2.70 2.72 2.74 2.76 2.78 2.80 2.82 2.84 2.86 2.88 2.90 2.92 2.94 2.96 2.98 3.00]
 #define fbmPower1 3.00	// Higher values increases high frequency details of the cloud shape	[1.0 1.50 1.52 1.54 1.56 1.58 1.60 1.62 1.64 1.66 1.68 1.70 1.72 1.74 1.76 1.78 1.80 1.82 1.84 1.86 1.88 1.90 1.92 1.94 1.96 1.98 2.00 2.02 2.04 2.06 2.08 2.10 2.12 2.14 2.16 2.18 2.20 2.22 2.24 2.26 2.28 2.30 2.32 2.34 2.36 2.38 2.40 2.42 2.44 2.46 2.48 2.50 2.52 2.54 2.56 2.58 2.60 2.62 2.64 2.66 2.68 2.70 2.72 2.74 2.76 2.78 2.80 2.82 2.84 2.86 2.88 2.90 2.92 2.94 2.96 2.98 3.00 3.02 3.04 3.06 3.08 3.10 3.12 3.14 3.16 3.18 3.20 3.22 3.24 3.26 3.28 3.30 3.32 3.34 3.36 3.38 3.40 3.42 3.44 3.46 3.48 3.50 3.52 3.54 3.56 3.58 3.60 3.62 3.64 3.66 3.68 3.70 3.72 3.74 3.76 3.78 3.80 3.82 3.84 3.86 3.88 3.90 3.92 3.94 3.96 3.98 4.00 5. 6. 7. 8. 9. 10.]
-#define fbmPower2 1.50	// Lower values increases high frequency details of the cloud shape	[1.00 1.50 1.52 1.54 1.56 1.58 1.60 1.62 1.64 1.66 1.68 1.70 1.72 1.74 1.76 1.78 1.80 1.82 1.84 1.86 1.88 1.90 1.92 1.94 1.96 1.98 2.00 2.02 2.04 2.06 2.08 2.10 2.12 2.14 2.16 2.18 2.20 2.22 2.24 2.26 2.28 2.30 2.32 2.34 2.36 2.38 2.40 2.42 2.44 2.46 2.48 2.50 2.52 2.54 2.56 2.58 2.60 2.62 2.64 2.66 2.68 2.70 2.72 2.74 2.76 2.78 2.80 2.82 2.84 2.86 2.88 2.90 2.92 2.94 2.96 2.98 3.00 3.02 3.04 3.06 3.08 3.10 3.12 3.14 3.16 3.18 3.20 3.22 3.24 3.26 3.28 3.30 3.32 3.34 3.36 3.38 3.40 3.42 3.44 3.46 3.48 3.50 3.52 3.54 3.56 3.58 3.60 3.62 3.64 3.66 3.68 3.70 3.72 3.74 3.76 3.78 3.80 3.82 3.84 3.86 3.88 3.90 3.92 3.94 3.96 3.98 4.00 5. 6. 7. 8. 9. 10.]
+#define fbmPower2 2.50	// Lower values increases high frequency details of the cloud shape	[1.00 1.50 1.52 1.54 1.56 1.58 1.60 1.62 1.64 1.66 1.68 1.70 1.72 1.74 1.76 1.78 1.80 1.82 1.84 1.86 1.88 1.90 1.92 1.94 1.96 1.98 2.00 2.02 2.04 2.06 2.08 2.10 2.12 2.14 2.16 2.18 2.20 2.22 2.24 2.26 2.28 2.30 2.32 2.34 2.36 2.38 2.40 2.42 2.44 2.46 2.48 2.50 2.52 2.54 2.56 2.58 2.60 2.62 2.64 2.66 2.68 2.70 2.72 2.74 2.76 2.78 2.80 2.82 2.84 2.86 2.88 2.90 2.92 2.94 2.96 2.98 3.00 3.02 3.04 3.06 3.08 3.10 3.12 3.14 3.16 3.18 3.20 3.22 3.24 3.26 3.28 3.30 3.32 3.34 3.36 3.38 3.40 3.42 3.44 3.46 3.48 3.50 3.52 3.54 3.56 3.58 3.60 3.62 3.64 3.66 3.68 3.70 3.72 3.74 3.76 3.78 3.80 3.82 3.84 3.86 3.88 3.90 3.92 3.94 3.96 3.98 4.00 5. 6. 7. 8. 9. 10.]
 #define Cloud_Size 35 // [1 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100]
-#define Cloud_Height 319 // [-300 -290 -280 -270 -260 -250 -240 -230 -220 -210 -200 -190 -180 -170 -160 -150 -140 -130 -120 -110 -100 -90 -80 -70 -60 -50 -40 -30 -20 -10 0 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 160 170 180 190 200 210 220 230 240 250 260 270 280 290 300 310 319 320]
+#define Cloud_Height 300 // [-300 -290 -280 -270 -260 -250 -240 -230 -220 -210 -200 -190 -180 -170 -160 -150 -140 -130 -120 -110 -100 -90 -80 -70 -60 -50 -40 -30 -20 -10 0 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 160 170 180 190 200 210 220 230 240 250 260 270 280 290 300 310 319 320]
 #define Shadow_brightness 0.5 // how dark / bright you want the shadowed part of the clouds to be. low values can look weird. [ 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 3.0 4.0 5.0 6.0]
 #define self_shadow_samples 3.0 // amount of interations for cloud self shadows. longer/shorter cloud self shadows. [ 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 15 20 30 40 50]
 #define Dynamic_sky_day -1 // -1 MEANS THIS IS OFF. select which day of the 8 to the clouds should take shape in [0 1 2 3 4 5 6 7 ]
 #define Dynamic_Sky // day 1: partly cloudy. day 2: really cloudy, misty. day 3: mostly clear. day 4: cloudy. day 5: cloudy again. day 6: scattered clouds. day 7: partly cloudy. day 8: clear
-#define High_Altitude_Clouds // a layer of clouds way up yonder
-#define Cumulus_Clouds
-#define flip_the_clouds 1 // what was once above is now below [1 -1] 
+
 #define cloud_speed 1 // how 	[ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2.0 3.0 5.0 10.0 25.0 50.0 100.0 200.0]
 #define VL_SAMPLES2 6 //[4 6 8 10 12 14 16 20 24 30 40 50]
 
@@ -308,3 +341,18 @@ const float shadowDistanceRenderMul = -1.0; //[-1.0 1.0] Can help to increase sh
 // #define AEROCHROME_MODE // Infra-red film colors ^~^
 #define AEROCHROME_PINKNESS 0.3 // How pink it is from red [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 //#define AEROCHROME_WOOL_ENABLED // Technically wool things should be affected but it affects a lot of builds and stuff
+
+
+
+// -- END SPECIFIC STUFF ---
+
+// #define DEBUG_endfog
+// #define THE_ORB
+#define ORB_X 0 // [-200 -195 -190 -185 -180 -175 -170 -165 -160 -155 -150 -145 -140 -135 -130 -125 -120 -115 -110 -105 -100 -95 -90 -85 -80 -75 -70 -65 -60 -55 -50 -45 -40 -35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120 125 130 135 140 145 150 155 160 165 170 175 180 185 190 195 200]
+#define ORB_Y 0 // [-200 -195 -190 -185 -180 -175 -170 -165 -160 -155 -150 -145 -140 -135 -130 -125 -120 -115 -110 -105 -100 -95 -90 -85 -80 -75 -70 -65 -60 -55 -50 -45 -40 -35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120 125 130 135 140 145 150 155 160 165 170 175 180 185 190 195 200]
+#define ORB_Z 0 // [-200 -195 -190 -185 -180 -175 -170 -165 -160 -155 -150 -145 -140 -135 -130 -125 -120 -115 -110 -105 -100 -95 -90 -85 -80 -75 -70 -65 -60 -55 -50 -45 -40 -35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120 125 130 135 140 145 150 155 160 165 170 175 180 185 190 195 200]
+
+#define ORB_R 1.0 // [0.00 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
+#define ORB_G 1.0 // [0.00 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
+#define ORB_B 1.0 // [0.00 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.6 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0]
+#define ORB_ColMult 1.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 3.1 3.2 3.3 3.4 3.5 3.6 3.7 3.8 3.9 4.0 4.1 4.2 4.3 4.4 4.5 4.6 4.7 4.8 4.9 5.0 5.1 5.2 5.3 5.4 5.5 5.6 5.7 5.8 5.9 6.0 6.1 6.2 6.3 6.4 6.5 6.6 6.7 6.8 6.9 7.0 7.1 7.2 7.3 7.4 7.5 7.6 7.7 7.8 7.9 8.0 8.1 8.2 8.3 8.4 8.5 8.6 8.7 8.8 8.9 9.0 9.1 9.2 9.3 9.4 9.5 9.6 9.7 9.8 9.9 10.0 ]

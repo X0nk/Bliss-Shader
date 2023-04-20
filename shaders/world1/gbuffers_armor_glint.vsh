@@ -1,6 +1,6 @@
 #version 120
 #extension GL_EXT_gpu_shader4 : enable
-#define TAA
+#include "/lib/res_params.glsl"
 
 /*
 !! DO NOT REMOVE !!
@@ -14,7 +14,7 @@ varying vec4 color;
 varying vec4 normalMat;
 #ifdef MC_NORMAL_MAP
 varying vec4 tangent;
-attribute vec4 at_tangent; 
+attribute vec4 at_tangent;
 #endif
 uniform vec2 texelSize;
 uniform int framemod8;
@@ -26,6 +26,12 @@ uniform int framemod8;
 									vec2(-7.,-1.)/8.,
 									vec2(3,7.)/8.,
 									vec2(7.,-7.)/8.);
+#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
+#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+vec4 toClipSpace3(vec3 viewSpacePosition) {
+  return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
+}
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -38,15 +44,19 @@ void main() {
 	vec2 lmcoord = gl_MultiTexCoord1.xy/255.;
 	lmtexcoord.zw = lmcoord*lmcoord;
 
-	gl_Position = ftransform();
-	color = gl_Color;
-	
-	
+	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
+		color = gl_Color;
+	gl_Position = toClipSpace3(position);
+
+
 	#ifdef MC_NORMAL_MAP
 		tangent = vec4(normalize(gl_NormalMatrix *at_tangent.rgb),at_tangent.w);
 	#endif
 
-	normalMat = vec4(normalize(gl_NormalMatrix *gl_Normal),1.0);	
+	normalMat = vec4(normalize(gl_NormalMatrix *gl_Normal),1.0);
+	#ifdef TAA_UPSCALING
+		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
+	#endif
 	#ifdef TAA
 	gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
 	#endif
