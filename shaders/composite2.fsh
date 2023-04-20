@@ -234,30 +234,30 @@ void main() {
 
 		waterVolumetrics(vl, vec3(0.0), fragpos, estEyeDepth, estEyeDepth, length(fragpos), noise, totEpsilon, scatterCoef, (ambientUp*8./150./3.*0.5) , lightCol.rgb*8./150./3.0*(1.0-pow(1.0-sunElevation*lightCol.a,5.0)), dot(normalize(fragpos), normalize(sunVec)	));
 
-		#ifdef DOF_JITTER
-			vec3 laserColor;
-			#if FOCUS_LASER_COLOR == 0 // Red
-			laserColor = vec3(25, 0, 0);
-			#elif FOCUS_LASER_COLOR == 1 // Green
-			laserColor = vec3(0, 25, 0);
-			#elif FOCUS_LASER_COLOR == 2 // Blue
-			laserColor = vec3(0, 0, 25);
-			#elif FOCUS_LASER_COLOR == 3 // Pink
-			laserColor = vec3(25, 10, 15);
-			#elif FOCUS_LASER_COLOR == 4 // Yellow
-			laserColor = vec3(25, 25, 0);
-			#elif FOCUS_LASER_COLOR == 5 // White
-			laserColor = vec3(25);
-			#endif
+		// #ifdef DOF_JITTER
+		// 	vec3 laserColor;
+		// 	#if FOCUS_LASER_COLOR == 0 // Red
+		// 	laserColor = vec3(25, 0, 0);
+		// 	#elif FOCUS_LASER_COLOR == 1 // Green
+		// 	laserColor = vec3(0, 25, 0);
+		// 	#elif FOCUS_LASER_COLOR == 2 // Blue
+		// 	laserColor = vec3(0, 0, 25);
+		// 	#elif FOCUS_LASER_COLOR == 3 // Pink
+		// 	laserColor = vec3(25, 10, 15);
+		// 	#elif FOCUS_LASER_COLOR == 4 // Yellow
+		// 	laserColor = vec3(25, 25, 0);
+		// 	#elif FOCUS_LASER_COLOR == 5 // White
+		// 	laserColor = vec3(25);
+		// 	#endif
 
-			#if DOF_JITTER_FOCUS < 0
-			float focusDist = mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
-			#else
-			float focusDist = DOF_JITTER_FOCUS;
-			#endif
+		// 	#if DOF_JITTER_FOCUS < 0
+		// 	float focusDist = mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
+		// 	#else
+		// 	float focusDist = DOF_JITTER_FOCUS;
+		// 	#endif
 
-			if( hideGUI < 1.0) gl_FragData[0].rgb += laserColor * pow( clamp( 	 1.0-abs(focusDist-abs(fragpos.z))		,0,1),25) ;
-		#endif
+		// 	if( hideGUI < 1.0) gl_FragData[0].rgb += laserColor * pow( clamp( 	 1.0-abs(focusDist-abs(fragpos.z))		,0,1),25) ;
+		// #endif
 
 		gl_FragData[0] = clamp(vec4(vl,1.0),0.000001,65000.);
 	}
