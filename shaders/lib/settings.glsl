@@ -251,7 +251,7 @@ const float shadowDistanceRenderMul = -1.0; //[-1.0 1.0] Can help to increase sh
 #define Sky_reflection // just in case you dont want it i guess
 // #define Rough_reflections // turns the roughness GGXVNDF ON. sizable performance impact, and introduces alot of noise.
 #define Sun_specular_Strength 3 // increase for more sparkles [1 2 3 4 5 6 7 8 9 10]
-#define reflection_quality 30 // adjust the quality of the screenspace reflections. [6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 ]
+#define reflection_quality 30 // adjust the quality of the screenspace reflections. [6.0 7.0 8.0 9.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0 18.0 19.0 20.0 25.0 30.0 35.0 40.0 45.0 50.0 55.0 60.0 65.0 70.0 75.0 80.0 85.0 90.0 95.0 100.0 ]
 #define Roughness_Threshold 1.5 // using a curve on the roughness, make the reflections more or less visible on rough surfaces. good for hiding noise on rough materials [1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
 #define SCREENSPACE_REFLECTIONS	//can be really expensive at high resolutions/render quality, especially on ice
 #define SSR_STEPS 30 //[10 15 20 25 30 35 40 50 100 200 400]

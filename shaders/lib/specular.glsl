@@ -246,7 +246,7 @@ void MaterialReflections(
 	// // if (!hasReflections) Outdoors = 0.0;
 	
 	// SunReflection = directlighting *  SunGGX(normal, -np3, sunPos, roughness, f0.y) / 5.0; 
-	SunReflection = directlighting *  GGX(normal, -np3, sunPos, roughness, f0.yyy);
+	SunReflection = directlighting *  GGX(normal, -np3, sunPos, roughness, vec3(f0.y));
 // 
 	if (hasReflections) { // Skip sky reflection and SSR if its just not very visible anyway
 		#ifdef Sky_reflection
@@ -254,16 +254,18 @@ void MaterialReflections(
 		#endif
 
 		#ifdef Screen_Space_Reflections
-			// #ifdef SCREENSHOT_MODE
+			// #ifdef SCREENSHOT_MODEFconst
 			// 	float rayQuality = reflection_quality; 
 			// #else
-				float rayQuality = mix_float(reflection_quality,4,luma(rayContrib)); // Scale quality with ray contribution
+				float rayQuality = mix_float(reflection_quality,4.0,luma(rayContrib)); // Scale quality with ray contribution
 			// #endif
 			// float rayQuality = reflection_quality; 
+	
 
-			vec3 rtPos = rayTraceSpeculars( mat3(gbufferModelView) * L,fragpos.xyz,  noise.b, reflection_quality, hand, reflectLength);
+			vec3 rtPos = rayTraceSpeculars(mat3(gbufferModelView) * L, fragpos.xyz,  noise.b, reflection_quality, hand, reflectLength);
 
-			float LOD = clamp(reflectLength * 6.0, 0.0,6.0) ;
+			float LOD = clamp(reflectLength * 6.0, 0.0,6.0);
+
 			if(hand || isEntities) LOD = 6.0;
 
 			if (rtPos.z < 1.) { // Reproject on previous frame
