@@ -211,10 +211,11 @@ void main() {
 
   vec2 refractedCoord = texcoord;
     
+  /// --- REFRACTION --- ///
   #ifdef Refraction
     refractedCoord += (tangentNormals * clamp((ld(z2) - ld(z)) * 0.5,0.0,0.15)) * RENDER_SCALE;
 
-    if(decodeVec2(texture2D(colortex11,refractedCoord).b).g < 0.01 ) refractedCoord = texcoord; // remove refracted coords on solids
+    if( texture2D(colortex7,refractedCoord).a < 0.95  && decodeVec2(texture2D(colortex11,refractedCoord).b).g < 0.01 ) refractedCoord = texcoord; // remove refracted coords on solids
   #endif
   
   /// --- MAIN COLOR BUFFER --- ///

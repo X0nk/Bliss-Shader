@@ -71,7 +71,6 @@ flat varying vec3 avgAmbient;
 #include "lib/diffuse_lighting.glsl"
 
 
-
 float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
@@ -151,6 +150,7 @@ vec3 viewToWorld(vec3 viewPosition) {
     pos = gbufferModelViewInverse * pos;
     return pos.xyz;
 }
+
 vec3 worldToView(vec3 worldPos) {
     vec4 pos = vec4(worldPos, 0.0);
     pos = gbufferModelView * pos;
@@ -290,6 +290,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 		}
 	#endif
 
+
 	vec4 COLORTEST = vec4(Albedo,gl_FragData[0].a);
 
 
@@ -304,7 +305,18 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 							  tangent.z, tangent2.z, normal.z);
 
 	
-	if (iswater > 0.4){
+
+
+	/// ------ NORMALS ------ ///
+
+	vec4 NormalTex = texture2D(normals, lmtexcoord.xy, Texture_MipMap_Bias).rgba;
+	NormalTex.xy = NormalTex.xy*2.0-1.0;
+	NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0) ;
+	TangentNormal = NormalTex.xy*0.5+0.5;
+
+	normal = applyBump(tbnMatrix, NormalTex.xyz,  1.0);
+
+	if (iswater > 0.95){
 		
 		if(physics_iterationsNormal < 1.0){
 			float bumpmult = 1.;
@@ -321,29 +333,26 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 			bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 			normal = normalize(bump * tbnMatrix);
 			
-		}else{
-			vec3 PhysicsMod_normal = physics_waveNormal(physics_localPosition.xz, physics_localWaviness, physics_gameTime);
+		}else{	
+			/// ------ PHYSICS MOD OCEAN SHIT ------ ///
 
-			normal = normalize(worldToView(PhysicsMod_normal) + mix(normal, vec3(0.0), clamp(physics_localWaviness,0.0,1.0)));
+			WavePixelData wave = physics_wavePixel(physics_localPosition.xz, physics_localWaviness, physics_iterationsNormal, physics_gameTime);
+			// float Foam = wave.foam;
 
-			vec3 worldSpaceNormal = normal.xyz;
+			// Albedo = mix(Albedo,vec3(1),Foam);
+			// gl_FragData[0].a = Foam;
+			
+			
+			normal = normalize(worldToView(wave.normal) + mix(normal, vec3(0.0), clamp(physics_localWaviness,0.0,1.0)));
+
+			vec3 worldSpaceNormal = normal;
 
 			vec3 bitangent = normalize(cross(tangent.xyz, worldSpaceNormal));
 			mat3 tbn_new =  mat3(tangent.xyz, binormal, worldSpaceNormal);
 			vec3 tangentSpaceNormal = worldSpaceNormal * tbn_new;
 
-			TangentNormal = tangentSpaceNormal.xy ;
+			TangentNormal = tangentSpaceNormal.xy * 0.5 + 0.5;
 		}
-
-	}else{
-
-		vec4 NormalTex = texture2D(normals, lmtexcoord.xy, Texture_MipMap_Bias).rgba;
-		NormalTex.xy = NormalTex.xy*2.0-1.0;
-		NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0) ;
-
-		TangentNormal = NormalTex.xy*0.5+0.5;
-
-		normal = applyBump(tbnMatrix, NormalTex.xyz,  1.0);
 	}
 
 	// cannot encode alpha or it will shit its pants
@@ -405,12 +414,19 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 
 	
 	vec2 SpecularTex = texture2D(specular, lmtexcoord.xy, Texture_MipMap_Bias).rg;
-	SpecularTex = (iswater > 0.0 && iswater < 0.9) && SpecularTex.r > 0.0 && SpecularTex.g < 0.9 ? SpecularTex : vec2(1.0,0.02);
+	
+	// SpecularTex = (iswater > 0.0 && iswater < 0.9) && SpecularTex.r > 0.0 && SpecularTex.g < 0.9 ? SpecularTex : vec2(1.0,0.1);
 
-	if (iswater > 0.0 && (SpecularTex.g > 0.0 || SpecularTex.r > 0.0)){
+
+	float roughness = max(pow(1.0-SpecularTex.r,2.0),0.05);
+	float f0 = SpecularTex.g;
+
+	roughness =  iswater > 0.95 ? 0.05 : roughness;
+	f0 =  iswater > 0.95 ? 0.1 : f0;
+
+	if (iswater > 0.0 ){
 		vec3 Reflections_Final = vec3(0.0);
-		float roughness = max(pow(1.0-SpecularTex.r,2.0),0.05);
-		float f0 = SpecularTex.g;
+		
 
 		float F0 = f0;
 	
@@ -458,7 +474,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 
 		//correct alpha channel with fresnel
 		float alpha0 = gl_FragData[0].a;
-		gl_FragData[0].a = -gl_FragData[0].a*fresnel+gl_FragData[0].a+fresnel;
+		gl_FragData[0].a = mix(alpha0, 1.0, fresnel);
 
 		if (gl_FragData[0].r > 65000.) gl_FragData[0].rgba = vec4(0.);
 

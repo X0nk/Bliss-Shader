@@ -20,7 +20,7 @@ vec3 toLinear(vec3 sRGB){
 
 void main() {
 
-	vec3 albedo = (texture2D(texture, texcoord).rgb * color.rgb);
+	vec3 albedo = texture2D(texture, texcoord).rgb * color.rgb;
    
     gl_FragData[0].rgb = albedo;
    

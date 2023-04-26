@@ -323,7 +323,8 @@ float GetCloudShadow(vec3 eyePlayerPos){
 		shadow += GetAltostratusDensity(highShadowStart) * Alto_density;
 	#endif
 
-	shadow = clamp(exp(-shadow*10.0),0.0,1.0);
+	shadow = shadow/2.0; // perhaps i should average the 2 shadows being added....
+	shadow = clamp(exp(-shadow*15.0),0.0,1.0);
 
 	return shadow;
 }
@@ -342,6 +343,8 @@ float GetCloudShadow_VLFOG(vec3 WorldPos){
 		shadow += GetAltostratusDensity(highShadowStart) * Alto_density;
 	#endif
 
+	// shadow = shadow/2.0; // perhaps i should average the 2 shadows being added....
+	
 	shadow = clamp(exp(-shadow*15.0),0.0,1.0);
 
 	// do not allow it to exist above the lowest cloud plane

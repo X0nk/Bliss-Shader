@@ -97,11 +97,11 @@ void main() {
 
 	float mat = 0.0;
 	
-	if(mc_Entity.x == 8.0 || mc_Entity.x == 9.0) {
-    mat = 1.0;
+	if(mc_Entity.x == 8.0) {
+    	mat = 1.0;
 
-    gl_Position.z -= 1e-4;
-  }
+    	gl_Position.z -= 1e-4;
+  	}
 
 	if (mc_Entity.x == 10002) mat = 0.2;
 	if (mc_Entity.x == 72) mat = 0.5;

@@ -3,8 +3,6 @@
 
 #include "/lib/settings.glsl"
 
-
-
 flat varying int NameTags;
 
 #ifndef USE_LUMINANCE_AS_HEIGHTMAP
@@ -79,6 +77,12 @@ in vec3 velocity;
 
 flat varying float blockID;
 flat varying int EMISSIVE;
+
+#ifdef ENTITIES
+	#define ENTITY_PHYSICSMOD_SNOW 829925
+#endif
+
+
 
 // float interleaved_gradientNoise(){
 // 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
@@ -425,14 +429,19 @@ void main() {
 			NormalTex.xy = NormalTex.xy*2.0-1.0;
 			NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0) ;
 
-			normal = applyBump(tbnMatrix, NormalTex.xyz,  mix(1.0,1.0-Puddle_shape,rainfall)  );
+			normal = applyBump(tbnMatrix, NormalTex.xyz,  1	);
 			
 			#ifdef ENTITIES
 				if(NameTags == 1) normal = vec3(1);
 			#endif
 
+			#ifdef ENTITY_PHYSICSMOD_SNOW
+				normal = FlatNormals;
+			#endif
+
 		#endif
 	#endif
+
 
 		//////////////////////////////// 
 		//////////////////////////////// SPECULAR
@@ -449,11 +458,20 @@ void main() {
 			if(NameTags == 1) SpecularTex = vec4(0.0);
 		#endif
 
+		#ifdef ENTITY_PHYSICSMOD_SNOW
+			SpecularTex.rg = vec2(0.0);
+		#endif
+
 		gl_FragData[2] = SpecularTex;
 	#endif
 
 		if(EMISSIVE > 0) gl_FragData[2].a = 0.9;
-		
+
+
+
+
+
+
 		//////////////////////////////// 
 		//////////////////////////////// ALBEDO
 		//////////////////////////////// 

@@ -131,11 +131,13 @@ vec3 blackbody2(float Temp)
 #define SEASONS_VSH
 #include "/lib/climate_settings.glsl"
 
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
+
 
 void main() {
 
@@ -148,9 +150,9 @@ void main() {
 
 	// emission and shit...
 	EMISSIVE = 0;
-	#ifndef LabPBR_Emissives
-		if(mc_Entity.x == 10005) EMISSIVE = 1;
-	#endif
+	// #ifndef LabPBR_Emissives
+	// 	if(mc_Entity.x == 10005) EMISSIVE = 1;
+	// #endif
 
 
 	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
@@ -194,7 +196,7 @@ void main() {
 	// normalMat.a = 0.45;
 
 
-	
+
 
 
 	// try and single out nametag text and then discard nametag background
@@ -240,8 +242,13 @@ void main() {
 		normalMat.a = 0.9;
 	}
 
+
+
+
+
 	gl_Position = toClipSpace3(position);
 #endif
+
 
 	NoSeasonCol.rgb = gl_Color.rgb;
 
