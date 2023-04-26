@@ -136,7 +136,7 @@
 //#define POM
 #define mob_SSS
 #define misc_block_SSS
-#define POM_DEPTH 0.25 // [0.025 0.05 0.075 0.1 0.125 0.15 0.20 0.25 0.30 0.50 0.75 1.0] // IN CENTIMETERS. Increase to increase POM strength.
+#define POM_DEPTH 0.25 // [0.025 0.05 0.075 0.1 0.125 0.15 0.20 0.25 0.30 0.50 0.75 1.0] // IN METERS. Vanillaccurate: 0.15-0.25. VNR: 0.20. Patrix: 1.0
 #define Adaptive_Step_length // make only used parts of the POM depth get samples, to increase overall quality. DOWNSIDE: at sheer angles, it looks kinda buggy.
 #define MAX_ITERATIONS 50 // [5 10 15 20 25 30 40 50 60 70 80 90 100 125 150 200 400] //Improves quality at grazing angles (reduces performance)
 #define MAX_DIST 25.0 // [5.0 10.0 15.0 20.0 25.0 30.0 40.0 50.0 60.0 70.0 80.0 90.0 100.0 125.0 150.0 200.0 400.0] //Increases distance at which POM is calculated

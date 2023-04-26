@@ -87,12 +87,12 @@ flat varying int EMISSIVE;
 // float interleaved_gradientNoise(){
 // 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
 // }
-// float interleaved_gradientNoise(){
-// 	vec2 alpha = vec2(0.75487765, 0.56984026);
-// 	vec2 coord = vec2(alpha.x * gl_FragCoord.x,alpha.y * gl_FragCoord.y)+ 1.0/1.6180339887 * frameCounter;
-// 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-// 	return noise;
-// }
+float interleaved_gradientNoise_temp(){
+	vec2 alpha = vec2(0.75487765, 0.56984026);
+	vec2 coord = vec2(alpha.x * gl_FragCoord.x,alpha.y * gl_FragCoord.y)+ 1.0/1.6180339887 * frameCounter;
+	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
+	return noise;
+}
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy;
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
@@ -173,16 +173,18 @@ vec3 toScreenSpace(vec3 p) {
 vec3 toClipSpace3(vec3 viewSpacePosition) {
     return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 }
+
 #ifdef POM
-vec4 readNormal(in vec2 coord)
-{
-	return texture2DGradARB(normals,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
-}
-vec4 readTexture(in vec2 coord)
-{
-	return texture2DGradARB(texture,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
-}
+	vec4 readNormal(in vec2 coord)
+	{
+		return texture2DGradARB(normals,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
+	}
+	vec4 readTexture(in vec2 coord)
+	{
+		return texture2DGradARB(texture,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
+	}
 #endif
+
 float luma(vec3 color) {
 	return dot(color,vec3(0.21, 0.72, 0.07));
 }
@@ -299,7 +301,7 @@ void main() {
 				float used_POM_DEPTH = 1.0;
 
 	   	 	if ( viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
-
+					float noise = interleaved_gradientNoise_temp();
 	  				#ifdef Adaptive_Step_length
 						vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * POM_DEPTH) * clamp(1.0-pow(depthmap,2),0.1,1.0) ;
 						used_POM_DEPTH = 1.0;
@@ -308,9 +310,9 @@ void main() {
 					#endif
 					vec3 coord = vec3(vtexcoord.st, 1.0);
 
-					coord += interval * used_POM_DEPTH;
+					coord += (interval * noise) * used_POM_DEPTH;
 
-					float sumVec = 0.5;
+					float sumVec = noise;
 					for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - POM_DEPTH + POM_DEPTH * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
 						coord = coord+interval * used_POM_DEPTH; 
 						sumVec += 1.0 * used_POM_DEPTH; 
@@ -336,7 +338,7 @@ void main() {
 		//////////////////////////////// ALBEDO
 		//////////////////////////////// 
 
-		vec4 Albedo = texture2DGradARB(texture, adjustedTexCoord.xy,dcdx,dcdy) * color;
+		vec4 Albedo = texture2DGradARB(texture, adjustedTexCoord.xy, dcdx,dcdy) * color;
 
 		#ifdef ENTITIES
 			if(NameTags == 1) Albedo = texture2D(texture, lmtexcoord.xy, Texture_MipMap_Bias) * color;
@@ -452,7 +454,6 @@ void main() {
 
 		SpecularTex.r = max(SpecularTex.r, Puddle_shape);
 		SpecularTex.g = max(SpecularTex.g, Puddle_shape*0.04);
-
 
 		#ifdef ENTITIES
 			if(NameTags == 1) SpecularTex = vec4(0.0);

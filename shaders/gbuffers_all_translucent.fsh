@@ -415,21 +415,16 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 	
 	vec2 SpecularTex = texture2D(specular, lmtexcoord.xy, Texture_MipMap_Bias).rg;
 	
-	// SpecularTex = (iswater > 0.0 && iswater < 0.9) && SpecularTex.r > 0.0 && SpecularTex.g < 0.9 ? SpecularTex : vec2(1.0,0.1);
-
+	SpecularTex = (iswater > 0.0 && iswater < 0.9) && SpecularTex.r > 0.0 && SpecularTex.g < 0.9 ? SpecularTex : vec2(1.0,0.1);
 
 	float roughness = max(pow(1.0-SpecularTex.r,2.0),0.05);
 	float f0 = SpecularTex.g;
 
-	roughness =  iswater > 0.95 ? 0.05 : roughness;
-	f0 =  iswater > 0.95 ? 0.1 : f0;
-
-	if (iswater > 0.0 ){
+	if (iswater > 0.0){
 		vec3 Reflections_Final = vec3(0.0);
-		
 
-		float F0 = f0;
-	
+		float indoors = clamp((lmtexcoord.w-0.6)*5.0, 0.0,1.0);
+
 		vec3 reflectedVector = reflect(normalize(fragpos), normal);
 		float normalDotEye = dot(normal, normalize(fragpos));
 		float fresnel = pow(clamp(1.0 + normalDotEye,0.0,1.0), 5.0);
@@ -440,9 +435,8 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 
 		if(isEyeInWater == 1 && physics_iterationsNormal > 0.0) fresnel = clamp( 1.0 - (pow( normalDotEye * 1.66 ,25)),0.02,1.0);
 
-		fresnel = mix(F0, 1.0, fresnel); 
-		// fresnel = F0 + (1.0 - F0) * fresnel;
-		float indoors = clamp((lmtexcoord.w-0.6)*5.0, 0.0,1.0);
+		fresnel = mix(f0, 1.0, fresnel); 
+		
 		vec3 wrefl = mat3(gbufferModelViewInverse)*reflectedVector;
 
 		// SSR, Sky, and Sun reflections

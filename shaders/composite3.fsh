@@ -260,15 +260,13 @@ void main() {
 
   // underwater fog
   if (isEyeInWater == 1){
-    float fogfade = clamp(exp(-length(fragpos) /5. )   ,0.0,1.0);
-    color.rgb *= fogfade;
-    vl.a *= fogfade*0.70+0.3  ;
+    float fogfade = clamp( exp(length(p3) /  -10)   ,0.0,1.0);
+    color.rgb = color.rgb * fogfade   ;
+    vl.a *= fogfade*0.7+0.3  ;
   }
 
   color *= vl.a;
   color += vl.rgb;
-
-
 
   float rainDrops =  clamp(texture2D(colortex9,texcoord).a,  0.0,1.0); // bloomy rain effect
   if(rainDrops > 0.0) vl.a *= clamp(exp2(-rainDrops*5),0.,1.); // bloomy rain effect

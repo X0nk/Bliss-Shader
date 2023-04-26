@@ -1091,8 +1091,8 @@ void main() {
 			float Ambient_Caustics = waterCaustics(mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz + cameraPosition, vec3(0.5, 1.0, 0.5));
 
 			// apply caustics to the lightting
-			DirectLightColor 	  *= 0.5 + max(pow(Direct_caustics*2,2),0.0); 
-			Indirect_lighting *= 0.5 + max(pow(Ambient_Caustics,2),0.0); 
+			DirectLightColor  *= 0.5 + max(pow(Direct_caustics*2,2),0.0); 
+			// Indirect_lighting *= 0.5 + max(pow(Ambient_Caustics,2),0.0); 
 
 			// directLightCol 	  *= Direct_caustics; 
 			// Indirect_lighting *= Ambient_Caustics*0.5+0.5; 
