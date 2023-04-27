@@ -261,7 +261,7 @@ vec3 GGX (vec3 n, vec3 v, vec3 l, float r, vec3 F0) {
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 
-/* RENDERTARGETS:2,7,11 */
+/* RENDERTARGETS:2,7,11,14 */
 void main() {
 if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize.y < RENDER_SCALE.y )	{
 	vec2 tempOffset = offsets[framemod8];
@@ -479,5 +479,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 	#ifndef HAND
 		gl_FragData[1] = vec4(Albedo,iswater);
 	#endif
+
+	gl_FragData[3].a = lmtexcoord.w;
 }
 }

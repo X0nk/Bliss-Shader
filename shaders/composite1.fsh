@@ -38,7 +38,7 @@ uniform sampler2D colortex11; // specular
 uniform sampler2D colortex10; // specular
 uniform sampler2D colortex12; // specular
 uniform sampler2D colortex13; // specular
-// uniform sampler2D colortex14; // specular
+uniform sampler2D colortex14; 
 uniform sampler2D colortex15; // specular
 uniform sampler2D colortex16; // specular
 uniform sampler2D depthtex1;//depth
@@ -262,7 +262,6 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 
 		vec3 wpos = mat3(gbufferModelViewInverse) * rayStart  + gbufferModelViewInverse[3].xyz;
 		vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
-		// vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition;
 
 		float expFactor = 11.0;
 		for (int i=0;i<spCount;i++) {
@@ -775,9 +774,6 @@ void main() {
 
 	vec2 texcoord = gl_FragCoord.xy*texelSize;
 
-
-
-
 	float z0 = texture2D(depthtex0,texcoord).x;
 	float z = texture2D(depthtex1,texcoord).x;
     float TranslucentDepth = clamp( ld(z0)-ld(z0) 	 ,0.0,1.0);
@@ -1135,7 +1131,7 @@ void main() {
 		vec3 FINAL_COLOR = Indirect_lighting + Direct_lighting;
 		
 		#ifdef Variable_Penumbra_Shadows
-			FINAL_COLOR += SSS*DirectLightColor;
+			FINAL_COLOR += SSS*DirectLightColor	* lightleakfix;
 		#endif
 
 		FINAL_COLOR *= albedo;
@@ -1163,9 +1159,9 @@ void main() {
 		float estimatedDepth = Vdiff * abs(VdotU) ;	//assuming water plane
 		float estimatedSunDepth = estimatedDepth/abs(WsunVec.y); //assuming water plane
 	
-		// float custom_lightmap_T = texture2D(colortex14, texcoord).x;  * max(custom_lightmap_T,0.005)// y = torch
+		float custom_lightmap_T = pow(texture2D(colortex14, texcoord).a,1.5);
 	
-		vec3 ambientColVol = (avgAmbient * 8./150./1.5);
+		vec3 ambientColVol = (avgAmbient * 8./150./1.5) *  max(custom_lightmap_T,MIN_LIGHT_AMOUNT*0.001);
 		vec3 lightColVol = (lightCol.rgb / 80.) ;
 	
 		if (isEyeInWater == 0) waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));		

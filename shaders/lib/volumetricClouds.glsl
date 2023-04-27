@@ -27,7 +27,7 @@ float MaxCumulusHeight = CumulusHeight + 100;
 float AltostratusHeight = 2000;
 
 float rainCloudwetness = rainStrength;
-float cloud_movement = 0;
+float cloud_movement = frameTimeCounter;
 
 //3D noise from 2d texture
 float densityAtPos(in vec3 pos){
@@ -46,8 +46,15 @@ float densityAtPos(in vec3 pos){
 
 float cloudCov(in vec3 pos,vec3 samplePos){
 
-	float CloudLarge = texture2D(noisetex, (samplePos.xz + cloud_movement) / 5000 ).b;
-	float CloudSmall = texture2D(noisetex, (samplePos.xz - cloud_movement) / 500 ).r;
+	// vec2 windshift2 = pow( max(MaxCumulusHeight - pos.y, 0.0) / 20,2) * vec2(1);
+	// windshift.x *=  sin(frameTimeCounter);
+	// windshift.y *= -cos(frameTimeCounter);
+
+	float CloudLarge = texture2D(noisetex, (samplePos.xz  + cloud_movement) / 5000 ).b;
+
+
+	vec2 windshift = pow( max(pos.y-CumulusHeight, 0.0) / 5,1.5) * vec2(1)  * (CloudLarge*2-1.15);
+	float CloudSmall = texture2D(noisetex, (samplePos.xz   - cloud_movement) / 500 ).r;
 
 	float coverage =  abs(pow(CloudLarge,1)*2.0 - 1.2)*0.5 - (1.0-CloudSmall) + 0.3;
 
@@ -74,6 +81,8 @@ float cloudVol(in vec3 pos,in vec3 samplePos,in float cov, in int LoD){
 	float pw2 = log(fbmPower2);
 
 	samplePos.xz -= cloud_movement/4;
+	samplePos.xz += pow( max(pos.y - (CumulusHeight+20), 0.0) / 20.0,1.50);
+
 	noise += 1.0-densityAtPos(samplePos * 200.) ;
 	
 	float smallnoise = densityAtPos(samplePos * 600.);
@@ -101,8 +110,8 @@ float GetCumulusDensity(in vec3 pos, in int LoD){
 
 float GetAltostratusDensity(vec3 pos){
 
-	float large = texture2D(noisetex, pos.xz/100000. ).b;
-	float small = texture2D(noisetex, pos.xz/10000. - vec2(-large,1-large)/5).b;
+	float large = texture2D(noisetex, (pos.xz + cloud_movement)/100000. ).b;
+	float small = texture2D(noisetex, (pos.xz - cloud_movement)/10000. - vec2(-large,1-large)/5).b;
 
 	float shape = (small + pow((1.0-large),2.0))/2.0;
 
