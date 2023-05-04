@@ -27,7 +27,7 @@ float MaxCumulusHeight = CumulusHeight + 100;
 float AltostratusHeight = 2000;
 
 float rainCloudwetness = rainStrength;
-float cloud_movement = frameTimeCounter;
+float cloud_movement = frameTimeCounter * 0;
 
 //3D noise from 2d texture
 float densityAtPos(in vec3 pos){
@@ -133,17 +133,24 @@ vec3 Cloud_lighting(
 	vec3 sunContributionMulti,
 	vec3 moonContribution,
 	float AmbientShadow,
-	int cloudType
+	int cloudType,
+	vec3 pos
 ){
 	float coeeff = -30;
 	// float powder = 1.0 - exp((CloudShape*CloudShape) * -800);
 	float powder = 1.0 - exp(CloudShape * coeeff/3);
 	float lesspowder = powder*0.4+0.6;
 	
-	vec3 skyLighting = SkyColors * exp(SkyShadowing * AmbientShadow * coeeff/2 ) * lesspowder ;
 	
+	vec3 skyLighting = SkyColors;
+	#ifdef Altostratus
+		skyLighting += sunContributionMulti * 5.0 * exp(SunShadowing * -3)   * clamp(Alto_coverage * (1-Alto_density),0,1);
+	#endif
+	skyLighting *= exp(SkyShadowing * AmbientShadow * coeeff/2 ) * lesspowder ;
+
+
 	if(cloudType == 1){
-		coeeff = -10;
+		coeeff = -3;
 		skyLighting = SkyColors * exp(SkyShadowing * coeeff/15) * lesspowder;
 	}
 
@@ -152,7 +159,8 @@ vec3 Cloud_lighting(
 
 	vec3 moonLighting = exp(MoonShadowing * coeeff / 3) * moonContribution * powder;
 
-	return skyLighting + moonLighting + sunLighting ;
+	return skyLighting + moonLighting + sunLighting  ;
+	// return sunLighting;
 }
 
 //Mie phase function
@@ -215,6 +223,7 @@ vec4 renderClouds(
 	////// lighitng stuff 
 	float shadowStep = 200.;
 	vec3 dV_Sun = normalize(mat3(gbufferModelViewInverse)*sunVec)*shadowStep;
+	vec3 dV_Sun_small = dV_Sun/shadowStep;
 
 	float SdotV = dot(sunVec,normalize(FragPosition));
 
@@ -248,13 +257,14 @@ vec4 renderClouds(
 
 				float Sunlight = 0.0;
 				float MoonLight = 0.0;
-				
-				for (int j=0; j < self_shadow_samples; j++){
 
-					vec3 shadowSamplePos = progress_view + dV_Sun * (1+j+Dither.y/2)*0.15;
+				for (int j=0; j < 3; j++){
+
+					vec3 shadowSamplePos = progress_view + (dV_Sun * 0.15) * (1 + Dither.y/2 + j);
+
 					float shadow = GetCumulusDensity(shadowSamplePos, 0) * Cumulus_density;
 
-					Sunlight += shadow;
+					Sunlight += shadow / (1 + j);
 					MoonLight += shadow;
 
 				}
@@ -267,7 +277,7 @@ vec4 renderClouds(
 				#endif
 
 				float ambientlightshadow = 1.0-clamp(exp((progress_view.y - (MaxCumulusHeight + CumulusHeight)*0.5) / 100.0),0.0,1.0);
-				vec3 S = Cloud_lighting(muE, cumulus*Cumulus_density, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, ambientlightshadow, 0);
+				vec3 S = Cloud_lighting(muE, cumulus*Cumulus_density, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, ambientlightshadow, 0, progress_view);
 
 				vec3 Sint = (S - S * exp(-mult*muE)) / muE;
 				color += max(muE*Sint*total_extinction,0.0);
@@ -295,7 +305,7 @@ vec4 renderClouds(
 					float shadow = GetAltostratusDensity(shadowSamplePos_high) * Alto_density;
 					Sunlight += shadow;
 				}
-				vec3 S = Cloud_lighting(altostratus, altostratus, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, 1, 1);
+				vec3 S = Cloud_lighting(altostratus, altostratus, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, 1, 1, progress_view_high);
 
 				vec3 Sint = (S - S * exp(-20*altostratus)) / altostratus;
 				color += max(altostratus*Sint*total_extinction,0.0);
@@ -360,4 +370,16 @@ float GetCloudShadow_VLFOG(vec3 WorldPos){
 	shadow *= clamp(((MaxCumulusHeight + CumulusHeight)*0.435 - WorldPos.y)/100,0.0,1.0) ;
 
 	return shadow;
+}
+float GetAltoOcclusion(vec3 eyePlayerPos){
+
+	vec3 playerPos = eyePlayerPos + cameraPosition;
+	playerPos.y += 0.05;
+	float shadow;
+	vec3 lowShadowStart = playerPos + normalize(vec3(0,1,0)) * max((MaxCumulusHeight + CumulusHeight)*0.433 - playerPos.y,0.0) ;
+	shadow = GetCumulusDensity(lowShadowStart,0) * cloudDensity;
+	
+	shadow = clamp(exp(shadow * -1),0.0,1.0);
+	return shadow;
+
 }

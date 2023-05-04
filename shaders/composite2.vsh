@@ -72,42 +72,24 @@ void main() {
 	sunColor = texelFetch2D(colortex4,ivec2(12,37),0).rgb;
 	moonColor = texelFetch2D(colortex4,ivec2(13,37),0).rgb;
 	avgAmbient = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
-	// avgAmbient = texelFetch2D(colortex4,ivec2(11,37),0).rgb;
-
-
-	// ambientUp = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
-	// ambientDown = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
-	// ambientLeft = texelFetch2D(colortex4,ivec2(2,37),0).rgb;
-	// ambientRight = texelFetch2D(colortex4,ivec2(3,37),0).rgb;
-	// ambientB = texelFetch2D(colortex4,ivec2(4,37),0).rgb;
-	// ambientF = texelFetch2D(colortex4,ivec2(5,37),0).rgb;
 
 
 	lightCol.a = float(sunElevation > 1e-5)*2-1.;
 	lightCol.rgb = sc;
 
+	// #ifdef VOLUMETRIC_CLOUDS
+	// 	#ifndef VL_Clouds_Shadows
+	// 		lightCol.rgb *= (1.0-rainStrength*0.9);
+	// 	#endif
+	// #endif
+
+
+
 	TAA_Offset = offsets[frameCounter%8];
 	#ifndef TAA
-	TAA_Offset = vec2(0.0);
+		TAA_Offset = vec2(0.0);
 	#endif
 
-	#ifndef VL_Clouds_Shadows
-		lightCol.rgb *= (1.0-rainStrength*0.9);
-	#endif
-	// float Time = worldTime%24000;
-
-	// FogSchedule = 	clamp( (Time - 9000)/9000 ,0,1);
-	// // float fogAmount0 = 1/3000.+FOG_TOD_MULTIPLIER*(1/100.*(clamp(modWT-11000.,0.,2000.0)/2000.+(1.0-clamp(modWT,0.,3000.0)/3000.))*(clamp(modWT-11000.,0.,2000.0)/2000.+(1.0-clamp(modWT,0.,3000.0)/3000.)) + 1/120.*clamp(modWT-13000.,0.,1000.0)/1000.*(1.0-clamp(modWT-23000.,0.,1000.0)/1000.));
-	
-	// float fogAmount0 = TimeOfDayFog;
-	
-	// // VFAmount = CLOUDY_FOG_AMOUNT*(fogAmount0*fogAmount0+FOG_RAIN_MULTIPLIER*1.0/20000.*rainStrength);
-	// VFAmount = fogAmount0;
-	// fogAmount = BASE_FOG_AMOUNT*(fogAmount0+max(FOG_RAIN_MULTIPLIER*1/10.*rainStrength , FOG_TOD_MULTIPLIER*1/50.*clamp(modWT-13000.,0.,1000.0)/1000.*(1.0-clamp(modWT-23000.,0.,1000.0)/1000.)));
-	
-	
-	
-	
 	WsunVec = lightCol.a*normalize(mat3(gbufferModelViewInverse) *sunPosition);
 	refractedSunVec = refract(WsunVec, -vec3(0.0,1.0,0.0), 1.0/1.33333);
 }

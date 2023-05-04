@@ -49,7 +49,7 @@ uniform int entityId;
 flat varying int EMISSIVE;
 
 flat varying float blockID;
-flat varying int lightningBolt;
+flat varying int LIGHTNING;
 
 flat varying int NameTags;
 
@@ -143,13 +143,20 @@ void main() {
 
 	gl_Position = ftransform();
 
-	NameTags = 0;
+	EMISSIVE = 0;
+
+	#ifdef ENTITIES
+		LIGHTNING = 0;
+		if(entityId == 12345){
+			LIGHTNING = 1;
+		}
+	#endif
+
 
 	blockID = mc_Entity.x;
 	velocity = at_velocity;
 
 	// emission and shit...
-	EMISSIVE = 0;
 	// #ifndef LabPBR_Emissives
 	// 	if(mc_Entity.x == 10005) EMISSIVE = 1;
 	// #endif
@@ -199,10 +206,11 @@ void main() {
 
 
 
+	NameTags = 0;
 	// try and single out nametag text and then discard nametag background
 	if( dot(gl_Color.rgb, vec3(0.35)) < 1.0) NameTags = 1;
 
-	if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
+	// if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
 
 #endif
 

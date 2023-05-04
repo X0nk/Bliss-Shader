@@ -59,7 +59,6 @@ uniform sampler2D specular;
 	vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
 #endif
 
-flat varying int lightningBolt;
 uniform sampler2D texture;
 uniform sampler2D colortex1;//albedo(rgb),material(alpha) RGBA16
 uniform float frameTimeCounter;
@@ -77,6 +76,7 @@ in vec3 velocity;
 
 flat varying float blockID;
 flat varying int EMISSIVE;
+flat varying int LIGHTNING;
 
 #ifdef ENTITIES
 	#define ENTITY_PHYSICSMOD_SNOW 829925
@@ -437,9 +437,9 @@ void main() {
 				if(NameTags == 1) normal = vec3(1);
 			#endif
 
-			#ifdef ENTITY_PHYSICSMOD_SNOW
-				normal = FlatNormals;
-			#endif
+			// #ifdef ENTITY_PHYSICSMOD_SNOW
+			// 	normal = FlatNormals;
+			// #endif
 
 		#endif
 	#endif
@@ -459,14 +459,15 @@ void main() {
 			if(NameTags == 1) SpecularTex = vec4(0.0);
 		#endif
 
-		#ifdef ENTITY_PHYSICSMOD_SNOW
-			SpecularTex.rg = vec2(0.0);
-		#endif
+		// #ifdef ENTITY_PHYSICSMOD_SNOW
+		// 	SpecularTex.rg = vec2(0.0);
+		// #endif
 
 		gl_FragData[2] = SpecularTex;
 	#endif
 
 		if(EMISSIVE > 0) gl_FragData[2].a = 0.9;
+		if(LIGHTNING > 0.0) gl_FragData[2].a = 0.9;
 
 
 

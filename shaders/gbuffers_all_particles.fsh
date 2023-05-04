@@ -97,14 +97,14 @@ void main() {
 
 	vec4 TEXTURE = texture2D(texture, lmtexcoord.xy)*color;
 	
-	#ifdef WEATHER
-		gl_FragData[1].a = TEXTURE.a; // for bloomy rain
-	#endif
+	gl_FragData[1].a = TEXTURE.a; // for bloomy rain and stuff
+
 
 #ifndef WEATHER
-	gl_FragData[1].a = 0.0; // for bloomy rain
-	gl_FragData[0] = TEXTURE;  
-	vec3 Albedo = toLinear(gl_FragData[0].rgb);
+
+	gl_FragData[1].a = 1.0 - TEXTURE.a; // for bloomy rain and stuff
+
+	vec3 Albedo = toLinear(TEXTURE.rgb);
 
 	vec2 tempOffset = offsets[framemod8];
 	vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
@@ -139,6 +139,7 @@ void main() {
 
 	vec3 Indirect_lighting = DoAmbientLighting(avgAmbient, vec3(TORCH_R,TORCH_G,TORCH_B), lmtexcoord.zw, 5.0);
 
+	gl_FragData[0].a = TEXTURE.a;
 	gl_FragData[0].rgb = (Direct_lighting + Indirect_lighting) * Albedo;
 #endif
 }

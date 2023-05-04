@@ -56,6 +56,7 @@ void main() {
 	color = gl_Color;
 
 	avgAmbient = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+	
 	vec3 sc = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
 	lightCol.a = float(sunElevation > 1e-5)*2-1.;
 	lightCol.rgb = sc;

@@ -175,10 +175,10 @@ void main() {
 	moonColorCloud = calculateAtmosphere(vec3(0.0), modSunVec, vec3(0.0,1.0,0.0), sunVec, -sunVec, planetSphere, skyAbsorb, 25,0.5);
 
 	moonColorCloud = moonColorBase/4000.0*0.55;
-	#ifndef CLOUDS_SHADOWS
-	sunColor *= (1.0-rainStrength*vec3(0.96,0.95,0.94));
-	moonColor *= (1.0-rainStrength*vec3(0.96,0.95,0.94));
-	#endif
+	// #ifndef CLOUDS_SHADOWS
+	// 	sunColor *= (1.0-rainStrength*vec3(0.96,0.95,0.94));
+	// 	moonColor *= (1.0-rainStrength*vec3(0.96,0.95,0.94));
+	// #endif
 	lightSourceColor = sunVis >= 1e-5 ? sunColor * sunVis : moonColor * moonVis;
 
 	float lightDir = float( sunVis >= 1e-5)*2.0-1.0;

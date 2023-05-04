@@ -863,6 +863,8 @@ void main() {
 	vec3 DirectLightColor = (lightCol.rgb/80.0);
 	DirectLightColor *= clamp(abs(WsunVec.y)*2,0.,1.);
 
+	vec3 AmbientLightColor = avgAmbient;
+
 	float cloudShadow = 1.0;
 
 	if ( z >= 1.) { //sky
@@ -1019,8 +1021,22 @@ void main() {
 		// float thething = pow(clamp(2.0 + dot(viewToWorld(FlatNormals),np3),0.0,2.0),3.0);
 		// // LavaGlow *= thething*0.25+0.75;
 		// LavaGlow *= mix((2.0-thething)*0.5+0.5, thething*0.25+0.75, sqrt(lightmap.x));
+		
+		// #ifdef altostratus
+		// 	AmbientLightColor += (lightCol.rgb/5) * clamp(Alto_coverage * (1-Alto_density),0,1)  * clamp(abs(ambientCoefs.y+1.0),0.0,1.0);
+		// #endif
 
-		Indirect_lighting = DoAmbientLighting(avgAmbient, vec3(TORCH_R,TORCH_G,TORCH_B), newLightmap.xy, skylight);
+		// float SkylightShadow = 1;
+		// #ifdef VOLUMETRIC_CLOUDS
+		// #ifdef CLOUDS_SHADOWS
+		// 	SkylightShadow = GetAltoOcclusion(p3);
+		// #endif
+		// #endif
+
+		// AmbientLightColor *= SkylightShadow;
+
+		Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), newLightmap.xy, skylight);
+
 
 		
 		
