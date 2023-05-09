@@ -92,74 +92,43 @@ float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 
 
 #ifdef WEATHERCLOUDS
-	uniform float CumulusCoverage;
+	uniform float Cumulus_Cov;
+
+	uniform float Alto_Cov;
+	uniform float Alto_Den;
+
 	uniform float CirrusCoverage;
 	uniform float CirrusThickness;
 
-	float DailyWeather_LowAltitude(
+	float DailyWeather_Cumulus(
 		float Coverage
 	){
-		
-		// #ifdef Daily_Weather
-		// 	int W_DAY = WeatherDay;
-
-		// 	if(W_DAY > -1)	{
-		// 		if(W_DAY == 0) Coverage += 0.1;
-		// 		if(W_DAY == 1) Coverage += 0.5;
-		// 		if(W_DAY == 2) Coverage += 0.2;
-		// 		if(W_DAY == 3) Coverage += 0.8;
-		// 		if(W_DAY == 4) Coverage += 0.1;
-		// 		if(W_DAY == 5) Coverage += 0.6;
-		// 		if(W_DAY == 6) Coverage += 0.0;
-		// 		if(W_DAY == 7) Coverage += 1.0;
-		// 	}else{
-		// 		Coverage += mix(CumulusCoverage, Rain_coverage, rainStrength);
-		// 	}
-		// #else
-		// 	Coverage += mix(cloudCoverage, Rain_coverage, rainStrength);
-		// #endif
 
 		#ifdef Daily_Weather
-			Coverage += day0 * 0.3	+	day1 * 0.8	+	day2 * 0.2	+	day3 * 0.0	+	day4 * 0.8	+	day5 * 0.5	+	day6 * -0.5	+	day7 * 0.6;
+			// Coverage += day0 * 0.3	+	day1 * 0.8	+	day2 * 0.2	+	day3 * 0.0	+	day4 * 0.8	+	day5 * 0.5	+	day6 * -0.5	+	day7 * 0.6;
+			Coverage += Cumulus_Cov;
 		#else
 			Coverage += mix(Cumulus_coverage, Rain_coverage, rainStrength);
 			// Coverage = mix(Coverage, Rain_coverage, rainStrength);
 		#endif
 
 		return Coverage;
-
-
 	}
 
-	void DailyWeather_HighAltitude(
+	void DailyWeather_Alto(
 		inout float Coverage,
-		inout float Thickness
+		inout float Density
 	){
 		
 		#ifdef Daily_Weather
-			float W_DAY = WeatherDay;
-
-			if(W_DAY > -1)	{
-				if(W_DAY == 0){ Coverage = 0.8; Thickness = 0.5; }
-				if(W_DAY == 1){ Coverage = 0.8; Thickness = 0.5; }
-				if(W_DAY == 2){ Coverage = 0.0; Thickness = 0.5; }
-				if(W_DAY == 3){ Coverage = 0.0; Thickness = 0.5; }
-				if(W_DAY == 4){ Coverage = 0.0; Thickness = 0.5; }
-				if(W_DAY == 5){ Coverage = 0.0; Thickness = 0.5; }
-				if(W_DAY == 6){ Coverage = 0.0; Thickness = 0.5; }
-				if(W_DAY == 7){ Coverage = 0.0; Thickness = 0.5; }
-			}else{
-				Coverage  = CirrusCoverage;
-				Thickness = CirrusThickness;
-			}
+			Coverage = Alto_Cov;
+			Density  = Alto_Den;
 		#else
-			Coverage  = 0.7;
-			Thickness = 0.05;
+			Coverage = Alto_coverage;
+			Density  = Alto_density;
 		#endif
-
-		Coverage = pow(1.0-Coverage,3) * 50;
-		Thickness = Thickness * 10;
 	}
+
 #endif
 
 #ifdef Daily_Weather
@@ -177,8 +146,8 @@ float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 		vec4 FoggyDay_C = vec4(25);
 
 
-		UniformDensity += FoggyDay_U*day1 + MistyDay_U*day4;
-		CloudyDensity  += FoggyDay_C*day1;
+		// UniformDensity += FoggyDay_U*day1 + MistyDay_U*day4;
+		// CloudyDensity  += FoggyDay_C*day1;
 	}
 #endif
 

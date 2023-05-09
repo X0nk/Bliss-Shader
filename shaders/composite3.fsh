@@ -218,8 +218,8 @@ void main() {
     
   /// --- REFRACTION --- ///
   #ifdef Refraction
-    // refractedCoord += (tangentNormals * clamp((ld(z2) - ld(z)) * 0.5,0.0,0.15)) * RENDER_SCALE;
-    refractedCoord += tangentNormals * 0.1 * RENDER_SCALE;
+    refractedCoord += (tangentNormals * clamp((ld(z2) - ld(z)) * 0.5,0.0,0.15)) * RENDER_SCALE;
+    // refractedCoord += tangentNormals * 0.1 * RENDER_SCALE;
 
     float refractedalpha = decodeVec2(texture2D(colortex11,refractedCoord).b).g;
     float refractedalpha2 = texture2D(colortex7,refractedCoord).a;

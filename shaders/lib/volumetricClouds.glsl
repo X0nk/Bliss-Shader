@@ -46,31 +46,23 @@ float densityAtPos(in vec3 pos){
 
 float cloudCov(in vec3 pos,vec3 samplePos){
 
-	// vec2 windshift2 = pow( max(MaxCumulusHeight - pos.y, 0.0) / 20,2) * vec2(1);
-	// windshift.x *=  sin(frameTimeCounter);
-	// windshift.y *= -cos(frameTimeCounter);
-
 	float CloudLarge = texture2D(noisetex, (samplePos.xz  + cloud_movement) / 5000 ).b;
-
-
-	vec2 windshift = pow( max(pos.y-CumulusHeight, 0.0) / 5,1.5) * vec2(1)  * (CloudLarge*2-1.15);
 	float CloudSmall = texture2D(noisetex, (samplePos.xz   - cloud_movement) / 500 ).r;
 
-	float coverage =  abs(pow(CloudLarge,1)*2.0 - 1.2)*0.5 - (1.0-CloudSmall) + 0.3;
-
 	float Topshape = max(pos.y - (MaxCumulusHeight + CumulusHeight)*0.46, 0.0) / 200;
-
 	Topshape += max(exp((pos.y - MaxCumulusHeight) / 10.0 ), 0.0) ;
 
-	float FinalShape = DailyWeather_LowAltitude(coverage) - Topshape;
+	float coverage =  abs(pow(CloudLarge,1)*2.0 - 1.2)*0.5 - (1.0-CloudSmall);
+
+	float FinalShape = DailyWeather_Cumulus(coverage) - Topshape;
 
 	// cap the top and bottom for reasons
 	float capbase = sqrt(max(CumulusHeight*1.05 - pos.y, 0.0)/50) ;
 	float captop = max(pos.y - MaxCumulusHeight, 0.0);
 	
-	FinalShape = FinalShape - capbase - captop ;
+	FinalShape = max(FinalShape - capbase - captop, 0.0);
 
-	return max(FinalShape,0.0);
+	return FinalShape;
 }
 
 //Erode cloud with 3d Perlin-worley noise, actual cloud value
@@ -114,8 +106,12 @@ float GetAltostratusDensity(vec3 pos){
 	float small = texture2D(noisetex, (pos.xz - cloud_movement)/10000. - vec2(-large,1-large)/5).b;
 
 	float shape = (small + pow((1.0-large),2.0))/2.0;
+	
+	float Coverage; float Density;
+	DailyWeather_Alto(Coverage,Density);
 
-	shape = pow(max(shape + Alto_coverage - 0.5,0.0),2.0);
+	shape = pow(max(shape + Coverage - 0.5,0.0),2.0);
+	shape *= Density;
 
 	return shape;
 }
@@ -134,7 +130,8 @@ vec3 Cloud_lighting(
 	vec3 moonContribution,
 	float AmbientShadow,
 	int cloudType,
-	vec3 pos
+	vec3 pos,
+	float altoShadow
 ){
 	float coeeff = -30;
 	// float powder = 1.0 - exp((CloudShape*CloudShape) * -800);
@@ -143,14 +140,20 @@ vec3 Cloud_lighting(
 	
 	
 	vec3 skyLighting = SkyColors;
+
 	#ifdef Altostratus
-		skyLighting += sunContributionMulti * 5.0 * exp(SunShadowing * -3)   * clamp(Alto_coverage * (1-Alto_density),0,1);
+		float Coverage; float Density;
+		DailyWeather_Alto(Coverage,Density);
+		skyLighting += sunContributionMulti * exp(SunShadowing * -3) * clamp(Coverage * (1-Density),0,1);
+
+		// skyLighting += (sunContributionMulti * 5.0 * exp(SunShadowing * -3)) * exp(altoShadow * -0.1);
 	#endif
+
 	skyLighting *= exp(SkyShadowing * AmbientShadow * coeeff/2 ) * lesspowder ;
 
 
 	if(cloudType == 1){
-		coeeff = -3;
+		coeeff = -10;
 		skyLighting = SkyColors * exp(SkyShadowing * coeeff/15) * lesspowder;
 	}
 
@@ -160,7 +163,7 @@ vec3 Cloud_lighting(
 	vec3 moonLighting = exp(MoonShadowing * coeeff / 3) * moonContribution * powder;
 
 	return skyLighting + moonLighting + sunLighting  ;
-	// return sunLighting;
+	// return skyLighting;
 }
 
 //Mie phase function
@@ -272,12 +275,12 @@ vec4 renderClouds(
 				#ifdef Altostratus
 					// cast a shadow from higher clouds onto lower clouds
 					vec3 HighAlt_shadowPos = progress_view + dV_Sun/abs(dV_Sun.y) * max(AltostratusHeight - progress_view.y,0.0);
-					float HighAlt_shadow = GetAltostratusDensity(HighAlt_shadowPos) * Alto_density ;
+					float HighAlt_shadow = GetAltostratusDensity(HighAlt_shadowPos);
 					Sunlight += HighAlt_shadow;
 				#endif
 
 				float ambientlightshadow = 1.0-clamp(exp((progress_view.y - (MaxCumulusHeight + CumulusHeight)*0.5) / 100.0),0.0,1.0);
-				vec3 S = Cloud_lighting(muE, cumulus*Cumulus_density, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, ambientlightshadow, 0, progress_view);
+				vec3 S = Cloud_lighting(muE, cumulus*Cumulus_density, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, ambientlightshadow, 0, progress_view, HighAlt_shadow);
 
 				vec3 Sint = (S - S * exp(-mult*muE)) / muE;
 				color += max(muE*Sint*total_extinction,0.0);
@@ -294,7 +297,7 @@ vec4 renderClouds(
 		if (max(AltostratusHeight-cameraPosition.y,0.0)/max(normalize(dV_view).y,0.0) / 100000.0 < AltostratusHeight) {
 
 			vec3 progress_view_high = dV_view2 + cameraPosition + dV_view2/dV_view2.y * max(AltostratusHeight-cameraPosition.y,0.0);
-			float altostratus = GetAltostratusDensity(progress_view_high) * Alto_density;
+			float altostratus = GetAltostratusDensity(progress_view_high);
 
 			float Sunlight = 0.0;
 			float MoonLight = 0.0;
@@ -302,10 +305,10 @@ vec4 renderClouds(
 			if(altostratus > 1e-5){
 				for (int j = 0; j < 2; j++){
 					vec3 shadowSamplePos_high = progress_view_high + dV_Sun * float(j+Dither.y);
-					float shadow = GetAltostratusDensity(shadowSamplePos_high) * Alto_density;
+					float shadow = GetAltostratusDensity(shadowSamplePos_high);
 					Sunlight += shadow;
 				}
-				vec3 S = Cloud_lighting(altostratus, altostratus, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, 1, 1, progress_view_high);
+				vec3 S = Cloud_lighting(altostratus, altostratus, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, 1, 1, progress_view_high, 0);
 
 				vec3 Sint = (S - S * exp(-20*altostratus)) / altostratus;
 				color += max(altostratus*Sint*total_extinction,0.0);
@@ -339,7 +342,7 @@ float GetCloudShadow(vec3 eyePlayerPos){
 
 	#ifdef Altostratus 
 		vec3 highShadowStart = playerPos + WsunVec/abs(WsunVec.y) * max(AltostratusHeight - playerPos.y,0.0);
-		shadow += GetAltostratusDensity(highShadowStart) * Alto_density;
+		shadow += GetAltostratusDensity(highShadowStart);
 	#endif
 
 	shadow = shadow/2.0; // perhaps i should average the 2 shadows being added....
@@ -359,7 +362,7 @@ float GetCloudShadow_VLFOG(vec3 WorldPos){
 
 	#ifdef Altostratus 
 		vec3 highShadowStart = WorldPos + WsunVec/abs(WsunVec.y) * max(AltostratusHeight - WorldPos.y,0.0);
-		shadow += GetAltostratusDensity(highShadowStart) * Alto_density;
+		shadow += GetAltostratusDensity(highShadowStart);
 	#endif
 
 	// shadow = shadow/2.0; // perhaps i should average the 2 shadows being added....
