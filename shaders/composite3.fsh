@@ -194,8 +194,13 @@ void main() {
 	vec4 unpack0 =  vec4(decodeVec2(data.r),decodeVec2(data.g)) ;
 	vec4 unpack1 = vec4(decodeVec2(data.b),0,0) ;
 	
-	vec2 tangentNormals = unpack0.xy*2.0-1.0;
+  
+
 	vec4 albedo = vec4(unpack0.ba,unpack1.rg);
+
+	vec2 tangentNormals = unpack0.xy*2.0-1.0;
+
+  if(albedo.a <= 0.0) tangentNormals = vec2(0.0);
 
   vec4 TranslucentShader = texture2D(colortex2,texcoord);
 
@@ -213,9 +218,12 @@ void main() {
     
   /// --- REFRACTION --- ///
   #ifdef Refraction
-    refractedCoord += (tangentNormals * clamp((ld(z2) - ld(z)) * 0.5,0.0,0.15)) * RENDER_SCALE;
+    // refractedCoord += (tangentNormals * clamp((ld(z2) - ld(z)) * 0.5,0.0,0.15)) * RENDER_SCALE;
+    refractedCoord += tangentNormals * 0.1 * RENDER_SCALE;
 
-    if( texture2D(colortex7,refractedCoord).a < 0.95  && decodeVec2(texture2D(colortex11,refractedCoord).b).g < 0.01 ) refractedCoord = texcoord; // remove refracted coords on solids
+    float refractedalpha = decodeVec2(texture2D(colortex11,refractedCoord).b).g;
+    float refractedalpha2 = texture2D(colortex7,refractedCoord).a;
+    if( refractedalpha <= 0.0 ) refractedCoord = texcoord; // remove refracted coords on solids
   #endif
   
   /// --- MAIN COLOR BUFFER --- ///
@@ -297,7 +305,7 @@ void main() {
 
   gl_FragData[1].rgb = clamp(color.rgb,0.0,68000.0);
 
-  // gl_FragData[1].rgb = vec3(albedo.rgb*albedo.a);
-  // if(texcoord.x > 0.5) gl_FragData[1].rgb = vec3(tangentNormals,0.0);
+  // gl_FragData[1].rgb = vec3(albedo.a);
+//  gl_FragData[1].rgb = vec3(tangentNormals,0.0);
 
 }

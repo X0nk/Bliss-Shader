@@ -300,7 +300,7 @@ void main() {
 				float depthmap = readNormal(vtexcoord.st).a;
 				float used_POM_DEPTH = 1.0;
 
-	   	 	if ( viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
+	   	 		if ( viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
 					float noise = interleaved_gradientNoise_temp();
 	  				#ifdef Adaptive_Step_length
 						vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * POM_DEPTH) * clamp(1.0-pow(depthmap,2),0.1,1.0) ;
@@ -310,9 +310,9 @@ void main() {
 					#endif
 					vec3 coord = vec3(vtexcoord.st, 1.0);
 
-					coord += (interval * noise) * used_POM_DEPTH;
+					coord += (interval ) * used_POM_DEPTH;
 
-					float sumVec = noise;
+					float sumVec = 0.5;
 					for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - POM_DEPTH + POM_DEPTH * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
 						coord = coord+interval * used_POM_DEPTH; 
 						sumVec += 1.0 * used_POM_DEPTH; 
@@ -339,6 +339,7 @@ void main() {
 		//////////////////////////////// 
 
 		vec4 Albedo = texture2DGradARB(texture, adjustedTexCoord.xy, dcdx,dcdy) * color;
+
 
 		#ifdef ENTITIES
 			if(NameTags == 1) Albedo = texture2D(texture, lmtexcoord.xy, Texture_MipMap_Bias) * color;
@@ -398,9 +399,9 @@ void main() {
 
 			normal = applyBump(tbnMatrix,NormalTex, mix(1.0,Puddle_shape,rainfall));
 
-			#ifdef ENTITIES
-				if(NameTags == 1) normal = vec3(1);
-			#endif
+			// #ifdef ENTITIES
+			// 	if(NameTags == 1) normal = vec3(1);
+			// #endif
 		#endif
 
 		//////////////////////////////// 
@@ -433,9 +434,9 @@ void main() {
 
 			normal = applyBump(tbnMatrix, NormalTex.xyz,  1	);
 			
-			#ifdef ENTITIES
-				if(NameTags == 1) normal = vec3(1);
-			#endif
+			// #ifdef ENTITIES
+			// 	if(NameTags == 1) normal = vec3(1);
+			// #endif
 
 			// #ifdef ENTITY_PHYSICSMOD_SNOW
 			// 	normal = FlatNormals;

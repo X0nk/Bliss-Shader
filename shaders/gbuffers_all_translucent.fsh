@@ -270,6 +270,8 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 	gl_FragData[0] = texture2D(texture, lmtexcoord.xy, Texture_MipMap_Bias) * color;
 	vec3 Albedo = toLinear(gl_FragData[0].rgb);
 
+	float UnchangedAlpha = gl_FragData[0].a;
+
 	float iswater = normalMat.w;
 
 	#ifdef HAND
@@ -291,7 +293,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 	#endif
 
 
-	vec4 COLORTEST = vec4(Albedo,gl_FragData[0].a);
+	vec4 COLORTEST = vec4(Albedo,UnchangedAlpha);
 
 
 	vec3 p3 = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
@@ -356,7 +358,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 	}
 
 	// cannot encode alpha or it will shit its pants
-	gl_FragData[2] = vec4(encodeVec2(TangentNormal), encodeVec2(COLORTEST.rg), encodeVec2(COLORTEST.ba), 1.0);
+	gl_FragData[2] = vec4(encodeVec2(TangentNormal), encodeVec2(COLORTEST.rg), encodeVec2(COLORTEST.ba), UnchangedAlpha);
 
 	
 	float NdotL = clamp(lightSign*dot(normal,sunVec) ,0.0,1.0);
