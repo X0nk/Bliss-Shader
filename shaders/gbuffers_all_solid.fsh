@@ -267,27 +267,19 @@ void main() {
 
 	float lightmap = clamp( (lmtexcoord.w-0.8) * 10.0,0.,1.);
 
-	float rainfall = 0. ;
+	float rainfall = rainStrength ;
 	float Puddle_shape = 0.;
-	float puddle_shiny = 1.;
-	float puddle_normal = 0.;
 	
 	#ifndef ENTITIES
 	#ifdef WORLD
 	#ifdef Puddles
-		rainfall = rainStrength ;
-		// Puddle_shape =  (1.0 - max(texture2D(noisetex, worldpos.xz * (0.015 * Puddle_Size)).b - (1.0-lightmap)  ,0.0) * clamp( viewToWorld(normal).y*0.5+0.5 ,0.0,1.0)) * rainfall;
-
-		
 		Puddle_shape = (1.0 - clamp(exp(-15 * pow(texture2D(noisetex, worldpos.xz * (0.015 * Puddle_Size)	).b  ,5)),0,1)) * lightmap		;
-
 		Puddle_shape *= clamp( viewToWorld(normal).y*0.5+0.5 ,0.0,1.0);
 		Puddle_shape *= rainfall;
-		// puddle_shiny =   clamp( pow(1.0-Puddle_shape,2.0)*2,0.25,1.)   * rainfall;
-		// puddle_normal =  clamp( pow(Puddle_shape,5.0) * 50.	,0.,1.)  * rainfall;
 	#endif
 	#endif
 	#endif
+
 
 	#ifdef POM
 		// vec2 tempOffset=offsets[framemod8];
@@ -337,6 +329,7 @@ void main() {
 				}
 	    	}
 		#endif
+
 
 		//////////////////////////////// 
 		//////////////////////////////// ALBEDO
@@ -401,7 +394,7 @@ void main() {
 			NormalTex.xy = NormalTex.xy*2.0-1.0;
 			NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0);
 
-			normal = applyBump(tbnMatrix,NormalTex, mix(1.0,Puddle_shape,rainfall));
+			normal = applyBump(tbnMatrix,NormalTex, mix(1.0,1.0-Puddle_shape,rainfall));
 
 			// #ifdef ENTITIES
 			// 	if(NameTags == 1) normal = vec3(1);
@@ -412,11 +405,24 @@ void main() {
 		//////////////////////////////// SPECULAR
 		//////////////////////////////// 
 
-		gl_FragData[2] = texture2DGradARB(specular, adjustedTexCoord.xy,dcdx,dcdy);
+		vec4 SpecularTex = texture2DGradARB(specular, adjustedTexCoord.xy,dcdx,dcdy);
+
+		SpecularTex.r = max(SpecularTex.r, Puddle_shape);
+		SpecularTex.g = max(SpecularTex.g, Puddle_shape*0.04);
+
+		gl_FragData[2] = SpecularTex ;
 
 		//////////////////////////////// 
 		//////////////////////////////// FINALIZE
 		//////////////////////////////// 
+
+		#ifdef Puddles
+			float porosity = 0.35;
+			#ifdef Porosity
+				porosity = SpecularTex.z >= 64.5/255.0 ? 0.0 : (SpecularTex.z*255.0/64.0)*0.65;
+			#endif
+			if(SpecularTex.g < 229.5/255.0) Albedo.rgb = mix(Albedo.rgb, vec3(0), Puddle_shape*porosity);
+		#endif
 
 		vec4 data1 = clamp(encode(viewToWorld(normal), lmtexcoord.zw),0.,1.0);
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),encodeVec2(Albedo.y,data1.y),encodeVec2(Albedo.z,data1.z),encodeVec2(data1.w,Albedo.w));
@@ -436,7 +442,7 @@ void main() {
 			NormalTex.xy = NormalTex.xy*2.0-1.0;
 			NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0) ;
 
-			normal = applyBump(tbnMatrix, NormalTex.xyz,  1	);
+			normal = applyBump(tbnMatrix, NormalTex.xyz,  mix(1.0,1-Puddle_shape,rainfall)	);
 			
 			// #ifdef ENTITIES
 			// 	if(NameTags == 1) normal = vec3(1);
@@ -533,7 +539,7 @@ void main() {
 		#ifdef Puddles
 			float porosity = 0.35;
 			#ifdef Porosity
-				porosity = specular.z >= 64.5/255.0 ? 0.0 : (specular.z*255.0/64.0)*0.65;
+				porosity = SpecularTex.z >= 64.5/255.0 ? 0.0 : (SpecularTex.z*255.0/64.0)*0.65;
 			#endif
 			if(SpecularTex.g < 229.5/255.0) Albedo.rgb = mix(Albedo.rgb, vec3(0), Puddle_shape*porosity);
 		#endif
