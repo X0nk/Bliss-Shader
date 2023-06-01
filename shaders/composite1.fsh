@@ -968,7 +968,7 @@ void main() {
 		vec3 Indirect_lighting = vec3(1.0);
 
 		// float skylight = clamp(abs(normal.y+1),0.0,1.0);
-		float skylight = clamp(pow(abs(ambientCoefs.y+1.0),1),0.35,2.0);
+		float skylight = clamp(pow(abs(ambientCoefs.y+1.0),2),0.35,2.0);
 		// float skylight = clamp(abs(ambientCoefs.y+0.5),0.35,2.0);
 		
 
