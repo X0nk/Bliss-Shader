@@ -4,6 +4,7 @@
 #include "/lib/settings.glsl"
 
 flat varying int NameTags;
+flat varying float SSSAMOUNT;
 
 #ifndef USE_LUMINANCE_AS_HEIGHTMAP
 #ifndef MC_NORMAL_MAP
@@ -46,13 +47,16 @@ varying vec4 normalMat;
 
 
 #ifdef MC_NORMAL_MAP
-uniform sampler2D normals;
-varying vec4 tangent;
-varying vec3 FlatNormals;
+	uniform sampler2D normals;
+	varying vec4 tangent;
+	varying vec3 FlatNormals;
 #endif
 
 // #ifdef SPECULARTEX
+
 uniform sampler2D specular;
+
+
 // #endif
 #ifdef POM
 	vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
@@ -444,8 +448,7 @@ void main() {
 
 		#endif
 	#endif
-
-
+	
 		//////////////////////////////// 
 		//////////////////////////////// SPECULAR
 		//////////////////////////////// 
@@ -460,20 +463,32 @@ void main() {
 			if(NameTags == 1) SpecularTex = vec4(0.0);
 		#endif
 
-		// #ifdef ENTITY_PHYSICSMOD_SNOW
-		// 	SpecularTex.rg = vec2(0.0);
-		// #endif
 
-		gl_FragData[2] = SpecularTex;
+		gl_FragData[2].rg = SpecularTex.rg;
+
+		#if SSS_TYPE == 0
+			gl_FragData[2].b = 0.0;
+		#endif
+
+		#if SSS_TYPE == 1
+			gl_FragData[2].b = SSSAMOUNT;
+		#endif
+
+		#if SSS_TYPE == 2
+			gl_FragData[2].b = SpecularTex.b;
+			if(SpecularTex.b < 65.0/255.0) gl_FragData[2].b = SSSAMOUNT;
+		#endif
+
+		#if SSS_TYPE == 3		
+			gl_FragData[2].b = SpecularTex.b;
+		#endif
+
 	#endif
 
+		 
 		if(EMISSIVE > 0) gl_FragData[2].a = 0.9;
 		if(LIGHTNING > 0.0) gl_FragData[2].a = 0.9;
-
-
-
-
-
+		
 
 		//////////////////////////////// 
 		//////////////////////////////// ALBEDO

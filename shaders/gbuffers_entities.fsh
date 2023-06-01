@@ -2,4 +2,5 @@
 
 #define WORLD
 #define ENTITIES
+
 #include "gbuffers_all_solid.fsh"

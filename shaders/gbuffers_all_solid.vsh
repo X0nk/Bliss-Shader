@@ -46,10 +46,14 @@ float pi2wt = PI48*frameTimeCounter;
 attribute vec4 mc_Entity;
 uniform int blockEntityId;
 uniform int entityId;
+
 flat varying int EMISSIVE;
 
 flat varying float blockID;
 flat varying int LIGHTNING;
+
+
+flat varying float SSSAMOUNT;
 
 flat varying int NameTags;
 
@@ -143,6 +147,8 @@ void main() {
 
 	gl_Position = ftransform();
 
+	SSSAMOUNT = 0.0;
+
 	EMISSIVE = 0;
 
 	#ifdef ENTITIES
@@ -194,39 +200,45 @@ void main() {
 
 #ifdef ENTITIES
 
-	#ifdef mob_SSS
-		#ifdef Variable_Penumbra_Shadows
-			normalMat.a = entityId == 1100 ? 0.65 : normalMat.a;
-			normalMat.a = entityId == 1200 ? 0.65 : normalMat.a;
-		#endif
-	#endif
-	// normalMat.a = 0.45;
-
-
-
-
-
 	NameTags = 0;
 	// try and single out nametag text and then discard nametag background
 	if( dot(gl_Color.rgb, vec3(0.35)) < 1.0) NameTags = 1;
-
-	// if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
-
+	if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
+   
 #endif
-
 
 #ifdef WORLD
 
-	normalMat = vec4(normalize(gl_NormalMatrix *gl_Normal),mc_Entity.x == 10004 || mc_Entity.x == 10003 ? 0.5 : mc_Entity.x == 10001 ? 0.6 : 1.0);
+    /////// ----- SSS ----- ///////
+	// strong
+	if(mc_Entity.x == 10001 || mc_Entity.x == 10003 || mc_Entity.x == 10004) SSSAMOUNT = 1.0;
+	
+	// medium
+	if(mc_Entity.x == 10006 || mc_Entity.x == 200) SSSAMOUNT = 1.0;
+	
+	// low
+	if(mc_Entity.x == 10007 || mc_Entity.x == 10008) SSSAMOUNT = 1.0;
+	
+	#ifdef ENTITIES
+	    /////// ----- SSS ----- ///////
+		// strong
+		if(entityId == 1100) SSSAMOUNT = 1.0;
 
-	normalMat.a = mc_Entity.x == 10006 || mc_Entity.x == 200 || mc_Entity.x == 100061 ? 0.6 : normalMat.a; // 0.6 weak SSS
-	normalMat.a = blockEntityId == 10010 ? 0.65 : normalMat.a; // banners
+		// medium
 
-	#ifdef misc_block_SSS
-		normalMat.a = (mc_Entity.x == 10007 || mc_Entity.x == 10008) ? 0.55 : normalMat.a; // 0.55 abnormal block strong sss
+		// low
+		if(entityId == 1200) SSSAMOUNT = 0.3;
 	#endif
 
-	// normalMat.a = mc_Entity.x == 10005 ? 0.8 : normalMat.a;
+	#ifdef BLOCKENTITIES
+		// strong
+
+		// medium
+		if(blockEntityId == 10010) SSSAMOUNT = 0.4;
+
+		// low
+
+	#endif
 
 
 	#ifdef WAVY_PLANTS
@@ -245,16 +257,8 @@ void main() {
 		}
 	#endif
 
-	if (mc_Entity.x == 100 ){
-		color.rgb = normalize(color.rgb)*sqrt(3.0);
-		normalMat.a = 0.9;
-	}
-
-
-
-
-
 	gl_Position = toClipSpace3(position);
+
 #endif
 
 

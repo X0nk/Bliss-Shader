@@ -188,12 +188,12 @@ void main() {
 	}
 
 
-	#ifdef LabPBR_subsurface_scattering
+	// #ifdef LabPBR_subsurface_scattering
 		float SpecularTex = texture2D(colortex8,texcoord).z;
 		float LabSSS = clamp((-65.0 + SpecularTex * 255.0) / 190.0 ,0.0,1.0);
-	#else
-		float LabSSS = 0.0;
-	#endif
+	// #else
+	// 	float LabSSS = 0.0;
+	// #endif
 
 	#ifndef Variable_Penumbra_Shadows
 		if (translucent  && !hand)  minshadowfilt += 25;

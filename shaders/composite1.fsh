@@ -413,15 +413,17 @@ vec2 tapLocation_alternate(
 }
 
 
-void ssAO(inout vec3 lighting,	vec3 fragpos,float mulfov, vec2 noise, vec3 normal, vec2 texcoord, vec3 ambientCoefs, vec2 lightmap){
+void ssAO(inout vec3 lighting, inout float sss, vec3 fragpos,float mulfov, vec2 noise, vec3 normal, vec2 texcoord, vec3 ambientCoefs, vec2 lightmap){
 
 	ivec2 pos = ivec2(gl_FragCoord.xy);
 	const float tan70 = tan(70.*3.14/180.);
 
 	float dist = 1.0 + clamp(fragpos.z*fragpos.z/50.0,0,2); // shrink sample size as distance increases
+	float dist2 = 1-clamp(linZ(fragpos.z)*50,0,1); // shrink sample size as distance increases
 
 	float mulfov2 = gbufferProjection[1][1]/(tan70  * dist);
 	float maxR2 = fragpos.z*fragpos.z*mulfov2*2.*5/50.0;
+	float maxR2_2 = mix(500, fragpos.z*fragpos.z*mulfov2*2./50.0, dist2);
 
 
 	float rd = mulfov2 * 0.1 ;
@@ -429,12 +431,13 @@ void ssAO(inout vec3 lighting,	vec3 fragpos,float mulfov, vec2 noise, vec3 norma
 	float n = 0.0;
 
 	float occlusion = 0.0;
-
+	sss = 0.0;
 	vec2 acc = -(TAA_Offset*(texelSize/2))*RENDER_SCALE ;
 
 	int seed = (frameCounter%40000)*2 + (1+frameCounter);
 	float randomDir = fract(R2_samples(seed).y + noise.x ) * 1.61803398874 ;
 	vec3 NormalSpecific = viewToWorld(normal);
+
 	for (int j = 0; j < 7 ;j++) {
 		
 		vec2 sp = tapLocation_alternate(j, 0.0, 7, 20, randomDir);
@@ -458,10 +461,17 @@ void ssAO(inout vec3 lighting,	vec3 fragpos,float mulfov, vec2 noise, vec3 norma
 				if (dsquared < maxR2){
 					float NdotV = clamp(dot(vec*inversesqrt(dsquared), normalize(normal)),0.,1.);
 					occlusion += NdotV * clamp(1.0-dsquared/maxR2,0.0,1.0);
-
-					// float NdotV2 = clamp(dot(vec*inversesqrt(dsquared), normalize(RPnormal)),0.,1.);
-					// occlusion.y += NdotV2 * clamp(1.0-dsquared/maxR2,0.0,1.0);
+					
 				}
+				
+				if (dsquared > maxR2_2){
+					float NdotV = 1.0 - clamp(dot(vec*dsquared, normalize(normal)),0.,1.);
+
+					sss += NdotV + NdotV*clamp(1.0-maxR2_2/dsquared,0.0,1.0);
+
+					// sss += (1.0 - NdotV) ;
+				}
+
 				n += 1;
 			}
 		}
@@ -470,8 +480,13 @@ void ssAO(inout vec3 lighting,	vec3 fragpos,float mulfov, vec2 noise, vec3 norma
 	occlusion *= mix(2.5, 2.0 ,  clamp(floor(abs(NormalSpecific.y)*2.0),0.0,1.0));
 	occlusion = max(1.0 - occlusion/n, 0.0);
 
+
+	sss *= mix(1.0, 1.5 ,  clamp(floor(abs(NormalSpecific.y)*2.0),0.0,1.0));
+	sss = max(1.0 - sss/n, 0.0) ;
+
 	lighting = lighting*max(occlusion,pow(lightmap.x,4));
 }
+
 vec3 DoContrast(vec3 Color, float strength){
 
 	float Contrast =  log(strength);
@@ -479,69 +494,6 @@ vec3 DoContrast(vec3 Color, float strength){
 	return clamp(mix(vec3(0.5), Color, Contrast) ,0,255);
 }
 
-
-void ssDO(inout vec3 lighting,	vec3 fragpos,float mulfov, vec2 noise, vec3 normal, vec3 RPnormal, vec2 texcoord, vec3 ambientCoefs, vec2 lightmap, float sunlight){
-	const int Samples = 7;
-	vec3 Radiance = vec3(0);
-	float occlusion = 0.0;
-
-	ivec2 pos = ivec2(gl_FragCoord.xy);
-	const float tan70 = tan(70.*3.14/180.);
-
-	// float dist = 1.0 + clamp(fragpos.z*fragpos.z/50.0,0,2); // shrink sample size as distance increases
-
-	float mulfov2 = gbufferProjection[1][1]/(tan70   );
-	float maxR2 = fragpos.z*fragpos.z*mulfov2*2.*5/50.0;
-
-
-	float rd = mulfov2 * 0.1 ;
-
-
-	vec2 acc = -(TAA_Offset*(texelSize/2))*RENDER_SCALE ;
-
-	vec3 NormalSpecific = viewToWorld(normal);
-
-	
-	for (int j = 0; j < Samples ;j++) {
-		
-		vec2 sp = tapLocation_alternate(j, 0.0, 7, 20, blueNoise());
-		float thing = sp.y < 0.0 && clamp(floor(abs(NormalSpecific.y)*2.0),0.0,1.0) < 1.0 ? rd * 10: rd;
-
-
-		vec2 sampleOffset = sp*thing;
-		vec2 sampleOffset2 =  sp*rd ;
-		sampleOffset = sampleOffset2;
-
-		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio)*RENDER_SCALE);
-
-		if (offset.x >= 0 && offset.y >= 0 && offset.x < viewWidth*RENDER_SCALE.x && offset.y < viewHeight*RENDER_SCALE.y ) {
-			vec3 t0 = toScreenSpace(vec3(offset*texelSize+acc+0.5*texelSize,texelFetch2D(depthtex1,offset,0).x) * vec3(1.0/RENDER_SCALE, 1.0) );
-			
-
-			vec3 vec = t0.xyz - fragpos;
-			float dsquared = dot(vec,vec);
-
-				float NdotV2 = clamp(dot(vec*inversesqrt(dsquared), normalize(RPnormal)),0.,1.);
-
-				if (dsquared < maxR2){
-					// float NdotV = clamp(dot(vec*inversesqrt(dsquared), normalize(normal)),0.,1.);
-					// occlusion += NdotV * clamp(1.0-dsquared/maxR2,0.0,1.0);
-					
-
-					vec3 previousPosition = mat3(gbufferModelViewInverse) * t0 + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
-					previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
-					previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
-
-					if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0){
-						Radiance +=  NdotV2*texture2D(colortex5,previousPosition.xy).rgb ;
-					}
-
-				}
-		}
-	}
-	
-	lighting =  vec3(1) + Radiance/Samples;
-}
 
 vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes){
 	float dist = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
@@ -676,30 +628,24 @@ void rtGI(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, float lightm
 
 
 void SubsurfaceScattering(inout float SSS, float Scattering, float Density, float LabDenisty){
-	#ifdef LabPBR_subsurface_scattering
+	// #ifdef LabPBR_subsurface_scattering
 		float labcurve = pow(LabDenisty,LabSSS_Curve);
 		// beers law
 		SSS = clamp(exp( Scattering * -(10 - LabDenisty*7)), 0.0, labcurve);
 		if (abs(Scattering-0.1) < 0.0004 ) SSS = labcurve;
-	#else
-		// beers law
-		SSS = clamp(exp(Scattering * -Density), 0.0, 1.0);
-		if (abs(Scattering-0.1) < 0.0004 ) SSS = 1.0;
-	#endif
+	// #else
+	// 	// beers law
+	// 	SSS = clamp(exp(Scattering * -Density), 0.0, 1.0);
+	// 	if (abs(Scattering-0.1) < 0.0004 ) SSS = 1.0;
+	// #endif
 }
 
-
-
-
 vec3 SubsurfaceScattering_2(vec3 albedo, float Scattering, float Density, float LabDenisty, float lightPos, bool yeSSS){
-	if(!yeSSS) return vec3(0.0);
+	// if(!yeSSS) return vec3(0.0);
 
-	float density = Density;
-
-	#ifdef LabPBR_subsurface_scattering
-		float labcurve = pow(LabDenisty,LabSSS_Curve);
-		density = sqrt(30 - labcurve*15);
-	#endif
+	float labcurve = pow(LabDenisty,LabSSS_Curve);
+	float density = sqrt(30 - labcurve*15);
+	// #endif
 
 	vec3 absorbed = max(1.0 - albedo,0.0) * density;
 	// absorbed = vec3(1.);
@@ -708,11 +654,38 @@ vec3 SubsurfaceScattering_2(vec3 albedo, float Scattering, float Density, float 
 	// float gloop = (1.0-exp(sqrt(Scattering) * -density));
 	// vec3 scatter = mix(vec3(1.0), max(albedo - gloop * (1-labcurve),0.0), gloop) * exp(Scattering * -density);
 	
-	#ifdef LabPBR_subsurface_scattering
+	// #ifdef LabPBR_subsurface_scattering
 		scatter *= labcurve;
-	#endif
+	// #endif
 
 	scatter *= 0.5 + CustomPhase(lightPos, 1.0,30.0)*20;
+
+	return scatter;
+}
+
+vec3 SubsurfaceScattering_3(vec3 albedo, float Scattering, float Density, float lightPos){
+
+	float labcurve = pow(Density,LabSSS_Curve);
+	float density = sqrt(30 - labcurve*15);
+
+	vec3 absorbed = max(1.0 - albedo,0.0) * density;
+	vec3 scatter = exp(-sqrt(Scattering * absorbed)) * exp(Scattering * -density);
+
+	scatter *= labcurve;
+	scatter *= 0.5 + CustomPhase(lightPos, 1.0,30.0)*20;
+
+	return scatter;
+}
+
+vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
+
+	vec3 absorbed = max(luma(albedo) - albedo,0.0);
+	// vec3 scatter = exp(-absorbed) * exp(pow(max(Scattering-0.5,0.0),0.5) * -10);
+	vec3 scatter = exp(-sqrt(max(Scattering+0.1,0.0) * absorbed * 20)) * exp(Scattering* -5);
+
+	// vec3 scatter = exp(pow(max(Scattering-0.5,0.0),0.5) * -5) * vec3(1);
+
+	scatter *= pow(Density,LabSSS_Curve);
 
 	return scatter;
 }
@@ -828,6 +801,7 @@ void main() {
 
 	////// --------------- UNPACK MISC --------------- //////
 	vec4 SpecularTex = texture2D(colortex8,texcoord);
+	float LabSSS = clamp((-65.0 + SpecularTex.z * 255.0) / 190.0 ,0.0,1.0);	
 
 	vec4 normalAndAO = texture2D(colortex15,texcoord);
 	vec3 FlatNormals = normalAndAO.rgb * 2.0 - 1.0;
@@ -854,6 +828,8 @@ void main() {
 	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
 	bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
 	
+	// vec3 AO = vec3(1.0);
+	float SkySSS = 0.0;
 	vec3 filtered = vec3(1.412,1.0,0.0);
 	if (!hand) filtered = texture2D(colortex3,texcoord).rgb;
 	vec3 ambientCoefs = normal/dot(abs(normal),vec3(1.));
@@ -900,10 +876,11 @@ void main() {
 		float Shadows = clamp(1.0 - filtered.b,0.0,1.0);
 		
 		if (abs(filtered.y-0.1) < 0.0004 && !iswater) Shadows = clamp((lightmap.y-0.85)*25,0,1);
-	
-		vec3 SSS;
+		float SHADOWBLOCKERDEPTBH = filtered.y;
+		if (abs(filtered.y-0.1) < 0.0004 && !iswater) SHADOWBLOCKERDEPTBH = 1.0-clamp((lightmap.y-0.85)*25,0,1);
+		
+		vec3 SSS = vec3(0.0);
 		float SSS_strength;
-		float LabSSS = clamp((-65.0 + SpecularTex.z * 255.0) / 190.0 ,0.0,1.0);	
 
 		if (NdotL > 0.001) {
 			
@@ -943,19 +920,9 @@ void main() {
 
 		#ifdef Sub_surface_scattering
 			#ifdef Variable_Penumbra_Shadows
-				SSS_strength = 1000;
-				if (translucent)  SSS_strength = 2; // low Density
-				else if (translucent2) SSS_strength = 5; /// medium Density
-				else if (translucent3) SSS_strength = 10; // misc Desnity
-				else if (translucent4) SSS_strength = 10; // mob Debsity
-
-				bool hasSSS = SSS_strength < 1000 || LabSSS > 0.0;
-
-				// if(hasSSS) SubsurfaceScattering(SSS, filtered.y, SSS_strength, LabSSS) ;
 				
-				SSS = SubsurfaceScattering_2(albedo, filtered.y, SSS_strength, LabSSS, clamp(dot(np3, WsunVec),0.0,1.0), hasSSS) ;
+				SSS = SubsurfaceScattering_3(albedo, SHADOWBLOCKERDEPTBH, LabSSS, clamp(dot(np3, WsunVec),0.0,1.0)) ;
 					
-
 				// if (isEyeInWater == 0) SSS *= lightleakfix; // light leak fix
 			#endif
 
@@ -963,25 +930,21 @@ void main() {
 
 			if (!hand){
 
-					if (abs(filtered.y-0.1) < 0.0004 && ( !translucent || !translucent2 || !translucent3 ||  !translucent4  ) ) SSS = vec3(0.0);
+				if (abs(filtered.y-0.1) < 0.0004 && LabSSS < 0.0 ) SSS = vec3(0.0);
 
-				#ifndef SCREENSPACE_CONTACT_SHADOWS
+				#ifdef SCREENSPACE_CONTACT_SHADOWS
 
-					if (abs(filtered.y-0.1) < 0.0004 && ( translucent || translucent2  ||  translucent4 )	) SSS = clamp((lightmap.y-0.87)*25,0,1) * clamp(pow(1+dot(WsunVec,normal),25),0,1) * vec3(1);
+					vec3 vec = lightCol.a*sunVec;
+					float screenShadow = rayTraceShadow(vec, fragpos_rtshadow, interleaved_gradientNoise());
+					screenShadow *= screenShadow ;
 
-				#else
-						vec3 vec = lightCol.a*sunVec;
-						float screenShadow = rayTraceShadow(vec, fragpos_rtshadow, interleaved_gradientNoise());
-						screenShadow *= screenShadow ;
+					#ifdef Variable_Penumbra_Shadows
+						Shadows = min(screenShadow, Shadows);
+						if (abs(filtered.y-0.1) < 0.0004 ) SSS *= vec3(Shadows);
+					#endif
 
-						#ifdef Variable_Penumbra_Shadows
-							Shadows = min(screenShadow, Shadows);
-							if (abs(filtered.y-0.1) < 0.0004 && ( translucent || translucent2   )	) SSS = vec3(Shadows);
-						// #else
-
-						#endif
-
-
+				// #else
+				// 	if (abs(filtered.y-0.1) < 0.0004 && LabSSS > 0.0 ) SSS = clamp((lightmap.y-0.87)*25,0,1) * clamp(pow(1+dot(WsunVec,normal),25),0,1) * vec3(1);
 				#endif
 			}
 
@@ -989,7 +952,7 @@ void main() {
 				SSS *= 1.0-NdotL*Shadows;
 			#endif
 		#else
-			 SSS = 0.0;
+			 SSS = vec3(0.0);
 		#endif
 
 		#ifdef VOLUMETRIC_CLOUDS
@@ -1005,7 +968,8 @@ void main() {
 		vec3 Indirect_lighting = vec3(1.0);
 
 		// float skylight = clamp(abs(normal.y+1),0.0,1.0);
-		float skylight = clamp(abs(ambientCoefs.y+1.0),0.35,2.0);
+		float skylight = clamp(pow(abs(ambientCoefs.y+1.0),1),0.35,2.0);
+		// float skylight = clamp(abs(ambientCoefs.y+0.5),0.35,2.0);
 		
 
 		#if indirect_effect == 2 || indirect_effect == 3 || indirect_effect == 4
@@ -1015,31 +979,11 @@ void main() {
 		// do this to make underwater shading easier.
 		vec2 newLightmap = lightmap.xy;
 		if((isEyeInWater == 0 && iswater) || (isEyeInWater == 1 && !iswater)) newLightmap.y = min(newLightmap.y+0.1,1.0);
- 		
-	
-		// vec3 LavaGlow = vec3(TORCH_R,TORCH_G,TORCH_B);
-		// float thething = pow(clamp(2.0 + dot(viewToWorld(FlatNormals),np3),0.0,2.0),3.0);
-		// // LavaGlow *= thething*0.25+0.75;
-		// LavaGlow *= mix((2.0-thething)*0.5+0.5, thething*0.25+0.75, sqrt(lightmap.x));
-		
-		// #ifdef altostratus
-		// 	AmbientLightColor += (lightCol.rgb/5) * clamp(Alto_coverage * (1-Alto_density),0,1)  * clamp(abs(ambientCoefs.y+1.0),0.0,1.0);
-		// #endif
-
-		// float SkylightShadow = 1;
-		// #ifdef VOLUMETRIC_CLOUDS
-		// #ifdef CLOUDS_SHADOWS
-		// 	SkylightShadow = GetAltoOcclusion(p3);
-		// #endif
-		// #endif
-
-		// AmbientLightColor *= SkylightShadow;
-
-		Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), newLightmap.xy, skylight);
-
 
 		
-		
+		#ifndef ambientSSS_view
+			Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), newLightmap.xy, skylight);
+		#endif
 
 		vec3 AO = vec3(1.0);
 		vec3 debug = vec3(0.0);
@@ -1055,7 +999,8 @@ void main() {
 			// AO *= mix(1.0 - exp2(-5 * pow(1-vanilla_AO,3)),1.0, pow(newLightmap.x,4));
 			
 			AO = vec3( exp( (vanilla_AO*vanilla_AO) * -3) )  ;
-			if (!hand) ssAO(AO, fragpos, 1.0, blueNoise(gl_FragCoord.xy).rg,   FlatNormals , texcoord, ambientCoefs, newLightmap.xy);
+			if (!hand) ssAO(AO, SkySSS, fragpos, 1.0, blueNoise(gl_FragCoord.xy).rg,   FlatNormals , texcoord, ambientCoefs, newLightmap.xy);
+		
 		#endif
 
 		// GTAO
@@ -1079,7 +1024,13 @@ void main() {
 			AO = mix(AO,vec3(1.0),  min(NdotL*Shadows,1.0));
 		#endif
 
+		
 		Indirect_lighting *= AO;
+		Indirect_lighting += SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3)  * pow(1.0-clamp(abs(ambientCoefs.y+0.5),0.0,1.0),0.1) ;
+
+	
+
+
 
    	////// ----- Under Water Shading ----- //////
 
@@ -1149,8 +1100,9 @@ void main() {
 		#ifdef Variable_Penumbra_Shadows
 			FINAL_COLOR += SSS*DirectLightColor	* lightleakfix;
 		#endif
-
-		FINAL_COLOR *= albedo;
+		#ifndef ambientSSS_view
+			FINAL_COLOR *= albedo;
+		#endif
 
 		#ifdef Specular_Reflections	
 			MaterialReflections(FINAL_COLOR, SpecularTex.r, SpecularTex.ggg, albedo, WsunVec, (Shadows*NdotL)*DirectLightColor, lightmap.y, slopednormal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise()), hand, entities);
@@ -1185,9 +1137,8 @@ void main() {
 
 	// phasefunc =  phaseg(clamp(dot(np3, WsunVec),0.0,1.0), 0.5)*10;
 
- 	//  gl_FragData[0].rgb = vec3(1.0);
 	//  if(z < 1)  gl_FragData[0].rgb = Custom_GGX(normal, -np3, WsunVec, SpecularTex.r, SpecularTex.g) * vec3(1.0);
-
+	//  gl_FragData[0].rgb = SubsurfaceScattering_sky(albedo, SkySSS, LabSSS);
 
 	/* DRAWBUFFERS:3 */
 }

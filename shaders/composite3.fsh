@@ -7,7 +7,6 @@ flat varying vec3 zMults;
 flat varying vec2 TAA_Offset;
 
 
-
 uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
@@ -305,7 +304,6 @@ void main() {
 
   gl_FragData[1].rgb = clamp(color.rgb,0.0,68000.0);
 
-  // gl_FragData[1].rgb = vec3(albedo.a);
 //  gl_FragData[1].rgb = vec3(tangentNormals,0.0);
 
 }

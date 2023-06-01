@@ -105,11 +105,9 @@ float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 	){
 
 		#ifdef Daily_Weather
-			// Coverage += day0 * 0.3	+	day1 * 0.8	+	day2 * 0.2	+	day3 * 0.0	+	day4 * 0.8	+	day5 * 0.5	+	day6 * -0.5	+	day7 * 0.6;
-			Coverage += Cumulus_Cov;
+			Coverage += mix(Cumulus_Cov, Rain_coverage, rainStrength);
 		#else
 			Coverage += mix(Cumulus_coverage, Rain_coverage, rainStrength);
-			// Coverage = mix(Coverage, Rain_coverage, rainStrength);
 		#endif
 
 		return Coverage;
