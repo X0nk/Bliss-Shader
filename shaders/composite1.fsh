@@ -680,11 +680,8 @@ vec3 SubsurfaceScattering_3(vec3 albedo, float Scattering, float Density, float 
 vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 
 	vec3 absorbed = max(luma(albedo) - albedo,0.0);
-	// vec3 scatter = exp(-absorbed) * exp(pow(max(Scattering-0.5,0.0),0.5) * -10);
-	vec3 scatter = exp(-sqrt(max(Scattering+0.1,0.0) * absorbed * 20)) * exp(Scattering* -5);
 
-	// vec3 scatter = exp(pow(max(Scattering-0.5,0.0),0.5) * -5) * vec3(1);
-
+	vec3 scatter = exp(-sqrt(max(Scattering+0.05,0.0) * absorbed * 25)) * exp(Scattering * -5);
 	scatter *= pow(Density,LabSSS_Curve);
 
 	return scatter;
@@ -968,7 +965,7 @@ void main() {
 		vec3 Indirect_lighting = vec3(1.0);
 
 		// float skylight = clamp(abs(normal.y+1),0.0,1.0);
-		float skylight = clamp(pow(abs(ambientCoefs.y+1.0),2),0.35,2.0);
+		float skylight = clamp(abs(ambientCoefs.y+1.0),0.35,2.0);
 		// float skylight = clamp(abs(ambientCoefs.y+0.5),0.35,2.0);
 		
 
@@ -1023,11 +1020,14 @@ void main() {
 		#ifndef AO_in_sunlight
 			AO = mix(AO,vec3(1.0),  min(NdotL*Shadows,1.0));
 		#endif
-
 		
 		Indirect_lighting *= AO;
-		Indirect_lighting += SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3)  * pow(1.0-clamp(abs(ambientCoefs.y+0.5),0.0,1.0),0.1) ;
 
+		#if indirect_effect == 1
+		#ifdef Ambient_SSS
+			Indirect_lighting += SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3)  * pow(1.0-clamp(abs(ambientCoefs.y+0.5),0.0,1.0),0.1) ;
+		#endif
+		#endif
 	
 
 
