@@ -5,6 +5,15 @@ value.indirect_effect.2 = GTAO
 value.indirect_effect.3 = RTAO
 value.indirect_effect.4 = SSGI
 
+option.ambientOcclusionLevel = Vanilla AO Amount
+option.ambient_brightness = Ambient Light Brightness
+option.MIN_LIGHT_AMOUNT = Minimum Light Brightness
+
+option.ambient_colortype = Coloring Type
+value.ambient_colortype.0 = Temperature
+value.ambient_colortype.1 = RGB
+
+
 option.SSS_TYPE = SSS Mode
 value.SSS_TYPE.0 = RTX
 value.SSS_TYPE.1 = Hardcoded only
@@ -14,9 +23,6 @@ option.SSS_TYPE.comment = Hardcoded means that the shader defines what gets SSS 
 
 
 
-option.ambient_colortype = Coloring Type
-value.ambient_colortype.0 = Temperature
-value.ambient_colortype.1 = RGB
 
 option.DOF_QUALITY=Depth Of Field
 value.DOF_QUALITY.-1=Off

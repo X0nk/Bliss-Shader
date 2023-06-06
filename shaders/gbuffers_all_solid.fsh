@@ -517,8 +517,10 @@ void main() {
 
 		 
 		if(EMISSIVE > 0) gl_FragData[2].a = 0.9;
-		if(LIGHTNING > 0.0) gl_FragData[2].a = 0.9;
 		
+		#ifdef ENTITIES
+			if(LIGHTNING > 0) gl_FragData[2].a = 0.5;
+		#endif
 
 		//////////////////////////////// 
 		//////////////////////////////// ALBEDO

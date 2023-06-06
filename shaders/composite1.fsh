@@ -193,6 +193,8 @@ vec3 decode (vec2 encn){
     n.xy = n.z <= 0.0 ? (1.0 - n.yx) * sign(encn) : encn;
     return clamp(normalize(n.xyz),-1.0,1.0);
 }
+
+
 vec2 decodeVec2(float a){
     const vec2 constant1 = 65535. / vec2( 256., 65536.);
     const float constant2 = 256. / 255.;
@@ -335,37 +337,6 @@ float waterCaustics(vec3 wPos, vec3 lightSource) { // water waves
 }
 
 
-// float waterCaustics(vec3 wPos, vec3 lightSource) {
-// 	vec2 movement = vec2(frameTimeCounter*0.05);
-// 	vec2 pos = (wPos + WsunVec/WsunVec.y*max(SEA_LEVEL - wPos.y,0.0)).xz ;
-// 	float caustic = 1.0;
-// 	float weightSum = 0.0;
-
-// 	float radiance = 2.39996;
-// 	mat2 rotationMatrix  = mat2(vec2(cos(radiance),  -sin(radiance)),  vec2(sin(radiance),  cos(radiance)));
-
-// 	const vec2 wave_size[3] = vec2[](
-// 		vec2(48.,12.),
-// 		vec2(12.,48.),
-// 		vec2(32.)
-// 	);
-
-// 	float WavesLarge = clamp(	pow(1.0-pow(1.0-texture2D(noisetex, pos / 600.0 ).b, 5.0),5.0),0.1,1.0);
-
-// 	for (int i = 0; i < 3; i++){
-// 		pos = rotationMatrix * pos ;
-
-// 		float Waves = texture2D(noisetex, pos / (wave_size[i] +  (1-WavesLarge)*0.1) + movement).b;
-
-		
-// 		caustic += Waves/3;
-// 		// weightSum += exp2(caustic);
-// 	}
-// 	return exp(1.0-(1.0-pow(1.0-abs((caustic - 1.5)*2.0)*0.5,0.5)) * 30) + 0.5 ;
-// }
-
-
-
 float rayTraceShadow(vec3 dir,vec3 position,float dither){
     const float quality = 16.;
     vec3 clipPosition = toClipSpace3(position);
@@ -419,70 +390,61 @@ void ssAO(inout vec3 lighting, inout float sss, vec3 fragpos,float mulfov, vec2 
 	const float tan70 = tan(70.*3.14/180.);
 
 	float dist = 1.0 + clamp(fragpos.z*fragpos.z/50.0,0,2); // shrink sample size as distance increases
-	float dist2 = 1-clamp(linZ(fragpos.z)*50,0,1); // shrink sample size as distance increases
-
 	float mulfov2 = gbufferProjection[1][1]/(tan70  * dist);
 	float maxR2 = fragpos.z*fragpos.z*mulfov2*2.*5/50.0;
-	float maxR2_2 = mix(500, fragpos.z*fragpos.z*mulfov2*2./50.0, dist2);
 
-
+	#ifdef Ambient_SSS
+		float dist3 = clamp(1.0 - exp( fragpos.z*fragpos.z / -50),0,1);
+		float maxR2_2 = mix(10.0, fragpos.z*fragpos.z*mulfov2*2./50.0, dist3);
+	#endif
+	
 	float rd = mulfov2 * 0.1 ;
-	//pre-rotate direction
-	float n = 0.0;
 
-	float occlusion = 0.0;
-	sss = 0.0;
 	vec2 acc = -(TAA_Offset*(texelSize/2))*RENDER_SCALE ;
 
 	int seed = (frameCounter%40000)*2 + (1+frameCounter);
 	float randomDir = fract(R2_samples(seed).y + noise.x ) * 1.61803398874 ;
-	vec3 NormalSpecific = viewToWorld(normal);
 
-	for (int j = 0; j < 7 ;j++) {
+	float n = 0.0;
+	float occlusion = 0.0;
+	for (int j = 0; j < 7; j++) {
 		
 		vec2 sp = tapLocation_alternate(j, 0.0, 7, 20, randomDir);
-		// vec2 sp = vogel_disk_7[j];
-		float thing = sp.y < 0.0 && clamp(floor(abs(NormalSpecific.y)*2.0),0.0,1.0) < 1.0 ? rd * 10: rd;
 
-
-		vec2 sampleOffset = sp*thing;
-		vec2 sampleOffset2 =  sp*rd ;
-		sampleOffset = min(sampleOffset, sampleOffset2);
-		// vec2 sampleOffset = sp*rd;
-
+		vec2 sampleOffset = sp*rd;
 		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio)*RENDER_SCALE);
 
 		if (offset.x >= 0 && offset.y >= 0 && offset.x < viewWidth*RENDER_SCALE.x && offset.y < viewHeight*RENDER_SCALE.y ) {
 			vec3 t0 = toScreenSpace(vec3(offset*texelSize+acc+0.5*texelSize,texelFetch2D(depthtex1,offset,0).x) * vec3(1.0/RENDER_SCALE, 1.0) );
-			vec3 vec = t0.xyz - fragpos;
-			float dsquared = dot(vec,vec);
+			vec3 vec = (t0.xyz - fragpos);
+			float dsquared = dot(vec,vec) ;
+
 
 			if (dsquared > 1e-5){
 				if (dsquared < maxR2){
 					float NdotV = clamp(dot(vec*inversesqrt(dsquared), normalize(normal)),0.,1.);
 					occlusion += NdotV * clamp(1.0-dsquared/maxR2,0.0,1.0);
-					
 				}
 				
-				if (dsquared > maxR2_2){
-					float NdotV = 1.0 - clamp(dot(vec*dsquared, normalize(normal)),0.,1.);
-
-					sss += NdotV + NdotV*clamp(1.0-maxR2_2/dsquared,0.0,1.0);
-
-					// sss += (1.0 - NdotV) ;
-				}
+				#ifdef Ambient_SSS
+					if(dsquared > maxR2_2){
+						float NdotV = 1.0 - clamp(dot(vec*dsquared, normalize(normal)),0.,1.);
+						sss += max((NdotV - (1.0-NdotV)) * clamp(1.0-maxR2_2/dsquared,0.0,1.0) ,0.0);
+					}
+				#endif
 
 				n += 1;
 			}
 		}
 	}
 
-	occlusion *= mix(2.5, 2.0 ,  clamp(floor(abs(NormalSpecific.y)*2.0),0.0,1.0));
+	#ifdef Ambient_SSS
+		sss = max(1.0 - sss/n, 0.0) ;
+	#endif
+
+	occlusion *= 2.0;
 	occlusion = max(1.0 - occlusion/n, 0.0);
 
-
-	sss *= mix(1.0, 1.5 ,  clamp(floor(abs(NormalSpecific.y)*2.0),0.0,1.0));
-	sss = max(1.0 - sss/n, 0.0) ;
 
 	lighting = lighting*max(occlusion,pow(lightmap.x,4));
 }
@@ -681,11 +643,55 @@ vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 
 	vec3 absorbed = max(luma(albedo) - albedo,0.0);
 
-	vec3 scatter = exp(-sqrt(max(Scattering+0.05,0.0) * absorbed * 25)) * exp(Scattering * -5);
+	// vec3 scatter = exp(-sqrt(max(Scattering+0.05,0.0) * absorbed * 25)) * exp(Scattering * -5);
+	vec3 scatter =   exp(-sqrt(Scattering * absorbed * 5)) * pow((-Scattering+1.0)*1.5,2.0);
 	scatter *= pow(Density,LabSSS_Curve);
 
 	return scatter;
 }
+
+void ScreenSpace_SSS(inout float sss, vec3 fragpos, vec2 noise, vec3 normal){
+	ivec2 pos = ivec2(gl_FragCoord.xy);
+	const float tan70 = tan(70.*3.14/180.);
+
+	float dist = 1.0 + (clamp(fragpos.z*fragpos.z/50.0,0,2)); // shrink sample size as distance increases
+	float mulfov2 = gbufferProjection[1][1]/(tan70 * dist);
+
+	float dist3 = clamp(1-exp( fragpos.z*fragpos.z / -50),0,1);
+	float maxR2_2 = mix(10, fragpos.z*fragpos.z*mulfov2*2./50.0, dist3);
+
+	float rd = mulfov2 * 0.1;
+
+
+	vec2 acc = -(TAA_Offset*(texelSize/2))*RENDER_SCALE ;
+
+	int seed = (frameCounter%40000)*2 + (1+frameCounter);
+	float randomDir = fract(R2_samples(seed).y + noise.x ) * 1.61803398874 ;
+
+	float n = 0.0;
+	for (int j = 0; j < 7 ;j++) {
+		
+		vec2 sp = tapLocation_alternate(j, 0.0, 7, 20, randomDir);
+		vec2 sampleOffset = sp*rd;
+		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio)*RENDER_SCALE);
+
+		if (offset.x >= 0 && offset.y >= 0 && offset.x < viewWidth*RENDER_SCALE.x && offset.y < viewHeight*RENDER_SCALE.y ) {
+			vec3 t0 = toScreenSpace(vec3(offset*texelSize+acc+0.5*texelSize,texelFetch2D(depthtex1,offset,0).x) * vec3(1.0/RENDER_SCALE, 1.0) );
+			vec3 vec = t0.xyz - fragpos;
+			float dsquared = dot(vec,vec);
+
+			if (dsquared > 1e-5){
+				if(dsquared > maxR2_2){
+					float NdotV = 1.0 - clamp(dot(vec*dsquared, normalize(normal)),0.,1.);
+					sss += max((NdotV - (1.0-NdotV)) * clamp(1.0-maxR2_2/dsquared,0.0,1.0) ,0.0);
+				}
+				n += 1;
+			}
+		}
+	}
+	sss = max(1.0 - sss/n, 0.0);
+}
+
 
 float densityAtPosSNOW(in vec3 pos){
 	pos /= 18.;
@@ -1022,11 +1028,13 @@ void main() {
 		#endif
 		
 		Indirect_lighting *= AO;
-
-		#if indirect_effect == 1
+	
 		#ifdef Ambient_SSS
+			#if indirect_effect != 1
+				if (!hand) ScreenSpace_SSS(SkySSS, fragpos, blueNoise(gl_FragCoord.xy).rg, FlatNormals);
+			#endif
 			Indirect_lighting += SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3)  * pow(1.0-clamp(abs(ambientCoefs.y+0.5),0.0,1.0),0.1) ;
-		#endif
+			// Indirect_lighting += SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3);
 		#endif
 	
 
@@ -1086,14 +1094,12 @@ void main() {
 		#endif
 		#endif
 
-		Direct_lighting = DoDirectLighting(DirectLightColor, Shadows, NdotL, 0.0);
-		
-
 		#ifdef ambientLight_only
-			Direct_lighting = vec3(0.0);
+			DirectLightColor = vec3(0.0);
 		#endif
 
-
+		Direct_lighting = DoDirectLighting(DirectLightColor, Shadows, NdotL, 0.0);
+		
 		//combine all light sources 
 		vec3 FINAL_COLOR = Indirect_lighting + Direct_lighting;
 		
@@ -1138,7 +1144,9 @@ void main() {
 	// phasefunc =  phaseg(clamp(dot(np3, WsunVec),0.0,1.0), 0.5)*10;
 
 	//  if(z < 1)  gl_FragData[0].rgb = Custom_GGX(normal, -np3, WsunVec, SpecularTex.r, SpecularTex.g) * vec3(1.0);
-	//  gl_FragData[0].rgb = SubsurfaceScattering_sky(albedo, SkySSS, LabSSS);
+	//  gl_FragData[0].rgb = SubsurfaceScattering_sky(albedo, SkySSS, 1.0);
+
+	// gl_FragData[0].rgb = clamp(1-exp( fragpos.z*fragpos.z / -50),0,1)* vec3(1);
 
 	/* DRAWBUFFERS:3 */
 }

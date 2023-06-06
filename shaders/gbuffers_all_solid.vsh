@@ -185,7 +185,7 @@ void main() {
 
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
 	
-	FlatNormals = normalize(gl_NormalMatrix * gl_Normal);
+
 	color = gl_Color;
 	
 	VanillaAO = 1.0 - clamp(color.a,0,1);
@@ -197,32 +197,32 @@ void main() {
 	#endif
 
 	normalMat = vec4(normalize(gl_NormalMatrix *gl_Normal), 1.0);
+	FlatNormals = normalMat.xyz;
+// #ifdef ENTITIES
 
-#ifdef ENTITIES
-
-	NameTags = 0;
-	// try and single out nametag text and then discard nametag background
-	if( dot(gl_Color.rgb, vec3(0.35)) < 1.0) NameTags = 1;
-	if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
+// 	NameTags = 0;
+// 	// try and single out nametag text and then discard nametag background
+// 	if( dot(gl_Color.rgb, vec3(0.35)) < 1.0) NameTags = 1;
+// 	if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
    
-#endif
+// #endif
 
 #ifdef WORLD
 
-    /////// ----- SSS ----- ///////
+    /////// ----- SSS ON BLOCKS ----- ///////
 	// strong
 	if(mc_Entity.x == 10001 || mc_Entity.x == 10003 || mc_Entity.x == 10004) SSSAMOUNT = 1.0;
 	
 	// medium
-	if(mc_Entity.x == 10006 || mc_Entity.x == 200) SSSAMOUNT = 1.0;
+	if(mc_Entity.x == 10006 || mc_Entity.x == 200) SSSAMOUNT = 0.75;
 	
 	// low
-	if(mc_Entity.x == 10007 || mc_Entity.x == 10008) SSSAMOUNT = 1.0;
+	if(mc_Entity.x == 10007 || mc_Entity.x == 10008) SSSAMOUNT = 0.5;
 	
 	#ifdef ENTITIES
-	    /////// ----- SSS ----- ///////
+	    /////// ----- SSS ON MOBS----- ///////
 		// strong
-		if(entityId == 1100) SSSAMOUNT = 1.0;
+		if(entityId == 1100) SSSAMOUNT = 0.75;
 
 		// medium
 
@@ -231,6 +231,7 @@ void main() {
 	#endif
 
 	#ifdef BLOCKENTITIES
+	    /////// ----- SSS ON BLOCK ENTITIES----- ///////
 		// strong
 
 		// medium
