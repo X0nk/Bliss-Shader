@@ -126,6 +126,7 @@
 
 #define SSS_TYPE 1 // [0 1 2 3]
 #define Ambient_SSS // subsurface scattering from the sky's light. If SSAO is enabled, this costs very little performance.
+#define ambientsss_brightness 1 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
 #define LabSSS_Curve 1.0 // i just really like how it looks at 2.0, so i made it an option. [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
 #define Strong_SSS_strength 45 // [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2 3 4 5 6 7 8 9 10 15 20 30 35 40 45 50]
 #define Medium_SSS_strength 30 // [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2 3 4 5 6 7 8 9 10 15 20 30 35 40 45 50]

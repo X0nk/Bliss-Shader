@@ -320,9 +320,9 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 
 	if (iswater > 0.95){
 		
-		if(physics_iterationsNormal < 1.0){
+		//if(physics_iterationsNormal < 1.0){
 			float bumpmult = 1.;
-			vec3 bump;
+			vec3 bump = vec3(0);
 			vec3 posxz = p3+cameraPosition;
 
 			posxz.xz -= posxz.y;
@@ -335,26 +335,26 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 			bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 			normal = normalize(bump * tbnMatrix);
 			
-		}else{	
-			/// ------ PHYSICS MOD OCEAN SHIT ------ ///
-
-			WavePixelData wave = physics_wavePixel(physics_localPosition.xz, physics_localWaviness, physics_iterationsNormal, physics_gameTime);
-			// float Foam = wave.foam;
-
-			// Albedo = mix(Albedo,vec3(1),Foam);
-			// gl_FragData[0].a = Foam;
-			
-			
-			normal = normalize(worldToView(wave.normal) + mix(normal, vec3(0.0), clamp(physics_localWaviness,0.0,1.0)));
-
-			vec3 worldSpaceNormal = normal;
-
-			vec3 bitangent = normalize(cross(tangent.xyz, worldSpaceNormal));
-			mat3 tbn_new =  mat3(tangent.xyz, binormal, worldSpaceNormal);
-			vec3 tangentSpaceNormal = worldSpaceNormal * tbn_new;
-
-			TangentNormal = tangentSpaceNormal.xy * 0.5 + 0.5;
-		}
+		//}else{	
+		//	/// ------ PHYSICS MOD OCEAN SHIT ------ ///
+		//
+		//	WavePixelData wave = physics_wavePixel(physics_localPosition.xz, physics_localWaviness, physics_iterationsNormal, physics_gameTime);
+		//	// float Foam = wave.foam;
+		//
+		//	// Albedo = mix(Albedo,vec3(1),Foam);
+		//	// gl_FragData[0].a = Foam;
+		//	
+		//	
+		//	normal = normalize(worldToView(wave.normal) + mix(normal, vec3(0.0), clamp(physics_localWaviness,0.0,1.0)));
+		//
+		//	vec3 worldSpaceNormal = normal;
+		//
+		//	vec3 bitangent = normalize(cross(tangent.xyz, worldSpaceNormal));
+		//	mat3 tbn_new =  mat3(tangent.xyz, binormal, worldSpaceNormal);
+		//	vec3 tangentSpaceNormal = worldSpaceNormal * tbn_new;
+		//
+		//	TangentNormal = tangentSpaceNormal.xy * 0.5 + 0.5;
+		//}
 	}
 
 	// cannot encode alpha or it will shit its pants

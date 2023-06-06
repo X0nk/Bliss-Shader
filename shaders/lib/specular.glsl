@@ -202,8 +202,8 @@ void MaterialReflections(
 ){
 	vec3 Reflections_Final = Output;
 	vec3 SkyReflection = Output;
-	vec3 SunReflection;
-	vec4 Reflections;
+	vec3 SunReflection = vec3(0.0);
+	vec4 Reflections = vec4(0.0);
 
 	float reflectLength;
 	float Outdoors = clamp((lightmap-0.6)*5.0, 0.0,1.0);
@@ -250,7 +250,7 @@ void MaterialReflections(
 // 
 	if (hasReflections) { // Skip sky reflection and SSR if its just not very visible anyway
 		#ifdef Sky_reflection
-			SkyReflection = skyCloudsFromTex(L, colortex4).rgb / 150. * 5.;
+			SkyReflection = ( skyCloudsFromTex(L, colortex4).rgb / 150. ) * 5.;
 		#endif
 
 		#ifdef Screen_Space_Reflections

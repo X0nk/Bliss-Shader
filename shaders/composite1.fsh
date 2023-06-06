@@ -546,7 +546,7 @@ void rtAO(inout vec3 lighting, vec3 normal, vec2 noise, vec3 fragpos, float ligh
 	}
 	// occlude = mix( occlude,1, inShadow);
 	// occlude = occlude*0.5 + 0.5;
-	lighting *= 2.5;
+	lighting *= 3.0;
 	lighting *= mix(occlude/nrays,1.0,0) ;
 }
 
@@ -644,8 +644,11 @@ vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 	vec3 absorbed = max(luma(albedo) - albedo,0.0);
 
 	// vec3 scatter = exp(-sqrt(max(Scattering+0.05,0.0) * absorbed * 25)) * exp(Scattering * -5);
-	vec3 scatter =   exp(-sqrt(Scattering * absorbed * 5)) * pow((-Scattering+1.0)*1.5,2.0);
+	vec3 scatter =   exp(-sqrt(Scattering * absorbed * 5)) * pow((-Scattering+1.0)*1.25,2.0);
 	scatter *= pow(Density,LabSSS_Curve);
+	// temporary
+
+	scatter *= ambientsss_brightness;
 
 	return scatter;
 }
@@ -880,10 +883,9 @@ void main() {
 		
 		if (abs(filtered.y-0.1) < 0.0004 && !iswater) Shadows = clamp((lightmap.y-0.85)*25,0,1);
 		float SHADOWBLOCKERDEPTBH = filtered.y;
-		if (abs(filtered.y-0.1) < 0.0004 && !iswater) SHADOWBLOCKERDEPTBH = 1.0-clamp((lightmap.y-0.85)*25,0,1);
+		//if (abs(filtered.y-0.1) < 0.0004 && !iswater) SHADOWBLOCKERDEPTBH = 1.0-clamp((lightmap.y-0.85)*25,0,1);
 		
 		vec3 SSS = vec3(0.0);
-		float SSS_strength;
 
 		if (NdotL > 0.001) {
 			

@@ -1,4 +1,4 @@
 #version 120
 
-// #define WORLD
+#define WORLD
 #include "gbuffers_all_translucent.fsh"

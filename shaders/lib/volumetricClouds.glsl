@@ -345,7 +345,7 @@ vec4 renderClouds(
 float GetCloudShadow(vec3 eyePlayerPos){
 	vec3 playerPos = eyePlayerPos + cameraPosition;
 	playerPos.y += 0.05;
-	float shadow;
+	float shadow = 0.0;
 
 	// assume a flat layer of cloud, and stretch the sampled density along the sunvector, starting from some vertical layer in the cloud.
 	#ifdef Cumulus
@@ -365,7 +365,7 @@ float GetCloudShadow(vec3 eyePlayerPos){
 }
 float GetCloudShadow_VLFOG(vec3 WorldPos){
 
-	float shadow;
+	float shadow = 0.0;
 
 	// assume a flat layer of cloud, and stretch the sampled density along the sunvector, starting from some vertical layer in the cloud.
 	#ifdef Cumulus
@@ -391,7 +391,9 @@ float GetAltoOcclusion(vec3 eyePlayerPos){
 
 	vec3 playerPos = eyePlayerPos + cameraPosition;
 	playerPos.y += 0.05;
-	float shadow;
+	
+	float shadow = 0.0;
+	
 	vec3 lowShadowStart = playerPos + normalize(vec3(0,1,0)) * max((MaxCumulusHeight - 70) - playerPos.y,0.0) ;
 	shadow = GetCumulusDensity(lowShadowStart,0) * cloudDensity;
 	

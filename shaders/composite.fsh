@@ -216,7 +216,7 @@ void main() {
 
 		#ifdef Variable_Penumbra_Shadows
 
-			if (NdotL > 0.0 || LabSSS >= 0.0) {
+			if (NdotL > 0.0 || LabSSS > 0.0) {
 
 				vec3 p3 = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
 
