@@ -589,43 +589,7 @@ void rtGI(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, float lightm
 }
 
 
-void SubsurfaceScattering(inout float SSS, float Scattering, float Density, float LabDenisty){
-	// #ifdef LabPBR_subsurface_scattering
-		float labcurve = pow(LabDenisty,LabSSS_Curve);
-		// beers law
-		SSS = clamp(exp( Scattering * -(10 - LabDenisty*7)), 0.0, labcurve);
-		if (abs(Scattering-0.1) < 0.0004 ) SSS = labcurve;
-	// #else
-	// 	// beers law
-	// 	SSS = clamp(exp(Scattering * -Density), 0.0, 1.0);
-	// 	if (abs(Scattering-0.1) < 0.0004 ) SSS = 1.0;
-	// #endif
-}
-
-vec3 SubsurfaceScattering_2(vec3 albedo, float Scattering, float Density, float LabDenisty, float lightPos, bool yeSSS){
-	// if(!yeSSS) return vec3(0.0);
-
-	float labcurve = pow(LabDenisty,LabSSS_Curve);
-	float density = sqrt(30 - labcurve*15);
-	// #endif
-
-	vec3 absorbed = max(1.0 - albedo,0.0) * density;
-	// absorbed = vec3(1.);
-
-	vec3 scatter = exp(-sqrt(Scattering * absorbed)) * exp(Scattering * -density);
-	// float gloop = (1.0-exp(sqrt(Scattering) * -density));
-	// vec3 scatter = mix(vec3(1.0), max(albedo - gloop * (1-labcurve),0.0), gloop) * exp(Scattering * -density);
-	
-	// #ifdef LabPBR_subsurface_scattering
-		scatter *= labcurve;
-	// #endif
-
-	scatter *= 0.5 + CustomPhase(lightPos, 1.0,30.0)*20;
-
-	return scatter;
-}
-
-vec3 SubsurfaceScattering_3(vec3 albedo, float Scattering, float Density, float lightPos){
+vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, float lightPos){
 
 	float labcurve = pow(Density,LabSSS_Curve);
 	float density = sqrt(30 - labcurve*15);
@@ -838,6 +802,8 @@ void main() {
 	float SkySSS = 0.0;
 	vec3 filtered = vec3(1.412,1.0,0.0);
 	if (!hand) filtered = texture2D(colortex3,texcoord).rgb;
+
+
 	vec3 ambientCoefs = normal/dot(abs(normal),vec3(1.));
 
 	float lightleakfix = clamp(eyeBrightness.y/240.0 + lightmap.y,0.0,1.0);
@@ -850,6 +816,11 @@ void main() {
 	float cloudShadow = 1.0;
 
 	if ( z >= 1.) { //sky
+	#ifdef Compositing_Sky
+		gl_FragData[0].rgb = vec3(CompSky_R, CompSky_G, CompSky_B);
+	#else
+
+
 		vec3 background = vec3(0.0);
 		background += stars(vec3(np3.x,abs(np3.y),np3.z)) * 5.0	;
 
@@ -870,16 +841,16 @@ void main() {
 		background = background*cloud.a + cloud.rgb;
 
 		gl_FragData[0].rgb = clamp(fp10Dither(background ,triangularize(noise)),0.0,65000.);
-
+	#endif
 	}else{//land
 
    	////// ----- direct ----- //////
 
 		vec3 Direct_lighting = vec3(1.0);
 
+		float Shadows = clamp(1.0 - filtered.b,0.0,1.0);
 		float NdotL = dot(slopednormal,WsunVec);
 		NdotL = clamp((-15 + NdotL*255.0) / 240.0  ,0.0,1.0);
-		float Shadows = clamp(1.0 - filtered.b,0.0,1.0);
 		
 		if (abs(filtered.y-0.1) < 0.0004 && !iswater) Shadows = clamp((lightmap.y-0.85)*25,0,1);
 		float SHADOWBLOCKERDEPTBH = filtered.y;
@@ -900,16 +871,16 @@ void main() {
 			//apply distortion
 			float distortFactor = calcDistort(projectedShadowPosition.xy);
 			projectedShadowPosition.xy *= distortFactor;
-
+			// Shadows = 0.0;
+			vec3 shadew = projectedShadowPosition.xyz;
 			//do shadows only if on shadow map
-			if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0){
+			if (abs(shadew.x) < 1.0-1.5/shadowMapResolution && abs(shadew.y) < 1.0-1.5/shadowMapResolution && abs(shadew.z) < 6.0){
 		
 				float diffthresh = 0.0;
 				// if(hand && eyeBrightness.y/240. > 0.0) diffthresh = 0.0003;
 
 				projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
 				Shadows = 0.0;
-
 				float rdMul = filtered.x*distortFactor*d0*k/shadowMapResolution;
 
 				for(int i = 0; i < SHADOW_FILTER_SAMPLE_COUNT; i++){
@@ -917,7 +888,6 @@ void main() {
 					vec2 offsetS = tapLocation(i,SHADOW_FILTER_SAMPLE_COUNT,1.618,noise,0.0);
 					float weight = 1.0+(i+noise)*rdMul/SHADOW_FILTER_SAMPLE_COUNT*shadowMapResolution;
 					float isShadow = shadow2D(shadow,vec3(projectedShadowPosition + vec3(rdMul*offsetS,-diffthresh*weight))).x;
-
 					Shadows += isShadow/SHADOW_FILTER_SAMPLE_COUNT;
 				}
 			}
@@ -926,7 +896,7 @@ void main() {
 		#ifdef Sub_surface_scattering
 			#ifdef Variable_Penumbra_Shadows
 				
-				SSS = SubsurfaceScattering_3(albedo, SHADOWBLOCKERDEPTBH, LabSSS, clamp(dot(np3, WsunVec),0.0,1.0)) ;
+				SSS = SubsurfaceScattering_sun(albedo, SHADOWBLOCKERDEPTBH, LabSSS, clamp(dot(np3, WsunVec),0.0,1.0)) ;
 					
 				// if (isEyeInWater == 0) SSS *= lightleakfix; // light leak fix
 			#endif
@@ -944,7 +914,7 @@ void main() {
 					screenShadow *= screenShadow ;
 
 					#ifdef Variable_Penumbra_Shadows
-						Shadows = min(screenShadow, Shadows);
+						Shadows = min(screenShadow, Shadows + luma(SSS));
 						if (abs(filtered.y-0.1) < 0.0004 ) SSS *= vec3(Shadows);
 					#endif
 
@@ -1143,12 +1113,9 @@ void main() {
 		if (isEyeInWater == 0) waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));		
 	}
 
-	// phasefunc =  phaseg(clamp(dot(np3, WsunVec),0.0,1.0), 0.5)*10;
-
-	//  if(z < 1)  gl_FragData[0].rgb = Custom_GGX(normal, -np3, WsunVec, SpecularTex.r, SpecularTex.g) * vec3(1.0);
-	//  gl_FragData[0].rgb = SubsurfaceScattering_sky(albedo, SkySSS, 1.0);
-
-	// gl_FragData[0].rgb = clamp(1-exp( fragpos.z*fragpos.z / -50),0,1)* vec3(1);
+	
+	//  gl_FragData[0].rgb = TESTS; if(z >= 1) gl_FragData[0].rgb = vec3(0.5);
+	// if (abs(filtered.b-0.1) < 0.0004 ) gl_FragData[0].rgb = vec3(0,1,0);
 
 	/* DRAWBUFFERS:3 */
 }

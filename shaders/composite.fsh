@@ -216,7 +216,7 @@ void main() {
 
 		#ifdef Variable_Penumbra_Shadows
 
-			if (NdotL > 0.0 || LabSSS > 0.0) {
+			if (NdotL > 0.001 || LabSSS > 0.0) {
 
 				vec3 p3 = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
 
@@ -227,7 +227,7 @@ void main() {
 				float distortFactor = calcDistort(projectedShadowPosition.xy);
 				projectedShadowPosition.xy *= distortFactor;
 				//do shadows only if on shadow map
-				if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0){
+			if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0){
 					const float threshMul = max(2048.0/shadowMapResolution*shadowDistance/128.0,0.95);
 					float distortThresh = (sqrt(1.0-NdotL*NdotL)/NdotL+0.7)/distortFactor;
 					float diffthresh = distortThresh/6000.0*threshMul;
