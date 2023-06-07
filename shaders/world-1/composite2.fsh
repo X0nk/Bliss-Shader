@@ -312,6 +312,81 @@ void LabEmission(
 	if( Emission < 255.0/255.0 ) Lighting += (Albedo * Emissive_Brightness) * pow(Emission, Emissive_Curve);
 }
 
+
+
+vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
+
+	vec3 absorbed = max(luma(albedo) - albedo,0.0);
+
+	// vec3 scatter = exp(-sqrt(max(Scattering+0.05,0.0) * absorbed * 25)) * exp(Scattering * -5);
+	vec3 scatter =   exp(-sqrt(Scattering * absorbed * 5)) * pow((-Scattering+1.0)*1.25,2.0);
+	scatter *= pow(Density,LabSSS_Curve);
+	// temporary
+
+	scatter *= ambientsss_brightness;
+
+	return scatter;
+}
+
+void ScreenSpace_SSS(inout float sss, vec3 fragpos, vec2 noise, vec3 normal){
+	ivec2 pos = ivec2(gl_FragCoord.xy);
+	const float tan70 = tan(70.*3.14/180.);
+
+	float dist = 1.0 + (clamp(fragpos.z*fragpos.z/50.0,0,2)); // shrink sample size as distance increases
+	float mulfov2 = gbufferProjection[1][1]/(tan70 * dist);
+
+	float dist3 = clamp(1-exp( fragpos.z*fragpos.z / -50),0,1);
+	float maxR2_2 = mix(10, fragpos.z*fragpos.z*mulfov2*2./50.0, dist3);
+
+	float rd = mulfov2 * 0.1;
+
+
+	vec2 acc = -(TAA_Offset*(texelSize/2))*RENDER_SCALE ;
+
+	// int seed = (frameCounter%40000)*2 + (1+frameCounter);
+	// float randomDir = fract(R2_samples(seed).y + noise.x ) * 1.61803398874 ;
+
+	float n = 0.0;
+	vec2 v = fract(vec2(noise.x,interleaved_gradientNoise()) + (frameCounter%10000) * vec2(0.75487765, 0.56984026));
+
+	for (int j = 0; j < 7+2 ;j++) {
+
+			vec2 sp = tapLocation(j,v.x,7+2,2.,v.y);
+		
+		// vec2 sp = tapLocation_alternate(j, 0.0, 7, 20, randomDir);
+		vec2 sampleOffset = sp*rd;
+		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio)*RENDER_SCALE);
+
+		if (offset.x >= 0 && offset.y >= 0 && offset.x < viewWidth*RENDER_SCALE.x && offset.y < viewHeight*RENDER_SCALE.y ) {
+			vec3 t0 = toScreenSpace(vec3(offset*texelSize+acc+0.5*texelSize,texelFetch2D(depthtex1,offset,0).x) * vec3(1.0/RENDER_SCALE, 1.0) );
+			vec3 vec = t0.xyz - fragpos;
+			float dsquared = dot(vec,vec);
+
+			if (dsquared > 1e-5){
+				if(dsquared > maxR2_2){
+					float NdotV = 1.0 - clamp(dot(vec*dsquared, normalize(normal)),0.,1.);
+					sss += max((NdotV - (1.0-NdotV)) * clamp(1.0-maxR2_2/dsquared,0.0,1.0) ,0.0);
+				}
+				n += 1;
+			}
+		}
+	}
+	sss = max(1.0 - sss/n, 0.0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void main() {
 	float dirtAmount = Dirt_Amount;
 	vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
@@ -333,6 +408,7 @@ void main() {
 	vec4 trpData = texture2D(colortex7,texcoord);
 	bool iswater = trpData.a > 0.99;
 	vec4 SpecularTex = texture2D(colortex8,texcoord);
+	float LabSSS = clamp((-65.0 + SpecularTex.z * 255.0) / 190.0 ,0.0,1.0);	
 
 	vec4 data = texture2D(colortex1,texcoord); // terraom
 	vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y));
@@ -352,6 +428,7 @@ void main() {
 	vec2 lightmap = dataUnpacked1.yz;
 	bool translucent = abs(dataUnpacked1.w-0.5) <0.01;
 	bool hand = abs(dataUnpacked1.w-0.75) <0.01;
+	float Indirect_SSS = 0.0;
 
 	if (z >=1.0) {
 		vec3 color = clamp(gl_Fog.color.rgb*pow(luma(gl_Fog.color.rgb),-0.75)*0.65,0.0,1.0)*0.02;
@@ -362,9 +439,20 @@ void main() {
 
 		p3 += gbufferModelViewInverse[3].xyz + cameraPosition;
 
+    	vec3 FogColor =  (gl_Fog.color.rgb / pow(0.00001 + dot(gl_Fog.color.rgb,vec3(0.3333)),1.0) ) * 0.2;
+
 		// do all ambient lighting stuff
-		vec3 Indirect_lighting = DoAmbientLighting_Nether(gl_Fog.color.rgb, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, np3, p3 );
+		vec3 Indirect_lighting = DoAmbientLighting_Nether(FogColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, np3, p3 );
 		
+		if(!hand) Indirect_lighting *= ssao(fragpos,noise,FlatNormals) * vanilla_AO;
+
+
+		// ScreenSpace_SSS(Indirect_SSS, fragpos, vec2(R2_dither()), FlatNormals);
+
+
+		// Indirect_lighting *= 1 + SubsurfaceScattering_sky(albedo, Indirect_SSS, LabSSS) * 5;
+
+
 
         vec3 LightColor = LightSourceColor();
 		
@@ -387,8 +475,6 @@ void main() {
 		#ifdef Specular_Reflections	
 			MaterialReflections_N(gl_FragData[0].rgb, SpecularTex.r, SpecularTex.ggg, albedo, normal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg,noise), hand);
 		#endif
-
-		if(!hand) gl_FragData[0].rgb *= ssao(fragpos,noise,FlatNormals) * vanilla_AO;
 
 		#ifdef LabPBR_Emissives
 			LabEmission(gl_FragData[0].rgb, albedo, SpecularTex.a);
@@ -421,5 +507,7 @@ void main() {
 	}
 
 
+
+	// gl_FragData[0].rgb = SubsurfaceScattering_sky(albedo, Indirect_SSS, 1.0) * vec3(1);
 /* DRAWBUFFERS:3 */
 }

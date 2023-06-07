@@ -87,10 +87,6 @@ vec3 LightSourcePosition(vec3 WorldPos, vec3 CameraPos){
         // Origin -= RandomPosition * 100;
     }
 
-    #ifdef THE_ORB
-     Origin = WorldPos - ManualLightPos;
-    #endif
-
     return Origin;
 }
 
@@ -126,10 +122,6 @@ vec3 LightSourceColor(float SwirlBounds){
         // Color *= Flash;
 
     }
-
-    #ifdef THE_ORB
-        Color = vec3(ORB_R, ORB_G, ORB_B) * ORB_ColMult;
-    #endif
 
     return Color;
 }
@@ -305,10 +297,10 @@ mat2x3 getVolumetricRays(float dither,vec3 fragpos,float dither2) {
         vec3 CastedLight = LightColor * OrbMie * exp(CastLight * 15 * (LightColor*(1.0-CastLight/3)-1.50))  ; 
         CastedLight += (LightColor * vec3(1.0,1.3,1.0)) * exp(abs(densityVol*2.0 - 0.3) * 15 * (LightColor*CastLight)) * (max(OrbMie - density*10,0.0)/10);
 
-        #ifdef THE_ORB
-		    density += clamp((1.0 - length(LightPos) / 10.0) * 10 ,0.0,1.0) ;
-            InnerLight = vec3(0.0);
-        #endif
+        // #ifdef THE_ORB
+		//     density += clamp((1.0 - length(LightPos) / 10.0) * 10 ,0.0,1.0) ;
+        //     InnerLight = vec3(0.0);
+        // #endif
         
 		vec3 AmbientLight = fogColor * 0.05  * pow(exp(density * -2),20);
 
