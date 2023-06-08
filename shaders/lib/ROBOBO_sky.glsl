@@ -110,7 +110,7 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 	vec3  increment = viewVector * stepSize;
 	vec3  position  = viewVector * sd.x + viewPosition;
 	position += increment * (0.34*noise);
-	vec2 phaseSun  = sky_phase(dot(viewVector, sunVector ), sky_mieg);
+	vec2 phaseSun  = sky_phase(dot(viewVector, sunVector ), sky_mieg) ;
 	vec2 phaseMoon = sky_phase(dot(viewVector, moonVector), sky_mieg);
 
 	vec3 scatteringSun     = vec3(0.0);
@@ -128,19 +128,19 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 	for (int i = 0; i < iSteps; ++i, position += increment) {
 		vec3 density          = sky_density(length(position));
 		if (density.y > 1e35) break;
-		vec3 stepAirmass      = density * stepSize;
-		vec3 stepOpticalDepth = sky_coefficientsAttenuation * stepAirmass;
+		vec3 stepAirmass      = density * stepSize ;
+		vec3 stepOpticalDepth = sky_coefficientsAttenuation * stepAirmass ;
 
-		vec3 stepTransmittance       = exp2(-stepOpticalDepth * rLOG2);
-		vec3 stepTransmittedFraction = clamp01((stepTransmittance - 1.0) / -stepOpticalDepth);
-		vec3 stepScatteringVisible   = transmittance * stepTransmittedFraction;
+		vec3 stepTransmittance       = exp2(-stepOpticalDepth * rLOG2) ;
+		vec3 stepTransmittedFraction = clamp01((stepTransmittance - 1.0) / -stepOpticalDepth) ;
+		vec3 stepScatteringVisible   = transmittance * stepTransmittedFraction ;
 
-		scatteringSun  += sky_coefficientsScattering * (stepAirmass.xy * phaseSun ) * stepScatteringVisible * sky_transmittance(position, sunVector*0.5+0.1,  jSteps);
+		scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun ) * stepScatteringVisible * sky_transmittance(position, sunVector*0.5+0.1,  jSteps)  ;
 		scatteringMoon += sky_coefficientsScattering * (stepAirmass.xy * phaseMoon) * stepScatteringVisible * sky_transmittance(position, moonVector, jSteps);
 		// Nice way to fake multiple scattering.
-		scatteringAmbient += sky_coefficientsScattering * stepAirmass.xy * (stepScatteringVisible * low_sun);
+		scatteringAmbient += sky_coefficientsScattering * stepAirmass.xy * (stepScatteringVisible * low_sun );
 
-		transmittance *= stepTransmittance;
+		transmittance *= stepTransmittance ;
 	}
 
 	vec3 scattering = scatteringSun * sunColorBase + (scatteringAmbient) * background + scatteringMoon*moonColorBase	;

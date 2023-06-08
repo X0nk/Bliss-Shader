@@ -169,7 +169,7 @@ float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 		BiomeColors.b = isSwamps*0.35 + isJungles*0.8;
 
 		// insure the biome colors are locked to the fog shape and lighting, but not its orignal color.
-		BiomeColors *= dot(FinalFogColor,vec3(0.33)); 
+		BiomeColors *= dot(FinalFogColor,vec3(0.21, 0.72, 0.07)); 
 		
 		// these range 0.0-1.0. they will never overlap.
 		float Inbiome = isJungles+isSwamps;

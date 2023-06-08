@@ -142,11 +142,9 @@ vec3 Cloud_lighting(
 	vec3 skyLighting = SkyColors;
 
 	#ifdef Altostratus
-		float Coverage; float Density;
+		float Coverage = 0.0; float Density = 0.0;
 		DailyWeather_Alto(Coverage,Density);
-		skyLighting += sunContributionMulti * exp(SunShadowing * -3) * clamp(Coverage * (1-Density),0,1);
-
-		// skyLighting += (sunContributionMulti * 5.0 * exp(SunShadowing * -3)) * exp(altoShadow * -0.1);
+		skyLighting += sunContributionMulti * exp(-SunShadowing)  * clamp((1.0 - abs(pow(Density*4.0 - 1.1,4.0))) * Coverage,0,1) ;
 	#endif
 
 	skyLighting *= exp(SkyShadowing * AmbientShadow * coeeff/2 ) * lesspowder ;
@@ -162,7 +160,7 @@ vec3 Cloud_lighting(
 
 	vec3 moonLighting = exp(MoonShadowing * coeeff / 3) * moonContribution * powder;
 
-	return skyLighting + moonLighting + sunLighting  ;
+	return skyLighting + moonLighting  + sunLighting ;
 	// return skyLighting;
 }
 
@@ -174,7 +172,7 @@ float phaseg(float x, float g){
 }
 
 float CustomPhase(float LightPos, float S_1, float S_2){
-	float SCALE = S_2; // remember the epislons 0.001 is fine.
+	float SCALE = S_2 + 0.001; // remember the epislons 0.001 is fine.
 	float N = S_1;
 	float N2 = N / SCALE;
 
@@ -244,7 +242,7 @@ vec4 renderClouds(
 
 	if(dV_Sun.y/shadowStep < -0.1) dV_Sun = -dV_Sun;
 	
-	float mieDay = phaseg(SdotV, 0.75) * 2;
+	float mieDay = phaseg(SdotV, 0.75) * 3.14;
 	float mieDayMulti = phaseg(SdotV, 0.35) * 2;
 
 	vec3 sunContribution = SunColor * mieDay;
@@ -289,7 +287,8 @@ vec4 renderClouds(
 				
 				float phase = PhaseHG(-SdotV, (1.0-cumulus));
 
-				float ambientlightshadow = 1.0-clamp(exp((progress_view.y - (MaxCumulusHeight - 50)) / 100.0),0.0,1.0);
+				float ambientlightshadow = 1.0 - clamp(exp((progress_view.y - (MaxCumulusHeight - 50)) / 100.0),0.0,1.0);
+
 				vec3 S = Cloud_lighting(muE, cumulus*Cumulus_density, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, ambientlightshadow, 0, progress_view);
 
 				vec3 Sint = (S - S * exp(-mult*muE)) / muE;

@@ -78,6 +78,12 @@ vec4 getVolumetricRays(
 	vec3 sunColor = lightCol.rgb / 80.0;
 	vec3 skyCol0 = AmbientColor / 150. * 5.; // * max(abs(WsunVec.y)/150.0,0.);
 
+	#ifdef Biome_specific_environment
+		// recolor change sun and sky color to some color, but make sure luminance is preserved.
+		BiomeFogColor(sunColor);
+		BiomeFogColor(skyCol0);
+	#endif
+
 	vec3 rC = vec3(fog_coefficientRayleighR*1e-6, fog_coefficientRayleighG*1e-5, fog_coefficientRayleighB*1e-5);
 	vec3 mC = vec3(fog_coefficientMieR*1e-6, fog_coefficientMieG*1e-6, fog_coefficientMieB*1e-6);
 
@@ -126,14 +132,8 @@ vec4 getVolumetricRays(
 		// extra fog effects
 		vec3 rainRays =   (sunColor*sh) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1) * rainStrength * RainFog_amount; 
 		vec3 CaveRays = (sunColor*sh)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - max(eyeBrightnessSmooth.y,0)/240.);
-
-		// vec3 RAAAAY =    (sunColor*sh) * (rayL*phaseg(SdotV,0.5)) ; 
-
+ 
 		vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays) * max(eyeBrightnessSmooth.y,0)/240. + CaveRays ;
-
-		#ifdef Biome_specific_environment
-			BiomeFogColor(vL0); // ?????
-		#endif
 
 		vL += (vL0 - vL0 * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*absorbance;
 		absorbance *= dot(clamp(exp(-(rL+m)*dd*dL),0.0,1.0), vec3(0.333333));
