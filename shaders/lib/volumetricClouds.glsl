@@ -131,7 +131,8 @@ vec3 Cloud_lighting(
 	vec3 moonContribution,
 	float AmbientShadow,
 	int cloudType,
-	vec3 pos
+	vec3 pos,
+	float time
 ){
 	float coeeff = -30;
 	// float powder = 1.0 - exp((CloudShape*CloudShape) * -800);
@@ -147,7 +148,7 @@ vec3 Cloud_lighting(
 		skyLighting += sunContributionMulti * exp(-SunShadowing)  * clamp((1.0 - abs(pow(Density*4.0 - 1.1,4.0))) * Coverage,0,1) ;
 	#endif
 
-	skyLighting *= exp(SkyShadowing * AmbientShadow * coeeff/2 ) * lesspowder ;
+	skyLighting *= exp(SkyShadowing * AmbientShadow * coeeff/(2.0 - time) ) * lesspowder ;
 
 
 	if(cloudType == 1){
@@ -158,7 +159,7 @@ vec3 Cloud_lighting(
 	vec3 sunLighting = exp(SunShadowing * coeeff  + powder) * sunContribution;
 	sunLighting +=  exp(SunShadowing * coeeff/4 + powder*2) * sunContributionMulti;
 
-	vec3 moonLighting = exp(MoonShadowing * coeeff / 3) * moonContribution * powder;
+	vec3 moonLighting = exp(MoonShadowing * coeeff/4  + powder) * moonContribution;
 
 	return skyLighting + moonLighting  + sunLighting ;
 	// return skyLighting;
@@ -248,9 +249,10 @@ vec4 renderClouds(
 	vec3 sunContribution = SunColor * mieDay;
 	vec3 sunContributionMulti = SunColor * mieDayMulti ;
 
-	float mieNight = (phaseg(-SdotV,0.8) + phaseg(-SdotV, 0.35)*4) * 6.0;
+	float mieNight = (phaseg(-SdotV,0.8) + phaseg(-SdotV, 0.35)*4);
 	vec3 moonContribution = MoonColor * mieNight;
 	
+	float timing = 1.0 - clamp(pow(abs(dV_Sun.y)/150.0,2.0),0.0,1.0);
 
 	#ifdef Cumulus
 		for(int i=0;i<maxIT_clouds;i++) {
@@ -287,9 +289,9 @@ vec4 renderClouds(
 				
 				float phase = PhaseHG(-SdotV, (1.0-cumulus));
 
-				float ambientlightshadow = 1.0 - clamp(exp((progress_view.y - (MaxCumulusHeight - 50)) / 100.0),0.0,1.0);
+				float ambientlightshadow = 1.0 - clamp(exp((progress_view.y - (MaxCumulusHeight - 50)) / 100.0),0.0,1.0) ;
 
-				vec3 S = Cloud_lighting(muE, cumulus*Cumulus_density, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, ambientlightshadow, 0, progress_view);
+				vec3 S = Cloud_lighting(muE, cumulus*Cumulus_density, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, ambientlightshadow, 0, progress_view, timing);
 
 				vec3 Sint = (S - S * exp(-mult*muE)) / muE;
 				color += max(muE*Sint*total_extinction,0.0);
@@ -317,7 +319,7 @@ vec4 renderClouds(
 					float shadow = GetAltostratusDensity(shadowSamplePos_high);
 					Sunlight += shadow;
 				}
-				vec3 S = Cloud_lighting(altostratus, altostratus, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, 1, 1, progress_view_high);
+				vec3 S = Cloud_lighting(altostratus, altostratus, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, 1, 1, progress_view_high, timing);
 
 				vec3 Sint = (S - S * exp(-20*altostratus)) / altostratus;
 				color += max(altostratus*Sint*total_extinction,0.0);

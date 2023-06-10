@@ -80,7 +80,9 @@ uniform int frameCounter;
 uniform int framemod8;
 uniform vec3 previousCameraPosition;
 uniform mat4 gbufferPreviousModelView;
+
 #define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
+
 #include "lib/projections.glsl"
 
 
@@ -120,9 +122,11 @@ vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth)
 	dmin = dmin.z > dtl.z? dtl : dmin;
 	dmin = dmin.z > dbl.z? dbl : dmin;
 	dmin = dmin.z > dbr.z? dbr : dmin;
+
 	#ifdef TAA_UPSCALING
-	dmin.xy = dmin.xy/RENDER_SCALE;
+		dmin.xy = dmin.xy/RENDER_SCALE;
 	#endif
+
 	return dmin;
 }
 

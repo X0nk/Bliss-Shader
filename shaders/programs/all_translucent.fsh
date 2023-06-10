@@ -126,14 +126,14 @@ vec3 rayTrace(vec3 dir,vec3 position,float dither, float fresnel, bool inwater){
     float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z);
 
 
-    vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0);
+    vec3 stepv = direction * mult / quality;
 
 
-	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) + stepv*dither;
+	vec3 spos = clipPosition + stepv*dither;
 	float minZ = clipPosition.z;
 	float maxZ = spos.z+stepv.z*0.5;
 	
-	spos.xy += offsets[framemod8]*texelSize*0.5/RENDER_SCALE;
+	spos.xy += offsets[framemod8]*texelSize*0.5;
 
 	float dist = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
     for (int i = 0; i <= int(quality); i++) {
@@ -141,7 +141,7 @@ vec3 rayTrace(vec3 dir,vec3 position,float dither, float fresnel, bool inwater){
 		float sp = texelFetch2D(depthtex1,ivec2(spos.xy/texelSize),0).x;
 
 
-		if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ) ) return vec3(spos.xy/RENDER_SCALE,sp);
+		if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ) ) return vec3(spos.xy,sp);
 
 		spos += stepv;
 		
@@ -422,7 +422,7 @@ vec3 getWaveHeightmap_dimension(vec2 posxz, float iswater){
 //////////////////////////////VOID MAIN//////////////////////////////
 /* RENDERTARGETS:2,7,1,11,13,14 */
 void main() {
-	if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize.y < RENDER_SCALE.y )	{
+	if (gl_FragCoord.x * texelSize.x < 1  && gl_FragCoord.y * texelSize.y < 1 )	{
 
 		gl_FragData[0] = texture2D(texture, lmtexcoord.xy,Texture_MipMap_Bias)*color;
 		vec3 Albedo = toLinear(gl_FragData[0].rgb);
@@ -452,7 +452,7 @@ void main() {
 
 		vec2 tempOffset=offsets[framemod8];
 		vec3 fragC = gl_FragCoord.xyz*vec3(texelSize,1.0);
-		vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
+		vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
 		vec3 p3 = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
 		vec3 np3 = normVec(p3);
 

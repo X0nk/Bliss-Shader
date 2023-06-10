@@ -822,7 +822,9 @@ void main() {
 
 
 		vec3 background = vec3(0.0);
-		background += stars(vec3(np3.x,abs(np3.y),np3.z)) * 5.0	;
+		vec3 orbitstar = vec3(np3.x,abs(np3.y),np3.z);
+		orbitstar.x -= WsunVec.x*0.2; 
+		background += stars(orbitstar) * 5.0	;
 
 		#ifndef ambientLight_only
 			background += drawSun(dot(lightCol.a * WsunVec, np3),0, DirectLightColor,vec3(0.0)) ; // sun 
@@ -1115,7 +1117,7 @@ void main() {
 	}
 
 	
-	//  gl_FragData[0].rgb = TESTS; if(z >= 1) gl_FragData[0].rgb = vec3(0.5);
+	//  gl_FragData[0].rgb = worldToView(normal); if(z >= 1) gl_FragData[0].rgb = vec3(0.5);
 	// if (abs(filtered.b-0.1) < 0.0004 ) gl_FragData[0].rgb = vec3(0,1,0);
 
 	/* DRAWBUFFERS:3 */

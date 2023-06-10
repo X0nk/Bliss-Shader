@@ -341,7 +341,7 @@ void ScreenSpace_SSS(inout float sss, vec3 fragpos, vec2 noise, vec3 normal){
 	float rd = mulfov2 * 0.1;
 
 
-	vec2 acc = -(TAA_Offset*(texelSize/2))*RENDER_SCALE ;
+	vec2 acc = -(TAA_Offset*(texelSize/2)) ;
 
 	// int seed = (frameCounter%40000)*2 + (1+frameCounter);
 	// float randomDir = fract(R2_samples(seed).y + noise.x ) * 1.61803398874 ;
@@ -355,10 +355,10 @@ void ScreenSpace_SSS(inout float sss, vec3 fragpos, vec2 noise, vec3 normal){
 		
 		// vec2 sp = tapLocation_alternate(j, 0.0, 7, 20, randomDir);
 		vec2 sampleOffset = sp*rd;
-		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio)*RENDER_SCALE);
+		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio));
 
-		if (offset.x >= 0 && offset.y >= 0 && offset.x < viewWidth*RENDER_SCALE.x && offset.y < viewHeight*RENDER_SCALE.y ) {
-			vec3 t0 = toScreenSpace(vec3(offset*texelSize+acc+0.5*texelSize,texelFetch2D(depthtex1,offset,0).x) * vec3(1.0/RENDER_SCALE, 1.0) );
+		if (offset.x >= 0 && offset.y >= 0 && offset.x < viewWidth && offset.y < viewHeight ) {
+			vec3 t0 = toScreenSpace(vec3(offset*texelSize+acc+0.5*texelSize,texelFetch2D(depthtex1,offset,0).x) );
 			vec3 vec = t0.xyz - fragpos;
 			float dsquared = dot(vec,vec);
 

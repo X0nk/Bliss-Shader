@@ -136,6 +136,21 @@ vec3 blackbody2(float Temp)
 #include "/lib/climate_settings.glsl"
 
 
+uniform sampler2D noisetex;//depth
+float densityAtPos(in vec3 pos){
+	pos /= 18.;
+	pos.xz *= 0.5;
+	vec3 p = floor(pos);
+	vec3 f = fract(pos);
+	vec2 uv =  p.xz + f.xz + p.y * vec2(0.0,193.0);
+	vec2 coord =  uv / 512.0;
+	
+	//The y channel has an offset to avoid using two textures fetches
+	vec2 xy = texture2D(noisetex, coord).yx;
+
+	return mix(xy.r,xy.g, f.y);
+}
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -245,11 +260,22 @@ void main() {
 	#ifdef WAVY_PLANTS
 		bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
 
+		// #ifdef WORLD 
+		// #ifndef HAND
+    	// 	vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
+		// 	// worldpos.xyz += (densityAtPos(worldpos*255 )*2) - cameraPosition;
+		// 	worldpos.xyz += sin(worldpos) - cameraPosition;
+    	// 	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
+		// #endif
+		// #endif
+
 		if ((mc_Entity.x == 10001 && istopv) && abs(position.z) < 64.0) {
     		vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
 			worldpos.xyz += calcMovePlants(worldpos.xyz)*lmtexcoord.w - cameraPosition;
     		position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 		}
+		
+
 
 		if (mc_Entity.x == 10003 && abs(position.z) < 64.0) {
    			vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
