@@ -813,6 +813,7 @@ void main() {
 
 	vec3 AmbientLightColor = avgAmbient;
 
+
 	float cloudShadow = 1.0;
 
 	if ( z >= 1.) { //sky
@@ -945,10 +946,10 @@ void main() {
 
 		vec3 Indirect_lighting = vec3(1.0);
 
-		// float skylight = clamp(abs(normal.y+1),0.0,1.0);
-		float skylight = clamp(abs(ambientCoefs.y+1.0),0.35,2.0);
-		// float skylight = clamp(abs(ambientCoefs.y+0.5),0.35,2.0);
-		
+		// float cloudOcclusion = GetCloudShadow_occluson(p3 + cameraPosition);
+		// AmbientLightColor *= cloudOcclusion*0.5+.5;
+
+		float skylight = clamp(abs(ambientCoefs.y + 1.0),0.35,2.0);
 
 		#if indirect_effect == 2 || indirect_effect == 3 || indirect_effect == 4
 			if (!hand)  skylight = 1.0;
@@ -959,6 +960,7 @@ void main() {
 		if((isEyeInWater == 0 && iswater) || (isEyeInWater == 1 && !iswater)) newLightmap.y = min(newLightmap.y+0.1,1.0);
 
 		
+
 		#ifndef ambientSSS_view
 			Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), newLightmap.xy, skylight);
 		#endif

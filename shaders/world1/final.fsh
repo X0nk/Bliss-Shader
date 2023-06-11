@@ -88,8 +88,8 @@ void main() {
     vec3 std = abs(col - m1) + abs(albedoCurrent1 - m1) + abs(albedoCurrent2 - m1) +
      abs(albedoCurrent3 - m1) + abs(albedoCurrent3 - m1) + abs(albedoCurrent4 - m1);
     float contrast = 1.0 - luma(std)/5.0;
-    col = col*(1.0+(SHARPENING+UPSCALING_SHARPNENING)*contrast)
-          - (SHARPENING+UPSCALING_SHARPNENING)/(1.0-0.5/3.5)*contrast*(m1 - 0.5/3.5*col);
+    col = col*(1.0+(SHARPENING)*contrast)
+          - (SHARPENING)/(1.0-0.5/3.5)*contrast*(m1 - 0.5/3.5*col);
   #endif
 
   float lum = luma(col);

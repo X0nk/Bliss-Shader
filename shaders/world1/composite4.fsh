@@ -248,9 +248,7 @@ vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth)
 	dmin = dmin.z > dtl.z? dtl : dmin;
 	dmin = dmin.z > dbl.z? dbl : dmin;
 	dmin = dmin.z > dbr.z? dbr : dmin;
-	#ifdef TAA_UPSCALING
-	dmin.xy = dmin.xy/RENDER_SCALE;
-	#endif
+
 	return dmin;
 }
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
@@ -288,12 +286,7 @@ vec3 TAA_hq(){
 	if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0)
 		return smoothfilter(colortex3, adjTC + offsets[framemod8]*texelSize*0.5).xyz;
 
-	#ifdef TAA_UPSCALING
-	vec3 albedoCurrent0 = smoothfilter(colortex3, adjTC + offsets[framemod8]*texelSize*0.5).xyz;
-	// Interpolating neighboorhood clampling boundaries between pixels
-	vec3 cMax = texture2D(colortex0, adjTC).rgb;
-	vec3 cMin = texture2D(colortex6, adjTC).rgb;
-	#else
+
 	vec3 albedoCurrent0 = texture2D(colortex3, adjTC).rgb;
 	vec3 albedoCurrent1 = texture2D(colortex3, adjTC + vec2(texelSize.x,texelSize.y)).rgb;
 	vec3 albedoCurrent2 = texture2D(colortex3, adjTC + vec2(texelSize.x,-texelSize.y)).rgb;
@@ -307,7 +300,7 @@ vec3 TAA_hq(){
 	vec3 cMax = max(max(max(albedoCurrent0,albedoCurrent1),albedoCurrent2),max(albedoCurrent3,max(albedoCurrent4,max(albedoCurrent5,max(albedoCurrent6,max(albedoCurrent7,albedoCurrent8))))));
 	vec3 cMin = min(min(min(albedoCurrent0,albedoCurrent1),albedoCurrent2),min(albedoCurrent3,min(albedoCurrent4,min(albedoCurrent5,min(albedoCurrent6,min(albedoCurrent7,albedoCurrent8))))));
 	albedoCurrent0 = smoothfilter(colortex3, adjTC + offsets[framemod8]*texelSize*0.5).rgb;
-	#endif
+
 
 	#ifndef NO_CLIP
 	vec3 albedoPrev = max(FastCatmulRom(colortex5, previousPosition.xy,vec4(texelSize, 1.0/texelSize), 0.75).xyz, 0.0);

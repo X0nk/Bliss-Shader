@@ -298,7 +298,8 @@ void main() {
   
   #ifdef display_LUT
   	vec2 movedTC = texcoord  ;
-    if(texcoord.x < 0.45 ) color.rgb =  texture2D(colortex4,movedTC).rgb / 150. * 5.0;
+    vec3 thingy = texture2D(colortex4,movedTC).rgb / 150. * 5.0;
+    if(texcoord.x < 0.45 && luma(thingy) > 0.0 ) color.rgb =  thingy;
   #endif
 
 

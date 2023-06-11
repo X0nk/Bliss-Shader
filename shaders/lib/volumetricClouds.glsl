@@ -16,9 +16,11 @@
 
 uniform float viewHeight;
 uniform float viewWidth;
+
 uniform sampler2D colortex4;//Skybox
 
 #define WEATHERCLOUDS
+
 #include "/lib/climate_settings.glsl"
 
 float CumulusHeight = Cumulus_height;
@@ -148,7 +150,7 @@ vec3 Cloud_lighting(
 		skyLighting += sunContributionMulti * exp(-SunShadowing)  * clamp((1.0 - abs(pow(Density*4.0 - 1.1,4.0))) * Coverage,0,1) ;
 	#endif
 
-	skyLighting *= exp(SkyShadowing * AmbientShadow * coeeff/(2.0 - time) ) * lesspowder ;
+	skyLighting *= exp(SkyShadowing * AmbientShadow * coeeff/2.0 ) * lesspowder ;
 
 
 	if(cloudType == 1){
@@ -259,7 +261,7 @@ vec4 renderClouds(
 
 			// IntersecTerrain = length(progress_view - cameraPosition) > lViewPosM;
 			// if(IntersecTerrain) break;
-			float cumulus = GetCumulusDensity(progress_view, cloudLoD);
+			float cumulus = GetCumulusDensity(progress_view, 1);
 			
 			float alteredDensity = Cumulus_density * clamp(exp( (progress_view.y - (MaxCumulusHeight - 75)) / 9.0	 ),0.0,1.0);
 
@@ -287,7 +289,7 @@ vec4 renderClouds(
 					Sunlight += HighAlt_shadow;
 				#endif
 				
-				float phase = PhaseHG(-SdotV, (1.0-cumulus));
+				// float phase = PhaseHG(-SdotV, (1.0-cumulus));
 
 				float ambientlightshadow = 1.0 - clamp(exp((progress_view.y - (MaxCumulusHeight - 50)) / 100.0),0.0,1.0) ;
 
@@ -369,10 +371,10 @@ float GetCloudShadow_VLFOG(vec3 WorldPos){
 	float shadow = 0.0;
 
 	// assume a flat layer of cloud, and stretch the sampled density along the sunvector, starting from some vertical layer in the cloud.
-	#ifdef Cumulus
-		vec3 lowShadowStart = WorldPos + WsunVec/abs(WsunVec.y) * max((MaxCumulusHeight - 70) - WorldPos.y,0.0) ;
+	// #ifdef Cumulus
+		vec3 lowShadowStart = WorldPos + WsunVec/abs(WsunVec.y) * max((MaxCumulusHeight - 60) - WorldPos.y,0.0) ;
 		shadow += GetCumulusDensity(lowShadowStart,0)*Cumulus_density;
-	#endif
+	// #endif
 
 	#ifdef Altostratus 
 		vec3 highShadowStart = WorldPos + WsunVec/abs(WsunVec.y) * max(AltostratusHeight - WorldPos.y,0.0);
@@ -381,24 +383,23 @@ float GetCloudShadow_VLFOG(vec3 WorldPos){
 
 	// shadow = shadow/2.0; // perhaps i should average the 2 shadows being added....
 	
-	shadow = clamp(exp(-shadow*15.0),0.0,1.0);
+	shadow = clamp(exp(-shadow*255.0),0.0,1.0);
 
 	// do not allow it to exist above the lowest cloud plane
-	shadow *= clamp(((MaxCumulusHeight + CumulusHeight)*0.435 - WorldPos.y)/100,0.0,1.0) ;
+	// shadow *= clamp(((MaxCumulusHeight + CumulusHeight)*0.435 - WorldPos.y)/100,0.0,1.0) ;
 
 	return shadow;
 }
-float GetAltoOcclusion(vec3 eyePlayerPos){
 
-	vec3 playerPos = eyePlayerPos + cameraPosition;
-	playerPos.y += 0.05;
-	
+float GetCloudShadow_occluson(vec3 WorldPos){
+
 	float shadow = 0.0;
-	
-	vec3 lowShadowStart = playerPos + normalize(vec3(0,1,0)) * max((MaxCumulusHeight - 70) - playerPos.y,0.0) ;
-	shadow = GetCumulusDensity(lowShadowStart,0) * cloudDensity;
-	
-	shadow = clamp(exp(shadow * -1),0.0,1.0);
-	return shadow;
 
+	#ifdef Cumulus
+		vec3 lowShadowStart = WorldPos + vec3(0,0.7,0) * max((MaxCumulusHeight - 60) - WorldPos.y,0.0) ;
+		shadow += GetCumulusDensity(lowShadowStart,1)*Cumulus_density;
+		shadow = clamp(exp(-shadow * 5),0.0,1.0);
+	#endif
+
+	return shadow;
 }

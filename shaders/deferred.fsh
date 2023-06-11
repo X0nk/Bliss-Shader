@@ -85,6 +85,7 @@ vec4 lightCol = vec4(lightSourceColor, float(sunElevation > 1e-5)*2-1.);
 float luma(vec3 color) {
 	return dot(color,vec3(0.299, 0.587, 0.114));
 }
+
 #include "lib/volumetricFog.glsl"
 
 const float[17] Slightmap = float[17](14.0,17.,19.0,22.0,24.0,28.0,31.0,40.0,60.0,79.0,93.0,110.0,132.0,160.0,197.0,249.0,249.0);
@@ -194,7 +195,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
 	vec3 viewVector = cartToSphere(p);
 
-	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024.,vec2(blueNoise(),R2_dither()), sunColorCloud, moonColor, ambientUp*5.0);
+	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024.,vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), sunColorCloud, moonColor, ambientUp*5.0);
   vec4 VL_Fog = getVolumetricRays(mat3(gbufferModelView)*viewVector*1024.,  fract(frameCounter/1.6180339887), ambientUp);
 
 

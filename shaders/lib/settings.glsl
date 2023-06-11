@@ -112,6 +112,7 @@
 
 #define CaveFog_amount  1 // [0 1 2 3 4 5 6 7 8 9  10 15 20 25]
 
+#define Cloud_Fog // render the VL clouds a second time along with VL fog so you can fly through it and stuff. expect a noticeable performance hit.
 // ----- TIME OF DAY FOG ----- //
 
 #define TOD_Fog_mult 1.0 // [0.0 0.25 0.5 0.75 1.0 2.0 3.0 4.0 5.0 10.0 15.0 20.0 25.0 50.0 75.0 100.0]
@@ -323,7 +324,6 @@ const float shadowDistanceRenderMul = -1.0; //[-1.0 1.0] THIS WILL BREAK SUBSURF
 
 #define WeatherDay -1 // [-1 0 1 2 3 4 5 6 7]
 #define cloudCoverage 0.4 // Cloud coverage	[ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
-
 
 #define cloud_LevelOfDetail 1		// Number of fbm noise iterations for on-screen clouds (-1 is no fbm)	[-1 0 1 2 3 4 5 6 7 8]
 #define cloud_ShadowLevelOfDetail 0	// Number of fbm noise iterations for the shadowing of on-screen clouds (-1 is no fbm)	[-1 0 1 2 3 4 5 6 7 8]

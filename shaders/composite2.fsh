@@ -212,10 +212,14 @@ void main() {
 
 		vec3 fragpos = toScreenSpace(vec3(tc/RENDER_SCALE,z));
 
-		vec4 VL_Fog = getVolumetricRays(fragpos,blueNoise(),avgAmbient);
-	
+		#ifdef Cloud_Fog
+			vec4 VL_CLOUDFOG = InsideACloudFog(fragpos, vec2(R2_dither(),blueNoise()), lightCol.rgb/80., moonColor/150., (avgAmbient*2.0) * 8./150./3.);
+			gl_FragData[0] = clamp(VL_CLOUDFOG,0.0,65000.);
+		#else
+			vec4 VL_Fog = getVolumetricRays(fragpos,blueNoise(),avgAmbient);
+			gl_FragData[0] = clamp(VL_Fog,0.0,65000.);
+		#endif
 
-		gl_FragData[0] = clamp(VL_Fog,0.0,65000.);
 	} else {
 
 		float dirtAmount = Dirt_Amount;
