@@ -36,7 +36,7 @@ float cloudVol(in vec3 pos){
 	
 	TimeOfDayFog(UniformFog, CloudyFog);
 
-	return CloudyFog + UniformFog;
+	return CloudyFog + UniformFog + RainFog;
 }
 
 vec4 getVolumetricRays(
@@ -254,6 +254,7 @@ vec4 InsideACloudFog(
 
 
 			float cloudhsadow = 1;
+			
 			#ifdef VL_CLOUDS_SHADOWS
 				cloudhsadow = sh * GetCloudShadow_VLFOG(progressW);
 			#endif
@@ -274,8 +275,8 @@ vec4 InsideACloudFog(
 			vec3 AtmosphericFog = Fog_SkyCol * (rL+m)  ;
 
 			// extra fog effects
-			vec3 rainRays =   (sunColor*cloudhsadow) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1) * rainStrength * RainFog_amount; 
-			vec3 CaveRays = (sunColor*cloudhsadow)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - max(eyeBrightnessSmooth.y,0)/240.);
+			vec3 rainRays =   ((Fog_SunCol/5)*cloudhsadow) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1.0) * rainStrength * RainFog_amount; 
+			vec3 CaveRays = (Fog_SunCol*cloudhsadow)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - max(eyeBrightnessSmooth.y,0)/240.);
  
 			vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * max(eyeBrightnessSmooth.y,0)/240. + CaveRays ;
 
