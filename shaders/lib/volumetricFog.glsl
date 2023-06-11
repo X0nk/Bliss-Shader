@@ -250,12 +250,12 @@ vec4 InsideACloudFog(
 				pos = pos*vec3(0.5,0.5,0.5/6.0)+0.5;
 				sh = shadow2D( shadow, pos).x;
 			}
-			
 
 
 
+			float cloudhsadow = 1;
 			#ifdef VL_CLOUDS_SHADOWS
-				sh *= GetCloudShadow_VLFOG(progressW);
+				cloudhsadow = sh * GetCloudShadow_VLFOG(progressW);
 			#endif
 				
 			float densityVol = cloudVol(progressW);
@@ -269,20 +269,19 @@ vec4 InsideACloudFog(
 			vec3 rL = rC*airCoef.x;
 			vec3 m = (airCoef.y+density)*mC;
 
-			vec3 DirectLight =  (Fog_SunCol*sh) * (rayL*rL+m*mie);
+			vec3 DirectLight =  (Fog_SunCol*cloudhsadow) * (rayL*rL+m*mie);
 			vec3 AmbientLight =  Fog_SkyCol * m;
 			vec3 AtmosphericFog = Fog_SkyCol * (rL+m)  ;
 
 			// extra fog effects
-			vec3 rainRays =   (sunColor*sh) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1) * rainStrength * RainFog_amount; 
-			vec3 CaveRays = (sunColor*sh)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - max(eyeBrightnessSmooth.y,0)/240.);
+			vec3 rainRays =   (sunColor*cloudhsadow) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1) * rainStrength * RainFog_amount; 
+			vec3 CaveRays = (sunColor*cloudhsadow)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - max(eyeBrightnessSmooth.y,0)/240.);
  
 			vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * max(eyeBrightnessSmooth.y,0)/240. + CaveRays ;
 
 			color += (vL0 - vL0 * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*total_extinction;
 			total_extinction *= dot(clamp(exp(-(rL+m)*dd*dL),0.0,1.0), vec3(0.333333));
 
-			sh = 1.0; // make sure cloud shadows dont shadow the clouds hurhur
 
 			progress_view = progressW;
 			float cumulus = GetCumulusDensity(progress_view, 1);
@@ -304,9 +303,9 @@ vec4 InsideACloudFog(
 					Sunlight += shadow / (1 + j);
 					MoonLight += shadow;
 				}
-				
-				Sunlight += 1.0 - sh;
-				MoonLight += 1.0 - sh;
+
+				Sunlight  += (1-sh) * 100.;
+				MoonLight += (1-sh) * 100.;
 
 				#ifdef Altostratus
 					// cast a shadow from higher clouds onto lower clouds
