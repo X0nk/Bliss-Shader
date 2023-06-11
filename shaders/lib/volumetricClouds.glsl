@@ -111,7 +111,7 @@ float GetAltostratusDensity(vec3 pos){
 	float shape = (small + pow((1.0-large),2.0))/2.0;
 	
 	float Coverage; float Density;
-	DailyWeather_Alto(Coverage,Density);
+	DailyWeather_Alto(Coverage, Density);
 
 	shape = pow(max(shape + Coverage - 0.5,0.0),2.0);
 	shape *= Density;
@@ -142,12 +142,14 @@ vec3 Cloud_lighting(
 	float lesspowder = powder*0.4+0.6;
 	
 	
-	vec3 skyLighting = SkyColors;
+	vec3 skyLighting = SkyColors; // skyLighting = vec3(0.0);
 
 	#ifdef Altostratus
-		float Coverage = 0.0; float Density = 0.0;
-		DailyWeather_Alto(Coverage,Density);
-		skyLighting += sunContributionMulti * exp(-SunShadowing)  * clamp((1.0 - abs(pow(Density*4.0 - 1.1,4.0))) * Coverage,0,1) ;
+		/// a special conditon where scattered light exiting altocumulus clouds come down onto the cumulus clouds below.
+		float cov = 0.0;
+		float den = 0.0;
+		DailyWeather_Alto(cov, den);
+		skyLighting += (sunContributionMulti * exp(-SunShadowing))  * clamp( 1.0 - pow( abs(den - 0.35) * 4.0 , 5.0)  ,0.0,1.0) * cov;
 	#endif
 
 	skyLighting *= exp(SkyShadowing * AmbientShadow * coeeff/2.0 ) * lesspowder ;
@@ -164,6 +166,7 @@ vec3 Cloud_lighting(
 	vec3 moonLighting = exp(MoonShadowing * coeeff/4  + powder) * moonContribution;
 
 	return skyLighting + moonLighting  + sunLighting ;
+
 	// return skyLighting;
 }
 
@@ -371,10 +374,10 @@ float GetCloudShadow_VLFOG(vec3 WorldPos){
 	float shadow = 0.0;
 
 	// assume a flat layer of cloud, and stretch the sampled density along the sunvector, starting from some vertical layer in the cloud.
-	// #ifdef Cumulus
+	#ifdef Cumulus
 		vec3 lowShadowStart = WorldPos + WsunVec/abs(WsunVec.y) * max((MaxCumulusHeight - 60) - WorldPos.y,0.0) ;
 		shadow += GetCumulusDensity(lowShadowStart,0)*Cumulus_density;
-	// #endif
+	#endif
 
 	#ifdef Altostratus 
 		vec3 highShadowStart = WorldPos + WsunVec/abs(WsunVec.y) * max(AltostratusHeight - WorldPos.y,0.0);
@@ -383,7 +386,7 @@ float GetCloudShadow_VLFOG(vec3 WorldPos){
 
 	// shadow = shadow/2.0; // perhaps i should average the 2 shadows being added....
 	
-	shadow = clamp(exp(-shadow*255.0),0.0,1.0);
+	shadow = clamp(exp(-shadow*35.0),0.0,1.0);
 
 	// do not allow it to exist above the lowest cloud plane
 	// shadow *= clamp(((MaxCumulusHeight + CumulusHeight)*0.435 - WorldPos.y)/100,0.0,1.0) ;

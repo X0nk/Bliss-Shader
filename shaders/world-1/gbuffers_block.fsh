@@ -2,4 +2,4 @@
 
 #define WORLD
 #define BLOCKENTITIES
-#include "/gbuffers_all_solid.fsh"
+#include "/programs/all_solid.fsh"

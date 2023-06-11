@@ -2,19 +2,18 @@
 // i gotta start centralizing shit someday. 
 
 
-uniform float Day;
-uniform float worldDay;
+// uniform float Day;
 
-// it's so symmetrical~
+// // it's so symmetrical~
 
-float day0 = clamp(clamp(Day,   0.0,1.0)*clamp(2-Day, 0.0,1.0),0.0,1.0);
-float day1 = clamp(clamp(Day-1, 0.0,1.0)*clamp(3-Day, 0.0,1.0),0.0,1.0);
-float day2 = clamp(clamp(Day-2, 0.0,1.0)*clamp(4-Day, 0.0,1.0),0.0,1.0);
-float day3 = clamp(clamp(Day-3, 0.0,1.0)*clamp(5-Day, 0.0,1.0),0.0,1.0);
-float day4 = clamp(clamp(Day-4, 0.0,1.0)*clamp(6-Day, 0.0,1.0),0.0,1.0);
-float day5 = clamp(clamp(Day-5, 0.0,1.0)*clamp(7-Day, 0.0,1.0),0.0,1.0);
-float day6 = clamp(clamp(Day-6, 0.0,1.0)*clamp(8-Day, 0.0,1.0),0.0,1.0);
-float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
+// float day0 = clamp(clamp(Day,   0.0,1.0)*clamp(2-Day, 0.0,1.0),0.0,1.0);
+// float day1 = clamp(clamp(Day-1, 0.0,1.0)*clamp(3-Day, 0.0,1.0),0.0,1.0);
+// float day2 = clamp(clamp(Day-2, 0.0,1.0)*clamp(4-Day, 0.0,1.0),0.0,1.0);
+// float day3 = clamp(clamp(Day-3, 0.0,1.0)*clamp(5-Day, 0.0,1.0),0.0,1.0);
+// float day4 = clamp(clamp(Day-4, 0.0,1.0)*clamp(6-Day, 0.0,1.0),0.0,1.0);
+// float day5 = clamp(clamp(Day-5, 0.0,1.0)*clamp(7-Day, 0.0,1.0),0.0,1.0);
+// float day6 = clamp(clamp(Day-6, 0.0,1.0)*clamp(8-Day, 0.0,1.0),0.0,1.0);
+// float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -92,13 +91,8 @@ float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 
 
 #ifdef WEATHERCLOUDS
+
 	uniform float Cumulus_Cov;
-
-	uniform float Alto_Cov;
-	uniform float Alto_Den;
-
-	uniform float CirrusCoverage;
-	uniform float CirrusThickness;
 
 	float DailyWeather_Cumulus(
 		float Coverage
@@ -113,11 +107,13 @@ float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
 		return Coverage;
 	}
 
+	uniform float Alto_Cov;
+	uniform float Alto_Den;
+
 	void DailyWeather_Alto(
 		inout float Coverage,
 		inout float Density
 	){
-		
 		#ifdef Daily_Weather
 			Coverage = Alto_Cov;
 			Density  = Alto_Den;

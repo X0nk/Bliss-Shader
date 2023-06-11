@@ -10,10 +10,10 @@ vec3 DoAmbientLighting (vec3 SkyColor, vec3 TorchColor, vec2 Lightmap, float sky
 
 
 	vec3 TorchLight = TorchColor * pow(1.0-pow(1.0-clamp(Lightmap.x,0.0,1.0) ,0.1),2);
-    TorchLight = exp(TorchLight * 30) - 1.0;
+    TorchLight = clamp(exp(TorchLight * 30) - 1.0,0.0,5.0);
 
 
-    vec3 SkyLight = max((SkyColor * 8./150./3.) * pow(Lightmap.y,3.0) , vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01)) ;
+    vec3 SkyLight = max((SkyColor * 8./150./3.) * min(pow(Lightmap.y,3.0),1.0) , vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01)) ;
     // vec3 SkyLight = max((SkyColor * 8./150./3.) * pow(Lightmap.y,3.0),0.0) ;
 
     
