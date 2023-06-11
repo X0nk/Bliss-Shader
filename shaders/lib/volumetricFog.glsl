@@ -179,7 +179,7 @@ vec4 InsideACloudFog(
 	float maxLength = min(length(dVWorld),far+16)/length(dVWorld);
 	dV *= maxLength;
 	dVWorld *= maxLength;
-	float mult = length(dVWorld)/25;
+	float mult = length(dVWorld);
 	float dL = length(dVWorld);
 
 	vec3 progress = start.xyz;
