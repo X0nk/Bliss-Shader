@@ -206,11 +206,13 @@
 #endif
 
 
-// #define Allow_Vanilla_sky // allow the vanilla sky to appear. may appear broken with some resourcepacks.
-// #define WhiteWorld // THIS IS A DEBUG VIEW. uses to see AO easier. used to see fake GI better (green light)
 #define TAA
 // #define TAA_UPSCALING // Lowers render resolution and uses TAA to combine several lower resolution images (greatly improves performance). USE THIS INSTEAD OF SHADER RENDER QUALITY OPTION IF YOU WANT TO INCREASE FPS (Leave it to 1). IF YOU WANT TO INCREASE QUALITY DISABLE THIS AND INCREASE SHADER RENDER QUALITY
-// #define Seasons
+
+
+
+
+#define Seasons
 #define Season_Length 24 // how long each season lasts in minecraft days. 91 is roughly how long each season is in reality. 1 will make a year last 4 days [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91]
 // #define Snowy_Winter // snow in the winter, yes or no?
 #define Summer_R 1.0 // the color of the plants during this season [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
@@ -395,7 +397,9 @@ const float shadowDistanceRenderMul = -1.0; //[-1.0 1.0] THIS WILL BREAK SUBSURF
 
 // -- RANDOM SHIT ---
 
+// #define WhiteWorld // THIS IS A DEBUG VIEW. uses to see AO easier. used to see fake GI better (green light)
 // #define Compositing_Sky // make the sky some color to make compositing a sky in some photoediting software easier.
+
 #define CompSky_R 0.0 // [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 ]
 #define CompSky_G 0.0 // [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 ]
 #define CompSky_B 0.0 // [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 ]

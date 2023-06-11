@@ -25,7 +25,7 @@
 #ifdef Seasons
 	#ifdef SEASONS_VSH
 
-	    varying vec4 seasonColor;
+		uniform int worldDay;  
 
 	    void YearCycleColor (
 	        inout vec3 FinalColor,
@@ -78,7 +78,7 @@
 			bool IsTintIndex = floor(dot(glcolor,vec3(0.5))) < 1.0;  
 
 	    	// multiply final color by the final lerped color, because it contains all the other colors.
-	    	FinalColor = SpringToSummer;
+	    	if(IsTintIndex) FinalColor = SpringToSummer;
 	    }
 	#endif
 #endif

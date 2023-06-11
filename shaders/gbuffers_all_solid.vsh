@@ -22,7 +22,6 @@ Read the terms of modification and sharing before changing something below pleas
 
 
 varying vec4 color;
-varying vec4 NoSeasonCol;
 varying float VanillaAO;
 
 varying vec4 lmtexcoord;
@@ -288,15 +287,16 @@ void main() {
 
 #endif
 
-
-	NoSeasonCol.rgb = gl_Color.rgb;
-
-	#ifdef Seasons
-	#ifndef BLOCKENTITIES
-	#ifndef ENTITIES 
-		YearCycleColor(color.rgb, gl_Color.rgb);
-	#endif
-	#endif
+	#ifdef Seasons 
+		#ifdef WORLD
+		#ifndef BLOCKENTITIES
+		#ifndef ENTITIES 
+		#ifndef HAND 
+			YearCycleColor(color.rgb, gl_Color.rgb);
+		#endif
+		#endif
+		#endif
+		#endif
 	#endif
 
 	#ifdef TAA_UPSCALING

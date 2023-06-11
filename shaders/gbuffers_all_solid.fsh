@@ -36,9 +36,9 @@ varying vec4 vtexcoord;
 #endif
 #include "/lib/res_params.glsl"
 varying vec4 lmtexcoord;
+
 varying vec4 color;
-varying vec4 NoSeasonCol;
-varying vec4 seasonColor;
+
 uniform float far;
 
 
