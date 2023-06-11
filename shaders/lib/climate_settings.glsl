@@ -126,6 +126,8 @@
 #endif
 
 #ifdef Daily_Weather
+	uniform float Uniform_Den;
+	uniform float Cloudy_Den;
 
 	void DailyWeather_FogDensity(
 		inout vec4 UniformDensity,
@@ -134,14 +136,10 @@
 
 		// set fog Profiles for each of the 8 days in the cycle.
 		// U = uniform fog  ||  C = cloudy fog
-		vec4 MistyDay_U = vec4(5);
+		// vec4( morning, noon, evening, night )
 
-		vec4 FoggyDay_U = vec4(5);
-		vec4 FoggyDay_C = vec4(25);
-
-
-		// UniformDensity += FoggyDay_U*day1 + MistyDay_U*day4;
-		// CloudyDensity  += FoggyDay_C*day1;
+		UniformDensity.rgb += vec3(Uniform_Den);
+		CloudyDensity.rgb  += vec3(Cloudy_Den);
 	}
 #endif
 
