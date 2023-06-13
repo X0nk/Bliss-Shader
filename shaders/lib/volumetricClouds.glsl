@@ -386,23 +386,10 @@ float GetCloudShadow_VLFOG(vec3 WorldPos){
 
 	// shadow = shadow/2.0; // perhaps i should average the 2 shadows being added....
 	
-	shadow = clamp(exp(-shadow*35.0),0.0,1.0);
+	shadow = clamp(exp(-shadow*255.0),0.0,1.0);
 
 	// do not allow it to exist above the lowest cloud plane
 	// shadow *= clamp(((MaxCumulusHeight + CumulusHeight)*0.435 - WorldPos.y)/100,0.0,1.0) ;
-
-	return shadow;
-}
-
-float GetCloudShadow_occluson(vec3 WorldPos){
-
-	float shadow = 0.0;
-
-	#ifdef Cumulus
-		vec3 lowShadowStart = WorldPos + vec3(0,0.7,0) * max((MaxCumulusHeight - 60) - WorldPos.y,0.0) ;
-		shadow += GetCumulusDensity(lowShadowStart,1)*Cumulus_density;
-		shadow = clamp(exp(-shadow * 5),0.0,1.0);
-	#endif
 
 	return shadow;
 }

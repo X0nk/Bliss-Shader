@@ -5,23 +5,7 @@ varying vec4 color;
 
 uniform sampler2D texture;
 
-//faster and actually more precise than pow 2.2
-// vec3 toLinear(vec3 sRGB){
-// 	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
-// }
 
-// vec3 viewToWorld(vec3 viewPosition) {
-//     vec4 pos;
-//     pos.xyz = viewPosition;
-//     pos.w = 0.0;
-//     pos = gbufferModelViewInverse * pos;
-//     return pos.xyz;
-// }
-// vec3 worldToView(vec3 worldPos) {
-//     vec4 pos = vec4(worldPos, 0.0);
-//     pos = gbufferModelView * pos;
-//     return pos.xyz;
-// }
 vec4 encode (vec3 n, vec2 lightmaps){
 	n.xy = n.xy / dot(abs(n), vec3(1.0));
 	n.xy = n.z <= 0.0 ? (1.0 - abs(n.yx)) * sign(n.xy) : n.xy;

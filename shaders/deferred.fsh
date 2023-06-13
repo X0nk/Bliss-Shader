@@ -195,14 +195,13 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
 	vec3 viewVector = cartToSphere(p);
 
-	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024.,vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), sunColorCloud, moonColor, ambientUp*5.0);
-  vec4 VL_Fog = getVolumetricRays(mat3(gbufferModelView)*viewVector*1024.,  fract(frameCounter/1.6180339887), ambientUp);
-
-
   vec3 skytex = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150.;
   if(viewVector.y < -0.025) skytex = skytex * clamp( exp(viewVector.y) - 1.0,0.25,1.0) ;
   
-  skytex = skytex*clouds.a + clouds.rgb/5.0;
+	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024.,vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), sunColorCloud, moonColor, ambientUp*5.0);
+  skytex = skytex*clouds.a + clouds.rgb/5.0; 
+
+  vec4 VL_Fog = getVolumetricRays(mat3(gbufferModelView)*viewVector*1024.,  fract(frameCounter/1.6180339887), ambientUp);
   skytex = skytex*VL_Fog.a + VL_Fog.rgb*20;
 
 	gl_FragData[0] = vec4(skytex,1.0);

@@ -46,13 +46,13 @@ attribute vec4 mc_Entity;
 uniform int blockEntityId;
 uniform int entityId;
 
-flat varying int EMISSIVE;
 
 flat varying float blockID;
 flat varying int LIGHTNING;
 
 
 flat varying float SSSAMOUNT;
+flat varying float EMISSIVE;
 
 flat varying int NameTags;
 
@@ -161,26 +161,20 @@ void main() {
 
 	gl_Position = ftransform();
 
-	SSSAMOUNT = 0.0;
+	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
+	
 
-	EMISSIVE = 0;
+	
+    /////// ----- COLOR STUFF ----- ///////
+	color = gl_Color;
 
-	#ifdef ENTITIES
-		LIGHTNING = 0;
-		if(entityId == 12345){
-			LIGHTNING = 1;
-		}
-	#endif
+	VanillaAO = 1.0 - clamp(color.a,0,1);
+	if (color.a < 0.3) color.a = 1.0; // fix vanilla ao on some custom block models.
 
 
-	blockID = mc_Entity.x;
-	velocity = at_velocity;
 
-	// emission and shit...
-	// #ifndef LabPBR_Emissives
-	// 	if(mc_Entity.x == 10005) EMISSIVE = 1;
-	// #endif
 
+    /////// ----- RANDOM STUFF ----- ///////
 
 	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
 
@@ -197,21 +191,18 @@ void main() {
 
 
 
-	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-	
-
-	color = gl_Color;
-	
-	VanillaAO = 1.0 - clamp(color.a,0,1);
-	if (color.a < 0.3) color.a = 1.0; // fix vanilla ao on some custom block models.
-
-
 	#ifdef MC_NORMAL_MAP
 		tangent = vec4(normalize(gl_NormalMatrix *at_tangent.rgb),at_tangent.w);
 	#endif
 
 	normalMat = vec4(normalize(gl_NormalMatrix *gl_Normal), 1.0);
 	FlatNormals = normalMat.xyz;
+
+
+
+	blockID = mc_Entity.x;
+	velocity = at_velocity;
+
 // #ifdef ENTITIES
 
 // 	NameTags = 0;
@@ -220,6 +211,21 @@ void main() {
 // 	if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
    
 // #endif
+
+
+    /////// ----- EMISSIVE STUFF ----- ///////
+				EMISSIVE = 0.0;
+
+	// normal block lightsources		
+	if(mc_Entity.x == 10005) EMISSIVE = 0.5;
+	
+	// special cases light lightning and beacon beams...	
+	#ifdef ENTITIES
+		if(entityId == 12345) EMISSIVE = 0.9;
+	#endif
+
+    /////// ----- SSS STUFF ----- ///////
+				SSSAMOUNT = 0.0;
 
 #ifdef WORLD
 
@@ -305,6 +311,5 @@ void main() {
 	#ifdef TAA
 		gl_Position.xy += offsets[framemod8] * gl_Position.w * texelSize;
 	#endif
-
 
 }

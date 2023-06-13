@@ -79,7 +79,7 @@ uniform sampler2D depthtex0;
 in vec3 velocity;
 
 flat varying float blockID;
-flat varying int EMISSIVE;
+flat varying float EMISSIVE;
 flat varying int LIGHTNING;
 
 #ifdef ENTITIES
@@ -409,12 +409,19 @@ void main() {
 
 		SpecularTex.r = max(SpecularTex.r, Puddle_shape);
 		SpecularTex.g = max(SpecularTex.g, Puddle_shape*0.04);
-		#ifdef ENTITIES
-			if(NameTags == 1) SpecularTex = vec4(0.0);
-		#endif
+
+		// #ifdef ENTITIES
+		// 	if(NameTags == 1) SpecularTex = vec4(0.0);
+		// #endif
 
 
 		gl_FragData[2].rg = SpecularTex.rg;
+
+		#ifdef LabPBR_Emissives
+			gl_FragData[2].a = SpecularTex.a;
+		#else
+			gl_FragData[2].a = EMISSIVE;
+		#endif
 
 		#if SSS_TYPE == 0
 			gl_FragData[2].b = 0.0;
@@ -432,9 +439,6 @@ void main() {
 		#if SSS_TYPE == 3		
 			gl_FragData[2].b = SpecularTex.b;
 		#endif
-
-		if(EMISSIVE > 0) gl_FragData[2].a = 0.9;
-		if(LIGHTNING > 0.0) gl_FragData[2].a = 0.9;
 
 		//////////////////////////////// 
 		//////////////////////////////// FINALIZE
@@ -489,12 +493,19 @@ void main() {
 		SpecularTex.r = max(SpecularTex.r, Puddle_shape);
 		SpecularTex.g = max(SpecularTex.g, Puddle_shape*0.04);
 
-		#ifdef ENTITIES
-			if(NameTags == 1) SpecularTex = vec4(0.0);
-		#endif
+		// #ifdef ENTITIES
+		// 	if(NameTags == 1) SpecularTex = vec4(0.0);
+		// #endif
 
 
 		gl_FragData[2].rg = SpecularTex.rg;
+
+		#ifdef LabPBR_Emissives
+			gl_FragData[2].a = SpecularTex.a;
+		#else
+			gl_FragData[2].a = EMISSIVE;
+		#endif
+
 
 		#if SSS_TYPE == 0
 			gl_FragData[2].b = 0.0;
@@ -515,9 +526,8 @@ void main() {
 
 	#endif
 
-		 
-		if(EMISSIVE > 0) gl_FragData[2].a = 0.9;
-		
+		 	
+
 		#ifdef ENTITIES
 			if(LIGHTNING > 0) gl_FragData[2].a = 0.5;
 		#endif

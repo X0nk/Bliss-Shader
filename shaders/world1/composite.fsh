@@ -408,6 +408,7 @@ void main() {
 
 		float fogshadow = GetCloudShadow(p3+cameraPosition, LightPos, blueNoise());
 		vec3 LightSource = (LightColor * max(LightColor - (1-fogshadow) ,0.0)) * LightFalloff * NdotL ;
+		// vec3 LightSource = LightColor * fogshadow * LightFalloff * NdotL ;
 
 
 
@@ -417,7 +418,7 @@ void main() {
 		LightFalloff2 = pow(1.0-pow(1.0-LightFalloff2,0.5),2.0);
 		LightFalloff2 *= 25;
 
-		LightSource += (LightColor * (LightColor - 0.6)) * vec3(1.0,1.3,1.0) * LightFalloff2 * (NdotL*0.7+0.3);
+		LightSource += (LightColor * max(LightColor - 0.6,0.0)) * vec3(1.0,1.3,1.0) * LightFalloff2 * (NdotL*0.7+0.3);
 
 		// float RT_Shadows = rayTraceShadow(worldToView(normalize(-LightPos)), fragpos_RTSHADOW, blueNoise());
 		// if(!hand) LightSource *= RT_Shadows*RT_Shadows;

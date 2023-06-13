@@ -109,10 +109,10 @@ vec4 getVolumetricRays(
 		float sh = 1.0;
 		
 		
-		// if (abs(pos.x) < 1.0-0.5/2048. && abs(pos.y) < 1.0-0.5/2048){
-		// 	pos = pos*vec3(0.5,0.5,0.5/6.0)+0.5;
-		// 	sh = shadow2D( shadow, pos).x;
-		// }
+		if (abs(pos.x) < 1.0-0.5/2048. && abs(pos.y) < 1.0-0.5/2048){
+			pos = pos*vec3(0.5,0.5,0.5/6.0)+0.5;
+			sh = shadow2D( shadow, pos).x;
+		}
 
 		#ifdef VL_CLOUDS_SHADOWS
 			sh *= GetCloudShadow_VLFOG(progressW);
@@ -154,9 +154,9 @@ vec4 InsideACloudFog(
 	vec3 MoonColor,
 	vec3 SkyColor
 ){
-	#ifndef VOLUMETRIC_CLOUDS
-		return vec4(0.0,0.0,0.0,1.0);
-	#endif
+	// #ifndef VOLUMETRIC_CLOUDS
+	// 	return vec4(0.0,0.0,0.0,1.0);
+	// #endif
 
 	float total_extinction = 1.0;
 	vec3 color = vec3(0.0);
@@ -253,7 +253,7 @@ vec4 InsideACloudFog(
 
 
 
-			float cloudhsadow = 1;
+			float cloudhsadow = sh;
 			
 			#ifdef VL_CLOUDS_SHADOWS
 				cloudhsadow = sh * GetCloudShadow_VLFOG(progressW);
@@ -316,10 +316,7 @@ vec4 InsideACloudFog(
 				#endif
 				
 				float ambientlightshadow = 1.0 - clamp(exp((progress_view.y - (MaxCumulusHeight - 50)) / 100.0),0.0,1.0) ;
-			
-
 				vec3 S = Cloud_lighting(muE, cumulus*Cumulus_density, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, ambientlightshadow, 0, progress_view, timing);
-
 
 				vec3 Sint = (S - S * exp(-mult*muE)) / muE;
 				color += max(muE*Sint*total_extinction,0.0);

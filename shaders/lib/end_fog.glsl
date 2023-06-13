@@ -50,41 +50,48 @@ vec3 hash31(float p)
    return fract((p3.xxy+p3.yzz)*p3.zyx); 
 }
 
-// uniform float ifEndBoss;
-// uniform float isSneaking;
 
-// uniform float EndSequence1;
-// uniform float EndSequence2;
+///////////////// POSITION
+///////////////// POSITION
+///////////////// POSITION
 
-
-// position related stuff
-// vec2 SEED = vec2(sin(frameTimeCounter*5) + 1);
-// uvec3 HASH = hash(SEED);
-// vec3 RandomPosition = clamp(vec3(HASH) * (1.0/float(0xffffffffu)), 0.0, 1.0);
-vec3 RandomPosition = hash31(1);
-
-
-// vec3 ManualLightPos =   vec3(109.25, 128.73, 1189.4) ;
-// vec3 ManualLightPos = vec3(307.96, 141.00, 1107.05) - vec3(sin(frameTimeCounter), 0, -cos(frameTimeCounter))*25;
-// ManualLightPos -= vec3(sin(frameTimeCounter), 0, -cos(frameTimeCounter))*100;
-
+vec3 RandomPosition = hash31(frameTimeCounter);
 vec3 ManualLightPos = vec3(ORB_X, ORB_Y, ORB_Z);
 
-///////////////// POSITION
-///////////////// POSITION
-///////////////// POSITION
+float densityAtPosFog(in vec3 pos){
+	pos /= 18.;
+	pos.xz *= 0.5;
+
+	vec3 p = floor(pos);
+	vec3 f = fract(pos);
+
+	f = (f*f) * (3.-2.*f);
+	vec2 uv =  p.xz + f.xz + p.y * vec2(0.0,193.0);
+	vec2 coord =  uv / 512.0;
+	vec2 xy = texture2D(noisetex, coord).yx;
+	return mix(xy.r,xy.g, f.y);
+}
+
 vec3 LightSourcePosition(vec3 WorldPos, vec3 CameraPos){
     
     vec3 Origin = WorldPos ;
-    vec3 RandomPosition2 = hash31(Origin.y);
     // make the swirl only happen within a radius
     float SwirlBounds = clamp(sqrt(length(vec3(Origin.x,Origin.y-100,Origin.z)) / 150.0 - 1.0)  ,0.0,1.0);
 
     if( SwirlBounds < 1.0) {
         Origin.y -= 200;
     } else {
-        Origin = WorldPos - cameraPosition - ManualLightPos ;
-        // Origin -= RandomPosition * 100;
+
+        Origin = WorldPos - CameraPos - ManualLightPos;
+        float nosie = (densityAtPosFog(Origin / 30 + sin(frameTimeCounter/5)*100)-0.15) * 15   ;
+        Origin.xz += vec2(  sin(nosie),-cos(nosie)   )*50;
+        Origin.y -= sin(nosie)*100;
+
+        float cellSize = 100.0;
+        vec3 cellPos = CameraPos - vec3(0,10,0) ;
+        // cellPos += vec3(frameTimeCounter,0,0)*25.0;
+
+        Origin +=  (fract(cellPos/cellSize)*cellSize - cellSize*0.5);
     }
 
     return Origin;
@@ -99,27 +106,19 @@ vec3 LightSourceColor(float SwirlBounds){
 
     if( SwirlBounds < 1.0) {
 
-        //////// STAGE 1
         Color = vec3(0.5, 0.5, 1.0);
-        
-        //////// STAGE 2
-
-        // Color = mix(Color, vec3(1.0,0.3,0.3),  pow(EndSequence1,3.0));
-        
-        // //////// STAGE 3
-        // // yes rico, kaboom 
-        // Color = mix(Color, vec3(1.0,0.0,1.0) * (1.0-EndSequence2),  EndSequence2);
 
     } else {
 
-        // Color = vec3(0.6, 0.8 ,1.0);
         Color = vec3(ORB_R, ORB_G, ORB_B) * ORB_ColMult;
+        
 
-        // float Timing = dot(RandomPosition, vec3(1.0/3.0));
 
-        // float Flash = max(sin(frameTimeCounter*10) * Timing,0.0);
         // Color *= blackbody2(RandomPosition.y*4000 + 1000);
-        // Color *= Flash;
+
+        float Timing = dot(RandomPosition, vec3(1.0/3.0));
+        float Flash = max(sin(frameTimeCounter) * cos(Timing) ,0.0);
+        Color *= Flash;
 
     }
 
@@ -169,19 +168,7 @@ vec3 LightSourceShape(vec3 WorldPos){
 }
 
 
-float densityAtPosFog(in vec3 pos){
-	pos /= 18.;
-	pos.xz *= 0.5;
 
-	vec3 p = floor(pos);
-	vec3 f = fract(pos);
-
-	f = (f*f) * (3.-2.*f);
-	vec2 uv =  p.xz + f.xz + p.y * vec2(0.0,193.0);
-	vec2 coord =  uv / 512.0;
-	vec2 xy = texture2D(noisetex, coord).yx;
-	return mix(xy.r,xy.g, f.y);
-}
 
 float cloudVol(in vec3 pos, int LOD){
 
@@ -298,8 +285,7 @@ mat2x3 getVolumetricRays(float dither,vec3 fragpos,float dither2) {
         CastedLight += (LightColor * vec3(1.0,1.3,1.0)) * exp(abs(densityVol*2.0 - 0.3) * 15 * (LightColor*CastLight)) * (max(OrbMie - density*10,0.0)/10);
 
         // #ifdef THE_ORB
-		//     density += clamp((1.0 - length(LightPos) / 10.0) * 10 ,0.0,1.0) ;
-        //     InnerLight = vec3(0.0);
+		    // density += clamp((1.0 - length(LightPos) / 10.0) * 10 ,0.0,1.0) ;
         // #endif
         
 		vec3 AmbientLight = fogColor * 0.05  * pow(exp(density * -2),20);
