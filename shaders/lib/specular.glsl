@@ -212,8 +212,8 @@ void MaterialReflections(
 	f0 = f0.y == 0.0 ? vec3(0.02) : f0;
 
 
-	f0 = vec3(0.9);
-	roughness = 0.0;
+	// f0 = vec3(0.9);
+	// roughness = 0.0;
 
 	mat3 basis = CoordBase(normal);
 	vec3 normSpaceView = -np3*basis ;
