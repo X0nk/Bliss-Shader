@@ -902,7 +902,7 @@ void main() {
 				
 				SSS = SubsurfaceScattering_sun(albedo, SHADOWBLOCKERDEPTBH, LabSSS, clamp(dot(np3, WsunVec),0.0,1.0)) ;
 					
-				// if (isEyeInWater == 0) SSS *= lightleakfix; // light leak fix
+				if (isEyeInWater == 0) SSS *= lightleakfix; // light leak fix
 			#endif
 
 

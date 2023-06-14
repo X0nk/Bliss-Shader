@@ -112,7 +112,9 @@
 
 #define CaveFog_amount  1 // [0 1 2 3 4 5 6 7 8 9  10 15 20 25]
 
-#define Cloud_Fog // render the VL clouds a second time along with VL fog so you can fly through it and stuff. expect a noticeable performance hit.
+
+
+
 // ----- TIME OF DAY FOG ----- //
 
 #define TOD_Fog_mult 1.0 // [0.0 0.25 0.5 0.75 1.0 2.0 3.0 4.0 5.0 10.0 15.0 20.0 25.0 50.0 75.0 100.0]
@@ -304,7 +306,10 @@ const float shadowDistanceRenderMul = -1.0; //[-1.0 1.0] THIS WILL BREAK SUBSURF
 #define Daily_Weather // different skies and fog for different days.
 
 #ifdef VOLUMETRIC_CLOUDS
+	#define Cloud_Fog // render the VL clouds a second time along with VL fog so you can fly through it and stuff. expect a noticeable performance hit.
+
 	#define CLOUDS_SHADOWS // Casts shadows from clouds on the world
+	
 	#ifdef CLOUDS_SHADOWS
 		#define VL_CLOUDS_SHADOWS // Casts shadows from clouds on VL
 	#endif

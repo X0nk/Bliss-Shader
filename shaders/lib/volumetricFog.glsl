@@ -146,7 +146,7 @@ vec4 getVolumetricRays(
 
 
 
-
+/// really dumb lmao
 vec4 InsideACloudFog(
 	vec3 fragpos,
 	vec2 Dither,
@@ -154,10 +154,6 @@ vec4 InsideACloudFog(
 	vec3 MoonColor,
 	vec3 SkyColor
 ){
-	// #ifndef VOLUMETRIC_CLOUDS
-	// 	return vec4(0.0,0.0,0.0,1.0);
-	// #endif
-
 	float total_extinction = 1.0;
 	vec3 color = vec3(0.0);
 
@@ -184,13 +180,13 @@ vec4 InsideACloudFog(
 
 	vec3 progress = start.xyz;
 	vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition;
+
 	vec3 progress_view = vec3(0.0);
 	float expFactor = 11.0;
 
 	////// lighitng stuff 
 	float shadowStep = 200.;
 	vec3 dV_Sun = normalize(mat3(gbufferModelViewInverse)*sunVec)*shadowStep;
-	vec3 dV_Sun_small = dV_Sun/shadowStep;
 
 	float SdotV = dot(sunVec,normalize(fragpos));
 
@@ -200,23 +196,24 @@ vec4 InsideACloudFog(
 
 	vec3 Fog_SkyCol = SkyColor;
 	vec3 Fog_SunCol = SunColor;
-
-	// if(dV_Sun.y/shadowStep < -0.1) dV_Sun = -dV_Sun;
 	
-	float mieDay = phaseg(SdotV, 0.75) * 3.14;
-	float mieDayMulti = phaseg(SdotV, 0.35) * 2;
-
-	vec3 sunContribution = SunColor * mieDay;
-	vec3 sunContributionMulti = SunColor * mieDayMulti ;
-
-	float mieNight = (phaseg(-SdotV,0.8) + phaseg(-SdotV, 0.35)*4);
-	vec3 moonContribution = MoonColor * mieNight;
-	
-	float timing = 1.0 - clamp(pow(abs(dV_Sun.y)/150.0,2.0),0.0,1.0);
 
 
 
-	///////// fog part
+		float mieDay = phaseg(SdotV, 0.75) * 3.14;
+		float mieDayMulti = phaseg(SdotV, 0.35) * 2;
+
+		vec3 sunContribution = SunColor * mieDay;
+		vec3 sunContributionMulti = SunColor * mieDayMulti ;
+
+		float mieNight = (phaseg(-SdotV,0.8) + phaseg(-SdotV, 0.35)*4);
+		vec3 moonContribution = MoonColor * mieNight;
+
+		float timing = 1.0 - clamp(pow(abs(dV_Sun.y)/150.0,2.0),0.0,1.0);
+
+
+
+
 
 	//Mie phase + somewhat simulates multiple scattering (Horizon zero down cloud approx)
 	float mie = phaseg(SdotV,0.7)*5.0 + 1.0;
@@ -233,60 +230,61 @@ vec4 InsideACloudFog(
 
 	float mu = 1.0;
 	float muS = mu;
+	
+	float Shadows_for_Fog = 0.0;
 
-	#ifdef Cumulus
-		for (int i=0;i<VL_SAMPLES;i++) {
-			float d = (pow(expFactor, float(i+Dither.x)/float(VL_SAMPLES))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
-			float dd = pow(expFactor, float(i+Dither.x)/float(VL_SAMPLES)) * log(expFactor) / float(VL_SAMPLES)/(expFactor-1.0);
-			progress = start.xyz + d*dV;
-			progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
+	for (int i=0;i<VL_SAMPLES;i++) {
 
-			//project into biased shadowmap space
-			float distortFactor = calcDistort(progress.xy);
-			vec3 pos = vec3(progress.xy*distortFactor, progress.z);
-			float sh = 1.0;
+		float d = (pow(expFactor, float(i+Dither.x)/float(VL_SAMPLES))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
+		float dd = pow(expFactor, float(i+Dither.x)/float(VL_SAMPLES)) * log(expFactor) / float(VL_SAMPLES)/(expFactor-1.0);
+		progress = start.xyz + d*dV;
+		progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
 
-			if (abs(pos.x) < 1.0-0.5/2048. && abs(pos.y) < 1.0-0.5/2048){
-				pos = pos*vec3(0.5,0.5,0.5/6.0)+0.5;
-				sh = shadow2D( shadow, pos).x;
-			}
+		//project into biased shadowmap space
+		float distortFactor = calcDistort(progress.xy);
+		vec3 pos = vec3(progress.xy*distortFactor, progress.z);
+		float sh = 1.0;
 
+		if (abs(pos.x) < 1.0-0.5/2048. && abs(pos.y) < 1.0-0.5/2048){
+			pos = pos*vec3(0.5,0.5,0.5/6.0)+0.5;
+			sh = shadow2D( shadow, pos).x;
+		}
 
+		Shadows_for_Fog = sh;
 
-			float cloudhsadow = sh;
-			
-			#ifdef VL_CLOUDS_SHADOWS
-				cloudhsadow = sh * GetCloudShadow_VLFOG(progressW);
-			#endif
-				
-			float densityVol = cloudVol(progressW);
-			//Water droplets(fog)
-			float density = densityVol*ATMOSPHERIC_DENSITY*mu*300.;
+		#ifdef VL_CLOUDS_SHADOWS
+			Shadows_for_Fog = sh * GetCloudShadow_VLFOG(progressW);
+		#endif
 
-			//Just air
-			vec2 airCoef = exp(-max(progressW.y-SEA_LEVEL,0.0)/vec2(8.0e3, 1.2e3)*vec2(6.,7.0)) * 24 * Haze_amount;
+		float densityVol = cloudVol(progressW);
+		//Water droplets(fog)
+		float density = densityVol*ATMOSPHERIC_DENSITY*mu*300.;
 
-			//Pbr for air, yolo mix between mie and rayleigh for water droplets
-			vec3 rL = rC*airCoef.x;
-			vec3 m = (airCoef.y+density)*mC;
+		//Just air
+		vec2 airCoef = exp(-max(progressW.y-SEA_LEVEL,0.0)/vec2(8.0e3, 1.2e3)*vec2(6.,7.0)) * 24 * Haze_amount;
 
-			vec3 DirectLight =  (Fog_SunCol*cloudhsadow) * (rayL*rL+m*mie);
-			vec3 AmbientLight =  Fog_SkyCol * m;
-			vec3 AtmosphericFog = Fog_SkyCol * (rL+m)  ;
+		//Pbr for air, yolo mix between mie and rayleigh for water droplets
+		vec3 rL = rC*airCoef.x;
+		vec3 m = (airCoef.y+density)*mC;
 
-			// extra fog effects
-			vec3 rainRays =   ((Fog_SunCol/5)*cloudhsadow) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1.0) * rainStrength * RainFog_amount; 
-			vec3 CaveRays = (Fog_SunCol*cloudhsadow)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - max(eyeBrightnessSmooth.y,0)/240.);
- 
-			vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * max(eyeBrightnessSmooth.y,0)/240. + CaveRays ;
+		vec3 DirectLight =  (Fog_SunCol*Shadows_for_Fog) * (rayL*rL+m*mie);
+		vec3 AmbientLight =  Fog_SkyCol * m;
+		vec3 AtmosphericFog = Fog_SkyCol * (rL+m)  ;
 
-			color += (vL0 - vL0 * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*total_extinction;
-			total_extinction *= dot(clamp(exp(-(rL+m)*dd*dL),0.0,1.0), vec3(0.333333));
+		// extra fog effects
+		vec3 rainRays =   ((Fog_SunCol/5)*Shadows_for_Fog) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1.0) * rainStrength * RainFog_amount; 
+		vec3 CaveRays = (Fog_SunCol*Shadows_for_Fog)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - max(eyeBrightnessSmooth.y,0)/240.);
+
+		vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * max(eyeBrightnessSmooth.y,0)/240. + CaveRays ;
+
+		color += (vL0 - vL0 * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*total_extinction;
+		total_extinction *= dot(clamp(exp(-(rL+m)*dd*dL),0.0,1.0), vec3(0.333333));
 
 
+		
 			progress_view = progressW;
 			float cumulus = GetCumulusDensity(progress_view, 1);
-			
+
 			float alteredDensity = Cumulus_density * clamp(exp( (progress_view.y - (MaxCumulusHeight - 75)) / 9.0	 ),0.0,1.0);
 
 			if(cumulus > 1e-5){
@@ -314,7 +312,7 @@ vec4 InsideACloudFog(
 					float HighAlt_shadow = GetAltostratusDensity(HighAlt_shadowPos);
 					Sunlight += HighAlt_shadow;
 				#endif
-				
+
 				float ambientlightshadow = 1.0 - clamp(exp((progress_view.y - (MaxCumulusHeight - 50)) / 100.0),0.0,1.0) ;
 				vec3 S = Cloud_lighting(muE, cumulus*Cumulus_density, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, ambientlightshadow, 0, progress_view, timing);
 
@@ -323,12 +321,7 @@ vec4 InsideACloudFog(
 				total_extinction *= max(exp(-mult*muE),0.0);
 			}
 
-			
-
-
-			if (total_extinction < 1e-5) break;
-		}
-	#endif
-
+		if (total_extinction < 1e-5) break;
+	}
 	return vec4(color, total_extinction);
 }

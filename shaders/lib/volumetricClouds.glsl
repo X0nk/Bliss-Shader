@@ -215,7 +215,7 @@ vec4 renderClouds(
 
 	vec3 dV_view = normalize(fragpos.xyz);
 
-	dV_view.y += 0.05;
+	// dV_view.y += 0.05;
 
 	vec3 dV_view2 = dV_view;
 	float mult2 = length(dV_view2);
@@ -337,7 +337,7 @@ vec4 renderClouds(
 	// Assume fog color = sky gradient at long distance
 	vec3 fogColor = skyFromTex(normView, colortex4)/150. * 5.0;
 	float dist = max(cameraPosition.y+CumulusHeight,max(CumulusHeight,150))/(abs(normView.y)+0.001);
-	float fog = exp(dist / -5000.0 * (1.0+rainCloudwetness*8.));
+	float fog = exp(dist / -15000.0 * (1.0+rainCloudwetness*8.));
 
 	// if(IntersecTerrain) fog = 1.0;
 
