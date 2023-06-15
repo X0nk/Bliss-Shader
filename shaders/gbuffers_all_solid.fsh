@@ -454,7 +454,7 @@ void main() {
 			if(SpecularTex.g < 229.5/255.0) Albedo.rgb = mix(Albedo.rgb, vec3(0), Puddle_shape*porosity);
 		#endif
 
-		vec4 data1 = clamp(encode(viewToWorld(normal), vec2(torchlightmap,lmtexcoord.w)),0.,1.0);
+		vec4 data1 = clamp(encode(viewToWorld(normal),  (blueNoise()*vec2(torchlightmap,lmtexcoord.w)/30.0) + vec2(torchlightmap,lmtexcoord.w)),0.,1.0);
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),encodeVec2(Albedo.y,data1.y),encodeVec2(Albedo.z,data1.z),encodeVec2(data1.w,Albedo.w));
 		gl_FragData[1].a = 0.0;
 
@@ -598,7 +598,7 @@ void main() {
 		//////////////////////////////// 
 
 		// vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*lmtexcoord.zw/30.0) + lmtexcoord.zw),	0.0,	1.0);
-		vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*lmtexcoord.zw/30.0) + vec2(torchlightmap,lmtexcoord.w)),	0.0,	1.0);
+		vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*vec2(torchlightmap,lmtexcoord.w)/30.0) + vec2(torchlightmap,lmtexcoord.w)),	0.0,	1.0);
 
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
 
