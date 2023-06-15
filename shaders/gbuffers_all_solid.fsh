@@ -81,6 +81,7 @@ in vec3 velocity;
 flat varying float blockID;
 flat varying float EMISSIVE;
 flat varying int LIGHTNING;
+flat varying float HELD_ITEM_BRIGHTNESS;
 
 #ifdef ENTITIES
 	#define ENTITY_PHYSICSMOD_SNOW 829925
@@ -238,7 +239,12 @@ vec3 blackbody2(float Temp)
 
 /* RENDERTARGETS: 1,7,8,15 */
 void main() {
-
+	
+	
+	
+	
+	
+	
 	vec3 normal = normalMat.xyz;
 
 	#ifdef MC_NORMAL_MAP
@@ -253,8 +259,15 @@ void main() {
 	vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
 	vec3 worldpos = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz + cameraPosition;
 
+	float torchlightmap = lmtexcoord.z;
 
+	#ifdef Hand_Held_lights
+		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = mix(torchlightmap, HELD_ITEM_BRIGHTNESS,  clamp( max(1.0-length(fragpos)/10,0.0)	* 0.7	,0.0,1.0));
+	#endif
+	
 	float lightmap = clamp( (lmtexcoord.w-0.8) * 10.0,0.,1.);
+
+
 
 	float rainfall = rainStrength ;
 	float Puddle_shape = 0.;
@@ -441,7 +454,7 @@ void main() {
 			if(SpecularTex.g < 229.5/255.0) Albedo.rgb = mix(Albedo.rgb, vec3(0), Puddle_shape*porosity);
 		#endif
 
-		vec4 data1 = clamp(encode(viewToWorld(normal), lmtexcoord.zw),0.,1.0);
+		vec4 data1 = clamp(encode(viewToWorld(normal), vec2(torchlightmap,lmtexcoord.w)),0.,1.0);
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),encodeVec2(Albedo.y,data1.y),encodeVec2(Albedo.z,data1.z),encodeVec2(data1.w,Albedo.w));
 		gl_FragData[1].a = 0.0;
 
@@ -584,7 +597,9 @@ void main() {
 		//////////////////////////////// FINALIZE
 		//////////////////////////////// 
 
-		vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*lmtexcoord.zw/30.0) + lmtexcoord.zw),	0.0,	1.0);
+		// vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*lmtexcoord.zw/30.0) + lmtexcoord.zw),	0.0,	1.0);
+		vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*lmtexcoord.zw/30.0) + vec2(torchlightmap,lmtexcoord.w)),	0.0,	1.0);
+
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
 
 		gl_FragData[1].a = 0.0;

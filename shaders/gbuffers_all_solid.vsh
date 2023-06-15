@@ -46,6 +46,9 @@ attribute vec4 mc_Entity;
 uniform int blockEntityId;
 uniform int entityId;
 
+uniform int heldItemId;
+uniform int heldItemId2;
+flat varying float HELD_ITEM_BRIGHTNESS;
 
 flat varying float blockID;
 flat varying int LIGHTNING;
@@ -185,8 +188,10 @@ void main() {
 		vtexcoord.xy    = sign(texcoordminusmid)*0.5+0.5;
 	#endif
 
-	vec2 lmcoord = gl_MultiTexCoord1.xy / 255.0; // is this even correct? lol
+	vec2 lmcoord = gl_MultiTexCoord1.xy / 255.0; // is this even correct? lol'
 	lmtexcoord.zw = lmcoord;
+
+
 
 
 
@@ -216,7 +221,7 @@ void main() {
 				EMISSIVE = 0.0;
 
 	// normal block lightsources		
-	if(mc_Entity.x == 10005) EMISSIVE = 0.5;
+	if(mc_Entity.x == 10005) EMISSIVE = 0.3;
 	
 	// special cases light lightning and beacon beams...	
 	#ifdef ENTITIES
@@ -225,6 +230,14 @@ void main() {
 
     /////// ----- SSS STUFF ----- ///////
 				SSSAMOUNT = 0.0;
+
+
+	HELD_ITEM_BRIGHTNESS = 0.0;
+
+	#ifdef Hand_Held_lights
+		if(heldItemId == 100 || heldItemId2 == 100) HELD_ITEM_BRIGHTNESS = 1.0;
+	#endif
+
 
 #ifdef WORLD
 

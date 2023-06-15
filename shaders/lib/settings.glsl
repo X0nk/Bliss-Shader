@@ -402,7 +402,7 @@ const float shadowDistanceRenderMul = -1.0; //[-1.0 1.0] THIS WILL BREAK SUBSURF
 
 
 // -- RANDOM SHIT ---
-
+#define Hand_Held_lights
 // #define WhiteWorld // THIS IS A DEBUG VIEW. uses to see AO easier. used to see fake GI better (green light)
 // #define Compositing_Sky // make the sky some color to make compositing a sky in some photoediting software easier.
 
