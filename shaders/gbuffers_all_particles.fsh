@@ -96,50 +96,57 @@ vec3 normVec (vec3 vec){
 void main() {
 
 	vec4 TEXTURE = texture2D(texture, lmtexcoord.xy)*color;
-	
-	gl_FragData[1].a = TEXTURE.a; // for bloomy rain and stuff
-
-
-#ifndef WEATHER
-
-	gl_FragData[1].a = 1.0 - TEXTURE.a; // for bloomy rain and stuff
-
-	vec3 Albedo = toLinear(TEXTURE.rgb);
 
 	vec2 tempOffset = offsets[framemod8];
 	vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
 	vec3 p3 = mat3(gbufferModelViewInverse) * fragpos;
 	vec3 np3 = normVec(p3);
 
+	float cloudOcclusion = 0.0;
 
-	float Shadows = 1.0;
-	vec3 p3_shadow = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
-	vec3 projectedShadowPosition = mat3(shadowModelView) * p3_shadow + shadowModelView[3].xyz;
-	projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
+	if(TEXTURE.a > 0.0) cloudOcclusion = 1.0 - GetCloudSkyOcclusion(p3 + cameraPosition)*0.9;
+	gl_FragData[1].a = TEXTURE.a * cloudOcclusion; // for bloomy rain and stuff
 
-	//apply distortion
-	float distortFactor = calcDistort(projectedShadowPosition.xy);
-	projectedShadowPosition.xy *= distortFactor;
-	//do shadows only if on shadow map
-	if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution){
+#ifndef WEATHER
 
-		float diffthresh = 0.0002;
-		projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5,0.5,0.5);
-
-		Shadows = shadow2D_bicubic(shadow,vec3(projectedShadowPosition + vec3(0.0,0.0,-diffthresh*1.2)));
-		
-	}
-	#ifdef CLOUDS_SHADOWS
-		Shadows *= GetCloudShadow(p3);
-	#endif
-
-	float lightleakfix = clamp(eyeBrightnessSmooth.y/240.0,0.0,1.0);
-	float phase = phaseg(clamp(dot(np3, WsunVec),0.0,1.0),(1.0-gl_FragData[0].a) * 0.8 + 0.1) + 1.0 ;
-	vec3 Direct_lighting = DoDirectLighting(lightCol.rgb/80., Shadows, 1.0, 0.0) * phase * lightleakfix;
-
-	vec3 Indirect_lighting = DoAmbientLighting(avgAmbient, vec3(TORCH_R,TORCH_G,TORCH_B), lmtexcoord.zw, 5.0);
-
+	gl_FragData[1].a = 1.0 - TEXTURE.a;
 	gl_FragData[0].a = TEXTURE.a;
-	gl_FragData[0].rgb = (Direct_lighting + Indirect_lighting) * Albedo;
+
+	vec3 Albedo = toLinear(TEXTURE.rgb);
+
+	// do the maths only if the pixels exist....
+	if(TEXTURE.a > 0.0){
+
+		float Shadows = 1.0;
+		vec3 p3_shadow = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
+		vec3 projectedShadowPosition = mat3(shadowModelView) * p3_shadow + shadowModelView[3].xyz;
+		projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
+
+		//apply distortion
+		float distortFactor = calcDistort(projectedShadowPosition.xy);
+		projectedShadowPosition.xy *= distortFactor;
+		//do shadows only if on shadow map
+		if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution){
+
+			float diffthresh = 0.0002;
+			projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5,0.5,0.5);
+
+			Shadows = shadow2D_bicubic(shadow,vec3(projectedShadowPosition + vec3(0.0,0.0,-diffthresh*1.2)));
+
+		}
+		#ifdef CLOUDS_SHADOWS
+			Shadows *= GetCloudShadow(p3);
+		#endif
+
+		float lightleakfix = clamp(eyeBrightnessSmooth.y/240.0,0.0,1.0);
+		float phase = phaseg(clamp(dot(np3, WsunVec),0.0,1.0),(1.0-gl_FragData[0].a) * 0.8 + 0.1) + 1.0 ;
+		vec3 Direct_lighting = DoDirectLighting(lightCol.rgb/80., Shadows, 1.0, 0.0) * phase * lightleakfix;
+
+		vec3 Indirect_lighting = DoAmbientLighting(avgAmbient, vec3(TORCH_R,TORCH_G,TORCH_B), lmtexcoord.zw, 5.0);
+		// gl_FragData[0].a = TEXTURE.a;
+		gl_FragData[0].rgb = (Direct_lighting + Indirect_lighting) * Albedo;
+
+	}
+
 #endif
 }

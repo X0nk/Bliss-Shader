@@ -276,7 +276,10 @@ void main() {
   color += vl.rgb;
 
   float rainDrops =  clamp(texture2D(colortex9,texcoord).a,  0.0,1.0); // bloomy rain effect
-  if(rainDrops > 0.0) vl.a *= clamp(exp2(-rainDrops*5),0.,1.); // bloomy rain effect
+
+
+
+  if(rainDrops > 0.0) vl.a *= clamp(1.0 - rainDrops ,0.,1.); // bloomy rain effect
   gl_FragData[0].r = vl.a;
   
   /// lava.
@@ -301,7 +304,6 @@ void main() {
     vec3 thingy = texture2D(colortex4,movedTC).rgb / 150. * 5.0;
     if(texcoord.x < 0.45 && luma(thingy) > 0.0 ) color.rgb =  thingy;
   #endif
-
 
   gl_FragData[1].rgb = clamp(color.rgb,0.0,68000.0);
 

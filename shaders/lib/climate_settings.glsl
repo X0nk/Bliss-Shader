@@ -29,7 +29,8 @@
 
 	    void YearCycleColor (
 	        inout vec3 FinalColor,
-	        vec3 glcolor
+	        vec3 glcolor,
+			inout float SnowySeason
 	    ){
 	    	// colors for things that arent leaves and using the tint index.
 	    	vec3 SummerCol = vec3(Summer_R, Summer_G, Summer_B);
@@ -79,6 +80,15 @@
 
 	    	// multiply final color by the final lerped color, because it contains all the other colors.
 	    	if(IsTintIndex) FinalColor = SpringToSummer;
+
+			#ifdef Snowy_Winter
+				// this is to make snow only exist in winter
+	    		float FallToWinter_snowfall = mix(0.0, 1.0, AutumnTime);
+	    		float WinterToSpring_snowfall = mix(FallToWinter_snowfall, 0.0, WinterTime);
+				SnowySeason = WinterToSpring_snowfall;
+			#else
+				SnowySeason = 0.0;
+			#endif
 	    }
 	#endif
 #endif

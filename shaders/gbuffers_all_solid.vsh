@@ -53,7 +53,6 @@ flat varying int LIGHTNING;
 
 flat varying float SSSAMOUNT;
 flat varying float EMISSIVE;
-
 flat varying int NameTags;
 
 in vec3 at_velocity;
@@ -298,7 +297,8 @@ void main() {
 		#ifndef BLOCKENTITIES
 		#ifndef ENTITIES 
 		#ifndef HAND 
-			YearCycleColor(color.rgb, gl_Color.rgb);
+			float blank = 0.0;
+			YearCycleColor(color.rgb, gl_Color.rgb, blank);
 		#endif
 		#endif
 		#endif

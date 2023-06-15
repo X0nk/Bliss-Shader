@@ -33,6 +33,19 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 
 #include "/lib/util.glsl"
 #include "/lib/res_params.glsl"
+
+
+
+
+
+#define SEASONS_VSH
+#include "/lib/climate_settings.glsl"
+
+flat varying float WinterTimeForSnow;
+
+
+
+
 void main() {
 	gl_Position = ftransform();
 	
@@ -57,5 +70,11 @@ void main() {
 	zMults = vec3((far * near)*2.0,far+near,far-near);
 
 
-
+	WinterTimeForSnow = 0.0;
+	
+	#ifdef Snowy_Winter
+		vec3 color1 = vec3(0.0);
+		vec3 color2 = color1;
+		YearCycleColor(color1, color2, WinterTimeForSnow);
+	#endif
 }

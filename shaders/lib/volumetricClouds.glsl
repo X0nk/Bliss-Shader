@@ -393,3 +393,22 @@ float GetCloudShadow_VLFOG(vec3 WorldPos){
 
 	return shadow;
 }
+
+float GetCloudSkyOcclusion(vec3 WorldPos){
+
+	float shadow = 0.0;
+
+	vec3 shadowDir = vec3(0,1,0);
+
+
+	// assume a flat layer of cloud, and stretch the sampled density along the sunvector, starting from some vertical layer in the cloud.
+	#ifdef Cumulus
+		vec3 lowShadowStart = WorldPos + shadowDir/abs(shadowDir.y) * max((MaxCumulusHeight - 60) - WorldPos.y,0.0) ;
+		shadow += GetCumulusDensity(lowShadowStart,0)*Cumulus_density;
+	#endif
+
+
+	shadow = clamp(exp(-shadow*25.0) ,0.0,1.0);
+
+	return shadow;
+}

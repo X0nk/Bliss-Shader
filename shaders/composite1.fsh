@@ -72,6 +72,8 @@ uniform vec3 sunVec;
 uniform ivec2 eyeBrightnessSmooth;
 uniform ivec2 eyeBrightness;
 
+flat varying float WinterTimeForSnow;
+
 // uniform int worldTime;                    
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
@@ -1064,6 +1066,8 @@ void main() {
 			SnowPatches = 1.0 - clamp( exp(pow(SnowPatches,3.5) * -100.0) ,0,1);
 			SnowPatches *= clamp(sqrt(normal.y),0,1) * clamp(pow(lightmap.y,25)*25,0,1);
 
+			SnowPatches = mix(0.0, SnowPatches, WinterTimeForSnow);
+
 			if(!hand && !iswater){
 				albedo = mix(albedo, vec3(0.8,0.9,1.0), SnowPatches);
 				SpecularTex.rg = mix(SpecularTex.rg, vec2(1,0.05), SnowPatches);
@@ -1119,7 +1123,7 @@ void main() {
 	}
 
 	
-	//  gl_FragData[0].rgb = worldToView(normal); if(z >= 1) gl_FragData[0].rgb = vec3(0.5);
+	//  gl_FragData[0].rgb *=  GetCloudSkyOcclusion(p3 + cameraPosition);
 	// if (abs(filtered.b-0.1) < 0.0004 ) gl_FragData[0].rgb = vec3(0,1,0);
 
 	/* DRAWBUFFERS:3 */
