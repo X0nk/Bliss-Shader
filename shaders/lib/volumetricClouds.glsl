@@ -210,7 +210,7 @@ vec4 renderClouds(
 	#endif
 	float total_extinction = 1.0;
 	vec3 color = vec3(0.0);
-
+	float distancething = 1;
 	//project pixel position into projected shadowmap space
 	vec4 fragpos = normalize(gbufferModelViewInverse*vec4(FragPosition,1.0));
 
@@ -264,7 +264,7 @@ vec4 renderClouds(
 
 	#ifdef Cumulus
 		for(int i=0;i<maxIT_clouds;i++) {
-
+			distancething *= 2;
 			// IntersecTerrain = length(progress_view - cameraPosition) > lViewPosM;
 			// if(IntersecTerrain) break;
 			float cumulus = GetCumulusDensity(progress_view, 1);

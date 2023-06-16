@@ -142,7 +142,7 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 
 		transmittance *= stepTransmittance ;
 	}
-
+	
 	vec3 scattering = scatteringSun * sunColorBase + (scatteringAmbient) * background + scatteringMoon*moonColorBase	;
 	// scattering = vec3(0,high_sun*255.,0);
 	return scattering;

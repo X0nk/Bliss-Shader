@@ -15,6 +15,8 @@ float densityAtPosFog(in vec3 pos){
 	return mix(xy.r,xy.g, f.y);
 }
 
+uniform float noPuddleAreas;
+
 float cloudVol(in vec3 pos){
 
 	vec3 samplePos = pos*vec3(1.0,1./24.,1.0);
@@ -32,12 +34,13 @@ float cloudVol(in vec3 pos){
 
 	float UniformFog = exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0));
 	
-	float RainFog = max(fog_shape*10. - 7.,0.5) * exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0)) * 5. * rainStrength * RainFog_amount;
+	float RainFog = max(fog_shape*10. - 7.,0.5) * exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0)) * 5. * rainStrength * noPuddleAreas * RainFog_amount;
 	
 	TimeOfDayFog(UniformFog, CloudyFog);
 
 	return CloudyFog + UniformFog + RainFog;
 }
+
 
 vec4 getVolumetricRays(
 	vec3 fragpos,
@@ -133,7 +136,7 @@ vec4 getVolumetricRays(
 		vec3 AtmosphericFog = skyCol0 * (rL+m)  ;
 
 		// extra fog effects
-		vec3 rainRays =   (sunColor*sh) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1) * rainStrength * RainFog_amount; 
+		vec3 rainRays =   (sunColor*sh) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1) * rainStrength * noPuddleAreas * RainFog_amount; 
 		vec3 CaveRays = (sunColor*sh)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - max(eyeBrightnessSmooth.y,0)/240.);
  
 		vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * max(eyeBrightnessSmooth.y,0)/240. + CaveRays ;
@@ -274,7 +277,7 @@ vec4 InsideACloudFog(
 		vec3 AtmosphericFog = Fog_SkyCol * (rL+m)  ;
 
 		// extra fog effects
-		vec3 rainRays =   ((Fog_SunCol/5)*Shadows_for_Fog) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1.0) * rainStrength * RainFog_amount; 
+		vec3 rainRays =   ((Fog_SunCol/5)*Shadows_for_Fog) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1.0) * rainStrength * noPuddleAreas * RainFog_amount; 
 		vec3 CaveRays = (Fog_SunCol*Shadows_for_Fog)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - max(eyeBrightnessSmooth.y,0)/240.);
 
 		vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * max(eyeBrightnessSmooth.y,0)/240. + CaveRays ;
@@ -297,7 +300,7 @@ vec4 InsideACloudFog(
 
 				for (int j=0; j < 3; j++){
 
-					vec3 shadowSamplePos = progress_view + (dV_Sun * 0.015) * (1 + Dither.y/2 + j);
+					vec3 shadowSamplePos = progress_view + (dV_Sun * 0.15) * (1 + Dither.y/2 + j);
 
 					float shadow = GetCumulusDensity(shadowSamplePos, 0) * Cumulus_density;
 
@@ -321,8 +324,8 @@ vec4 InsideACloudFog(
 				vec3 Sint = (S - S * exp(-mult*muE)) / muE;
 				color += max(muE*Sint*total_extinction,0.0);
 				total_extinction *= max(exp(-mult*muE),0.0);
-			}
 
+			}
 		if (total_extinction < 1e-5) break;
 	}
 	return vec4(color, total_extinction);
