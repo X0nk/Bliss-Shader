@@ -72,9 +72,11 @@ void main() {
 
 	WinterTimeForSnow = 0.0;
 	
-	#ifdef Snowy_Winter
-		vec3 color1 = vec3(0.0);
-		vec3 color2 = color1;
-		YearCycleColor(color1, color2, WinterTimeForSnow);
+	#ifdef Seasons
+		#ifdef Snowy_Winter
+			vec3 color1 = vec3(0.0);
+			vec3 color2 = color1;
+			YearCycleColor(color1, color2, WinterTimeForSnow);
+		#endif
 	#endif
 }

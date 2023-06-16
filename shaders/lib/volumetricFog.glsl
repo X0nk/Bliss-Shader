@@ -194,6 +194,8 @@ vec4 InsideACloudFog(
 	SunColor =  SunColor * clamp(dV_Sun.y ,0.0,1.0);
 	MoonColor *=  clamp(-dV_Sun.y,0.0,1.0);
 
+	if(dV_Sun.y/shadowStep < -0.1) dV_Sun = -dV_Sun;
+
 	vec3 Fog_SkyCol = SkyColor;
 	vec3 Fog_SunCol = SunColor;
 	
@@ -295,7 +297,7 @@ vec4 InsideACloudFog(
 
 				for (int j=0; j < 3; j++){
 
-					vec3 shadowSamplePos = progress_view + (dV_Sun * 0.15) * (1 + Dither.y/2 + j);
+					vec3 shadowSamplePos = progress_view + (dV_Sun * 0.015) * (1 + Dither.y/2 + j);
 
 					float shadow = GetCumulusDensity(shadowSamplePos, 0) * Cumulus_density;
 

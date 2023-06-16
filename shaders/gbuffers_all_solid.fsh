@@ -87,6 +87,7 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 	#define ENTITY_PHYSICSMOD_SNOW 829925
 #endif
 
+uniform float noPuddleAreas;
 
 
 // float interleaved_gradientNoise(){
@@ -262,14 +263,15 @@ void main() {
 	float torchlightmap = lmtexcoord.z;
 
 	#ifdef Hand_Held_lights
-		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = mix(torchlightmap, HELD_ITEM_BRIGHTNESS,  clamp( max(1.0-length(fragpos)/10,0.0)	* 0.7	,0.0,1.0));
+		// if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = mix(torchlightmap, HELD_ITEM_BRIGHTNESS,  clamp( max(1.0-length(fragpos)/10,0.0)	* 0.7	,0.0,1.0));
+		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = clamp(torchlightmap + HELD_ITEM_BRIGHTNESS * clamp( max(1.0-length(fragpos)/10,0.0)	* 0.7	,0.0,1.0),0.0,1.0);
 	#endif
 	
 	float lightmap = clamp( (lmtexcoord.w-0.8) * 10.0,0.,1.);
 
 
 
-	float rainfall = rainStrength ;
+	float rainfall = rainStrength * noPuddleAreas;
 	float Puddle_shape = 0.;
 	
 	#ifndef ENTITIES
@@ -454,7 +456,7 @@ void main() {
 			if(SpecularTex.g < 229.5/255.0) Albedo.rgb = mix(Albedo.rgb, vec3(0), Puddle_shape*porosity);
 		#endif
 
-		vec4 data1 = clamp(encode(viewToWorld(normal),  (blueNoise()*vec2(torchlightmap,lmtexcoord.w)/30.0) + vec2(torchlightmap,lmtexcoord.w)),0.,1.0);
+		vec4 data1 = clamp(encode(viewToWorld(normal),  (blueNoise()*vec2(torchlightmap,lmtexcoord.w)/(30.0 * (1+ (1-RENDER_SCALE.x)))) + vec2(torchlightmap,lmtexcoord.w)),0.,1.0);
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),encodeVec2(Albedo.y,data1.y),encodeVec2(Albedo.z,data1.z),encodeVec2(data1.w,Albedo.w));
 		gl_FragData[1].a = 0.0;
 
@@ -598,7 +600,7 @@ void main() {
 		//////////////////////////////// 
 
 		// vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*lmtexcoord.zw/30.0) + lmtexcoord.zw),	0.0,	1.0);
-		vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*vec2(torchlightmap,lmtexcoord.w)/30.0) + vec2(torchlightmap,lmtexcoord.w)),	0.0,	1.0);
+		vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*vec2(torchlightmap,lmtexcoord.w)/	(30.0 * (1+ (1-RENDER_SCALE.x)))		) + vec2(torchlightmap,lmtexcoord.w)),	0.0,	1.0);
 
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
 

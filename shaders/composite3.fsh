@@ -184,7 +184,12 @@ void main() {
 
   // vec4 vl = texture2D(colortex0,texcoord * 0.5);
 
-
+	////// --------------- UNPACK OPAQUE GBUFFERS --------------- //////
+	vec4 data_opaque = texture2D(colortex1,texcoord);
+	vec4 dataUnpacked1 = vec4(decodeVec2(data_opaque.z),decodeVec2(data_opaque.w)); // normals, lightmaps
+	// vec4 dataUnpacked2 = vec4(decodeVec2(data.z),decodeVec2(data.w));
+	
+	vec2 lightmap = dataUnpacked1.yz;
 
 	////// --------------- UNPACK TRANSLUCENT GBUFFERS --------------- //////
 
@@ -275,11 +280,12 @@ void main() {
   color *= vl.a;
   color += vl.rgb;
 
-  float rainDrops =  clamp(texture2D(colortex9,texcoord).a,  0.0,1.0); // bloomy rain effect
+  
+// bloomy rain effect
+  float rainDrops =  clamp(texture2D(colortex9,texcoord).a,  0.0,1.0); 
+  if(rainDrops > 0.0) vl.a *= clamp(1.0 - pow(rainDrops*5.0,2),0.0,1.0); 
 
 
-
-  if(rainDrops > 0.0) vl.a *= clamp(1.0 - rainDrops ,0.,1.); // bloomy rain effect
   gl_FragData[0].r = vl.a;
   
   /// lava.

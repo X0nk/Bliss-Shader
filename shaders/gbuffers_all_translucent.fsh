@@ -404,7 +404,11 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 	vec3 ambientCoefs = WS_normal/dot(abs(WS_normal),vec3(1.));
 	float skylight = clamp(abs(ambientCoefs.y+1),0.35,2.0) ;
 
-	vec3 Indirect_lighting = DoAmbientLighting(avgAmbient, vec3(TORCH_R,TORCH_G,TORCH_B), lmtexcoord.zw, skylight);
+	vec2 lightmaps2 = lmtexcoord.zw;
+
+	
+
+	vec3 Indirect_lighting = DoAmbientLighting(avgAmbient, vec3(TORCH_R,TORCH_G,TORCH_B), lightmaps2, skylight);
 	vec3 Direct_lighting = DoDirectLighting(lightCol.rgb/80.0, Shadows, NdotL, 0.0);
 
 	vec3 FinalColor = (Direct_lighting + Indirect_lighting) * Albedo;

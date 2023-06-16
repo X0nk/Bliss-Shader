@@ -105,7 +105,7 @@ void main() {
 	float cloudOcclusion = 0.0;
 
 	if(TEXTURE.a > 0.0) cloudOcclusion = 1.0 - GetCloudSkyOcclusion(p3 + cameraPosition)*0.9;
-	gl_FragData[1].a = TEXTURE.a * cloudOcclusion; // for bloomy rain and stuff
+	gl_FragData[1].a = TEXTURE.a * cloudOcclusion ; // for bloomy rain and stuff
 
 #ifndef WEATHER
 

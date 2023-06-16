@@ -207,18 +207,22 @@ void main() {
 	blockID = mc_Entity.x;
 	velocity = at_velocity;
 
+	NameTags = 0;
+	
 // #ifdef ENTITIES
 
-// 	NameTags = 0;
 // 	// try and single out nametag text and then discard nametag background
-// 	if( dot(gl_Color.rgb, vec3(0.35)) < 1.0) NameTags = 1;
-// 	if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
+// 	// if( dot(gl_Color.rgb, vec3(1.0/3.0)) < 1.0) NameTags = 1;
+// 	// if(gl_Color.a < 1.0) NameTags = 1;
+// 	// if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
    
 // #endif
 
 
     /////// ----- EMISSIVE STUFF ----- ///////
 				EMISSIVE = 0.0;
+
+	// if(NameTags > 0) EMISSIVE = 0.9;
 
 	// normal block lightsources		
 	if(mc_Entity.x == 10005) EMISSIVE = 0.3;

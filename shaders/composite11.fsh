@@ -118,7 +118,7 @@ void main() {
 
 	float lightleakfix = clamp(eyeBrightnessSmooth.y/240.0,0.0,1.0);
 
-	col = (mix(col,bloom,VL_abs)+bloom*lightScat)*	mix(exposure.rgb,min(exposure.rgb,0.01), 0);
+	col = (mix(col,bloom,VL_abs)+bloom * lightScat)*	mix(exposure.rgb,min(exposure.rgb,0.01), 0);
 
 	//Purkinje Effect
   	float lum = dot(col,vec3(0.15,0.3,0.55));

@@ -23,10 +23,13 @@ uniform sampler2D colortex4;//Skybox
 
 #include "/lib/climate_settings.glsl"
 
+// #ifdef Daily_Weather
+	// uniform float CloudHeight;
+// #endif
 float CumulusHeight = Cumulus_height;
 float MaxCumulusHeight = CumulusHeight + 100;
-
 float AltostratusHeight = 2000;
+
 
 float rainCloudwetness = rainStrength;
 float cloud_movement = frameTimeCounter * Cloud_Speed;
