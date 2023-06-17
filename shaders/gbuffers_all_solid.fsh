@@ -263,8 +263,8 @@ void main() {
 	float torchlightmap = lmtexcoord.z;
 
 	#ifdef Hand_Held_lights
-		// if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = mix(torchlightmap, HELD_ITEM_BRIGHTNESS,  clamp( max(1.0-length(fragpos)/10,0.0)	* 0.7	,0.0,1.0));
-		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = clamp(torchlightmap + HELD_ITEM_BRIGHTNESS * clamp( max(1.0-length(fragpos)/10,0.0)	* 0.7	,0.0,1.0),0.0,1.0);
+		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = mix(torchlightmap, HELD_ITEM_BRIGHTNESS,  clamp( max(1.0-length(fragpos)/10,0.0)	* 0.7	,0.0,1.0));
+		// if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = clamp(torchlightmap + HELD_ITEM_BRIGHTNESS * clamp( max(1.0-length(fragpos)/10,0.0)	* 0.7	,0.0,1.0),0.0,1.0);
 	#endif
 	
 	float lightmap = clamp( (lmtexcoord.w-0.8) * 10.0,0.,1.);
