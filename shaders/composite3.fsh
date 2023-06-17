@@ -227,7 +227,7 @@ void main() {
 
     float refractedalpha = decodeVec2(texture2D(colortex11,refractedCoord).b).g;
     float refractedalpha2 = texture2D(colortex7,refractedCoord).a;
-    if( refractedalpha <= 0.0 ) refractedCoord = texcoord; // remove refracted coords on solids
+    if( refractedalpha <= 0.001 ) refractedCoord = texcoord; // remove refracted coords on solids
   #endif
   
   /// --- MAIN COLOR BUFFER --- ///
@@ -246,7 +246,6 @@ void main() {
 
   if (TranslucentShader.a > 0.0){
 		#ifdef Glass_Tint
-      // if(albedo.a < 0) color = color*albedo.rgb + color * clamp(pow(1.0-luma(albedo.rgb),10.),0.0,1.0);
       if(albedo.a > 0.2) color = color*albedo.rgb + color * clamp(pow(1.0-luma(albedo.rgb),20.),0.0,1.0);
     #endif
 
