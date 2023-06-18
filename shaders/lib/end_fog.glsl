@@ -82,10 +82,21 @@ vec3 LightSourcePosition(vec3 WorldPos, vec3 CameraPos){
         Origin.y -= 200;
     } else {
 
-        Origin = WorldPos - CameraPos - ManualLightPos;
-        float nosie = (densityAtPosFog(Origin / 30 + sin(frameTimeCounter/5)*100)-0.15) * 15   ;
-        Origin.xz += vec2(  sin(nosie),-cos(nosie)   )*50;
-        Origin.y -= sin(nosie)*100;
+        Origin = WorldPos - CameraPos ;
+
+        #ifdef THE_ORB
+            if(ManualLightPos == 0.0){
+        #endif
+
+                float nosie = (densityAtPosFog(Origin / 30 + sin(frameTimeCounter/5)*100)-0.15) * 15   ;
+                Origin.xz += vec2(  sin(nosie),-cos(nosie)   )*50;
+                Origin.y -= sin(nosie)*100;
+
+        #ifdef THE_ORB
+            } else {
+                Origin -= ManualLightPos;
+            }
+        #endif
 
         float cellSize = 100.0;
         vec3 cellPos = CameraPos - vec3(0,10,0) ;
@@ -102,25 +113,28 @@ vec3 LightSourcePosition(vec3 WorldPos, vec3 CameraPos){
 ///////////////// COLOR
 vec3 LightSourceColor(float SwirlBounds){
 
-    vec3 Color = vec3(0.0);
+    vec3 Color = vec3(0.5, 0.5, 1.0);
 
-    if( SwirlBounds < 1.0) {
+    #ifndef THE_ORB
+        if( SwirlBounds < 1.0) { 
+            // Color = vec3(0.5, 0.5, 1.0);
+        } else {
 
-        Color = vec3(0.5, 0.5, 1.0);
+         // #ifdef THE_ORB
+         //     Color = vec3(ORB_R, ORB_G, ORB_B) * ORB_ColMult;
+         // #endif
 
-    } else {
 
+         // Color *= blackbody2(RandomPosition.y*4000 + 1000);
+
+            float Timing = dot(RandomPosition, vec3(1.0/3.0));
+            float Flash = max(sin(frameTimeCounter) * cos(Timing) ,0.0);
+            Color *= Flash;
+        }
+    #else
         Color = vec3(ORB_R, ORB_G, ORB_B) * ORB_ColMult;
-        
+    #endif
 
-
-        // Color *= blackbody2(RandomPosition.y*4000 + 1000);
-
-        float Timing = dot(RandomPosition, vec3(1.0/3.0));
-        float Flash = max(sin(frameTimeCounter) * cos(Timing) ,0.0);
-        Color *= Flash;
-
-    }
 
     return Color;
 }
@@ -137,31 +151,30 @@ vec3 LightSourceShape(vec3 WorldPos){
     float SwirlBounds = clamp(sqrt(length(Origin) / 200.0 - 1.0)  ,0.0,1.0);
 
     if( SwirlBounds < 1.0) {
-
         // vec3 Origin = WorldPos;
         Origin.y -= 200; 
 
         vec3 Origin2 = Origin;
-        Origin2.y += 100 ;
-        Origin2.y *= 0.8;
+        Origin2.y = (Origin2.y + 100.0) * 0.8;
 
         float Center = length(Origin);
         float AltCenter = length(Origin2);
 
-        //////// STAGE 1
-        // when the ender dragon is alive, restrict the fog in this shape
         // the max of a sphere is another smaller sphere. this creates a hollow sphere.
         Shapes.r = max(1.0 - AltCenter / 75.0, max(AltCenter / 150.0 - 1.0, 0.0));
 
+        // donut to make the hurricane shape
         float radius = 200.0;
-        float thickness = 50.0 * radius;
-        Shapes.r =  (thickness - clamp(pow(sqrt(pow(Origin2.x,2) + pow(Origin2.z,2)) - radius,2) + pow(Origin2.y*0.75,2.0) - radius,0,thickness)) / thickness ;
+        float thickness = 25.0 * radius;
+        Shapes.r =  (thickness - clamp( pow( length( vec2(length(Origin2.xz) - radius, Origin2.y*0.75) ),2.0) - radius, 0.0, thickness) ) / thickness;
         
-        Shapes.r = max(Shapes.r,    max(1.0 - AltCenter / 75.0, 0.0));
+        Shapes.r = max(Shapes.r, max(1.0 - AltCenter / 75.0, 0.0));
 
-        radius = 50.0;
-        thickness = 5.0 * radius;
-        Shapes.b =  (thickness - clamp(pow(sqrt(pow(Origin2.x,2) + pow(Origin2.y,2)) - radius,2) + pow(Origin2.z*0.75,2.0) - radius,0,thickness)) / thickness ;
+
+        // debug donut
+        // radius = 50.0;
+        // thickness = 5.0 * radius;
+        // Shapes.b   =  (thickness - clamp( pow( length( vec2(length(Origin2.xy) - radius, Origin2.z*0.75) ),2.0) - radius, 0.0, thickness) ) / thickness;
     }
 
     return Shapes;
@@ -180,25 +193,20 @@ float cloudVol(in vec3 pos, int LOD){
 	vec3 samplePos2 = pos*vec3(1.0,1./48.,1.0);
 
     // #ifndef THE_ORB
-        // ender dragon battle area swirling effect.
-        // if(EndSequence2 < 1.0){
-	        float radiance = 2.39996 + samplePos.y + frameTimeCounter/10;
-	        mat2 rotationMatrix  = mat2(vec2(cos(radiance),  -sin(radiance)),  vec2(sin(radiance),  cos(radiance)));
+	     float radiance = 2.39996 + samplePos.y + frameTimeCounter/10;
+	     mat2 rotationMatrix  = mat2(vec2(cos(radiance),  -sin(radiance)),  vec2(sin(radiance),  cos(radiance)));
 
-            // make the swirl only happen within a radius
-            float SwirlBounds = clamp(sqrt(length(vec3(pos.x,pos.y-100,pos.z)) / 200.0 - 1.0)  ,0.0,1.0);
+         // make the swirl only happen within a radius
+         float SwirlBounds = clamp(sqrt(length(vec3(pos.x,pos.y-100,pos.z)) / 200.0 - 1.0)  ,0.0,1.0);
 
-            samplePos.xz =  mix(samplePos.xz  * rotationMatrix, samplePos.xz, SwirlBounds);
-            samplePos2.xz = mix(samplePos2.xz * rotationMatrix, samplePos2.xz, SwirlBounds);
-        // }
+         samplePos.xz =  mix(samplePos.xz  * rotationMatrix, samplePos.xz, SwirlBounds);
+         samplePos2.xz = mix(samplePos2.xz * rotationMatrix, samplePos2.xz, SwirlBounds);
     // #endif
 
     samplePos2.y -= frameTimeCounter/15;
 
-    float finalfog = 0;
-
+    float finalfog = 0.0;
 	finalfog += max(0.6-densityAtPosFog(samplePos * 16.0) * 2,0.0);
-    // finalfog = exp(finalfog*5)-1;
 
 	float smallnoise = max(densityAtPosFog(samplePos2 * (160. - finalfog*3))-0.1,0.0);
 	finalfog -= ((1-smallnoise) - max(0.15 - abs(smallnoise * 2.0 - 0.55) * 0.5,0.0)*1.5) * 0.3;
@@ -206,7 +214,6 @@ float cloudVol(in vec3 pos, int LOD){
     // make the eye of the swirl have no fog, so you can actually see.
     finalfog = max(finalfog - Shapes.r, 0.0);
     
-    // dragon death sequence
     // finalfog = Shapes.b;
     
 
@@ -261,7 +268,6 @@ mat2x3 getVolumetricRays(float dither,vec3 fragpos,float dither2) {
         
         vec3 LightPos = LightSourcePosition(progressW, cameraPosition);
         // float OrbMie = exp(length(LightPos) * -0.03) * 64.0;
-        
         // float OrbMie = max(exp2(4.0 + length(LightPos) / -20),0.0);
  
 
@@ -284,9 +290,9 @@ mat2x3 getVolumetricRays(float dither,vec3 fragpos,float dither2) {
         vec3 CastedLight = LightColor * OrbMie * exp(CastLight * 15 * (LightColor*(1.0-CastLight/3)-1.50))  ; 
         CastedLight += (LightColor * vec3(1.0,1.3,1.0)) * exp(abs(densityVol*2.0 - 0.3) * 15 * (LightColor*CastLight)) * (max(OrbMie - density*10,0.0)/10);
 
-        // #ifdef THE_ORB
-		    // density += clamp((1.0 - length(LightPos) / 10.0) * 10 ,0.0,1.0) ;
-        // #endif
+        #ifdef THE_ORB
+		    density += clamp((1.0 - length(LightPos) / 10.0) * 10 ,0.0,1.0) ;
+        #endif
         
 		vec3 AmbientLight = fogColor * 0.05  * pow(exp(density * -2),20);
 

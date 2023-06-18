@@ -21,6 +21,7 @@ uniform sampler2D colortex4;//Skybox
 
 #define WEATHERCLOUDS
 
+uniform int worldTime; 
 #include "/lib/climate_settings.glsl"
 
 // #ifdef Daily_Weather
@@ -32,7 +33,8 @@ float AltostratusHeight = 2000;
 
 
 float rainCloudwetness = rainStrength;
-float cloud_movement = frameTimeCounter * Cloud_Speed;
+// float cloud_movement = frameTimeCounter * Cloud_Speed ;
+float cloud_movement = (worldTime / 24.0) * Cloud_Speed ;
 
 //3D noise from 2d texture
 float densityAtPos(in vec3 pos){

@@ -56,6 +56,8 @@ uniform ivec2 eyeBrightnessSmooth;
 #include "/lib/ROBOBO_sky.glsl"
 #include "lib/sky_gradient.glsl"
 
+// uniform int worldTime; 
+
 #define TIMEOFDAYFOG
 #include "lib/volumetricClouds.glsl"
 

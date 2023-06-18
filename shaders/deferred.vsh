@@ -44,7 +44,7 @@ uniform float far;
 uniform float frameTime;
 uniform float eyeAltitude;
 uniform int frameCounter;
-uniform int worldTime;
+// uniform int worldTime;
 vec3 sunVec = normalize(mat3(gbufferModelViewInverse) *sunPosition);
 
 

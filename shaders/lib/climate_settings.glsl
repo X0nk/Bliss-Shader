@@ -203,7 +203,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifdef TIMEOFDAYFOG
-	uniform int worldTime;
+	// uniform int worldTime;
 	void TimeOfDayFog(inout float Uniform, inout float Cloudy) {
 	
 	    float Time = (worldTime%24000)*1.0; 

@@ -46,6 +46,8 @@ uniform int isEyeInWater;
 uniform vec2 texelSize;
 
 
+// uniform int worldTime; 
+
 #include "lib/Shadow_Params.glsl"
 #include "lib/color_transforms.glsl"
 #include "lib/color_dither.glsl"
