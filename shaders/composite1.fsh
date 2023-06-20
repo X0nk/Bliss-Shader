@@ -140,6 +140,8 @@ vec3 viewToWorld(vec3 viewPosition) {
     pos = gbufferModelViewInverse * pos;
     return pos.xyz;
 }
+
+
 #include "lib/res_params.glsl"
 #include "lib/Shadow_Params.glsl"
 #include "lib/color_transforms.glsl"
@@ -704,7 +706,31 @@ void LabEmission(
 	if( Emission < 255.0/255.0 ) Lighting += (Albedo * Emissive_Brightness) * pow(Emission, Emissive_Curve);
 }
 
+vec3 Moon(vec3 PlayerPos, vec3 WorldSunVec, vec3 Color, inout vec3 occludeStars){
 
+	float Shape = clamp((exp(1 + -1000 * dot(WorldSunVec+PlayerPos,PlayerPos)) - 1.5),0.0,25.0);
+	occludeStars *= max(1.0-Shape*5,0.0);
+
+	float shape2 = pow(exp(Shape * -10),0.15) * 255.0;
+
+	vec3 sunNormal = vec3(dot(WorldSunVec+PlayerPos, vec3(shape2,0,0)), dot(PlayerPos+WorldSunVec, vec3(0,shape2,0)), -dot(WorldSunVec, PlayerPos) * 15.0);
+
+
+	// even has a little tilt approximation haha.... yeah....
+	vec3[8] phase = vec3[8](vec3( -1.0,	 -0.5,	 1.0	),
+							vec3( -1.0,	 -0.5,	 0.35	),
+							vec3( -1.0,	 -0.5,   0.2	),
+							vec3( -1.0,	 -0.5,   0.1	),
+							vec3(  1.0,	 0.25,	-1.0	),
+							vec3(  1.0,	 0.25,	 0.1	),
+							vec3(  1.0,	 0.25,	 0.2	),
+							vec3(  1.0,	 0.25,	 0.35	)
+	);
+	
+	vec3 LightDir = phase[moonPhase];
+
+	return Shape * pow(clamp(dot(sunNormal,LightDir)/5,0.0,1.5),5) * Color  + clamp(Shape * 4.0 * pow(shape2/200,2.0),0.0,1.0)*0.004;
+}
 
 
 
@@ -814,6 +840,7 @@ void main() {
 	vec3 DirectLightColor = (lightCol.rgb/80.0);
 	DirectLightColor *= clamp(abs(WsunVec.y)*2,0.,1.);
 
+
 	vec3 AmbientLightColor = avgAmbient;
 
 
@@ -832,7 +859,8 @@ void main() {
 
 		#ifndef ambientLight_only
 			background += drawSun(dot(lightCol.a * WsunVec, np3),0, DirectLightColor,vec3(0.0)) ; // sun 
-			background += drawSun(dot(lightCol.a * -WsunVec, np3),0, blackbody2(Moon_temp)/500.,vec3(0.0)); // moon
+			// vec3 moon = drawSun(dot(lightCol.a * -WsunVec, np3),0, DirectLightColor/5,vec3(0.0)) ; // moon
+			background += Moon(np3, -WsunVec, DirectLightColor*25, background); // moon
 		#endif
 		
 		background *= clamp( (np3.y+ 0.02)*5.0 + (eyeAltitude - 319)/800000  ,0.0,1.0);
@@ -845,7 +873,6 @@ void main() {
 
 		vec4 cloud = texture2D_bicubic(colortex0,texcoord*CLOUDS_QUALITY);
 		background = background*cloud.a + cloud.rgb;
-
 
 		gl_FragData[0].rgb = clamp(fp10Dither(background ,triangularize(noise)),0.0,65000.);
 	#endif

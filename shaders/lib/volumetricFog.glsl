@@ -139,7 +139,7 @@ vec4 getVolumetricRays(
 		vec3 rainRays =   (sunColor*sh) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1) * rainStrength * noPuddleAreas * RainFog_amount; 
 		vec3 CaveRays = (sunColor*sh)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - max(eyeBrightnessSmooth.y,0)/240.);
  
-		vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * max(eyeBrightnessSmooth.y,0)/240. + CaveRays ;
+		vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * max(eyeBrightnessSmooth.y,0)/240.  ;
 
 		vL += (vL0 - vL0 * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*absorbance;
 		absorbance *= dot(clamp(exp(-(rL+m)*dd*dL),0.0,1.0), vec3(0.333333));

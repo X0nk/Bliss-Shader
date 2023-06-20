@@ -243,6 +243,7 @@ void main() {
   #endif
 
   vec4 vl = BilateralUpscale(colortex0, depthtex1, gl_FragCoord.xy, frDepth, vec2(0.0));
+  color *= vl.a;
 
   if (TranslucentShader.a > 0.0){
 		#ifdef Glass_Tint
@@ -256,16 +257,13 @@ void main() {
     #endif
   } 
 
-
-
-
-  //cave fog  
+  //cave fog
   #ifdef Cave_fog
     if (isEyeInWater == 0){
-      float fogdistfade = 1.0 - clamp( exp(-pow(length(fragpos / far),2.)*5.0)  ,0.0,1.0);
-      float fogfade =  clamp( exp(clamp( np3.y*0.5 +0.5,0,1) * -6.0)  ,0.0,1.0);
-
-      color.rgb = mix(color.rgb, vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B)*fogfade,  fogdistfade * (1.0-lightleakfix) * (1.0-darknessFactor)* clamp( 1.5 - np3.y,0.,1)) ;  
+      float fogdistfade = clamp( pow(length(fragpos) / far, CaveFogFallOff) ,0.0,1.0);
+      float fogfade = clamp( exp(clamp(np3.y * 0.5 + 0.5,0,1) * -3.0)  ,0.0,1.0);
+      color.rgb = mix(color.rgb, vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B)*fogfade + (blueNoise()-0.5)*0.01,  fogdistfade * (1.0-lightleakfix) * (1.0-darknessFactor) * clamp( 1.5 - np3.y,0.,1)) ;  
+      // color.rgb = vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B)*fogfade ;  
     }
   #endif
 
@@ -276,16 +274,13 @@ void main() {
     vl.a *= fogfade*0.7+0.3  ;
   }
 
-  color *= vl.a;
   color += vl.rgb;
-
   
 // bloomy rain effect
   float rainDrops =  clamp(texture2D(colortex9,texcoord).a,  0.0,1.0); 
   if(rainDrops > 0.0) vl.a *= clamp(1.0 - pow(rainDrops*5.0,2),0.0,1.0); 
 
 
-  gl_FragData[0].r = vl.a;
   
   /// lava.
   if (isEyeInWater == 2){
@@ -310,6 +305,7 @@ void main() {
     if(texcoord.x < 0.45 && luma(thingy) > 0.0 ) color.rgb =  thingy;
   #endif
 
+  gl_FragData[0].r = vl.a; // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb,0.0,68000.0);
 
 //  gl_FragData[1].rgb = vec3(tangentNormals,0.0);

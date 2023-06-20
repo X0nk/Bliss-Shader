@@ -209,14 +209,14 @@ void main() {
 
 	NameTags = 0;
 	
-// #ifdef ENTITIES
+#ifdef ENTITIES
 
-// 	// try and single out nametag text and then discard nametag background
-// 	// if( dot(gl_Color.rgb, vec3(1.0/3.0)) < 1.0) NameTags = 1;
-// 	// if(gl_Color.a < 1.0) NameTags = 1;
-// 	// if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
+	// try and single out nametag text and then discard nametag background
+	// if( dot(gl_Color.rgb, vec3(1.0/3.0)) < 1.0) NameTags = 1;
+	// if(gl_Color.a < 1.0) NameTags = 1;
+	// if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
    
-// #endif
+#endif
 
 
     /////// ----- EMISSIVE STUFF ----- ///////
@@ -239,7 +239,7 @@ void main() {
 	HELD_ITEM_BRIGHTNESS = 0.0;
 
 	#ifdef Hand_Held_lights
-		if(heldItemId == 100 || heldItemId2 == 100) HELD_ITEM_BRIGHTNESS = 1.0;
+		if(heldItemId == 100 || heldItemId2 == 100) HELD_ITEM_BRIGHTNESS = 0.9;
 	#endif
 
 
