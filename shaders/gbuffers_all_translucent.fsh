@@ -410,6 +410,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 	vec2 lightmaps2 = lmtexcoord.zw;
 
 	
+	float lightleakfix = clamp(eyeBrightness.y/240.0 + lightmap.y,0.0,1.0);
 
 	vec3 Indirect_lighting = DoAmbientLighting(avgAmbient, vec3(TORCH_R,TORCH_G,TORCH_B), lightmaps2, skylight);
 	vec3 Direct_lighting = DoDirectLighting(lightCol.rgb/80.0, Shadows, NdotL, 0.0);
@@ -448,7 +449,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 		#else
 			if(isEyeInWater == 1) fresnel = clamp( 1.0 - (pow( normalDotEye * 1.66 ,25)),0.02,1.0);
 		#endif
-		
+
 		fresnel = mix(f0, 1.0, fresnel); 
 		
 		vec3 wrefl = mat3(gbufferModelViewInverse)*reflectedVector;
@@ -476,7 +477,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 
 		Reflections_Final = mix(SkyReflection*indoors, Reflections.rgb, Reflections.a);
 		Reflections_Final = mix(FinalColor, Reflections_Final, fresnel * visibilityFactor);
-		Reflections_Final += SunReflection;
+		Reflections_Final += SunReflection * lightleakfix;
 
 		gl_FragData[0].rgb = Reflections_Final;
 
