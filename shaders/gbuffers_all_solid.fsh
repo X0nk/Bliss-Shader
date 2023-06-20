@@ -83,10 +83,7 @@ flat varying float EMISSIVE;
 flat varying int LIGHTNING;
 flat varying float HELD_ITEM_BRIGHTNESS;
 
-#ifdef ENTITIES
-	#define ENTITY_PHYSICSMOD_SNOW 829925
-#endif
-
+flat varying int PHYSICSMOD_SNOW;
 uniform float noPuddleAreas;
 
 
@@ -474,7 +471,7 @@ void main() {
 			NormalTex.xy = NormalTex.xy*2.0-1.0;
 			NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0) ;
 
-			normal = applyBump(tbnMatrix, NormalTex.xyz,  mix(1.0,1-Puddle_shape,rainfall)	);
+			if(PHYSICSMOD_SNOW < 1)normal = applyBump(tbnMatrix, NormalTex.xyz,  mix(1.0,1-Puddle_shape,rainfall)	);
 			
 			// #ifdef ENTITIES
 			// 	if(NameTags == 1) normal = vec3(1);

@@ -3,7 +3,10 @@
 #define PHYSICS_OCEAN_SUPPORT
 // at the top of your file. When used my mod no longer injects code into
 // your shaderpack. It replaces this define statement (before compilation) with
-
+#define PHYSICS_OCEAN
+// so you can use
+#ifdef PHYSICS_OCEAN
+#endif
 
 #ifdef PhysicsMod_support
 // to customize the water for the physics ocean 

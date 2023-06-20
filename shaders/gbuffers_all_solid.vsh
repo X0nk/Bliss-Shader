@@ -61,6 +61,9 @@ flat varying int NameTags;
 in vec3 at_velocity;
 out vec3 velocity;
 
+
+flat varying int PHYSICSMOD_SNOW;
+
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
 attribute vec4 mc_midTexCoord;
@@ -151,6 +154,9 @@ float densityAtPos(in vec3 pos){
 
 	return mix(xy.r,xy.g, f.y);
 }
+float luma(vec3 color) {
+	return dot(color,vec3(0.21, 0.72, 0.07));
+}
 
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -208,14 +214,22 @@ void main() {
 	velocity = at_velocity;
 
 	NameTags = 0;
-	
+
+PHYSICSMOD_SNOW = 0;
+
 #ifdef ENTITIES
+
+#ifdef ENTITY_PHYSICSMOD_SNOW
+	 if(entityId == 829925) PHYSICSMOD_SNOW = 1;
+#endif
+
 
 	// try and single out nametag text and then discard nametag background
 	// if( dot(gl_Color.rgb, vec3(1.0/3.0)) < 1.0) NameTags = 1;
 	// if(gl_Color.a < 1.0) NameTags = 1;
 	// if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
-   
+	
+
 #endif
 
 
