@@ -3,10 +3,9 @@
 #define PHYSICS_OCEAN_SUPPORT
 // at the top of your file. When used my mod no longer injects code into
 // your shaderpack. It replaces this define statement (before compilation) with
-#define PHYSICS_OCEAN
-// so you can use
-#ifdef PHYSICS_OCEAN
-#endif
+
+
+#ifdef PhysicsMod_support
 // to customize the water for the physics ocean 
 
 // just some basic consts for the wave function based on afl_ext's shader https://www.shadertoy.com/view/Xdlczl
@@ -221,3 +220,4 @@ WavePixelData physics_wavePixel(const in vec2 position, const in float factor, c
     
     return data;
 }
+#endif

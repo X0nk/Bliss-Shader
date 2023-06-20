@@ -319,8 +319,9 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 	normal = applyBump(tbnMatrix, NormalTex.xyz,  1.0);
 
 	if (iswater > 0.95){
-		
-		//if(physics_iterationsNormal < 1.0){
+		#ifdef PhysicsMod_support
+		if(physics_iterationsNormal < 1.0){
+		#endif
 			float bumpmult = 1.;
 			vec3 bump = vec3(0);
 			vec3 posxz = p3+cameraPosition;
@@ -334,27 +335,29 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 
 			bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 			normal = normalize(bump * tbnMatrix);
+		
+		#ifdef PhysicsMod_support
+		}else{	
+			/// ------ PHYSICS MOD OCEAN SHIT ------ ///
+		
+			WavePixelData wave = physics_wavePixel(physics_localPosition.xz, physics_localWaviness, physics_iterationsNormal, physics_gameTime);
+			// float Foam = wave.foam;
+		
+			// Albedo = mix(Albedo,vec3(1),Foam);
+			// gl_FragData[0].a = Foam;
 			
-		//}else{	
-		//	/// ------ PHYSICS MOD OCEAN SHIT ------ ///
-		//
-		//	WavePixelData wave = physics_wavePixel(physics_localPosition.xz, physics_localWaviness, physics_iterationsNormal, physics_gameTime);
-		//	// float Foam = wave.foam;
-		//
-		//	// Albedo = mix(Albedo,vec3(1),Foam);
-		//	// gl_FragData[0].a = Foam;
-		//	
-		//	
-		//	normal = normalize(worldToView(wave.normal) + mix(normal, vec3(0.0), clamp(physics_localWaviness,0.0,1.0)));
-		//
-		//	vec3 worldSpaceNormal = normal;
-		//
-		//	vec3 bitangent = normalize(cross(tangent.xyz, worldSpaceNormal));
-		//	mat3 tbn_new =  mat3(tangent.xyz, binormal, worldSpaceNormal);
-		//	vec3 tangentSpaceNormal = worldSpaceNormal * tbn_new;
-		//
-		//	TangentNormal = tangentSpaceNormal.xy * 0.5 + 0.5;
-		//}
+			
+			normal = normalize(worldToView(wave.normal) + mix(normal, vec3(0.0), clamp(physics_localWaviness,0.0,1.0)));
+		
+			vec3 worldSpaceNormal = normal;
+		
+			vec3 bitangent = normalize(cross(tangent.xyz, worldSpaceNormal));
+			mat3 tbn_new =  mat3(tangent.xyz, binormal, worldSpaceNormal);
+			vec3 tangentSpaceNormal = worldSpaceNormal * tbn_new;
+		
+			TangentNormal = tangentSpaceNormal.xy * 0.5 + 0.5;
+		}
+		#endif
 	}
 
 	// cannot encode alpha or it will shit its pants
@@ -439,8 +442,13 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 		// snells window looking thing
 		if(isEyeInWater == 1 && iswater > 0.99) fresnel = clamp(pow(1.66 + normalDotEye,25),0.02,1.0);
 
-		if(isEyeInWater == 1 && physics_iterationsNormal > 0.0) fresnel = clamp( 1.0 - (pow( normalDotEye * 1.66 ,25)),0.02,1.0);
-
+		
+		#ifdef PhysicsMod_support
+			if(isEyeInWater == 1 && physics_iterationsNormal > 0.0) fresnel = clamp( 1.0 - (pow( normalDotEye * 1.66 ,25)),0.02,1.0);
+		#else
+			if(isEyeInWater == 1) fresnel = clamp( 1.0 - (pow( normalDotEye * 1.66 ,25)),0.02,1.0);
+		#endif
+		
 		fresnel = mix(f0, 1.0, fresnel); 
 		
 		vec3 wrefl = mat3(gbufferModelViewInverse)*reflectedVector;

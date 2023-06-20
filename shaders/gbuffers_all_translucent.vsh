@@ -73,6 +73,7 @@ void main() {
 
 	vec4 Swtich_gl_vertex = gl_Vertex;
 
+	#ifdef PhysicsMod_support
 	if(physics_iterationsNormal > 0.0){
     	// basic texture to determine how shallow/far away from the shore the water is
     	physics_localWaviness = texelFetch(physics_waviness, ivec2(gl_Vertex.xz) - physics_textureOffset, 0).r;
@@ -83,6 +84,7 @@ void main() {
 
 		Swtich_gl_vertex.xyz = finalPosition.xyz ;
 	}
+	#endif
 
 	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
 	vec2 lmcoord = gl_MultiTexCoord1.xy / 255.0; // is this even correct? lol
