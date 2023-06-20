@@ -858,9 +858,9 @@ void main() {
 		background += stars(orbitstar) * 5.0	;
 
 		#ifndef ambientLight_only
+			background += Moon(np3, -WsunVec, blackbody2(12000), background); // moon
 			background += drawSun(dot(lightCol.a * WsunVec, np3),0, DirectLightColor,vec3(0.0)) ; // sun 
 			// vec3 moon = drawSun(dot(lightCol.a * -WsunVec, np3),0, DirectLightColor/5,vec3(0.0)) ; // moon
-			background += Moon(np3, -WsunVec, blackbody2(12000), background); // moon
 		#endif
 		
 		background *= clamp( (np3.y+ 0.02)*5.0 + (eyeAltitude - 319)/800000  ,0.0,1.0);
