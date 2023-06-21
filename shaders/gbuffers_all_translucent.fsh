@@ -53,6 +53,7 @@ uniform int framemod8;
 uniform sampler2D specular;
 uniform int frameCounter;
 uniform int isEyeInWater;
+uniform ivec2 eyeBrightness;
 
 
 flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
@@ -410,7 +411,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 	vec2 lightmaps2 = lmtexcoord.zw;
 
 	
-	float lightleakfix = clamp(eyeBrightness.y/240.0 + lightmap.y,0.0,1.0);
+	float lightleakfix = clamp(eyeBrightness.y/240.0 + lightmaps2.y,0.0,1.0);
 
 	vec3 Indirect_lighting = DoAmbientLighting(avgAmbient, vec3(TORCH_R,TORCH_G,TORCH_B), lightmaps2, skylight);
 	vec3 Direct_lighting = DoDirectLighting(lightCol.rgb/80.0, Shadows, NdotL, 0.0);
