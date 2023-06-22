@@ -121,6 +121,8 @@ vec3 rayTraceSpeculars(vec3 dir,vec3 position,float dither, float quality, bool 
 	float maxZ = spos.z;
 	
 	spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
+	float depthcancle = pow(1.0-(quality/reflection_quality),5);
+
 
 	float dist = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
   	for (int i = 0; i <= int(quality); i++) {
@@ -133,7 +135,7 @@ vec3 rayTraceSpeculars(vec3 dir,vec3 position,float dither, float quality, bool 
 		spos += stepv;
 		
 		//small bias
-		float biasamount = 0.0002 / dist;
+		float biasamount = max(0.0002, depthcancle*0.0035) / dist;
 		if(hand) biasamount = 0.01;
 		minZ = maxZ-biasamount / ld(spos.z);
 		maxZ += stepv.z;
@@ -143,6 +145,35 @@ vec3 rayTraceSpeculars(vec3 dir,vec3 position,float dither, float quality, bool 
 
 
   return vec3(1.1);
+}
+
+float xonk_fma(float a,float b,float c){
+ return a * b + c;
+}
+
+//// thank you Zombye | the paper: https://ggx-research.github.io/publication/2023/06/09/publication-ggx.html
+vec3 SampleVNDFGGX(
+    vec3 viewerDirection, // Direction pointing towards the viewer, oriented such that +Z corresponds to the surface normal
+    vec2 alpha, // Roughness parameter along X and Y of the distribution
+    vec2 xy // Pair of uniformly distributed numbers in [0, 1)
+) {
+    // Transform viewer direction to the hemisphere configuration
+    viewerDirection = normalize(vec3(alpha * viewerDirection.xy, viewerDirection.z));
+
+    // Sample a reflection direction off the hemisphere
+    const float tau = 6.2831853; // 2 * pi
+    float phi = tau * xy.x;
+    float cosTheta = xonk_fma(1.0 - xy.y, 1.0 + viewerDirection.z, -viewerDirection.z);
+    float sinTheta = sqrt(clamp(1.0 - cosTheta * cosTheta, 0.0, 1.0)*0.25);
+    vec3 reflected = vec3(vec2(cos(phi), sin(phi)) * sinTheta, cosTheta);
+
+    // Evaluate halfway direction
+    // This gives the normal on the hemisphere
+    vec3 halfway = reflected + viewerDirection;
+
+    // Transform the halfway direction back to hemiellispoid configuation
+    // This gives the final sampled normal
+    return normalize(vec3(alpha * halfway.xy, halfway.z));
 }
 
 vec3 sampleGGXVNDF(vec3 V_, float roughness, float U1, float U2){
@@ -222,7 +253,8 @@ void MaterialReflections(
 	#ifdef Rough_reflections
 		int seed = frameCounter%40000;
 		vec2  ij = fract(R2_samples_spec(seed) + noise.rg) ;
-		vec3 H = sampleGGXVNDF(normSpaceView, roughness, ij.x, ij.y);
+		// vec3 H = sampleGGXVNDF(normSpaceView, roughness, ij.x, ij.y);
+		vec3 H = SampleVNDFGGX(normSpaceView, vec2(roughness), ij.xy);
 
 		if(hand) H = normalize(vec3(0.0,0.0,1.0));
 	#else
@@ -257,12 +289,12 @@ void MaterialReflections(
 			// #ifdef SCREENSHOT_MODEFconst
 			// 	float rayQuality = reflection_quality; 
 			// #else
-				float rayQuality = mix_float(reflection_quality,4.0,luma(rayContrib)); // Scale quality with ray contribution
+				float rayQuality = mix_float(reflection_quality,6.0,luma(rayContrib)); // Scale quality with ray contribution
 			// #endif
 			// float rayQuality = reflection_quality; 
 	
 
-			vec3 rtPos = rayTraceSpeculars(mat3(gbufferModelView) * L, fragpos.xyz,  noise.b, reflection_quality, hand, reflectLength);
+			vec3 rtPos = rayTraceSpeculars(mat3(gbufferModelView) * L, fragpos.xyz,  noise.b, rayQuality, hand, reflectLength);
 
 			float LOD = clamp(reflectLength * 6.0, 0.0,6.0);
 

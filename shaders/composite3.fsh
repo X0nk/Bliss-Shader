@@ -243,7 +243,7 @@ void main() {
   #endif
 
   vec4 vl = BilateralUpscale(colortex0, depthtex1, gl_FragCoord.xy, frDepth, vec2(0.0));
-  color *= vl.a;
+
 
   if (TranslucentShader.a > 0.0){
 		#ifdef Glass_Tint
@@ -256,6 +256,7 @@ void main() {
         if(z < 1.0 && isEyeInWater == 0) color.rgb = mix(color.rgb, sky, fog * heightFalloff * lightleakfix);
     #endif
   } 
+
 
   //cave fog
   #ifdef Cave_fog
@@ -274,6 +275,7 @@ void main() {
     vl.a *= fogfade*0.7+0.3  ;
   }
 
+  color *= vl.a;
   color += vl.rgb;
   
 // bloomy rain effect
