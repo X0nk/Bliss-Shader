@@ -79,7 +79,7 @@ vec3 LightSourcePosition(vec3 WorldPos, vec3 CameraPos){
     float SwirlBounds = clamp(sqrt(length(vec3(Origin.x,Origin.y-100,Origin.z)) / 150.0 - 1.0)  ,0.0,1.0);
 
     if( SwirlBounds < 1.0) {
-        Origin.y -= 200;
+        Origin.y -= 260;
     } else {
 
         Origin = WorldPos - CameraPos ;
@@ -113,10 +113,11 @@ vec3 LightSourcePosition(vec3 WorldPos, vec3 CameraPos){
 ///////////////// COLOR
 vec3 LightSourceColor(float SwirlBounds){
 
-    vec3 Color = vec3(0.5, 0.5, 1.0);
+    vec3 Color = vec3(0.7, 0.8, 1.0);
 
     #ifndef THE_ORB
         if( SwirlBounds < 1.0) { 
+
             // Color = vec3(0.5, 0.5, 1.0);
         } else {
 
@@ -171,6 +172,7 @@ vec3 LightSourceShape(vec3 WorldPos){
         Shapes.r = max(Shapes.r, max(1.0 - AltCenter / 75.0, 0.0));
 
 
+
         // debug donut
         // radius = 50.0;
         // thickness = 5.0 * radius;
@@ -214,7 +216,7 @@ float cloudVol(in vec3 pos, int LOD){
     // make the eye of the swirl have no fog, so you can actually see.
     finalfog = max(finalfog - Shapes.r, 0.0);
     
-    // finalfog = Shapes.b;
+    finalfog += Shapes.b;
     
 
 	return finalfog;
@@ -260,7 +262,7 @@ mat2x3 getVolumetricRays(float dither,vec3 fragpos,float dither2) {
 		progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
 
 		float densityVol = cloudVol(progressW,1);
-		float density = min(densityVol,0.1);
+		float density = min(densityVol,0.09);
         float air = 0.005;
 
         /// THE OOOOOOOOOOOOOOOOOOOOOORB
@@ -271,7 +273,7 @@ mat2x3 getVolumetricRays(float dither,vec3 fragpos,float dither2) {
         // float OrbMie = max(exp2(4.0 + length(LightPos) / -20),0.0);
  
 
-        float OrbMie = max(1.0-length(LightPos)/200,0.0);
+        float OrbMie = max(1.0-length(LightPos)/250,0.0);
         float N = 2.50;
 		OrbMie = pow(1.0-pow(1.0-OrbMie,1.0/N),N);
 		OrbMie *= 10.0;

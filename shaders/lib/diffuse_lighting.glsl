@@ -65,7 +65,8 @@ vec3 DoAmbientLighting_End(vec3 FogColor, vec3 TorchColor, float Lightmap, vec3 
 
     FogColor =  (FogColor / pow(0.00001 + dot(FogColor,vec3(0.3333)),1.0) ) * 0.1;
     // vec3 AmbientLight =  sqrt( clamp(1.25 + dot(Normal,np3),0.0,1.0)) * (vec3(0.5,0.75,1.0) * 0.05);
-    vec3 AmbientLight =  sqrt( clamp(1.25 + dot(Normal,np3),0.0,1.0)*0.5) * FogColor;
+    // vec3 AmbientLight =  sqrt( clamp(1.25 + dot(Normal,np3),0.0,1.0)*0.5) * FogColor;
+    vec3 AmbientLight = vec3(0.5,0.75,1.0) * 0.05 + FogColor*clamp(1.1 + dot(Normal,np3),0.0,1.0)*0.5;
 
     return TorchLight + AmbientLight;
 }

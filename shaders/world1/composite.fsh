@@ -318,9 +318,9 @@ float rayTraceShadow(vec3 dir,vec3 position,float dither){
       					 (-near -position.z) / dir.z : far*sqrt(3.) ;
     vec3 direction = toClipSpace3(position+dir*rayLength)-clipPosition;  //convert to clip space
     direction.xyz = direction.xyz/max(abs(direction.x)/texelSize.x,abs(direction.y)/texelSize.y);	//fixed step size
-    vec3 stepv = direction * 3.0 * clamp(MC_RENDER_QUALITY,1.,2.0)*vec3(RENDER_SCALE,1.0);
+    vec3 stepv = direction * 3.0 * clamp(MC_RENDER_QUALITY,1.,2.0);
 	
-	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0);
+	vec3 spos = clipPosition;
 	spos += stepv*dither ;
 
 	for (int i = 0; i < int(quality); i++) {
@@ -398,13 +398,19 @@ void main() {
         vec3 LightColor = LightSourceColor(clamp(sqrt(length(p3+cameraPosition) / 150.0 - 1.0)  ,0.0,1.0));
         vec3 LightPos = LightSourcePosition(p3+cameraPosition, cameraPosition);
 
-	     // float LightFalloff = max(exp2(4.0 + length(LightPos) / -50),0.0);
-        float LightFalloff = max(1.0-length(LightPos)/255,0.0);
-		LightFalloff = pow(1.0-pow(1.0-LightFalloff,0.5),2.0);
-		LightFalloff *= 10.0;
+	     float LightFalloff = max(exp2(4.0 + length(LightPos) / -25),0.0);
+        // float LightFalloff = max(1.0-length(LightPos)/255,0.0);
+		// LightFalloff = pow(1.0-pow(1.0-LightFalloff,0.5),2.0);
+		// LightFalloff *= 10.0;
+
+        // float LightFalloff = max(1.0-length(LightPos)/250,0.0);
+        // float N = 2.50;
+		// LightFalloff = pow(1.0-pow(1.0-LightFalloff,1.0/N),N);
+		// LightFalloff *= 10.0;
 
 		// 0.5 added because lightsources are always high radius.
 		float NdotL = clamp( dot(normal,normalize(-LightPos)),0.0,1.0);
+		NdotL = clamp((-15 + NdotL*255.0) / 240.0  ,0.0,1.0);
 
 		float fogshadow = GetCloudShadow(p3+cameraPosition, LightPos, blueNoise());
 		vec3 LightSource = (LightColor * max(LightColor - (1-fogshadow) ,0.0)) * LightFalloff * NdotL ;
@@ -420,8 +426,8 @@ void main() {
 
 		LightSource += (LightColor * max(LightColor - 0.6,0.0)) * vec3(1.0,1.3,1.0) * LightFalloff2 * (NdotL*0.7+0.3);
 
-		// float RT_Shadows = rayTraceShadow(worldToView(normalize(-LightPos)), fragpos_RTSHADOW, blueNoise());
-		// if(!hand) LightSource *= RT_Shadows*RT_Shadows;
+		float RT_Shadows = rayTraceShadow(worldToView(normalize(-LightPos)), fragpos_RTSHADOW, blueNoise());
+		if(!hand) LightSource *= RT_Shadows*RT_Shadows;
 
 
 		// finalize
