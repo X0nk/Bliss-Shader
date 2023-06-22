@@ -41,6 +41,7 @@ uniform int frameCounter;
 uniform float rainStrength;
 uniform float sunElevation;
 uniform ivec2 eyeBrightnessSmooth;
+uniform ivec2 eyeBrightness;
 uniform float frameTimeCounter;
 uniform int isEyeInWater;
 uniform vec2 texelSize;
@@ -181,7 +182,7 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 		vec3 p3 = mat3(gbufferModelViewInverse) * rayEnd;
 		vec3 np3 = normVec(p3);
 		float ambfogfade =  clamp(exp(np3.y*1.5 - 1.5),0.0,1.0) ;
-		vec3 ambientMul = exp(-max(estEyeDepth - dY * d,0.0) * waterCoefs) + ambfogfade*0.5 ;
+		vec3 ambientMul = exp(-max(estEyeDepth - dY * d,0.0) * waterCoefs) + ambfogfade*0.5 * clamp(eyeBrightnessSmooth.y/240.0,0.1,1.0);
 		vec3 sunMul = exp(-max((estEyeDepth - dY * d) ,0.0)/abs(refractedSunVec.y) * waterCoefs)*cloudShadow;
 		
 		float sunCaustics = waterCaustics(progressW, WsunVec);
