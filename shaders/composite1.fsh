@@ -1094,8 +1094,8 @@ void main() {
 
 			snow_p3 /= 75.0;
 
-			float resolution = 1000.;
-			snow_p3 = (fract(snow_p3 * resolution) / resolution) - snow_p3;
+			// float resolution = 1000.;
+			// snow_p3 = (fract(snow_p3 * resolution) / resolution) - snow_p3;
 
 			float SnowPatches = texture2D(noisetex,	snow_p3.xz).r;
 			// float SnowPatches = densityAtPosSNOW(snow_p3);

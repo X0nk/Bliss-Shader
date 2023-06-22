@@ -85,7 +85,7 @@
 				// this is to make snow only exist in winter
 	    		float FallToWinter_snowfall = mix(0.0, 1.0, AutumnTime);
 	    		float WinterToSpring_snowfall = mix(FallToWinter_snowfall, 0.0, WinterTime);
-				SnowySeason = pow(WinterToSpring_snowfall,10.0);
+				SnowySeason = clamp(pow(sin(WinterToSpring_snowfall*SeasonLength)*0.5+0.5,5),0,1)  * WinterToSpring_snowfall;
 			#else
 				SnowySeason = 0.0;
 			#endif

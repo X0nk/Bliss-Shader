@@ -286,12 +286,12 @@ void MaterialReflections(
 
 		#ifdef Screen_Space_Reflections
 			float rayQuality = mix_float(reflection_quality,6.0,rayContribLuma); // Scale quality with ray contribution
-			
+			if(hand) {rayQuality = max(rayQuality,30.0); noise.b = 0.5 + (noise.b-0.5);}
+
 			vec3 rtPos = rayTraceSpeculars(mat3(gbufferModelView) * L, fragpos.xyz,  noise.b, rayQuality, hand, reflectLength);
 
 			float LOD = clamp(reflectLength * 6.0, 0.0,6.0);
-			// LOD = 0.0;
-			if(hand || isEntities) LOD = 6.0;
+			if(hand || isEntities) LOD = VisibilityFactor*6;
 			
 			if (rtPos.z < 1.) { // Reproject on previous frame
 				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rtPos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
