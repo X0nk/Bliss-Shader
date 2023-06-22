@@ -374,18 +374,18 @@ float GetCloudShadow(vec3 eyePlayerPos){
 
 	return shadow;
 }
-float GetCloudShadow_VLFOG(vec3 WorldPos){
+float GetCloudShadow_VLFOG(vec3 WorldPos, vec3 WorldSpace_sunVec){
 
 	float shadow = 0.0;
 
 	// assume a flat layer of cloud, and stretch the sampled density along the sunvector, starting from some vertical layer in the cloud.
 	#ifdef Cumulus
-		vec3 lowShadowStart = WorldPos + WsunVec/abs(WsunVec.y) * max((MaxCumulusHeight - 60) - WorldPos.y,0.0) ;
+		vec3 lowShadowStart = WorldPos + WorldSpace_sunVec/abs(WorldSpace_sunVec.y) * max((MaxCumulusHeight - 60) - WorldPos.y,0.0) ;
 		shadow += GetCumulusDensity(lowShadowStart,0)*Cumulus_density;
 	#endif
 
 	#ifdef Altostratus 
-		vec3 highShadowStart = WorldPos + WsunVec/abs(WsunVec.y) * max(AltostratusHeight - WorldPos.y,0.0);
+		vec3 highShadowStart = WorldPos + WorldSpace_sunVec/abs(WorldSpace_sunVec.y) * max(AltostratusHeight - WorldPos.y,0.0);
 		shadow += GetAltostratusDensity(highShadowStart);
 	#endif
 

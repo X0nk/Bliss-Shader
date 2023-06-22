@@ -287,7 +287,7 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 			}
 
 			#ifdef VL_CLOUDS_SHADOWS
-				sh *= GetCloudShadow_VLFOG(progressW);
+				sh *= GetCloudShadow_VLFOG(progressW,WsunVec);
 			#endif
 
 

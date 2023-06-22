@@ -3,6 +3,7 @@ float phaseRayleigh(float cosTheta) {
 	return cosTheta * mul_add.x + mul_add.y; // optimized version from [Elek09], divided by 4 pi for energy conservation
 }
 
+uniform float noPuddleAreas;
 float densityAtPosFog(in vec3 pos){
 	pos /= 18.;
 	pos.xz *= 0.5;
@@ -15,7 +16,6 @@ float densityAtPosFog(in vec3 pos){
 	return mix(xy.r,xy.g, f.y);
 }
 
-uniform float noPuddleAreas;
 
 float cloudVol(in vec3 pos){
 
@@ -118,7 +118,7 @@ vec4 getVolumetricRays(
 		}
 
 		#ifdef VL_CLOUDS_SHADOWS
-			sh *= GetCloudShadow_VLFOG(progressW);
+			sh *= GetCloudShadow_VLFOG(progressW,WsunVec);
 		#endif
 		
 		//Water droplets(fog)
@@ -140,6 +140,7 @@ vec4 getVolumetricRays(
 		vec3 CaveRays = (sunColor*sh)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - max(eyeBrightnessSmooth.y,0)/240.);
  
 		vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * max(eyeBrightnessSmooth.y,0)/240.  ;
+
 
 		vL += (vL0 - vL0 * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*absorbance;
 		absorbance *= dot(clamp(exp(-(rL+m)*dd*dL),0.0,1.0), vec3(0.333333));
@@ -258,7 +259,7 @@ vec4 InsideACloudFog(
 		Shadows_for_Fog = sh;
 
 		#ifdef VL_CLOUDS_SHADOWS
-			Shadows_for_Fog = sh * GetCloudShadow_VLFOG(progressW);
+			Shadows_for_Fog = sh * GetCloudShadow_VLFOG(progressW,WsunVec);
 		#endif
 
 		float densityVol = cloudVol(progressW);

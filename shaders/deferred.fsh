@@ -180,7 +180,9 @@ if (gl_FragCoord.x > 18. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257){
 	vec2 planetSphere = vec2(0.0);
 	vec3 sky = vec3(0.0);
 	vec3 skyAbsorb = vec3(0.0);
+
   vec3 WsunVec = mat3(gbufferModelViewInverse)*sunVec;
+
 	sky = calculateAtmosphere(avgSky*4000./2.0, viewVector, vec3(0.0,1.0,0.0), WsunVec, -WsunVec, planetSphere, skyAbsorb, 10, blueNoise());
 
 	#ifdef AEROCHROME_MODE
@@ -197,6 +199,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
 	vec3 viewVector = cartToSphere(p);
 
+  vec3 WsunVec = mat3(gbufferModelViewInverse)*sunVec;
   vec3 skytex = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150.;
   if(viewVector.y < -0.025) skytex = skytex * clamp( exp(viewVector.y) - 1.0,0.25,1.0) ;
   
