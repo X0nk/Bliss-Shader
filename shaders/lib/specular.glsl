@@ -272,24 +272,21 @@ void MaterialReflections(
 	vec3 rayContrib = F;
 
 	float rayContribLuma = luma(rayContrib);
-
 	float VisibilityFactor = rayContribLuma * pow(1.0-roughness,3.0);
-
     bool hasReflections = Roughness_Threshold == 1.0 ? true : (f0.y * (1.0 - roughness * Roughness_Threshold)) > 0.01;
 
 	SunReflection = directlighting *  GGX(normal, -np3, sunPos, roughness, vec3(f0.y));
+	
+	#ifdef Sky_reflection
+		if( Roughness_Threshold == 1.0 || (f0.y * (1.0 - roughness * Roughness_Threshold)) > 0.005) SkyReflection = pow(clamp(1.0-VisibilityFactor,0,1),0.3)*( skyCloudsFromTex(L, colortex4).rgb / 150. ) * 5.;
+	#endif
 
 	if (hasReflections) { // Skip sky reflection and SSR if its just not very visible anyway
-		#ifdef Sky_reflection
-			SkyReflection = ( skyCloudsFromTex(L, colortex4).rgb / 150. ) * 5.;
-		#endif
+
 
 		#ifdef Screen_Space_Reflections
-
 			float rayQuality = mix_float(reflection_quality,6.0,rayContribLuma); // Scale quality with ray contribution
 			
-	
-
 			vec3 rtPos = rayTraceSpeculars(mat3(gbufferModelView) * L, fragpos.xyz,  noise.b, rayQuality, hand, reflectLength);
 
 			float LOD = clamp(reflectLength * 6.0, 0.0,6.0);
@@ -328,7 +325,7 @@ void MaterialReflections(
 
 	// put reflections onto the scene
 	#ifdef Rough_reflections
-		Output = hand ? mix_vec3(Output,  Reflections.rgb, VisibilityFactor) : mix_vec3(Output,  Reflections.rgb, rayContribLuma *  (1.0 - roughness * Roughness_Threshold));
+		Output = hand ? mix_vec3(Output,  Reflections.rgb, VisibilityFactor) : mix_vec3(Output,  Reflections.rgb, rayContribLuma);
 	#else
 		Output = mix_vec3(Output,  Reflections.rgb, VisibilityFactor);
 	#endif
