@@ -272,11 +272,13 @@ void main() {
 	float Puddle_shape = 0.;
 	
 	#ifndef ENTITIES
+	#ifndef HAND
 	#ifdef WORLD
 	#ifdef Puddles
 		Puddle_shape = (1.0 - clamp(exp(-15 * pow(texture2D(noisetex, worldpos.xz * (0.015 * Puddle_Size)	).b  ,5)),0,1)) * lightmap		;
 		Puddle_shape *= clamp( viewToWorld(normal).y*0.5+0.5 ,0.0,1.0);
 		Puddle_shape *= rainfall;
+	#endif
 	#endif
 	#endif
 	#endif
@@ -492,7 +494,7 @@ void main() {
 		vec4 SpecularTex = texture2D(specular, lmtexcoord.xy, bias);
 
 		SpecularTex.r = max(SpecularTex.r, Puddle_shape);
-		SpecularTex.g = max(SpecularTex.g, Puddle_shape*0.04);
+		SpecularTex.g = max(SpecularTex.g, Puddle_shape*0.02);
 
 		// #ifdef ENTITIES
 		// 	if(NameTags == 1) SpecularTex = vec4(0.0);

@@ -136,7 +136,7 @@ vec4 getVolumetricRays(
 		vec3 AtmosphericFog = skyCol0 * (rL+m)  ;
 
 		// extra fog effects
-		vec3 rainRays =   (sunColor*sh) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1) * rainStrength * noPuddleAreas * RainFog_amount; 
+		vec3 rainRays =   (sunColor*sh) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1) * rainStrength * noPuddleAreas * RainFog_amount * 0.5; 
 		vec3 CaveRays = (sunColor*sh)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - max(eyeBrightnessSmooth.y,0)/240.);
  
 		vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * max(eyeBrightnessSmooth.y,0)/240.  ;
