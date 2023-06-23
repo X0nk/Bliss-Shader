@@ -266,7 +266,7 @@ vec4 renderClouds(
 	
 	float timing = 1.0 - clamp(pow(abs(dV_Sun.y)/150.0,2.0),0.0,1.0);
 
-	vec3 lightningColor =  vec3(0.5,0.8,1.0) * 1000.0 * lightningFlash;
+	vec3 lightningColor =  vec3(Lightning_R,Lightning_G,Lightning_B) * 1000.0 * lightningFlash;
 
 	#ifdef Cumulus
 		for(int i=0;i<maxIT_clouds;i++) {

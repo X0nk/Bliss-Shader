@@ -89,13 +89,13 @@ vec4 getVolumetricRays(
 	vec3 sunColor = lightCol.rgb / 80.0;
 	vec3 skyCol0 = AmbientColor / 150. * 5. ; // * max(abs(WsunVec.y)/150.0,0.);
 
-	vec3 lightningColor =  vec3(0.5,0.8,1.0) * 25.0 * lightningFlash;
+	vec3 lightningColor =  vec3(Lightning_R,Lightning_G,Lightning_B) * 25.0 * lightningFlash * max(eyeBrightnessSmooth.y,0)/240.;
 	#ifdef ReflectedFog
 		lightningColor *= 0.01;
 	#endif
 	
 	vec3 np3 = normVec(wpos);
-	float ambfogfade =  clamp(exp(np3.y*1.5 - 1.5),0.0,1.0) * 2 ;
+	float ambfogfade =  clamp(exp(np3.y* 2 - 2),0.0,1.0) * 4 ;
 	skyCol0 += lightningColor * ambfogfade;
 
 
@@ -221,13 +221,13 @@ vec4 InsideACloudFog(
 	vec3 Fog_SkyCol = SkyColor;
 	vec3 Fog_SunCol = SunColor;
 	
-	vec3 lightningColor =  vec3(0.5,0.8,1.0) * 255.0 * lightningFlash;
+	vec3 lightningColor =  vec3(Lightning_R,Lightning_G,Lightning_B) * 255.0 * lightningFlash * max(eyeBrightnessSmooth.y,0)/240.;
 	#ifdef ReflectedFog
 		lightningColor *= 0.01;
 	#endif
 
 	vec3 np3 = normVec(wpos);
-	float ambfogfade =  clamp(exp(np3.y*1.5 - 1.5),0.0,1.0) * 2 ;
+	float ambfogfade =  clamp(exp(np3.y* 2 - 2),0.0,1.0) * 4 ;
 
 	Fog_SkyCol += (lightningColor/10) * ambfogfade;
 	

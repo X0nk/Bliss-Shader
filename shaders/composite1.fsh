@@ -1142,7 +1142,7 @@ void main() {
 			LabEmission(FINAL_COLOR, albedo, SpecularTex.a);
 		// #endif
 		
-		if(lightningBolt) FINAL_COLOR.rgb += vec3(0.5,0.8,1.0) * 255.0;
+		if(lightningBolt) FINAL_COLOR.rgb += vec3(Lightning_R,Lightning_G,Lightning_B) * 150.0;
 
 		gl_FragData[0].rgb =  FINAL_COLOR;
 	}
