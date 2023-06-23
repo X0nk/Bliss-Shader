@@ -272,7 +272,7 @@ void main() {
   if (isEyeInWater == 1){
     float fogfade = clamp( exp(length(p3) /  -10)   ,0.0,1.0);
     color.rgb = color.rgb * fogfade   ;
-    vl.a *= fogfade*0.7+0.3  ;
+    vl.a *= fogfade  ;
   }
 
   color *= vl.a;

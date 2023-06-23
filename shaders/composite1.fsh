@@ -737,6 +737,7 @@ vec3 Moon(vec3 PlayerPos, vec3 WorldSunVec, vec3 Color, inout vec3 occludeStars)
 
 #include "lib/PhotonGTAO.glsl"
 
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -818,7 +819,9 @@ void main() {
 
 
 
-	bool translucent = abs(dataUnpacked1.w-0.5) <0.01;	// Strong translucency
+
+	bool lightningBolt = abs(dataUnpacked1.w-0.5) <0.01;
+
 	bool translucent2 = abs(dataUnpacked1.w-0.6) <0.01;	// Weak translucency
 	bool translucent3 = abs(dataUnpacked1.w-0.55) <0.01;	// all blocks
 	bool translucent4 = abs(dataUnpacked1.w-0.65) <0.01;	// Weak translucency
@@ -995,6 +998,7 @@ void main() {
 			Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), newLightmap.xy, skylight);
 		#endif
 
+
 		vec3 AO = vec3(1.0);
 		vec3 debug = vec3(0.0);
 
@@ -1120,6 +1124,8 @@ void main() {
 		
 		//combine all light sources 
 		vec3 FINAL_COLOR = Indirect_lighting + Direct_lighting;
+
+
 		
 		#ifdef Variable_Penumbra_Shadows
 			FINAL_COLOR += SSS*DirectLightColor	* lightleakfix;
@@ -1135,6 +1141,8 @@ void main() {
 		// #ifdef LabPBR_Emissives
 			LabEmission(FINAL_COLOR, albedo, SpecularTex.a);
 		// #endif
+		
+		if(lightningBolt) FINAL_COLOR.rgb += vec3(0.5,0.8,1.0) * 255.0;
 
 		gl_FragData[0].rgb =  FINAL_COLOR;
 	}
@@ -1161,7 +1169,6 @@ void main() {
 
 	
 	//  gl_FragData[0].rgb *=  GetCloudSkyOcclusion(p3 + cameraPosition);
-	// if (abs(filtered.b-0.1) < 0.0004 ) gl_FragData[0].rgb = vec3(0,1,0);
 
 	/* DRAWBUFFERS:3 */
 }

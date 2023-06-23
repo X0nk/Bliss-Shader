@@ -45,15 +45,15 @@ float pi2wt = PI48*frameTimeCounter;
 attribute vec4 mc_Entity;
 uniform int blockEntityId;
 uniform int entityId;
+flat varying float blockID;
 
 uniform int heldItemId;
 uniform int heldItemId2;
 flat varying float HELD_ITEM_BRIGHTNESS;
 
-flat varying float blockID;
+
+
 flat varying int LIGHTNING;
-
-
 flat varying float SSSAMOUNT;
 flat varying float EMISSIVE;
 flat varying int NameTags;
@@ -199,8 +199,6 @@ void main() {
 
 
 
-
-
 	#ifdef MC_NORMAL_MAP
 		tangent = vec4(normalize(gl_NormalMatrix *at_tangent.rgb),at_tangent.w);
 	#endif
@@ -235,7 +233,7 @@ PHYSICSMOD_SNOW = 0;
 
     /////// ----- EMISSIVE STUFF ----- ///////
 				EMISSIVE = 0.0;
-
+				LIGHTNING = 0;
 	// if(NameTags > 0) EMISSIVE = 0.9;
 
 	// normal block lightsources		
@@ -243,11 +241,16 @@ PHYSICSMOD_SNOW = 0;
 	
 	// special cases light lightning and beacon beams...	
 	#ifdef ENTITIES
-		if(entityId == 12345) EMISSIVE = 0.9;
+
+		if(entityId == 12345){
+			LIGHTNING = 1;
+			normalMat.a = 0.5;
+		}
+
 	#endif
 
     /////// ----- SSS STUFF ----- ///////
-				SSSAMOUNT = 0.0;
+			SSSAMOUNT = 0.0;
 
 
 	HELD_ITEM_BRIGHTNESS = 0.0;

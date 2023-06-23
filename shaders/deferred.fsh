@@ -3,6 +3,7 @@
 
 #include "lib/settings.glsl"
 //Prepares sky textures (2 * 256 * 256), computes light values and custom lightmaps
+#define ReflectedFog
 
 flat varying vec3 ambientUp;
 flat varying vec3 ambientLeft;
@@ -102,6 +103,7 @@ vec3 toScreenSpace(vec3 p) {
     vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
     return fragposition.xyz / fragposition.w;
 }
+
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-1.,3.)/8.,
 							vec2(5.0,1.)/8.,
@@ -146,33 +148,35 @@ if (gl_FragCoord.x < 17. && gl_FragCoord.y > 19. && gl_FragCoord.y < 19.+17. ){
 
 //Save light values
 if (gl_FragCoord.x < 1. && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(ambientUp * blackbody(ambient_temp),1.0);
+gl_FragData[0] = vec4(ambientUp * blackbody(ambient_temp) ,1.0);
 if (gl_FragCoord.x > 1. && gl_FragCoord.x < 2.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(ambientUp,1.0);
+gl_FragData[0] = vec4(ambientUp ,1.0);
 if (gl_FragCoord.x > 2. && gl_FragCoord.x < 3.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(ambientLeft,1.0);
+gl_FragData[0] = vec4(ambientLeft ,1.0);
 if (gl_FragCoord.x > 3. && gl_FragCoord.x < 4.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(ambientRight,1.0);
+gl_FragData[0] = vec4(ambientRight ,1.0);
 if (gl_FragCoord.x > 4. && gl_FragCoord.x < 5.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(ambientB,1.0);
+gl_FragData[0] = vec4(ambientB ,1.0);
 if (gl_FragCoord.x > 5. && gl_FragCoord.x < 6.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(ambientF,1.0);
+gl_FragData[0] = vec4(ambientF ,1.0);
 if (gl_FragCoord.x > 6. && gl_FragCoord.x < 7.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 gl_FragData[0] = vec4(lightSourceColor,1.0);
 if (gl_FragCoord.x > 7. && gl_FragCoord.x < 8.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(avgAmbient,1.0);
+gl_FragData[0] = vec4(avgAmbient ,1.0);
 if (gl_FragCoord.x > 8. && gl_FragCoord.x < 9.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 gl_FragData[0] = vec4(sunColor,1.0);
 if (gl_FragCoord.x > 9. && gl_FragCoord.x < 10.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 gl_FragData[0] = vec4(moonColor,1.0);
 if (gl_FragCoord.x > 11. && gl_FragCoord.x < 12.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(avgSky,1.0);
+gl_FragData[0] = vec4(avgSky ,1.0);
 if (gl_FragCoord.x > 12. && gl_FragCoord.x < 13.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 gl_FragData[0] = vec4(sunColorCloud,1.0);
 if (gl_FragCoord.x > 13. && gl_FragCoord.x < 14.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 gl_FragData[0] = vec4(moonColorCloud,1.0);
 //Sky gradient (no clouds)
 const float pi = 3.141592653589793238462643383279502884197169;
+
+
 if (gl_FragCoord.x > 18. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257){
   vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.,1.))/256.+tempOffsets/256.,0.0,1.0);
   vec3 viewVector = cartToSphere(p);
@@ -200,11 +204,12 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec3 viewVector = cartToSphere(p);
 
   vec3 WsunVec = mat3(gbufferModelViewInverse)*sunVec;
-  vec3 skytex = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150.;
+  vec3 skytex = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150. ;
+
   if(viewVector.y < -0.025) skytex = skytex * clamp( exp(viewVector.y) - 1.0,0.25,1.0) ;
   
 	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024.,vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), sunColorCloud, moonColor, ambientUp*5.0);
-  skytex = skytex*clouds.a + clouds.rgb/5.0; 
+  // skytex = skytex*clouds.a + clouds.rgb/5.0; 
 
   vec4 VL_Fog = getVolumetricRays(mat3(gbufferModelView)*viewVector*1024.,  fract(frameCounter/1.6180339887), ambientUp);
   skytex = skytex*VL_Fog.a + VL_Fog.rgb*20;

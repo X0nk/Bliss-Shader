@@ -1,3 +1,9 @@
+
+vec3 normVec (vec3 vec){
+	return vec*inversesqrt(dot(vec,vec));
+}
+
+
 float phaseRayleigh(float cosTheta) {
 	const vec2 mul_add = vec2(0.1, 0.28) /acos(-1.0);
 	return cosTheta * mul_add.x + mul_add.y; // optimized version from [Elek09], divided by 4 pi for energy conservation
@@ -30,7 +36,8 @@ float cloudVol(in vec3 pos){
 
 	// float CloudyFog = max(	(fog_shape*2.0 - fog_eroded*0.5) - 1.2, max(fog_shape-0.8,0.0)) * mult;
 
-	float CloudyFog = max((fog_shape*1.2 - fog_eroded*0.2) - 0.75,0.0) ;
+	float heightlimit = exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0));
+	float CloudyFog = max((fog_shape*1.2 - fog_eroded*0.2) - 0.75,0.0) * heightlimit ;
 
 	float UniformFog = exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0));
 	
@@ -77,9 +84,20 @@ vec4 getVolumetricRays(
 	float mie = phaseg(SdotV,0.7)*5.0 + 1.0;
 	float rayL = phaseRayleigh(SdotV);
 
+	
 	// Makes fog more white idk how to simulate it correctly
 	vec3 sunColor = lightCol.rgb / 80.0;
-	vec3 skyCol0 = AmbientColor / 150. * 5.; // * max(abs(WsunVec.y)/150.0,0.);
+	vec3 skyCol0 = AmbientColor / 150. * 5. ; // * max(abs(WsunVec.y)/150.0,0.);
+
+	vec3 lightningColor =  vec3(0.5,0.8,1.0) * 25.0 * lightningFlash;
+	#ifdef ReflectedFog
+		lightningColor *= 0.01;
+	#endif
+	
+	vec3 np3 = normVec(wpos);
+	float ambfogfade =  clamp(exp(np3.y*1.5 - 1.5),0.0,1.0) * 2 ;
+	skyCol0 += lightningColor * ambfogfade;
+
 
 	#ifdef Biome_specific_environment
 		// recolor change sun and sky color to some color, but make sure luminance is preserved.
@@ -149,7 +167,6 @@ vec4 getVolumetricRays(
 }
 
 
-
 /// really dumb lmao
 vec4 InsideACloudFog(
 	vec3 fragpos,
@@ -200,10 +217,20 @@ vec4 InsideACloudFog(
 
 	if(dV_Sun.y/shadowStep < -0.1) dV_Sun = -dV_Sun;
 
+
 	vec3 Fog_SkyCol = SkyColor;
 	vec3 Fog_SunCol = SunColor;
 	
+	vec3 lightningColor =  vec3(0.5,0.8,1.0) * 255.0 * lightningFlash;
+	#ifdef ReflectedFog
+		lightningColor *= 0.01;
+	#endif
 
+	vec3 np3 = normVec(wpos);
+	float ambfogfade =  clamp(exp(np3.y*1.5 - 1.5),0.0,1.0) * 2 ;
+
+	Fog_SkyCol += (lightningColor/10) * ambfogfade;
+	
 
 
 		float mieDay = phaseg(SdotV, 0.75) * 3.14;
@@ -321,6 +348,8 @@ vec4 InsideACloudFog(
 
 				float ambientlightshadow = 1.0 - clamp(exp((progress_view.y - (MaxCumulusHeight - 50)) / 100.0),0.0,1.0) ;
 				vec3 S = Cloud_lighting(muE, cumulus*Cumulus_density, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, ambientlightshadow, 0, progress_view, timing);
+				
+				S += lightningColor * exp((1.0-cumulus) * -5) * ambientlightshadow;
 
 				vec3 Sint = (S - S * exp(-mult*muE)) / muE;
 				color += max(muE*Sint*total_extinction,0.0);

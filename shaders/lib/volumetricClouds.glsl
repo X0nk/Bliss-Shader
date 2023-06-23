@@ -200,6 +200,8 @@ float PhaseHG(float cosTheta, float g) {
     return Inv4Pi * (1 - g * g) / (denom * sqrt(denom));
 }
 
+uniform float lightningFlash;
+
 vec4 renderClouds(
 	vec3 FragPosition,
 	vec2 Dither,
@@ -264,6 +266,8 @@ vec4 renderClouds(
 	
 	float timing = 1.0 - clamp(pow(abs(dV_Sun.y)/150.0,2.0),0.0,1.0);
 
+	vec3 lightningColor =  vec3(0.5,0.8,1.0) * 1000.0 * lightningFlash;
+
 	#ifdef Cumulus
 		for(int i=0;i<maxIT_clouds;i++) {
 			distancething *= 2;
@@ -302,6 +306,7 @@ vec4 renderClouds(
 				float ambientlightshadow = 1.0 - clamp(exp((progress_view.y - (MaxCumulusHeight - 50)) / 100.0),0.0,1.0) ;
 
 				vec3 S = Cloud_lighting(muE, cumulus*Cumulus_density, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, ambientlightshadow, 0, progress_view, timing);
+				S += lightningColor * exp((1.0-cumulus) * -10) * ambientlightshadow;
 
 				vec3 Sint = (S - S * exp(-mult*muE)) / muE;
 				color += max(muE*Sint*total_extinction,0.0);

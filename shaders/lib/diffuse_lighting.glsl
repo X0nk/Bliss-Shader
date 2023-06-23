@@ -22,6 +22,10 @@ vec3 DoAmbientLighting (vec3 SkyColor, vec3 TorchColor, vec2 Lightmap, float sky
     // vec3 SkyLight = max(SkyColor * min(pow(Lightmap.y,3.0),1.0), vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01)) ;
 
     SkyColor = (SkyColor * 2.0 * ambient_brightness) * 8./150./3.;
+
+	SkyColor += vec3(0.5,0.8,1.0) * 50.0 * skyLightDir * lightningFlash ;
+    // SkyColor += vec3(0.7,0.9,1.0) * skyLightDir * lightningFlash;
+
     float skyLM = (pow(Lightmap.y,15.0)*2.0 + pow(Lightmap.y,2.5))*0.5;
     vec3 SkyLight = max(SkyColor * skyLM,  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01)); 
 

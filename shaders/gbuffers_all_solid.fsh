@@ -542,6 +542,8 @@ void main() {
 	#ifdef WORLD
 		vec4 Albedo = texture2D(texture, lmtexcoord.xy, bias) * color;
 
+		if(LIGHTNING > 0)  Albedo = vec4(1);
+
 		#ifdef AEROCHROME_MODE
 			vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), AEROCHROME_PINKNESS);
 			float gray = dot(Albedo.rgb, vec3(0.2, 01.0, 0.07));
@@ -599,7 +601,7 @@ void main() {
 		//////////////////////////////// 
 
 		// vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*lmtexcoord.zw/30.0) + lmtexcoord.zw),	0.0,	1.0);
-		vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*vec2(torchlightmap,lmtexcoord.w)/	(30.0 * (1+ (1-RENDER_SCALE.x)))		) + vec2(torchlightmap,lmtexcoord.w)),	0.0,	1.0);
+		vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*vec2(torchlightmap,lmtexcoord.w) /	(30.0 * (1+ (1-RENDER_SCALE.x)))		) + vec2(torchlightmap,lmtexcoord.w)),	0.0,	1.0);
 
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
 

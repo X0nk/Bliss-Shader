@@ -118,9 +118,11 @@ float waterCaustics(vec3 wPos, vec3 lightSource) { // water waves
 	return caustic / weightSum;
 }
 
-vec3 normVec (vec3 vec){
-	return vec*inversesqrt(dot(vec,vec));
-}
+// vec3 normVec (vec3 vec){
+// 	return vec*inversesqrt(dot(vec,vec));
+// }
+
+#include "lib/volumetricFog.glsl"
 
 void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estEyeDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient, vec3 lightSource, float VdotL){
 	int spCount = 8;
@@ -195,7 +197,6 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 	inColor += vL;
 }
 
-#include "lib/volumetricFog.glsl"
 
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
