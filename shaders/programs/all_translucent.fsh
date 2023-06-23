@@ -57,6 +57,8 @@ flat varying vec3 avgAmbient;
 #include "/lib/sky_gradient.glsl"
 #include "/lib/waterBump.glsl"
 
+#define END
+#define NETHER
 #include "/lib/diffuse_lighting.glsl"
 
 

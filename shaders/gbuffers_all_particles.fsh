@@ -33,6 +33,7 @@ uniform vec3 cameraPosition;
 #include "lib/sky_gradient.glsl"
 #include "lib/volumetricClouds.glsl"
 
+#define OVERWORLD
 #include "lib/diffuse_lighting.glsl"
 
 //faster and actually more precise than pow 2.2

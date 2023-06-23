@@ -27,6 +27,8 @@ uniform vec3 cameraPosition;
 
 #include "/lib/settings.glsl"
 
+#define END
+#define NETHER
 #include "/lib/diffuse_lighting.glsl"
 
 vec3 toLinear(vec3 sRGB){

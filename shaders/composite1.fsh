@@ -151,6 +151,7 @@ vec3 viewToWorld(vec3 viewPosition) {
 #include "lib/waterBump.glsl"
 #include "lib/specular.glsl"
 
+#define OVERWORLD
 #include "lib/diffuse_lighting.glsl"
 
 float lengthVec (vec3 vec){

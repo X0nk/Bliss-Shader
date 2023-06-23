@@ -1,7 +1,11 @@
 // in this here file im doing all the lighting for sunlight, ambient light, torches, for solids and translucents.
 
-//// OVERWORLD ////
 
+#ifndef OVERWORLD
+uniform float lightningFlash;
+#endif
+//// OVERWORLD ////
+#ifdef OVERWORLD
 vec3 DoAmbientLighting (vec3 SkyColor, vec3 TorchColor, vec2 Lightmap, float skyLightDir){
     // Lightmap.x = 0.0;
     // Lightmap.y = 1.0;
@@ -41,8 +45,9 @@ vec3 DoDirectLighting(vec3 SunColor, float Shadow, float NdotL, float Subsurface
     
     return SunLight;
 }
+#endif
 
-
+#ifdef NETHER
 //// NETHER ////
 vec3 DoAmbientLighting_Nether(vec3 FogColor, vec3 TorchColor, float Lightmap, vec3 Normal, vec3 np3, vec3 WorldPos){
 
@@ -59,6 +64,9 @@ vec3 DoAmbientLighting_Nether(vec3 FogColor, vec3 TorchColor, float Lightmap, ve
 
     return  AmbientLight + TorchLight + LavaGlow;
 }
+#endif
+
+#ifdef END
 //// END ////
 vec3 DoAmbientLighting_End(vec3 FogColor, vec3 TorchColor, float Lightmap, vec3 Normal, vec3 np3){
 
@@ -74,3 +82,4 @@ vec3 DoAmbientLighting_End(vec3 FogColor, vec3 TorchColor, float Lightmap, vec3 
 
     return TorchLight + AmbientLight;
 }
+#endif

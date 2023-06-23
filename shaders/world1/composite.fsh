@@ -2,6 +2,8 @@
 #extension GL_EXT_gpu_shader4 : enable
 
 #include "/lib/settings.glsl"
+
+#define END
 #include "/lib/diffuse_lighting.glsl"
 
 
