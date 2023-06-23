@@ -214,7 +214,6 @@ void main() {
 	NameTags = 0;
 
 PHYSICSMOD_SNOW = 0;
-
 #ifdef ENTITIES
 
 #ifdef ENTITY_PHYSICSMOD_SNOW
@@ -227,6 +226,7 @@ PHYSICSMOD_SNOW = 0;
 	// if(gl_Color.a < 1.0) NameTags = 1;
 	// if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
 	
+	if(entityId == 1100 || entityId == 1200 || entityId == 2468) normalMat.a = 0.45;
 
 #endif
 

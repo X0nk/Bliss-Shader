@@ -822,10 +822,10 @@ void main() {
 
 
 	bool lightningBolt = abs(dataUnpacked1.w-0.5) <0.01;
-
-	bool translucent2 = abs(dataUnpacked1.w-0.6) <0.01;	// Weak translucency
-	bool translucent3 = abs(dataUnpacked1.w-0.55) <0.01;	// all blocks
-	bool translucent4 = abs(dataUnpacked1.w-0.65) <0.01;	// Weak translucency
+	bool boatMask = abs(dataUnpacked1.w-0.6) <0.01;
+	// bool translucent2 = abs(dataUnpacked1.w-0.6) <0.01;	// Weak translucency
+	// bool translucent3 = abs(dataUnpacked1.w-0.55) <0.01;	// all blocks
+	// bool translucent4 = abs(dataUnpacked1.w-0.65) <0.01;	// Weak translucency
 	bool entities = abs(dataUnpacked1.w-0.45) < 0.01;	
 	
 	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
@@ -1110,7 +1110,7 @@ void main() {
 
 			SnowPatches = mix(0.0, SnowPatches, WinterTimeForSnow);
 
-			if(!hand && !iswater){
+			if(!hand && !iswater && !entities && isEyeInWater == 0){
 				albedo = mix(albedo, vec3(0.8,0.9,1.0), SnowPatches);
 				SpecularTex.rg = mix(SpecularTex.rg, vec2(1,0.05), SnowPatches);
 			}
