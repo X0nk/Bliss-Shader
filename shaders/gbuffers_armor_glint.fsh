@@ -41,7 +41,7 @@ void main() {
 
 	float exposure = texelFetch2D(gaux1,ivec2(10,37),0).r;
 
-	vec3 col = albedo*exp(-exposure*3.);
+	vec3 col = albedo*exp(-exposure*4.) * 255.0;
 
 	gl_FragData[0].rgb = col*color.a;
 	gl_FragData[0].a = gl_FragData[0].a*0.1;
