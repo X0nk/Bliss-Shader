@@ -134,7 +134,7 @@ vec3 rayTraceSpeculars(vec3 dir,vec3 position,float dither, float quality, bool 
 		spos += stepv;
 		
 		//small bias
-		float biasamount = (0.0002 + 0.0015*depthcancleoffset ) / dist;
+		float biasamount = (0.0002 + 0.0015*pow(depthcancleoffset,5) ) / dist;
 		// float biasamount = 0.0002 / dist;
 		if(hand) biasamount = 0.01;
 		minZ = maxZ-biasamount / ld(spos.z);
@@ -147,10 +147,29 @@ vec3 rayTraceSpeculars(vec3 dir,vec3 position,float dither, float quality, bool 
   return vec3(1.1);
 }
 
+
+// vec3 sampleGGXVNDF(vec3 V_, float roughness, float U1, float U2){
+// 	// stretch view
+// 	vec3 V = normalize(vec3(roughness * V_.x, roughness * V_.y, V_.z));
+// 	// orthonormal basis
+// 	vec3 T1 = (V.z < 0.9999) ? normalize(cross(V, vec3(0,0,1))) : vec3(1,0,0);
+// 	vec3 T2 = cross(T1, V);
+// 	// sample point with polar coordinates (r, phi)
+// 	float a = 1.0 / (1.0 + V.z);
+// 	float r = sqrt(U1*0.25);
+// 	float phi = (U2<a) ? U2/a * 3.141592653589793 : 3.141592653589793 + (U2-a)/(1.0-a) * 3.141592653589793;
+// 	float P1 = r*cos(phi);
+// 	float P2 = r*sin(phi)*((U2<a) ? 1.0 : V.z);
+// 	// compute normal
+// 	vec3 N = P1*T1 + P2*T2 + sqrt(max(0.0, 1.0 - P1*P1 - P2*P2))*V;
+// 	// unstretch
+// 	N = normalize(vec3(roughness*N.x, roughness*N.y, N.z));
+// 	return N;
+// }
+
 float xonk_fma(float a,float b,float c){
  return a * b + c;
 }
-
 //// thank you Zombye | the paper: https://ggx-research.github.io/publication/2023/06/09/publication-ggx.html
 vec3 SampleVNDFGGX(
     vec3 viewerDirection, // Direction pointing towards the viewer, oriented such that +Z corresponds to the surface normal
@@ -178,28 +197,9 @@ vec3 SampleVNDFGGX(
     return normalize(vec3(alpha * halfway.xy, halfway.z));
 }
 
-vec3 sampleGGXVNDF(vec3 V_, float roughness, float U1, float U2){
-	// stretch view
-	vec3 V = normalize(vec3(roughness * V_.x, roughness * V_.y, V_.z));
-	// orthonormal basis
-	vec3 T1 = (V.z < 0.9999) ? normalize(cross(V, vec3(0,0,1))) : vec3(1,0,0);
-	vec3 T2 = cross(T1, V);
-	// sample point with polar coordinates (r, phi)
-	float a = 1.0 / (1.0 + V.z);
-	float r = sqrt(U1*0.25);
-	float phi = (U2<a) ? U2/a * 3.141592653589793 : 3.141592653589793 + (U2-a)/(1.0-a) * 3.141592653589793;
-	float P1 = r*cos(phi);
-	float P2 = r*sin(phi)*((U2<a) ? 1.0 : V.z);
-	// compute normal
-	vec3 N = P1*T1 + P2*T2 + sqrt(max(0.0, 1.0 - P1*P1 - P2*P2))*V;
-	// unstretch
-	N = normalize(vec3(roughness*N.x, roughness*N.y, N.z));
-	return N;
-}
 
-vec3 GGX (vec3 n, vec3 v, vec3 l, float r, vec3 F0) {
-  r = pow(r,2.5);
-//   r*=r;
+vec3 GGX(vec3 n, vec3 v, vec3 l, float r, vec3 F0) {
+  r = max(pow(r,2.5), 0.0001);
 
   vec3 h = l + v;
   float hn = inversesqrt(dot(h, h));
@@ -255,7 +255,6 @@ void MaterialReflections(
 	#ifdef Rough_reflections
 		int seed = frameCounter%40000;
 		vec2  ij = fract(R2_samples_spec(seed) + noise.rg) ;
-		// vec3 H = sampleGGXVNDF(normSpaceView, roughness, ij.x, ij.y);
 		vec3 H = SampleVNDFGGX(normSpaceView, vec2(roughness), ij.xy);
 
 		if(hand) H = normalize(vec3(0.0,0.0,1.0));
@@ -286,8 +285,15 @@ void MaterialReflections(
 
 		#ifdef Screen_Space_Reflections
 			float rayQuality = mix_float(reflection_quality,6.0,rayContribLuma); // Scale quality with ray contribution
-			if(hand) {rayQuality = max(rayQuality,30.0); noise.b = 0.5 + (noise.b-0.5);}
+			
+			#ifndef Dynamic_SSR_quality
+				rayQuality = reflection_quality;
+			#endif
 
+
+			noise.b = mix_float(noise.b, 0.5 + (noise.b-0.5),rayContribLuma);
+			if(hand) {rayQuality = max(rayQuality,30.0); noise.b = 0.5 + (noise.b-0.5);}
+			
 			vec3 rtPos = rayTraceSpeculars(mat3(gbufferModelView) * L, fragpos.xyz,  noise.b, rayQuality, hand, reflectLength);
 
 			float LOD = clamp(reflectLength * 6.0, 0.0,6.0);
@@ -306,6 +312,8 @@ void MaterialReflections(
 	}
 
 	// check if the f0 is within the metal ranges, then tint by albedo if it's true.
+	// // the brightening is disgusting
+	// vec3 Metals = f0.y > 229.5/255.0 ? clamp((albedo / max(pow(luma(albedo),0.1),0.4)) + fresnel,0.0,1.0) : vec3(1.0);
 	vec3 Metals = f0.y > 229.5/255.0 ? clamp(albedo + fresnel,0.0,1.0) : vec3(1.0);
 
 	SunReflection *= Metals;

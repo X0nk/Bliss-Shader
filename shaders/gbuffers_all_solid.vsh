@@ -57,6 +57,7 @@ flat varying int LIGHTNING;
 flat varying float SSSAMOUNT;
 flat varying float EMISSIVE;
 flat varying int NameTags;
+flat varying int PORTAL;
 
 in vec3 at_velocity;
 out vec3 velocity;
@@ -206,14 +207,22 @@ void main() {
 	normalMat = vec4(normalize(gl_NormalMatrix *gl_Normal), 1.0);
 	FlatNormals = normalMat.xyz;
 
-
-
 	blockID = mc_Entity.x;
 	velocity = at_velocity;
 
-	NameTags = 0;
 
-PHYSICSMOD_SNOW = 0;
+
+
+
+	PORTAL = 0;
+
+	#ifdef WORLD
+		if(blockEntityId == 2100) PORTAL = 255;
+	#endif
+
+	NameTags = 0;
+	PHYSICSMOD_SNOW = 0;
+
 #ifdef ENTITIES
 
 #ifdef ENTITY_PHYSICSMOD_SNOW
@@ -227,9 +236,11 @@ PHYSICSMOD_SNOW = 0;
 	// if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
 	
 	if(entityId == 1100 || entityId == 1200 || entityId == 2468) normalMat.a = 0.45;
+	
 
 #endif
 
+	if(mc_Entity.x == 10003) normalMat.a = 0.55;
 
     /////// ----- EMISSIVE STUFF ----- ///////
 				EMISSIVE = 0.0;

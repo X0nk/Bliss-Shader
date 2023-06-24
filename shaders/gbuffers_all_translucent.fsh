@@ -69,7 +69,6 @@ flat varying vec3 avgAmbient;
 #include "lib/clouds.glsl"
 #include "lib/stars.glsl"
 #include "lib/volumetricClouds.glsl"
-
 #define OVERWORLD
 #include "lib/diffuse_lighting.glsl"
 

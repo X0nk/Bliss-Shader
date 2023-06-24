@@ -299,6 +299,7 @@ const float shadowDistanceRenderMul = -1.0; //[-1.0 1.0] THIS WILL BREAK SUBSURF
 #define SSR_STEPS 30 //[10 15 20 25 30 35 40 50 100 200 400]
 #define SUN_MICROFACET_SPECULAR // If enabled will use realistic rough microfacet model, else will just reflect the sun. No performance impact.
 #define USE_QUARTER_RES_DEPTH // Uses a quarter resolution depth buffer to raymarch screen space reflections, improves performance but may introduce artifacts
+#define Dynamic_SSR_quality // rougher reflections have lower quality. this improves performance a bit in alot of scenes
 
 #ifdef Specular_Reflections
 	#define Puddles // yes

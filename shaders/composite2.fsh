@@ -197,6 +197,63 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 	inColor += vL;
 }
 
+vec4 RainRays(vec3 rayStart, vec3 rayEnd, float rayLength, float dither, vec3 ambient, vec3 lightSource, float VdotL){
+	int spCount = 8;
+	
+	vec3 start = toShadowSpaceProjected(rayStart);
+	vec3 end = toShadowSpaceProjected(rayEnd);
+	vec3 dV = (end-start);
+
+
+	//limit ray length at 32 blocks for performance and reducing integration error
+	//you can't see above this anyway
+	float maxZ = min(rayLength,1000)/(1e-8+rayLength);
+
+	// min(length(dVWorld),far)/length(dVWorld);
+	dV *= maxZ;
+	vec3 dVWorld = mat3(gbufferModelViewInverse) * (rayEnd - rayStart) * maxZ;
+	rayLength *= maxZ;
+	float dY = normalize(mat3(gbufferModelViewInverse) * rayEnd).y * rayLength;
+	vec3 progressW = (gbufferModelViewInverse[3].xyz+cameraPosition);
+	vec3 WsunVec = mat3(gbufferModelViewInverse) * sunVec * lightCol.a;
+
+
+
+	float absorbance = 1.0;
+	vec3 vL = vec3(0.0);
+
+	vec3 mC = vec3(fog_coefficientMieR*1e-6, fog_coefficientMieG*1e-6, fog_coefficientMieB*1e-6);
+
+
+	//Mie phase + somewhat simulates multiple scattering (Horizon zero down cloud approx)
+	float mie = phaseg(VdotL,0.7);
+	float rayL = phaseRayleigh(VdotL);
+
+	float cloudShadow = 1;
+	float expFactor = 11.0;
+	for (int i=0;i<spCount;i++) {
+		float d = (pow(expFactor, float(i+dither)/float(spCount))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);		// exponential step position (0-1)
+		float dd = pow(expFactor, float(i+dither)/float(spCount)) * log(expFactor) / float(spCount)/(expFactor-1.0);	//step length (derivative)
+
+		progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
+
+		float sh = 1.0;
+		#ifdef VL_CLOUDS_SHADOWS
+			sh *= GetCloudShadow_VLFOG(progressW,WsunVec);
+		#endif
+
+		float density =  clamp(CumulusHeight - progressW.y,0,1) ;
+		vec3 m = density*mC;
+		vec3 DirectLight =  (lightSource*sh) * (m*mie);
+
+		vec3 vL0 = DirectLight*25 ;
+
+
+		vL += (vL0 - vL0 * exp(-m*dd*rayLength)) / (m+0.00000001)*absorbance;
+		absorbance *= dot(clamp(exp(-m*dd*rayLength),0.0,1.0), vec3(0.333333));
+	}
+	return vec4(vL,0);
+}
 
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -218,7 +275,15 @@ void main() {
 		
 		#ifdef Cloud_Fog
 			vec4 VL_CLOUDFOG = InsideACloudFog(fragpos, vec2(R2_dither(),blueNoise()), lightCol.rgb/80., moonColor/150., (avgAmbient*2.0) * 8./150./3.);
-			gl_FragData[0] = clamp(VL_CLOUDFOG,0.0,65000.);
+			
+			// vec4 rays = vec4(0.0);
+
+			// if(rainStrength > 0.0){
+			// 	rays = RainRays(vec3(0.0), fragpos, length(fragpos), R2_dither(), (avgAmbient*2.0) * 8./150./3., lightCol.rgb, dot(normalize(fragpos), normalize(sunVec)	));
+			// 	VL_CLOUDFOG += rays * rainStrength;
+			// }
+
+			gl_FragData[0] = clamp(VL_CLOUDFOG  ,0.0,65000.);
 		#else
 			vec4 VL_Fog = getVolumetricRays(fragpos,blueNoise(),avgAmbient);
 			gl_FragData[0] = clamp(VL_Fog,0.0,65000.);

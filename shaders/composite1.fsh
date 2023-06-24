@@ -622,15 +622,17 @@ vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 	return scatter;
 }
 
-void ScreenSpace_SSS(inout float sss, vec3 fragpos, vec2 noise, vec3 normal){
+void ScreenSpace_SSS(inout float sss, vec3 fragpos, vec2 noise, vec3 normal, bool isleaves){
 	ivec2 pos = ivec2(gl_FragCoord.xy);
 	const float tan70 = tan(70.*3.14/180.);
 
 	float dist = 1.0 + (clamp(fragpos.z*fragpos.z/50.0,0,2)); // shrink sample size as distance increases
 	float mulfov2 = gbufferProjection[1][1]/(tan70 * dist);
 
+	float maxR2_2 = fragpos.z*fragpos.z*mulfov2*2./50.0;
+
 	float dist3 = clamp(1-exp( fragpos.z*fragpos.z / -50),0,1);
-	float maxR2_2 = mix(10, fragpos.z*fragpos.z*mulfov2*2./50.0, dist3);
+	if(isleaves) maxR2_2 = mix(10, maxR2_2, dist3);
 
 	float rd = mulfov2 * 0.1;
 
@@ -738,7 +740,7 @@ vec3 Moon(vec3 PlayerPos, vec3 WorldSunVec, vec3 Color, inout vec3 occludeStars)
 
 #include "lib/PhotonGTAO.glsl"
 
-
+uniform float detectThunderStorm;
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -822,9 +824,8 @@ void main() {
 
 
 	bool lightningBolt = abs(dataUnpacked1.w-0.5) <0.01;
-	bool boatMask = abs(dataUnpacked1.w-0.6) <0.01;
+	bool isLeaf = abs(dataUnpacked1.w-0.55) <0.01;
 	// bool translucent2 = abs(dataUnpacked1.w-0.6) <0.01;	// Weak translucency
-	// bool translucent3 = abs(dataUnpacked1.w-0.55) <0.01;	// all blocks
 	// bool translucent4 = abs(dataUnpacked1.w-0.65) <0.01;	// Weak translucency
 	bool entities = abs(dataUnpacked1.w-0.45) < 0.01;	
 	
@@ -1043,7 +1044,7 @@ void main() {
 	
 		#ifdef Ambient_SSS
 			#if indirect_effect != 1
-				if (!hand) ScreenSpace_SSS(SkySSS, fragpos, blueNoise(gl_FragCoord.xy).rg, FlatNormals);
+				if (!hand) ScreenSpace_SSS(SkySSS, fragpos, blueNoise(gl_FragCoord.xy).rg, FlatNormals, isLeaf);
 			#endif
 			Indirect_lighting += SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3)  * pow(1.0-clamp(abs(ambientCoefs.y+0.5),0.0,1.0),0.1) ;
 			// Indirect_lighting += SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3);
@@ -1143,9 +1144,11 @@ void main() {
 			LabEmission(FINAL_COLOR, albedo, SpecularTex.a);
 		// #endif
 		
-		if(lightningBolt) FINAL_COLOR.rgb += vec3(Lightning_R,Lightning_G,Lightning_B) * 150.0;
+		// if(lightningBolt) FINAL_COLOR.rgb += vec3(Lightning_R,Lightning_G,Lightning_B) * 255.0;
 
 		gl_FragData[0].rgb =  FINAL_COLOR;
+		// if(LabSSS > 0.0) gl_FragData[0].rgb =  vec3(0,25,0);
+
 	}
 	
    	////// ----- Apply Clouds ----- //////
@@ -1167,9 +1170,6 @@ void main() {
 	
 		if (isEyeInWater == 0) waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));		
 	}
-
-	
-	//  gl_FragData[0].rgb *=  GetCloudSkyOcclusion(p3 + cameraPosition);
 
 	/* DRAWBUFFERS:3 */
 }

@@ -32,8 +32,9 @@ uniform int framemod8;
 #ifdef POM
 varying vec4 vtexcoordam; // .st for add, .pq for mul
 varying vec4 vtexcoord;
-
 #endif
+
+
 #include "/lib/res_params.glsl"
 varying vec4 lmtexcoord;
 
@@ -81,6 +82,8 @@ in vec3 velocity;
 flat varying float blockID;
 flat varying float EMISSIVE;
 flat varying int LIGHTNING;
+flat varying int PORTAL;
+
 flat varying float HELD_ITEM_BRIGHTNESS;
 
 flat varying int PHYSICSMOD_SNOW;
@@ -186,7 +189,12 @@ vec3 toClipSpace3(vec3 viewSpacePosition) {
 	{
 		return texture2DGradARB(texture,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
 	}
+	vec4 readNoise(in vec2 coord)
+	{
+		return texture2DGradARB(noisetex,(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
+	}
 #endif
+
 
 float luma(vec3 color) {
 	return dot(color,vec3(0.21, 0.72, 0.07));
@@ -229,6 +237,12 @@ vec3 blackbody2(float Temp)
     return srgbToLinear2(col);
 }
 
+uniform float near;
+
+
+float ld(float dist) {
+    return (2.0 * near) / (far + near - dist * (far - near));
+}
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -275,7 +289,7 @@ void main() {
 	#ifndef HAND
 	#ifdef WORLD
 	#ifdef Puddles
-		Puddle_shape = (1.0 - clamp(exp(-15 * pow(texture2D(noisetex, worldpos.xz * (0.015 * Puddle_Size)	).b  ,5)),0,1)) * lightmap		;
+		Puddle_shape = (1.0 - clamp(exp(-15 * pow(texture2D(noisetex, worldpos.xz * (0.020 * Puddle_Size)	).b  ,5)),0,1)) * lightmap		;
 		Puddle_shape *= clamp( viewToWorld(normal).y*0.5+0.5 ,0.0,1.0);
 		Puddle_shape *= rainfall;
 	#endif
@@ -294,7 +308,7 @@ void main() {
 		gl_FragDepth = gl_FragCoord.z;
 
 		#ifdef WORLD
-	    	if (dist < MAX_OCCLUSION_DISTANCE) {
+	    	if (dist < MAX_OCCLUSION_DISTANCE && PORTAL > 0) {
 
 				float depthmap = readNormal(vtexcoord.st).a;
 				float used_POM_DEPTH = 1.0;
@@ -331,6 +345,8 @@ void main() {
 	  				// #endif
 				}
 	    	}
+
+
 		#endif
 
 
@@ -339,6 +355,41 @@ void main() {
 		//////////////////////////////// 
 
 		vec4 Albedo = texture2DGradARB(texture, adjustedTexCoord.xy, dcdx,dcdy) * color;
+
+		float endportalGLow = 0;
+	    // if (dist < MAX_OCCLUSION_DISTANCE && PORTAL > 0) {
+
+		// 	Albedo = vec4(0,0,0,1);
+		// 	float used_POM_DEPTH = 1.0;
+		// 	float depth = 0.2;
+
+	   	// 	if ( viewVector.z < 0.0) {	
+		// 		float noise = interleaved_gradientNoise_temp();
+	
+		// 		vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * POM_DEPTH) * 0.6 ;
+		// 		used_POM_DEPTH = 1.0;
+
+		// 		vec3 coord = vec3(-abs(worldpos.zx)/4, 1.0);
+
+		// 		coord += interval * noise;
+
+		// 		float sumVec = noise;
+
+		// 		for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - depth + depth * (1-readNoise(coord.st).r - readNoise((-coord.st*3 )).b*0.2)  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
+		// 			coord = coord+interval ; 
+		// 			sumVec += 1.0 ; 
+
+		// 			endportalGLow += 0.01*0.6;
+		// 		}
+
+	  	// 		vec3 truePos = fragpos + sumVec*inverse(tbnMatrix)*interval;
+
+
+	  	// 		Albedo.rgb += vec3(0.5,0.75,1.0) * sqrt(endportalGLow);
+		// 		endportalGLow = clamp(pow(endportalGLow*3.5,5),0,1);
+
+		// 	}
+	    // }
 
 
 		#ifdef ENTITIES
@@ -425,6 +476,8 @@ void main() {
 		#else
 			gl_FragData[2].a = EMISSIVE;
 		#endif
+		
+		if(PORTAL > 0) gl_FragData[2].a = clamp(endportalGLow * 0.9 ,0,0.9);
 
 		#if SSS_TYPE == 0
 			gl_FragData[2].b = 0.0;
@@ -542,7 +595,12 @@ void main() {
 	#ifdef WORLD
 		vec4 Albedo = texture2D(texture, lmtexcoord.xy, bias) * color;
 
-		if(LIGHTNING > 0)  Albedo = vec4(1);
+		#ifdef WhiteWorld
+			Albedo.rgb = vec3(1.0);
+		#endif
+			
+		if(LIGHTNING > 0) Albedo = vec4(1);
+
 
 		#ifdef AEROCHROME_MODE
 			vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), AEROCHROME_PINKNESS);
@@ -569,9 +627,6 @@ void main() {
 			}
 		#endif
 
-		#ifdef WhiteWorld
-			Albedo.rgb = vec3(1.0);
-		#endif
 
 	  	#ifdef DISABLE_ALPHA_MIPMAPS
 	  		Albedo.a = texture2DLod(texture,lmtexcoord.xy,0).a;

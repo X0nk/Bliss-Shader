@@ -386,7 +386,7 @@ float GetCloudShadow_VLFOG(vec3 WorldPos, vec3 WorldSpace_sunVec){
 	// assume a flat layer of cloud, and stretch the sampled density along the sunvector, starting from some vertical layer in the cloud.
 	#ifdef Cumulus
 		vec3 lowShadowStart = WorldPos + WorldSpace_sunVec/abs(WorldSpace_sunVec.y) * max((MaxCumulusHeight - 60) - WorldPos.y,0.0) ;
-		shadow += GetCumulusDensity(lowShadowStart,0)*Cumulus_density;
+		shadow +=  max(GetCumulusDensity(lowShadowStart,0) - 0.2,0.0)*Cumulus_density;
 	#endif
 
 	#ifdef Altostratus 
