@@ -556,11 +556,32 @@ void main() {
 
 		gl_FragData[2].rg = SpecularTex.rg;
 
-		#ifdef LabPBR_Emissives
-			gl_FragData[2].a = SpecularTex.a;
-		#else
-			gl_FragData[2].a = EMISSIVE;
+		// #ifdef LabPBR_Emissives
+		// 	gl_FragData[2].a = SpecularTex.a;
+		// 	if(SpecularTex.a <= 0.0) gl_FragData[2].a = EMISSIVE;
+		// #else
+		// 	gl_FragData[2].a = SpecularTex.a;
+		// 	if(SpecularTex.a <= 0.0) gl_FragData[2].a = EMISSIVE;
+		// 	// gl_FragData[2].a = EMISSIVE;
+		// #endif
+
+		#if EMISSIVE_TYPE == 0
+			gl_FragData[2].a = 0.0;
 		#endif
+
+		#if EMISSIVE_TYPE == 1
+			gl_FragData[2].a = EMISSIVE
+		#endif
+
+		#if EMISSIVE_TYPE == 2
+			gl_FragData[2].a = SpecularTex.a;
+			if(SpecularTex.a <= 0.0) gl_FragData[2].a = EMISSIVE;
+		#endif
+
+		#if EMISSIVE_TYPE == 3		
+			gl_FragData[2].a = SpecularTex.a;
+		#endif
+
 
 
 		#if SSS_TYPE == 0
@@ -584,9 +605,9 @@ void main() {
 
 		 	
 
-		#ifdef ENTITIES
-			if(LIGHTNING > 0) gl_FragData[2].a = 0.5;
-		#endif
+		// #ifdef ENTITIES
+		// 	if(LIGHTNING > 0) gl_FragData[2].a = 0.9;
+		// #endif
 
 		//////////////////////////////// 
 		//////////////////////////////// ALBEDO

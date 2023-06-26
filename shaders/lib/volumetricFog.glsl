@@ -117,6 +117,7 @@ vec4 getVolumetricRays(
 
 	vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition;
 
+	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 	for (int i=0;i<VL_SAMPLES;i++) {
 		float d = (pow(expFactor, float(i+dither)/float(VL_SAMPLES))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
 		float dd = pow(expFactor, float(i+dither)/float(VL_SAMPLES)) * log(expFactor) / float(VL_SAMPLES)/(expFactor-1.0);
@@ -155,9 +156,9 @@ vec4 getVolumetricRays(
 
 		// extra fog effects
 		vec3 rainRays =   (sunColor*sh) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1) * rainStrength * noPuddleAreas * RainFog_amount * 0.5; 
-		vec3 CaveRays = (sunColor*sh)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - max(eyeBrightnessSmooth.y,0)/240.);
+		vec3 CaveRays = (sunColor*sh)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - lightleakfix);
  
-		vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * max(eyeBrightnessSmooth.y,0)/240.  ;
+		vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * lightleakfix  ;
 
 
 		vL += (vL0 - vL0 * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*absorbance;
@@ -218,9 +219,15 @@ vec4 InsideACloudFog(
 	if(dV_Sun.y/shadowStep < -0.1) dV_Sun = -dV_Sun;
 
 
-	vec3 Fog_SkyCol = SkyColor;
-	vec3 Fog_SunCol = SunColor;
-	
+
+	float fogSdotV = dot(sunVec,normalize(fragpos))*lightCol.a;
+	float fogmie = phaseg(fogSdotV,0.7)*5.0 + 1.0;
+
+	// Makes fog more white idk how to simulate it correctly
+	vec3 Fog_SkyCol = averageSkyCol/ 150. * 5. ; // * max(abs(WsunVec.y)/150.0,0.);
+	vec3 Fog_SunCol = lightCol.rgb / 80.0;
+
+
 	vec3 lightningColor =  vec3(Lightning_R,Lightning_G,Lightning_B) * 255.0 * lightningFlash * max(eyeBrightnessSmooth.y,0)/240.;
 	#ifdef ReflectedFog
 		lightningColor *= 0.01;
@@ -265,6 +272,7 @@ vec4 InsideACloudFog(
 	float muS = mu;
 	
 	float Shadows_for_Fog = 0.0;
+	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 
 	for (int i=0;i<VL_SAMPLES;i++) {
 
@@ -300,15 +308,15 @@ vec4 InsideACloudFog(
 		vec3 rL = rC*airCoef.x;
 		vec3 m = (airCoef.y+density)*mC;
 
-		vec3 DirectLight =  (Fog_SunCol*Shadows_for_Fog) * (rayL*rL+m*mie);
+		vec3 DirectLight =  (Fog_SunCol*Shadows_for_Fog) * (rayL*rL+m*fogmie);
 		vec3 AmbientLight =  Fog_SkyCol * m;
 		vec3 AtmosphericFog = Fog_SkyCol * (rL+m)  ;
 
 		// extra fog effects
 		vec3 rainRays =   ((Fog_SunCol/5)*Shadows_for_Fog) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1.0) * rainStrength * noPuddleAreas * RainFog_amount; 
-		vec3 CaveRays = (Fog_SunCol*Shadows_for_Fog)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - max(eyeBrightnessSmooth.y,0)/240.);
+		vec3 CaveRays = (Fog_SunCol*Shadows_for_Fog)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - lightleakfix);
 
-		vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * max(eyeBrightnessSmooth.y,0)/240. ;
+		vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * lightleakfix ;
 
 		color += (vL0 - vL0 * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*total_extinction;
 		total_extinction *= dot(clamp(exp(-(rL+m)*dd*dL),0.0,1.0), vec3(0.333333));

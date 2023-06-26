@@ -4,14 +4,17 @@
 //Computes volumetric clouds at variable resolution (default 1/4 res)
 
 
-uniform float far;
-uniform float near;
-flat varying vec4 lightCol;
+
 flat varying vec3 sunColor;
 flat varying vec3 moonColor;
-flat varying vec3 avgAmbient;
-flat varying float tempOffsets;
 
+flat varying vec3 averageSkyCol_Clouds;
+
+
+
+flat varying float tempOffsets;
+uniform float far;
+uniform float near;
 uniform sampler2D depthtex0;
 // uniform sampler2D colortex4;
 uniform sampler2D noisetex;
@@ -92,7 +95,7 @@ void main() {
 	vec3 fragpos = toScreenSpace(vec3(halfResTC*texelSize,1));
 
 
-	vec4 currentClouds = renderClouds(fragpos,vec2(R2_dither(),blueNoise2()), lightCol.rgb/80., moonColor/150., (avgAmbient*2.0)* 8./150./3.);
+	vec4 currentClouds = renderClouds(fragpos,vec2(R2_dither(),blueNoise2()), sunColor/80., moonColor/150., (averageSkyCol_Clouds*2.0)* 8./150./3.);
 	
 	gl_FragData[0] = currentClouds;
 	

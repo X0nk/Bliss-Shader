@@ -39,11 +39,12 @@ void main() {
 	#ifdef TAA_UPSCALING
 		gl_Position.xy = (gl_Position.xy*0.5+0.5)*RENDER_SCALE*2.0-1.0;
 	#endif
-
 		TAA_Offset = offsets[frameCounter%8];
+
 	#ifndef TAA
-	TAA_Offset = vec2(0.0);
+		TAA_Offset = vec2(0.0);
 	#endif
+
 	vec3 sc = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
 	lightCol.a = float(sunElevation > 1e-5)*2-1.;
 	lightCol.rgb = sc;

@@ -145,6 +145,7 @@
 //#define SPECULARTEX 
 
 // #define LabPBR_Emissives
+#define EMISSIVE_TYPE 2 // [0 1 2 3]
 #define Emissive_Brightness 10.0 // [1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 15.0 20.0 25.0 30.0 35.0 40.0 45.0 50.0 100.]
 #define Emissive_Curve 2.0 // yes i blatantly copied kappa here. [1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
 
@@ -159,9 +160,8 @@
 #define MAX_DIST 25.0 // [5.0 10.0 15.0 20.0 25.0 30.0 40.0 50.0 60.0 70.0 80.0 90.0 100.0 125.0 150.0 200.0 400.0] //Increases distance at which POM is calculated
 
 // #define Porosity
-
 #define Sub_surface_scattering // (place the flashlight on your hand example here)
-#define SSS_TYPE 1 // [0 1 2 3]
+#define SSS_TYPE 2 // [0 1 2 3]
 #define Ambient_SSS // subsurface scattering from the sky's light. If SSAO is enabled, this costs very little performance.
 #define ambientsss_brightness 1 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
 #define Strong_SSS_strength 45 // [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2 3 4 5 6 7 8 9 10 15 20 30 35 40 45 50]

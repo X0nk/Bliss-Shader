@@ -208,7 +208,7 @@ void main() {
 
   vec4 TranslucentShader = texture2D(colortex2,texcoord);
 
-	float lightleakfix = clamp((eyeBrightnessSmooth.y )/240.0,0.0,1.0);
+	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 
 
 	vec2 tempOffset = TAA_Offset;
@@ -261,8 +261,21 @@ void main() {
   //cave fog
   #ifdef Cave_fog
     if (isEyeInWater == 0){
+
+      // float fogdistfade = clamp( pow(length(fragpos) / far, CaveFogFallOff) ,0.0,1.0);
+      // float fogfade = clamp( exp(clamp(np3.y * 0.5 + 0.5,0,1) * -3.0)  ,0.0,1.0);
+
       float fogdistfade = clamp( pow(length(fragpos) / far, CaveFogFallOff) ,0.0,1.0);
+      
+      fogdistfade = fogdistfade*0.95 + clamp( pow(1.0 - exp((length(fragpos) / far) * -5), 2.0) ,0.0,1.0)*0.05;
       float fogfade = clamp( exp(clamp(np3.y * 0.5 + 0.5,0,1) * -3.0)  ,0.0,1.0);
+  
+      // vl.a *= 1-fogdistfade  ;
+      // float fogdistfade = clamp( pow(1.0 - exp((length(fragpos) / far) * -5), 2.0) ,0.0,1.0);
+      // // float fogfade = clamp( exp(clamp(np3.y * 0.35 + 0.35,0,1) * -5.0)  ,0.0,1.0) * 0.1;
+
+
+
       color.rgb = mix(color.rgb, vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B)*fogfade + (blueNoise()-0.5)*0.01,  fogdistfade * (1.0-lightleakfix) * (1.0-darknessFactor) * clamp( 1.5 - np3.y,0.,1)) ;  
       // color.rgb = vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B)*fogfade ;  
     }
@@ -300,9 +313,9 @@ void main() {
   color.rgb *= mix(1.0, (1.0-darknessLightFactor*2.0) * clamp(1.0-pow(length(fragpos2)*(darknessFactor*0.07),2.0),0.0,1.0), darknessFactor);
   
   #ifdef display_LUT
-  	vec2 movedTC = texcoord  ;
+  	vec2 movedTC = texcoord   ;
     vec3 thingy = texture2D(colortex4,movedTC).rgb / 150. * 5.0;
-    if(texcoord.x < 0.45 && luma(thingy) > 0.0 ) color.rgb =  thingy;
+    if(luma(thingy) > 0.0 ) color.rgb =  thingy;
   #endif
 
   gl_FragData[0].r = vl.a; // pass fog alpha so bloom can do bloomy fog

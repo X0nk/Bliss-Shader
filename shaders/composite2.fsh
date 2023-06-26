@@ -4,11 +4,14 @@
 
 #include "lib/settings.glsl"
 
+flat varying vec4 lightCol;
 flat varying vec3 sunColor;
 flat varying vec3 moonColor;
-flat varying vec3 avgAmbient2;
 
-flat varying vec4 lightCol;
+flat varying vec3 averageSkyCol_Clouds;
+flat varying vec3 averageSkyCol;
+
+
 flat varying vec3 ambientUp;
 flat varying vec3 ambientLeft;
 flat varying vec3 ambientRight;
@@ -16,6 +19,7 @@ flat varying vec3 ambientB;
 flat varying vec3 ambientF;
 flat varying vec3 ambientDown;
 flat varying vec3 avgAmbient;
+
 flat varying float tempOffsets;
 flat varying float fogAmount;
 flat varying float VFAmount;
@@ -274,18 +278,17 @@ void main() {
 		vec3 fragpos = toScreenSpace(vec3(tc/RENDER_SCALE,z));
 		
 		#ifdef Cloud_Fog
-			vec4 VL_CLOUDFOG = InsideACloudFog(fragpos, vec2(R2_dither(),blueNoise()), lightCol.rgb/80., moonColor/150., (avgAmbient*2.0) * 8./150./3.);
+			vec4 VL_CLOUDFOG = InsideACloudFog(fragpos, vec2(R2_dither(),blueNoise()), lightCol.rgb/80., moonColor/150., (averageSkyCol*2.0) * 8./150./3.);
 			
 			// vec4 rays = vec4(0.0);
-
 			// if(rainStrength > 0.0){
 			// 	rays = RainRays(vec3(0.0), fragpos, length(fragpos), R2_dither(), (avgAmbient*2.0) * 8./150./3., lightCol.rgb, dot(normalize(fragpos), normalize(sunVec)	));
 			// 	VL_CLOUDFOG += rays * rainStrength;
 			// }
 
-			gl_FragData[0] = clamp(VL_CLOUDFOG  ,0.0,65000.);
+			gl_FragData[0] = clamp(VL_CLOUDFOG, 0.0,65000.);
 		#else
-			vec4 VL_Fog = getVolumetricRays(fragpos,blueNoise(),avgAmbient);
+			vec4 VL_Fog = getVolumetricRays(fragpos, blueNoise(), averageSkyCol);
 			gl_FragData[0] = clamp(VL_Fog,0.0,65000.);
 		#endif
 
@@ -311,8 +314,7 @@ void main() {
 
 		estEyeDepth = max(Water_Top_Layer - cameraPosition.y,0.0);
 
-
-		waterVolumetrics(vl, vec3(0.0), fragpos, estEyeDepth, estEyeDepth, length(fragpos), noise, totEpsilon, scatterCoef, (avgAmbient*8./150./3.*0.5) , lightCol.rgb*8./150./3.0*(1.0-pow(1.0-sunElevation*lightCol.a,5.0)), dot(normalize(fragpos), normalize(sunVec)	));
+		waterVolumetrics(vl, vec3(0.0), fragpos, estEyeDepth, estEyeDepth, length(fragpos), noise, totEpsilon, scatterCoef, (averageSkyCol_Clouds*8./150./3.*0.5) , lightCol.rgb*8./150./3.0*(1.0-pow(1.0-sunElevation*lightCol.a,5.0)), dot(normalize(fragpos), normalize(sunVec)	));
 		gl_FragData[0] = clamp(vec4(vl,1.0),0.000001,65000.);
 	}
 }

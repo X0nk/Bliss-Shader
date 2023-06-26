@@ -10,30 +10,17 @@ vec3 DoAmbientLighting (vec3 SkyColor, vec3 TorchColor, vec2 Lightmap, float sky
     // Lightmap.x = 0.0;
     // Lightmap.y = 1.0;
 
-
-    // old torchlight curves
-	// vec3 TorchLight = TorchColor * pow(1.0-pow(1.0-clamp(Lightmap.x,0.0,1.0) ,0.1),2);
-    // TorchLight = clamp(exp(TorchLight * 30) - 1.0,0.0,5.0);
-    // TorchLight *= TORCH_AMOUNT;
-
     float TorchLM = 10.0 - ( 1.0 / (pow(exp(-0.5*inversesqrt(Lightmap.x)),5.0)+0.1));
     TorchLM = pow(TorchLM/4,10) + pow(Lightmap.x,1.5)*0.5; //pow(TorchLM/4.5,10)*2.5 + pow(Lightmap.x,1.5)*0.5;
 	vec3 TorchLight = TorchColor * TorchLM * 0.75;
     TorchLight *= TORCH_AMOUNT;
 
-    // old skylight curves
-    // SkyColor = (SkyColor * 2.0 * ambient_brightness) * 8./150./3.;
-    // vec3 SkyLight = max(SkyColor * min(pow(Lightmap.y,3.0),1.0), vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01)) ;
-
     SkyColor = (SkyColor * 2.0 * ambient_brightness) * 8./150./3.;
-
-	SkyColor += vec3(Lightning_R,Lightning_G,Lightning_B) * 25.0 * skyLightDir * lightningFlash ;
-    // SkyColor += vec3(0.7,0.9,1.0) * skyLightDir * lightningFlash;
+	
+    SkyColor += vec3(Lightning_R,Lightning_G,Lightning_B) * 25.0 * skyLightDir * lightningFlash ;
 
     float skyLM = (pow(Lightmap.y,15.0)*2.0 + pow(Lightmap.y,2.5))*0.5;
     vec3 SkyLight = max(SkyColor * skyLM,  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01)); 
-
-    
 
     return   SkyLight * skyLightDir + TorchLight;
 }
@@ -52,8 +39,6 @@ vec3 DoDirectLighting(vec3 SunColor, float Shadow, float NdotL, float Subsurface
 vec3 DoAmbientLighting_Nether(vec3 FogColor, vec3 TorchColor, float Lightmap, vec3 Normal, vec3 np3, vec3 WorldPos){
 
     vec3 TorchLight = TorchColor * clamp(pow(Lightmap,3.0),0.0,1.0);
-
-
 
     vec3 LavaGlow = vec3(TORCH_R,TORCH_G,TORCH_B);
     LavaGlow *= pow(clamp(1.0-max(Normal.y,0.0) + dot(Normal,np3),0.0,1.0),3.0);

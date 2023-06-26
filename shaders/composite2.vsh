@@ -3,6 +3,9 @@
 
 #include "lib/settings.glsl"
 
+flat varying vec3 averageSkyCol_Clouds;
+flat varying vec3 averageSkyCol;
+
 flat varying vec4 lightCol;
 flat varying vec3 ambientUp;
 flat varying vec3 ambientLeft;
@@ -69,10 +72,12 @@ void main() {
 	#endif
 	vec3 sc = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
 
-	sunColor = texelFetch2D(colortex4,ivec2(12,37),0).rgb;
-	moonColor = texelFetch2D(colortex4,ivec2(13,37),0).rgb;
-	avgAmbient = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
 
+	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+	averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
+	
+	sunColor = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
+	moonColor = texelFetch2D(colortex4,ivec2(13,37),0).rgb;
 
 	lightCol.a = float(sunElevation > 1e-5)*2-1.;
 	lightCol.rgb = sc;

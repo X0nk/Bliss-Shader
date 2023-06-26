@@ -5,27 +5,19 @@
 //Prepares sky textures (2 * 256 * 256), computes light values and custom lightmaps
 #define ReflectedFog
 
-flat varying vec3 ambientUp;
-flat varying vec3 ambientLeft;
-flat varying vec3 ambientRight;
-flat varying vec3 ambientB;
-flat varying vec3 ambientF;
-flat varying vec3 ambientDown;
-flat varying float avgL2;
+flat varying vec3 averageSkyCol_Clouds;
+flat varying vec3 averageSkyCol;
+
 flat varying vec3 lightSourceColor;
 flat varying vec3 sunColor;
-flat varying vec3 sunColorCloud;
 flat varying vec3 moonColor;
-flat varying vec3 moonColorCloud;
 flat varying vec3 zenithColor;
-flat varying vec3 avgSky;
+
+flat varying float avgL2;
 flat varying vec2 tempOffsets;
 flat varying float exposure;
 flat varying float rodExposure;
 flat varying float avgBrightness;
-flat varying float exposureF;
-flat varying float fogAmount;
-flat varying float VFAmount;
 flat varying float centerDepth;
 
 // uniform sampler2D colortex4;
@@ -116,85 +108,40 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 void main() {
 /* DRAWBUFFERS:4 */
 gl_FragData[0] = vec4(0.0);
-float minLight = (MIN_LIGHT_AMOUNT + nightVision*5) * 0.007/ (exposure + rodExposure/(rodExposure+1.0)*exposure*1.);
-// vec3 minLight_col = MIN_LIGHT_AMOUNT * 0.007/ (exposure + rodExposure/(rodExposure+1.0)*exposure*1.)    * vec3(0.8,0.9,1.0);
-//Lightmap for forward shading (contains average integrated sky color across all faces + torch + min ambient)
-vec3 avgAmbient = (ambientUp + ambientLeft + ambientRight + ambientB + ambientF + ambientDown)/6.;
-
-// avgAmbient *= blackbody(ambient_temp);
-
-if (gl_FragCoord.x < 17. && gl_FragCoord.y < 17.){
-  float torchLut = clamp(16.0-gl_FragCoord.x,0.5,15.5);
-  torchLut = torchLut+0.712;
-  float torch_lightmap = max(1.0/torchLut/torchLut - 1/17.212/17.212,0.0);
-  torch_lightmap = pow(torch_lightmap*2.5,1.5)*TORCH_AMOUNT*10.;
-  float sky_lightmap = (Slightmap[int(gl_FragCoord.y)]-14.0)/235.;
-  sky_lightmap = pow(sky_lightmap,1.4);
-  vec3 ambient = (ambientUp * blackbody(ambient_temp))*sky_lightmap+torch_lightmap*vec3(TORCH_R,TORCH_G,TORCH_B)*TORCH_AMOUNT;
-  
-  gl_FragData[0] = vec4(max(ambient*Ambient_Mult,minLight/5),1.0);
-}
-
-//Lightmap for deferred shading (contains only torch + min ambient)
-if (gl_FragCoord.x < 17. && gl_FragCoord.y > 19. && gl_FragCoord.y < 19.+17. ){
-	float torchLut = clamp(16.0-gl_FragCoord.x,0.5,15.5);
-  torchLut = torchLut+0.712;
-  float torch_lightmap = max(1.0/torchLut/torchLut - 1/17.212/17.212,0.0);
-  float ambient = pow(torch_lightmap*2.5,1.5)*TORCH_AMOUNT*10.;
-  float sky_lightmap = (Slightmap[int(gl_FragCoord.y-19.0)]-14.0)/235./150.;
-  
-  gl_FragData[0] = vec4(sky_lightmap,ambient,minLight,1.0)*Ambient_Mult;
-}
 
 //Save light values
 if (gl_FragCoord.x < 1. && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(ambientUp * blackbody(ambient_temp) ,1.0);
+gl_FragData[0] = vec4(averageSkyCol_Clouds * blackbody(ambient_temp),1.0);
 if (gl_FragCoord.x > 1. && gl_FragCoord.x < 2.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(ambientUp ,1.0);
-if (gl_FragCoord.x > 2. && gl_FragCoord.x < 3.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(ambientLeft ,1.0);
-if (gl_FragCoord.x > 3. && gl_FragCoord.x < 4.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(ambientRight ,1.0);
-if (gl_FragCoord.x > 4. && gl_FragCoord.x < 5.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(ambientB ,1.0);
-if (gl_FragCoord.x > 5. && gl_FragCoord.x < 6.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(ambientF ,1.0);
+gl_FragData[0] = vec4(averageSkyCol,1.0);
+
 if (gl_FragCoord.x > 6. && gl_FragCoord.x < 7.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 gl_FragData[0] = vec4(lightSourceColor,1.0);
-if (gl_FragCoord.x > 7. && gl_FragCoord.x < 8.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(avgAmbient ,1.0);
+
 if (gl_FragCoord.x > 8. && gl_FragCoord.x < 9.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 gl_FragData[0] = vec4(sunColor,1.0);
-if (gl_FragCoord.x > 9. && gl_FragCoord.x < 10.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(moonColor,1.0);
-if (gl_FragCoord.x > 11. && gl_FragCoord.x < 12.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(avgSky ,1.0);
-if (gl_FragCoord.x > 12. && gl_FragCoord.x < 13.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(sunColorCloud,1.0);
 if (gl_FragCoord.x > 13. && gl_FragCoord.x < 14.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(moonColorCloud,1.0);
-//Sky gradient (no clouds)
+gl_FragData[0] = vec4(moonColor,1.0);
+
 const float pi = 3.141592653589793238462643383279502884197169;
 
-
+//Sky gradient (no clouds)
 if (gl_FragCoord.x > 18. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257){
-  vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.,1.))/256.+tempOffsets/256.,0.0,1.0);
-  vec3 viewVector = cartToSphere(p);
+	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.,1.))/256.+tempOffsets/256.,0.0,1.0);
+	vec3 viewVector = cartToSphere(p);
 
 	vec2 planetSphere = vec2(0.0);
 	vec3 sky = vec3(0.0);
 	vec3 skyAbsorb = vec3(0.0);
 
-  vec3 WsunVec = mat3(gbufferModelViewInverse)*sunVec;
+	vec3 WsunVec = mat3(gbufferModelViewInverse)*sunVec;
 
-	sky = calculateAtmosphere(avgSky*4000./2.0, viewVector, vec3(0.0,1.0,0.0), WsunVec, -WsunVec, planetSphere, skyAbsorb, 10, blueNoise());
+	sky = calculateAtmosphere(averageSkyCol*4000./2.0, viewVector, vec3(0.0,1.0,0.0), WsunVec, -WsunVec, planetSphere, skyAbsorb, 10, blueNoise());
 
 	#ifdef AEROCHROME_MODE
 		sky *= vec3(0.0, 0.18, 0.35);
 	#endif
 
-  // sky = mix(sky, vec3(0.5,0.5,0.5)*avgSky * 4000., clamp(1 - viewVector.y,0.0,1.0) * rainStrength  );
-  // sky *= max(abs(viewVector.y+0.05),0.25);
   gl_FragData[0] = vec4(sky/4000.*Sky_Brightness,1.0);
 }
 
@@ -203,18 +150,18 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
 	vec3 viewVector = cartToSphere(p);
 
-  vec3 WsunVec = mat3(gbufferModelViewInverse)*sunVec;
-  vec3 skytex = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150. ;
+	vec3 WsunVec = mat3(gbufferModelViewInverse)*sunVec;
+	vec3 sky = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150. ;	
 
-  if(viewVector.y < -0.025) skytex = skytex * clamp( exp(viewVector.y) - 1.0,0.25,1.0) ;
+	if(viewVector.y < -0.025) sky = sky * clamp( exp(viewVector.y) - 1.0,0.25,1.0) ;
   
-	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024.,vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), sunColorCloud, moonColor, ambientUp*5.0);
-  // skytex = skytex*clouds.a + clouds.rgb/5.0; 
+	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024.,vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), sunColor, moonColor, averageSkyCol*5.0);
+	sky = sky*clouds.a + clouds.rgb/5.0; 
 
-  vec4 VL_Fog = getVolumetricRays(mat3(gbufferModelView)*viewVector*1024.,  fract(frameCounter/1.6180339887), ambientUp);
-  skytex = skytex*VL_Fog.a + VL_Fog.rgb*20;
+	vec4 VL_Fog = getVolumetricRays(mat3(gbufferModelView)*viewVector*1024.,  fract(frameCounter/1.6180339887), averageSkyCol);
+	sky = sky*VL_Fog.a + VL_Fog.rgb*20;
 
-	gl_FragData[0] = vec4(skytex,1.0);
+	gl_FragData[0] = vec4(sky,1.0);
 }
 
 //Temporally accumulate sky and light values

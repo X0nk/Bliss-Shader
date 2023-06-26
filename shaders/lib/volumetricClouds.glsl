@@ -305,7 +305,7 @@ vec4 renderClouds(
 
 				float ambientlightshadow = 1.0 - clamp(exp((progress_view.y - (MaxCumulusHeight - 50)) / 100.0),0.0,1.0) ;
 
-				vec3 S = Cloud_lighting(muE, cumulus*Cumulus_density, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, ambientlightshadow, 0, progress_view, timing);
+				vec3 S = Cloud_lighting(muE, cumulus*Cumulus_density, Sunlight, MoonLight, SkyColor, sunContribution, sunContributionMulti, moonContribution, ambientlightshadow, 0, progress_view, 1);
 				S += lightningColor * exp((1.0-cumulus) * -10) * ambientlightshadow;
 
 				vec3 Sint = (S - S * exp(-mult*muE)) / muE;

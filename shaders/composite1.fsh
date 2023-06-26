@@ -9,8 +9,11 @@ const bool colortex12MipmapEnabled = true;
 // const bool colortex4MipmapEnabled = true;
 
 const bool shadowHardwareFiltering = true;
-flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
-flat varying vec3 avgAmbient;
+
+flat varying vec3 averageSkyCol_Clouds;
+flat varying vec3 averageSkyCol;
+flat varying vec4 lightCol;
+
 flat varying vec3 WsunVec;
 flat varying vec2 TAA_Offset;
 flat varying float tempOffsets;
@@ -389,7 +392,7 @@ vec2 tapLocation_alternate(
 }
 
 
-void ssAO(inout vec3 lighting, inout float sss, vec3 fragpos,float mulfov, vec2 noise, vec3 normal, vec2 texcoord, vec3 ambientCoefs, vec2 lightmap){
+void ssAO(inout vec3 lighting, inout float sss, vec3 fragpos,float mulfov, vec2 noise, vec3 normal, vec2 texcoord, vec3 ambientCoefs, vec2 lightmap, bool isleaves){
 
 	ivec2 pos = ivec2(gl_FragCoord.xy);
 	const float tan70 = tan(70.*3.14/180.);
@@ -399,8 +402,12 @@ void ssAO(inout vec3 lighting, inout float sss, vec3 fragpos,float mulfov, vec2 
 	float maxR2 = fragpos.z*fragpos.z*mulfov2*2.*5/50.0;
 
 	#ifdef Ambient_SSS
-		float dist3 = clamp(1.0 - exp( fragpos.z*fragpos.z / -50),0,1);
-		float maxR2_2 = mix(10.0, fragpos.z*fragpos.z*mulfov2*2./50.0, dist3);
+		// float dist3 = clamp(1.0 - exp( fragpos.z*fragpos.z / -50),0,1);
+		// float maxR2_2 = mix(10.0, fragpos.z*fragpos.z*mulfov2*2./50.0, dist3);
+
+		float maxR2_2 = fragpos.z*fragpos.z*mulfov2*2./50.0;
+		float dist3 = clamp(1-exp( fragpos.z*fragpos.z / -50),0,1);
+		if(isleaves) maxR2_2 = mix(10, maxR2_2, dist3);
 	#endif
 	
 	float rd = mulfov2 * 0.1 ;
@@ -846,7 +853,7 @@ void main() {
 	DirectLightColor *= clamp(abs(WsunVec.y)*2,0.,1.);
 
 
-	vec3 AmbientLightColor = avgAmbient;
+	vec3 AmbientLightColor = averageSkyCol_Clouds;
 
 
 	float cloudShadow = 1.0;
@@ -1015,7 +1022,7 @@ void main() {
 			// AO *= mix(1.0 - exp2(-5 * pow(1-vanilla_AO,3)),1.0, pow(newLightmap.x,4));
 			
 			AO = vec3( exp( (vanilla_AO*vanilla_AO) * -3) )  ;
-			if (!hand) ssAO(AO, SkySSS, fragpos, 1.0, blueNoise(gl_FragCoord.xy).rg,   FlatNormals , texcoord, ambientCoefs, newLightmap.xy);
+			if (!hand) ssAO(AO, SkySSS, fragpos, 1.0, blueNoise(gl_FragCoord.xy).rg,   FlatNormals , texcoord, ambientCoefs, newLightmap.xy, isLeaf);
 		
 		#endif
 
@@ -1043,11 +1050,13 @@ void main() {
 		Indirect_lighting *= AO;
 	
 		#ifdef Ambient_SSS
+		if (!hand){
 			#if indirect_effect != 1
-				if (!hand) ScreenSpace_SSS(SkySSS, fragpos, blueNoise(gl_FragCoord.xy).rg, FlatNormals, isLeaf);
+				ScreenSpace_SSS(SkySSS, fragpos, blueNoise(gl_FragCoord.xy).rg, FlatNormals, isLeaf);
 			#endif
 			Indirect_lighting += SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3)  * pow(1.0-clamp(abs(ambientCoefs.y+0.5),0.0,1.0),0.1) ;
 			// Indirect_lighting += SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3);
+			}
 		#endif
 	
 
@@ -1144,18 +1153,13 @@ void main() {
 			LabEmission(FINAL_COLOR, albedo, SpecularTex.a);
 		// #endif
 		
-		// if(lightningBolt) FINAL_COLOR.rgb += vec3(Lightning_R,Lightning_G,Lightning_B) * 255.0;
+		if(lightningBolt) FINAL_COLOR.rgb += vec3(Lightning_R,Lightning_G,Lightning_B) * 255.0;
 
 		gl_FragData[0].rgb =  FINAL_COLOR;
 		// if(LabSSS > 0.0) gl_FragData[0].rgb =  vec3(0,25,0);
 
 	}
-	
-   	////// ----- Apply Clouds ----- //////
-		// gl_FragData[0].rgb  = gl_FragData[0].rgb *cloud.a + cloud.rgb;
-
    	////// ----- Under Water Fog ----- //////
-
 	if (iswater){	
 		vec3 fragpos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z0));
 		float Vdiff = distance(fragpos,fragpos0);
@@ -1165,7 +1169,7 @@ void main() {
 	
 		float custom_lightmap_T = pow(texture2D(colortex14, texcoord).a,1.5);
 	
-		vec3 ambientColVol = (avgAmbient * 8./150./1.5) *  max(custom_lightmap_T,MIN_LIGHT_AMOUNT*0.001);
+		vec3 ambientColVol = (averageSkyCol_Clouds * 8./150./1.5) *  max(custom_lightmap_T,MIN_LIGHT_AMOUNT*0.001);
 		vec3 lightColVol = (lightCol.rgb / 80.) ;
 	
 		if (isEyeInWater == 0) waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));		

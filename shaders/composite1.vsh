@@ -2,9 +2,12 @@
 #extension GL_EXT_gpu_shader4 : enable
 #include "lib/settings.glsl"
 
-flat varying vec3 WsunVec;
-flat varying vec3 avgAmbient;
+flat varying vec3 averageSkyCol_Clouds;
+flat varying vec3 averageSkyCol;
+
 flat varying vec4 lightCol;
+
+flat varying vec3 WsunVec;
 flat varying float tempOffsets;
 flat varying vec2 TAA_Offset;
 flat varying vec3 zMults;
@@ -58,8 +61,11 @@ void main() {
 	#ifndef TAA
 	TAA_Offset = vec2(0.0);
 	#endif
-	avgAmbient = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 
+	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+	averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
+	// sunColor = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
+	// moonColor = texelFetch2D(colortex4,ivec2(13,37),0).rgb;
 
 
 	vec3 sc = texelFetch2D(colortex4,ivec2(6,37),0).rgb;

@@ -13,6 +13,10 @@ vec3 skyFromTex(vec3 pos,sampler2D sampler){
 	vec2 p = sphereToCarte(pos);
 	return texture2D(sampler,p*texelSize*256.+vec2(18.5,1.5)*texelSize).rgb;
 }
+vec3 skyFromTexLOD(vec3 pos,sampler2D sampler, float LOD){
+	vec2 p = sphereToCarte(pos);
+	return texture2DLod(sampler,p*texelSize*256.+vec2(18.5,1.5)*texelSize,LOD).rgb;
+}
 float w0(float a)
 {
     return (1.0/6.0)*(a*(a*(-a + 3.0) - 3.0) + 1.0);
