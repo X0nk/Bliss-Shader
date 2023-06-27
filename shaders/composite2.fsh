@@ -303,9 +303,11 @@ void main() {
 		float estEyeDepth = clamp((14.0-eyeBrightnessSmooth.y/255.0*16.0)/14.0,0.,1.0);
 		estEyeDepth *= estEyeDepth*estEyeDepth*34.0;
 
+		vec3 ambientColVol =  max(averageSkyCol_Clouds*8./150./1.5,MIN_LIGHT_AMOUNT*0.0015);
+		vec3 lightColVol = (lightCol.rgb / 80.);
 		estEyeDepth = max(Water_Top_Layer - cameraPosition.y,0.0);
 
-		waterVolumetrics(vl, vec3(0.0), fragpos, estEyeDepth, estEyeDepth, length(fragpos), noise, totEpsilon, scatterCoef, (averageSkyCol_Clouds*8./150./3.*0.5) , lightCol.rgb*8./150./3.0*(1.0-pow(1.0-sunElevation*lightCol.a,5.0)), dot(normalize(fragpos), normalize(sunVec)	));
+		waterVolumetrics(vl, vec3(0.0), fragpos, estEyeDepth, estEyeDepth, length(fragpos), noise, totEpsilon, scatterCoef, ambientColVol, lightColVol*(1.0-pow(1.0-sunElevation*lightCol.a,5.0)) , dot(normalize(fragpos), normalize(sunVec)	));
 		gl_FragData[0] = clamp(vec4(vl,1.0),0.000001,65000.);
 	}
 }

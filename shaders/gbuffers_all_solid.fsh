@@ -32,11 +32,13 @@ const int   MAX_OCCLUSION_POINTS   = MAX_ITERATIONS;
 uniform vec2 texelSize;
 uniform int framemod8;
 
-#ifdef POM
+// #ifdef POM
 varying vec4 vtexcoordam; // .st for add, .pq for mul
 varying vec4 vtexcoord;
-#endif
 
+vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
+vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
+// #endif
 
 #include "/lib/res_params.glsl"
 varying vec4 lmtexcoord;
@@ -61,11 +63,6 @@ varying vec4 normalMat;
 uniform sampler2D specular;
 
 
-// #endif
-#ifdef POM
-	vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
-	vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
-#endif
 
 uniform sampler2D texture;
 uniform sampler2D colortex1;//albedo(rgb),material(alpha) RGBA16
@@ -195,10 +192,6 @@ vec3 toClipSpace3(vec3 viewSpacePosition) {
 	{
 		return texture2DGradARB(texture,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
 	}
-	vec4 readNoise(in vec2 coord)
-	{
-		return texture2DGradARB(noisetex,(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
-	}
 #endif
 
 
@@ -249,6 +242,95 @@ uniform float near;
 float ld(float dist) {
     return (2.0 * near) / (far + near - dist * (far - near));
 }
+
+
+
+// float EndPortalEffect(
+// 	inout vec4 ALBEDO,
+// 	vec3 FragPos,
+// 	vec3 WorldPos,
+// 	mat3 tbnMatrix
+// ){
+// 	float endportalGLow = 0.0;
+
+// 	vec3 viewVec = normalize(tbnMatrix*FragPos);
+
+//     if (length(FragPos) < MAX_OCCLUSION_DISTANCE) {
+// 		ALBEDO = vec4(0,0,0,1);
+// 		float depth = 0.2;
+//    		if ( viewVec.z < 0.0) {
+// 			float noise = interleaved_gradientNoise_temp();
+
+// 			vec3 interval = (viewVec.xyz /-viewVec.z/MAX_OCCLUSION_POINTS * POM_DEPTH) * 0.6 ;
+
+// 			vec3 coord = vec3((lmtexcoord.st)/4, 1.0);
+// 			coord += interval * noise;
+// 			float sumVec = noise;
+
+// 			for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - depth + depth * (1-readNoise(coord.st).r - readNoise((-coord.st*3 )).b*0.2)  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
+// 				coord = coord+interval ; 
+// 				sumVec += 1.0 ; 
+// 				endportalGLow += 0.01*0.6;
+// 			}
+
+//   			ALBEDO.rgb = vec3(0.5,0.75,1.0) * sqrt(endportalGLow);
+
+// 			return clamp(pow(endportalGLow*3.5,5),0,1);
+// 		}
+//     }
+// }
+
+vec4 readNoise(in vec2 coord){
+	return texture2D(noisetex,coord*vtexcoordam.pq + vtexcoordam.st);
+}
+float EndPortalEffect(
+	inout vec4 ALBEDO,
+	vec3 FragPos,
+	vec3 WorldPos,
+	mat3 tbnMatrix
+){	
+
+	int maxdist = 25;
+	int quality = 35;
+
+	vec3 viewVec = normalize(tbnMatrix*FragPos);
+	if ( viewVec.z < 0.0 && length(FragPos) < maxdist) {
+		float endportalGLow = 0.0;
+		float Depth = 0.3;
+		vec3 interval = (viewVec.xyz /-viewVec.z/quality*Depth) * (0.7 + (blueNoise()-0.5)*0.1);
+
+		vec3 coord = vec3(-(abs(WorldPos.zx + WorldPos.zx))/4, 1.0);
+		coord += interval;
+
+		for (int loopCount = 0; (loopCount < quality) && (1.0 - Depth + Depth * ( 1.0-readNoise(coord.st).r - readNoise(-coord.st*3).b*0.2 ) ) < coord.p  && coord.p >= 0.0; ++loopCount) {
+			coord = coord+interval ; 
+			endportalGLow += (0.3/quality);
+		}
+
+  		ALBEDO.rgb = vec3(0.5,0.75,1.0) * sqrt(endportalGLow);
+
+		return clamp(pow(endportalGLow*3.5,3),0,1);
+	}
+}
+
+float bias(){
+	return Texture_MipMap_Bias + (blueNoise()-0.5)*0.5;
+}
+vec4 texture2D_POMSwitch(
+	sampler2D sampler, 
+	vec2 lightmapCoord,
+	vec4 dcdxdcdy, 
+	bool ifPOM
+){
+	if(ifPOM){
+		return texture2DGradARB(sampler, lightmapCoord, dcdxdcdy.xy, dcdxdcdy.zw);
+	}else{
+		return texture2D(sampler, lightmapCoord, bias());
+	}
+}
+
+
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -258,9 +340,15 @@ float ld(float dist) {
 /* RENDERTARGETS: 1,7,8,15 */
 void main() {
 
-	
-	
-	
+
+	bool ifPOM = false;
+
+	#ifdef POM
+		ifPOM = true;
+	#endif
+
+	if(SIGN > 0) ifPOM = false;
+
 	vec3 normal = normalMat.xyz;
 
 	#ifdef MC_NORMAL_MAP
@@ -273,18 +361,15 @@ void main() {
 	vec2 tempOffset=offsets[framemod8];
 
 	vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
-	vec3 worldpos = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz + cameraPosition;
+	vec3 worldpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz + cameraPosition;
 
 	float torchlightmap = lmtexcoord.z;
 
 	#ifdef Hand_Held_lights
-		// if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = mix(torchlightmap, HELD_ITEM_BRIGHTNESS,  clamp( max(1.0-length(fragpos)/10,0.0)		,0.0,1.0));
 		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(fragpos)/10,0.0),1.5),0.0,1.0));
 	#endif
 	
 	float lightmap = clamp( (lmtexcoord.w-0.8) * 10.0,0.,1.);
-
-
 
 	float rainfall = rainStrength * noPuddleAreas;
 	float Puddle_shape = 0.;
@@ -300,36 +385,39 @@ void main() {
 	#endif
 	#endif
 	#endif
+	
+	vec2 adjustedTexCoord = lmtexcoord.xy;
+
 #ifdef POM
-		// vec2 tempOffset=offsets[framemod8];
-		vec2 adjustedTexCoord = fract(vtexcoord.st)*vtexcoordam.pq+vtexcoordam.st;
-		// vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
-		vec3 viewVector = normalize(tbnMatrix*fragpos);
-		float dist = length(fragpos);
+	#ifdef WORLD
+			// vec2 tempOffset=offsets[framemod8];
+			adjustedTexCoord = fract(vtexcoord.st)*vtexcoordam.pq+vtexcoordam.st;
+			// vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
+			vec3 viewVector = normalize(tbnMatrix*fragpos);
+			float dist = length(fragpos);
 
-		gl_FragDepth = gl_FragCoord.z;
+			gl_FragDepth = gl_FragCoord.z;
 
-		#ifdef WORLD
 	    	if (dist < MAX_OCCLUSION_DISTANCE) {
 
 				float depthmap = readNormal(vtexcoord.st).a;
 				float used_POM_DEPTH = 1.0;
 
 	   	 		if ( viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
-					float noise = interleaved_gradientNoise_temp();
+					// float noise = interleaved_gradientNoise_temp();
 	  				#ifdef Adaptive_Step_length
-						vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * POM_DEPTH) * clamp(1.0-pow(depthmap,2),0.1,1.0) ;
+						vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * POM_DEPTH) * clamp(1.0-pow(depthmap,2),0.1,1.0);
 						used_POM_DEPTH = 1.0;
 	  				#else
 	  					vec3 interval = viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS*POM_DEPTH;
 					#endif
-					vec3 coord = vec3(vtexcoord.st, 1.0);
+					vec3 coord = vec3(vtexcoord.st , 1.0);
 
-					coord += (interval ) * used_POM_DEPTH;
+					coord += interval * used_POM_DEPTH;
 
 					float sumVec = 0.5;
 					for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - POM_DEPTH + POM_DEPTH * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
-						coord = coord+interval * used_POM_DEPTH; 
+						coord = coord + interval  * used_POM_DEPTH; 
 						sumVec += 1.0 * used_POM_DEPTH; 
 					}
 	
@@ -339,6 +427,7 @@ void main() {
 	  						discard;
 	  					}
 	  				}
+					
 	  				adjustedTexCoord = mix(fract(coord.st)*vtexcoordam.pq+vtexcoordam.st, adjustedTexCoord, max(dist-MIX_OCCLUSION_DISTANCE,0.0)/(MAX_OCCLUSION_DISTANCE-MIX_OCCLUSION_DISTANCE));
 
 	  				vec3 truePos = fragpos + sumVec*inverse(tbnMatrix)*interval;
@@ -347,233 +436,93 @@ void main() {
 	  				// #endif
 				}
 	    	}
+	#endif
+#endif
 
-
-		#endif
-
-
-		//////////////////////////////// 
-		//////////////////////////////// ALBEDO
-		//////////////////////////////// 
-
-		vec4 Albedo = texture2DGradARB(texture, adjustedTexCoord.xy, dcdx,dcdy) * color;
-
-		float endportalGLow = 0;
-	    // if (dist < MAX_OCCLUSION_DISTANCE && PORTAL > 0) {
-
-		// 	Albedo = vec4(0,0,0,1);
-		// 	float used_POM_DEPTH = 1.0;
-		// 	float depth = 0.2;
-
-	   	// 	if ( viewVector.z < 0.0) {	
-		// 		float noise = interleaved_gradientNoise_temp();
+	if(!ifPOM) adjustedTexCoord = lmtexcoord.xy;
 	
-		// 		vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * POM_DEPTH) * 0.6 ;
-		// 		used_POM_DEPTH = 1.0;
 
-		// 		vec3 coord = vec3(-abs(worldpos.zx)/4, 1.0);
-
-		// 		coord += interval * noise;
-
-		// 		float sumVec = noise;
-
-		// 		for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - depth + depth * (1-readNoise(coord.st).r - readNoise((-coord.st*3 )).b*0.2)  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
-		// 			coord = coord+interval ; 
-		// 			sumVec += 1.0 ; 
-
-		// 			endportalGLow += 0.01*0.6;
-		// 		}
-
-	  	// 		vec3 truePos = fragpos + sumVec*inverse(tbnMatrix)*interval;
-
-
-	  	// 		Albedo.rgb += vec3(0.5,0.75,1.0) * sqrt(endportalGLow);
-		// 		endportalGLow = clamp(pow(endportalGLow*3.5,5),0,1);
-
-		// 	}
-	    // }
-
-
-		#ifdef ENTITIES
-			if(NameTags == 1) Albedo = texture2D(texture, lmtexcoord.xy, Texture_MipMap_Bias) * color;
-		#endif
-
-		#ifdef AEROCHROME_MODE
-			vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), AEROCHROME_PINKNESS);
-			float gray = dot(Albedo.rgb, vec3(0.2, 01.0, 0.07));
-			if(blockID == 10001 || blockID == 10003 || blockID == 10004 || blockID == 10006) {
-			// IR Reflective (Pink-red)
-				Albedo.rgb = mix(vec3(gray), aerochrome_color, 0.7);
-			}
-			else if(blockID == 10008) {
-			// Special handling for grass block
-				float strength = 1.0 - color.b;
-				Albedo.rgb = mix(Albedo.rgb, aerochrome_color, strength);
-			}
-			#ifdef AEROCHROME_WOOL_ENABLED
-				else if(blockID == 200) {
-				// Wool
-					Albedo.rgb = mix(Albedo.rgb, aerochrome_color, 0.3);
-				}
-			#endif
-			else if(blockID == 8 || blockID == 10002)
-			{
-			// IR Absorbsive? Dark.
-				Albedo.rgb = mix(Albedo.rgb, vec3(0.01, 0.08, 0.15), 0.5);
-			}
-		#endif
-		
-		#ifdef WhiteWorld
-			Albedo.rgb = vec3(1.0);
-		#endif
-
-	 	#ifdef DISABLE_ALPHA_MIPMAPS
-	 		Albedo.a = texture2DGradARB(texture, adjustedTexCoord.xy,vec2(0.),vec2(0.0)).a;
-	 	#endif
-
-		#ifdef WORLD
-			if (Albedo.a > 0.1) Albedo.a = normalMat.a;
-			else Albedo.a = 0.0;
-		#endif
-
-		#ifdef HAND
-			if (Albedo.a > 0.1) Albedo.a = 0.75;
-			else Albedo.a = 0.0;
-		#endif
-
-		//////////////////////////////// 
-		//////////////////////////////// NORMAL
-		//////////////////////////////// 
-
-		#ifdef MC_NORMAL_MAP
-			vec3 NormalTex = texture2DGradARB(normals, adjustedTexCoord.xy, dcdx,dcdy).rgb;
-			NormalTex.xy = NormalTex.xy*2.0-1.0;
-			NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0);
-
-			normal = applyBump(tbnMatrix,NormalTex, mix(1.0,1.0-Puddle_shape,rainfall));
-
-			// #ifdef ENTITIES
-			// 	if(NameTags == 1) normal = vec3(1);
-			// #endif
-		#endif
-
-		//////////////////////////////// 
-		//////////////////////////////// SPECULAR
-		//////////////////////////////// 
-
-		vec4 SpecularTex = texture2DGradARB(specular, adjustedTexCoord.xy,dcdx,dcdy);
-
-		SpecularTex.r = max(SpecularTex.r, Puddle_shape);
-		SpecularTex.g = max(SpecularTex.g, Puddle_shape*0.04);
-
-		// #ifdef ENTITIES
-		// 	if(NameTags == 1) SpecularTex = vec4(0.0);
-		// #endif
-
-
-		gl_FragData[2].rg = SpecularTex.rg;
-
-		#ifdef LabPBR_Emissives
-			gl_FragData[2].a = SpecularTex.a;
-		#else
-			gl_FragData[2].a = EMISSIVE;
-		#endif
-		
-		if(PORTAL > 0) gl_FragData[2].a = clamp(endportalGLow * 0.9 ,0,0.9);
-
-		#if SSS_TYPE == 0
-			gl_FragData[2].b = 0.0;
-		#endif
-
-		#if SSS_TYPE == 1
-			gl_FragData[2].b = SSSAMOUNT;
-		#endif
-
-		#if SSS_TYPE == 2
-			gl_FragData[2].b = SpecularTex.b;
-			if(SpecularTex.b < 65.0/255.0) gl_FragData[2].b = SSSAMOUNT;
-		#endif
-
-		#if SSS_TYPE == 3		
-			gl_FragData[2].b = SpecularTex.b;
-		#endif
-
-		//////////////////////////////// 
-		//////////////////////////////// FINALIZE
-		//////////////////////////////// 
-
-		#ifdef Puddles
-			float porosity = 0.35;
-			#ifdef Porosity
-				porosity = SpecularTex.z >= 64.5/255.0 ? 0.0 : (SpecularTex.z*255.0/64.0)*0.65;
-			#endif
-			if(SpecularTex.g < 229.5/255.0) Albedo.rgb = mix(Albedo.rgb, vec3(0), Puddle_shape*porosity);
-		#endif
-
-		vec4 data1 = clamp(encode(viewToWorld(normal),  (blueNoise()*vec2(torchlightmap,lmtexcoord.w)/(30.0 * (1+ (1-RENDER_SCALE.x)))) + vec2(torchlightmap,lmtexcoord.w)),0.,1.0);
-		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),encodeVec2(Albedo.y,data1.y),encodeVec2(Albedo.z,data1.z),encodeVec2(data1.w,Albedo.w));
-		gl_FragData[1].a = 0.0;
-
-#else
-
-
-		float bias = Texture_MipMap_Bias - blueNoise()*0.5;
-
-		//////////////////////////////// 
-		//////////////////////////////// NORMAL
-		//////////////////////////////// 
+	//////////////////////////////// 				////////////////////////////////
+	////////////////////////////////	ALBEDO		////////////////////////////////
+	//////////////////////////////// 				//////////////////////////////// 
 	
+	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM) * color;
+	
+	// float ENDPORTAL_EFFECT = PORTAL > 0 ? EndPortalEffect(Albedo, fragpos, worldpos, tbnMatrix) : 0;
+
+	#ifdef WhiteWorld
+		Albedo.rgb = vec3(1.0);
+	#endif
+		
+
+	#ifdef AEROCHROME_MODE
+		vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), AEROCHROME_PINKNESS);
+		float gray = dot(Albedo.rgb, vec3(0.2, 01.0, 0.07));
+		if(blockID == 10001 || blockID == 10003 || blockID == 10004 || blockID == 10006) {
+		// IR Reflective (Pink-red)
+			Albedo.rgb = mix(vec3(gray), aerochrome_color, 0.7);
+		}
+		else if(blockID == 10008) {
+		// Special handling for grass block
+			float strength = 1.0 - color.b;
+			Albedo.rgb = mix(Albedo.rgb, aerochrome_color, strength);
+		}
+		#ifdef AEROCHROME_WOOL_ENABLED
+			else if(blockID == 200) {
+			// Wool
+				Albedo.rgb = mix(Albedo.rgb, aerochrome_color, 0.3);
+			}
+		#endif
+		else if(blockID == 8 || blockID == 10002)
+		{
+		// IR Absorbsive? Dark.
+			Albedo.rgb = mix(Albedo.rgb, vec3(0.01, 0.08, 0.15), 0.5);
+		}
+	#endif
+
+	#ifdef WORLD
+		if (Albedo.a > 0.1) Albedo.a = normalMat.a;
+		else Albedo.a = 0.0;
+	#endif
+
+	#ifdef HAND
+		if (Albedo.a > 0.1) Albedo.a = 0.75;
+		else Albedo.a = 0.0;
+	#endif
+
+	//////////////////////////////// 				////////////////////////////////
+	////////////////////////////////	NORMAL		////////////////////////////////
+	//////////////////////////////// 				//////////////////////////////// 
+
 	#ifdef WORLD
 		#ifdef MC_NORMAL_MAP
-			vec4 NormalTex = texture2D(normals, lmtexcoord.xy, bias).rgba;
+		
+			vec4 NormalTex = texture2D_POMSwitch(normals, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM);
 			NormalTex.xy = NormalTex.xy*2.0-1.0;
 			NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0) ;
 
-			if(PHYSICSMOD_SNOW < 1)normal = applyBump(tbnMatrix, NormalTex.xyz,  mix(1.0,1-Puddle_shape,rainfall)	);
-			
-			// #ifdef ENTITIES
-			// 	if(NameTags == 1) normal = vec3(1);
-			// #endif
-
-			// #ifdef ENTITY_PHYSICSMOD_SNOW
-			// 	normal = FlatNormals;
-			// #endif
-
+			if(PHYSICSMOD_SNOW < 1) normal = applyBump(tbnMatrix, NormalTex.xyz,  mix(1.0,1-Puddle_shape,rainfall)	);
 		#endif
 	#endif
 	
-		//////////////////////////////// 
-		//////////////////////////////// SPECULAR
-		//////////////////////////////// 
+	//////////////////////////////// 				////////////////////////////////
+	////////////////////////////////	SPECULAR	////////////////////////////////
+	//////////////////////////////// 				//////////////////////////////// 
 	
 	#ifdef WORLD
-		vec4 SpecularTex = texture2D(specular, lmtexcoord.xy, bias);
+		vec4 SpecularTex = texture2D_POMSwitch(specular, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM);
 
 		SpecularTex.r = max(SpecularTex.r, Puddle_shape);
 		SpecularTex.g = max(SpecularTex.g, Puddle_shape*0.02);
 
-		// #ifdef ENTITIES
-		// 	if(NameTags == 1) SpecularTex = vec4(0.0);
-		// #endif
-
-
 		gl_FragData[2].rg = SpecularTex.rg;
-
-		// #ifdef LabPBR_Emissives
-		// 	gl_FragData[2].a = SpecularTex.a;
-		// 	if(SpecularTex.a <= 0.0) gl_FragData[2].a = EMISSIVE;
-		// #else
-		// 	gl_FragData[2].a = SpecularTex.a;
-		// 	if(SpecularTex.a <= 0.0) gl_FragData[2].a = EMISSIVE;
-		// 	// gl_FragData[2].a = EMISSIVE;
-		// #endif
 
 		#if EMISSIVE_TYPE == 0
 			gl_FragData[2].a = 0.0;
 		#endif
 
 		#if EMISSIVE_TYPE == 1
-			gl_FragData[2].a = EMISSIVE
+			gl_FragData[2].a = EMISSIVE;
 		#endif
 
 		#if EMISSIVE_TYPE == 2
@@ -585,8 +534,6 @@ void main() {
 			gl_FragData[2].a = SpecularTex.a;
 		#endif
 
-
-
 		#if SSS_TYPE == 0
 			gl_FragData[2].b = 0.0;
 		#endif
@@ -604,56 +551,18 @@ void main() {
 			gl_FragData[2].b = SpecularTex.b;
 		#endif
 
+		// if(PORTAL > 0){
+		// 	gl_FragData[2].rgb = vec3(0);
+		// 	gl_FragData[2].a = clamp(ENDPORTAL_EFFECT * 0.9, 0,0.9);
+		// }
 	#endif
 
-		 	
 
-		// #ifdef ENTITIES
-		// 	if(LIGHTNING > 0) gl_FragData[2].a = 0.9;
-		// #endif
+	//////////////////////////////// 				////////////////////////////////
+	////////////////////////////////	FINALIZE	////////////////////////////////
+	//////////////////////////////// 				////////////////////////////////
 
-		//////////////////////////////// 
-		//////////////////////////////// ALBEDO
-		//////////////////////////////// 
-	
 	#ifdef WORLD
-		vec4 Albedo = texture2D(texture, lmtexcoord.xy, bias) * color;
-
-		#ifdef WhiteWorld
-			Albedo.rgb = vec3(1.0);
-		#endif
-			
-		if(LIGHTNING > 0) Albedo = vec4(1);
-
-		#ifdef AEROCHROME_MODE
-			vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), AEROCHROME_PINKNESS);
-			float gray = dot(Albedo.rgb, vec3(0.2, 01.0, 0.07));
-			if(blockID == 10001 || blockID == 10003 || blockID == 10004 || blockID == 10006) {
-			// IR Reflective (Pink-red)
-				Albedo.rgb = mix(vec3(gray), aerochrome_color, 0.7);
-			}
-			else if(blockID == 10008) {
-			// Special handling for grass block
-				float strength = 1.0 - color.b;
-				Albedo.rgb = mix(Albedo.rgb, aerochrome_color, strength);
-			}
-			#ifdef AEROCHROME_WOOL_ENABLED
-				else if(blockID == 200) {
-				// Wool
-					Albedo.rgb = mix(Albedo.rgb, aerochrome_color, 0.3);
-				}
-			#endif
-			else if(blockID == 8 || blockID == 10002)
-			{
-			// IR Absorbsive? Dark.
-				Albedo.rgb = mix(Albedo.rgb, vec3(0.01, 0.08, 0.15), 0.5);
-			}
-		#endif
-
-
-	  	#ifdef DISABLE_ALPHA_MIPMAPS
-	  		Albedo.a = texture2DLod(texture,lmtexcoord.xy,0).a;
-	  	#endif
 
 		#ifdef Puddles
 			float porosity = 0.35;
@@ -662,23 +571,7 @@ void main() {
 			#endif
 			if(SpecularTex.g < 229.5/255.0) Albedo.rgb = mix(Albedo.rgb, vec3(0), Puddle_shape*porosity);
 		#endif
-		
-		#ifdef WORLD
-			if (Albedo.a > 0.1) Albedo.a = normalMat.a;
-			else Albedo.a = 0.0;
-		#endif
 
-
-		#ifdef HAND
-			if (Albedo.a > 0.1) Albedo.a = 0.75;
-			else Albedo.a = 0.0;
-		#endif
-
-		//////////////////////////////// 
-		//////////////////////////////// FINALIZE
-		//////////////////////////////// 
-
-		// vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*lmtexcoord.zw/30.0) + lmtexcoord.zw),	0.0,	1.0);
 		vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*vec2(torchlightmap,lmtexcoord.w) /	(30.0 * (1+ (1-RENDER_SCALE.x)))		) + vec2(torchlightmap,lmtexcoord.w)),	0.0,	1.0);
 
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
@@ -686,15 +579,15 @@ void main() {
 		gl_FragData[1].a = 0.0;
 	#endif
 
-#endif
+
 	
 	#ifdef WORLD
-	gl_FragData[5].x = 0;
+		gl_FragData[5].x = 0;
 
-	#ifdef ENTITIES
-		gl_FragData[5].xyz = velocity *0.5+0.5;
-	#endif
+		#ifdef ENTITIES
+			gl_FragData[5].xyz = velocity *0.5+0.5;
+		#endif
 
-	gl_FragData[3] = vec4(FlatNormals * 0.5 + 0.5,VanillaAO);	
+		gl_FragData[3] = vec4(FlatNormals * 0.5 + 0.5,VanillaAO);	
 	#endif
 }

@@ -11,7 +11,6 @@ const bool colortex12MipmapEnabled = true;
 const bool shadowHardwareFiltering = true;
 
 flat varying vec3 averageSkyCol_Clouds;
-flat varying vec3 averageSkyCol;
 flat varying vec4 lightCol;
 
 flat varying vec3 WsunVec;
@@ -295,7 +294,7 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 			#endif
 
 
-			vec3 ambientMul = exp(-max(estEndDepth * d,0.0) * waterCoefs );
+			vec3 ambientMul = exp(-max(estEndDepth * d,0.0) * waterCoefs ) * 1.5;
 			vec3 sunMul = exp(-max(estSunDepth * d,0.0) * waterCoefs);
 
 			vec3 light = (sh * lightSource * phase * sunMul + (ambientMul*ambient) )*scatterCoef;
@@ -994,12 +993,13 @@ void main() {
 		float skylight = clamp(abs(ambientCoefs.y + 1.0),0.35,2.0);
 
 		#if indirect_effect == 2 || indirect_effect == 3 || indirect_effect == 4
-			if (!hand)  skylight = 1.0;
+			if (!hand) skylight = 1.0;
 		#endif
 
 		// do this to make underwater shading easier.
 		vec2 newLightmap = lightmap.xy;
-		if((isEyeInWater == 0 && iswater) || (isEyeInWater == 1 && !iswater)) newLightmap.y = min(newLightmap.y+0.1,1.0);
+		
+		if((isEyeInWater == 0 && iswater) || (isEyeInWater == 1 && !iswater)) newLightmap.y = clamp(newLightmap.y,0,1);
 
 		
 
@@ -1169,8 +1169,8 @@ void main() {
 	
 		float custom_lightmap_T = pow(texture2D(colortex14, texcoord).a,1.5);
 	
-		vec3 ambientColVol = (averageSkyCol_Clouds * 8./150./1.5) *  max(custom_lightmap_T,MIN_LIGHT_AMOUNT*0.001);
-		vec3 lightColVol = (lightCol.rgb / 80.) ;
+		vec3 ambientColVol =  (averageSkyCol_Clouds*8./150./1.5) *  max(custom_lightmap_T,MIN_LIGHT_AMOUNT*0.0015);
+		vec3 lightColVol = (lightCol.rgb / 80.);
 	
 		if (isEyeInWater == 0) waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));		
 	}

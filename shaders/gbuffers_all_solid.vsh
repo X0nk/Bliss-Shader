@@ -31,10 +31,10 @@ varying float VanillaAO;
 varying vec4 lmtexcoord;
 varying vec4 normalMat;
 
-#ifdef POM
+// #ifdef POM
 	varying vec4 vtexcoordam; // .st for add, .pq for mul
 	varying vec4 vtexcoord;
-#endif
+// #endif
 
 #ifdef MC_NORMAL_MAP
 	varying vec4 tangent;
@@ -194,13 +194,13 @@ void main() {
 
 	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
 
-	#ifdef POM
-		vec2 midcoord = (gl_TextureMatrix[0] *  mc_midTexCoord).st;
-		vec2 texcoordminusmid = lmtexcoord.xy-midcoord;
-		vtexcoordam.pq  = abs(texcoordminusmid)*2;
-		vtexcoordam.st  = min(lmtexcoord.xy,midcoord-texcoordminusmid);
-		vtexcoord.xy    = sign(texcoordminusmid)*0.5+0.5;
-	#endif
+	// #ifdef POM
+	vec2 midcoord = (gl_TextureMatrix[0] *  mc_midTexCoord).st;
+	vec2 texcoordminusmid = lmtexcoord.xy-midcoord;
+	vtexcoordam.pq  = abs(texcoordminusmid)*2;
+	vtexcoordam.st  = min(lmtexcoord.xy,midcoord-texcoordminusmid);
+	vtexcoord.xy    = sign(texcoordminusmid)*0.5+0.5;
+	// #endif
 
 	vec2 lmcoord = gl_MultiTexCoord1.xy / 255.0; // is this even correct? lol'
 	lmtexcoord.zw = lmcoord;
@@ -244,7 +244,6 @@ void main() {
 	
 	if(entityId == 1100 || entityId == 1200 || entityId == 2468) normalMat.a = 0.45;
 	
-
 #endif
 
 	if(mc_Entity.x == 10003) normalMat.a = 0.55;
@@ -255,21 +254,18 @@ void main() {
 	// if(NameTags > 0) EMISSIVE = 0.9;
 
 	// normal block lightsources		
-	if(mc_Entity.x == 10005) EMISSIVE = 0.9;
+	if(mc_Entity.x == 10005) EMISSIVE = 0.5;
 	
 	// special cases light lightning and beacon beams...	
 	#ifdef ENTITIES
-
 		if(entityId == 12345){
 			LIGHTNING = 1;
 			normalMat.a = 0.5;
 		}
-
 	#endif
 
     /////// ----- SSS STUFF ----- ///////
 			SSSAMOUNT = 0.0;
-
 
 	HELD_ITEM_BRIGHTNESS = 0.0;
 

@@ -92,11 +92,13 @@ void main() {
 		pos.xy += normalize(sample3x3[i] * vec2(0.5,0.5));
 		averageSkyCol_Clouds += 2.0*skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.;
 		
+		averageSkyCol += 1.5*skyFromTex(pos,colortex4).rgb/maxIT/150.; // please dont do an infinite feedback loop....
+		
 		pos = normalize(vec3(0,1,0));
    	}
 	
-	// only need to sample one spot for this
-	averageSkyCol += 2.0*skyFromTex(normalize(vec3(0.0,1.0,0.0)),colortex4).rgb/150.;
+	// // only need to sample one spot for this
+	// averageSkyCol += 2.0*skyFromTex(normalize(vec3(0.0,1.0,0.0)),colortex4).rgb/150.;
 
 
 

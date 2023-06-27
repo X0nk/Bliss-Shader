@@ -281,8 +281,7 @@ void MaterialReflections(
 	#endif
 
 	if (hasReflections) { // Skip sky reflection and SSR if its just not very visible anyway
-
-
+	
 		#ifdef Screen_Space_Reflections
 			float rayQuality = mix_float(reflection_quality,6.0,rayContribLuma); // Scale quality with ray contribution
 			
@@ -294,7 +293,7 @@ void MaterialReflections(
 			noise.b = mix_float(noise.b, 0.5 + (noise.b-0.5),rayContribLuma);
 			if(hand) {rayQuality = max(rayQuality,30.0); noise.b = 0.5 + (noise.b-0.5);}
 			
-			vec3 rtPos = rayTraceSpeculars(mat3(gbufferModelView) * L, fragpos.xyz,  noise.b, rayQuality, hand, reflectLength);
+			vec3 rtPos = rayTraceSpeculars(mat3(gbufferModelView) * L, fragpos.xyz,  (noise.b), rayQuality, hand, reflectLength);
 
 			float LOD = clamp(reflectLength * 6.0, 0.0,6.0);
 			if(hand || isEntities) LOD = VisibilityFactor*6;

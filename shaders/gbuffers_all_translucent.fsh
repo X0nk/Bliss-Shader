@@ -60,7 +60,7 @@ uniform ivec2 eyeBrightnessSmooth;
 flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
 
 flat varying vec3 averageSkyCol_Clouds;
-flat varying vec3 averageSkyCol;
+// flat varying vec3 averageSkyCol;
 
 
 
@@ -462,6 +462,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 			// SSR, Sky, and Sun reflections
 			#ifdef WATER_BACKGROUND_SPECULAR
  				SkyReflection = skyCloudsFromTex(wrefl,colortex4).rgb / 150. * 5.;
+				// SkyReflection = vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B)/
 			#endif
 			#ifdef WATER_SUN_SPECULAR
 				SunReflection = Direct_lighting *  GGX(normal,  -normalize(fragpos),  lightSign*sunVec, roughness, vec3(f0)); 

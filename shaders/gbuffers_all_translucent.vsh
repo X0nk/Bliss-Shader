@@ -153,6 +153,6 @@ void main() {
 	WsunVec = lightCol.a*normalize(mat3(gbufferModelViewInverse) *sunPosition);
 	
 	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
-	averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
+	// averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
 
 }

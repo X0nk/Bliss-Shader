@@ -146,8 +146,7 @@ vec3 Cloud_lighting(
 	float powder = 1.0 - exp(CloudShape * coeeff/3);
 	float lesspowder = powder*0.4+0.6;
 	
-	
-	vec3 skyLighting = SkyColors; // skyLighting = vec3(0.0);
+	vec3 skyLighting = SkyColors;
 
 	#ifdef Altostratus
 		/// a special conditon where scattered light exiting altocumulus clouds come down onto the cumulus clouds below.
