@@ -22,7 +22,9 @@ varying vec4 normalMat;
 
 flat varying vec3 WsunVec;
 flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
-flat varying vec3 avgAmbient;
+
+flat varying vec3 averageSkyCol_Clouds;
+// flat varying vec3 averageSkyCol;
 
 uniform mat4 gbufferModelViewInverse;
 uniform vec3 sunPosition;
@@ -55,8 +57,9 @@ void main() {
 	gl_Position = ftransform();
 	color = gl_Color;
 
-	avgAmbient = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
-	
+	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+	// averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
+
 	vec3 sc = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
 	lightCol.a = float(sunElevation > 1e-5)*2-1.;
 	lightCol.rgb = sc;

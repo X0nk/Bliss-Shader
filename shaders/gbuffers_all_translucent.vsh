@@ -11,6 +11,12 @@ Read the terms of modification and sharing before changing something below pleas
 !! DO NOT REMOVE !!
 */
 
+flat varying vec3 averageSkyCol_Clouds;
+flat varying vec3 averageSkyCol;
+
+flat varying vec4 lightCol;
+
+
 varying vec4 lmtexcoord;
 varying vec4 color;
 varying vec4 normalMat;
@@ -32,9 +38,6 @@ flat varying vec3 WsunVec;
 uniform float sunElevation;
 
 varying vec4 tangent_other;
-
-flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
-flat varying vec3 avgAmbient;
 
 
 uniform vec2 texelSize;
@@ -149,5 +152,7 @@ void main() {
 
 	WsunVec = lightCol.a*normalize(mat3(gbufferModelViewInverse) *sunPosition);
 	
-	avgAmbient = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+	averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
+
 }

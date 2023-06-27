@@ -1,43 +1,245 @@
-option.indirect_effect = Indirect Lighting
-value.indirect_effect.0 = Vanilla AO
-value.indirect_effect.1 = SSAO
-value.indirect_effect.2 = GTAO
-value.indirect_effect.3 = RTAO
-value.indirect_effect.4 = SSGI
-
-option.ambientOcclusionLevel = Vanilla AO Amount
-option.ambient_brightness = Ambient Light Brightness
-option.MIN_LIGHT_AMOUNT = Minimum Light Brightness
-
-option.ambient_colortype = Coloring Type
-value.ambient_colortype.0 = Temperature
-value.ambient_colortype.1 = RGB
+screen.Sun_and_Moon_Colors = Sun/Moon Colors
+option.sunPathRotation = Sun Angle
+option.sun_illuminance = Sun Illuminance
+option.moon_illuminance = Moon Illuminance
 
 
-option.SSS_TYPE = SSS Mode
-value.SSS_TYPE.0 = RTX
-value.SSS_TYPE.1 = Hardcoded only
-value.SSS_TYPE.2 = Hardcoded + LabSSS
-value.SSS_TYPE.3 = LabSSS only
-option.SSS_TYPE.comment = Hardcoded means that the shader defines what gets SSS or not. LabSSS means that the resourcepack defines what gets SSS or not. RTX is no SSS at all lmao. i had to steal this formatting, RRe36
+screen.Direct_Light = Direct Light
+    screen.Filtering = Shadow Filtering Settings
+    screen.Shadows = Shadows
+        option.SCREENSPACE_CONTACT_SHADOWS = Contact Shadows
+        option.shadowMapResolution = Shadow Resolution
+        option.shadowDistance = Shadow Distance
 
-option.EMISSIVE_TYPE = Emission Mode
-value.EMISSIVE_TYPE.0 = No emission
-value.EMISSIVE_TYPE.1 = Hardcoded only
-value.EMISSIVE_TYPE.2 = Hardcoded + Lab Emission
-value.EMISSIVE_TYPE.3 = Lab Emission only
-option.EMISSIVE_TYPE.comment = Hardcoded means that the shader defines what gets emission or not. Lab emission means that the resourcepack defines what gets emission or not. RTX is no SSS at all lmao. i had to steal this formatting, RRe36
 
+screen.Subsurface_Scattering = Sub-Surface Scattering
+    option.LabSSS_Curve = LabSSS Curve
+    option.Ambient_SSS = SSS from the sky
+    option.ambientsss_brightness = Sky SSS Brightness
+    option.SSS_TYPE = Mode
+        option.SSS_TYPE.comment = Hardcoded means that the shader defines what gets SSS or not. LabSSS means that the resourcepack defines what gets SSS or not. RTX is no SSS at all lmao. i had to steal this formatting, RRe36
+            value.SSS_TYPE.0 = RTX
+            value.SSS_TYPE.1 = Hardcoded only
+            value.SSS_TYPE.2 = Hardcoded + LabSSS
+            value.SSS_TYPE.3 = LabSSS only
+
+
+screen.Ambient_light = Ambient Light
+    option.AO_Strength = AO Multiplier
+    option.GI_Strength = GI Multiplier
+    option.HQ_SSGI = Long Range SSGI
+    option.Hand_Held_lights = Hand Held Light
+    option.indirect_effect = Indirect Lighting
+        value.indirect_effect.0 = Vanilla AO
+            value.indirect_effect.1 = SSAO
+            value.indirect_effect.2 = GTAO
+            value.indirect_effect.3 = RTAO
+            value.indirect_effect.4 = SSGI
+
+    screen.Ambient_Colors =  Ambient Light Color
+        option.ambient_temp = Tempurature
+        option.AmbientLight_R = Red Amount
+        option.AmbientLight_G = Green Amount
+        option.AmbientLight_B = Blue Amount
+        option.ambient_colortype = Coloring Type
+            value.ambient_colortype.0 = Temperature
+            value.ambient_colortype.1 = RGB
+    
+    screen.Torch_Colors = Torch Color
+        option.TORCH_AMOUNT = Torch Light Multiplier
+        option.TORCH_R = Red Amount
+        option.TORCH_G = Green Amount
+        option.TORCH_B = Blue Amount
+    
+
+
+
+
+    option.ambientOcclusionLevel = Vanilla AO Amount
+    option.ambient_brightness = Ambient Light Brightness
+    option.MIN_LIGHT_AMOUNT = Minimum Light Brightness
+
+
+
+screen.Fog = Fog Settings
+    option.VL_RENDER_RESOLUTION = Fog Resolution Scaling
+    option.VL_SAMPLES = Fog Samples
+    option.BLOOMY_FOG = Bloomy Fog Multiplier
+    option.Haze_amount = Atmospheric Haze Density
+    option.RainFog_amount = Rain Fog Multiplier
+    option.Cloud_Fog = Fog Inside Clouds
+    option.BorderFog = Chunk Border Fog
+
+    screen.TOD_fog = Time Of Day Fog
+        option.TOD_Fog_mult = Fog Density Multiplier
+        option.Morning_Uniform_Fog = Morning Fog Density
+        option.Noon_Uniform_Fog = Noon Fog Density
+        option.Evening_Uniform_Fog = Evening Fog Density
+        option.Night_Uniform_Fog = Night Fog Density
+
+        option.Morning_Cloudy_Fog = Cloudy Morning Fog Density
+        option.Noon_Cloudy_Fog = Cloudy Noon Fog Density
+        option.Evening_Cloudy_Fog = Cloudy Evening Fog Density
+        option.Night_Cloudy_Fog = Cloudy Night Fog Density
+
+    screen.Biome_Fog = Biome Specific Fog
+        option.Biome_specific_environment = Biome Specific Fog
+
+    screen.Cave_Fog = Cave Fog
+        option.Cave_Fog = Cave Fog
+        option.CaveFogFallOff = Fog Falloff
+        option.CaveFogColor_R = Fog R
+        option.CaveFogColor_G = Fog G
+        option.CaveFogColor_B = Fog B
+
+
+screen.Clouds = Cloud Settings
+    option.VOLUMETRIC_CLOUDS = Volumetric Clouds
+    option.CLOUDS_QUALITY = Cloud Resolution Scaling
+    option.CLOUDS_SHADOWS = Cloud Shadows
+    option.Daily_Weather = Daily Weather
+    option.Cloud_Speed = Cloud Speed Multiplier
+    option.Rain_coverage = Coverage When Raining
+
+    option.Cumulus = Cumulus Clouds
+    option.Cumulus_coverage = Coverage
+    option.Cumulus_density = Density
+    option.Cumulus_height = Cumulus Height
+
+    option.Altostratus = Altostratus Clouds
+    option.Alto_coverage = Coverage
+    option.Alto_density = Density
+
+
+screen.Climate = Climate Settings
+    option.Seasons = Seasonal Colors
+    option.Season_Length = Season Length (In Days)
+    option.Snowy_Winter = Snow During Winter
+    screen.Summer_colors = Summer Colors
+        option.Summer_R = Red Amount
+        option.Summer_G = Green Amount
+        option.Summer_B = Blue Amount
+        option.Summer_Leaf_R = Red Amount (for leaves)
+        option.Summer_Leaf_G = Green Amount (for leaves)
+        option.Summer_Leaf_B = Blue Amount (for leaves)
+
+    screen.Fall_colors = Fall Colors
+        option.Fall_R = Red Amount
+        option.Fall_G = Green Amount
+        option.Fall_B = Blue Amount
+        option.Fall_Leaf_R = Red Amount (for leaves)
+        option.Fall_Leaf_G = Green Amount (for leaves)
+        option.Fall_Leaf_B = Blue Amount (for leaves)
+
+    screen.Winter_colors = Winter Colors
+        option.Winter_R = Red Amount
+        option.Winter_G = Green Amount
+        option.Winter_B = Blue Amount
+        option.Winter_Leaf_R = Red Amount (for leaves)
+        option.Winter_Leaf_G = Green Amount (for leaves)
+        option.Winter_Leaf_B = Blue Amount (for leaves)
+
+    screen.Spring_colors = Spring Colors
+        option.Spring_R = Red Amount
+        option.Spring_G = Green Amount
+        option.Spring_B = Blue Amount
+        option.Spring_Leaf_R = Red Amount (for leaves)
+        option.Spring_Leaf_G = Green Amount (for leaves)
+        option.Spring_Leaf_B = Blue Amount (for leaves)
+
+
+
+screen.World = World
+    screen.Water = Water Settings
+        option.WATER_REFLECTIONS = Specular Reflections for Water
+        option.SCREENSPACE_REFLECTIONS = Screen-Space Reflections
+        option.SSR_STEPS = SSR Quality
+        option.WATER_SUN_SPECULAR = Sun/Moon Reflections
+        option.WATER_BACKGROUND_SPECULAR = Sky/Fog Reflections
+        option.Refraction = Refraction In Water/Glass
+        option.Dirt_Amount = Dirt Amount
+        option.Water_Top_Layer = Ocean Y coordinate
+        
+        screen.Water_fog_color = Water Fog Settings
+            option.Dirt_Scatter_R = Scatter Red (dirt)
+            option.Dirt_Scatter_G = Scatter Green (dirt)
+            option.Dirt_Scatter_B = Scatter Blue (dirt)
+            option.Dirt_Absorb_R = Absorb Red (dirt)
+            option.Dirt_Absorb_G = Absorb Green (dirt)
+            option.Dirt_Absorb_B = Absorb Blue (dirt)
+            option.Water_Absorb_R = Absorb Red (water)
+            option.Water_Absorb_G = Absorb Green (water)
+            option.Water_Absorb_B = Absorb Blue (water)
+
+
+screen.Post_Processing = Post Processing
+    screen.TAA_OPTIONS = Anti-Aliasing Settings
+        option.SCREENSHOT_MODE = Screenshot Mode
+        option.TAA = TAA
+        option.BLEND_FACTOR = Blend Factor
+        option.TAA_UPSCALING = Temporal Upscaling
+        option.SCALE_FACTOR = Scale Factor
+
+    screen.Tonemapping = Tone-Map/Color Settings
+
+    screen.Exposure = Exposure Settings
+    screen.DepthOfField = Depth Of Field Settings
+    screen.Purkinje_effect = Purkinje Effect Settings
+
+    option.SHARPENING = CAS Sharpening amount
+    option.BLOOM_STRENGTH = Bloom Multiplier
+
+
+
+screen.Misc_Settings = Misc. Settings
+
+
+screen.LabPBR = Lab PBR
+    screen.Reflections = Specular Reflections
+        option.Specular_Reflections = Specular Reflections
+        option.Screen_Space_Reflections = Screen-Space Reflections
+        option.Rough_reflections = Detailed Roughness
+        option.Sky_reflection = Sky/Fog in Reflections
+        option.Dynamic_SSR_quality = Dynamic SSR Quality
+        option.Roughness_Threshold = Reflection Threshold
+        option.Sun_specular_Strength = Sun Reflection Multiplier
+        option.reflection_quality = SSR Quality
+
+    screen.Emissives = Emissives
+        option.Emissive_Brightness = Emission Multiplier
+        option.Emissive_Curve = Emission Curve
+        option.EMISSIVE_TYPE = Mode
+            option.EMISSIVE_TYPE.comment = Hardcoded means that the shader defines what gets emission or not. Lab emission means that the resourcepack defines what gets emission or not.
+            value.EMISSIVE_TYPE.0 = No emission
+            value.EMISSIVE_TYPE.1 = Hardcoded only
+            value.EMISSIVE_TYPE.2 = Hardcoded + Lab Emission
+            value.EMISSIVE_TYPE.3 = Lab Emission only
+
+
+screen.POM = Parallax Occlusion Mapping / POM
+    option.POM = Parallax Occlusion Mapping
+    option.MAX_ITERATIONS = Quality
+    option.POM_DEPTH = Depth
+    option.MAX_DIST = Maximum Distance
+    option.Adaptive_Step_length = Dynamic Quality
+    option.Horrible_slope_normals = Horrible Slope Normals
+
+
+screen.Porosity = Porosity / Puddles
+    option.Porosity = Porosity
+    option.Puddles = Puddles
+    option.Puddle_Size = Puddle Size Multiplier
 
 
 option.DOF_QUALITY=Depth Of Field
-value.DOF_QUALITY.-1=Off
-value.DOF_QUALITY.0=Hexagonal
-value.DOF_QUALITY.1=Low
-value.DOF_QUALITY.2=Medium
-value.DOF_QUALITY.3=High
-value.DOF_QUALITY.4=Ultra
-option.DOF_ANAMORPHIC_RATIO=Anamorphic Ratio
+    value.DOF_QUALITY.-1=Off
+    value.DOF_QUALITY.0=Hexagonal
+    value.DOF_QUALITY.1=Low
+    value.DOF_QUALITY.2=Medium
+    value.DOF_QUALITY.3=High
+    value.DOF_QUALITY.4=Ultra
+    option.DOF_ANAMORPHIC_RATIO=Anamorphic Ratio
+
 
 option.AEROCHROME_MODE=Aerochrome Mode
 option.AEROCHROME_MODE.comment=Infrared Film. Google "Aerochrome" to get an idea of what it does.

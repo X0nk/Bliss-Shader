@@ -54,10 +54,13 @@ uniform sampler2D specular;
 uniform int frameCounter;
 uniform int isEyeInWater;
 uniform ivec2 eyeBrightness;
+uniform ivec2 eyeBrightnessSmooth;
 
 
 flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
-flat varying vec3 avgAmbient;
+
+flat varying vec3 averageSkyCol_Clouds;
+flat varying vec3 averageSkyCol;
 
 
 
@@ -410,9 +413,9 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 	vec2 lightmaps2 = lmtexcoord.zw;
 
 	
-	float lightleakfix = clamp(eyeBrightness.y/240.0 + lightmaps2.y,0.0,1.0);
+	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240. + lightmaps2.y,2) ,0.0,1.0);
 
-	vec3 Indirect_lighting = DoAmbientLighting(avgAmbient, vec3(TORCH_R,TORCH_G,TORCH_B), lightmaps2, skylight);
+	vec3 Indirect_lighting = DoAmbientLighting(averageSkyCol_Clouds, vec3(TORCH_R,TORCH_G,TORCH_B), lightmaps2, skylight);
 	vec3 Direct_lighting = DoDirectLighting(lightCol.rgb/80.0, Shadows, NdotL, 0.0);
 
 	vec3 FinalColor = (Direct_lighting + Indirect_lighting) * Albedo;
@@ -422,74 +425,81 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 		FinalColor *= alphashit;
 	#endif
 
-	
-	vec2 SpecularTex = texture2D(specular, lmtexcoord.xy, Texture_MipMap_Bias).rg;
-	
-	SpecularTex = (iswater > 0.0 && iswater < 0.9) && SpecularTex.r > 0.0 && SpecularTex.g < 0.9 ? SpecularTex : vec2(1.0,0.1);
-
-	float roughness = max(pow(1.0-SpecularTex.r,2.0),0.05);
-	float f0 = SpecularTex.g;
-
-	if (iswater > 0.0){
-		vec3 Reflections_Final = vec3(0.0);
-
-		float indoors = clamp((lmtexcoord.w-0.6)*5.0, 0.0,1.0);
-
-		vec3 reflectedVector = reflect(normalize(fragpos), normal);
-		float normalDotEye = dot(normal, normalize(fragpos));
-		float fresnel = pow(clamp(1.0 + normalDotEye,0.0,1.0), 5.0);
-		// float unchangedfresnel = fresnel;
-
-		// snells window looking thing
-		if(isEyeInWater == 1 && iswater > 0.99) fresnel = clamp(pow(1.66 + normalDotEye,25),0.02,1.0);
-
+	#ifdef WATER_REFLECTIONS
+		vec2 SpecularTex = texture2D(specular, lmtexcoord.xy, Texture_MipMap_Bias).rg;
 		
-		#ifdef PhysicsMod_support
-			if(isEyeInWater == 1 && physics_iterationsNormal > 0.0) fresnel = clamp( 1.0 - (pow( normalDotEye * 1.66 ,25)),0.02,1.0);
-		#else
-			if(isEyeInWater == 1) fresnel = clamp( 1.0 - (pow( normalDotEye * 1.66 ,25)),0.02,1.0);
-		#endif
+		SpecularTex = (iswater > 0.0 && iswater < 0.9) && SpecularTex.r > 0.0 && SpecularTex.g < 0.9 ? SpecularTex : vec2(1.0,0.1);
+	
+		float roughness = max(pow(1.0-SpecularTex.r,2.0),0.05);
+		float f0 = SpecularTex.g;
+	
+		if (iswater > 0.0){
+			vec3 Reflections_Final = vec3(0.0);
+			vec4 Reflections = vec4(0.0);
+			vec3 SkyReflection = vec3(0.0); 
+			vec3 SunReflection = vec3(0.0);
+	
+			float indoors = clamp((lmtexcoord.w-0.6)*5.0, 0.0,1.0);
+	
+			vec3 reflectedVector = reflect(normalize(fragpos), normal);
+			float normalDotEye = dot(normal, normalize(fragpos));
+			float fresnel = pow(clamp(1.0 + normalDotEye,0.0,1.0), 5.0);
+			// float unchangedfresnel = fresnel;
+	
+			// snells window looking thing
+			if(isEyeInWater == 1 && iswater > 0.99) fresnel = clamp(pow(1.66 + normalDotEye,25),0.02,1.0);
+	
+			#ifdef PhysicsMod_support
+				if(isEyeInWater == 1 && physics_iterationsNormal > 0.0) fresnel = clamp( 1.0 - (pow( normalDotEye * 1.66 ,25)),0.02,1.0);
+			#else
+				if(isEyeInWater == 1) fresnel = clamp( 1.0 - (pow( normalDotEye * 1.66 ,25)),0.02,1.0);
+			#endif
 
-		fresnel = mix(f0, 1.0, fresnel); 
-		
-		vec3 wrefl = mat3(gbufferModelViewInverse)*reflectedVector;
-
-		// SSR, Sky, and Sun reflections
-		vec4 Reflections = vec4(0.0);
-		vec3 SkyReflection = skyCloudsFromTex(wrefl,colortex4).rgb / 150. * 5.;
-		vec3 SunReflection = Direct_lighting *  GGX(normal,  -normalize(fragpos),  lightSign*sunVec, roughness, vec3(f0)); 
-
-		if(iswater > 0.0){
+			fresnel = mix(f0, 1.0, fresnel); 
+			
+			vec3 wrefl = mat3(gbufferModelViewInverse)*reflectedVector;
+	
+			// SSR, Sky, and Sun reflections
+			#ifdef WATER_BACKGROUND_SPECULAR
+ 				SkyReflection = skyCloudsFromTex(wrefl,colortex4).rgb / 150. * 5.;
+			#endif
+			#ifdef WATER_SUN_SPECULAR
+				SunReflection = Direct_lighting *  GGX(normal,  -normalize(fragpos),  lightSign*sunVec, roughness, vec3(f0)); 
+			#endif
 			#ifdef SCREENSPACE_REFLECTIONS
-				vec3 rtPos = rayTrace(reflectedVector,fragpos.xyz, interleaved_gradientNoise(), fresnel, isEyeInWater == 1);
-				if (rtPos.z < 1.){
-					vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rtPos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
-					previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
-					previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
-					if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0) {
-						Reflections.a = 1.0;
-						Reflections.rgb = texture2D(colortex5,previousPosition.xy).rgb;
+				if(iswater > 0.0){
+					vec3 rtPos = rayTrace(reflectedVector,fragpos.xyz, interleaved_gradientNoise(), fresnel, isEyeInWater == 1);
+					if (rtPos.z < 1.){
+						vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rtPos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
+						previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
+						previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
+						if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0) {
+							Reflections.a = 1.0;
+							Reflections.rgb = texture2D(colortex5,previousPosition.xy).rgb;
+						}
 					}
 				}
 			#endif
+
+			float visibilityFactor = clamp(exp2((pow(roughness,3.0) / f0) * -4),0,1);
+
+			Reflections_Final = mix(SkyReflection*indoors, Reflections.rgb, Reflections.a);
+			Reflections_Final = mix(FinalColor, Reflections_Final, fresnel * visibilityFactor);
+			Reflections_Final += SunReflection * lightleakfix;
+			
+			gl_FragData[0].rgb = Reflections_Final;
+			
+			//correct alpha channel with fresnel
+			gl_FragData[0].a = mix(gl_FragData[0].a, 1.0, fresnel);
+	
+			if (gl_FragData[0].r > 65000.) gl_FragData[0].rgba = vec4(0.);
+	
+		} else {
+			gl_FragData[0].rgb = FinalColor;
 		}
-		float visibilityFactor = clamp(exp2((pow(roughness,3.0) / f0) * -4),0,1);
-
-		Reflections_Final = mix(SkyReflection*indoors, Reflections.rgb, Reflections.a);
-		Reflections_Final = mix(FinalColor, Reflections_Final, fresnel * visibilityFactor);
-		Reflections_Final += SunReflection * lightleakfix;
-
-		gl_FragData[0].rgb = Reflections_Final;
-
-		//correct alpha channel with fresnel
-		float alpha0 = gl_FragData[0].a;
-		gl_FragData[0].a = mix(alpha0, 1.0, fresnel);
-
-		if (gl_FragData[0].r > 65000.) gl_FragData[0].rgba = vec4(0.);
-
-	} else {
+	#else
 		gl_FragData[0].rgb = FinalColor;
-	}
+	#endif
 
 	#ifndef HAND
 		gl_FragData[1] = vec4(Albedo,iswater);

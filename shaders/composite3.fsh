@@ -313,7 +313,7 @@ void main() {
   color.rgb *= mix(1.0, (1.0-darknessLightFactor*2.0) * clamp(1.0-pow(length(fragpos2)*(darknessFactor*0.07),2.0),0.0,1.0), darknessFactor);
   
   #ifdef display_LUT
-  	vec2 movedTC = texcoord   ;
+  	vec2 movedTC = texcoord;
     vec3 thingy = texture2D(colortex4,movedTC).rgb / 150. * 5.0;
     if(luma(thingy) > 0.0 ) color.rgb =  thingy;
   #endif

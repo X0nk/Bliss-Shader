@@ -10,6 +10,10 @@ Read the terms of modification and sharing before changing something below pleas
 */
 
 
+#ifdef HAND
+#undef POM
+#endif
+
 #ifndef USE_LUMINANCE_AS_HEIGHTMAP
 #ifndef MC_NORMAL_MAP
 #undef POM
@@ -53,17 +57,19 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 
 
 
-flat varying int LIGHTNING;
+flat varying int PHYSICSMOD_SNOW;
+flat varying int NameTags;
+
 flat varying float SSSAMOUNT;
 flat varying float EMISSIVE;
-flat varying int NameTags;
+flat varying int LIGHTNING;
 flat varying int PORTAL;
+flat varying int SIGN;
 
 in vec3 at_velocity;
 out vec3 velocity;
 
 
-flat varying int PHYSICSMOD_SNOW;
 
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
@@ -71,6 +77,7 @@ attribute vec4 mc_midTexCoord;
 uniform vec3 cameraPosition;
 uniform vec2 texelSize;
 uniform int framemod8;
+
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-1.,3.)/8.,
 							vec2(5.0,1.)/8.,
@@ -212,12 +219,12 @@ void main() {
 
 
 
-
-
 	PORTAL = 0;
+	SIGN = 0;
 
 	#ifdef WORLD
-		if(blockEntityId == 2100) PORTAL = 255;
+		if(blockEntityId == 2200) SIGN = 1;
+		if(blockEntityId == 2100) PORTAL = 1;
 	#endif
 
 	NameTags = 0;

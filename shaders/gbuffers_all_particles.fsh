@@ -2,8 +2,12 @@
 varying vec4 lmtexcoord;
 varying vec4 color;
 
+flat varying vec3 averageSkyCol_Clouds;
+// flat varying vec3 averageSkyCol;
+
 flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
-flat varying vec3 avgAmbient;
+// flat varying vec3 sunColor;
+// flat varying vec3 moonColor;
 
 uniform vec3 sunVec;
 flat varying vec3 WsunVec;
@@ -143,7 +147,7 @@ void main() {
 		float phase = phaseg(clamp(dot(np3, WsunVec),0.0,1.0),(1.0-gl_FragData[0].a) * 0.8 + 0.1) + 1.0 ;
 		vec3 Direct_lighting = DoDirectLighting(lightCol.rgb/80., Shadows, 1.0, 0.0) * phase * lightleakfix;
 
-		vec3 Indirect_lighting = DoAmbientLighting(avgAmbient, vec3(TORCH_R,TORCH_G,TORCH_B), lmtexcoord.zw, 5.0);
+		vec3 Indirect_lighting = DoAmbientLighting(averageSkyCol_Clouds, vec3(TORCH_R,TORCH_G,TORCH_B), lmtexcoord.zw, 5.0);
 		// gl_FragData[0].a = TEXTURE.a;
 		gl_FragData[0].rgb = (Direct_lighting + Indirect_lighting) * Albedo;
 

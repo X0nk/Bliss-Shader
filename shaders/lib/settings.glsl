@@ -20,6 +20,7 @@
 #define Water_Top_Layer 62.90 // When under water and when lightMapDepthEstimate is turned off. Assumes the top layer of the water is at this height (minecraft y position) for underwater lighting calculations. If not set correctly, underwater will look incorrect.[0.90 1.90 2.90 3.90 4.90 5.90 6.90 7.90 8.90 9.90 10.90 11.90 12.90 13.90 14.90 15.90 16.90 17.90 18.90 19.90 20.90 21.90 22.90 23.90 24.90 25.90 26.90 27.90 28.90 29.90 30.90 31.90 32.90 33.90 34.90 35.90 36.90 37.90 38.90 39.90 40.90 41.90 42.90 43.90 44.90 45.90 46.90 47.90 48.90 49.90 50.90 51.90 52.90 53.90 54.90 55.90 56.90 57.90 58.90 59.90 60.90 61.90 62.90 63.90 64.90 65.90 66.90 67.90 68.90 69.90 70.90 71.90 72.90 73.90 74.90 75.90 76.90 77.90 78.90 79.90 80.90 81.90 82.90 83.90 84.90 85.90 86.90 87.90 88.90 89.90 90.90 91.90 92.90 93.90 94.90 95.90 96.90 97.90 98.90 99.90 100.90 101.90 102.90 103.90 104.90 105.90 106.90 107.90 108.90 109.90 110.90 111.90 112.90 113.90 114.90 115.90 116.90 117.90 118.90 119.90 120.90 121.90 122.90 123.90 124.90 125.90 126.90 127.90 128.90 129.90 130.90 131.90 132.90 133.90 134.90 135.90 136.90 137.90 138.90 139.90 140.90 141.90 142.90 143.90 144.90 145.90 146.90 147.90 148.90 149.90 150.90 151.90 152.90 153.90 154.90 155.90 156.90 157.90 158.90 159.90 160.90 161.90 162.90 163.90 164.90 165.90 166.90 167.90 168.90 169.90 170.90 171.90 172.90 173.90 174.90 175.90 176.90 177.90 178.90 179.90 180.90 181.90 182.90 183.90 184.90 185.90 186.90 187.90 188.90 189.90 190.90 191.90 192.90 193.90 194.90 195.90 196.90 197.90 198.90 199.90]
 //#define lightMapDepthEstimation // If turned off, will use the player eye position and the Water_Top_Layer option to determine how deep the player is in water. It can look wrong in a lot of cases, and using minecraft light levels instead improves this but will look worse in oceans, lakes and rivers.
 //#define Vanilla_like_water // vanilla water texture along with shader water stuff
+
 #define Texture_MipMap_Bias 0.0 // Uses a another mip level for textures. When reduced will increase texture detail but may induce a lot of shimmering. [-5.00 -4.75 -4.50 -4.25 -4.00 -3.75 -3.50 -3.25 -3.00 -2.75 -2.50 -2.25 -2.00 -1.75 -1.50 -1.25 -1.00 -0.75 -0.50 -0.25 0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.25 2.50 2.75 3.00 3.25 3.50 3.75 4.00 4.25 4.50 4.75 5.00]
 
 // --- AMBIENT LIGHT ---
@@ -156,7 +157,7 @@
 #define Adaptive_Step_length // make only used parts of the POM depth get samples, to increase overall quality. DOWNSIDE: at sheer angles, it looks kinda buggy.
 //#define Horrible_slope_normals // really only good on low resoltution packs. alot of aliasing/flickering at high resoltions
 #define POM_DEPTH 0.25 // [0.025 0.05 0.075 0.1 0.125 0.15 0.20 0.25 0.30 0.50 0.75 1.0] // IN METERS. Vanillaccurate: 0.15-0.25. VNR: 0.20. Patrix: 1.0
-#define MAX_ITERATIONS 50 // [5 10 15 20 25 30 40 50 60 70 80 90 100 125 150 200 400] //Improves quality at grazing angles (reduces performance)
+#define MAX_ITERATIONS 35 // [5 10 15 20 25 30 40 50 60 70 80 90 100 125 150 200 400] //Improves quality at grazing angles (reduces performance)
 #define MAX_DIST 25.0 // [5.0 10.0 15.0 20.0 25.0 30.0 40.0 50.0 60.0 70.0 80.0 90.0 100.0 125.0 150.0 200.0 400.0] //Increases distance at which POM is calculated
 
 // #define Porosity
@@ -295,11 +296,17 @@ const float shadowDistanceRenderMul = -1.0; //[-1.0 1.0] THIS WILL BREAK SUBSURF
 #define Sun_specular_Strength 3 // increase for more sparkles [1 2 3 4 5 6 7 8 9 10]
 #define reflection_quality 30 // adjust the quality of the screenspace reflections. [6.0 7.0 8.0 9.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0 18.0 19.0 20.0 25.0 30.0 35.0 40.0 45.0 50.0 55.0 60.0 65.0 70.0 75.0 80.0 85.0 90.0 95.0 100.0 ]
 #define Roughness_Threshold 1.5 // using a curve on the roughness, make the reflections more or less visible on rough surfaces. good for hiding noise on rough materials [1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
-#define SCREENSPACE_REFLECTIONS	//can be really expensive at high resolutions/render quality, especially on ice
+
 #define SSR_STEPS 30 //[10 15 20 25 30 35 40 50 100 200 400]
 #define SUN_MICROFACET_SPECULAR // If enabled will use realistic rough microfacet model, else will just reflect the sun. No performance impact.
 #define USE_QUARTER_RES_DEPTH // Uses a quarter resolution depth buffer to raymarch screen space reflections, improves performance but may introduce artifacts
 #define Dynamic_SSR_quality // rougher reflections have lower quality. this improves performance a bit in alot of scenes
+
+#define WATER_REFLECTIONS
+#define WATER_BACKGROUND_SPECULAR
+#define WATER_SUN_SPECULAR
+#define SCREENSPACE_REFLECTIONS	//can be really expensive at high resolutions/render quality, especially on ice
+
 
 #ifdef Specular_Reflections
 	#define Puddles // yes
@@ -423,4 +430,5 @@ const float shadowDistanceRenderMul = -1.0; //[-1.0 1.0] THIS WILL BREAK SUBSURF
 #define Lightning_R 0.3 // [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 ]
 #define Lightning_G 0.6 // [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 ]
 #define Lightning_B 1.0 // [ 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 ]
-// #define PhysicsMod_support // CURRENTLY BREAKS THE WHOLE SHADER WITH AMD
+
+// #define PhysicsMod_support // WARNING: this may or may not visually mess up the whole shader on AMD devices. if you dont see any weirdness then it's fine

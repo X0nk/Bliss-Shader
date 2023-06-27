@@ -89,7 +89,7 @@ void main() {
 	vec3 pos = normalize(vec3(0,1,0));
 	int maxIT = 9;
 	for (int i = 0; i < maxIT; i++) {
-		pos.xy += normalize(sample3x3[i] * vec2(1.0,0.5));
+		pos.xy += normalize(sample3x3[i] * vec2(0.5,0.5));
 		averageSkyCol_Clouds += 2.0*skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.;
 		
 		pos = normalize(vec3(0,1,0));

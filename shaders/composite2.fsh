@@ -11,15 +11,6 @@ flat varying vec3 moonColor;
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec3 averageSkyCol;
 
-
-flat varying vec3 ambientUp;
-flat varying vec3 ambientLeft;
-flat varying vec3 ambientRight;
-flat varying vec3 ambientB;
-flat varying vec3 ambientF;
-flat varying vec3 ambientDown;
-flat varying vec3 avgAmbient;
-
 flat varying float tempOffsets;
 flat varying float fogAmount;
 flat varying float VFAmount;

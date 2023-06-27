@@ -4,7 +4,10 @@
 #include "/lib/settings.glsl"
 
 flat varying int NameTags;
-flat varying float SSSAMOUNT;
+
+#ifdef HAND
+#undef POM
+#endif
 
 #ifndef USE_LUMINANCE_AS_HEIGHTMAP
 #ifndef MC_NORMAL_MAP
@@ -79,14 +82,17 @@ uniform sampler2D depthtex0;
 
 in vec3 velocity;
 
+flat varying int PHYSICSMOD_SNOW;
 flat varying float blockID;
+
+flat varying float SSSAMOUNT;
 flat varying float EMISSIVE;
 flat varying int LIGHTNING;
 flat varying int PORTAL;
+flat varying int SIGN;
+
 
 flat varying float HELD_ITEM_BRIGHTNESS;
-
-flat varying int PHYSICSMOD_SNOW;
 uniform float noPuddleAreas;
 
 
@@ -251,9 +257,7 @@ float ld(float dist) {
 
 /* RENDERTARGETS: 1,7,8,15 */
 void main() {
-	
-	
-	
+
 	
 	
 	
@@ -296,9 +300,7 @@ void main() {
 	#endif
 	#endif
 	#endif
-
-
-	#ifdef POM
+#ifdef POM
 		// vec2 tempOffset=offsets[framemod8];
 		vec2 adjustedTexCoord = fract(vtexcoord.st)*vtexcoordam.pq+vtexcoordam.st;
 		// vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
@@ -308,7 +310,7 @@ void main() {
 		gl_FragDepth = gl_FragCoord.z;
 
 		#ifdef WORLD
-	    	if (dist < MAX_OCCLUSION_DISTANCE && PORTAL > 0) {
+	    	if (dist < MAX_OCCLUSION_DISTANCE) {
 
 				float depthmap = readNormal(vtexcoord.st).a;
 				float used_POM_DEPTH = 1.0;
@@ -512,7 +514,8 @@ void main() {
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),encodeVec2(Albedo.y,data1.y),encodeVec2(Albedo.z,data1.z),encodeVec2(data1.w,Albedo.w));
 		gl_FragData[1].a = 0.0;
 
-	#else
+#else
+
 
 		float bias = Texture_MipMap_Bias - blueNoise()*0.5;
 
@@ -622,7 +625,6 @@ void main() {
 			
 		if(LIGHTNING > 0) Albedo = vec4(1);
 
-
 		#ifdef AEROCHROME_MODE
 			vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), AEROCHROME_PINKNESS);
 			float gray = dot(Albedo.rgb, vec3(0.2, 01.0, 0.07));
@@ -683,7 +685,8 @@ void main() {
 
 		gl_FragData[1].a = 0.0;
 	#endif
-	#endif
+
+#endif
 	
 	#ifdef WORLD
 	gl_FragData[5].x = 0;

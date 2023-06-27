@@ -847,7 +847,7 @@ void main() {
 
 	vec3 ambientCoefs = normal/dot(abs(normal),vec3(1.));
 
-	float lightleakfix = clamp(eyeBrightness.y/240.0 + lightmap.y,0.0,1.0);
+	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2) ,0.0,1.0);
 
 	vec3 DirectLightColor = (lightCol.rgb/80.0);
 	DirectLightColor *= clamp(abs(WsunVec.y)*2,0.,1.);
