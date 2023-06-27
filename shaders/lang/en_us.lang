@@ -1,3 +1,4 @@
+screen.Misc_Settings = Misc. Settings
 screen.Sun_and_Moon_Colors = Sun/Moon Colors
 option.sunPathRotation = Sun Angle
 option.sun_illuminance = Sun Illuminance
@@ -29,6 +30,9 @@ screen.Ambient_light = Ambient Light
     option.GI_Strength = GI Multiplier
     option.HQ_SSGI = Long Range SSGI
     option.Hand_Held_lights = Hand Held Light
+    option.ambientOcclusionLevel = Vanilla AO Amount
+    option.ambient_brightness = Ambient Light Brightness
+    option.MIN_LIGHT_AMOUNT = Minimum Light Brightness
     option.indirect_effect = Indirect Lighting
         value.indirect_effect.0 = Vanilla AO
             value.indirect_effect.1 = SSAO
@@ -52,15 +56,6 @@ screen.Ambient_light = Ambient Light
         option.TORCH_B = Blue Amount
     
 
-
-
-
-    option.ambientOcclusionLevel = Vanilla AO Amount
-    option.ambient_brightness = Ambient Light Brightness
-    option.MIN_LIGHT_AMOUNT = Minimum Light Brightness
-
-
-
 screen.Fog = Fog Settings
     option.VL_RENDER_RESOLUTION = Fog Resolution Scaling
     option.VL_SAMPLES = Fog Samples
@@ -76,7 +71,6 @@ screen.Fog = Fog Settings
         option.Noon_Uniform_Fog = Noon Fog Density
         option.Evening_Uniform_Fog = Evening Fog Density
         option.Night_Uniform_Fog = Night Fog Density
-
         option.Morning_Cloudy_Fog = Cloudy Morning Fog Density
         option.Noon_Cloudy_Fog = Cloudy Noon Fog Density
         option.Evening_Cloudy_Fog = Cloudy Evening Fog Density
@@ -148,7 +142,6 @@ screen.Climate = Climate Settings
         option.Spring_Leaf_B = Blue Amount (for leaves)
 
 
-
 screen.World = World
     screen.Water = Water Settings
         option.WATER_REFLECTIONS = Specular Reflections for Water
@@ -173,25 +166,18 @@ screen.World = World
 
 
 screen.Post_Processing = Post Processing
+    screen.Tonemapping = Tone-Map/Color Settings
+    screen.Exposure = Exposure Settings
+    screen.DepthOfField = Depth Of Field Settings
+    screen.Purkinje_effect = Purkinje Effect Settings
+    option.SHARPENING = CAS Sharpening amount
+    option.BLOOM_STRENGTH = Bloom Multiplier
     screen.TAA_OPTIONS = Anti-Aliasing Settings
         option.SCREENSHOT_MODE = Screenshot Mode
         option.TAA = TAA
         option.BLEND_FACTOR = Blend Factor
         option.TAA_UPSCALING = Temporal Upscaling
         option.SCALE_FACTOR = Scale Factor
-
-    screen.Tonemapping = Tone-Map/Color Settings
-
-    screen.Exposure = Exposure Settings
-    screen.DepthOfField = Depth Of Field Settings
-    screen.Purkinje_effect = Purkinje Effect Settings
-
-    option.SHARPENING = CAS Sharpening amount
-    option.BLOOM_STRENGTH = Bloom Multiplier
-
-
-
-screen.Misc_Settings = Misc. Settings
 
 
 screen.LabPBR = Lab PBR
