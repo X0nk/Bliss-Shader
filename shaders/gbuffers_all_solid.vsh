@@ -223,7 +223,9 @@ void main() {
 	SIGN = 0;
 
 	#ifdef WORLD
+		// disallow POM to work on signs.
 		if(blockEntityId == 2200) SIGN = 1;
+
 		if(blockEntityId == 2100) PORTAL = 1;
 	#endif
 	
@@ -231,12 +233,13 @@ void main() {
 	PHYSICSMOD_SNOW = 0;
 
 #ifdef ENTITIES
+	// disallow POM to work on item frames.
+	if(entityId == 2300) SIGN = 1;
 
 	#ifdef ENTITY_PHYSICSMOD_SNOW
 		 if(entityId == 829925) PHYSICSMOD_SNOW = 1;
 	#endif
 
-	if(entityId == 2300) SIGN = 1;
 
 	// try and single out nametag text and then discard nametag background
 	// if( dot(gl_Color.rgb, vec3(1.0/3.0)) < 1.0) NameTags = 1;

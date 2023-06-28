@@ -139,7 +139,7 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 		scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun ) * stepScatteringVisible * sky_transmittance(position, sunVector*0.5+0.1,  jSteps)  ;
 		scatteringMoon += sky_coefficientsScattering * (stepAirmass.xy * phaseMoon) * stepScatteringVisible * sky_transmittance(position, moonVector, jSteps);
 		// Nice way to fake multiple scattering.
-		scatteringAmbient += sky_coefficientsScattering * stepAirmass.xy * (stepScatteringVisible * low_sun );
+		scatteringAmbient += sky_coefficientsScattering * stepAirmass.xy * (stepScatteringVisible * low_sun);
 
 		transmittance *= stepTransmittance ;
 	}
