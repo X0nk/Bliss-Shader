@@ -43,8 +43,11 @@ float cloudVol(in vec3 pos){
 	
 	float RainFog = max(fog_shape*10. - 7.,0.5) * exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0)) * 5. * rainStrength * noPuddleAreas * RainFog_amount;
 	
-	// sandstorms and snowstorms
-  	if(sandStorm > 0 || snowStorm > 0) CloudyFog = mix(CloudyFog, max(densityAtPosFog((samplePos2  - vec3(frameTimeCounter,0,frameTimeCounter)*10) * 100.0 ) - 0.2,0.0) * heightlimit, sandStorm+snowStorm);
+	
+	#ifdef Biome_specific_environment
+		// sandstorms and snowstorms
+	  	if(sandStorm > 0 || snowStorm > 0) CloudyFog = mix(CloudyFog, max(densityAtPosFog((samplePos2  - vec3(frameTimeCounter,0,frameTimeCounter)*10) * 100.0 ) - 0.2,0.0) * heightlimit, sandStorm+snowStorm);
+	#endif
 
 	TimeOfDayFog(UniformFog, CloudyFog);
 
