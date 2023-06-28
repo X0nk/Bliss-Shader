@@ -1,0 +1,32 @@
+Credit to the creator of the entire shader that Bliss is an edit of:
+
+	Chocapic13 / https://www.curseforge.com/minecraft/customization/chocapic13-shaders
+
+
+
+Credit to the creators of various code, code contributions, or code snippets:
+
+	EminGt / https://github.com/EminGT
+	Gri573 / https://github.com/gri573
+	Null / https://github.com/Null-MC
+	Sasha / https://github.com/WoMspace
+	SixthSurge / https://github.com/sixthsurge
+	Zombye / https://github.com/zombye
+
+
+
+Credit to the translators:
+
+	Nord / nordwhy (discord)
+	Ruri / nakiriruri (discord)
+	YurgenS / yurgens (discord)
+
+
+
+Credit to the people who inspired many changes and ideas, that you NEED to know about:
+
+	Rre36 / https://github.com/rre36
+	SixthSurge / https://github.com/sixthsurge
+	EminGt / https://github.com/EminGT
+	Null / https://github.com/Null-MC
+	L4mbads / l4mbads (discord) | https://www.youtube.com/channel/UC-5tMMYBNrGJfp1SMjuAf2w
