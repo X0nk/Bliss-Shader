@@ -1,0 +1,320 @@
+option.PhysicsMod_support=Suporte ao PhysicsMod
+
+screen.Misc_Settings = Configurações Diversas
+     screen.the_orb=O Orb
+     option.THE_ORB=O Orb
+     option.ORB_X=Orb X
+     option.ORB_Y=Orb Y
+     option.ORB_Z=Orb Z
+     option.ORB_ColMult=Orb MultiplicadorCol
+     option.ORB_R=Orb Vermelho
+     option.ORB_G=Orb Verde
+     option.ORB_B=Orb Azul
+
+screen.lightning_color=Relâmpago
+     option.Lightning_R=Relâmpago Vermelho
+     option.Lightning_G=Relâmpago Verde
+     option.Lightning_B=Relâmpago Azul
+
+option.WhiteWorld=MundoBranco
+    option.ambientLight_only=Apenas Luz Ambiente
+    option.Glass_Tint=Tintura de Vidro
+    option.display_LUT=Mostrar LUT
+    option.ambientSSS_view=Visualização de SSS vindo do Céu
+ 
+screen.Sun_and_Moon_Colors = Cores Lua/Sol
+     option.sunColorR=SolCor Vermelha
+     option.sunColorG=SolCor Verde
+     option.sunColorB=SolCor Azul
+     option.moonColorR=LuaCor Vermelha
+     option.moonColorG=LuaCor Verde
+     option.moonColorB=LuaCor Azul
+     option.colortype=Tipo de Cor
+     option.Sun_temp=Temperatura do Sol
+     option.Moon_temp=Temperatura da Lua
+
+option.sunPathRotation = Ângulo do Sol
+option.sun_illuminance = Iluminância do Sol    
+option.moon_illuminance = Iluminância da Lua
+
+screen.Direct_Light = Luz Direta
+    screen.Filtering = Configurações do Filtro de Sombras 
+    screen.Shadows = Sombras
+    option.Variable_Penumbra_Shadows= Sombras de Penumbra Variável(VPS) 
+    option.VPS_Search_Samples=Amostragem de Procura VPS
+    option.Min_Shadow_Filter_Radius=Raio Minimo do Filtro de Sombra
+    option.Max_Shadow_Filter_Radius=Raio Máximo do Filtro de Sombra
+    option.Max_Filter_Depth=Profundidade Máxima do Filtro de Sombra
+    option.SHADOW_FILTER_SAMPLE_COUNT=Amostragem do Filtro de Sombra
+  
+    option.SCREENSPACE_CONTACT_SHADOWS = Sombras de Contato
+    option.Stochastic_Transparent_Shadows=Sombras Transparentes Estocásticas
+    option.SHADOW_FRUSTRUM_CULLING= Redução de Sombras Fora de Vista
+    option.SHADOW_FRUSTRUM_CULLING.comment= Essa opção não funciona nas versões 1.17+. Pode aumentar o desempenho, mas cria gráficos incorretos nas sombras distantes. 
+        option.shadowMapResolution = Resolução da Sombra
+        option.shadowDistance = Distância da Sombra
+
+
+screen.Subsurface_Scattering = Espalhamento de Subsuperfície (SSS)
+    option.LabSSS_Curve = Curva LabSSS
+    option.Ambient_SSS = SSS vindo do Céu
+    option.ambientsss_brightness = Brilho do SSS vindo do Céu
+    option.SSS_TYPE = Modo
+        option.SSS_TYPE.comment = Hardcoded significa que os shaders definem o que recebe SSS. LabSSS significa que o resourcepack define o que recebe SSS. RTX é sem nenhum SSS lol. Eu tive que roubar esse formato, RRe36
+            value.SSS_TYPE.0 = RTX
+            value.SSS_TYPE.1 = Somente Hardcoded
+            value.SSS_TYPE.2 = Hardcoded + LabSSS
+            value.SSS_TYPE.3 = Somente LabSSS
+
+
+screen.Ambient_light = Luz Ambiente
+    option.AO_Strength = Multiplicador de AO
+    option.GI_Strength = Multiplicador de GI
+    option.HQ_SSGI = SSGI de Longo Alcance
+    option.Hand_Held_lights = Luz de Mão
+    option.ambientOcclusionLevel = Quantidade da AO Vanilla
+    option.ambient_brightness = Brilho da Luz Ambiente
+    option.MIN_LIGHT_AMOUNT = Mínimo de Brilho da Luz
+    option.indirect_effect = Luz Indireta
+        value.indirect_effect.0 = AO Vanilla
+            value.indirect_effect.1 = SSAO
+            value.indirect_effect.2 = GTAO
+            value.indirect_effect.3 = RTAO
+            value.indirect_effect.4 = SSGI
+
+    screen.Ambient_Colors =  Cor da Luz Ambiente
+        option.ambient_temp = Temperatura
+        option.AmbientLight_R = Quantia de Vermelho
+        option.AmbientLight_G = Quantia de Verde
+        option.AmbientLight_B = Quantia de Azul
+        option.ambient_colortype = Tipo de Coloração
+            value.ambient_colortype.0 = Temperatura
+            value.ambient_colortype.1 = RGB
+    
+    screen.Torch_Colors = Cor da Tocha
+        option.TORCH_AMOUNT = Multiplicador de Luz da Torcha
+        option.TORCH_R = Quantia de Vermelho
+        option.TORCH_G = Quantia de Verde
+        option.TORCH_B = Quantia de Azul
+    
+
+screen.Fog = Configurações da Névoa 
+    option.VL_RENDER_RESOLUTION = Escala de Resolução da Névoa
+    option.VL_SAMPLES = Amostragem de Névoa
+    option.BLOOMY_FOG = Quantidade de Névoa Difusa
+    option.Haze_amount = Quantidade de Neblina Atmosférica
+    option.RainFog_amount = Multiplicador da Névoa de Chuva
+    option.Cloud_Fog = Névoa Dentro de Nuvens
+    option.BorderFog = Névoa nas Bordas de Chunks
+
+    screen.TOD_fog = Névoa Por Horário do Dia
+        option.TOD_Fog_mult = Multiplicador de Densidade da Névoa 
+        option.Morning_Uniform_Fog = Densidade da Névoa de Manhã
+        option.Noon_Uniform_Fog = Densidade da Névoa ao Meio-Dia
+        option.Evening_Uniform_Fog = Densidade da Névoa a Tarde
+        option.Night_Uniform_Fog = Densidade da Névoa de Noite
+        option.Morning_Cloudy_Fog = Densidade da Névoa de Manhã Nublada
+        option.Noon_Cloudy_Fog = Densidade da Névoa ao Meio-Dia Nublada
+        option.Evening_Cloudy_Fog = Densidade da Névoa a Tarde Nublada
+        option.Night_Cloudy_Fog = Densidade da Névoa de Noite Nublada
+
+    screen.Biome_Fog = Névoa Específica de Bioma
+        option.Biome_specific_environment = Névoa Específica de Bioma
+
+    screen.Cave_Fog = Névoa de Caverna
+        option.Cave_fog = Névoa da Caverna
+        option.CaveFogFallOff = Queda da Névoa
+        option.CaveFogColor_R = Névoa Vermelho
+        option.CaveFogColor_G = Névoa Verde
+        option.CaveFogColor_B = Névoa Azul
+
+
+screen.Clouds = Configurações da Nuvem
+    option.VOLUMETRIC_CLOUDS = Nuvens Volumétricas
+    option.CLOUDS_QUALITY = Escala de Resolução da Nuvem
+    option.CLOUDS_SHADOWS = Sombra Projetada Pela Nuvem
+    option.Daily_Weather = Clima Diário
+    option.Cloud_Speed = Multiplicador de Velocidade da Nuvem
+    option.Rain_coverage = Cobertura durante Chuva
+
+    option.Cumulus = Nuvens Cúmulos
+    option.Cumulus_coverage = Cobertura
+    option.Cumulus_density = Densidade
+    option.Cumulus_height = Altitude das Cúmulus
+
+    option.Altostratus = Nuvens de Alto-Estratos
+    option.Alto_coverage = Cobertura
+    option.Alto_density = Densidade
+
+
+screen.Climate = Configurações de Clima
+    screen.Seasons=Estações
+    option.Seasons = Cores Sazonais
+    option.Season_Length = Duração das Estações (Em Dias)
+    option.Snowy_Winter = Neve Durante o Inverno
+    screen.Summer_colors = Cores do Verão
+        option.Summer_R = Quantidade de Vermelho
+        option.Summer_G = Quantidade de Verde
+        option.Summer_B = Quantidade de Azul
+        option.Summer_Leaf_R = Quantidade de Verelho (para Folhas)
+        option.Summer_Leaf_G = Quantidade de Verde (para Folhas))
+        option.Summer_Leaf_B = Quantidade de Azul (para Folhas))
+
+    screen.Fall_colors = Cores do Outono
+        option.Fall_R = Quantidade de Vermelho
+        option.Fall_G = Quantidade de Verde
+        option.Fall_B = Quantidade de Azul
+        option.Fall_Leaf_R = Quantidade de Vermelho (para Folhas)
+        option.Fall_Leaf_G = Quantidade de Verde (para Folhas)
+        option.Fall_Leaf_B = Quantidade de Azul (para Folhas)
+
+    screen.Winter_colors = Cores do Inverno
+        option.Winter_R = Quantidade de Vermelho
+        option.Winter_G = Quantidade de Verde
+        option.Winter_B = Quantidade de Azul
+        option.Winter_Leaf_R = Quantidade de Vermelho (para Folhas)
+        option.Winter_Leaf_G = Quantidade de Verde (para Folhas)
+        option.Winter_Leaf_B = Quantidade de Azul (para Folhas)
+
+    screen.Spring_colors = Cores da Primavera 
+        option.Spring_R = Quantidade de Vermelho
+        option.Spring_G = Quantidade de Verde
+        option.Spring_B = Quantidade de Azul
+        option.Spring_Leaf_R = Quantidade de Vermelho (para Folhas)
+        option.Spring_Leaf_G = Quantidade de Verde (para Folhas)
+        option.Spring_Leaf_B = Quantidade de Azul (para Folhas)
+
+screen.World = Mundo
+    screen.Water = Configurações da Água 
+        option.WATER_REFLECTIONS = Reflexos na Água
+        option.SCREENSPACE_REFLECTIONS = Reflexos no Espaço de Tela (SSR)
+        option.SSR_STEPS = Qualidade do SSR
+        option.WATER_SUN_SPECULAR = Reflexos do Sol/Lua 
+        option.WATER_BACKGROUND_SPECULAR = Reflexos do Céu/Névoa
+        option.Refraction = Refração na Água/Vidro
+        option.Vanilla_like_water=Água Estilo Vanilla
+        option.Vanilla_like_water.comment=Água com cor e textura vanilla
+        option.Dirt_Amount = Quantidade de Sujeira
+        option.Dirt_Mie_Phase=Fase de Mie na Sujeira
+        option.rayMarchSampleCount=Amostragem de Ray Marching
+        option.USE_QUARTER_RES_DEPTH=Usar Profundidade em 1/4 de Resolução
+        option.Water_Top_Layer = Coordenada Y do Oceano
+        
+        screen.Water_fog_color = Configurações de Névoa da Água
+            option.Dirt_Scatter_R = Dispersão Vermelha (Sujeira)
+            option.Dirt_Scatter_G = Dispersão Verde (Sujeira)
+            option.Dirt_Scatter_B = Dispersão Azul (Sujeira)
+            option.Dirt_Absorb_R = Absorção Vermelha (Sujeira)
+            option.Dirt_Absorb_G = Absorção Verde (Sujeira)
+            option.Dirt_Absorb_B = Absorção Azul (Sujeira)
+            option.Water_Absorb_R = Absorção Vermelha (Água)
+            option.Water_Absorb_G = Absorção Verde (Água)
+            option.Water_Absorb_B = Absorção Azul (Água)
+
+screen.Post_Processing = Pós-Pocessamento 
+    screen.DepthOfField = Profundidade de Campo 
+    option.SHARPENING = Quantidade de Nitidez CAS 
+    option.BLOOM_STRENGTH = Multiplicador de Bloom
+    option.BLOOM_QUALITY=Qualidade do Bloom
+    screen.TAA_OPTIONS = Antisserrilhamento
+        option.SCREENSHOT_MODE = Modo Screenshot 
+        option.SPLIT_RENDER=Dividir Renderização
+        option.TAA = TAA
+        option.BLEND_FACTOR = Coeficiente de Mistura
+        option.TAA_UPSCALING = Upscale Temporal 
+        option.SCALE_FACTOR = Coeficiente de Escala
+
+screen.Tonemapping=Mapeamento de Tons/Cor
+        option.TONEMAP=Mapeamento de Tom
+        option.USE_ACES_COLORSPACE_APPROXIMATION=Usar Aproximação de Espaço de Cores ACES
+        option.SATURATION=Saturação
+        option.CROSSTALK=Diafonia
+        option.FinalR=Vermelho Final
+        option.FinalG=Verde Final
+        option.FinalB=Azul Final
+
+screen.Exposure=Exposição
+        option.AUTO_EXPOSURE=Exposição Automática 
+        option.EXPOSURE_MULTIPLIER=Multiplicador de Exposição
+        option.Exposure_Speed=Velocidade de Ajuste de Exposição
+        option.Manual_exposure_value=Valor Manual de Exposição
+
+screen.Purkinje_effect=Efeito Purkinje
+        option.Purkinje_strength=Força do Purkinje
+        option.Purkinje_R=Purkinje Vermelho
+        option.Purkinje_G=Purkinje Verde
+        option.Purkinje_B=Purkinje Azul
+        option.Purkinje_Multiplier=Multiplicador de Purkinje
+
+screen.LabPBR = Lab PBR
+    screen.Reflections = Reflexões Especulares
+        option.Specular_Reflections = Reflexões Especulares
+        option.Screen_Space_Reflections = Reflexos no Espaço de Tela
+        option.Rough_reflections = Aspereza Detalhada
+        option.Sky_reflection = Refletir Céu/Névoa
+        option.Dynamic_SSR_quality = SSR de Qualidade Dinâmica
+        option.Roughness_Threshold = Limiar de Reflexão
+        option.Sun_specular_Strength = Multiplicador de Reflexo do Sol 
+        option.reflection_quality = Qualidade do SSR
+
+    screen.Emissives = Emissivos
+        option.Emissive_Brightness = Multiplicador de Emissão
+        option.LabPBR_Emissives=Emissivos LabPBR
+        option.Emissive_Curve = Curva de Emissão
+        option.EMISSIVE_TYPE = Modo
+            option.EMISSIVE_TYPE.comment = Hardcoded significa que o shaders define o que tem emissão. Emissão Lab significa que o resourcepack define o que tem emissão.
+            value.EMISSIVE_TYPE.0 = Sem emissão
+            value.EMISSIVE_TYPE.1 = Somente Hardcoded
+            value.EMISSIVE_TYPE.2 = Hardcoded + Emissão Lab
+            value.EMISSIVE_TYPE.3 = Somente Emissão Lab
+
+
+screen.POM = Mapeamento de Oclusão de Paralaxe / POM
+    option.POM = Mapeamento de Oclusão de Paralaxe
+    option.MAX_ITERATIONS = Qualidade
+    option.POM_DEPTH = Profundidade
+    option.MAX_DIST = Distância Máxima
+    option.Adaptive_Step_length = Qualidade Dinâmica
+    option.Horrible_slope_normals = Inclinação Normal Horrível
+
+
+screen.Porosity = Porosidade / Poças
+    option.Porosity = Porosidade
+    option.Puddles = Poças
+    option.Puddle_Size = Multiplicador do Tamanho das Poças
+
+ screen.Waving_Stuff=Coisas Balançando
+        option.WAVY_STRENGTH=Força do Balanço
+        option.WAVY_SPEED=Velocidade do Balanço
+        option.WAVY_PLANTS=Plantas Balançando
+
+
+option.DOF_QUALITY=Porfundidade de Campo(DoF)
+    value.DOF_QUALITY.-1=Desligado
+    value.DOF_QUALITY.0=Hexagonal
+    value.DOF_QUALITY.1=Baixo
+    value.DOF_QUALITY.2=Médio
+    value.DOF_QUALITY.3=Alto
+    value.DOF_QUALITY.4=Ultra
+    option.DOF_ANAMORPHIC_RATIO=Razão Anamórfica
+    option.AUTOFOCUS=Auto-Foco
+    option.focal=Distância Focal
+    option.aperture=Abertura
+    option.MANUAL_FOCUS=Foco Manual
+    option.DoF_Adaptation_Speed=Velocidade de Adaptação do DoF
+    option.FAR_BLUR_ONLY=Apenas Desfoque Distante
+
+  screen.Editing=Edição
+        option.Compositing_Sky=Composição do Céu.
+        option.CompSky_R=Composição Vermelho
+        option.CompSky_G=Composição Verde
+        option.CompSky_B=Composição Azul
+
+
+
+option.AEROCHROME_MODE=Modo Aerochrome
+option.AEROCHROME_MODE.comment=Filme Infravermelho. Pesquise "Aerochrome" pra ter uma idéia do que isso faz.
+option.AEROCHROME_PINKNESS=Aerochrome Vermelho:Quociente Rosa
+option.AEROCHROME_PINKNESS.comment=Maior = Rosa. Menor = Vermelho
+option.AEROCHROME_WOOL_ENABLED=Lã em Aerochrome
+option.AEROCHROME_WOOL_ENABLED.comment=Tecnicamente, coisas feitas de lã deveriam ser afetadas, mas isso arruína muitas construções. Habilite para ser mais tecnicamente correto.
