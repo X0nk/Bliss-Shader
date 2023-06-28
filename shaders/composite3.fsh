@@ -50,6 +50,7 @@ uniform float blindness;
 uniform float darknessFactor;
 uniform float darknessLightFactor;
 
+
 #include "lib/waterBump.glsl"
 #include "/lib/res_params.glsl"
 
@@ -283,7 +284,7 @@ void main() {
 
   // underwater fog
   if (isEyeInWater == 1){
-    float fogfade = clamp( exp(length(p3) /  -10)   ,0.0,1.0);
+    float fogfade = clamp( exp(length(fragpos) /  -10)   ,0.0,1.0);
     color.rgb = color.rgb * fogfade   ;
     vl.a *= fogfade  ;
   }

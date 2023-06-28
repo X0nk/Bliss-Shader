@@ -30,19 +30,22 @@ float cloudVol(in vec3 pos){
 
 
 	float mult = exp( -max((pos.y - SEA_LEVEL) / 35.,0.0));
-
-	float fog_shape = 1.0 - densityAtPosFog(samplePos * 24.0);
-	float fog_eroded = 1.0 - densityAtPosFog(	samplePos2 * 200.0);
+	float fog_shape = 1.0 - densityAtPosFog(samplePos * 24.0 );
+	float fog_eroded = 1.0 - densityAtPosFog(samplePos2 * 200.0 );
 
 	// float CloudyFog = max(	(fog_shape*2.0 - fog_eroded*0.5) - 1.2, max(fog_shape-0.8,0.0)) * mult;
 
 	float heightlimit = exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0));
 	float CloudyFog = max((fog_shape*1.2 - fog_eroded*0.2) - 0.75,0.0) * heightlimit ;
 
+
 	float UniformFog = exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0));
 	
 	float RainFog = max(fog_shape*10. - 7.,0.5) * exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0)) * 5. * rainStrength * noPuddleAreas * RainFog_amount;
 	
+	// sandstorms and snowstorms
+  	if(sandStorm > 0 || snowStorm > 0) CloudyFog = mix(CloudyFog, max(densityAtPosFog((samplePos2  - vec3(frameTimeCounter,0,frameTimeCounter)*10) * 100.0 ) - 0.2,0.0) * heightlimit, sandStorm+snowStorm);
+
 	TimeOfDayFog(UniformFog, CloudyFog);
 
 	return CloudyFog + UniformFog + RainFog;
@@ -229,6 +232,7 @@ vec4 InsideACloudFog(
 
 
 	vec3 lightningColor =  vec3(Lightning_R,Lightning_G,Lightning_B) * 255.0 * lightningFlash * max(eyeBrightnessSmooth.y,0)/240.;
+	
 	#ifdef ReflectedFog
 		lightningColor *= 0.01;
 	#endif
@@ -313,7 +317,7 @@ vec4 InsideACloudFog(
 		vec3 AtmosphericFog = Fog_SkyCol * (rL+m)  ;
 
 		// extra fog effects
-		vec3 rainRays =   ((Fog_SunCol/5)*Shadows_for_Fog) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1.0) * rainStrength * noPuddleAreas * RainFog_amount; 
+		vec3 rainRays =   ((Fog_SunCol/5)*Shadows_for_Fog) * (rayL*phaseg(SdotV,0.7)) * clamp(pow(WsunVec.y,5)*2,0.0,1.0) * rainStrength * noPuddleAreas * RainFog_amount; 
 		vec3 CaveRays = (Fog_SunCol*Shadows_for_Fog)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - lightleakfix);
 
 		vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * lightleakfix ;

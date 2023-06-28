@@ -1,20 +1,6 @@
 // this file contains all things for seasons, weather, and biome specific settings.
 // i gotta start centralizing shit someday. 
 
-
-// uniform float Day;
-
-// // it's so symmetrical~
-
-// float day0 = clamp(clamp(Day,   0.0,1.0)*clamp(2-Day, 0.0,1.0),0.0,1.0);
-// float day1 = clamp(clamp(Day-1, 0.0,1.0)*clamp(3-Day, 0.0,1.0),0.0,1.0);
-// float day2 = clamp(clamp(Day-2, 0.0,1.0)*clamp(4-Day, 0.0,1.0),0.0,1.0);
-// float day3 = clamp(clamp(Day-3, 0.0,1.0)*clamp(5-Day, 0.0,1.0),0.0,1.0);
-// float day4 = clamp(clamp(Day-4, 0.0,1.0)*clamp(6-Day, 0.0,1.0),0.0,1.0);
-// float day5 = clamp(clamp(Day-5, 0.0,1.0)*clamp(7-Day, 0.0,1.0),0.0,1.0);
-// float day6 = clamp(clamp(Day-6, 0.0,1.0)*clamp(8-Day, 0.0,1.0),0.0,1.0);
-// float day7 = clamp(clamp(Day-7, 0.0,1.0)*clamp(9-Day, 0.0,1.0),0.0,1.0);
-
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////// SEASONS /////////////////////////////////////
@@ -26,6 +12,7 @@
 	#ifdef SEASONS_VSH
 
 		uniform int worldDay;  
+		uniform float noPuddleAreas;
 
 	    void YearCycleColor (
 	        inout vec3 FinalColor,
@@ -85,7 +72,7 @@
 				// this is to make snow only exist in winter
 	    		float FallToWinter_snowfall = mix(0.0, 1.0, AutumnTime);
 	    		float WinterToSpring_snowfall = mix(FallToWinter_snowfall, 0.0, WinterTime);
-				SnowySeason = clamp(pow(sin(WinterToSpring_snowfall*SeasonLength)*0.5+0.5,5),0,1)  * WinterToSpring_snowfall;
+				SnowySeason = clamp(pow(sin(WinterToSpring_snowfall*SeasonLength)*0.5+0.5,5),0,1)  * WinterToSpring_snowfall * noPuddleAreas;
 			#else
 				SnowySeason = 0.0;
 			#endif
@@ -160,23 +147,26 @@
 #ifdef Biome_specific_environment
 	uniform float isJungles;
 	uniform float isSwamps;
-	uniform float isLush;
-	uniform float isDeserts;
+	// uniform float isLush;
+	// uniform float isDeserts;
+	
+	uniform float sandStorm;
+	uniform float snowStorm;
 	
 	void BiomeFogColor(
 		inout vec3 FinalFogColor
 	){	
 		// this is a little complicated? lmao
 		vec3 BiomeColors;
-		BiomeColors.r = isSwamps*0.7  + isJungles*0.5;
-		BiomeColors.g = isSwamps*1.0  + isJungles*1.0;
-		BiomeColors.b = isSwamps*0.35 + isJungles*0.8;
+		BiomeColors.r = isSwamps*0.7  + isJungles*0.5 + sandStorm*1.0 + snowStorm*0.5;
+		BiomeColors.g = isSwamps*1.0  + isJungles*1.0 + sandStorm*0.5 + snowStorm*0.6;
+		BiomeColors.b = isSwamps*0.35 + isJungles*0.8 + sandStorm*0.3 + snowStorm*1.0;
 
 		// insure the biome colors are locked to the fog shape and lighting, but not its orignal color.
 		BiomeColors *= dot(FinalFogColor,vec3(0.21, 0.72, 0.07)); 
 		
 		// these range 0.0-1.0. they will never overlap.
-		float Inbiome = isJungles+isSwamps;
+		float Inbiome = isJungles+isSwamps+sandStorm;
 
 		// interpoloate between normal fog colors and biome colors. the transition speeds are conrolled by the biome uniforms.
 		FinalFogColor = mix(FinalFogColor, BiomeColors, Inbiome);
@@ -187,11 +177,11 @@
 		inout vec4 CloudyDensity
 	){	
 		// these range 0.0-1.0. they will never overlap.
-		float Inbiome = isJungles+isSwamps;
+		float Inbiome = isJungles+isSwamps+sandStorm+snowStorm;
 
 		vec2 BiomeFogDensity; // x = uniform  ||  y = cloudy
-		BiomeFogDensity.x = isSwamps*1  + isJungles*5;
-		BiomeFogDensity.y = isSwamps*5 + isJungles*2;
+		BiomeFogDensity.x = isSwamps*1  + isJungles*5 + sandStorm*15 + snowStorm*15;
+		BiomeFogDensity.y = isSwamps*5 + isJungles*2 +  sandStorm*255 + snowStorm*100;
 
 		UniformDensity = mix(UniformDensity, vec4(BiomeFogDensity.x), Inbiome);
 		CloudyDensity  = mix(CloudyDensity,  vec4(BiomeFogDensity.y), Inbiome);
