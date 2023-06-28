@@ -1155,7 +1155,9 @@ void main() {
 		
 		if(lightningBolt) FINAL_COLOR.rgb += vec3(Lightning_R,Lightning_G,Lightning_B) * 255.0;
 
-		gl_FragData[0].rgb =  FINAL_COLOR;
+
+
+		gl_FragData[0].rgb =  FINAL_COLOR  ;
 		// if(LabSSS > 0.0) gl_FragData[0].rgb =  vec3(0,25,0);
 
 	}

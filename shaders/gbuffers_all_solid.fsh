@@ -396,9 +396,12 @@ void main() {
 			vec3 viewVector = normalize(tbnMatrix*fragpos);
 			float dist = length(fragpos);
 
+			float maxdist = MAX_OCCLUSION_DISTANCE;
+			if(!ifPOM) maxdist = 0.0;
+
 			gl_FragDepth = gl_FragCoord.z;
 
-	    	if (dist < MAX_OCCLUSION_DISTANCE) {
+	    	if (dist < maxdist) {
 
 				float depthmap = readNormal(vtexcoord.st).a;
 				float used_POM_DEPTH = 1.0;
@@ -448,6 +451,7 @@ void main() {
 	
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM) * color;
 	
+	if(LIGHTNING > 0) Albedo = vec4(1);
 	// float ENDPORTAL_EFFECT = PORTAL > 0 ? EndPortalEffect(Albedo, fragpos, worldpos, tbnMatrix) : 0;
 
 	#ifdef WhiteWorld
@@ -489,6 +493,7 @@ void main() {
 		if (Albedo.a > 0.1) Albedo.a = 0.75;
 		else Albedo.a = 0.0;
 	#endif
+
 
 	//////////////////////////////// 				////////////////////////////////
 	////////////////////////////////	NORMAL		////////////////////////////////

@@ -97,6 +97,7 @@ void main() {
 		pos = normalize(vec3(0,1,0));
    	}
 	
+	/// TOOO DAMN BLUE
 	// // only need to sample one spot for this
 	// averageSkyCol += 2.0*skyFromTex(normalize(vec3(0.0,1.0,0.0)),colortex4).rgb/150.;
 
