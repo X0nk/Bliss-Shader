@@ -28,7 +28,6 @@ float cloudVol(in vec3 pos){
 	vec3 samplePos = pos*vec3(1.0,1./24.,1.0);
 	vec3 samplePos2 = pos*vec3(1.0,1./48.,1.0);
 
-
 	float mult = exp( -max((pos.y - SEA_LEVEL) / 35.,0.0));
 	float fog_shape = 1.0 - densityAtPosFog(samplePos * 24.0 );
 	float fog_eroded = 1.0 - densityAtPosFog(samplePos2 * 200.0 );
