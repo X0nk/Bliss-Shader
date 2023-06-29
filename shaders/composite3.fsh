@@ -277,8 +277,11 @@ void main() {
       // // float fogfade = clamp( exp(clamp(np3.y * 0.35 + 0.35,0,1) * -5.0)  ,0.0,1.0) * 0.1;
 
       vec3 cavefogCol = vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B);
-      BiomeFogColor(cavefogCol);
-
+      
+	    #ifdef Biome_specific_environment
+        BiomeFogColor(cavefogCol);
+      #endif
+      
       color.rgb = mix(color.rgb, cavefogCol*fogfade,  fogdistfade * (1.0-lightleakfix) * (1.0-darknessFactor) * clamp( 1.5 - np3.y,0.,1)) ;  
       // color.rgb = vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B)*fogfade ;  
     }
