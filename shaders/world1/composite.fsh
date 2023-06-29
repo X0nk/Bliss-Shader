@@ -428,8 +428,8 @@ void main() {
 
 		LightSource += (LightColor * max(LightColor - 0.6,0.0)) * vec3(1.0,1.3,1.0) * LightFalloff2 * (NdotL*0.7+0.3);
 
-		float RT_Shadows = rayTraceShadow(worldToView(normalize(-LightPos)), fragpos_RTSHADOW, blueNoise());
-		if(!hand) LightSource *= RT_Shadows*RT_Shadows;
+		// float RT_Shadows = rayTraceShadow(worldToView(normalize(-LightPos)), fragpos_RTSHADOW, blueNoise());
+		// if(!hand) LightSource *= RT_Shadows*RT_Shadows;
 
 
 		// finalize
