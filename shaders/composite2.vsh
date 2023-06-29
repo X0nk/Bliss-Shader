@@ -31,6 +31,7 @@ uniform mat4 gbufferModelViewInverse;
 // #include "lib/biome_specifics.glsl"
 
 
+// uniform float sandStorm;
 float luma(vec3 color) {
 	return dot(color,vec3(0.21, 0.72, 0.07));
 }
@@ -66,6 +67,8 @@ void main() {
 
 	lightCol.a = float(sunElevation > 1e-5)*2-1.;
 	lightCol.rgb = sc;
+
+	// lightCol.rgb = mix(lightCol.rgb, luma(lightCol.rgb) * vec3(1.0, 0.01, 0.1) , sandStorm);
 
 	// #ifdef VOLUMETRIC_CLOUDS
 	// 	#ifndef VL_Clouds_Shadows

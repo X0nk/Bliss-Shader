@@ -22,6 +22,8 @@ uniform vec3 sunPosition;
 uniform float sunElevation;
 uniform int frameCounter;
 
+// uniform float sandStorm;
+
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-1.,3.)/8.,
 							vec2(5.0,1.)/8.,
@@ -30,7 +32,9 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-7.,-1.)/8.,
 							vec2(3,7.)/8.,
 							vec2(7.,-7.)/8.);
-
+float luma(vec3 color) {
+	return dot(color,vec3(0.299, 0.587, 0.114));
+}
 
 #include "/lib/util.glsl"
 #include "/lib/res_params.glsl"

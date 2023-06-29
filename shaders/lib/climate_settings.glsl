@@ -163,7 +163,7 @@
 		BiomeColors.b = isSwamps*0.35 + isJungles*0.8 + sandStorm*0.3 + snowStorm*1.0;
 
 		// insure the biome colors are locked to the fog shape and lighting, but not its orignal color.
-		BiomeColors *= dot(FinalFogColor,vec3(0.21, 0.72, 0.07)); 
+		BiomeColors *= dot(FinalFogColor,vec3(0.33333)); 
 		
 		// these range 0.0-1.0. they will never overlap.
 		float Inbiome = isJungles+isSwamps+sandStorm;

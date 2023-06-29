@@ -12,9 +12,6 @@ flat varying vec3 averageSkyCol_Clouds;
 flat varying vec3 averageSkyCol;
 
 flat varying float tempOffsets;
-flat varying float fogAmount;
-flat varying float VFAmount;
-flat varying float FogSchedule;
 uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
@@ -50,7 +47,7 @@ uniform vec2 texelSize;
 #include "lib/projections.glsl"
 #include "lib/sky_gradient.glsl"
 #include "/lib/res_params.glsl"
-// #include "lib/biome_specifics.glsl"
+
 
 #define TIMEOFDAYFOG
 #include "lib/volumetricClouds.glsl"
@@ -268,19 +265,29 @@ void main() {
 
 		vec3 fragpos = toScreenSpace(vec3(tc/RENDER_SCALE,z));
 		
-		#ifdef Cloud_Fog
-			vec4 VL_CLOUDFOG = InsideACloudFog(fragpos, vec2(R2_dither(),blueNoise()), lightCol.rgb/80., moonColor/150., (averageSkyCol*2.0) * 8./150./3.);
-			
-			// vec4 rays = vec4(0.0);
-			// if(rainStrength > 0.0){
-			// 	rays = RainRays(vec3(0.0), fragpos, length(fragpos), R2_dither(), (avgAmbient*2.0) * 8./150./3., lightCol.rgb, dot(normalize(fragpos), normalize(sunVec)	));
-			// 	VL_CLOUDFOG += rays * rainStrength;
-			// }
+		#ifdef Cumulus
+			#ifdef Cloud_Fog
+				vec4 VL_CLOUDFOG = InsideACloudFog(fragpos, vec2(R2_dither(),blueNoise()), lightCol.rgb/80., moonColor/150., (averageSkyCol*2.0) * 8./150./3.);
 
-			gl_FragData[0] = clamp(VL_CLOUDFOG, 0.0,65000.);
+				// vec4 rays = vec4(0.0);
+				// if(rainStrength > 0.0){
+				// 	rays = RainRays(vec3(0.0), fragpos, length(fragpos), R2_dither(), (avgAmbient*2.0) * 8./150./3., lightCol.rgb, dot(normalize(fragpos), normalize(sunVec)	));
+				// 	VL_CLOUDFOG += rays * rainStrength;
+				// }
+
+				gl_FragData[0] = clamp(VL_CLOUDFOG, 0.0,65000.);
+			#else
+
+				vec4 VL_Fog = getVolumetricRays(fragpos, blueNoise(), averageSkyCol);
+				gl_FragData[0] = clamp(VL_Fog,0.0,65000.);
+
+			#endif
+
 		#else
+
 			vec4 VL_Fog = getVolumetricRays(fragpos, blueNoise(), averageSkyCol);
 			gl_FragData[0] = clamp(VL_Fog,0.0,65000.);
+
 		#endif
 
 

@@ -60,6 +60,7 @@ uniform float darknessLightFactor;
 
 
 
+
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
@@ -275,9 +276,10 @@ void main() {
       // float fogdistfade = clamp( pow(1.0 - exp((length(fragpos) / far) * -5), 2.0) ,0.0,1.0);
       // // float fogfade = clamp( exp(clamp(np3.y * 0.35 + 0.35,0,1) * -5.0)  ,0.0,1.0) * 0.1;
 
+      vec3 cavefogCol = vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B);
+      BiomeFogColor(cavefogCol);
 
-
-      color.rgb = mix(color.rgb, vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B)*fogfade + (blueNoise()-0.5)*0.01,  fogdistfade * (1.0-lightleakfix) * (1.0-darknessFactor) * clamp( 1.5 - np3.y,0.,1)) ;  
+      color.rgb = mix(color.rgb, cavefogCol*fogfade,  fogdistfade * (1.0-lightleakfix) * (1.0-darknessFactor) * clamp( 1.5 - np3.y,0.,1)) ;  
       // color.rgb = vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B)*fogfade ;  
     }
   #endif
