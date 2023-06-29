@@ -347,9 +347,7 @@ vec4 renderClouds(
 	vec3 fogColor = skyFromTex(normView, colortex4)/150. * 5.0;
 	float dist = max(cameraPosition.y+CumulusHeight,max(CumulusHeight,150))/(abs(normView.y)+0.001);
 	float fog = exp(dist / -5000.0 * (1.0+rainCloudwetness*8.));
-
-	// if(IntersecTerrain) fog = 1.0;
-
+	
 	return mix(vec4(fogColor,0.0), vec4(color,total_extinction), fog);
 	// return vec4(color,total_extinction);
 }

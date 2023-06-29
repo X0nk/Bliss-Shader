@@ -882,7 +882,7 @@ void main() {
 
 
 		vec4 cloud = texture2D_bicubic(colortex0,texcoord*CLOUDS_QUALITY);
-		background = background*cloud.a + cloud.rgb;
+		if(eyeAltitude < 25000) background = background*cloud.a + cloud.rgb;
 
 		gl_FragData[0].rgb = clamp(fp10Dither(background ,triangularize(noise)),0.0,65000.);
 	#endif

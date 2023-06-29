@@ -85,7 +85,7 @@ vec3 LightSourcePosition(vec3 WorldPos, vec3 CameraPos){
         Origin = WorldPos - CameraPos ;
 
         #ifdef THE_ORB
-            if(ManualLightPos == 0.0){
+            if(ManualLightPos.x == 0.0 && ManualLightPos.y == 0.0 && ManualLightPos.z == 0.0){
         #endif
 
                 float nosie = (densityAtPosFog(Origin / 30 + sin(frameTimeCounter/5)*100)-0.15) * 15   ;
