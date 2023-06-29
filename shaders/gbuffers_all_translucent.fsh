@@ -28,7 +28,6 @@ uniform sampler2DShadow shadow;
 uniform sampler2D colortex5;
 uniform sampler2D depthtex1;
 
-uniform float nightVision;
 
 uniform vec3 sunVec;
 uniform float frameTimeCounter;

@@ -22,7 +22,6 @@ uniform sampler2D gaux1;
 uniform sampler2D depthtex1;
 uniform sampler2D colortex5;
 
-uniform float nightVision;
 
 uniform vec3 sunVec;
 uniform float frameTimeCounter;

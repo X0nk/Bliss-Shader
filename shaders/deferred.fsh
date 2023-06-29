@@ -27,7 +27,6 @@ uniform sampler2DShadow shadow;
 uniform int frameCounter;
 uniform float rainStrength;
 uniform float eyeAltitude;
-uniform float nightVision;
 uniform vec3 sunVec;
 flat varying vec3 WsunVec;
 uniform vec2 texelSize;

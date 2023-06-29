@@ -53,7 +53,6 @@ uniform int frameCounter;
 uniform int isEyeInWater;
 uniform float far;
 uniform float near;
-uniform float nightVision;
 uniform float frameTimeCounter;
 uniform float rainStrength;
 uniform mat4 gbufferProjection;

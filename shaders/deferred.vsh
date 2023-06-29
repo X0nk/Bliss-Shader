@@ -57,6 +57,10 @@ float tanh(float x){
 float ld(float depth) {
     return (2.0 * near) / (far + near - depth * (far - near));		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
 }
+
+uniform float nightVision;
+
+
 void main() {
 
 	gl_Position = ftransform()*0.5+0.5;
@@ -103,7 +107,7 @@ void main() {
 	/// TOOO DAMN BLUE
 	// // only need to sample one spot for this
 	// averageSkyCol += 2.0*skyFromTex(normalize(vec3(0.0,1.0,0.0)),colortex4).rgb/150.;
-	vec3 minimimlight =  vec3(0.2,0.4,1.0) * MIN_LIGHT_AMOUNT*0.0005;
+	vec3 minimimlight =  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.0005 + nightVision);
 	averageSkyCol_Clouds = max(averageSkyCol_Clouds, minimimlight);
 	averageSkyCol = max(averageSkyCol, minimimlight);
 
