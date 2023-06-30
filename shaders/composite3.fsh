@@ -191,6 +191,7 @@ void main() {
 	vec4 dataUnpacked1 = vec4(decodeVec2(data_opaque.z),decodeVec2(data_opaque.w)); // normals, lightmaps
 	// vec4 dataUnpacked2 = vec4(decodeVec2(data.z),decodeVec2(data.w));
 	
+	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
 	vec2 lightmap = dataUnpacked1.yz;
 
 	////// --------------- UNPACK TRANSLUCENT GBUFFERS --------------- //////
@@ -216,6 +217,8 @@ void main() {
 	vec2 tempOffset = TAA_Offset;
 	vec3 fragpos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
 	vec3 fragpos2 = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z2));
+  
+
 	vec3 p3 = mat3(gbufferModelViewInverse) * fragpos;
 	vec3 np3 = normVec(p3);
 
@@ -229,7 +232,7 @@ void main() {
 
     float refractedalpha = decodeVec2(texture2D(colortex11,refractedCoord).b).g;
     float refractedalpha2 = texture2D(colortex7,refractedCoord).a;
-    if( refractedalpha <= 0.001 ) refractedCoord = texcoord; // remove refracted coords on solids
+    if( refractedalpha <= 0.001 ||z < 0.56) refractedCoord = texcoord; // remove refracted coords on solids
   #endif
   
   /// --- MAIN COLOR BUFFER --- ///
@@ -247,7 +250,7 @@ void main() {
   vec4 vl = BilateralUpscale(colortex0, depthtex1, gl_FragCoord.xy, frDepth, vec2(0.0));
 
 
-  if (TranslucentShader.a > 0.0){
+  if (TranslucentShader.a > 0.0 && !hand){
 		#ifdef Glass_Tint
       if(albedo.a > 0.2) color = color*albedo.rgb + color * clamp(pow(1.0-luma(albedo.rgb),20.),0.0,1.0);
     #endif

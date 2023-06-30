@@ -244,44 +244,9 @@ float ld(float dist) {
 }
 
 
-
-// float EndPortalEffect(
-// 	inout vec4 ALBEDO,
-// 	vec3 FragPos,
-// 	vec3 WorldPos,
-// 	mat3 tbnMatrix
-// ){
-// 	float endportalGLow = 0.0;
-
-// 	vec3 viewVec = normalize(tbnMatrix*FragPos);
-
-//     if (length(FragPos) < MAX_OCCLUSION_DISTANCE) {
-// 		ALBEDO = vec4(0,0,0,1);
-// 		float depth = 0.2;
-//    		if ( viewVec.z < 0.0) {
-// 			float noise = interleaved_gradientNoise_temp();
-
-// 			vec3 interval = (viewVec.xyz /-viewVec.z/MAX_OCCLUSION_POINTS * POM_DEPTH) * 0.6 ;
-
-// 			vec3 coord = vec3((lmtexcoord.st)/4, 1.0);
-// 			coord += interval * noise;
-// 			float sumVec = noise;
-
-// 			for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - depth + depth * (1-readNoise(coord.st).r - readNoise((-coord.st*3 )).b*0.2)  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
-// 				coord = coord+interval ; 
-// 				sumVec += 1.0 ; 
-// 				endportalGLow += 0.01*0.6;
-// 			}
-
-//   			ALBEDO.rgb = vec3(0.5,0.75,1.0) * sqrt(endportalGLow);
-
-// 			return clamp(pow(endportalGLow*3.5,5),0,1);
-// 		}
-//     }
-// }
-
 vec4 readNoise(in vec2 coord){
-	return texture2D(noisetex,coord*vtexcoordam.pq + vtexcoordam.st);
+	// return texture2D(noisetex,coord*vtexcoordam.pq+vtexcoord.st);
+		return texture2DGradARB(noisetex,coord*vtexcoordam.pq + vtexcoordam.st,dcdx,dcdy);
 }
 float EndPortalEffect(
 	inout vec4 ALBEDO,
@@ -299,7 +264,7 @@ float EndPortalEffect(
 		float Depth = 0.3;
 		vec3 interval = (viewVec.xyz /-viewVec.z/quality*Depth) * (0.7 + (blueNoise()-0.5)*0.1);
 
-		vec3 coord = vec3(-(abs(WorldPos.zx + WorldPos.zx))/4, 1.0);
+		vec3 coord = vec3(WorldPos.xz , 1.0);
 		coord += interval;
 
 		for (int loopCount = 0; (loopCount < quality) && (1.0 - Depth + Depth * ( 1.0-readNoise(coord.st).r - readNoise(-coord.st*3).b*0.2 ) ) < coord.p  && coord.p >= 0.0; ++loopCount) {
@@ -452,7 +417,7 @@ void main() {
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM) * color;
 	
 	if(LIGHTNING > 0) Albedo = vec4(1);
-	// float ENDPORTAL_EFFECT = PORTAL > 0 ? EndPortalEffect(Albedo, fragpos, worldpos, tbnMatrix) : 0;
+	float ENDPORTAL_EFFECT = PORTAL > 0 ? EndPortalEffect(Albedo, fragpos, worldpos, tbnMatrix) : 0;
 
 	#ifdef WhiteWorld
 		Albedo.rgb = vec3(1.0);
@@ -556,10 +521,10 @@ void main() {
 			gl_FragData[2].b = SpecularTex.b;
 		#endif
 
-		// if(PORTAL > 0){
-		// 	gl_FragData[2].rgb = vec3(0);
-		// 	gl_FragData[2].a = clamp(ENDPORTAL_EFFECT * 0.9, 0,0.9);
-		// }
+		if(PORTAL > 0){
+			gl_FragData[2].rgb = vec3(0);
+			gl_FragData[2].a = clamp(ENDPORTAL_EFFECT * 0.9, 0,0.9);
+		}
 	#endif
 
 

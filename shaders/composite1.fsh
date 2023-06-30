@@ -941,7 +941,7 @@ void main() {
 			#ifdef Variable_Penumbra_Shadows
 				
 				SSS = SubsurfaceScattering_sun(albedo, SHADOWBLOCKERDEPTBH, LabSSS, clamp(dot(np3, WsunVec),0.0,1.0)) ;
-					
+				SSS *=	DirectLightColor;
 				if (isEyeInWater == 0) SSS *= lightleakfix; // light leak fix
 			#endif
 
@@ -1053,7 +1053,7 @@ void main() {
 			#if indirect_effect != 1
 				ScreenSpace_SSS(SkySSS, fragpos, blueNoise(gl_FragCoord.xy).rg, FlatNormals, isLeaf);
 			#endif
-			Indirect_lighting += SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3)  * pow(1.0-clamp(abs(ambientCoefs.y+0.5),0.0,1.0),0.1) ;
+			SSS += SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3)  * pow(1.0-clamp(abs(ambientCoefs.y+0.5),0.0,1.0),0.1) ;
 			// Indirect_lighting += SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3);
 			}
 		#endif
@@ -1133,13 +1133,8 @@ void main() {
 		Direct_lighting = DoDirectLighting(DirectLightColor, Shadows, NdotL, 0.0);
 		
 		//combine all light sources 
-		vec3 FINAL_COLOR = Indirect_lighting + Direct_lighting;
+		vec3 FINAL_COLOR = Indirect_lighting + Direct_lighting + SSS;
 
-
-		
-		#ifdef Variable_Penumbra_Shadows
-			FINAL_COLOR += SSS*DirectLightColor	* lightleakfix;
-		#endif
 		#ifndef ambientSSS_view
 			FINAL_COLOR *= albedo;
 		#endif
