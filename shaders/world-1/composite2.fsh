@@ -315,7 +315,6 @@ void LabEmission(
 }
 
 
-
 vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 
 	vec3 absorbed = max(luma(albedo) - albedo,0.0);
@@ -382,13 +381,6 @@ void ScreenSpace_SSS(inout float sss, vec3 fragpos, vec2 noise, vec3 normal){
 
 
 
-
-
-
-
-
-
-
 void main() {
 	float dirtAmount = Dirt_Amount;
 	vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
@@ -407,30 +399,45 @@ void main() {
 	vec3 np3 = normVec(p3);
 
 
-	vec4 trpData = texture2D(colortex7,texcoord);
-	bool iswater = trpData.a > 0.99;
+	////// --------------- UNPACK OPAQUE GBUFFERS --------------- //////
+	
+	vec4 data = texture2D(colortex1,texcoord);
+	vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y)); // albedo, masks
+	vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w)); // normals, lightmaps
+	// vec4 dataUnpacked2 = vec4(decodeVec2(data.z),decodeVec2(data.w));
+	
+	vec3 albedo = toLinear(vec3(dataUnpacked0.xz,dataUnpacked1.x));
+	vec2 lightmap = dataUnpacked1.yz;
+	vec3 normal = decode(dataUnpacked0.yw);
+	
+	////// --------------- UNPACK MISC --------------- //////
+	
 	vec4 SpecularTex = texture2D(colortex8,texcoord);
 	float LabSSS = clamp((-65.0 + SpecularTex.z * 255.0) / 190.0 ,0.0,1.0);	
 
-	vec4 data = texture2D(colortex1,texcoord); // terraom
-	vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y));
-	vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w));
-	
-  	float Translucent_Programs = texture2D(colortex2,texcoord).a; // the shader for all translucent progams.
-	// Normal //
-	vec3 normal = decode(dataUnpacked0.yw) ;
-
 	vec4 normalAndAO = texture2D(colortex15,texcoord);
 	vec3 FlatNormals = normalAndAO.rgb * 2.0 - 1.0;
-	float vanilla_AO = 1.0 - exp2(-5 * pow(1-normalAndAO.a,3)) ;
+	vec3 slopednormal = normal;
 
+	#ifdef POM
+		#ifdef Horrible_slope_normals
+    		vec3 ApproximatedFlatNormal = normalize(cross(dFdx(p3), dFdy(p3))); // it uses depth that has POM written to it.
+			slopednormal = normalize(clamp(normal, ApproximatedFlatNormal*2.0 - 1.0, ApproximatedFlatNormal*2.0 + 1.0) );
+		#endif
+	#endif
 
-	vec3 albedo = toLinear(vec3(dataUnpacked0.xz,dataUnpacked1.x));
+	float vanilla_AO = normalAndAO.a;
+	normalAndAO.a = clamp(pow(normalAndAO.a*5,4),0,1);
 
-	vec2 lightmap = dataUnpacked1.yz;
-	bool translucent = abs(dataUnpacked1.w-0.5) <0.01;
-	bool hand = abs(dataUnpacked1.w-0.75) <0.01;
-	float Indirect_SSS = 0.0;
+	
+
+	bool iswater = texture2D(colortex7,texcoord).a > 0.99;
+	bool lightningBolt = abs(dataUnpacked1.w-0.5) <0.01;
+	bool isLeaf = abs(dataUnpacked1.w-0.55) <0.01;
+	bool entities = abs(dataUnpacked1.w-0.45) < 0.01;	
+	
+	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
+	// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
 
 	if (z >=1.0) {
 		vec3 color = clamp(gl_Fog.color.rgb*pow(luma(gl_Fog.color.rgb),-0.75)*0.65,0.0,1.0)*0.02;
@@ -446,7 +453,9 @@ void main() {
 		// do all ambient lighting stuff
 		vec3 Indirect_lighting = DoAmbientLighting_Nether(FogColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, np3, p3 );
 		
-		if(!hand) Indirect_lighting *= ssao(fragpos,noise,FlatNormals) * vanilla_AO;
+		vec3 AO = vec3( exp( (vanilla_AO*vanilla_AO) * -5) )  ;
+
+		if(!hand) Indirect_lighting *= ssao(fragpos,noise,FlatNormals) * AO;
 
 
 		// ScreenSpace_SSS(Indirect_SSS, fragpos, vec2(R2_dither()), FlatNormals);
@@ -471,16 +480,17 @@ void main() {
 
 
 		// finalize
-		gl_FragData[0].rgb = (Indirect_lighting) * albedo;
+		gl_FragData[0].rgb = Indirect_lighting * albedo;
 		// gl_FragData[0].rgb = LightSource * albedo;
 
 		#ifdef Specular_Reflections	
 			MaterialReflections_N(gl_FragData[0].rgb, SpecularTex.r, SpecularTex.ggg, albedo, normal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg,noise), hand);
 		#endif
 
-		#ifdef LabPBR_Emissives
-			LabEmission(gl_FragData[0].rgb, albedo, SpecularTex.a);
-		#endif
+		LabEmission(gl_FragData[0].rgb, albedo, SpecularTex.a);
+
+		if(lightningBolt) gl_FragData[0].rgb += vec3(Lightning_R,Lightning_G,Lightning_B) ;
+
 	}
 
   	// ////// border Fog

@@ -552,11 +552,10 @@ void main() {
 
 	
 	#ifdef WORLD
-		gl_FragData[5].x = 0;
 
-		#ifdef ENTITIES
-			gl_FragData[5].xyz = velocity *0.5+0.5;
-		#endif
+		// #ifdef ENTITIES
+		// 	gl_FragData[5].xyz = velocity *0.5+0.5;
+		// #endif
 
 		gl_FragData[3] = vec4(FlatNormals * 0.5 + 0.5,VanillaAO);	
 	#endif

@@ -148,10 +148,10 @@
 // #define LabPBR_Emissives
 #define EMISSIVE_TYPE 2 // [0 1 2 3]
 #define Emissive_Brightness 10.0 // [1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 15.0 20.0 25.0 30.0 35.0 40.0 45.0 50.0 100.]
-#define Emissive_Curve 2.0 // yes i blatantly copied kappa here. [1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
+#define Emissive_Curve 2.0 // yes i blatantly copied kappa here. [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
 
 #define LabPBR_subsurface_scattering
-#define LabSSS_Curve 1.0 // i just really like how it looks at 2.0, so i made it an option. [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
+#define LabSSS_Curve 1.0 // i just really like how it looks at 2.0, so i made it an option. [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
 
 //#define POM
 #define Adaptive_Step_length // make only used parts of the POM depth get samples, to increase overall quality. DOWNSIDE: at sheer angles, it looks kinda buggy.
