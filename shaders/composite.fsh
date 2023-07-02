@@ -180,7 +180,7 @@ void main() {
 	float minshadowfilt = Min_Shadow_Filter_Radius;
 	float maxshadowfilt = Max_Shadow_Filter_Radius;
 
-	float vanillAO = clamp(pow(1-texture2D(colortex15,texcoord).a*2,4),0,1)  ;
+	float vanillAO = clamp(texture2D(colortex15,texcoord).a,0.0,1.0)  ;
 
 	if(lightmap.y < 0.1 && !entities){
 		// minshadowfilt *= vanillAO;
@@ -188,12 +188,9 @@ void main() {
 	}
 
 
-	// #ifdef LabPBR_subsurface_scattering
-		float SpecularTex = texture2D(colortex8,texcoord).z;
-		float LabSSS = clamp((-65.0 + SpecularTex * 255.0) / 190.0 ,0.0,1.0);
-	// #else
-	// 	float LabSSS = 0.0;
-	// #endif
+	float SpecularTex = texture2D(colortex8,texcoord).z;
+	float LabSSS = clamp((-65.0 + SpecularTex * 255.0) / 190.0 ,0.0,1.0);
+
 
 	#ifndef Variable_Penumbra_Shadows
 		if (translucent  && !hand)  minshadowfilt += 25;

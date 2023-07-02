@@ -16,14 +16,15 @@ screen.Direct_Light = Direct Light
 
 screen.Subsurface_Scattering = Sub-Surface Scattering
     option.LabSSS_Curve = LabSSS Curve
+    option.MISC_BLOCK_SSS = SSS for random blocks
+    option.MOB_SSS = SSS for mobs
     option.Ambient_SSS = SSS from the sky
     option.ambientsss_brightness = Sky SSS Brightness
     option.SSS_TYPE = Mode
-        option.SSS_TYPE.comment = Hardcoded means that the shader defines what gets SSS or not. LabSSS means that the resourcepack defines what gets SSS or not. RTX is no SSS at all lmao. i had to steal this formatting, RRe36
-            value.SSS_TYPE.0 = RTX
-            value.SSS_TYPE.1 = Hardcoded only
-            value.SSS_TYPE.2 = Hardcoded + LabSSS
-            value.SSS_TYPE.3 = LabSSS only
+        value.SSS_TYPE.0 = RTX
+        value.SSS_TYPE.1 = Hardcoded only
+        value.SSS_TYPE.2 = Hardcoded + LabSSS
+        value.SSS_TYPE.3 = LabSSS only
 
 
 screen.Ambient_light = Ambient Light
@@ -42,7 +43,7 @@ screen.Ambient_light = Ambient Light
             value.indirect_effect.4 = SSGI
 
     screen.Ambient_Colors =  Ambient Light Color
-        option.ambient_temp = Tempurature
+        option.ambient_temp = Temperature
         option.AmbientLight_R = Red Amount
         option.AmbientLight_G = Green Amount
         option.AmbientLight_B = Blue Amount
@@ -196,7 +197,6 @@ screen.LabPBR = Lab PBR
         option.Emissive_Brightness = Emission Multiplier
         option.Emissive_Curve = Emission Curve
         option.EMISSIVE_TYPE = Mode
-            option.EMISSIVE_TYPE.comment = Hardcoded means that the shader defines what gets emission or not. Lab emission means that the resourcepack defines what gets emission or not.
             value.EMISSIVE_TYPE.0 = No emission
             value.EMISSIVE_TYPE.1 = Hardcoded only
             value.EMISSIVE_TYPE.2 = Hardcoded + Lab Emission
@@ -227,10 +227,21 @@ option.DOF_QUALITY=Depth Of Field
     value.DOF_QUALITY.4=Ultra
     option.DOF_ANAMORPHIC_RATIO=Anamorphic Ratio
 
-
 option.AEROCHROME_MODE=Aerochrome Mode
-option.AEROCHROME_MODE.comment=Infrared Film. Google "Aerochrome" to get an idea of what it does.
 option.AEROCHROME_PINKNESS=Aerochrome Red:Pink Ratio
-option.AEROCHROME_PINKNESS.comment=Higher = Pink. Lower = Red
 option.AEROCHROME_WOOL_ENABLED=Aerochrome Wool
-option.AEROCHROME_WOOL_ENABLED.comment=Technically wool things should be affected but it ruins a lot of builds. Enable to be more technically correct.
+
+
+
+
+
+
+
+option.AEROCHROME_MODE.comment = Infrared Film. Google "Aerochrome" to get an idea of what it does.
+option.AEROCHROME_PINKNESS.comment = Higher = Pink. Lower = Red
+option.AEROCHROME_WOOL_ENABLED.comment = Technically wool things should be affected but it ruins a lot of builds. Enable to be more technically correct.
+
+option.SSS_TYPE.comment = Hardcoded means that the shader defines what gets SSS or not. LabSSS means that the resourcepack defines what gets SSS or not. RTX is no SSS at all lmao. i had to steal this formatting, RRe36
+option.EMISSIVE_TYPE.comment = Hardcoded means that the shader defines what gets emission or not. Lab emission means that the resourcepack defines what gets emission or not.
+option.MOB_SSS.comment = Toggle Sub-Surface Scattering for mobs. players are included.
+option.MISC_BLOCK_SSS.comment = Toggle Sub-Surface Scattering for random blocks it may not fit. this is for grass and sand mostly.

@@ -288,17 +288,22 @@ void main() {
 	if(mc_Entity.x == 10006 || mc_Entity.x == 200) SSSAMOUNT = 0.75;
 	
 	// low
-	if(mc_Entity.x == 10007 || mc_Entity.x == 10008) SSSAMOUNT = 0.5;
-	
+
+	#ifdef MISC_BLOCK_SSS
+		if(mc_Entity.x == 10007) SSSAMOUNT = 0.5; // weird SSS on blocks like grass and stuff
+	#endif
+
 	#ifdef ENTITIES
-	    /////// ----- SSS ON MOBS----- ///////
-		// strong
-		if(entityId == 1100) SSSAMOUNT = 0.75;
-
-		// medium
-
-		// low
-		if(entityId == 1200) SSSAMOUNT = 0.3;
+		#ifdef MOB_SSS
+		    /////// ----- SSS ON MOBS----- ///////
+			// strong
+			if(entityId == 1100) SSSAMOUNT = 0.75;
+	
+			// medium
+	
+			// low
+			if(entityId == 1200) SSSAMOUNT = 0.3;
+		#endif
 	#endif
 
 	#ifdef BLOCKENTITIES

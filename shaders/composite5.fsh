@@ -29,8 +29,8 @@ const int colortex10Format = RGBA16F;			//Final output, transparencies id (gbuff
 
 const int colortex11Format = RGBA16;			//Final output, transparencies id (gbuffer->composite4)
 const int colortex13Format = RGBA8;			//Final output, transparencies id (gbuffer->composite4)
-const int colortex14Format = RGBA8;			//Final output, transparencies id (gbuffer->composite4)
-// const int colortex15Format = RGBA16F;			// flat normals and vanilla 
+const int colortex14Format = RGBA8;			// Final output, transparencies id (gbuffer->composite4)
+const int colortex15Format = RGBA8;			// flat normals and vanilla AO
 */
 
 //no need to clear the buffers, saves a few fps
@@ -451,19 +451,15 @@ void main() {
 
 /* DRAWBUFFERS:5 */
 
-
-
-
 	gl_FragData[0].a = 1.0;
-#ifndef SPLIT_RENDER
-	#ifdef SCREENSHOT_MODE
 
+	#ifdef SCREENSHOT_MODE
 
 		vec4 color = TAA_hq_render();
 		gl_FragData[0] = color;
 
-
 	#else
+
 		#ifdef TAA
 			vec4 data = texture2D(colortex1,texcoord* RENDER_SCALE); // terraom
 			vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w));
@@ -471,56 +467,15 @@ void main() {
 			bool translucentCol = texture2D(colortex13,texcoord * RENDER_SCALE).a > 0.0; // translucents
 			vec3 color = vec3(0.0);
 
-			// vec3 motionVector = texture2D(colortex10,texcoord).xyz  ;
-			// vec3 motionVector = texelFetch(colortex10, ivec2(gl_FragCoord.xy), 0).xyz * 2 - 1;
-
-			// if((motionVector.x+motionVector.y+motionVector.z) / 3 < 0.00001) motionVector = vec3(0.0);
-			// vec3 viewpos = motionVector;
-			// // vec3 eyepos =  mat3(gbufferModelViewInverse) * viewpos; 
-			// // vec3 worldPos = eyepos + (cameraPosition + gbufferModelViewInverse[3].xyz);
-			// // vec3 feetPos = worldPos - cameraPosition;
-
-			// vec4 clippos = gbufferProjection * vec4(motionVector,1.0);
-
-			// vec3 ndcPos = projectAndDivide(gbufferProjectionInverse, viewpos);
-			// vec3 screenPos = ndcPos * 0.5 + 0.5;
-
-
 			vec3 DEBUG = vec3(0.0);
-			color += TAA_hq(hand, translucentCol, vec3(0.0),DEBUG);
+			color += TAA_hq(hand, translucentCol, vec3(0.0), DEBUG);
 
 			
 			gl_FragData[0].rgb = clamp(fp10Dither(color ,triangularize(R2_dither())),6.11*1e-5,65000.0);
-			// gl_FragData[0].rgb = motionVector;
-		#endif
-
-		#ifndef TAA
+		#else
 			vec3 color = clamp(fp10Dither(texture2D(colortex3,texcoord).rgb,triangularize(interleaved_gradientNoise())),0.,65000.);
 			gl_FragData[0].rgb = color;
 		#endif
+
 	#endif
-#endif
-
-
-
-
-#ifdef SPLIT_RENDER
-	if(texcoord.x > 0.5){
-
-		vec4 color = TAA_hq_render();
-		gl_FragData[0] = color;
-
-	}else{
-			vec4 data = texture2D(colortex1,texcoord* RENDER_SCALE); // terraom
-			vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w));
-			bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
-			bool translucentCol = texture2D(colortex13,texcoord * RENDER_SCALE).a > 0.0; // translucents
-
-
-
-			vec3 color = TAA_hq(hand, translucentCol);
-			gl_FragData[0].rgb = clamp(fp10Dither(color ,triangularize(R2_dither())),6.11*1e-5,65000.0);
-
-	}
-#endif
 }

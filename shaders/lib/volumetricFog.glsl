@@ -146,7 +146,7 @@ vec4 getVolumetricRays(
 		#endif
 		
 		//Water droplets(fog)
-		float density = densityVol*ATMOSPHERIC_DENSITY*mu*300.;
+		float density = densityVol*mu*300.;
 
 		//Just air
 		vec2 airCoef = exp(-max(progressW.y-SEA_LEVEL,0.0)/vec2(8.0e3, 1.2e3)*vec2(6.,7.0)) * 24 * Haze_amount;
@@ -305,7 +305,7 @@ vec4 InsideACloudFog(
 
 		float densityVol = cloudVol(progressW);
 		//Water droplets(fog)
-		float density = densityVol*ATMOSPHERIC_DENSITY*mu*300.;
+		float density = densityVol*mu*300.;
 
 		//Just air
 		vec2 airCoef = exp(-max(progressW.y-SEA_LEVEL,0.0)/vec2(8.0e3, 1.2e3)*vec2(6.,7.0)) * 24 * Haze_amount;

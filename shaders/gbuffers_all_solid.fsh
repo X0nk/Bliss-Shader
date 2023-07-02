@@ -58,7 +58,6 @@ varying vec4 normalMat;
 	varying vec3 FlatNormals;
 #endif
 
-// #ifdef SPECULARTEX
 
 uniform sampler2D specular;
 

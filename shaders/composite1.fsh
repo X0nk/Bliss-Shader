@@ -20,12 +20,6 @@ flat varying float tempOffsets;
 
 uniform float eyeAltitude;
 
-/*
-const int colortex12Format = RGBA16F;			//Final output, transparencies id (gbuffer->composite4)
-const int colortex15Format = RGBA16F;			//Final output, transparencies id (gbuffer->composite4)
-*/
-
-
 flat varying vec3 zMults;
 uniform sampler2D colortex0;//clouds
 uniform sampler2D colortex1;//albedo(rgb),material(alpha) RGBA16
@@ -939,10 +933,10 @@ void main() {
 			}
 		}
 
-		#ifdef Sub_surface_scattering
 			#ifdef Variable_Penumbra_Shadows
 			
 				float sunSSS_density = LabSSS;
+				
 				#ifndef RENDER_ENTITY_SHADOWS
 					if(entities) sunSSS_density = 0.0;
 				#endif
@@ -952,8 +946,6 @@ void main() {
 				SSS *=	DirectLightColor;
 				if (isEyeInWater == 0) SSS *= lightleakfix; // light leak fix
 			#endif
-
-
 
 			if (!hand){
 
@@ -970,17 +962,12 @@ void main() {
 						if (abs(filtered.y-0.1) < 0.0004 ) SSS *= vec3(Shadows);
 					#endif
 
-				// #else
-				// 	if (abs(filtered.y-0.1) < 0.0004 && LabSSS > 0.0 ) SSS = clamp((lightmap.y-0.87)*25,0,1) * clamp(pow(1+dot(WsunVec,normal),25),0,1) * vec3(1);
 				#endif
 			}
 
 			#ifdef Variable_Penumbra_Shadows
 				SSS *= 1.0-NdotL*Shadows;
 			#endif
-		#else
-			 SSS = vec3(0.0);
-		#endif
 
 		#ifdef VOLUMETRIC_CLOUDS
 		#ifdef CLOUDS_SHADOWS
@@ -1151,9 +1138,8 @@ void main() {
 			MaterialReflections(FINAL_COLOR, SpecularTex.r, SpecularTex.ggg, albedo, WsunVec, (Shadows*NdotL)*DirectLightColor, lightmap.y, slopednormal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise()), hand, entities);
 		#endif
 
-		// #ifdef LabPBR_Emissives
-			LabEmission(FINAL_COLOR, albedo, SpecularTex.a);
-		// #endif
+		LabEmission(FINAL_COLOR, albedo, SpecularTex.a);
+
 		
 		if(lightningBolt) FINAL_COLOR.rgb += vec3(Lightning_R,Lightning_G,Lightning_B) * 255.0;
 
