@@ -25,6 +25,9 @@ void main() {
 	 gl_FragData[0].a = texture2DLod(tex,texcoord.xy,0).a;
 	#endif
 
+	#ifdef RENDER_ENTITY_SHADOWS
+	#endif
+
   #ifdef Stochastic_Transparent_Shadows
 	 gl_FragData[0].a = float(gl_FragData[0].a >= R2_dither());
   #endif

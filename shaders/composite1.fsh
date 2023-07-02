@@ -601,6 +601,8 @@ void rtGI(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, float lightm
 
 vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, float lightPos){
 
+
+
 	float labcurve = pow(Density,LabSSS_Curve);
 	float density = sqrt(30 - labcurve*15);
 
@@ -939,8 +941,14 @@ void main() {
 
 		#ifdef Sub_surface_scattering
 			#ifdef Variable_Penumbra_Shadows
-				
-				SSS = SubsurfaceScattering_sun(albedo, SHADOWBLOCKERDEPTBH, LabSSS, clamp(dot(np3, WsunVec),0.0,1.0)) ;
+			
+				float sunSSS_density = LabSSS;
+				#ifndef RENDER_ENTITY_SHADOWS
+					if(entities) sunSSS_density = 0.0;
+				#endif
+
+
+				SSS = SubsurfaceScattering_sun(albedo, SHADOWBLOCKERDEPTBH, sunSSS_density, clamp(dot(np3, WsunVec),0.0,1.0)) ;
 				SSS *=	DirectLightColor;
 				if (isEyeInWater == 0) SSS *= lightleakfix; // light leak fix
 			#endif

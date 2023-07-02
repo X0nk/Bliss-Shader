@@ -273,6 +273,9 @@ const float shadowDistanceRenderMul = -1.0; //[-1.0 1.0] THIS WILL BREAK SUBSURF
 #define SHADOW_DISABLE_ALPHA_MIPMAPS // Disables mipmaps on the transparency of alpha-tested things like foliage, may cost a few fps in some cases
 #define Stochastic_Transparent_Shadows // Highly recommanded to enable SHADOW_DISABLE_ALPHA_MIPMAPS with it. Uses noise to simulate transparent objects' shadows (not colored). It is also recommended to increase Min_Shadow_Filter_Radius with this.
 
+#define RENDER_ENTITY_SHADOWS
+
+
 
 // --- SSGI/RTAO ---
 

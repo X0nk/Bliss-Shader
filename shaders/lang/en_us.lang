@@ -9,6 +9,7 @@ screen.Direct_Light = Direct Light
     screen.Filtering = Shadow Filtering Settings
     screen.Shadows = Shadows
         option.SCREENSPACE_CONTACT_SHADOWS = Contact Shadows
+        option.RENDER_ENTITY_SHADOWS = Shadows for Entities
         option.shadowMapResolution = Shadow Resolution
         option.shadowDistance = Shadow Distance
 
