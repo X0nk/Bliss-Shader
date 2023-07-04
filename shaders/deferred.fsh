@@ -110,7 +110,7 @@ gl_FragData[0] = vec4(0.0);
 
 //Save light values
 if (gl_FragCoord.x < 1. && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(averageSkyCol_Clouds * blackbody(ambient_temp),1.0);
+gl_FragData[0] = vec4(averageSkyCol_Clouds,1.0);
 if (gl_FragCoord.x > 1. && gl_FragCoord.x < 2.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 gl_FragData[0] = vec4(averageSkyCol,1.0);
 
