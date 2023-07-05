@@ -249,7 +249,7 @@ option.AEROCHROME_WOOL_ENABLED.comment = Technically wool things should be affec
 
 
 
-screen.Misc_Settings.comment = Random settings for DEBUGGING or other fun.
+screen.Misc_Settings.comment = Random settings for DEBUGGING or other fun stuff.
 screen.Sun_and_Moon_Colors.comment = Configure the color of the sun or moon.
 option.sunPathRotation.comment = Configure the angle of the sun or moon
 option.sun_illuminance.comment = Configure the brightness of the sun
@@ -353,7 +353,6 @@ screen.Clouds.comment = Configure settings related to the raymarched volumetric 
     option.Alto_coverage.comment = Configure how much of the sky the higher layer of clouds cover. This setting does not work when daily weather is enabled.
     option.Alto_density.comment = Configure how dense the higher layer of clouds are.
 
-    
 screen.World.comment = Configure settings for various things that happen in the world, from waving plants to water related settings.
     screen.Water.comment = Configure settings related to the water.
         option.WATER_REFLECTIONS.comments = Toggle all reflections for translucent things. This allows other settings to be enabled below. §aPERFORMANCE COST:§r low
@@ -366,7 +365,6 @@ screen.World.comment = Configure settings for various things that happen in the 
         option.Water_Top_Layer.comment = Configure the Y coordinate at which the ocean should be in the world.
         
         screen.Water_fog_color.comment = Configure colors of the water fog. 
-
 
 screen.Climate.comment = Configure settings related to the climate, like seasonal colors, daily weather, and biome specific fog.
     screen.Seasons.comment = Seasonal colors that cycle through, summer, fall, winter, and spring.
@@ -382,7 +380,6 @@ screen.Waving_Stuff.comment = Configure settings related to waving things.
     option.WAVY_PLANTS.comment = Toggle waving plants. §aPERFORMANCE COST:§r very low
     option.WAVY_STRENGTH.comment = Configure the amount the plants wave.
     option.WAVY_SPEED.comment = Configure the speed the plants wave.
-
 
 screen.Post_Processing.comment = Configure settings for all post processing effects, from anti aliasing to tonemapping.
     screen.Tonemapping.comment = Configure settings related to color and tonemapping.
