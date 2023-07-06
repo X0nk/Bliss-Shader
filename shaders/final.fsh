@@ -1,6 +1,6 @@
 #version 120
 //Vignetting, applies bloom, applies exposure and tonemaps the final image
-//#extension GL_EXT_gpu_shader4 : enable
+#extension GL_EXT_gpu_shader4 : disable
 
 #include "lib/settings.glsl"
 

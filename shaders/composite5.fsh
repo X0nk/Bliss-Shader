@@ -1,7 +1,7 @@
 #version 120
 //Temporal Anti-Aliasing + Dynamic exposure calculations (vertex shader)
 
-//#extension GL_EXT_gpu_shader4 : enable
+#extension GL_EXT_gpu_shader4 : disable
 
 #include "lib/settings.glsl"
 #include "lib/res_params.glsl"
