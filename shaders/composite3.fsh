@@ -1,6 +1,6 @@
 #version 120
 //Horizontal bilateral blur for volumetric fog + Forward rendered objects + Draw volumetric fog
-#extension GL_EXT_gpu_shader4 : enable
+//#extension GL_EXT_gpu_shader4 : enable
 #include "lib/settings.glsl"
 
 flat varying vec3 zMults;

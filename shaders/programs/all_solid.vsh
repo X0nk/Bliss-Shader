@@ -1,4 +1,4 @@
-#extension GL_EXT_gpu_shader4 : enable
+//#extension GL_EXT_gpu_shader4 : enable
 #include "/lib/settings.glsl"
 
 #include "/lib/res_params.glsl"
