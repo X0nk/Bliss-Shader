@@ -1,10 +1,15 @@
 #version 120
 
-varying vec4 lmtexcoord;
+
 varying vec4 color;
+varying vec2 texcoord;
 
 uniform sampler2D texture;
 
+//faster and actually more precise than pow 2.2
+vec3 toLinear(vec3 sRGB){
+	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
+}
 
 vec4 encode (vec3 n, vec2 lightmaps){
 	n.xy = n.xy / dot(abs(n), vec3(1.0));
@@ -29,16 +34,14 @@ float encodeVec2(float x,float y){
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
-/* DRAWBUFFERS:18 */
+/* DRAWBUFFERS:28 */
 
 void main() {
 
-    vec3 albedo = texture2D(texture, lmtexcoord.xy).rgb * color.rgb;
+	vec4 Albedo = vec4(texture2D(texture, texcoord).rgb*5.0,1.0);
+    Albedo *= color;
+    Albedo.rgb = toLinear(Albedo.rgb);
 
-
-
-	vec4 data1 = clamp(encode(vec3(0.0), vec2(lmtexcoord.z,1)),	0.0,	1.0);
-	gl_FragData[0] = vec4(encodeVec2(albedo.r,data1.x),	encodeVec2(albedo.g,data1.y),	encodeVec2(albedo.b,data1.z),	encodeVec2(data1.w,0.75));
-
-   gl_FragData[1].a = 0.9;
+    gl_FragData[0] = Albedo;
+    gl_FragData[1] = vec4(0.0,0.0,0.0,0.9);
 }
