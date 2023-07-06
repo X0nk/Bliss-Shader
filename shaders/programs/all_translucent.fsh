@@ -1,5 +1,5 @@
 // #version 120
-#extension GL_EXT_gpu_shader4 : disable
+//#extension GL_EXT_gpu_shader4 : disable
 
 varying vec4 lmtexcoord;
 varying vec4 color;

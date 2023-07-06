@@ -1,6 +1,6 @@
 #version 120
-#extension GL_ARB_shader_texture_lod : disable
-#extension GL_EXT_gpu_shader4 : disable
+//#extension GL_ARB_shader_texture_lod : disable
+//#extension GL_EXT_gpu_shader4 : disable
 #include "lib/settings.glsl"
 
 

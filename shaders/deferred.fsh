@@ -1,5 +1,5 @@
 #version 120
-#extension GL_EXT_gpu_shader4 : disable
+//#extension GL_EXT_gpu_shader4 : disable
 
 #include "lib/settings.glsl"
 //Prepares sky textures (2 * 256 * 256), computes light values and custom lightmaps
