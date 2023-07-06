@@ -616,9 +616,6 @@ vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 	// vec3 scatter = exp(-sqrt(max(Scattering+0.05,0.0) * absorbed * 25)) * exp(Scattering * -5);
 	vec3 scatter =   exp(-sqrt(Scattering * absorbed * 5)) * pow((-Scattering+1.0)*1.25,2.0);
 	scatter *= pow(Density,LabSSS_Curve);
-	// temporary
-
-	scatter *= ambientsss_brightness;
 
 	return scatter;
 }
@@ -845,7 +842,9 @@ void main() {
 
 	vec3 DirectLightColor = (lightCol.rgb/80.0);
 	DirectLightColor *= clamp(abs(WsunVec.y)*2,0.,1.);
-
+	#ifdef ambientLight_only
+		DirectLightColor = vec3(0.0);
+	#endif
 
 	vec3 AmbientLightColor = averageSkyCol_Clouds;
 
@@ -1043,17 +1042,24 @@ void main() {
 		
 		Indirect_lighting *= AO;
 	
+
+		vec3 SSS_forSky = vec3(0.0);
+
 		#ifdef Ambient_SSS
 			if (!hand){
-				vec3 SSS_forSky = vec3(0.0);
 				#if indirect_effect != 1
 					ScreenSpace_SSS(SkySSS, fragpos, blueNoise(gl_FragCoord.xy).rg, FlatNormals, isLeaf);
 				#endif
-				SSS_forSky = SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3)  * pow(1.0-clamp(abs(ambientCoefs.y+0.5),0.0,1.0),0.1) ;
+				SSS_forSky = SubsurfaceScattering_sky(albedo, SkySSS, LabSSS);
+				SSS_forSky *= (AmbientLightColor* 2.0 * ambient_brightness) * 8./150.;
+				SSS_forSky *= pow(newLightmap.y,3);
+				// SSS_forSky *= pow(1.0-clamp(abs(ambientCoefs.y+0.5),0.0,1.0),0.1);
 				
-				SSS += SSS_forSky;// Indirect_lighting += SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3);
+				SSS += SSS_forSky * pow(1.0-clamp(abs(ambientCoefs.y+0.5),0.0,1.0),0.1); // Indirect_lighting += SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3);
 			}
 		#endif
+
+		// Indirect_lighting = max(Indirect_lighting, SSS_forSky);
 	
 
 
@@ -1123,9 +1129,6 @@ void main() {
 		#endif
 		#endif
 
-		#ifdef ambientLight_only
-			DirectLightColor = vec3(0.0);
-		#endif
 
 		Direct_lighting = DoDirectLighting(DirectLightColor, Shadows, NdotL, 0.0);
 		

@@ -141,6 +141,7 @@ vec3 rayTraceSpeculars(vec3 dir,vec3 position,float dither, float quality, bool 
 		maxZ += stepv.z;
 
 		reflectLength += 1.0 / quality; // for shit
+
   	}
 
 
@@ -270,7 +271,7 @@ void MaterialReflections(
 	vec3 F = mix_vec3(f0, vec3(1.0), fresnel); 
 	vec3 rayContrib = F;
 
-	float rayContribLuma = luma(rayContrib);
+	float rayContribLuma = dot(rayContrib,vec3(0.333333));
 	float VisibilityFactor = rayContribLuma * pow(1.0-roughness,3.0);
     bool hasReflections = Roughness_Threshold == 1.0 ? true : (f0.y * (1.0 - roughness * Roughness_Threshold)) > 0.01;
 
@@ -297,8 +298,9 @@ void MaterialReflections(
 
 			float LOD = clamp(reflectLength * 6.0, 0.0,6.0);
 			if(hand || isEntities) LOD = VisibilityFactor*6;
+			// LOD = 0.0;
 			
-			if (rtPos.z < 1.) { // Reproject on previous frame
+			if (rtPos.z < 1.0) { // Reproject on previous frame
 				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rtPos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
 				previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
 				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
