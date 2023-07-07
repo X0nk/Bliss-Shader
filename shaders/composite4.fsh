@@ -1,7 +1,7 @@
 #version 120
 //#extension GL_EXT_gpu_shader4 : disable
 
-#include "lib/settings.glsl"
+#include "/lib/settings.glsl"
 uniform sampler2D colortex3;
 // Compute 3x3 min max for TAA
 

@@ -1,7 +1,7 @@
 #version 120
 
-#include "lib/settings.glsl"
-#include "lib/res_params.glsl"
+#include "/lib/settings.glsl"
+#include "/lib/res_params.glsl"
 uniform float viewWidth;
 uniform float viewHeight;
 varying vec2 texcoord;

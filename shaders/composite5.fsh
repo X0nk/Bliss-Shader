@@ -3,8 +3,8 @@
 
 //#extension GL_EXT_gpu_shader4 : disable
 
-#include "lib/settings.glsl"
-#include "lib/res_params.glsl"
+#include "/lib/settings.glsl"
+#include "/lib/res_params.glsl"
 
 
 //TAA OPTIONS
@@ -83,7 +83,7 @@ uniform mat4 gbufferPreviousModelView;
 
 #define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
 
-#include "lib/projections.glsl"
+#include "/lib/projections.glsl"
 
 
 float luma(vec3 color) {

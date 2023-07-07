@@ -1,6 +1,6 @@
 #version 120
 //#extension GL_EXT_gpu_shader4 : disable
-#include "lib/settings.glsl"
+#include "/lib/settings.glsl"
 
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec3 sunColor;

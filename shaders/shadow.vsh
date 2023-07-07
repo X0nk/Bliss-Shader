@@ -8,8 +8,8 @@ This code is from Chocapic13' shaders
 Read the terms of modification and sharing before changing something below please !
 !! DO NOT REMOVE !!
 */
-#include "lib/settings.glsl"
-#include "lib/Shadow_Params.glsl"
+#include "/lib/settings.glsl"
+#include "/lib/Shadow_Params.glsl"
 
 #define SHADOW_MAP_BIAS 0.5
 const float PI = 3.1415927;

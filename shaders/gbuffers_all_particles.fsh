@@ -31,14 +31,14 @@ uniform mat4 shadowProjection;
 uniform vec3 cameraPosition;
 
 
-#include "lib/settings.glsl"
-#include "lib/Shadow_Params.glsl"
+#include "/lib/settings.glsl"
+#include "/lib/Shadow_Params.glsl"
 #include "/lib/res_params.glsl"
-#include "lib/sky_gradient.glsl"
-#include "lib/volumetricClouds.glsl"
+#include "/lib/sky_gradient.glsl"
+#include "/lib/volumetricClouds.glsl"
 
 #define OVERWORLD
-#include "lib/diffuse_lighting.glsl"
+#include "/lib/diffuse_lighting.glsl"
 
 //faster and actually more precise than pow 2.2
 vec3 toLinear(vec3 sRGB){

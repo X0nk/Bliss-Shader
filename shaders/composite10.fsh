@@ -1,8 +1,8 @@
 #version 120
 
-#include "lib/settings.glsl"
+#include "/lib/settings.glsl"
 //Merge and upsample the blurs into a 1/4 res bloom buffer
-#include "lib/res_params.glsl"
+#include "/lib/res_params.glsl"
 uniform sampler2D colortex3;
 uniform sampler2D colortex6;
 

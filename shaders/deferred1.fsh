@@ -1,6 +1,6 @@
 #version 120
 //#extension GL_EXT_gpu_shader4 : disable
-#include "lib/settings.glsl"
+#include "/lib/settings.glsl"
 //Computes volumetric clouds at variable resolution (default 1/4 res)
 
 
@@ -54,8 +54,8 @@ float interleaved_gradientNoise(){
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 	return noise;
 }
-#include "lib/sky_gradient.glsl"
-#include "lib/volumetricClouds.glsl"
+#include "/lib/sky_gradient.glsl"
+#include "/lib/volumetricClouds.glsl"
 #include "/lib/res_params.glsl"
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-1.,3.)/8.,

@@ -1,7 +1,7 @@
 #version 120
 //Horizontal bilateral blur for volumetric fog + Forward rendered objects + Draw volumetric fog
 //#extension GL_EXT_gpu_shader4 : disable
-#include "lib/settings.glsl"
+#include "/lib/settings.glsl"
 
 flat varying vec3 zMults;
 flat varying vec2 TAA_Offset;
@@ -51,12 +51,12 @@ uniform float darknessFactor;
 uniform float darknessLightFactor;
 
 
-#include "lib/waterBump.glsl"
+#include "/lib/waterBump.glsl"
 #include "/lib/res_params.glsl"
 
-#include "lib/sky_gradient.glsl"
-#include "lib/volumetricClouds.glsl"
-// #include "lib/biome_specifics.glsl"
+#include "/lib/sky_gradient.glsl"
+#include "/lib/volumetricClouds.glsl"
+// #include "/lib/biome_specifics.glsl"
 
 
 
@@ -81,7 +81,7 @@ vec3 toScreenSpace(vec3 p) {
 }
 
 
-// #include "lib/specular.glsl"
+// #include "/lib/specular.glsl"
 
 
 

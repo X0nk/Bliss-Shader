@@ -2,7 +2,7 @@
 //Render sky, volumetric clouds, direct lighting
 //#extension GL_EXT_gpu_shader4 : disable
 
-#include "lib/settings.glsl"
+#include "/lib/settings.glsl"
 
 const bool colortex5MipmapEnabled = true;
 const bool colortex12MipmapEnabled = true;
@@ -137,17 +137,17 @@ vec3 viewToWorld(vec3 viewPosition) {
 }
 
 
-#include "lib/res_params.glsl"
-#include "lib/Shadow_Params.glsl"
-#include "lib/color_transforms.glsl"
-#include "lib/sky_gradient.glsl"
-#include "lib/stars.glsl"
-#include "lib/volumetricClouds.glsl"
-#include "lib/waterBump.glsl"
-#include "lib/specular.glsl"
+#include "/lib/res_params.glsl"
+#include "/lib/Shadow_Params.glsl"
+#include "/lib/color_transforms.glsl"
+#include "/lib/sky_gradient.glsl"
+#include "/lib/stars.glsl"
+#include "/lib/volumetricClouds.glsl"
+#include "/lib/waterBump.glsl"
+#include "/lib/specular.glsl"
 
 #define OVERWORLD
-#include "lib/diffuse_lighting.glsl"
+#include "/lib/diffuse_lighting.glsl"
 
 float lengthVec (vec3 vec){
 	return sqrt(dot(vec,vec));
@@ -736,7 +736,7 @@ vec3 Moon(vec3 PlayerPos, vec3 WorldSunVec, vec3 Color, inout vec3 occludeStars)
 
 
 
-#include "lib/PhotonGTAO.glsl"
+#include "/lib/PhotonGTAO.glsl"
 
 uniform float detectThunderStorm;
 //////////////////////////////VOID MAIN//////////////////////////////

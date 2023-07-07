@@ -54,7 +54,7 @@ vec4 Weather_properties = Moon_Weather_properties;
 
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
-// #include "lib/biome_specifics.glsl"
+// #include "/lib/biome_specifics.glsl"
 #include "/lib/bokeh.glsl"
 
 float cdist(vec2 coord) {

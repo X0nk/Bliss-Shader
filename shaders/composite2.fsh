@@ -2,7 +2,7 @@
 //Volumetric fog rendering
 //#extension GL_EXT_gpu_shader4 : disable
 
-#include "lib/settings.glsl"
+#include "/lib/settings.glsl"
 
 flat varying vec4 lightCol;
 flat varying vec3 sunColor;
@@ -41,16 +41,16 @@ uniform vec2 texelSize;
 
 // uniform int worldTime; 
 
-#include "lib/Shadow_Params.glsl"
-#include "lib/color_transforms.glsl"
-#include "lib/color_dither.glsl"
-#include "lib/projections.glsl"
-#include "lib/sky_gradient.glsl"
+#include "/lib/Shadow_Params.glsl"
+#include "/lib/color_transforms.glsl"
+#include "/lib/color_dither.glsl"
+#include "/lib/projections.glsl"
+#include "/lib/sky_gradient.glsl"
 #include "/lib/res_params.glsl"
 
 
 #define TIMEOFDAYFOG
-#include "lib/volumetricClouds.glsl"
+#include "/lib/volumetricClouds.glsl"
 
 
 float blueNoise(){
@@ -114,7 +114,7 @@ float waterCaustics(vec3 wPos, vec3 lightSource) { // water waves
 // 	return vec*inversesqrt(dot(vec,vec));
 // }
 
-#include "lib/volumetricFog.glsl"
+#include "/lib/volumetricFog.glsl"
 
 void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estEyeDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient, vec3 lightSource, float VdotL){
 	int spCount = 8;

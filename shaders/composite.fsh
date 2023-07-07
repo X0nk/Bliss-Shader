@@ -1,13 +1,13 @@
 #version 120
 //#extension GL_EXT_gpu_shader4 : disable
 
-#include "lib/settings.glsl"
+#include "/lib/settings.glsl"
 
 
 flat varying vec3 WsunVec;
 flat varying vec2 TAA_Offset;
 #include "/lib/res_params.glsl"
-#include "lib/Shadow_Params.glsl"
+#include "/lib/Shadow_Params.glsl"
 
 uniform sampler2D depthtex1;
 uniform sampler2D colortex1;

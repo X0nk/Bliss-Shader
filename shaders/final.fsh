@@ -2,7 +2,7 @@
 //Vignetting, applies bloom, applies exposure and tonemaps the final image
 //#extension GL_EXT_gpu_shader4 : disable
 
-#include "lib/settings.glsl"
+#include "/lib/settings.glsl"
 
 varying vec2 texcoord;
 
@@ -16,8 +16,8 @@ uniform int frameCounter;
 uniform int isEyeInWater;
 
 
-#include "lib/color_transforms.glsl"
-#include "lib/color_dither.glsl"
+#include "/lib/color_transforms.glsl"
+#include "/lib/color_dither.glsl"
 #include "/lib/res_params.glsl"
 vec4 SampleTextureCatmullRom(sampler2D tex, vec2 uv, vec2 texSize )
 {

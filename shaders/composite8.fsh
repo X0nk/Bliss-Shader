@@ -1,7 +1,7 @@
 #version 120
-#include "lib/settings.glsl"
+#include "/lib/settings.glsl"
 //6 Horizontal gaussian blurs and horizontal downsampling
-#include "lib/res_params.glsl"
+#include "/lib/res_params.glsl"
 
 uniform sampler2D colortex6;
 uniform vec2 texelSize;

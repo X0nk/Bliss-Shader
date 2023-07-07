@@ -14,7 +14,7 @@ varying vec3 binormal;
 
 varying vec3 viewVector;
 
-#include "lib/settings.glsl"
+#include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 
 
@@ -63,16 +63,16 @@ flat varying vec3 averageSkyCol_Clouds;
 
 
 
-#include "lib/Shadow_Params.glsl"
-#include "lib/color_transforms.glsl"
-#include "lib/projections.glsl"
-#include "lib/sky_gradient.glsl"
-#include "lib/waterBump.glsl"
-#include "lib/clouds.glsl"
-#include "lib/stars.glsl"
-#include "lib/volumetricClouds.glsl"
+#include "/lib/Shadow_Params.glsl"
+#include "/lib/color_transforms.glsl"
+#include "/lib/projections.glsl"
+#include "/lib/sky_gradient.glsl"
+#include "/lib/waterBump.glsl"
+#include "/lib/clouds.glsl"
+#include "/lib/stars.glsl"
+#include "/lib/volumetricClouds.glsl"
 #define OVERWORLD
-#include "lib/diffuse_lighting.glsl"
+#include "/lib/diffuse_lighting.glsl"
 
 
 float blueNoise(){

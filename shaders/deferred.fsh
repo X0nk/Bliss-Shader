@@ -1,7 +1,7 @@
 #version 120
 //#extension GL_EXT_gpu_shader4 : disable
 
-#include "lib/settings.glsl"
+#include "/lib/settings.glsl"
 //Prepares sky textures (2 * 256 * 256), computes light values and custom lightmaps
 #define ReflectedFog
 
@@ -43,17 +43,17 @@ uniform vec3 cameraPosition;
 uniform float far;
 uniform ivec2 eyeBrightnessSmooth;
 
-#include "lib/Shadow_Params.glsl"
+#include "/lib/Shadow_Params.glsl"
 #include "/lib/util.glsl"
 #include "/lib/ROBOBO_sky.glsl"
-#include "lib/sky_gradient.glsl"
+#include "/lib/sky_gradient.glsl"
 
 // uniform int worldTime; 
 
 #define TIMEOFDAYFOG
-#include "lib/volumetricClouds.glsl"
+#include "/lib/volumetricClouds.glsl"
 
-// #include "lib/biome_specifics.glsl"
+// #include "/lib/biome_specifics.glsl"
 
 vec3 toShadowSpaceProjected(vec3 p3){
     p3 = mat3(gbufferModelViewInverse) * p3 + gbufferModelViewInverse[3].xyz;
@@ -80,7 +80,7 @@ float luma(vec3 color) {
 	return dot(color,vec3(0.299, 0.587, 0.114));
 }
 
-#include "lib/volumetricFog.glsl"
+#include "/lib/volumetricFog.glsl"
 
 const float[17] Slightmap = float[17](14.0,17.,19.0,22.0,24.0,28.0,31.0,40.0,60.0,79.0,93.0,110.0,132.0,160.0,197.0,249.0,249.0);
 
