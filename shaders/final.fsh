@@ -135,7 +135,7 @@ void main() {
 	vec3 FINAL_COLOR = clamp(int8Dither(col,texcoord),0.0,1.0);
 
   #ifdef LUMINANCE_CURVE
-    applyLuminanceCurve(FINAL_COLOR, LOWER_CURVE_TAIL, UPPER_CURVE_TAIL);
+    applyLuminanceCurve(FINAL_COLOR, LOWER_CURVE, UPPER_CURVE);
   #endif
 
 	applyContrast(FINAL_COLOR, CONTRAST); // for fun
