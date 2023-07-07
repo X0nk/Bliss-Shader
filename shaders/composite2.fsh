@@ -30,6 +30,7 @@ uniform vec3 sunVec;
 uniform float far;
 uniform float near;
 uniform int frameCounter;
+uniform float aspectRatio;
 uniform float rainStrength;
 uniform float sunElevation;
 uniform ivec2 eyeBrightnessSmooth;
@@ -51,6 +52,7 @@ uniform vec2 texelSize;
 
 #define TIMEOFDAYFOG
 #include "/lib/volumetricClouds.glsl"
+#include "/lib/bokeh.glsl"
 
 
 float blueNoise(){
@@ -259,6 +261,16 @@ void main() {
 
 	vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
 	float z = texture2D(depthtex0,tc).x;
+
+	#ifdef DOF_JITTER
+		vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);
+		jitter = rotate(radians(float(frameCounter))) * jitter;
+		jitter.y *= aspectRatio;
+		jitter.x *= DOF_ANAMORPHIC_RATIO;
+		jitter.xy *= 0.004 * JITTER_STRENGTH;
+
+		vec3 fragpos_DOF = toScreenSpace(vec3((tc + jitter)/RENDER_SCALE,z));
+	#endif
 		
 	if (isEyeInWater == 0){
 

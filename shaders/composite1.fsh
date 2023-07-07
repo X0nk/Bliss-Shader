@@ -44,6 +44,7 @@ uniform sampler2DShadow shadow;
 varying vec4 normalMat;
 uniform int heldBlockLightValue;
 uniform int frameCounter;
+uniform float screenBrightness;
 uniform int isEyeInWater;
 uniform float far;
 uniform float near;
@@ -60,6 +61,7 @@ uniform mat4 shadowProjection;
 uniform mat4 gbufferModelView;
 // uniform float viewWidth;
 // uniform float viewHeight;
+uniform int hideGUI;
 uniform float aspectRatio;
 uniform vec2 texelSize;
 uniform vec3 cameraPosition;
@@ -1169,6 +1171,31 @@ void main() {
 	
 		if (isEyeInWater == 0) waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));		
 	}
+
+	#ifdef DOF_JITTER
+		vec3 laserColor;
+		#if FOCUS_LASER_COLOR == 0 // Red
+		laserColor = vec3(25, 0, 0);
+		#elif FOCUS_LASER_COLOR == 1 // Green
+		laserColor = vec3(0, 25, 0);
+		#elif FOCUS_LASER_COLOR == 2 // Blue
+		laserColor = vec3(0, 0, 25);
+		#elif FOCUS_LASER_COLOR == 3 // Pink
+		laserColor = vec3(25, 10, 15);
+		#elif FOCUS_LASER_COLOR == 4 // Yellow
+		laserColor = vec3(25, 25, 0);
+		#elif FOCUS_LASER_COLOR == 5 // White
+		laserColor = vec3(25);
+		#endif
+
+		#if DOF_JITTER_FOCUS < 0
+		float focusDist = mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
+		#else
+		float focusDist = DOF_JITTER_FOCUS;
+		#endif
+
+		if( hideGUI < 1.0) gl_FragData[0].rgb += laserColor * pow( clamp( 	 1.0-abs(focusDist-abs(fragpos.z))		,0,1),25) ;
+	#endif
 
 	/* DRAWBUFFERS:3 */
 }
