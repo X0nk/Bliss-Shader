@@ -74,34 +74,22 @@ void applyContrast(inout vec3 color, float contrast){
   color = (color - 0.5) * contrast + 0.5;
 }
 
-
+float lowerCurve(float x) {
+	float y = 16 * x * (0.5 - x) * 0.1;
+	return clamp(y, 0.0, 1.0);
+}
+float upperCurve(float x) {
+	float y = 16 * (0.5 - x) * (x - 1.0) * 0.1;
+	return clamp(y, 0.0, 1.0);
+}
 void applyLuminanceCurve(inout vec3 color, float darks, float brights){
 
-  // wash out darks
-  // brights = 2.77;
-  // darks = 2;
-
-  // neat curve
-  // brights = 3.16;
-  // darks = 1.44;
-
-  // neat curve
-  // brights = 2.27;
-  // darks = 5.0;
-
-  // SCKRUNKLE
-  // brights = 3.0;
-  // darks = 5.0;
-  
-  vec3 darkCurve = pow(1.0 - pow(1.0 - color, vec3(darks)), vec3(1.0/darks));
-  vec3 brightCurve = pow(1.0 - pow(color, vec3(brights)), vec3(1.0/brights));
-
-  darkCurve = pow(darkCurve,vec3(  3  ));
-  brightCurve = pow(brightCurve,vec3(  3  ));
-  
-  color =  (darkCurve - brightCurve) * 0.5 + 0.5; // it goes -1 to 1 by default
-
-  color = clamp(color,0.0,1.0);
+  	// color.r = color.r < 0.5 ? pow(2.0 * color.r, darks) / 2.0 : 1.0 - (pow(2.0 - 2.0 * color.r, brights) / 2.0);
+	// color.g = color.g < 0.5 ? pow(2.0 * color.g, darks) / 2.0 : 1.0 - (pow(2.0 - 2.0 * color.g, brights) / 2.0);
+	// color.b = color.b < 0.5 ? pow(2.0 * color.b, darks) / 2.0 : 1.0 - (pow(2.0 - 2.0 * color.b, brights) / 2.0);
+	color.r += darks * lowerCurve(color.r) + brights * upperCurve(color.r);
+	color.g += darks * lowerCurve(color.g) + brights * upperCurve(color.g);
+	color.b += darks * lowerCurve(color.b) + brights * upperCurve(color.b);
 }
 
 void main() {
