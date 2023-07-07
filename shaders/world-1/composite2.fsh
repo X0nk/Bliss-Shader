@@ -448,7 +448,9 @@ void main() {
 
 		p3 += gbufferModelViewInverse[3].xyz + cameraPosition;
 
-    	vec3 FogColor =  (gl_Fog.color.rgb / pow(0.00001 + dot(gl_Fog.color.rgb,vec3(0.3333)),1.0) ) * 0.2;
+    	// vec3 FogColor =  (gl_Fog.color.rgb / pow(0.00001 + dot(gl_Fog.color.rgb,vec3(0.3333)),1.0) ) * 0.2;
+		// vec3 fogColor = (gl_Fog.color.rgb / max(pow(dot(gl_Fog.color.rgb,vec3(0.3333)),1.1),0.01)  ) ;
+    	vec3 FogColor =  (gl_Fog.color.rgb / max(dot(gl_Fog.color.rgb,vec3(0.3333)),0.01)  );
 
 		// do all ambient lighting stuff
 		vec3 Indirect_lighting = DoAmbientLighting_Nether(FogColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, np3, p3 );
@@ -457,31 +459,9 @@ void main() {
 
 		if(!hand) Indirect_lighting *= ssao(fragpos,noise,FlatNormals) * AO;
 
-
-		// ScreenSpace_SSS(Indirect_SSS, fragpos, vec2(R2_dither()), FlatNormals);
-
-
-		// Indirect_lighting *= 1 + SubsurfaceScattering_sky(albedo, Indirect_SSS, LabSSS) * 5;
-
-
-
-        vec3 LightColor = LightSourceColor();
-		
-		float SdotV = dot(normalize(viewspace_sunvec), normalize(fragpos));
-		float OrbMie = max(exp((p3.y - 60) / -30.),0);
-		
-		// 0.5 added because lightsources are always high radius.
-		float NdotL = clamp( dot(normal,normalize(WsunVec)) + 0.25,0.0,1.0);
-
-		vec3 LightSource = LightColor * NdotL * OrbMie ;
-
-		// LightSource *= rayTraceShadow(worldToView(normalize(-LightPos)), fragpos, interleaved_gradientNoise());
-		// LightSource *= GetCloudShadow(p3, WsunVec, blueNoise());
-
-
 		// finalize
 		gl_FragData[0].rgb = Indirect_lighting * albedo;
-		// gl_FragData[0].rgb = LightSource * albedo;
+		
 
 		#ifdef Specular_Reflections	
 			MaterialReflections_N(gl_FragData[0].rgb, SpecularTex.r, SpecularTex.ggg, albedo, normal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg,noise), hand);

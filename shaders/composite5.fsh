@@ -304,7 +304,7 @@ vec3 projectAndDivide(mat4 projectionMatrix, vec3 position){
 	vec4 homogeneousPos = projectionMatrix * vec4(position, 1.0);
 	return homogeneousPos.xyz / homogeneousPos.w;
 }
-
+;
 vec3 TAA_hq(bool hand, bool istranslucent, vec3 EntityVelocity, inout vec3 DEBUG){
 	#ifdef TAA_UPSCALING
 	vec2 adjTC = clamp(texcoord*RENDER_SCALE, vec2(0.0),RENDER_SCALE-texelSize*2.);
@@ -386,7 +386,7 @@ vec3 TAA_hq(bool hand, bool istranslucent, vec3 EntityVelocity, inout vec3 DEBUG
 	vec3 albedoPrev = texture2D(colortex5, previousPosition.xy).xyz;
 	vec3 supersampled =  mix(albedoPrev,albedoCurrent0,clamp(0.05,0.,1.));
 	#endif
-
+	
 	//De-tonemap
 	return supersampled;
 }
@@ -409,6 +409,7 @@ vec2 R2_samples(int n){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha * n)*2.-1.0;
 }
+
 vec4 TAA_hq_render(){
 	#ifdef TAA_UPSCALING
 	vec2 adjTC = clamp(texcoord*RENDER_SCALE, vec2(0.0),RENDER_SCALE-texelSize*2.);
@@ -470,8 +471,9 @@ void main() {
 			vec3 DEBUG = vec3(0.0);
 			color += TAA_hq(hand, translucentCol, vec3(0.0), DEBUG);
 
-			
+
 			gl_FragData[0].rgb = clamp(fp10Dither(color ,triangularize(R2_dither())),6.11*1e-5,65000.0);
+
 		#else
 			vec3 color = clamp(fp10Dither(texture2D(colortex3,texcoord).rgb,triangularize(interleaved_gradientNoise())),0.,65000.);
 			gl_FragData[0].rgb = color;

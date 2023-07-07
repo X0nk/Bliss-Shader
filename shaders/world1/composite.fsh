@@ -384,7 +384,7 @@ void main() {
 		#endif
 	#endif
 
-	float vanilla_AO = normalAndAO.a;
+	float vanilla_AO = clamp(normalAndAO.a,0,1);
 	normalAndAO.a = clamp(pow(normalAndAO.a*5,4),0,1);
 
 	
@@ -406,7 +406,7 @@ void main() {
 		p3 += gbufferModelViewInverse[3].xyz;
 
 		// do all ambient lighting stuff
-		
+
 		vec3 AO = vec3( exp( (vanilla_AO*vanilla_AO) * -5) )  ;
 		vec3 Indirect_lighting = DoAmbientLighting_End(gl_Fog.color.rgb, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, np3) ;
 		// Indirect_lighting = vec3(TORCH_R,TORCH_G,TORCH_B) * curveinvert(clamp(lightmap.x,0.0,1.0),2);
@@ -459,9 +459,9 @@ void main() {
 
 		if(!hand) gl_FragData[0].rgb *= ssao(fragpos,noise,FlatNormals) * AO;
 
-		// if(lightningBolt) albedo.rgb += vec3(Lightning_R,Lightning_G,Lightning_B) ;
-
 		LabEmission(gl_FragData[0].rgb, albedo, SpecularTex.a);
+
+		if(lightningBolt) gl_FragData[0].rgb = LightColor * 10 ;
 		
 
 

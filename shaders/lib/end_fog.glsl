@@ -253,7 +253,7 @@ mat2x3 getVolumetricRays(float dither,vec3 fragpos,float dither2) {
 	vec3 absorbance = vec3(1.0);
 	float expFactor = 11.0;
 
-	vec3 fogColor = (gl_Fog.color.rgb / pow(dot(gl_Fog.color.rgb,vec3(0.3333)),1.1)  ) ;
+	vec3 fogColor = (gl_Fog.color.rgb / max(pow(dot(gl_Fog.color.rgb,vec3(0.3333)),1.1),0.01)  ) ;
 
 
 	for (int i=0;i<SAMPLES;i++) {

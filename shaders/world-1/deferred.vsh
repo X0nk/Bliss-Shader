@@ -3,12 +3,12 @@
 
 #include "/lib/settings.glsl"
 
-flat varying vec3 ambientUp;
-flat varying vec3 ambientLeft;
-flat varying vec3 ambientRight;
-flat varying vec3 ambientB;
-flat varying vec3 ambientF;
-flat varying vec3 ambientDown;
+// flat varying vec3 ambientUp;
+// flat varying vec3 ambientLeft;
+// flat varying vec3 ambientRight;
+// flat varying vec3 ambientB;
+// flat varying vec3 ambientF;
+// flat varying vec3 ambientDown;
 flat varying vec3 zenithColor;
 flat varying vec3 sunColor;
 flat varying vec3 sunColorCloud;

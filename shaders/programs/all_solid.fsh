@@ -75,6 +75,8 @@ flat varying float EMISSIVE;
 flat varying int LIGHTNING;
 flat varying int SIGN;
 
+flat varying float HELD_ITEM_BRIGHTNESS;
+
 float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
@@ -225,9 +227,9 @@ void main() {
 
 	float torchlightmap = lmtexcoord.z;
 
-	// #ifdef Hand_Held_lights
-	// 	if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(fragpos)/10,0.0),1.5),0.0,1.0));
-	// #endif
+	#ifdef Hand_Held_lights
+		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(fragpos)/10,0.0),1.5),0.0,1.0));
+	#endif
 	
 	float lightmap = clamp( (lmtexcoord.w-0.8) * 10.0,0.,1.);
 

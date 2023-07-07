@@ -40,12 +40,6 @@ void main() {
 
 	vec4 Albedo = texture2D(texture, texcoord);
 
-	// if (Albedo.a > 0.1) Albedo.a = 1.0;
-	// else Albedo.a = 0.0;
-
-   	// vec4 data1 = vec4(1);
-	// gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
-    
     Albedo *= color;
     Albedo.rgb = toLinear(Albedo.rgb);
 

@@ -166,6 +166,10 @@ vec3 viewToWorld(vec3 viewPosition) {
     return pos.xyz;
 }
 
+/// thanks stackoverflow https://stackoverflow.com/questions/944713/help-with-pixel-shader-effect-for-brightness-and-contrast#3027595
+void applyContrast(inout vec3 color, float contrast){
+  color = ((color - 0.5) * max(contrast, 0.0)) + 0.5;
+}
 void main() {
   /* DRAWBUFFERS:73 */
 
@@ -328,6 +332,9 @@ void main() {
   #endif
 
   gl_FragData[0].r = vl.a; // pass fog alpha so bloom can do bloomy fog
+
+	// applyContrast(color.rgb,CONTRAST);
+
   gl_FragData[1].rgb = clamp(color.rgb,0.0,68000.0);
 
 //  gl_FragData[1].rgb = vec3(tangentNormals,0.0);
