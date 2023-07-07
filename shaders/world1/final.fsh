@@ -19,11 +19,6 @@ uniform int isEyeInWater;
 #include "/lib/color_dither.glsl"
 #include "/lib/res_params.glsl"
 
-/// thanks stackoverflow https://stackoverflow.com/questions/944713/help-with-pixel-shader-effect-for-brightness-and-contrast#3027595
-void applyContrast(inout vec3 color, float contrast){
-  color = (color - 0.5) * contrast + 0.5;
-}
-
 vec4 SampleTextureCatmullRom(sampler2D tex, vec2 uv, vec2 texSize )
 {
     // We're going to sample a a 4x4 grid of texels surrounding the target UV coordinate. We'll do this by rounding
