@@ -14,6 +14,8 @@ uniform float viewHeight;
 uniform float frameTimeCounter;
 uniform int frameCounter;
 uniform int isEyeInWater;
+
+
 #include "lib/color_transforms.glsl"
 #include "lib/color_dither.glsl"
 #include "/lib/res_params.glsl"
@@ -72,6 +74,36 @@ void applyContrast(inout vec3 color, float contrast){
   color = (color - 0.5) * contrast + 0.5;
 }
 
+
+void applyLuminanceCurve(inout vec3 color, float darks, float brights){
+
+  // wash out darks
+  // brights = 2.77;
+  // darks = 2;
+
+  // neat curve
+  // brights = 3.16;
+  // darks = 1.44;
+
+  // neat curve
+  // brights = 2.27;
+  // darks = 5.0;
+
+  // SCKRUNKLE
+  // brights = 3.0;
+  // darks = 5.0;
+  
+  vec3 darkCurve = pow(1.0 - pow(1.0 - color, vec3(darks)), vec3(1.0/darks));
+  vec3 brightCurve = pow(1.0 - pow(color, vec3(brights)), vec3(1.0/brights));
+
+  darkCurve = pow(darkCurve,vec3(  3  ));
+  brightCurve = pow(brightCurve,vec3(  3  ));
+  
+  color =  (darkCurve - brightCurve) * 0.5 + 0.5; // it goes -1 to 1 by default
+
+  color = clamp(color,0.0,1.0);
+}
+
 void main() {
   #ifdef BICUBIC_UPSCALING
     vec3 col = SampleTextureCatmullRom(colortex7,texcoord,1.0/texelSize).rgb;
@@ -100,8 +132,13 @@ void main() {
   vec3 diff = col-lum;
   col = col + diff*(-lum*CROSSTALK + SATURATION);
   
-  
-	applyContrast(col, CONTRAST);
-  
-	gl_FragColor.rgb = clamp(int8Dither(col,texcoord),0.0,1.0);
+	vec3 FINAL_COLOR = clamp(int8Dither(col,texcoord),0.0,1.0);
+
+  #ifdef LUMINANCE_CURVE
+    applyLuminanceCurve(FINAL_COLOR, LOWER_CURVE_TAIL, UPPER_CURVE_TAIL);
+  #endif
+
+	applyContrast(FINAL_COLOR, CONTRAST); // for fun
+
+  gl_FragColor.rgb = FINAL_COLOR;
 }

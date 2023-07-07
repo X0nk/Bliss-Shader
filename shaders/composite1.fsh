@@ -841,7 +841,7 @@ void main() {
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2) ,0.0,1.0);
 
 	vec3 DirectLightColor = (lightCol.rgb/80.0);
-	DirectLightColor *= clamp(abs(WsunVec.y)*2,0.,1.);
+	// DirectLightColor *= clamp(abs(WsunVec.y)*2,0.,1.);
 	#ifdef ambientLight_only
 		DirectLightColor = vec3(0.0);
 	#endif
@@ -863,7 +863,7 @@ void main() {
 		background += stars(orbitstar) * 5.0	;
 
 		#ifndef ambientLight_only
-			background += Moon(np3, -WsunVec, blackbody2(12000), background); // moon
+			background += Moon(np3, -WsunVec, DirectLightColor*20, background); // moon
 			background += drawSun(dot(lightCol.a * WsunVec, np3),0, DirectLightColor,vec3(0.0)) ; // sun 
 			// vec3 moon = drawSun(dot(lightCol.a * -WsunVec, np3),0, DirectLightColor/5,vec3(0.0)) ; // moon
 		#endif
