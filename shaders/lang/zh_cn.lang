@@ -1,29 +1,39 @@
-<<<<<<< HEAD
 screen.Misc_Settings = 杂项
 screen.Sun_and_Moon_Colors = 日月颜色
 option.sunPathRotation = 太阳角度
 option.sun_illuminance = 阳光照度
 option.moon_illuminance = 月光照度
 
+screen.Waving_Stuff = 摇晃相关
+    option.WAVY_PLANTS = 植物摇晃
+    option.WAVY_STRENGTH = 摇晃强度
+    option.WAVY_SPEED = 摇晃速度
 
 screen.Direct_Light = 直接照明
-    screen.Filtering = 阴影过滤设置
     screen.Shadows = 阴影
+        option.RENDER_ENTITY_SHADOWS = 实体阴影
         option.SCREENSPACE_CONTACT_SHADOWS = 屏幕空间接触阴影
         option.shadowMapResolution = 阴影分辨率
         option.shadowDistance = 阴影距离
+    screen.Filtering = 阴影过滤设置
+        option.SHADOW_FILTER_SAMPLE_COUNT = 阴影过滤采样数
+        option.Min_Shadow_Filter_Radius = 最小阴影过滤半径
+        option.Variable_Penumbra_Shadows = 可变半阴影 (VPS)
+        option.VPS_Search_Samples = VPS 检索采样数
+        option.Max_Shadow_Filter_Radius = 最大阴影过滤半径
+        option.Max_Filter_Depth = 最大过滤深度
 
-
-screen.Subsurface_Scattering = 次表面散射
-    option.LabSSS_Curve = LabPBR 次表面散射曲线值
+screen.Subsurface_Scattering = 次表面散射 (SSS)
+    option.LabSSS_Curve = LabSSS 曲线
+    option.MISC_BLOCK_SSS = 随机方块次表面散射
+    option.MOB_SSS = 怪物次表面散射
     option.Ambient_SSS = 天空光次表面散射
     option.ambientsss_brightness = 天空光次表面散射亮度
     option.SSS_TYPE = 次表面散射模式
-        option.SSS_TYPE.comment = 硬编码意味着由着色器定义什么方块应该具有次表面散射效果. LabRBR 资源包次表面散射意味着由 LabPBR 资源包决定什么方块应该具有次表面散射. RTX 不会有方块具有次表面散射效果, 乐. 我不得不盗取了这样的格式, RRe36 .
-            value.SSS_TYPE.0 = RTX
+            value.SSS_TYPE.0 = 无
             value.SSS_TYPE.1 = 仅硬编码
-            value.SSS_TYPE.2 = 硬编码 + LabRBR 资源包次表面散射
-            value.SSS_TYPE.3 = 仅 LabRBR 资源包次表面散射
+            value.SSS_TYPE.2 = 硬编码 + LabSSS
+            value.SSS_TYPE.3 = 仅 LabSSS
 
 
 screen.Ambient_light = 环境光
@@ -82,7 +92,7 @@ screen.Fog = 雾气设置
 
     screen.Cave_Fog = 洞穴雾气
         option.Cave_fog = 洞穴雾气
-        option.CaveFogFallOff = 洞穴雾气淡出距离
+        option.CaveFogFallOff = 洞穴雾气渐消曲线
         option.CaveFogColor_R = 洞穴雾气红色比重
         option.CaveFogColor_G = 洞穴雾气绿色比重
         option.CaveFogColor_B = 洞穴雾气蓝色比重
@@ -106,7 +116,7 @@ screen.Clouds = 云层设置
     option.Alto_density = 高层云密度
 
 
-screen.Climate = 氛围
+screen.Climate = 气候
     option.Seasons = 四季颜色
     option.Season_Length = 季节长度 (以 MC 日为单位)
     option.Snowy_Winter = 雪冬
@@ -170,15 +180,15 @@ screen.Post_Processing = 后期处理
     screen.Tonemapping = 色调映射
     screen.Exposure = 曝光
     screen.DepthOfField = 景深 (DOF) 
-    screen.Purkinje_effect = 柏金赫现象 (Purkinje effect) 设置
+    screen.Purkinje_effect = 柏金赫现象设置
     option.SHARPENING = 对比度自适应锐化强度
     option.BLOOM_STRENGTH = 泛光强度
     screen.TAA_OPTIONS = 抗锯齿设置
         option.SCREENSHOT_MODE = 截图模式
         option.TAA = 时间性抗锯齿 (TAA)
-        option.BLEND_FACTOR = 混合倍数
+        option.BLEND_FACTOR = 混合比重
         option.TAA_UPSCALING = TAA 升采样
-        option.SCALE_FACTOR = 渲染倍率
+        option.SCALE_FACTOR = 放大倍率
 
 
 screen.LabPBR = Lab PBR
@@ -196,11 +206,10 @@ screen.LabPBR = Lab PBR
         option.Emissive_Brightness = 发光亮度
         option.Emissive_Curve = 发光曲线
         option.EMISSIVE_TYPE = 发光模式
-            option.EMISSIVE_TYPE.comment = 硬编码意味着由光影定义什么方块应该发光. LabRBR资源包次表面散射意味着由labPBR资源包决定什么方块应该发光.
             value.EMISSIVE_TYPE.0 = 不发光
             value.EMISSIVE_TYPE.1 = 仅硬编码
-            value.EMISSIVE_TYPE.2 = 硬编码 + LabPBR 发光
-            value.EMISSIVE_TYPE.3 = 仅 LabPBR 发光
+            value.EMISSIVE_TYPE.2 = 硬编码 + LabPBR 自发光
+            value.EMISSIVE_TYPE.3 = 仅 LabPBR 自发光
 
 
 screen.POM = 视差遮蔽映射 (POM)
@@ -226,525 +235,178 @@ option.DOF_QUALITY=景深 (DOF)
     value.DOF_QUALITY.3=高质量
     value.DOF_QUALITY.4=极高质量
     option.DOF_ANAMORPHIC_RATIO=景深变形比
+    value.DOF_JITTER_FOCUS.-1=根据亮度滑块
+	value.FOCUS_LASER_COLOR.0=红
+	value.FOCUS_LASER_COLOR.1=绿
+	value.FOCUS_LASER_COLOR.2=蓝
+	value.FOCUS_LASER_COLOR.3=粉
+	value.FOCUS_LASER_COLOR.4=黄
+	value.FOCUS_LASER_COLOR.5=白
 
 
 option.AEROCHROME_MODE=Aerochrome 模式
-option.AEROCHROME_MODE.comment=影响画面. 从谷歌浏览器的功能实现方式得到了灵感.
 option.AEROCHROME_PINKNESS=Aerochrome 模式 红色: 粉色 比例
-option.AEROCHROME_PINKNESS.comment=选项数值越高 = 越接近粉色. 选项数值越低 = 越接近红色.
 option.AEROCHROME_WOOL_ENABLED=Aerochrome 模式作用于羊毛
+
+option.AEROCHROME_MODE.comment=影响画面. 从谷歌浏览器的功能实现方式得到了灵感.
+option.AEROCHROME_PINKNESS.comment=选项数值越高 = 越接近粉色. 选项数值越低 = 越接近红色.
 option.AEROCHROME_WOOL_ENABLED.comment=技术上,与羊毛相关的方块都会受到影响,但会破坏了大量的建筑外观. 启用后可能会导致更多的技术性错误.
 
 
-#Additional Options / 附加选项
-#Direct Light
-        option.SCREENSPACE_CONTACT_SHADOWS.comment=在屏幕空间中从太阳获得投射阴影,以便于在阴影范围外或者在物体接触处投射阴影. 可能在高分辨率情况下有巨大的性能损耗.
-
-            option.Variable_Penumbra_Shadows=可变半阴影 (VPS)
-            option.Variable_Penumbra_Shadows.comment=距离被投射物体时越远的阴影越模糊 (会降低帧数) . 
-            option.VPS_Search_Samples=可变半阴影 (VPS) 的检索采样数
-            option.VPS_Search_Samples.comment=对被投射物体时的检索采样次数.
-            option.Min_Shadow_Filter_Radius=最小阴影过滤半径
-            option.Min_Shadow_Filter_Radius.comment=如果没有启用VPS,此选项数值将用作阴影过滤器的大小.
-            option.Max_Shadow_Filter_Radius=最大阴影过滤半径
-            option.Max_Shadow_Filter_Radius.comment=如果没有启用VPS,此选项将不会有作用. 当此选项数值设置过大时会出现问题.
-            option.Max_Filter_Depth=最大过滤深度
-            option.Max_Filter_Depth.comment=此选项数值意味着 在被投射物体时与阴影投射位置的距离大小达到此数值时 阴影过滤器的尺寸达到最大.
-            option.SHADOW_FILTER_SAMPLE_COUNT=阴影过滤采样数
-            option.SHADOW_FILTER_SAMPLE_COUNT.comment=用来过滤实际阴影的采样数.
-
-        option.shadowMapResolution.comment=很大可能会在选择 16384 选项的时候崩溃游戏.
-        option.shadowDistance.comment=当 阴影距离渲染倍数 设置为-1.0的时候已经完全不是线性渲染,此时将本选项设置为175可满足40区块的渲染距离.
-
-        option.LabSSS_Curve.comment=我只是非常好奇设置为 2.0 的时候会看起来怎样,所以才做了这个选项.
-        option.Ambient_SSS.comment=来自天空光的次表面散射. 如果启用了屏幕空间环境光遮蔽,本选项只会消耗很小的性能.
-
-        option.sunColorR=太阳 - 红色比重
-        option.sunColorG=太阳 - 绿色比重
-        option.sunColorB=太阳 - 蓝色比重
-        option.moonColorR=月亮 - 红色比重
-        option.moonColorG=月亮 - 绿色比重
-        option.moonColorB=月亮 - 蓝色比重
-        option.colortype=颜色模式
-        option.colortype.comment=1 = RGB 模式滑块. 2 = 黑体模式.
-        value.colortype.1= RGB 模式滑块
-        value.colortype.2= 黑体模式
-        option.Sun_temp=阳光色温
-        suffix.Sun_temp=K
-        option.Moon_temp=月光色温
-        suffix.Moon_temp=K
-
-    suffix.sunPathRotation=°
-    suffix.sun_illuminance=LX
-    suffix.moon_illuminance=LX
 
 
-#World
-        option.Vanilla_like_water=原版水体样式
-        option.Vanilla_like_water.comment=原版水纹理贴图混合光影水体.
-        option.SCREENSPACE_REFLECTIONS.comment=在高分辨率资源包或者高质量渲染下会非常影响性能,特别是在冰面上的反射.
-        option.Dirt_Amount.comment=水中有多少污物.
 
-            option.Dirt_Scatter_R.comment=污物扩散红色能力.
-            option.Dirt_Scatter_G.comment=污物扩散绿色能力.
-            option.Dirt_Scatter_B.comment=污物扩散蓝色能力.
-            option.Dirt_Absorb_R.comment=污物吸收红色能力.
-            option.Dirt_Absorb_G.comment=污物吸收绿色能力.
-            option.Dirt_Absorb_B.comment=污物吸收蓝色能力.
-            option.Water_Absorb_R.comment=水体吸收红色能力.
-            option.Water_Absorb_G.comment=水体吸收绿色能力.
-            option.Water_Absorb_B.comment=水体吸收蓝色能力.
+screen.Misc_Settings.comment = 用于调试的一些随机选项和有趣的功能.
+screen.Sun_and_Moon_Colors.comment = 配置太阳和月亮的颜色.
+option.sunPathRotation.comment = 配置太阳和月亮的角度.
+option.sun_illuminance.comment = 配置太阳的亮度.
+option.moon_illuminance.comment = 配置月亮的亮度.
 
-        option.Water_Top_Layer.comment=当在水下并且当 光照图深度估算 关闭时.  假设水面顶层在这个数值对应的高度 (Y 值) 来进行水下照明的计算. 如果设置不正确,水下会看起来很奇怪.
+screen.Direct_Light.comment = 配置和阳光或阴影相关的设置.
 
-    screen.Waving_Stuff=摇晃相关
-        option.WAVY_STRENGTH=摇晃强度
-        option.WAVY_SPEED=摇晃速度
-        option.WAVY_PLANTS=植物摇晃
+screen.Shadows.comment = 根据喜好配置阳光的阴影.
+    option.SCREENSPACE_CONTACT_SHADOWS.comment = 屏幕空间接触阴影.  §b这啥?§r 这是给远处事物的小部分阴影区域补充, 以及对近处小部分阴影区域添加细节. §a性能消耗水平:§r 低偏中; 在更高分辨率下会消耗更多性能.
+    option.RENDER_ENTITY_SHADOWS.comment =  §b这啥?§r 所有类型实体的阴影, 例如怪物, 箱子, 旗帜, 或者告示牌. §a性能消耗水平:§r 低偏中; 在近处有特别多实体的时候消耗的性能会非常的恐怖.
+    option.shadowMapResolution.comment = 在太阳照射下从世界上的事物投射出来阴影的质量. §a性能消耗水平:§r 中或更高; 阴影需要从太阳的角度进行第二次 3D 世界的渲染, 这就是为什么它会使性能减半.
+    option.shadowDistance.comment = 阴影可渲染的最大距离 (这不是线性距离). 推荐保持默认, 因为接触阴影能解决远处阴影的渲染需求. §a性能消耗水平:§r 中或更高; 如果渲染距离非常大, 阴影的性能开销会很恐怖.
+    screen.Filtering.comment = 配置作用于阴影的过滤效果.
+        option.SHADOW_FILTER_SAMPLE_COUNT.comment = 基础阴影过滤器质量. 过滤器仅用于软化阴影. §a性能消耗水平:§r 低偏中; 拉高本选项数值可以减少阴影边缘的噪点.
+        option.Min_Shadow_Filter_Radius.comment = 基础阴影过滤器的最大软化程度.
+        option.Variable_Penumbra_Shadows.comment = 该效果使阴影离投射它的地方距离越远越柔和. 用于渲染更高质量的阴影和次表面散射. §a性能消耗水平:§r 低或高.
+        option.VPS_Search_Samples.comment = 可变半阴影过滤器质量. §a性能消耗水平:§r 低或高; 拉高本选项数值可以减少次表面散射和其它非常柔和地阴影的噪点.
+        option.Max_Shadow_Filter_Radius.comment = 离投射它的地方最大半径时阴影柔和程度达到最大.
+        option.Max_Filter_Depth = 配置太阳大小. 若太阳更大, 阴影越靠近投射它的地方越柔和.
 
-            option.Specular_Reflections.comment=方块上的反射. 需要一个 PBR 资源包.
-            option.Sun_specular_Strength.comment=调节以获得更大的发光面积.
-            option.Screen_Space_Reflections.comment=屏幕空间反射开关. 如果你想要正常的性能,但又想要方块有光泽和质感,可以关闭这个选项,因为太阳反射依旧保留.
-            option.reflection_quality.comment=调整屏幕空间反射的质量.
-            option.Rough_reflections.comment=开启粗糙度 GGX VNDF . 明显影响性能,同时会产生大量噪点.
-            option.Roughness_Threshold.comment=使用粗糙度曲线调节来让反射在粗糙面上更清楚或者更模糊. 有利于隐藏粗糙面材质上的噪点.
-            option.Sky_reflection.comment=估计有人不喜欢反射天空,以防万一所以有了这个选项.
-            option.Dynamic_SSR_quality.comment=粗糙反射质量会更低. 在很多场景下可以稍微提升性能表现.
+screen.Ambient_light.comment = 配置和遮蔽处的照明相关的设置.
+    option.AO_Strength.comment = 配置由 SSAO, GTAO, RTAO, 和 SSGI 渲染的环境光遮蔽强度. §b这啥?§r 环境光遮蔽是指在角落区域的小块柔和阴影.
+    option.GI_Strength.comment = 配置由 SSGI 渲染的全局照明强度. §b这啥?§r 在该情况下, 全局照明是指光线从一个表面反弹到其他区域的现象.
+    option.HQ_SSGI.comment = 远距屏幕空间全局照明开关. §a性能消耗水平:§r 非常高.
+    option.Hand_Held_lights.comment = 动态手持光源 (光影实现) 开关. §a性能消耗水平:§r 非常低.
+    option.ambientOcclusionLevel.comment = 配置原版 Minecraft 的环境光遮蔽强度. §b这啥?§r 原版下该环境光遮蔽默认开启, 无关光影是否开启.
+    option.ambient_brightness.comment = 配置阴影区域的其他光源照明的亮度.
+    option.MIN_LIGHT_AMOUNT.comment = 配置阴影区域的最小照明水平.
+    option.indirect_effect.comment = 切换不同类型的间接照明效果使阴影区域渲染质量更好. §a性能消耗水平S:§r. 原版 AO: 非常低. SSAO: 低偏中. GTAO: 中偏高. RTAO or SSGI: 高或更高.
 
-            option.LabSSS_Curve.comment=我只是非常好奇设置为 2.0 的时候会看起来怎样,所以才做了这个选项.
-            option.Ambient_SSS.comment=来自天空光的次表面散射. 如果启用了屏幕空间环境光遮蔽,本选项只会消耗很小的性能.
+    screen.Ambient_Colors.comment = 配置阴影区域的照明颜色.
+    screen.Torch_Colors.comment = 配置火把或其它可放置光源的颜色.
 
-            option.Emissive_Curve.comment=是的,我在这里明目张胆借鉴了 Kappa .
+screen.LabPBR.comment = 由遵循 LabPBR 格式的资源包提供部分信息的小部分效果.
+    screen.Reflections.comment = 配置由 LabPBR 格式的资源包所提供信息的反射.
+        option.Specular_Reflections.comment = LabPBR 资源包所有反射的开关. 本选项同时启用太阳反射, 同时允许以下其它设置启用. §a性能消耗水平:§r 低.
+        option.Screen_Space_Reflections.comment = 屏幕空间反射开关. §a性能消耗水平:§r 中.
+        option.Rough_reflections.comment = 开启更精细的粗糙反射以获得更高的反射质量. 开启会导致出现大量可见噪点. §a性能消耗水平:§r 中偏高.
+        option.Sky_reflection.comment = 反射天空和雾气的开关. §a性能消耗水平:§r 低偏中.
+        option.Dynamic_SSR_quality.comment = 会基于它们的可见程度降低屏幕空间反射质量. 以降低质量为代价提升性能. 
+        option.Roughness_Threshold.comment = 粗糙度达到阈值后除了太阳反射外所有反射都不渲染. 可提升性能.
+        option.Sun_specular_Strength.comment = 配置太阳反射亮度.
+        option.reflection_quality.comment = 配置屏幕空间反射质量.
 
-            option.Adaptive_Step_length.comment=仅使用部分视差深度获取采样, 以提升整体的质量. 缺点: 从大角度来观察, 会有不小的错误.
-            option.MAX_ITERATIONS.comment=拉高以提高投射角的质量 (降低性能) .
-            option.POM_DEPTH.comment=单位: 米. 资源包推荐深度数值: . Vanillaccurate: 0.15-0.25. VNR: 0.20. Patrix: 1.0.
-            option.MAX_DIST.comment=拉高以增加计算视差的距离.
-            option.Horrible_slope_normals.comment=真的只适合低分辨率资源包. 在高分辨率资源包上会有很多锯齿和闪烁.
+screen.Subsurface_Scattering.comment = §b这啥?§r 打个比方, 次表面散射类似于你把你的手盖住一个很亮的光源, 手掌呈现的那种从内部透光的感觉. 阳光实际上对植物, 衣服, 皮肤或者其它事物照耀都可以产生相同的效果.
+    option.SSS_TYPE.comment = 配置次表面散射如何在世界应用.  §b硬编码:§r 由光影决定. §bLabSSS:§r 由资源包决定. §a性能消耗水平:§r 非常低.
+    option.MOB_SSS.comment = 怪物次表面散射开关. 也包含玩家. §a性能消耗水平:§r 非常低.
+    option.MISC_BLOCK_SSS.comment = 随机方块的次表面散射开关. 这个一般是指草和沙子. §a性能消耗水平:§r 非常低
+    option.Ambient_SSS.comment = §b这啥?§r 天空光的次表面散射开关, 而不是太阳光. §a性能消耗水平:§r 低偏中; 如果启用了 SSAO , 本选项的性能消耗会很小, 反之如果关闭了会消耗得大.
+    option.ambientsss_brightness.comment = 配置天空光次表面散射亮度.
 
-            option.Puddles.comment=耶！
+screen.Emissives.comment = §b这啥?§r 自发光亮度是指某方块发光量或自发光强度.
+    option.Emissive_Brightness.comment = 配置自发光纹理发光亮度.
+    option.EMISSIVE_TYPE.comment = 配置自发光纹理如何在世界应用.  §b硬编码:§r 由光影决定. §bLabPBR:§r 由资源包决定. §a性能消耗水平:§r 非常低.
+    option.Emissive_Curve.comment = 调整自发光纹理达到最高亮度的容易程度/速度. 1.0 是线性.
 
-
-#Ambient_light
-        option.Emissive_Curve.comment=是的,我在这里明目张胆借鉴了 Kappa .
-
-        option.ambient_colortype.comment= 0 = 色温模式. 1 = RGB 滑块模式
-
-        suffix.ambient_temp=K
-
-    option.MIN_LIGHT_AMOUNT=最小照明强度
-    option.indirect_effect.comment=原版 AO 是 Minecraft 原版使用的环境光遮蔽. SSAO 基础, 常见且快速, 同时包含了原版 AO. GTAO 质量更高, 更少噪点, 速度适中. RTAO 基于路径追踪的环境光遮蔽, 缓慢且多噪点. SSGI 基于路径追踪全局照明且同时考虑环境光遮蔽, 最慢并且很多噪点.
-
-    option.AO_Strength.comment=用于调整阴影区域的强度.
-    option.GI_Strength.comment=用于调整反射全局照明区域的亮度.
-    option.ambientOcclusionLevel.comment=本选项控制原版 Minecraft 环境光遮蔽强度.
-
-
-#Fog
-    option.VL_RENDER_RESOLUTION.comment=降低计算体积雾的分辨率. (0.5 = 默认分辨率的一半).
-
-    option.Cloud_Fog.comment=渲染两次体积云和体积雾使飞跃云层成为可能. 可预见的性能下降.
-
-        option.Biome_specific_environment.comment=使雾气在特定生物群系中时有独特的密度和颜色. (沼泽、丛林、繁茂洞穴、巨型针叶林、黑森林).
-
-    option.BorderFog.comment=哼啊啊啊啊啊啊啊啊.
-
-        option.cave_fog.comment=洞穴雾气...
-
-
-#Post_Processing
-        option.SCREENSHOT_MODE.comment=进入渲染模式,累积帧直到满足需求的最高图像质量.
-
-        option.BLEND_FACTOR.comment=更高的值意味更多的闪烁,但图像更清晰. 更低的值意味较少的闪烁,但图像较模糊.
-
-        option.TAA_UPSCALING.comment=降低渲染分辨率并使用TAA来组合几个低分辨率的图像 (大大提高了性能) . 用它来代替光影渲染精细度选项.如果你想提高FPS(将其设为1). 如果你想提高质量,请禁用这个选项并增大光影渲染精细度倍数.
-        option.SCALE_FACTOR.comment=渲染分辨率倍率. 不推荐低于 0.5 .
-
-        option.TONEMAP=色调映射方法
-        option.TONEMAP.comment=不同的色调映射方法.
-        option.USE_ACES_COLORSPACE_APPROXIMATION=启用 ACES 色彩空间的近似值拟合
-        option.USE_ACES_COLORSPACE_APPROXIMATION.comment=ACES=Academy Color Encoding System,是一套颜色编码系统. 决定色调映射是否使用另一个色彩空间.
-        option.SATURATION=饱和度
-        option.SATURATION.comment=负值使颜色不饱和. 正值使颜色饱和. 0值意味着没有变化.
-        option.CROSSTALK=去饱和度
-        option.CROSSTALK.comment=使明亮的颜色不饱和,在较暗的区域保持饱和度(如果是负值,则反转). 有助于去除大多数荧光色.
-        option.FinalR=最终图像 - 红色偏移程度
-        option.FinalG=最终图像 - 绿色偏移程度
-        option.FinalB=最终图像 - 蓝色偏移程度
-
-        option.AUTO_EXPOSURE=自动曝光
-        option.AUTO_EXPOSURE.comment=强烈建议启用这个选项,除非需要截图.
-        option.EXPOSURE_MULTIPLIER=曝光强度
-        option.Exposure_Speed=曝光速度
-        option.Manual_exposure_value=手动曝光值
-
-        option.AUTOFOCUS=自动对焦
-        option.AUTOFOCUS.comment=此选项为关时,亮度滑块可以调节手动对焦距离.
-        option.focal=焦距
-        option.focal.comment=单位: 厘米.
-        option.aperture=光圈
-        option.aperture.comment=单位: 厘米.
-        option.MANUAL_FOCUS=手动对焦距离
-        option.MANUAL_FOCUS.comment=当 自动对焦 选项关闭时,通过调节此选项确定对焦距离(单位是米).
-        option.DoF_Adaptation_Speed=景深虚化适应速度
-        option.FAR_BLUR_ONLY=仅虚化远处
-        option.FAR_BLUR_ONLY.comment=移除那些比对焦点更靠近镜头物体的景深效果.
-
-    screen.Purkinje_effect.comment=是人类眼睛对高度照明灵敏，而在低照明水平时，往光谱高频蓝端迁移的现象 (来源于百度百科).
-        option.Purkinje_strength=柏金赫现象强度
-        option.Purkinje_strength.comment=模拟眼睛在低光强度下无法看到颜色的情况. 0 值意味着在低曝光情况下没有柏金赫现象.
-        option.Purkinje_R=柏金赫 - 红色
-        option.Purkinje_G=柏金赫 - 绿色
-        option.Purkinje_B=柏金赫 - 蓝色
-        option.Purkinje_Multiplier=柏金赫现象倍率
-        option.Purkinje_Multiplier.comment=决定柏金赫现象影响亮度的程度.
-
-    screen.Editing=后期编辑
-        option.Compositing_Sky=天空组成
-        option.Compositing_Sky.comment=调节天空颜色,以便在一些图像编辑软件中更容易合成天空. 实测会使部分云层以及太阳消失,且对性能负担较大.
-        option.CompSky_R=天空组成 - 红色
-        option.CompSky_G=天空组成 - 绿色
-        option.CompSky_B=天空组成 - 蓝色
-
-
-#Clouds
-    option.VOLUMETRIC_CLOUDS.comment=如果不喜欢默认设置时云的噪点,可以调高云的计算采样值. 如果这对性能影响过大,可以降低云质量.
-    option.CLOUDS_SHADOWS.comment=主世界云层投射的阴影.
-    option.Daily_Weather.comment=不同的日子有不同的天空和不同的雾气效果.
-    option.Cloud_Speed.comment=云层移动的速度.
-    option.Rain_coverage.comment=雨天时云层的覆盖率.
-
-    option.Cumulus.comment=一层远处的蓬松云彩.
-    option.Cumulus_height.comment=云层底部Y轴高度.
-    option.Altostratus.comment=一层在遥远天边的层云.
-
-#Misc Settings
-    screen.the_orb=末地球形天体
-        option.THE_ORB=球形天体
-        option.THE_ORB.comment=§c实测请保持关闭该选项, 以下配置选项暂不能调节该天体效果.
-        option.ORB_X=天体位置 - X轴坐标
-        option.ORB_Y=天体位置 - Y轴坐标
-        option.ORB_Z=天体位置 - Z轴坐标
-        option.ORB_ColMult=天体颜色倍率
-        option.ORB_R=天体颜色 - 红色
-        option.ORB_G=天体颜色 - 绿色
-        option.ORB_B=天体颜色 - 蓝色
-
-    screen.lightning_color=闪电颜色
-        option.Lightning_R=闪电 - 红色
-        option.Lightning_G=闪电 - 绿色
-        option.Lightning_B=闪电 - 蓝色
-
-    option.WhiteWorld=全白世界
-    option.WhiteWorld.comment=这是用于 Debug 的视图. 易于观察 环境光遮蔽 的效果. 易于观察 模拟全局光照 (绿光) 的效果.
-    option.ambientLight_only=仅启用环境光
-    option.ambientLight_only.comment=这是用于 Debug 的视图. 关闭太阳光. 此选项不会影响性能,阴影依旧会在后台工作.
-    option.Glass_Tint=玻璃色调
-    option.Glass_Tint.comment=背景通过混合玻璃本身的颜色获得强烈的色调.
-    option.display_LUT=显示 LUT
-    option.display_LUT.comment=哼啊啊啊啊啊啊啊啊.
-    option.ambientSSS_view=天空光次表面散射视图
-
-
-#Climate
-    screen.Seasons=季节
-        option.Season_Length.comment=决定季节的长度,以 MC 日为单位. 91 日大致为现实中一个季节的长度. 设置为 1 会使得一年只持续四天.
-        suffix.Season_Length=MC日
-        option.Snowy_Winter.comment=冬天就应该下雪,不是吗？
-
-            option.Summer_R.comment=在这个季节中植被的颜色.
-            option.Summer_G.comment=在这个季节中植被的颜色.
-            option.Summer_B.comment=在这个季节中植被的颜色.
-            option.Summer_Leaf_R.comment=在这个季节中树叶的颜色.
-            option.Summer_Leaf_G.comment=在这个季节中树叶的颜色.
-            option.Summer_Leaf_B.comment=在这个季节中树叶的颜色.
-
-            option.Fall_R.comment=在这个季节中植被的颜色.
-            option.Fall_G.comment=在这个季节中植被的颜色.
-            option.Fall_B.comment=在这个季节中植被的颜色.
-            option.Fall_Leaf_R.comment=在这个季节中树叶的颜色.
-            option.Fall_Leaf_G.comment=在这个季节中树叶的颜色.
-            option.Fall_Leaf_B.comment=在这个季节中树叶的颜色.
-
-            option.Winter_R.comment=在这个季节中植被的颜色.
-            option.Winter_G.comment=在这个季节中植被的颜色.
-            option.Winter_B.comment=在这个季节中植被的颜色.
-            option.Winter_Leaf_R.comment=在这个季节中树叶的颜色.
-            option.Winter_Leaf_G.comment=在这个季节中树叶的颜色.
-            option.Winter_Leaf_B.comment=在这个季节中树叶的颜色.
-
-            option.Spring_R.comment=在这个季节中植被的颜色.
-            option.Spring_G.comment=在这个季节中植被的颜色.
-            option.Spring_B.comment=在这个季节中植被的颜色.
-            option.Spring_Leaf_R.comment=在这个季节中树叶的颜色.
-            option.Spring_Leaf_G.comment=在这个季节中树叶的颜色.
-            option.Spring_Leaf_B.comment=在这个季节中树叶的颜色.
-
-    option.Biome_specific_environment.comment=使雾气在特定生物群系中时有独特的密度和颜色. (沼泽、丛林、繁茂洞穴、巨型针叶林、黑森林).
-    option.Daily_Weather.comment=不同的日子有不同的天空和不同的雾气效果.
-
-option.PhysicsMod_support=Physics (物理) 模组支持
-=======
-screen.Misc_Settings = 杂项
-screen.Sun_and_Moon_Colors = 日月颜色
-option.sunPathRotation = 太阳角度
-option.sun_illuminance = 阳光照度
-option.moon_illuminance = 月光照度
-
-
-screen.Direct_Light = 直接照明
-    screen.Filtering = 阴影过滤设置
-    screen.Shadows = 阴影
-        option.SCREENSPACE_CONTACT_SHADOWS = 屏幕空间接触阴影
-        option.shadowMapResolution = 阴影分辨率
-        option.shadowDistance = 阴影距离
-
-
-screen.Subsurface_Scattering = 次表面散射
-    option.LabSSS_Curve = LabPBR 次表面散射曲线值
-    option.Ambient_SSS = 天空光次表面散射
-    option.ambientsss_brightness = 天空光次表面散射亮度
-    option.SSS_TYPE = 次表面散射模式
-        option.SSS_TYPE.comment = 硬编码意味着由着色器定义什么方块应该具有次表面散射效果. LabRBR 资源包次表面散射意味着由 LabPBR 资源包决定什么方块应该具有次表面散射. RTX 不会有方块具有次表面散射效果, 乐. 我不得不盗取了这样的格式, RRe36 .
-            value.SSS_TYPE.0 = RTX
-            value.SSS_TYPE.1 = 仅硬编码
-            value.SSS_TYPE.2 = 硬编码 + LabRBR 资源包次表面散射
-            value.SSS_TYPE.3 = 仅 LabRBR 资源包次表面散射
-
-
-screen.Ambient_light = 环境光
-    option.AO_Strength = 环境光遮蔽强度
-    option.GI_Strength = 全局照明强度
-    option.HQ_SSGI = 远距 SSGI
-    option.Hand_Held_lights = 手持光源
-    option.ambientOcclusionLevel = 原版 AO 强度
-    option.ambient_brightness = 环境光照明亮度
-    option.MIN_LIGHT_AMOUNT = 最小照明强度
-    option.indirect_effect = 间接照明模式
-        value.indirect_effect.0 = 原版 AO
-            value.indirect_effect.1 = SSAO
-            value.indirect_effect.2 = GTAO
-            value.indirect_effect.3 = RTAO
-            value.indirect_effect.4 = SSGI
-
-    screen.Ambient_Colors = 环境光颜色
-        option.ambient_temp = 环境光色温
-        option.AmbientLight_R = 环境光红色比重
-        option.AmbientLight_G = 环境光绿色比重
-        option.AmbientLight_B = 环境光蓝色比重
-        option.ambient_colortype = 环境光颜色类型
-        value.ambient_colortype.0 = 色温模式
-        value.ambient_colortype.1 = RGB 滑块模式
+screen.POM.comment = 配置由资源包提供信息的视差遮蔽映射的相关设置.
+    option.POM.comment = §b这啥?§r 通过使用资源包中的特殊图像, 在实际没有的区域渲染出 3D 几何图形. 这种效果基本上只向内凹, 所以大角度观察时, 会存在一些伪影. §a性能消耗水平:§r 中偏高.
+    option.MAX_ITERATIONS.comment = 配置视差效果的质量. 如果近距离仅看到了部分层, 则需要提高本项数值, 不然很难看到. §a性能消耗水平:§r 高.
+    option.POM_DEPTH.comment = 视差效果表面凹陷程度. §a性能消耗水平:§r 非常低.
+    option.MAX_DIST.comment = 视差效果以镜头为起点开始渲染的最远距离. §a性能消耗水平:§r 高.
+    option.Adaptive_Step_length.comment = 本选项可在不实际意义上提高质量的情况下提高视觉质量. 如果在非常近距离观察, 或者读取了陡峭的高度图, 会导致产生一些伪影. 
+    option.Horrible_slope_normals.comment = 糟糕的实现, 给视差贴图的两侧提供表面. §a性能消耗水平:§r 低.
     
-    screen.Torch_Colors = 照明颜色
-        option.TORCH_AMOUNT = 照明强度
-        option.TORCH_R = 照明红色比重
-        option.TORCH_G = 照明绿色比重
-        option.TORCH_B = 照明蓝色比重
-    
+screen.Porosity.comment = 配置和湿度, 水坑相关的设置.
+    option.Porosity.comment = §b这啥?§r 孔隙率是对某种材料的多孔性的描述, 也可以说是它容纳水的能力. 例如, 海绵是非常多孔的; 大量吸附水时, 会使它变黑. §a性能消耗水平:§r 低.
+    option.Puddles.comment = 雨天时水坑的开关. §a性能消耗水平:§r 低.
+    option.Puddle_Size.comment = 配置水坑大小.
 
-screen.Fog = 雾气设置
-    option.VL_RENDER_RESOLUTION = 体积雾渲染分辨率
-    option.VL_SAMPLES = 体积雾采样值
-    option.BLOOMY_FOG = 雾气泛化值
-    option.Haze_amount = 大气雾霾密度
-    option.RainFog_amount = 雨雾密度
-    option.Cloud_Fog = 云中雾
-    option.BorderFog = 边界雾
+screen.Fog.comment = 配置和光线行进体积雾, 基于距离的雾气相关的设置.
+    option.VL_RENDER_RESOLUTION.comment = 配置体积雾分辨率. §a性能消耗水平:§r 高.
+    option.VL_SAMPLES.comment = 配置体积雾质量. §a性能消耗水平:§r 高
+    option.BLOOMY_FOG.comment = 配置作用于雾气的泛化强度. §b这啥?§r 本选项的效果使雾气看起来更柔和, 同时有助于隐藏部分噪点. 但可能会导致在细节边缘出现一些明显的闪烁. §a性能消耗水平:§r 非常低.
+    option.Haze_amount.comment = 配置周遭的大气密度. §b这啥?§r 在远处看到的蓝色雾霾.
+    option.RainFog_amount.comment = 配置雨天时的雾气密度.
+    option.Cloud_Fog.comment = 进入云层内或靠近云层周围时, 更细致的雾气的开关. §a性能消耗水平:§r 低偏中.
+    option.BorderFog.comment = 隐藏未加载区块的雾气开关.
 
-    screen.TOD_fog = 全天雾气
-        option.TOD_Fog_mult = 雾气密度倍率
-        option.Morning_Uniform_Fog = 清晨 - 雾气密度
-        option.Morning_Cloudy_Fog = 清晨 - 云雾密度
-        option.Noon_Uniform_Fog = 正午 - 雾气密度
-        option.Noon_Cloudy_Fog = 正午 - 云雾密度
-        option.Evening_Uniform_Fog = 傍晚 - 雾气密度
-        option.Evening_Cloudy_Fog = 傍晚 - 云雾密度
-        option.Night_Uniform_Fog = 夜晚 - 雾气密度
-        option.Night_Cloudy_Fog =夜 晚 - 云雾密度
+    screen.TOD_fog.comment = 配置一天中特定时间出现的雾气的密度.
+        option.TOD_Fog_mult.comment = 配置一天中特定时间出现的总体雾气量. 本选项不影响大气雾霾密度. 
 
-    screen.Biome_Fog = 群系雾
-        option.Biome_specific_environment = 生物群系特定雾气
+    screen.Biome_Fog.comment = 配置仅出现在特定群系的的雾气.
+        option.Biome_specific_environment.comment = 特定群系的特殊雾气效果开关. §a性能消耗水平:§r 低.
 
-    screen.Cave_Fog = 洞穴雾气
-        option.Cave_fog = 洞穴雾气
-        option.CaveFogFallOff = 洞穴雾气淡出距离
-        option.CaveFogColor_R = 洞穴雾气红色比重
-        option.CaveFogColor_G = 洞穴雾气绿色比重
-        option.CaveFogColor_B = 洞穴雾气蓝色比重
+    screen.Cave_Fog.comment = 配置仅出现在黑暗区域的雾气设置, 例如洞穴.
+        option.Cave_Fog.comment = 仅出现在黑暗区域的雾气. 因为光影不可能准确地判断出你是否在一个洞穴里, 所以这种雾气可能会出现在不是洞穴的地方. §a性能消耗水平:§r 低.
+        option.CaveFogFallOff.comment = 配置雾化淡出梯度达到最亮部分的容易程度/速度.
 
+screen.Clouds.comment = 配置和光线步进体积云相关的设置.
+    option.VOLUMETRIC_CLOUDS.comment = 云层开关. §a性能消耗水平:§r 中偏高.
+    option.CLOUDS_QUALITY.comment = 配置体积云分辨率. §a性能消耗水平:§r 高.
+    option.CLOUDS_SHADOWS.comment = 从云层或雾气投射到地面的阴影的开关. §a性能消耗水平:§r 低偏中.
+    option.Daily_Weather.comment = 按周期循环的天气功能开关. 有八种天气预设, 每天光影会循环启用它们. 启用本选项后, 不能改变任何云层覆盖率设置. §a性能消耗水平:§r 低.
+    option.Cloud_Speed.comment = 配置日常时间云层的移动速度.
+    option.Rain_coverage.comment = 配置雨天时云层的覆盖率.
 
-screen.Clouds = 云层设置
-    option.VOLUMETRIC_CLOUDS = 体积云
-    option.CLOUDS_QUALITY = 云层分辨率倍数
-    option.CLOUDS_SHADOWS = 云影
-    option.Daily_Weather = 周期循环的天气
-    option.Cloud_Speed = 云层速度
-    option.Rain_coverage = 雨云覆盖率
+    option.Cumulus.comment = 低层云开关. §a性能消耗水平:§r 中.
+    option.Cumulus_coverage.comment = 配置低层云的天空覆盖率. 本选项在周期循环的天气启用时不生效.
+    option.Cumulus_density.comment = 配置低层云的密度.
+    option.Cumulus_height.comment = 配置低层云的高度. 
 
-    option.Cumulus = 积云
-    option.Cumulus_coverage = 积云覆盖率
-    option.Cumulus_density = 积云密度
-    option.Cumulus_height = 积云高度
+    option.Altostratus.comment = 高层云开关. §a性能消耗水平:§r 低.
+    option.Alto_coverage.comment = 配置高层云的天空覆盖率. 本选项在周期循环的天气启用时不生效.
+    option.Alto_density.comment = 配置高层云的密度.
 
-    option.Altostratus = 高层云
-    option.Alto_coverage = 高层云覆盖率
-    option.Alto_density = 高层云密度
-
-
-screen.Climate = 氛围
-    option.Seasons = 四季颜色
-    option.Season_Length = 季节长度 (以 MC 日为单位)
-    option.Snowy_Winter = 雪冬
-    screen.Summer_colors = 夏天颜色
-        option.Summer_R = 植被 - 红
-        option.Summer_G = 植被 - 绿
-        option.Summer_B = 植被 - 蓝
-        option.Summer_Leaf_R = 树叶 - 红
-        option.Summer_Leaf_G = 树叶 - 绿
-        option.Summer_Leaf_B = 树叶 - 蓝
-
-    screen.Fall_colors = 秋天颜色
-        option.Fall_R = 植被 - 红
-        option.Fall_G = 植被 - 绿
-        option.Fall_B = 植被 - 蓝
-        option.Fall_Leaf_R = 树叶 - 红
-        option.Fall_Leaf_G = 树叶 - 绿
-        option.Fall_Leaf_B = 树叶 - 蓝
-
-    screen.Winter_colors = 冬天颜色
-        option.Winter_R = 植被 - 红
-        option.Winter_G = 植被 - 绿
-        option.Winter_B = 植被 - 蓝
-        option.Winter_Leaf_R = 树叶 - 红
-        option.Winter_Leaf_G = 树叶 - 绿
-        option.Winter_Leaf_B = 树叶 - 蓝
-
-    screen.Spring_colors = 春天颜色
-        option.Spring_R = 植被 - 红
-        option.Spring_G = 植被 - 绿
-        option.Spring_B = 植被 - 蓝
-        option.Spring_Leaf_R = 树叶 - 红
-        option.Spring_Leaf_G = 树叶 - 绿
-        option.Spring_Leaf_B = 树叶 - 蓝
-
-
-screen.World = 世界
-    screen.Water = 水体设置
-        option.WATER_REFLECTIONS = 水面高光反射
-        option.SCREENSPACE_REFLECTIONS = 屏幕空间反射 (SSR)
-        option.SSR_STEPS = SSR 采样值
-        option.WATER_SUN_SPECULAR = 日月反射
-        option.WATER_BACKGROUND_SPECULAR = 天空/雾气反射
-        option.Refraction = 折射 (水体/玻璃)
-        option.Dirt_Amount = 水体浑浊程度
-        option.Water_Top_Layer = 海平面 Y 轴坐标
+screen.World.comment = 配置多种会在主世界发生的效果, 从摇摆植物到水体相关的设置等.
+    screen.Water.comment = 配置和水体相关的设置.
+        option.WATER_REFLECTIONS.comments = 所有半透明方块反射的开关. 本选项允许以下其它设置启用. §a性能消耗水平:§r 低.
+        option.SCREENSPACE_REFLECTIONS.comment = 半透明方块的屏幕空间反射开关. §a性能消耗水平:§r 中.
+        option.SSR_STEPS.comment = 配置半透明方块的屏幕空间反射质量.  §a性能消耗水平:§r 中偏高.
+        option.WATER_SUN_SPECULAR.comment = 半透明方块的日月反射开关. §a性能消耗水平:§r 低.
+        option.WATER_BACKGROUND_SPECULAR.comment = 半透明方块的天空和雾气反射开关. §a性能消耗水平:§r 低偏中.
+        option.Refraction.comment = 半透明折射开关. §b这啥?§r 如果你观察水体, 可以看到光的折射会扭曲了水中的内容. §a性能消耗水平:§r 低.
+        option.Dirt_Amount.comment = 配置水中污物含量. 这可以控制水雾量.
+        option.Water_Top_Layer.comment = 配置海平面在世界中的 Y 坐标.
         
-        screen.Water_fog_color = 水雾设置
-            option.Dirt_Scatter_R = 红色扩散 (污物)
-            option.Dirt_Scatter_G = 绿色扩散 (污物)
-            option.Dirt_Scatter_B = 蓝色扩散 (污物)
-            option.Dirt_Absorb_R = 红色吸收 (污物)
-            option.Dirt_Absorb_G = 绿色吸收 (污物)
-            option.Dirt_Absorb_B = 蓝色吸收 (污物)
-            option.Water_Absorb_R = 红色吸收 (水体)
-            option.Water_Absorb_G = 绿色吸收 (水体)
-            option.Water_Absorb_B = 蓝色吸收 (水体)
+        screen.Water_fog_color.comment = 配置水雾颜色. 
 
+screen.Climate.comment = 配置和气候相关的设置, 例如四季颜色, 周期循环的天气, 以及群系特定雾气.
+    screen.Seasons.comment = 循环往复的四季颜色, 夏秋冬春.
+        option.Seasons.comment = 循环往复的四季颜色, 夏秋冬春. §a性能消耗水平:§r 低.
+        option.Season_Length.comment = 控制单个季节的持续时间, 单位: MC 日.
+        option.Snowy_Winter.comment = 冬季积雪开关. §a性能消耗水平:§r 低.
+        screen.Summer_colors.comment = 配置夏季植被的颜色.
+        screen.Fall_colors.comment = 配置秋季植被的颜色.
+        screen.Winter_colors.comment = 配置冬季植被的颜色.
+        screen.Spring_colors.comment = 配置春季植被的颜色.
 
-screen.Post_Processing = 后期处理
-    screen.Tonemapping = 色调映射
-    screen.Exposure = 曝光
-    screen.DepthOfField = 景深 (DOF) 
-    screen.Purkinje_effect = 柏金赫现象 (Purkinje effect) 设置
-    option.SHARPENING = 对比度自适应锐化强度
-    option.BLOOM_STRENGTH = 泛光强度
-    screen.TAA_OPTIONS = 抗锯齿设置
-        option.SCREENSHOT_MODE = 截图模式
-        option.TAA = 时间性抗锯齿 (TAA)
-        option.BLEND_FACTOR = 混合倍数
-        option.TAA_UPSCALING = TAA 升采样
-        option.SCALE_FACTOR = 渲染倍率
+screen.Waving_Stuff.comment = 配置和摇摆相关的设置.
+    option.WAVY_PLANTS.comment = 植物摇摆开关. §a性能消耗水平:§r 非常低.
+    option.WAVY_STRENGTH.comment = 配置摇摆效果强度.
+    option.WAVY_SPEED.comment = 配置植物摇摆速度.
 
-
-screen.LabPBR = Lab PBR
-    screen.Reflections = 高光反射
-        option.Specular_Reflections = 高光反射
-        option.Screen_Space_Reflections = 屏幕空间反射 (SSR)
-        option.Rough_reflections = 粗糙反射
-        option.Sky_reflection = 天空/雾气反射
-        option.Dynamic_SSR_quality = 动态 SSR 质量
-        option.Roughness_Threshold = 粗糙反射阀值
-        option.Sun_specular_Strength = 太阳反射强度
-        option.reflection_quality = SSR 质量
-
-    screen.Emissives = 发光效果
-        option.Emissive_Brightness = 发光亮度
-        option.Emissive_Curve = 发光曲线
-        option.EMISSIVE_TYPE = 发光模式
-            option.EMISSIVE_TYPE.comment = 硬编码意味着由光影定义什么方块应该发光. LabRBR资源包次表面散射意味着由labPBR资源包决定什么方块应该发光.
-            value.EMISSIVE_TYPE.0 = 不发光
-            value.EMISSIVE_TYPE.1 = 仅硬编码
-            value.EMISSIVE_TYPE.2 = 硬编码 + LabPBR 发光
-            value.EMISSIVE_TYPE.3 = 仅 LabPBR 发光
-
-
-screen.POM = 视差遮蔽映射 (POM)
-    option.POM = 视差 (POM)
-    option.MAX_ITERATIONS = 视差质量
-    option.POM_DEPTH = 视差深度
-    option.MAX_DIST = 视差最大距离
-    option.Adaptive_Step_length = 动态质量
-    option.Horrible_slope_normals = 恐怖的斜坡法线
-
-
-screen.Porosity = 孔隙率/水坑
-    option.Porosity = 孔隙率
-    option.Puddles = 水坑
-    option.Puddle_Size = 水坑大小
-
-
-option.DOF_QUALITY=景深 (DOF)
-    value.DOF_QUALITY.-1=关闭
-    value.DOF_QUALITY.0=六边形景深虚化效果
-    value.DOF_QUALITY.1=低质量
-    value.DOF_QUALITY.2=中质量
-    value.DOF_QUALITY.3=高质量
-    value.DOF_QUALITY.4=极高质量
-    option.DOF_ANAMORPHIC_RATIO=景深变形比
-
-
-option.AEROCHROME_MODE=Aerochrome 模式
-option.AEROCHROME_MODE.comment=影响画面. 从谷歌浏览器的功能实现方式得到了灵感.
-option.AEROCHROME_PINKNESS=Aerochrome 模式 红色: 粉色 比例
-option.AEROCHROME_PINKNESS.comment=选项数值越高 = 越接近粉色. 选项数值越低 = 越接近红色.
-option.AEROCHROME_WOOL_ENABLED=Aerochrome 模式作用于羊毛
-option.AEROCHROME_WOOL_ENABLED.comment=技术上,与羊毛相关的方块都会受到影响,但会破坏了大量的建筑外观. 启用后可能会导致更多的技术性错误.
+screen.Post_Processing.comment = 配置所有后处理效果设置, 从抗锯齿到色调映射等.
+    screen.Tonemapping.comment = 配置和颜色或色调相关的设置.
+    screen.Exposure.comment = 配置和曝光相关的设置.
+    screen.DepthOfField.comment = 配置和景深相关的设置.
+    screen.Purkinje_effect.comment = 配置和柏金赫现象相关的设置. 柏金赫现象: 人类眼睛对高度照明灵敏，而在低照明水平时，往光谱高频蓝端迁移的现象 (来源于百度百科).
+    option.SHARPENING.comment = 配置对比度自适应锐化作用于图像的强度. 本选项可以有效带出因抗锯齿和升分辨率产生的细节损失.
+    option.BLOOM_STRENGTH.comment = 配置作用于图像的泛光强度. §b这啥?§r 泛光是指柔和所有发光事物的效果, 用来描述某物是否明亮.
+    screen.TAA_OPTIONS.comment = 配置和抗锯齿相关的设置.
+        option.SCREENSHOT_MODE.comment = 开启帧数积累以获得少噪点高质量的图像. §b这啥?§r 将已发生的帧叠加到生成的下一帧上, 类似于长曝光图像.
+        option.TAA.comment = 时间性抗锯齿 (TAA) 开关. 这可以去除大部分内容的锯齿状边缘, 软化图像, 并有助于去除许多效果产生的噪点. 但会导致拖影, 因为它使用过去的帧来获取世界额外信息. §a性能消耗水平:§r 低.
+        option.BLEND_FACTOR.comment = 配置历史帧使用比重. 更高的数值意味着依赖更少的历史帧, 所以可能会看起来很闪烁和嘈杂. 较低的数值意味着以来更多的历史帧, 所以可能会看起来很多脏点和拖影.
+        option.TAA_UPSCALING.comment = 时间性升分辨率. 升分辨率时, 可以从低分辨率的图像中保留大多数质量. 因此与常规升分辨率相比, 可以开启一个看起来很高的分辨率的同时也能有更好的性能.
+        option.SCALE_FACTOR.comment = 配置以原有分辨率的多大一部分来开始升分辨率. 不推荐低于0.5, 只把它作为一个选项, 因为它很有趣. :P
 
 
 #Additional Options / 附加选项
 #Direct Light
-        option.SCREENSPACE_CONTACT_SHADOWS.comment=在屏幕空间中从太阳获得投射阴影,以便于在阴影范围外或者在物体接触处投射阴影. 可能在高分辨率情况下有巨大的性能损耗.
-
-            option.Variable_Penumbra_Shadows=可变半阴影 (VPS)
-            option.Variable_Penumbra_Shadows.comment=距离被投射物体时越远的阴影越模糊 (会降低帧数) . 
-            option.VPS_Search_Samples=可变半阴影 (VPS) 的检索采样数
-            option.VPS_Search_Samples.comment=对被投射物体时的检索采样次数.
-            option.Min_Shadow_Filter_Radius=最小阴影过滤半径
-            option.Min_Shadow_Filter_Radius.comment=如果没有启用VPS,此选项数值将用作阴影过滤器的大小.
-            option.Max_Shadow_Filter_Radius=最大阴影过滤半径
-            option.Max_Shadow_Filter_Radius.comment=如果没有启用VPS,此选项将不会有作用. 当此选项数值设置过大时会出现问题.
-            option.Max_Filter_Depth=最大过滤深度
-            option.Max_Filter_Depth.comment=此选项数值意味着 在被投射物体时与阴影投射位置的距离大小达到此数值时 阴影过滤器的尺寸达到最大.
-            option.SHADOW_FILTER_SAMPLE_COUNT=阴影过滤采样数
-            option.SHADOW_FILTER_SAMPLE_COUNT.comment=用来过滤实际阴影的采样数.
-
-        option.shadowMapResolution.comment=很大可能会在选择 16384 选项的时候崩溃游戏.
-        option.shadowDistance.comment=当 阴影距离渲染倍数 设置为-1.0的时候已经完全不是线性渲染,此时将本选项设置为175可满足40区块的渲染距离.
-
-        option.LabSSS_Curve.comment=我只是非常好奇设置为 2.0 的时候会看起来怎样,所以才做了这个选项.
-        option.Ambient_SSS.comment=来自天空光的次表面散射. 如果启用了屏幕空间环境光遮蔽,本选项只会消耗很小的性能.
-
         option.sunColorR=太阳 - 红色比重
         option.sunColorG=太阳 - 绿色比重
         option.sunColorB=太阳 - 蓝色比重
@@ -767,123 +429,51 @@ option.AEROCHROME_WOOL_ENABLED.comment=技术上,与羊毛相关的方块都会�
 
 #World
         option.Vanilla_like_water=原版水体样式
-        option.Vanilla_like_water.comment=原版水纹理贴图混合光影水体.
-        option.SCREENSPACE_REFLECTIONS.comment=在高分辨率资源包或者高质量渲染下会非常影响性能,特别是在冰面上的反射.
-        option.Dirt_Amount.comment=水中有多少污物.
-
-            option.Dirt_Scatter_R.comment=污物扩散红色能力.
-            option.Dirt_Scatter_G.comment=污物扩散绿色能力.
-            option.Dirt_Scatter_B.comment=污物扩散蓝色能力.
-            option.Dirt_Absorb_R.comment=污物吸收红色能力.
-            option.Dirt_Absorb_G.comment=污物吸收绿色能力.
-            option.Dirt_Absorb_B.comment=污物吸收蓝色能力.
-            option.Water_Absorb_R.comment=水体吸收红色能力.
-            option.Water_Absorb_G.comment=水体吸收绿色能力.
-            option.Water_Absorb_B.comment=水体吸收蓝色能力.
-
-        option.Water_Top_Layer.comment=当在水下并且当 光照图深度估算 关闭时.  假设水面顶层在这个数值对应的高度 (Y 值) 来进行水下照明的计算. 如果设置不正确,水下会看起来很奇怪.
-
-    screen.Waving_Stuff=摇晃相关
-        option.WAVY_STRENGTH=摇晃强度
-        option.WAVY_SPEED=摇晃速度
-        option.WAVY_PLANTS=植物摇晃
-
-            option.Specular_Reflections.comment=方块上的反射. 需要一个 PBR 资源包.
-            option.Sun_specular_Strength.comment=调节以获得更大的发光面积.
-            option.Screen_Space_Reflections.comment=屏幕空间反射开关. 如果你想要正常的性能,但又想要方块有光泽和质感,可以关闭这个选项,因为太阳反射依旧保留.
-            option.reflection_quality.comment=调整屏幕空间反射的质量.
-            option.Rough_reflections.comment=开启粗糙度 GGX VNDF . 明显影响性能,同时会产生大量噪点.
-            option.Roughness_Threshold.comment=使用粗糙度曲线调节来让反射在粗糙面上更清楚或者更模糊. 有利于隐藏粗糙面材质上的噪点.
-            option.Sky_reflection.comment=估计有人不喜欢反射天空,以防万一所以有了这个选项.
-            option.Dynamic_SSR_quality.comment=粗糙反射质量会更低. 在很多场景下可以稍微提升性能表现.
-
-            option.LabSSS_Curve.comment=我只是非常好奇设置为 2.0 的时候会看起来怎样,所以才做了这个选项.
-            option.Ambient_SSS.comment=来自天空光的次表面散射. 如果启用了屏幕空间环境光遮蔽,本选项只会消耗很小的性能.
-
-            option.Emissive_Curve.comment=是的,我在这里明目张胆借鉴了 Kappa .
-
-            option.Adaptive_Step_length.comment=仅使用部分视差深度获取采样, 以提升整体的质量. 缺点: 从大角度来观察, 会有不小的错误.
-            option.MAX_ITERATIONS.comment=拉高以提高投射角的质量 (降低性能) .
-            option.POM_DEPTH.comment=单位: 米. 资源包推荐深度数值: . Vanillaccurate: 0.15-0.25. VNR: 0.20. Patrix: 1.0.
-            option.MAX_DIST.comment=拉高以增加计算视差的距离.
-            option.Horrible_slope_normals.comment=真的只适合低分辨率资源包. 在高分辨率资源包上会有很多锯齿和闪烁.
-
-            option.Puddles.comment=耶！
 
 
 #Ambient_light
-        option.Emissive_Curve.comment=是的,我在这里明目张胆借鉴了 Kappa .
-
-        option.ambient_colortype.comment= 0 = 色温模式. 1 = RGB 滑块模式
-
         suffix.ambient_temp=K
-
-    option.MIN_LIGHT_AMOUNT=最小照明强度
-    option.indirect_effect.comment=原版 AO 是 Minecraft 原版使用的环境光遮蔽. SSAO 基础, 常见且快速, 同时包含了原版 AO. GTAO 质量更高, 更少噪点, 速度适中. RTAO 基于路径追踪的环境光遮蔽, 缓慢且多噪点. SSGI 基于路径追踪全局照明且同时考虑环境光遮蔽, 最慢并且很多噪点.
-
-    option.AO_Strength.comment=用于调整阴影区域的强度.
-    option.GI_Strength.comment=用于调整反射全局照明区域的亮度.
-    option.ambientOcclusionLevel.comment=本选项控制原版 Minecraft 环境光遮蔽强度.
 
 
 #Fog
-    option.VL_RENDER_RESOLUTION.comment=降低计算体积雾的分辨率. (0.5 = 默认分辨率的一半).
-
-    option.Cloud_Fog.comment=渲染两次体积云和体积雾使飞跃云层成为可能. 可预见的性能下降.
-
-        option.Biome_specific_environment.comment=使雾气在特定生物群系中时有独特的密度和颜色. (沼泽、丛林、繁茂洞穴、巨型针叶林、黑森林).
-
-    option.BorderFog.comment=哼啊啊啊啊啊啊啊啊.
-
-        option.cave_fog.comment=洞穴雾气...
 
 
 #Post_Processing
-        option.SCREENSHOT_MODE.comment=进入渲染模式,累积帧直到满足需求的最高图像质量.
-
-        option.BLEND_FACTOR.comment=更高的值意味更多的闪烁,但图像更清晰. 更低的值意味较少的闪烁,但图像较模糊.
-
-        option.TAA_UPSCALING.comment=降低渲染分辨率并使用TAA来组合几个低分辨率的图像 (大大提高了性能) . 用它来代替光影渲染精细度选项.如果你想提高FPS(将其设为1). 如果你想提高质量,请禁用这个选项并增大光影渲染精细度倍数.
-        option.SCALE_FACTOR.comment=渲染分辨率倍率. 不推荐低于 0.5 .
-
         option.TONEMAP=色调映射方法
-        option.TONEMAP.comment=不同的色调映射方法.
         option.USE_ACES_COLORSPACE_APPROXIMATION=启用 ACES 色彩空间的近似值拟合
-        option.USE_ACES_COLORSPACE_APPROXIMATION.comment=ACES=Academy Color Encoding System,是一套颜色编码系统. 决定色调映射是否使用另一个色彩空间.
         option.SATURATION=饱和度
-        option.SATURATION.comment=负值使颜色不饱和. 正值使颜色饱和. 0值意味着没有变化.
         option.CROSSTALK=去饱和度
-        option.CROSSTALK.comment=使明亮的颜色不饱和,在较暗的区域保持饱和度(如果是负值,则反转). 有助于去除大多数荧光色.
+        option.CONTRAST=对比度
+
         option.FinalR=最终图像 - 红色偏移程度
         option.FinalG=最终图像 - 绿色偏移程度
         option.FinalB=最终图像 - 蓝色偏移程度
 
         option.AUTO_EXPOSURE=自动曝光
-        option.AUTO_EXPOSURE.comment=强烈建议启用这个选项,除非需要截图.
         option.EXPOSURE_MULTIPLIER=曝光强度
         option.Exposure_Speed=曝光速度
         option.Manual_exposure_value=手动曝光值
 
-        option.AUTOFOCUS=自动对焦
-        option.AUTOFOCUS.comment=此选项为关时,亮度滑块可以调节手动对焦距离.
-        option.focal=焦距
-        option.focal.comment=单位: 厘米.
-        option.aperture=光圈
-        option.aperture.comment=单位: 厘米.
-        option.MANUAL_FOCUS=手动对焦距离
-        option.MANUAL_FOCUS.comment=当 自动对焦 选项关闭时,通过调节此选项确定对焦距离(单位是米).
-        option.DoF_Adaptation_Speed=景深虚化适应速度
-        option.FAR_BLUR_ONLY=仅虚化远处
-        option.FAR_BLUR_ONLY.comment=移除那些比对焦点更靠近镜头物体的景深效果.
+        screen.JITTER_DOF=抖动景深
+            option.DOF_JITTER=抖动景深
+            option.DOF_JITTER_FOCUS=抖动景深对焦距离
+            option.JITTER_STRENGTH=抖动强度
+            option.JITTER_STRENGTH.comment=抱歉
+            option.FOCUS_LASER_COLOR=聚焦颜色
+            option.FOCUS_LASER_COLOR.comment=红, 绿, 蓝, 粉, 黄, 白.
 
-    screen.Purkinje_effect.comment=是人类眼睛对高度照明灵敏，而在低照明水平时，往光谱高频蓝端迁移的现象 (来源于百度百科).
+        option.AUTOFOCUS=自动对焦
+        option.focal=焦距
+        option.aperture=光圈
+        option.MANUAL_FOCUS=手动对焦距离
+        option.DoF_Adaptation_Speed=景深虚化自适应速度
+        option.FAR_BLUR_ONLY=仅虚化远处
+
         option.Purkinje_strength=柏金赫现象强度
-        option.Purkinje_strength.comment=模拟眼睛在低光强度下无法看到颜色的情况. 0 值意味着在低曝光情况下没有柏金赫现象.
         option.Purkinje_R=柏金赫 - 红色
         option.Purkinje_G=柏金赫 - 绿色
         option.Purkinje_B=柏金赫 - 蓝色
         option.Purkinje_Multiplier=柏金赫现象倍率
-        option.Purkinje_Multiplier.comment=决定柏金赫现象影响亮度的程度.
 
     screen.Editing=后期编辑
         option.Compositing_Sky=天空组成
@@ -892,17 +482,13 @@ option.AEROCHROME_WOOL_ENABLED.comment=技术上,与羊毛相关的方块都会�
         option.CompSky_G=天空组成 - 绿色
         option.CompSky_B=天空组成 - 蓝色
 
+        option.CONTRAST=对比度
+        option.LUMINANCE_CURVE=亮度曲线
+        option.UPPER_CURVE=上部曲线
+        option.LOWER_CURVE=下部曲线
 
 #Clouds
-    option.VOLUMETRIC_CLOUDS.comment=如果不喜欢默认设置时云的噪点,可以调高云的计算采样值. 如果这对性能影响过大,可以降低云质量.
-    option.CLOUDS_SHADOWS.comment=主世界云层投射的阴影.
-    option.Daily_Weather.comment=不同的日子有不同的天空和不同的雾气效果.
-    option.Cloud_Speed.comment=云层移动的速度.
-    option.Rain_coverage.comment=雨天时云层的覆盖率.
 
-    option.Cumulus.comment=一层远处的蓬松云彩.
-    option.Cumulus_height.comment=云层底部Y轴高度.
-    option.Altostratus.comment=一层在遥远天边的层云.
 
 #Misc Settings
     screen.the_orb=末地球形天体
@@ -922,53 +508,18 @@ option.AEROCHROME_WOOL_ENABLED.comment=技术上,与羊毛相关的方块都会�
         option.Lightning_B=闪电 - 蓝色
 
     option.WhiteWorld=全白世界
-    option.WhiteWorld.comment=这是用于 Debug 的视图. 易于观察 环境光遮蔽 的效果. 易于观察 模拟全局光照 (绿光) 的效果.
+    option.WhiteWorld.comment=用于调试的视图. 易于观察环境光遮蔽的效果. 易于观察模拟全局光照 (绿光) 的效果.
     option.ambientLight_only=仅启用环境光
-    option.ambientLight_only.comment=这是用于 Debug 的视图. 关闭太阳光. 此选项不会影响性能,阴影依旧会在后台工作.
+    option.ambientLight_only.comment=用于调试的视图. 关闭太阳光. 此选项不会影响性能,阴影依旧会在后台工作.
     option.Glass_Tint=玻璃色调
     option.Glass_Tint.comment=背景通过混合玻璃本身的颜色获得强烈的色调.
     option.display_LUT=显示 LUT
-    option.display_LUT.comment=哼啊啊啊啊啊啊啊啊.
     option.ambientSSS_view=天空光次表面散射视图
 
 
 #Climate
     screen.Seasons=季节
-        option.Season_Length.comment=决定季节的长度,以 MC 日为单位. 91 日大致为现实中一个季节的长度. 设置为 1 会使得一年只持续四天.
         suffix.Season_Length=MC日
-        option.Snowy_Winter.comment=冬天就应该下雪,不是吗？
-
-            option.Summer_R.comment=在这个季节中植被的颜色.
-            option.Summer_G.comment=在这个季节中植被的颜色.
-            option.Summer_B.comment=在这个季节中植被的颜色.
-            option.Summer_Leaf_R.comment=在这个季节中树叶的颜色.
-            option.Summer_Leaf_G.comment=在这个季节中树叶的颜色.
-            option.Summer_Leaf_B.comment=在这个季节中树叶的颜色.
-
-            option.Fall_R.comment=在这个季节中植被的颜色.
-            option.Fall_G.comment=在这个季节中植被的颜色.
-            option.Fall_B.comment=在这个季节中植被的颜色.
-            option.Fall_Leaf_R.comment=在这个季节中树叶的颜色.
-            option.Fall_Leaf_G.comment=在这个季节中树叶的颜色.
-            option.Fall_Leaf_B.comment=在这个季节中树叶的颜色.
-
-            option.Winter_R.comment=在这个季节中植被的颜色.
-            option.Winter_G.comment=在这个季节中植被的颜色.
-            option.Winter_B.comment=在这个季节中植被的颜色.
-            option.Winter_Leaf_R.comment=在这个季节中树叶的颜色.
-            option.Winter_Leaf_G.comment=在这个季节中树叶的颜色.
-            option.Winter_Leaf_B.comment=在这个季节中树叶的颜色.
-
-            option.Spring_R.comment=在这个季节中植被的颜色.
-            option.Spring_G.comment=在这个季节中植被的颜色.
-            option.Spring_B.comment=在这个季节中植被的颜色.
-            option.Spring_Leaf_R.comment=在这个季节中树叶的颜色.
-            option.Spring_Leaf_G.comment=在这个季节中树叶的颜色.
-            option.Spring_Leaf_B.comment=在这个季节中树叶的颜色.
-
-    option.Biome_specific_environment.comment=使雾气在特定生物群系中时有独特的密度和颜色. (沼泽、丛林、繁茂洞穴、巨型针叶林、黑森林).
-    option.Daily_Weather.comment=不同的日子有不同的天空和不同的雾气效果.
 
 option.PhysicsMod_support=Physics (物理) 模组支持
->>>>>>> 985bf24e1b84fb433836c9e1d3d81627784d6d70
 option.PhysicsMod_support.comment=在 AMD 显卡上这个选项会破坏整个光影的功能. 如果没发现奇怪的东西那就没问题.
