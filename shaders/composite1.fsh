@@ -610,7 +610,7 @@ vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, floa
 vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 
 	vec3 absorbed = max(luma(albedo) - albedo,0.0);
-	vec3 scatter =   sqrt(exp(-(absorbed * Scattering * 15)) * (1.0 - Scattering));
+	vec3 scatter =   sqrt(exp(-(absorbed * Scattering * 15))) * (1.0 - Scattering);
 
 	scatter *= pow(Density,LabSSS_Curve);
 
@@ -1058,7 +1058,7 @@ void main() {
 					ScreenSpace_SSS(SkySSS, fragpos, blueNoise(gl_FragCoord.xy).rg, FlatNormals, isLeaf);
 				#endif
 
-				vec3 ambientColor = ((AmbientLightColor * 2.0 * ambient_brightness) * 8./150./3.) * 1.25;
+				vec3 ambientColor = ((AmbientLightColor * 2.0 * ambient_brightness) * 8./150./3.) * 1.5;
 				float lightmap =  pow(newLightmap.y,3);
 				float uplimit = clamp(1.0-pow(clamp(ambientCoefs.y + 0.5,0.0,1.0),2),0,1);
 

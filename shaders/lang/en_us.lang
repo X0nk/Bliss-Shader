@@ -280,7 +280,7 @@ screen.Shadows.comment = Configure the shadows from the sun to your liking.
         option.Variable_Penumbra_Shadows.comment = This effect softens the shadows more and more the farther the shadow gets from what casted it. This effect is used to create higher quality shadows and Sub-surface scattering. §aPERFORMANCE COST:§r low to high;
         option.VPS_Search_Samples.comment = The quality of the variable penumbra shadow filter. §aPERFORMANCE COST:§r low to high; Increasing this should reduce some noise in the sub-surface scattering and very soft shadows.
         option.Max_Shadow_Filter_Radius.comment = The maximum softness the shadows can get when far away from what casted it.
-        option.Max_Filter_Depth = Configure the size of the sun. If the sun is larger, shadows get softer closer to what casts them.
+        option.Max_Filter_Depth.comment = Configure the size of the sun. If the sun is larger, shadows get softer closer to what casts them.
 
 screen.Ambient_light.comment = Configure settings related to the lighting in shaded places
     option.AO_Strength.comment = Configure the strength of the ambient occlusion created by SSAO, GTAO, RTAO, and SSGI. §bWhat is this?§r ambient occlusion is the small soft shadows in corners and such.

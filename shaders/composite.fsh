@@ -170,12 +170,14 @@ void main() {
 	vec2 lightmap = dataUnpacked1.yz;
 
 
-	bool translucent = abs(dataUnpacked1.w-0.5) <0.01;
-	bool translucent2 = abs(dataUnpacked1.w-0.6) <0.01;	// Weak translucency
-	bool translucent3 = abs(dataUnpacked1.w-0.55) <0.01;	// Weak translucency
-	bool translucent4 = abs(dataUnpacked1.w-0.65) <0.01;	// Weak translucency
-	bool entities = abs(dataUnpacked1.w-0.45) <0.01;	// Weak translucency
-	bool hand = abs(dataUnpacked1.w-0.75) <0.01;
+	// bool lightningBolt = abs(dataUnpacked1.w-0.5) <0.01;
+	// bool isLeaf = abs(dataUnpacked1.w-0.55) <0.01;
+	// bool translucent2 = abs(dataUnpacked1.w-0.6) <0.01;	// Weak translucency
+	// bool translucent4 = abs(dataUnpacked1.w-0.65) <0.01;	// Weak translucency
+	bool entities = abs(dataUnpacked1.w-0.45) < 0.01;	
+	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
+	// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
+
 
 	float minshadowfilt = Min_Shadow_Filter_Radius;
 	float maxshadowfilt = Max_Shadow_Filter_Radius;
@@ -221,7 +223,7 @@ void main() {
 				float distortFactor = calcDistort(projectedShadowPosition.xy);
 				projectedShadowPosition.xy *= distortFactor;
 				//do shadows only if on shadow map
-			if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0){
+				if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0){
 					const float threshMul = max(2048.0/shadowMapResolution*shadowDistance/128.0,0.95);
 					float distortThresh = (sqrt(1.0-NdotL*NdotL)/NdotL+0.7)/distortFactor;
 					float diffthresh = distortThresh/6000.0*threshMul;
@@ -229,7 +231,7 @@ void main() {
 
 					float mult = maxshadowfilt;
 					float avgBlockerDepth = 0.0;
-					vec2 scales = vec2(0.0,Max_Filter_Depth);
+					vec2 scales = vec2(0.0, 120.0 - Max_Filter_Depth);
 					float blockerCount = 0.0;
 					float rdMul = distortFactor*(1.0+mult)*d0*k/shadowMapResolution;
 					float diffthreshM = diffthresh*mult*d0*k/20.;
@@ -265,6 +267,5 @@ void main() {
 		#endif
 		}
 
-}
-
+	}
 }
