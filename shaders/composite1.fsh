@@ -15,7 +15,6 @@ flat varying vec4 lightCol;
 
 flat varying vec3 WsunVec;
 flat varying vec2 TAA_Offset;
-flat varying float tempOffsets;
 
 
 uniform float eyeAltitude;
@@ -595,13 +594,11 @@ void rtGI(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, float lightm
 
 vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, float lightPos){
 
-
-
 	float labcurve = pow(Density,LabSSS_Curve);
 	float density = sqrt(30 - labcurve*15);
 
-	vec3 absorbed = max(1.0 - albedo,0.0) * density;
-	vec3 scatter = exp(-sqrt(Scattering * absorbed)) * exp(Scattering * -density);
+	vec3 absorbed = max(1.0 - albedo,0.0);
+	vec3 scatter = exp(absorbed * -sqrt(Scattering * 5)) * exp(Scattering * -density);
 
 	scatter *= labcurve;
 	scatter *= 0.5 + CustomPhase(lightPos, 1.0,30.0)*20;
@@ -612,9 +609,8 @@ vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, floa
 vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 
 	vec3 absorbed = max(luma(albedo) - albedo,0.0);
+	vec3 scatter =   sqrt(exp(-(absorbed * Scattering * 15)) * (1.0 - Scattering));
 
-	// vec3 scatter = exp(-sqrt(max(Scattering+0.05,0.0) * absorbed * 25)) * exp(Scattering * -5);
-	vec3 scatter =   exp(-sqrt(Scattering * absorbed * 5)) * pow((-Scattering+1.0)*1.25,2.0);
 	scatter *= pow(Density,LabSSS_Curve);
 
 	return scatter;
@@ -687,18 +683,21 @@ void GriAndEminShadowFix(
 	float SkyLightmap,
 	bool Entities
 ){
+
 	float DistanceOffset = clamp(0.1 + length(WorldPos) / (shadowMapResolution*0.20), 0.0,1.0) ;
 	vec3 Bias = FlatNormal * DistanceOffset; // adjust the bias thingy's strength as it gets farther away.
 	
+	vec3 finalBias = Bias;
+
 	// stop lightleaking
-	if(SkyLightmap < 0.1 && !Entities) {
-		WorldPos += mix(Bias, 0.5 * (0.5 - fract(WorldPos + cameraPosition + FlatNormal*0.01 )	), VanillaAO) ;
-	}else{
-		WorldPos += Bias;
-	}
+	vec2 scale = vec2(0.5); scale.y *= 0.5;
+	vec3 zoomShadow =  scale.y - scale.x * fract(WorldPos + cameraPosition + Bias*scale.y);
+	if(SkyLightmap < 0.1 && !Entities) finalBias = mix(Bias, zoomShadow, clamp(VanillaAO*5,0,1));
+
+	WorldPos += finalBias;
 }
 
-void LabEmission(
+void Emission(
 	inout vec3 Lighting,
 	vec3 Albedo,
 	float Emission
@@ -750,10 +749,10 @@ void main() {
 
 	float z0 = texture2D(depthtex0,texcoord).x;
 	float z = texture2D(depthtex1,texcoord).x;
-    float TranslucentDepth = clamp( ld(z0)-ld(z0) 	 ,0.0,1.0);
+    float TranslucentDepth = clamp( ld(z0)-ld(z0),0.0,1.0);
 
 	vec2 tempOffset=TAA_Offset;
-	vec3 fragpos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
+	vec3 fragpos = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z));
 	vec3 fragpos_rtshadow = toScreenSpace(vec3(texcoord/RENDER_SCALE,z));
 	vec3 fragpos_handfix = fragpos;
 
@@ -778,8 +777,8 @@ void main() {
 		scatterCoef *= 0.1;
 	#endif
 
-	float noise = blueNoise();
 
+	float noise = blueNoise();
 
 	float iswaterstuff = texture2D(colortex7,texcoord).a ;
 	bool iswater = iswaterstuff > 0.99;
@@ -816,10 +815,6 @@ void main() {
 	#endif
 
 	float vanilla_AO = normalAndAO.a;
-	normalAndAO.a = clamp(pow(normalAndAO.a*5,4),0,1);
-
-
-
 
 	bool lightningBolt = abs(dataUnpacked1.w-0.5) <0.01;
 	bool isLeaf = abs(dataUnpacked1.w-0.55) <0.01;
@@ -837,7 +832,6 @@ void main() {
 
 
 	vec3 ambientCoefs = normal/dot(abs(normal),vec3(1.));
-
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2) ,0.0,1.0);
 
 	vec3 DirectLightColor = (lightCol.rgb/80.0);
@@ -849,13 +843,21 @@ void main() {
 	vec3 AmbientLightColor = averageSkyCol_Clouds;
 
 
+
+	int shadowmapindicator = 0;
 	float cloudShadow = 1.0;
 
-	if ( z >= 1.) { //sky
-	#ifdef Compositing_Sky
-		gl_FragData[0].rgb = vec3(CompSky_R, CompSky_G, CompSky_B);
-	#else
+	if ( z >= 1.) {//sky
+	
+	//////////////////////////////// 				////////////////////////////////
+	////////////////////////////////	SKY STUFF	////////////////////////////////
+	//////////////////////////////// 				////////////////////////////////
 
+	#ifdef Compositing_Sky
+
+		gl_FragData[0].rgb = vec3(CompSky_R, CompSky_G, CompSky_B);
+
+	#else
 
 		vec3 background = vec3(0.0);
 		vec3 orbitstar = vec3(np3.x,abs(np3.y),np3.z);
@@ -872,101 +874,112 @@ void main() {
 
 		vec3 skyTEX = skyFromTex(np3,colortex4)/150.0 * 5.0;
 		background += skyTEX;
-		// eclipse
-		// color *=max(1.0 - drawSun(dot(lightCol.a * WsunVec, (np3-0.0002)*1.001),0, vec3(1),vec3(0.0)),0.0);
-
 
 		vec4 cloud = texture2D_bicubic(colortex0,texcoord*CLOUDS_QUALITY);
 		if(eyeAltitude < 25000) background = background*cloud.a + cloud.rgb;
 
 		gl_FragData[0].rgb = clamp(fp10Dither(background ,triangularize(noise)),0.0,65000.);
+
 	#endif
+
 	}else{//land
 
-   	////// ----- direct ----- //////
+	//////////////////////////////// 						////////////////////////////////
+	////////////////////////////////	DIRECT LIGHTING		////////////////////////////////
+	//////////////////////////////// 						////////////////////////////////
 
 		vec3 Direct_lighting = vec3(1.0);
 
 		float Shadows = clamp(1.0 - filtered.b,0.0,1.0);
+		float SHADOWBLOCKERDEPTBH = filtered.y;
+
 		float NdotL = dot(slopednormal,WsunVec);
 		NdotL = clamp((-15 + NdotL*255.0) / 240.0  ,0.0,1.0);
 		
-		if (abs(filtered.y-0.1) < 0.0004 && !iswater) Shadows = clamp((lightmap.y-0.85)*25,0,1);
-		float SHADOWBLOCKERDEPTBH = filtered.y;
-		//if (abs(filtered.y-0.1) < 0.0004 && !iswater) SHADOWBLOCKERDEPTBH = 1.0-clamp((lightmap.y-0.85)*25,0,1);
+
+		float shadowNDOTL = NdotL;
+		#ifndef Variable_Penumbra_Shadows
+			shadowNDOTL += LabSSS;
+		#endif
 		
-		vec3 SSS = vec3(0.0);
+		vec3 p3_shadow = mat3(gbufferModelViewInverse) * fragpos_handfix + gbufferModelViewInverse[3].xyz;
 
-		if (NdotL > 0.001) {
-			
-			vec3 p3_shadow = mat3(gbufferModelViewInverse) * fragpos_handfix + gbufferModelViewInverse[3].xyz;
-
-			GriAndEminShadowFix(p3_shadow, viewToWorld(FlatNormals), normalAndAO.a, lightmap.y, entities);
-			
-
-			vec3 projectedShadowPosition = mat3(shadowModelView) * p3_shadow  + shadowModelView[3].xyz;
-			projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
-
-			//apply distortion
-			float distortFactor = calcDistort(projectedShadowPosition.xy);
-			projectedShadowPosition.xy *= distortFactor;
-			// Shadows = 0.0;
-			vec3 shadew = projectedShadowPosition.xyz;
-			//do shadows only if on shadow map
-			if (abs(shadew.x) < 1.0-1.5/shadowMapResolution && abs(shadew.y) < 1.0-1.5/shadowMapResolution && abs(shadew.z) < 6.0){
+		if(!hand) GriAndEminShadowFix(p3_shadow, viewToWorld(FlatNormals), vanilla_AO, lightmap.y, entities);
 		
-				float diffthresh = 0.0;
-				// if(hand && eyeBrightness.y/240. > 0.0) diffthresh = 0.0003;
+		vec3 projectedShadowPosition = mat3(shadowModelView) * p3_shadow  + shadowModelView[3].xyz;
+		projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
-				projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
+		//apply distortion
+		float distortFactor = calcDistort(projectedShadowPosition.xy);
+		projectedShadowPosition.xy *= distortFactor;
+
+		//do shadows only if on shadow map
+		if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0){
+			if (shadowNDOTL > 0.001){
 				Shadows = 0.0;
-				float rdMul = filtered.x*distortFactor*d0*k/shadowMapResolution;
+				projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
 
-				for(int i = 0; i < SHADOW_FILTER_SAMPLE_COUNT; i++){
-					// if(hand) noise = 0.0;
-					vec2 offsetS = tapLocation(i,SHADOW_FILTER_SAMPLE_COUNT,1.618,noise,0.0);
-					float weight = 1.0+(i+noise)*rdMul/SHADOW_FILTER_SAMPLE_COUNT*shadowMapResolution;
-					float isShadow = shadow2D(shadow,vec3(projectedShadowPosition + vec3(rdMul*offsetS,-diffthresh*weight))).x;
-					Shadows += isShadow/SHADOW_FILTER_SAMPLE_COUNT;
-				}
+				#ifdef BASIC_SHADOW_FILTER
+					float rdMul = filtered.x*distortFactor*d0*k/shadowMapResolution;
+
+					for(int i = 0; i < SHADOW_FILTER_SAMPLE_COUNT; i++){
+						vec2 offsetS = tapLocation(i,SHADOW_FILTER_SAMPLE_COUNT,1.618,noise,0.0);
+
+						float isShadow = shadow2D(shadow,projectedShadowPosition + vec3(rdMul*offsetS, 0.0)	).x;
+						Shadows += isShadow/SHADOW_FILTER_SAMPLE_COUNT;
+					}
+				#else
+					Shadows = shadow2D(shadow, projectedShadowPosition).x;
+				#endif
 			}
+			shadowmapindicator = 1;
 		}
 
-			#ifdef Variable_Penumbra_Shadows
+		bool outsideShadowMap = shadowmapindicator < 1;
+
+		if(outsideShadowMap && !iswater) Shadows = clamp((lightmap.y-0.8) * 5,0,1);
 			
-				float sunSSS_density = LabSSS;
-				
-				#ifndef RENDER_ENTITY_SHADOWS
-					if(entities) sunSSS_density = 0.0;
-				#endif
 
+	////////////////////////////////	SUN SSS		////////////////////////////////
+		vec3 SSS = vec3(0.0);
 
-				SSS = SubsurfaceScattering_sun(albedo, SHADOWBLOCKERDEPTBH, sunSSS_density, clamp(dot(np3, WsunVec),0.0,1.0)) ;
-				SSS *=	DirectLightColor;
-				if (isEyeInWater == 0) SSS *= lightleakfix; // light leak fix
-			#endif
-
-			if (!hand){
-
-				if (abs(filtered.y-0.1) < 0.0004 && LabSSS < 0.0 ) SSS = vec3(0.0);
-
-				#ifdef SCREENSPACE_CONTACT_SHADOWS
-
-					vec3 vec = lightCol.a*sunVec;
-					float screenShadow = rayTraceShadow(vec, fragpos_rtshadow, interleaved_gradientNoise());
-					screenShadow *= screenShadow ;
-
-					#ifdef Variable_Penumbra_Shadows
-						Shadows = min(screenShadow, Shadows + luma(SSS));
-						if (abs(filtered.y-0.1) < 0.0004 ) SSS *= vec3(Shadows);
-					#endif
-
-				#endif
+		#ifndef Variable_Penumbra_Shadows
+			if(LabSSS > 0 ) {
+				SHADOWBLOCKERDEPTBH = pow(1.0 - Shadows,2);
 			}
+		#endif
 
-			#ifdef Variable_Penumbra_Shadows
-				SSS *= 1.0-NdotL*Shadows;
+		#if SSS_TYPE != 0
+
+			if (outsideShadowMap) SHADOWBLOCKERDEPTBH = 0.0;
+
+			float sunSSS_density = LabSSS;
+			
+			#ifndef RENDER_ENTITY_SHADOWS
+				if(entities) sunSSS_density = 0.0;
 			#endif
+
+
+			SSS = SubsurfaceScattering_sun(albedo, SHADOWBLOCKERDEPTBH, sunSSS_density, clamp(dot(np3, WsunVec),0.0,1.0)) ;
+			SSS *=	DirectLightColor;
+
+			if (isEyeInWater == 0) SSS *= lightleakfix; // light leak fix
+		#endif
+
+		if (!hand){
+			#ifdef SCREENSPACE_CONTACT_SHADOWS
+				float screenShadow = rayTraceShadow(lightCol.a*sunVec, fragpos_rtshadow, interleaved_gradientNoise());
+				screenShadow *= screenShadow;
+
+				Shadows = min(screenShadow, Shadows);
+
+				if (outsideShadowMap) SSS *= Shadows;
+			#endif
+		}
+
+		#if SSS_TYPE != 0
+			SSS *= 1.0-clamp(NdotL*Shadows,0,1);
+		#endif
 
 		#ifdef VOLUMETRIC_CLOUDS
 		#ifdef CLOUDS_SHADOWS
@@ -976,14 +989,14 @@ void main() {
 		#endif
 		#endif
 			 
-   	////// ----- indirect ----- //////
+	//////////////////////////////// 						////////////////////////////////
+	////////////////////////////////	INDIRECT LIGHTING	////////////////////////////////
+	//////////////////////////////// 						////////////////////////////////
 
 		vec3 Indirect_lighting = vec3(1.0);
 
-		// float cloudOcclusion = GetCloudShadow_occluson(p3 + cameraPosition);
-		// AmbientLightColor *= cloudOcclusion*0.5+.5;
-
-		float skylight = clamp(abs(ambientCoefs.y + 1.0),0.35,2.0);
+		// float skylight = clamp(abs(ambientCoefs.y + 1.0),0.35,2.0);
+		float skylight = clamp(ambientCoefs.y + 0.5,0.25,2.0);
 
 		#if indirect_effect == 2 || indirect_effect == 3 || indirect_effect == 4
 			if (!hand) skylight = 1.0;
@@ -991,39 +1004,31 @@ void main() {
 
 		// do this to make underwater shading easier.
 		vec2 newLightmap = lightmap.xy;
-		
 		if((isEyeInWater == 0 && iswater) || (isEyeInWater == 1 && !iswater)) newLightmap.y = clamp(newLightmap.y,0,1);
-
-		
 
 		#ifndef ambientSSS_view
 			Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), newLightmap.xy, skylight);
 		#endif
-
 
 		vec3 AO = vec3(1.0);
 		vec3 debug = vec3(0.0);
 
 		// vanilla AO
 		#if indirect_effect == 0
-			// AO = vec3(mix(1.0 - exp2(-5 * pow(1-vanilla_AO,3)), 1.0, pow(newLightmap.x,4))) ;
 			AO = vec3( exp( (vanilla_AO*vanilla_AO) * -5) ) ;
 		#endif
 
 		// SSAO + vanilla AO
 		#if indirect_effect == 1
-			// AO *= mix(1.0 - exp2(-5 * pow(1-vanilla_AO,3)),1.0, pow(newLightmap.x,4));
-			
 			AO = vec3( exp( (vanilla_AO*vanilla_AO) * -3) )  ;
 			if (!hand) ssAO(AO, SkySSS, fragpos, 1.0, blueNoise(gl_FragCoord.xy).rg,   FlatNormals , texcoord, ambientCoefs, newLightmap.xy, isLeaf);
-		
 		#endif
 
 		// GTAO
 		#if indirect_effect == 2
 			int seed = (frameCounter%40000);
 			vec2 r2 = fract(R2_samples(seed) + blueNoise(gl_FragCoord.xy).rg);
-			if (!hand) AO = ambient_occlusion(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z), fragpos, worldToView(slopednormal), r2, debug) * vec3(1.0);
+			if (!hand) AO = ambient_occlusion(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z), fragpos, worldToView(slopednormal), r2, debug) * vec3(1.0);
 		#endif
 
 		// RTAO
@@ -1040,36 +1045,47 @@ void main() {
 			AO = mix(AO,vec3(1.0),  min(NdotL*Shadows,1.0));
 		#endif
 		
-		Indirect_lighting *= AO;
-	
-
-		vec3 SSS_forSky = vec3(0.0);
+	////////////////////////////////	SKY SSS		////////////////////////////////
 
 		#ifdef Ambient_SSS
 			if (!hand){
+				vec3 SSS_forSky = vec3(0.0);
+
 				#if indirect_effect != 1
 					ScreenSpace_SSS(SkySSS, fragpos, blueNoise(gl_FragCoord.xy).rg, FlatNormals, isLeaf);
 				#endif
+
+				vec3 ambientColor = ((AmbientLightColor * 2.0 * ambient_brightness) * 8./150./3.) * 1.25;
+				float lightmap =  pow(newLightmap.y,3);
+				float uplimit = clamp(1.0-pow(clamp(ambientCoefs.y + 0.5,0.0,1.0),2),0,1);
+
 				SSS_forSky = SubsurfaceScattering_sky(albedo, SkySSS, LabSSS);
-				SSS_forSky *= (AmbientLightColor* 2.0 * ambient_brightness) * 8./150.;
-				SSS_forSky *= pow(newLightmap.y,3);
-				// SSS_forSky *= pow(1.0-clamp(abs(ambientCoefs.y+0.5),0.0,1.0),0.1);
-				
-				SSS += SSS_forSky * pow(1.0-clamp(abs(ambientCoefs.y+0.5),0.0,1.0),0.1); // Indirect_lighting += SubsurfaceScattering_sky(albedo, SkySSS, LabSSS) * ((AmbientLightColor* 2.0 * ambient_brightness)* 8./150.) * pow(newLightmap.y,3);
+				SSS_forSky *= ambientColor;
+				SSS_forSky *= lightmap;
+				SSS_forSky *= uplimit;
+
+				// Combine with the other SSS
+				SSS += SSS_forSky;
+
+				SSS_forSky = vec3((1.0 - SkySSS) * LabSSS);
+				SSS_forSky *= ambientColor;
+				SSS_forSky *= lightmap;
+
+				////light up dark parts so its more visible
+				Indirect_lighting = max(Indirect_lighting, SSS_forSky);
 			}
 		#endif
 
-		// Indirect_lighting = max(Indirect_lighting, SSS_forSky);
-	
+		Indirect_lighting *= AO;
 
-
-
-   	////// ----- Under Water Shading ----- //////
+	//////////////////////////////// 							////////////////////////////////
+	////////////////////////////////	UNDER WATER SHADING		////////////////////////////////
+	//////////////////////////////// 							////////////////////////////////
 
 		vec3 waterabsorb_speculars = vec3(1);
  		if ((isEyeInWater == 0 && iswater) || (isEyeInWater == 1 && !iswater)){
 
-			vec3 fragpos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z0));
+			vec3 fragpos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0));
 			float Vdiff = distance(fragpos,fragpos0);
 			float VdotU = np3.y;
 			float estimatedDepth = Vdiff * abs(VdotU);	//assuming water plane
@@ -1101,8 +1117,9 @@ void main() {
 		}
 
 
-
-   	////// ----- Finalize ----- //////
+	//////////////////////////////// 				////////////////////////////////
+	////////////////////////////////	FINALIZE	////////////////////////////////
+	//////////////////////////////// 				////////////////////////////////
 
 		#ifdef Seasons
 		#ifdef Snowy_Winter
@@ -1131,8 +1148,7 @@ void main() {
 
 
 		Direct_lighting = DoDirectLighting(DirectLightColor, Shadows, NdotL, 0.0);
-		
-		//combine all light sources 
+
 		vec3 FINAL_COLOR = Indirect_lighting + Direct_lighting + SSS;
 
 		#ifndef ambientSSS_view
@@ -1143,29 +1159,29 @@ void main() {
 			MaterialReflections(FINAL_COLOR, SpecularTex.r, SpecularTex.ggg, albedo, WsunVec, (Shadows*NdotL)*DirectLightColor, lightmap.y, slopednormal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise()), hand, entities);
 		#endif
 
-		LabEmission(FINAL_COLOR, albedo, SpecularTex.a);
+		Emission(FINAL_COLOR, albedo, SpecularTex.a);
 
-		
 		if(lightningBolt) FINAL_COLOR.rgb += vec3(Lightning_R,Lightning_G,Lightning_B) * 255.0;
 
-
-
-		gl_FragData[0].rgb =  FINAL_COLOR  ;
-		// if(LabSSS > 0.0) gl_FragData[0].rgb =  vec3(0,25,0);
+		gl_FragData[0].rgb =  FINAL_COLOR;
 
 	}
-   	////// ----- Under Water Fog ----- //////
+
+	//////////////////////////////// 					////////////////////////////////
+	////////////////////////////////	UNDERWATER FOG	////////////////////////////////
+	//////////////////////////////// 					////////////////////////////////
+
 	if (iswater){	
-		vec3 fragpos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z0));
+		vec3 fragpos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0));
 		float Vdiff = distance(fragpos,fragpos0);
 		float VdotU = np3.y;
 		float estimatedDepth = Vdiff * abs(VdotU) ;	//assuming water plane
 		float estimatedSunDepth = estimatedDepth/abs(WsunVec.y); //assuming water plane
 	
-		float custom_lightmap_T = pow(texture2D(colortex14, texcoord).a,1.5);
+		float custom_lightmap_T = pow(texture2D(colortex14, texcoord).a,3.0);
 	
-		vec3 ambientColVol =  (averageSkyCol_Clouds*8./150./1.5) *  max(custom_lightmap_T,MIN_LIGHT_AMOUNT*0.0015);
-		vec3 lightColVol = (lightCol.rgb / 80.);
+		vec3 ambientColVol =  (averageSkyCol_Clouds*8./150./2.) *  max(custom_lightmap_T,MIN_LIGHT_AMOUNT*0.0015);
+		vec3 lightColVol = DirectLightColor;
 	
 		if (isEyeInWater == 0) waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));		
 	}

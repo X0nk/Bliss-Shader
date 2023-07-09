@@ -505,6 +505,6 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 		gl_FragData[1] = vec4(Albedo,iswater);
 	#endif
 
-	gl_FragData[3].a = lmtexcoord.w;
+	gl_FragData[3].a = max(lmtexcoord.w*blueNoise()*0.05 + lmtexcoord.w,0.0);
 }
 }

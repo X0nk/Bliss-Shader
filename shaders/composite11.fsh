@@ -17,7 +17,6 @@ uniform sampler2D colortex5;
 uniform sampler2D colortex3;
 // uniform sampler2D colortex6;
 uniform sampler2D colortex7;
-// uniform sampler2D colortex10;
 // uniform sampler2D colortex8; // specular
 // uniform sampler2D colortex9; // specular
 uniform sampler2D depthtex0;
@@ -66,10 +65,6 @@ float blueNoise(){
 float ld(float depth) {
     return (2.0 * near) / (far + near - depth * (far - near));		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
 }
-
-// blindness fogs
-uniform float blindness;
-uniform float darknessFactor;
 
 void main() {
   /* DRAWBUFFERS:7 */
@@ -126,14 +121,6 @@ void main() {
 	float rodLum = lum2*400.;
 	float rodCurve = mix(1.0, rodLum/(2.5+rodLum), purkinje);
 	col = mix(clamp(lum,0.0,0.05)*Purkinje_Multiplier*vec3(Purkinje_R, Purkinje_G, Purkinje_B)+1.5e-3, col, rodCurve);
-
-//   #ifdef display_LUT
-//   	vec2 movedTC = texcoord ;
-//     if(movedTC.x < 0.4 ) col.rgb =  texture2D(colortex4,movedTC/2).rgb * 0.001;
-//   #endif
-
-  
-
 
 	#ifndef USE_ACES_COLORSPACE_APPROXIMATION
   		col = LinearTosRGB(TONEMAP(col));

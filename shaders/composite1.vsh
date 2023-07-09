@@ -54,15 +54,7 @@ flat varying float WinterTimeForSnow;
 void main() {
 	gl_Position = ftransform();
 	
-	#ifdef TAA_UPSCALING
-		gl_Position.xy = (gl_Position.xy*0.5+0.5)*RENDER_SCALE*2.0-1.0;
-	#endif
 
-	tempOffsets = HaltonSeq2(frameCounter%10000);
-	TAA_Offset = offsets[frameCounter%8];
-	#ifndef TAA
-	TAA_Offset = vec2(0.0);
-	#endif
 
 	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 	// averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
@@ -86,5 +78,19 @@ void main() {
 			vec3 color2 = color1;
 			YearCycleColor(color1, color2, WinterTimeForSnow);
 		#endif
+	#endif
+
+
+
+
+
+	TAA_Offset = offsets[frameCounter%8];
+	
+	#ifndef TAA
+		TAA_Offset = vec2(0.0);
+	#endif
+
+	#ifdef TAA_UPSCALING
+		gl_Position.xy = (gl_Position.xy*0.5+0.5)*RENDER_SCALE*2.0-1.0;
 	#endif
 }

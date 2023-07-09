@@ -541,7 +541,16 @@ void main() {
 			if(SpecularTex.g < 229.5/255.0) Albedo.rgb = mix(Albedo.rgb, vec3(0), Puddle_shape*porosity);
 		#endif
 
-		vec4 data1 = clamp( encode(viewToWorld(normal), (blueNoise()*vec2(torchlightmap,lmtexcoord.w) /	(30.0 * (1+ (1-RENDER_SCALE.x)))		) + vec2(torchlightmap,lmtexcoord.w)),	0.0,	1.0);
+		// apply noise to lightmaps to reduce banding.
+		vec2 PackLightmaps = vec2(torchlightmap,lmtexcoord.w);
+		
+		#ifndef ENTITIES
+		#ifndef HAND
+			PackLightmaps = max(PackLightmaps*blueNoise()*0.05 + PackLightmaps,0.0);
+		#endif
+		#endif
+
+		vec4 data1 = clamp( encode(viewToWorld(normal),PackLightmaps), 0.0, 1.0);
 
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
 
@@ -556,6 +565,6 @@ void main() {
 		// 	gl_FragData[5].xyz = velocity *0.5+0.5;
 		// #endif
 
-		gl_FragData[3] = vec4(FlatNormals * 0.5 + 0.5,VanillaAO);	
+		gl_FragData[3] = vec4(FlatNormals * 0.5 + 0.5, VanillaAO);	
 	#endif
 }

@@ -180,26 +180,24 @@ void main() {
 	float minshadowfilt = Min_Shadow_Filter_Radius;
 	float maxshadowfilt = Max_Shadow_Filter_Radius;
 
+	float NdotL = clamp(dot(normal,WsunVec),0.0,1.0);
+
 	float vanillAO = clamp(texture2D(colortex15,texcoord).a,0.0,1.0)  ;
 
 	if(lightmap.y < 0.1 && !entities){
 		// minshadowfilt *= vanillAO;
-		maxshadowfilt = mix(minshadowfilt ,maxshadowfilt, 	vanillAO);
+		maxshadowfilt = mix(minshadowfilt, maxshadowfilt, 	vanillAO);
 	}
 
 
 	float SpecularTex = texture2D(colortex8,texcoord).z;
 	float LabSSS = clamp((-65.0 + SpecularTex * 255.0) / 190.0 ,0.0,1.0);
 
-
 	#ifndef Variable_Penumbra_Shadows
-		if (translucent  && !hand)  minshadowfilt += 25;
+		if (LabSSS > 0.0 && !hand && NdotL < 0.001)  minshadowfilt += 50;
 	#endif
 
-
 	gl_FragData[0] = vec4(minshadowfilt, 0.1, 0.0, 0.0);
-
-
 
 	if (z < 1.0){
 
@@ -207,7 +205,6 @@ void main() {
 
 		if (!hand){
 
-			float NdotL = clamp(dot(normal,WsunVec),0.0,1.0);
 			
 			vec3 fragpos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
 

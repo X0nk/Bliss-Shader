@@ -86,6 +86,7 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-7.,-1.)/8.,
 							vec2(3,7.)/8.,
 							vec2(7.,-7.)/8.);
+							
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 vec4 toClipSpace3(vec3 viewSpacePosition) {

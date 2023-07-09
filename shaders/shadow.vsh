@@ -26,15 +26,19 @@ uniform float frameTimeCounter;
 uniform vec3 sunVec;
 uniform float aspectRatio;
 uniform float sunElevation;
+uniform vec3 sunPosition;
 uniform float lightSign;
 uniform float cosFov;
 uniform vec3 shadowViewDir;
 uniform vec3 shadowCamera;
 uniform vec3 shadowLightVec;
 uniform float shadowMaxProj;
-attribute vec4 mc_Entity;
 attribute vec4 mc_midTexCoord;
 varying vec4 glcolor;
+
+attribute vec4 mc_Entity;
+uniform int blockEntityId;
+uniform int entityId;
 
 const float PI48 = 150.796447372*WAVY_SPEED;
 float pi2wt = PI48*frameTimeCounter;
@@ -91,47 +95,39 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 }
 void main() {
 
-
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
 
-  
-  //Check if the vertice is going to cast shadows
-  // #ifdef SHADOW_FRUSTRUM_CULLING
-  // if (intersectCone(cosFov, shadowCamera, shadowViewDir, position, -shadowLightVec, shadowMaxProj)) {
-  // #endif
-	// #ifdef WAVY_PLANTS
-  // 	bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
-  //   if ((mc_Entity.x == 10001&&istopv) && length(position.xy) < 24.0) {
-  //     vec3 worldpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
-  //     worldpos.xyz += calcMovePlants(worldpos.xyz + cameraPosition)*gl_MultiTexCoord1.y;
-  //     position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz ;
-  //   }
+	#ifdef WAVY_PLANTS
+  	bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
+    if ((mc_Entity.x == 10001&&istopv) && length(position.xy) < 24.0) {
+      vec3 worldpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
+      worldpos.xyz += calcMovePlants(worldpos.xyz + cameraPosition)*gl_MultiTexCoord1.y;
+      position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz ;
+    }
 
-  //   if ((mc_Entity.x == 10003) && length(position.xy) < 24.0) {
-  //     vec3 worldpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
-  //     worldpos.xyz += calcMoveLeaves(worldpos.xyz + cameraPosition, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*gl_MultiTexCoord1.y;
-  //     position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz ;
-  //   }
-  // #endif
+    if ((mc_Entity.x == 10003) && length(position.xy) < 24.0) {
+      vec3 worldpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
+      worldpos.xyz += calcMoveLeaves(worldpos.xyz + cameraPosition, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*gl_MultiTexCoord1.y;
+      position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz ;
+    }
+  #endif
 
 
 
 	// gl_Position = BiasShadowProjection_altered(toClipSpace3(position),mat3(shadowProjection),mat3(shadowModelView), gl_NormalMatrix * gl_Normal);
 	
 	gl_Position = BiasShadowProjection(toClipSpace3(position));
-  
-  gl_Position.z /= 6.0;
 
+  float bias = 6.0;
+
+	vec3 FlatNormals = normalize(gl_NormalMatrix *gl_Normal);
+	vec3 WsunVec = (float(sunElevation > 1e-5)*2-1.)*normalize(mat3(shadowModelViewInverse) * sunPosition);
+  if(entityId == 1100) bias = 6.0 + (1-clamp(dot(WsunVec,FlatNormals),0,1))*0.3;
+
+  gl_Position.z /= bias;
 
 	texcoord.xy = gl_MultiTexCoord0.xy;
 
-
 	if(mc_Entity.x == 8 || mc_Entity.x == 9) gl_Position.w = -1.0;
-
   
-  #ifdef SHADOW_FRUSTRUM_CULLING
-  }
-  else
-  gl_Position.xyzw = vec4(0.0,0.0,1e30,0.0);  //Degenerates the triangle
-  #endif
 }
