@@ -130,15 +130,19 @@ void main() {
 		//apply distortion
 		float distortFactor = calcDistort(projectedShadowPosition.xy);
 		projectedShadowPosition.xy *= distortFactor;
+		int shadowmapindicator = 0;
 		//do shadows only if on shadow map
 		if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution){
 
-			float diffthresh = 0.0002;
-			projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5,0.5,0.5);
+			projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
 
-			Shadows = shadow2D_bicubic(shadow,vec3(projectedShadowPosition + vec3(0.0,0.0,-diffthresh*1.2)));
-
+			Shadows = shadow2D_bicubic(shadow,vec3(projectedShadowPosition + vec3(0.0,0.0,0.0)));
+			
+			shadowmapindicator = 1;
 		}
+		
+		if(shadowmapindicator < 1) Shadows = clamp((lmtexcoord.w-0.8) * 5,0,1);
+
 		#ifdef CLOUDS_SHADOWS
 			Shadows *= GetCloudShadow(p3);
 		#endif

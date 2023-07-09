@@ -43,7 +43,6 @@ uniform sampler2DShadow shadow;
 varying vec4 normalMat;
 uniform int heldBlockLightValue;
 uniform int frameCounter;
-uniform float screenBrightness;
 uniform int isEyeInWater;
 uniform float far;
 uniform float near;
@@ -1047,6 +1046,8 @@ void main() {
 			AO = mix(AO,vec3(1.0),  min(NdotL*Shadows,1.0));
 		#endif
 		
+		Indirect_lighting *= AO;
+		
 	////////////////////////////////	SKY SSS		////////////////////////////////
 
 		#ifdef Ambient_SSS
@@ -1078,7 +1079,6 @@ void main() {
 			}
 		#endif
 
-		Indirect_lighting *= AO;
 
 	//////////////////////////////// 							////////////////////////////////
 	////////////////////////////////	UNDER WATER SHADING		////////////////////////////////
@@ -1213,5 +1213,5 @@ void main() {
 		if( hideGUI < 1.0) gl_FragData[0].rgb += laserColor * pow( clamp( 	 1.0-abs(focusDist-abs(fragpos.z))		,0,1),25) ;
 	#endif
 
-	/* DRAWBUFFERS:3 */
+/* DRAWBUFFERS:3 */
 }
