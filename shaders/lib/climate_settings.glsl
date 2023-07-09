@@ -48,7 +48,7 @@
 	    	int SeasonLength = Season_Length; 
 
 			// loop the year. multiply the season length by the 4 seasons to create a years time.
-	    	float YearLoop = mod(worldDay, SeasonLength * 4); 
+	    	float YearLoop = mod(worldDay + Start_Season * SeasonLength, SeasonLength * 4);
 
 	    	// the time schedule for each season
 	    	float SummerTime = clamp(YearLoop                  ,0, SeasonLength) / SeasonLength;

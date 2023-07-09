@@ -10,6 +10,7 @@ Read the terms of modification and sharing before changing something below pleas
 */
 #include "/lib/settings.glsl"
 #include "/lib/Shadow_Params.glsl"
+#include "/lib/bokeh.glsl"
 
 #define SHADOW_MAP_BIAS 0.5
 const float PI = 3.1415927;
@@ -21,8 +22,12 @@ uniform mat4 shadowModelView;
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferProjection;
+uniform mat4 gbufferProjectionInverse;
+uniform int hideGUI;
 uniform vec3 cameraPosition;
 uniform float frameTimeCounter;
+uniform int frameCounter;
+uniform float screenBrightness;
 uniform vec3 sunVec;
 uniform float aspectRatio;
 uniform float sunElevation;
@@ -97,7 +102,43 @@ void main() {
 
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
 
-	#ifdef WAVY_PLANTS
+	// HHHHHHHHH ITS THE JITTER DOF HERE TO SAY HELLO
+	// It turns out 'position' above is just viewPos lmao
+	// #ifdef DOF_JITTER_SHADOW
+	// 	// CLIP SPACE
+	// 	vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);
+	// 	jitter = rotate(radians(float(frameCounter))) * jitter;
+	// 	jitter.y *= aspectRatio;
+	// 	jitter.x *= DOF_ANAMORPHIC_RATIO;
+
+	// 	vec4 clipPos = gbufferProjection * vec4(position, 1.0);
+
+	// 	// CLIP SPACE -> VIEW SPACE
+	// 	vec3 viewPos = (gbufferProjectionInverse * clipPos).xyz;
+
+	// 	// Focus distance
+	// 	#if DOF_JITTER_FOCUS < 0
+	// 	float focusMul = clipPos.z - mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
+	// 	#else
+	// 	float focusMul = clipPos.z - DOF_JITTER_FOCUS;
+	// 	#endif
+
+	// 	// CLIP SPACE -> SHADOW CLIP SPACE
+	// 	vec3 jitterViewPos = (gbufferProjectionInverse * vec4(jitter, 1.0, 1.0)).xyz;
+	// 	// vec3 jitterFeetPos = (gbufferModelViewInverse * vec4(jitterViewPos, 1.0)).xyz;
+	// 	// vec3 jitterShadowViewPos = (shadowModelView * vec4(jitterFeetPos, 1.0)).xyz;
+	// 	// vec4 jitterShadowClipPos = gl_ProjectionMatrix * vec4(jitterShadowViewPos, 1.0);
+		
+	// 	// vec4 totalOffset = jitterShadowClipPos * JITTER_STRENGTH * focusMul * 1e-2;
+
+	// 	position += jitterViewPos * focusMul * 1e-2;
+	// 	if(focusMul < 10.0) {
+	// 		gl_Position = vec4(-1.0);
+	// 		return;
+	// 	}
+	// #endif
+
+ 	#ifdef WAVY_PLANTS
   	bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
     if ((mc_Entity.x == 10001&&istopv) && length(position.xy) < 24.0) {
       vec3 worldpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
@@ -112,22 +153,20 @@ void main() {
     }
   #endif
 
-
-
 	// gl_Position = BiasShadowProjection_altered(toClipSpace3(position),mat3(shadowProjection),mat3(shadowModelView), gl_NormalMatrix * gl_Normal);
 	
 	gl_Position = BiasShadowProjection(toClipSpace3(position));
 
-  float bias = 6.0;
+	texcoord.xy = gl_MultiTexCoord0.xy;
+	if(mc_Entity.x == 8 || mc_Entity.x == 9) gl_Position.w = -1.0;
 
+
+  /// this is to ease the shadow acne on big fat entities like ghasts.
+  
+  float bias = 6.0;
 	vec3 FlatNormals = normalize(gl_NormalMatrix *gl_Normal);
 	vec3 WsunVec = (float(sunElevation > 1e-5)*2-1.)*normalize(mat3(shadowModelViewInverse) * sunPosition);
   if(entityId == 1100) bias = 6.0 + (1-clamp(dot(WsunVec,FlatNormals),0,1))*0.3;
 
   gl_Position.z /= bias;
-
-	texcoord.xy = gl_MultiTexCoord0.xy;
-
-	if(mc_Entity.x == 8 || mc_Entity.x == 9) gl_Position.w = -1.0;
-  
 }

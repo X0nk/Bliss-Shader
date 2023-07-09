@@ -2,7 +2,7 @@
 //#extension GL_EXT_gpu_shader4 : disable
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
-
+#include "/lib/bokeh.glsl"
 
 /*
 !! DO NOT REMOVE !!
@@ -39,6 +39,13 @@ uniform float sunElevation;
 
 varying vec4 tangent_other;
 
+uniform int frameCounter;
+uniform float far;
+uniform float aspectRatio;
+uniform float viewHeight;
+uniform float viewWidth;
+uniform int hideGUI;
+uniform float screenBrightness;
 
 uniform vec2 texelSize;
 uniform int framemod8;
@@ -151,6 +158,22 @@ void main() {
 	lightCol.rgb = sc;
 
 	WsunVec = lightCol.a*normalize(mat3(gbufferModelViewInverse) *sunPosition);
+
+	#ifdef DOF_JITTER
+		vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);
+		jitter = rotate(radians(float(frameCounter))) * jitter;
+		jitter.y *= aspectRatio;
+		jitter.x *= DOF_ANAMORPHIC_RATIO;
+
+		#if DOF_JITTER_FOCUS < 0
+		float focusMul = gl_Position.z - mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
+		#else
+		float focusMul = gl_Position.z - DOF_JITTER_FOCUS;
+		#endif
+
+		vec2 totalOffset = (jitter * JITTER_STRENGTH) * focusMul * 1e-2;
+		gl_Position.xy += hideGUI >= 1 ? totalOffset : vec2(0);
+	#endif
 	
 	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 	// averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
