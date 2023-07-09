@@ -128,5 +128,5 @@ void main() {
 
 	applyContrast(FINAL_COLOR, CONTRAST); // for fun
 
-  gl_FragColor.rgb = FINAL_COLOR;
+  gl_FragColor.rgb = FINAL_COLOR ;
 }

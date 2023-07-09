@@ -262,7 +262,7 @@ void main() {
 	vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
 	float z = texture2D(depthtex0,tc).x;
 
-	#ifdef DOF_JITTER
+	#if DOF_QUALITY == 5
 		vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);
 		jitter = rotate(radians(float(frameCounter))) * jitter;
 		jitter.y *= aspectRatio;
@@ -322,7 +322,8 @@ void main() {
 		float estEyeDepth = clamp((14.0-eyeBrightnessSmooth.y/255.0*16.0)/14.0,0.,1.0);
 		estEyeDepth *= estEyeDepth*estEyeDepth*34.0;
 
-		vec3 ambientColVol = averageSkyCol_Clouds*8./150./1.5;
+	
+		vec3 ambientColVol = averageSkyCol_Clouds*8./150./2.0;
 		vec3 lightColVol = (lightCol.rgb / 80.);
 		estEyeDepth = max(Water_Top_Layer - cameraPosition.y,0.0);
 

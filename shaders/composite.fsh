@@ -170,36 +170,36 @@ void main() {
 	vec2 lightmap = dataUnpacked1.yz;
 
 
-	bool translucent = abs(dataUnpacked1.w-0.5) <0.01;
-	bool translucent2 = abs(dataUnpacked1.w-0.6) <0.01;	// Weak translucency
-	bool translucent3 = abs(dataUnpacked1.w-0.55) <0.01;	// Weak translucency
-	bool translucent4 = abs(dataUnpacked1.w-0.65) <0.01;	// Weak translucency
-	bool entities = abs(dataUnpacked1.w-0.45) <0.01;	// Weak translucency
-	bool hand = abs(dataUnpacked1.w-0.75) <0.01;
+	// bool lightningBolt = abs(dataUnpacked1.w-0.5) <0.01;
+	// bool isLeaf = abs(dataUnpacked1.w-0.55) <0.01;
+	// bool translucent2 = abs(dataUnpacked1.w-0.6) <0.01;	// Weak translucency
+	// bool translucent4 = abs(dataUnpacked1.w-0.65) <0.01;	// Weak translucency
+	bool entities = abs(dataUnpacked1.w-0.45) < 0.01;	
+	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
+	// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
+
 
 	float minshadowfilt = Min_Shadow_Filter_Radius;
 	float maxshadowfilt = Max_Shadow_Filter_Radius;
+
+	float NdotL = clamp(dot(normal,WsunVec),0.0,1.0);
 
 	float vanillAO = clamp(texture2D(colortex15,texcoord).a,0.0,1.0)  ;
 
 	if(lightmap.y < 0.1 && !entities){
 		// minshadowfilt *= vanillAO;
-		maxshadowfilt = mix(minshadowfilt ,maxshadowfilt, 	vanillAO);
+		maxshadowfilt = mix(minshadowfilt, maxshadowfilt, 	vanillAO);
 	}
 
 
 	float SpecularTex = texture2D(colortex8,texcoord).z;
 	float LabSSS = clamp((-65.0 + SpecularTex * 255.0) / 190.0 ,0.0,1.0);
 
-
 	#ifndef Variable_Penumbra_Shadows
-		if (translucent  && !hand)  minshadowfilt += 25;
+		if (LabSSS > 0.0 && !hand && NdotL < 0.001)  minshadowfilt += 50;
 	#endif
 
-
 	gl_FragData[0] = vec4(minshadowfilt, 0.1, 0.0, 0.0);
-
-
 
 	if (z < 1.0){
 
@@ -207,7 +207,6 @@ void main() {
 
 		if (!hand){
 
-			float NdotL = clamp(dot(normal,WsunVec),0.0,1.0);
 			
 			vec3 fragpos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
 
@@ -224,7 +223,7 @@ void main() {
 				float distortFactor = calcDistort(projectedShadowPosition.xy);
 				projectedShadowPosition.xy *= distortFactor;
 				//do shadows only if on shadow map
-			if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0){
+				if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0){
 					const float threshMul = max(2048.0/shadowMapResolution*shadowDistance/128.0,0.95);
 					float distortThresh = (sqrt(1.0-NdotL*NdotL)/NdotL+0.7)/distortFactor;
 					float diffthresh = distortThresh/6000.0*threshMul;
@@ -232,7 +231,7 @@ void main() {
 
 					float mult = maxshadowfilt;
 					float avgBlockerDepth = 0.0;
-					vec2 scales = vec2(0.0,Max_Filter_Depth);
+					vec2 scales = vec2(0.0, 120.0 - Max_Filter_Depth);
 					float blockerCount = 0.0;
 					float rdMul = distortFactor*(1.0+mult)*d0*k/shadowMapResolution;
 					float diffthreshM = diffthresh*mult*d0*k/20.;
@@ -268,6 +267,5 @@ void main() {
 		#endif
 		}
 
-}
-
+	}
 }

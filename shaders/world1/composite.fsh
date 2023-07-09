@@ -303,7 +303,7 @@ vec4 blueNoise(vec2 coord){
   return texelFetch2D(colortex6, ivec2(coord )%512  , 0);
 }
 
-void LabEmission(
+void Emission(
 	inout vec3 Lighting,
 	vec3 Albedo,
 	float Emission
@@ -459,7 +459,7 @@ void main() {
 
 		if(!hand) gl_FragData[0].rgb *= ssao(fragpos,noise,FlatNormals) * AO;
 
-		LabEmission(gl_FragData[0].rgb, albedo, SpecularTex.a);
+		Emission(gl_FragData[0].rgb, albedo, SpecularTex.a);
 
 		if(lightningBolt) gl_FragData[0].rgb = LightColor * 10 ;
 		

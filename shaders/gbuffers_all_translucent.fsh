@@ -370,6 +370,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 	NdotL =  clamp((-15 + NdotL*255.0) / 240.0  ,0.0,1.0);
 
 	float Shadows = 1.0;
+	int shadowmapindicator = 0;
 	//compute shadows only if not backface
 	if (NdotL > 0.001) {
 		vec3 p3 = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
@@ -381,33 +382,41 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 		projectedShadowPosition.xy *= distortFactor;
 		//do shadows only if on shadow map
 		if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution){
-			const float threshMul = max(2048.0/shadowMapResolution*shadowDistance/128.0,0.95);
-			float distortThresh = (sqrt(1.0-NdotL*NdotL)/NdotL+0.7)/distortFactor;
-			float diffthresh = distortThresh/6000.0*threshMul;
-
-			projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5,0.5,0.5);
-
+			
 			Shadows = 0.0;
-			float noise = blueNoise();
-			float rdMul = 4.0/shadowMapResolution;
+			projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5,0.5,0.5);
+			
+			#ifdef BASIC_SHADOW_FILTER
+				const float threshMul = max(2048.0/shadowMapResolution*shadowDistance/128.0,0.95);
+				float distortThresh = (sqrt(1.0-NdotL*NdotL)/NdotL+0.7)/distortFactor;
+				float diffthresh = distortThresh/6000.0*threshMul;
 
-			for(int i = 0; i < 9; i++){
-				vec2 offsetS = tapLocation(i,9, 1.618,noise,0.0);
+				float noise = blueNoise();
+				float rdMul = 4.0/shadowMapResolution;
 
-				float weight = 1.0+(i+noise)*rdMul/9.0*shadowMapResolution;
-				Shadows += shadow2D(shadow,vec3(projectedShadowPosition + vec3(rdMul*offsetS,-diffthresh*weight))).x/9.0;
-			}
+				for(int i = 0; i < 9; i++){
+					vec2 offsetS = tapLocation(i,9, 1.618,noise,0.0);
+
+					float weight = 1.0+(i+noise)*rdMul/9.0*shadowMapResolution;
+					Shadows += shadow2D(shadow,vec3(projectedShadowPosition + vec3(rdMul*offsetS,-diffthresh*weight))).x/9.0;
+				}
+			#else
+				Shadows = shadow2D(shadow, projectedShadowPosition).x;
+			#endif
+			
+			shadowmapindicator = 1;
 		}
-
-
-		#ifdef CLOUDS_SHADOWS
-			Shadows *= GetCloudShadow(p3);
-		#endif
 	}
-	
+
+	if(shadowmapindicator < 1) Shadows = clamp((lmtexcoord.w-0.8) * 5,0,1);
+
+	#ifdef CLOUDS_SHADOWS
+		Shadows *= GetCloudShadow(p3);
+	#endif
+
 	vec3 WS_normal = viewToWorld(normal);
 	vec3 ambientCoefs = WS_normal/dot(abs(WS_normal),vec3(1.));
-	float skylight = clamp(abs(ambientCoefs.y+1),0.35,2.0) ;
+	float skylight = clamp(ambientCoefs.y + 0.5,0.25,2.0);
 
 	vec2 lightmaps2 = lmtexcoord.zw;
 
@@ -505,6 +514,6 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 		gl_FragData[1] = vec4(Albedo,iswater);
 	#endif
 
-	gl_FragData[3].a = lmtexcoord.w;
+	gl_FragData[3].a = max(lmtexcoord.w*blueNoise()*0.05 + lmtexcoord.w,0.0);
 }
 }

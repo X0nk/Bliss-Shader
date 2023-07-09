@@ -192,6 +192,7 @@ vec3 SampleVNDFGGX(
     // This gives the normal on the hemisphere
 	// xonk note, i added those magic numbers huhuhuh
     vec3 halfway = reflected*0.5 + viewerDirection*1.5;
+    // vec3 halfway = reflected + viewerDirection;
 
     // Transform the halfway direction back to hemiellispoid configuation
     // This gives the final sampled normal

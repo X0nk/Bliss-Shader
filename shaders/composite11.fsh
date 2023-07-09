@@ -17,7 +17,6 @@ uniform sampler2D colortex5;
 uniform sampler2D colortex3;
 // uniform sampler2D colortex6;
 uniform sampler2D colortex7;
-// uniform sampler2D colortex10;
 // uniform sampler2D colortex8; // specular
 // uniform sampler2D colortex9; // specular
 uniform sampler2D depthtex0;
@@ -67,22 +66,20 @@ float ld(float depth) {
     return (2.0 * near) / (far + near - depth * (far - near));		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
 }
 
-// blindness fogs
-uniform float blindness;
-uniform float darknessFactor;
-
 void main() {
   /* DRAWBUFFERS:7 */
 	float vignette = (1.5-dot(texcoord-0.5,texcoord-0.5)*2.);
 	vec3 col = texture2D(colortex5,texcoord).rgb;
 
-	#if DOF_QUALITY >= 0
+	#if DOF_QUALITY >= 0 && DOF_QUALITY < 5
 		/*--------------------------------*/
 		float z = ld(texture2D(depthtex0, texcoord.st*RENDER_SCALE).r)*far;
-		#ifdef AUTOFOCUS
+		#if MANUAL_FOCUS == -2
 			float focus = rodExposureDepth.y*far;
-		#else
-			float focus = MANUAL_FOCUS*screenBrightness;
+		#elif MANUAL_FOCUS == -1
+			float focus = mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
+		#elif MANUAL_FOCUS > 0
+			float focus = MANUAL_FOCUS;
 		#endif
 		float pcoc = min(abs(aperture * (focal/100.0 * (z - focus)) / (z * (focus - focal/100.0))),texelSize.x*15.0);
 		#ifdef FAR_BLUR_ONLY
@@ -126,14 +123,6 @@ void main() {
 	float rodLum = lum2*400.;
 	float rodCurve = mix(1.0, rodLum/(2.5+rodLum), purkinje);
 	col = mix(clamp(lum,0.0,0.05)*Purkinje_Multiplier*vec3(Purkinje_R, Purkinje_G, Purkinje_B)+1.5e-3, col, rodCurve);
-
-//   #ifdef display_LUT
-//   	vec2 movedTC = texcoord ;
-//     if(movedTC.x < 0.4 ) col.rgb =  texture2D(colortex4,movedTC/2).rgb * 0.001;
-//   #endif
-
-  
-
 
 	#ifndef USE_ACES_COLORSPACE_APPROXIMATION
   		col = LinearTosRGB(TONEMAP(col));
