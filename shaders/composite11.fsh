@@ -71,13 +71,15 @@ void main() {
 	float vignette = (1.5-dot(texcoord-0.5,texcoord-0.5)*2.);
 	vec3 col = texture2D(colortex5,texcoord).rgb;
 
-	#if DOF_QUALITY >= 0
+	#if DOF_QUALITY >= 0 && DOF_QUALITY < 5
 		/*--------------------------------*/
 		float z = ld(texture2D(depthtex0, texcoord.st*RENDER_SCALE).r)*far;
-		#ifdef AUTOFOCUS
+		#if MANUAL_FOCUS == -2
 			float focus = rodExposureDepth.y*far;
-		#else
-			float focus = MANUAL_FOCUS*screenBrightness;
+		#elif MANUAL_FOCUS == -1
+			float focus = mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
+		#elif MANUAL_FOCUS > 0
+			float focus = MANUAL_FOCUS;
 		#endif
 		float pcoc = min(abs(aperture * (focal/100.0 * (z - focus)) / (z * (focus - focal/100.0))),texelSize.x*15.0);
 		#ifdef FAR_BLUR_ONLY

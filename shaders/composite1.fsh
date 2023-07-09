@@ -12,6 +12,7 @@ const bool shadowHardwareFiltering = true;
 
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec4 lightCol;
+flat varying vec2 rodExposureDepth;
 
 flat varying vec3 WsunVec;
 flat varying vec2 TAA_Offset;
@@ -43,6 +44,7 @@ uniform sampler2DShadow shadow;
 varying vec4 normalMat;
 uniform int heldBlockLightValue;
 uniform int frameCounter;
+uniform float screenBrightness;
 uniform int isEyeInWater;
 uniform float far;
 uniform float near;
@@ -1188,7 +1190,7 @@ void main() {
 		if (isEyeInWater == 0) waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));		
 	}
 
-	#ifdef DOF_JITTER
+	#if DOF_QUALITY == 5
 		vec3 laserColor;
 		#if FOCUS_LASER_COLOR == 0 // Red
 		laserColor = vec3(25, 0, 0);
@@ -1204,10 +1206,12 @@ void main() {
 		laserColor = vec3(25);
 		#endif
 
-		#if DOF_JITTER_FOCUS < 0
+		#if MANUAL_FOCUS == -2
+		float focusDist = rodExposureDepth.y*far;
+		#elif MANUAL_FOCUS == -1
 		float focusDist = mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
 		#else
-		float focusDist = DOF_JITTER_FOCUS;
+		float focusDist = MANUAL_FOCUS;
 		#endif
 
 		if( hideGUI < 1.0) gl_FragData[0].rgb += laserColor * pow( clamp( 	 1.0-abs(focusDist-abs(fragpos.z))		,0,1),25) ;

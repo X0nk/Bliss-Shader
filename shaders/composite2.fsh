@@ -262,7 +262,7 @@ void main() {
 	vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
 	float z = texture2D(depthtex0,tc).x;
 
-	#ifdef DOF_JITTER
+	#if DOF_QUALITY == 5
 		vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);
 		jitter = rotate(radians(float(frameCounter))) * jitter;
 		jitter.y *= aspectRatio;
