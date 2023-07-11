@@ -300,7 +300,7 @@ void main() {
 	// low
 
 	#ifdef MISC_BLOCK_SSS
-		if(mc_Entity.x == 10007) SSSAMOUNT = 0.5; // weird SSS on blocks like grass and stuff
+		if(mc_Entity.x == 10007 || mc_Entity.x == 10008) SSSAMOUNT = 0.5; // weird SSS on blocks like grass and stuff
 	#endif
 
 	#ifdef ENTITIES
