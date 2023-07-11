@@ -195,6 +195,8 @@ screen.Post_Processing = Post Processing
         option.BLEND_FACTOR = Blend Factor
         option.TAA_UPSCALING = Temporal Upscaling
         option.SCALE_FACTOR = Scale Factor
+	option.HALD_CLUT=Color LUT
+	option.HALD_CLUT.comment=Enables using a Hald CLUT. Default is an identity LUT that you can use this as a base for edits.
 
 
 screen.LabPBR = Lab PBR

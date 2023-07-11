@@ -7,6 +7,7 @@
 varying vec2 texcoord;
 
 uniform sampler2D colortex7;
+uniform sampler2D depthtex2; // lut
 // uniform sampler2D noisetex;
 uniform vec2 texelSize;
 uniform float viewWidth;
@@ -121,6 +122,16 @@ void main() {
   col = col + diff*(-lum*CROSSTALK + SATURATION);
   
 	vec3 FINAL_COLOR = clamp(int8Dither(col,texcoord),0.0,1.0);
+
+	#ifdef HALD_CLUT
+		#define LUT_WIDTH 1728
+		#define LUT_DEPTH 144
+		FINAL_COLOR = clamp(FINAL_COLOR, 0.0, 0.9999999);
+		ivec3 rounded = ivec3(FINAL_COLOR * float(LUT_DEPTH));
+		int index = (rounded.b * LUT_DEPTH * LUT_DEPTH) + (rounded.g * LUT_DEPTH) + rounded.r;
+		ivec2 sampleCoord = ivec2(index % LUT_WIDTH, index / LUT_WIDTH);
+		FINAL_COLOR = texelFetch2D(depthtex2, sampleCoord, 0).rgb;
+	#endif
 
   #ifdef LUMINANCE_CURVE
     applyLuminanceCurve(FINAL_COLOR, LOWER_CURVE, UPPER_CURVE);
