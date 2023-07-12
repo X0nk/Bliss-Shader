@@ -254,7 +254,7 @@ void main() {
   vec4 vl = BilateralUpscale(colortex0, depthtex1, gl_FragCoord.xy, frDepth, vec2(0.0));
 
 
-  if (TranslucentShader.a > 0.0 && !hand){
+  if (TranslucentShader.a > 0.0){
 		#ifdef Glass_Tint
       if(albedo.a > 0.2) color = color*albedo.rgb + color * clamp(pow(1.0-luma(albedo.rgb),20.),0.0,1.0);
     #endif
@@ -333,10 +333,6 @@ void main() {
 
   gl_FragData[0].r = vl.a; // pass fog alpha so bloom can do bloomy fog
 
-	// applyContrast(color.rgb,CONTRAST);
-
   gl_FragData[1].rgb = clamp(color.rgb,0.0,68000.0);
-
-//  gl_FragData[1].rgb = vec3(tangentNormals,0.0);
 
 }

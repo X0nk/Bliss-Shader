@@ -184,15 +184,20 @@ vec3 SampleVNDFGGX(
     // Sample a reflection direction off the hemisphere
     const float tau = 6.2831853; // 2 * pi
     float phi = tau * xy.x;
+
     float cosTheta = xonk_fma(1.0 - xy.y, 1.0 + viewerDirection.z, -viewerDirection.z) ;
     float sinTheta = sqrt(clamp(1.0 - cosTheta * cosTheta, 0.0, 1.0));
-    vec3 reflected = vec3(vec2(cos(phi), sin(phi)) * sinTheta, cosTheta);
+
+	// xonk note, i dont know what im doing but this kinda does what i want so whatever
+	float attemptTailClamp  = clamp(sinTheta,max(cosTheta-0.25,0), cosTheta);
+	float attemptTailClamp2 = clamp(cosTheta,max(sinTheta-0.25,0), sinTheta);
+
+    vec3 reflected = vec3(vec2(cos(phi), sin(phi)) * attemptTailClamp2, attemptTailClamp);
+    // vec3 reflected = vec3(vec2(cos(phi), sin(phi)) * sinTheta, cosTheta);
 
     // Evaluate halfway direction
     // This gives the normal on the hemisphere
-	// xonk note, i added those magic numbers huhuhuh
-    vec3 halfway = reflected*0.5 + viewerDirection*1.5;
-    // vec3 halfway = reflected + viewerDirection;
+    vec3 halfway = reflected + viewerDirection;
 
     // Transform the halfway direction back to hemiellispoid configuation
     // This gives the final sampled normal
@@ -248,10 +253,11 @@ void MaterialReflections(
 
 
 	// f0 = vec3(0.9);
-	// roughness = 0.0;
+	// roughness = 0.5;
 
 	mat3 basis = CoordBase(normal);
 	vec3 normSpaceView = -np3*basis ;
+	
 
 	// roughness stuff
 	#ifdef Rough_reflections
@@ -279,7 +285,8 @@ void MaterialReflections(
 	SunReflection = directlighting *  GGX(normal, -np3, sunPos, roughness, vec3(f0.y));
 	
 	#ifdef Sky_reflection
-		if( Roughness_Threshold == 1.0 || (f0.y * (1.0 - roughness * Roughness_Threshold)) > 0.005) SkyReflection = pow(clamp(1.0-VisibilityFactor,0,1),0.3)*( skyCloudsFromTex(L, colortex4).rgb / 150. ) * 5.;
+		//pow(clamp(1.0-VisibilityFactor,0,1),0.3)*
+		if( Roughness_Threshold == 1.0 || (f0.y * (1.0 - roughness * Roughness_Threshold)) > 0.005) SkyReflection = skyCloudsFromTex(L, colortex4).rgb / 30.;
 	#endif
 
 	if (hasReflections) { // Skip sky reflection and SSR if its just not very visible anyway
@@ -291,14 +298,12 @@ void MaterialReflections(
 				rayQuality = reflection_quality;
 			#endif
 
-
 			noise.b = mix_float(noise.b, 0.5 + (noise.b-0.5),rayContribLuma);
 			if(hand) {rayQuality = max(rayQuality,30.0); noise.b = 0.5 + (noise.b-0.5);}
 			
 			vec3 rtPos = rayTraceSpeculars(mat3(gbufferModelView) * L, fragpos.xyz,  (noise.b), rayQuality, hand, reflectLength);
 
 			float LOD = clamp(reflectLength * 6.0, 0.0,6.0);
-			if(hand || isEntities) LOD = VisibilityFactor*6;
 			// LOD = 0.0;
 			
 			if (rtPos.z < 1.0) { // Reproject on previous frame
@@ -463,7 +468,7 @@ void MaterialReflections_E(
 	roughness = unpackRoughness(roughness);
 	f0 = f0.y == 0.0 ? vec3(0.02) : f0;
 
-	// roughness = 0.0;
+	// roughness = 0.1;
 	// f0 = vec3(0.9);
 
 	float visibilityFactor = clamp(exp2((pow(roughness,3.0) / f0.y) * -4),0,1);

@@ -309,7 +309,7 @@ void Emission(
 	float Emission
 ){
 	// if( Emission < 255.0/255.0 ) Lighting = mix(Lighting, Albedo * Emissive_Brightness, pow(Emission, Emissive_Curve)); // old method.... idk why
-	if( Emission < 255.0/255.0 ) Lighting += (Albedo * Emissive_Brightness) * pow(Emission, Emissive_Curve);
+	if( Emission < 255.0/255.0 ) Lighting += (Albedo * Emissive_Brightness * 0.25) * pow(Emission, Emissive_Curve);
 }
 
 float rayTraceShadow(vec3 dir,vec3 position,float dither){

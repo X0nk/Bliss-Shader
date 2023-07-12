@@ -96,7 +96,7 @@ void main() {
 	vec3 fragpos = toScreenSpace(vec3(halfResTC*texelSize,1));
 
 
-	vec4 currentClouds = renderClouds(fragpos,vec2(R2_dither(),blueNoise2()), sunColor/80., moonColor/150., (averageSkyCol_Clouds*2.0)* 8./150./3.);
+	vec4 currentClouds = renderClouds(fragpos,vec2(R2_dither(),blueNoise2()), sunColor/80., moonColor/150., averageSkyCol_Clouds/30.0);
 	
 	gl_FragData[0] = currentClouds;
 	

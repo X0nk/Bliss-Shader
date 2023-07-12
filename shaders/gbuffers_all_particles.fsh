@@ -100,7 +100,7 @@ vec3 normVec (vec3 vec){
 /* DRAWBUFFERS:29 */
 void main() {
 
-	vec4 TEXTURE = texture2D(texture, lmtexcoord.xy)*color;
+	vec4 TEXTURE = texture2D(texture, lmtexcoord.xy) * color;
 
 	vec2 tempOffset = offsets[framemod8];
 	vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
@@ -109,20 +109,25 @@ void main() {
 
 	float cloudOcclusion = 0.0;
 
-	if(TEXTURE.a > 0.0) cloudOcclusion = 1.0 - GetCloudSkyOcclusion(p3 + cameraPosition)*0.9;
+	if(TEXTURE.a > 0.0) cloudOcclusion = 1.0 - GetCloudSkyOcclusion(p3 + cameraPosition)*0.8;
 	gl_FragData[1].a = TEXTURE.a * cloudOcclusion ; // for bloomy rain and stuff
 
 #ifndef WEATHER
-
 	gl_FragData[1].a = 1.0 - TEXTURE.a;
+	
+	#ifdef LIT
+		gl_FragData[1].a = 0.0;
+	#endif
+	
 	gl_FragData[0].a = TEXTURE.a;
-
+	
 	vec3 Albedo = toLinear(TEXTURE.rgb);
 
 	// do the maths only if the pixels exist....
 	if(TEXTURE.a > 0.0){
 
 		float Shadows = 1.0;
+		
 		vec3 p3_shadow = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
 		vec3 projectedShadowPosition = mat3(shadowModelView) * p3_shadow + shadowModelView[3].xyz;
 		projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
@@ -147,15 +152,21 @@ void main() {
 			Shadows *= GetCloudShadow(p3);
 		#endif
 
+		vec3 AmbientLightColor = averageSkyCol_Clouds;
+		vec3 DirectLightColor = lightCol.rgb/80.0;
+
+		AmbientLightColor += (lightningEffect * 10) * pow(lmtexcoord.w,2);
+
 		float lightleakfix = clamp(eyeBrightnessSmooth.y/240.0,0.0,1.0);
 		float phase = phaseg(clamp(dot(np3, WsunVec),0.0,1.0),(1.0-gl_FragData[0].a) * 0.8 + 0.1) + 1.0 ;
-		vec3 Direct_lighting = DoDirectLighting(lightCol.rgb/80., Shadows, 1.0, 0.0) * phase * lightleakfix;
+		vec3 Direct_lighting = DoDirectLighting(DirectLightColor, Shadows, 1.0, 0.0) * phase * lightleakfix;
 
-		vec3 Indirect_lighting = DoAmbientLighting(averageSkyCol_Clouds, vec3(TORCH_R,TORCH_G,TORCH_B), lmtexcoord.zw, 5.0);
+		vec3 Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), clamp(lmtexcoord.zw,0.0,1.0), 5.0);
+		
 		// gl_FragData[0].a = TEXTURE.a;
+
 		gl_FragData[0].rgb = (Direct_lighting + Indirect_lighting) * Albedo;
 
 	}
-
 #endif
 }

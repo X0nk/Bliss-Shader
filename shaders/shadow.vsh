@@ -161,12 +161,16 @@ void main() {
 	if(mc_Entity.x == 8 || mc_Entity.x == 9) gl_Position.w = -1.0;
 
 
-  /// this is to ease the shadow acne on big fat entities like ghasts.
-  
-  float bias = 6.0;
-	vec3 FlatNormals = normalize(gl_NormalMatrix *gl_Normal);
-	vec3 WsunVec = (float(sunElevation > 1e-5)*2-1.)*normalize(mat3(shadowModelViewInverse) * sunPosition);
-  if(entityId == 1100) bias = 6.0 + (1-clamp(dot(WsunVec,FlatNormals),0,1))*0.3;
+ 	/// this is to ease the shadow acne on big fat entities like ghasts.
+  	float bias = 6.0;
 
-  gl_Position.z /= bias;
+	if(entityId == 1100){
+		// increase bias on parts facing the sun
+		vec3 FlatNormals = normalize(gl_NormalMatrix * gl_Normal);
+		vec3 WsunVec = (float(sunElevation > 1e-5)*2-1.)*normalize(mat3(shadowModelViewInverse) * sunPosition);
+  		
+		bias = 6.0 + (1-clamp(dot(WsunVec,FlatNormals),0,1))*0.3;
+	}
+
+  	gl_Position.z /= bias;
 }

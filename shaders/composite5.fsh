@@ -77,11 +77,12 @@ uniform vec2 texelSize;
 uniform float frameTimeCounter;
 uniform float viewHeight;
 uniform float viewWidth;
-uniform int hideGUI;
 uniform int frameCounter;
 uniform int framemod8;
 uniform vec3 previousCameraPosition;
 uniform mat4 gbufferPreviousModelView;
+
+uniform int hideGUI;
 
 #define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
 

@@ -158,7 +158,6 @@ void main() {
 /* DRAWBUFFERS:3 */
 	vec2 texcoord = gl_FragCoord.xy*texelSize;
 	
-
 	float z = texture2D(depthtex1,texcoord).x;
 
 	vec2 tempOffset=TAA_Offset;
@@ -184,6 +183,10 @@ void main() {
 
 	float NdotL = clamp(dot(normal,WsunVec),0.0,1.0);
 
+	// vec4 normalAndAO = texture2D(colortex15,texcoord);
+	// vec3 FlatNormals = normalAndAO.rgb * 2.0 - 1.0;
+	// float vanillAO = clamp(normalAndAO.a,0.0,1.0)  ;
+
 	float vanillAO = clamp(texture2D(colortex15,texcoord).a,0.0,1.0)  ;
 
 	if(lightmap.y < 0.1 && !entities){
@@ -193,7 +196,7 @@ void main() {
 
 
 	float SpecularTex = texture2D(colortex8,texcoord).z;
-	float LabSSS = clamp((-65.0 + SpecularTex * 255.0) / 190.0 ,0.0,1.0);
+	float LabSSS = clamp((-64.0 + SpecularTex * 255.0) / 191.0 ,0.0,1.0);
 
 	#ifndef Variable_Penumbra_Shadows
 		if (LabSSS > 0.0 && !hand && NdotL < 0.001)  minshadowfilt += 50;
@@ -201,20 +204,17 @@ void main() {
 
 	gl_FragData[0] = vec4(minshadowfilt, 0.1, 0.0, 0.0);
 
-	if (z < 1.0){
+	if (z < 1.0 && !hand){
 
-		// if( translucent || translucent2)
-
-		if (!hand){
-
-			
-			vec3 fragpos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
+		vec3 fragpos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
 
 		#ifdef Variable_Penumbra_Shadows
 
 			if (NdotL > 0.001 || LabSSS > 0.0) {
 
 				vec3 p3 = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
+
+				// GriAndEminShadowFix(p3, viewToWorld(FlatNormals), vanillAO, lightmap.y, entities);
 
 				vec3 projectedShadowPosition = mat3(shadowModelView) * p3 + shadowModelView[3].xyz;
 				projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
@@ -247,7 +247,10 @@ void main() {
 						vec2 offsetS = tapLocation_alternate(i, 0.0, 7, 20, randomDir);
 
 						float weight = 3.0 + (i+blueNoise() ) *rdMul/SHADOW_FILTER_SAMPLE_COUNT*shadowMapResolution*distortFactor/2.7;
+						// float d = texelFetch2D( shadow, ivec2((projectedShadowPosition.xy+offsetS*rdMul)*shadowMapResolution),0).x;
 						float d = texelFetch2D( shadow, ivec2((projectedShadowPosition.xy+offsetS*rdMul)*shadowMapResolution),0).x;
+
+
 						float b = smoothstep(weight*diffthresh/2.0, weight*diffthresh, projectedShadowPosition.z - d);
 
 						blockerCount += b;
@@ -265,7 +268,5 @@ void main() {
 				}
 			}
 		#endif
-		}
-
 	}
 }

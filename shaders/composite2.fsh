@@ -279,7 +279,7 @@ void main() {
 		
 		#ifdef Cumulus
 			#ifdef Cloud_Fog
-				vec4 VL_CLOUDFOG = InsideACloudFog(fragpos, vec2(R2_dither(),blueNoise()), lightCol.rgb/80., moonColor/150., (averageSkyCol*2.0) * 8./150./3.);
+				vec4 VL_CLOUDFOG = InsideACloudFog(fragpos, vec2(R2_dither(),blueNoise()), lightCol.rgb/80., moonColor/150., averageSkyCol/30.);
 
 				// vec4 rays = vec4(0.0);
 				// if(rainStrength > 0.0){
@@ -323,7 +323,8 @@ void main() {
 		estEyeDepth *= estEyeDepth*estEyeDepth*34.0;
 
 	
-		vec3 ambientColVol = averageSkyCol_Clouds*8./150./2.0;
+		vec3 lightningColor = (lightningEffect / 3) * (max(eyeBrightnessSmooth.y,0)/240.);
+		vec3 ambientColVol = (averageSkyCol_Clouds/30.0) + lightningColor;
 		vec3 lightColVol = (lightCol.rgb / 80.);
 		estEyeDepth = max(Water_Top_Layer - cameraPosition.y,0.0);
 

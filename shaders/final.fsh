@@ -11,6 +11,7 @@ uniform sampler2D colortex7;
 uniform vec2 texelSize;
 uniform float viewWidth;
 uniform float viewHeight;
+uniform float aspectRatio;
 uniform float frameTimeCounter;
 uniform int frameCounter;
 uniform int isEyeInWater;
@@ -19,6 +20,7 @@ uniform int isEyeInWater;
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
 #include "/lib/res_params.glsl"
+
 vec4 SampleTextureCatmullRom(sampler2D tex, vec2 uv, vec2 texSize )
 {
     // We're going to sample a a 4x4 grid of texels surrounding the target UV coordinate. We'll do this by rounding
@@ -84,12 +86,21 @@ float upperCurve(float x) {
 }
 void applyLuminanceCurve(inout vec3 color, float darks, float brights){
 
-  	// color.r = color.r < 0.5 ? pow(2.0 * color.r, darks) / 2.0 : 1.0 - (pow(2.0 - 2.0 * color.r, brights) / 2.0);
+  // color.r = color.r < 0.5 ? pow(2.0 * color.r, darks) / 2.0 : 1.0 - (pow(2.0 - 2.0 * color.r, brights) / 2.0);
 	// color.g = color.g < 0.5 ? pow(2.0 * color.g, darks) / 2.0 : 1.0 - (pow(2.0 - 2.0 * color.g, brights) / 2.0);
 	// color.b = color.b < 0.5 ? pow(2.0 * color.b, darks) / 2.0 : 1.0 - (pow(2.0 - 2.0 * color.b, brights) / 2.0);
+
 	color.r += darks * lowerCurve(color.r) + brights * upperCurve(color.r);
 	color.g += darks * lowerCurve(color.g) + brights * upperCurve(color.g);
 	color.b += darks * lowerCurve(color.b) + brights * upperCurve(color.b);
+}
+
+void applyColorCurve(inout vec3 color, vec4 darks, vec4 brights){
+
+	color.r += (darks.r + darks.a) * lowerCurve(color.r) + (brights.r + brights.a) * upperCurve(color.r);
+	color.g += (darks.g + darks.a) * lowerCurve(color.g) + (brights.g + brights.a) * upperCurve(color.g);
+	color.b += (darks.b + darks.a) * lowerCurve(color.b) + (brights.b + brights.a) * upperCurve(color.b);
+  
 }
 
 void main() {
@@ -122,8 +133,8 @@ void main() {
   
 	vec3 FINAL_COLOR = clamp(int8Dither(col,texcoord),0.0,1.0);
 
-  #ifdef LUMINANCE_CURVE
-    applyLuminanceCurve(FINAL_COLOR, LOWER_CURVE, UPPER_CURVE);
+  #ifdef COLOR_CURVE
+    applyColorCurve(FINAL_COLOR, vec4(R_LOWER_CURVE, G_LOWER_CURVE, B_LOWER_CURVE, LOWER_CURVE), vec4(R_UPPER_CURVE, G_UPPER_CURVE, B_UPPER_CURVE, UPPER_CURVE));
   #endif
 
 	applyContrast(FINAL_COLOR, CONTRAST); // for fun

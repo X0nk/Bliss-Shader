@@ -401,7 +401,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 					Shadows += shadow2D(shadow,vec3(projectedShadowPosition + vec3(rdMul*offsetS,-diffthresh*weight))).x/9.0;
 				}
 			#else
-				Shadows = shadow2D(shadow, projectedShadowPosition).x;
+				Shadows = shadow2D(shadow, projectedShadowPosition + vec3(0.0,0.0,-0.0001)).x;
 			#endif
 			
 			shadowmapindicator = 1;
@@ -414,6 +414,9 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 		Shadows *= GetCloudShadow(p3);
 	#endif
 
+	vec3 AmbientLightColor = averageSkyCol_Clouds;
+	vec3 DirectLightColor = lightCol.rgb/80.0;
+
 	vec3 WS_normal = viewToWorld(normal);
 	vec3 ambientCoefs = WS_normal/dot(abs(WS_normal),vec3(1.));
 	float skylight = clamp(ambientCoefs.y + 0.5,0.25,2.0);
@@ -423,8 +426,10 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 	
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240. + lightmaps2.y,2) ,0.0,1.0);
 
-	vec3 Indirect_lighting = DoAmbientLighting(averageSkyCol_Clouds, vec3(TORCH_R,TORCH_G,TORCH_B), lightmaps2, skylight);
-	vec3 Direct_lighting = DoDirectLighting(lightCol.rgb/80.0, Shadows, NdotL, 0.0);
+	AmbientLightColor += (lightningEffect * 10) * skylight * pow(lightmaps2.y,2);
+
+	vec3 Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmaps2, skylight);
+	vec3 Direct_lighting = DoDirectLighting(DirectLightColor, Shadows, NdotL, 0.0);
 
 	vec3 FinalColor = (Direct_lighting + Indirect_lighting) * Albedo;
 	
@@ -469,7 +474,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 	
 			// SSR, Sky, and Sun reflections
 			#ifdef WATER_BACKGROUND_SPECULAR
- 				SkyReflection = skyCloudsFromTex(wrefl,colortex4).rgb / 150. * 5.;
+ 				SkyReflection = skyCloudsFromTex(wrefl,colortex4).rgb / 30.0;
 				// SkyReflection = vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B)/
 			#endif
 			#ifdef WATER_SUN_SPECULAR

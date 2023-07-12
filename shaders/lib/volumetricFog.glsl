@@ -94,10 +94,7 @@ vec4 getVolumetricRays(
 	vec3 sunColor = lightCol.rgb / 80.0;
 	vec3 skyCol0 = AmbientColor / 150. * 5. ; // * max(abs(WsunVec.y)/150.0,0.);
 
-	vec3 lightningColor =  vec3(Lightning_R,Lightning_G,Lightning_B) * 25.0 * lightningFlash * max(eyeBrightnessSmooth.y,0)/240.;
-	#ifdef ReflectedFog
-		lightningColor *= 0.01;
-	#endif
+	vec3 lightningColor = (lightningEffect / 10) * (max(eyeBrightnessSmooth.y,0)/240.);
 	
 	vec3 np3 = normVec(wpos);
 	float ambfogfade =  clamp(exp(np3.y* 2 - 2),0.0,1.0) * 4 ;
@@ -232,17 +229,16 @@ vec4 InsideACloudFog(
 	vec3 Fog_SkyCol = averageSkyCol/ 150. * 5. ; // * max(abs(WsunVec.y)/150.0,0.);
 	vec3 Fog_SunCol = lightCol.rgb / 80.0;
 
-
-	vec3 lightningColor =  vec3(Lightning_R,Lightning_G,Lightning_B) * 255.0 * lightningFlash * max(eyeBrightnessSmooth.y,0)/240.;
+	vec3 lightningColor = (lightningEffect / 10) * (max(eyeBrightnessSmooth.y,0)/240.);
 	
-	#ifdef ReflectedFog
-		lightningColor *= 0.01;
+	#ifndef ReflectedFog
+		vec3 np3 = normVec(wpos);
+		float ambfogfade =  clamp(exp(np3.y* 2 - 2),0.0,1.0) * 4 ;
+
+		lightningColor *= ambfogfade;
 	#endif
 
-	vec3 np3 = normVec(wpos);
-	float ambfogfade =  clamp(exp(np3.y* 2 - 2),0.0,1.0) * 4 ;
-
-	Fog_SkyCol += (lightningColor/10) * ambfogfade;
+	Fog_SkyCol += lightningColor;
 	
 
 
@@ -256,9 +252,6 @@ vec4 InsideACloudFog(
 		vec3 moonContribution = MoonColor * mieNight;
 
 		float timing = 1.0 - clamp(pow(abs(dV_Sun.y)/150.0,2.0),0.0,1.0);
-
-
-
 
 
 	//Mie phase + somewhat simulates multiple scattering (Horizon zero down cloud approx)

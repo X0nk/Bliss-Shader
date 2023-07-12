@@ -4,6 +4,7 @@
 
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec4 lightCol;
+
 flat varying vec2 rodExposureDepth;
 
 flat varying vec3 WsunVec;
@@ -70,6 +71,8 @@ void main() {
 	WsunVec = lightCol.a*normalize(mat3(gbufferModelViewInverse) *sunPosition);
 	zMults = vec3((far * near)*2.0,far+near,far-near);
 
+	rodExposureDepth = texelFetch2D(colortex4,ivec2(14,37),0).rg;
+	rodExposureDepth.y = sqrt(rodExposureDepth.y/65000.0);
 
 	WinterTimeForSnow = 0.0;
 	
@@ -80,10 +83,6 @@ void main() {
 			YearCycleColor(color1, color2, WinterTimeForSnow);
 		#endif
 	#endif
-
-
-	rodExposureDepth = texelFetch2D(colortex4,ivec2(14,37),0).rg;
-	rodExposureDepth.y = sqrt(rodExposureDepth.y/65000.0);
 
 
 	TAA_Offset = offsets[frameCounter%8];

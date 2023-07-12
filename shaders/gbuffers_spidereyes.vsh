@@ -34,7 +34,7 @@ void main() {
 
 	gl_Position = ftransform();
 
-	// if(gl_Color.a < 0.1 ) gl_Position = vec4(10,10,10,1);
+	//  gl_Position = vec4(10,10,10,1);
 
 	texcoord = (gl_MultiTexCoord0).xy;
 	color = gl_Color;

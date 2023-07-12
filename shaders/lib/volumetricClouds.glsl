@@ -199,7 +199,7 @@ float PhaseHG(float cosTheta, float g) {
     return Inv4Pi * (1 - g * g) / (denom * sqrt(denom));
 }
 
-uniform float lightningFlash;
+uniform vec3 lightningEffect;
 
 vec4 renderClouds(
 	vec3 FragPosition,
@@ -264,7 +264,7 @@ vec4 renderClouds(
 	
 	float timing = 1.0 - clamp(pow(abs(dV_Sun.y)/150.0,2.0),0.0,1.0);
 
-	vec3 lightningColor =  vec3(Lightning_R,Lightning_G,Lightning_B) * 1000.0 * lightningFlash;
+	vec3 lightningColor = lightningEffect * 4.0;
 
 	#ifdef Cumulus
 		for(int i=0;i<maxIT_clouds;i++) {

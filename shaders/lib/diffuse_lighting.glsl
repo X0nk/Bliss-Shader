@@ -1,12 +1,7 @@
 // in this here file im doing all the lighting for sunlight, ambient light, torches, for solids and translucents.
 
-
-#ifndef OVERWORLD
-uniform float lightningFlash;
-
-#endif
-
 uniform float nightVision;
+
 //// OVERWORLD ////
 #ifdef OVERWORLD
 vec3 DoAmbientLighting (vec3 SkyColor, vec3 TorchColor, vec2 Lightmap, float skyLightDir){
@@ -18,9 +13,7 @@ vec3 DoAmbientLighting (vec3 SkyColor, vec3 TorchColor, vec2 Lightmap, float sky
 	vec3 TorchLight = TorchColor * TorchLM * 0.75;
     TorchLight *= TORCH_AMOUNT;
 
-    SkyColor = (SkyColor * 2.0 * ambient_brightness) * 8./150./3.;
-	
-    SkyColor += vec3(Lightning_R,Lightning_G,Lightning_B) * 25.0 * skyLightDir * lightningFlash ;
+    SkyColor = (SkyColor * ambient_brightness) / 30.0;
 
     float skyLM = (pow(Lightmap.y,15.0)*2.0 + pow(Lightmap.y,2.5))*0.5;
     vec3 SkyLight = max(SkyColor * skyLM,  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision) ); 

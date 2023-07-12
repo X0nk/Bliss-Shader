@@ -43,6 +43,8 @@ uniform vec3 cameraPosition;
 uniform float far;
 uniform ivec2 eyeBrightnessSmooth;
 
+uniform float lightningFlash;
+
 #include "/lib/Shadow_Params.glsl"
 #include "/lib/util.glsl"
 #include "/lib/ROBOBO_sky.glsl"
@@ -103,6 +105,7 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-7.,-1.)/8.,
 							vec2(3,7.)/8.,
 							vec2(7.,-7.)/8.);
+
 
 void main() {
 /* DRAWBUFFERS:4 */
@@ -166,7 +169,10 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 //Temporally accumulate sky and light values
 vec3 temp = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy),0).rgb;
 vec3 curr = gl_FragData[0].rgb*150.;
-gl_FragData[0].rgb = clamp(mix(temp,curr,0.07),0.0,65000.);
+
+float flashtiming = pow(clamp((0.01-lightningFlash)*100,0,1),25);
+
+gl_FragData[0].rgb = clamp(mix(temp,curr, 0.07 * flashtiming),0.0,65000.);
 
 //Exposure values
 if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )

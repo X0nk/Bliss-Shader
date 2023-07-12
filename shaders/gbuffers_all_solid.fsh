@@ -76,6 +76,8 @@ uniform float rainStrength;
 uniform sampler2D noisetex;//depth
 uniform sampler2D depthtex0;
 
+uniform vec4 entityColor;
+
 in vec3 velocity;
 
 flat varying int PHYSICSMOD_SNOW;
@@ -414,7 +416,9 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 	
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM) * color;
-	
+
+
+
 	if(LIGHTNING > 0) Albedo = vec4(1);
 	float ENDPORTAL_EFFECT = PORTAL > 0 ? EndPortalEffect(Albedo, fragpos, worldpos, tbnMatrix) : 0;
 
@@ -526,6 +530,11 @@ void main() {
 		}
 	#endif
 
+	// hit glow effect...
+	#ifdef ENTITIES
+		Albedo.rgb = mix(Albedo.rgb, entityColor.rgb, entityColor.a);
+		gl_FragData[2].a = mix(gl_FragData[2].a, 0.5, entityColor.a);;
+	#endif
 
 	//////////////////////////////// 				////////////////////////////////
 	////////////////////////////////	FINALIZE	////////////////////////////////
@@ -534,7 +543,7 @@ void main() {
 	#ifdef WORLD
 
 		#ifdef Puddles
-			float porosity = 0.35;
+			float porosity = 0.4;
 			#ifdef Porosity
 				porosity = SpecularTex.z >= 64.5/255.0 ? 0.0 : (SpecularTex.z*255.0/64.0)*0.65;
 			#endif

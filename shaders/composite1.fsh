@@ -12,7 +12,6 @@ const bool shadowHardwareFiltering = true;
 
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec4 lightCol;
-flat varying vec2 rodExposureDepth;
 
 flat varying vec3 WsunVec;
 flat varying vec2 TAA_Offset;
@@ -44,7 +43,6 @@ uniform sampler2DShadow shadow;
 varying vec4 normalMat;
 uniform int heldBlockLightValue;
 uniform int frameCounter;
-uniform float screenBrightness;
 uniform int isEyeInWater;
 uniform float far;
 uniform float near;
@@ -68,6 +66,9 @@ uniform vec3 cameraPosition;
 uniform vec3 sunVec;
 uniform ivec2 eyeBrightnessSmooth;
 uniform ivec2 eyeBrightness;
+
+uniform float screenBrightness;
+flat varying vec2 rodExposureDepth;
 
 flat varying float WinterTimeForSnow;
 
@@ -607,6 +608,7 @@ vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, floa
 	scatter *= 0.5 + CustomPhase(lightPos, 1.0,30.0)*20;
 
 	return scatter;
+
 }
 
 vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
@@ -614,7 +616,8 @@ vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 	vec3 absorbed = max(luma(albedo) - albedo,0.0);
 	vec3 scatter =   sqrt(exp(-(absorbed * Scattering * 15))) * (1.0 - Scattering);
 
-	scatter *= pow(Density,LabSSS_Curve);
+	// scatter *= pow(Density,LabSSS_Curve);
+	scatter *= clamp(1 - exp(Density * -10),0,1);
 
 	return scatter;
 }
@@ -804,7 +807,9 @@ void main() {
 
 	////// --------------- UNPACK MISC --------------- //////
 	vec4 SpecularTex = texture2D(colortex8,texcoord);
-	float LabSSS = clamp((-65.0 + SpecularTex.z * 255.0) / 190.0 ,0.0,1.0);	
+	// float LabSSS = clamp((-65.0 + SpecularTex.z * 255.0) / 190.0 ,0.0,1.0);	
+	
+	float LabSSS = clamp((-64.0 + SpecularTex.z * 255.0) / 191.0 ,0.0,1.0);
 
 	vec4 normalAndAO = texture2D(colortex15,texcoord);
 	vec3 FlatNormals = normalAndAO.rgb * 2.0 - 1.0;
@@ -835,7 +840,6 @@ void main() {
 
 
 	vec3 ambientCoefs = normal/dot(abs(normal),vec3(1.));
-	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2) ,0.0,1.0);
 
 	vec3 DirectLightColor = (lightCol.rgb/80.0);
 	// DirectLightColor *= clamp(abs(WsunVec.y)*2,0.,1.);
@@ -946,13 +950,13 @@ void main() {
 	////////////////////////////////	SUN SSS		////////////////////////////////
 		vec3 SSS = vec3(0.0);
 
-		#ifndef Variable_Penumbra_Shadows
-			if(LabSSS > 0 ) {
-				SHADOWBLOCKERDEPTBH = pow(1.0 - Shadows,2);
-			}
-		#endif
-
 		#if SSS_TYPE != 0
+			#ifndef Variable_Penumbra_Shadows
+				if(LabSSS > 0 ) {
+					SHADOWBLOCKERDEPTBH = pow(1.0 - Shadows,2);
+				}
+			#endif
+
 
 			if (outsideShadowMap) SHADOWBLOCKERDEPTBH = 0.0;
 
@@ -966,7 +970,7 @@ void main() {
 			SSS = SubsurfaceScattering_sun(albedo, SHADOWBLOCKERDEPTBH, sunSSS_density, clamp(dot(np3, WsunVec),0.0,1.0)) ;
 			SSS *=	DirectLightColor;
 
-			if (isEyeInWater == 0) SSS *= lightleakfix; // light leak fix
+			if (isEyeInWater == 0) SSS *= clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
 		#endif
 
 		if (!hand){
@@ -999,12 +1003,17 @@ void main() {
 		vec3 Indirect_lighting = vec3(1.0);
 
 		// float skylight = clamp(abs(ambientCoefs.y + 1.0),0.35,2.0);
-		float skylight = clamp(ambientCoefs.y + 0.5,0.25,2.0);
+
+		float skylight = clamp(ambientCoefs.y + 0.5,0.25,2.0) * 1.35;
+		// skylight *= skylight;
+		// if(texcoord.x >0.5) skylight = clamp(abs(ambientCoefs.y + 1.0),0.35,2.0);
 
 		#if indirect_effect == 2 || indirect_effect == 3 || indirect_effect == 4
 			if (!hand) skylight = 1.0;
 		#endif
 
+		AmbientLightColor += (lightningEffect * 10) * skylight * pow(lightmap.y,2);
+		
 		// do this to make underwater shading easier.
 		vec2 newLightmap = lightmap.xy;
 		if((isEyeInWater == 0 && iswater) || (isEyeInWater == 1 && !iswater)) newLightmap.y = clamp(newLightmap.y,0,1);
@@ -1060,7 +1069,7 @@ void main() {
 					ScreenSpace_SSS(SkySSS, fragpos, blueNoise(gl_FragCoord.xy).rg, FlatNormals, isLeaf);
 				#endif
 
-				vec3 ambientColor = ((AmbientLightColor * 2.0 * ambient_brightness) * 8./150./3.) * 1.5;
+				vec3 ambientColor = ((AmbientLightColor * ambient_brightness) / 30.0 ) * 1.5;
 				float lightmap =  pow(newLightmap.y,3);
 				float uplimit = clamp(1.0-pow(clamp(ambientCoefs.y + 0.5,0.0,1.0),2),0,1);
 
@@ -1182,9 +1191,10 @@ void main() {
 		float estimatedDepth = Vdiff * abs(VdotU) ;	//assuming water plane
 		float estimatedSunDepth = estimatedDepth/abs(WsunVec.y); //assuming water plane
 	
-		float custom_lightmap_T = pow(texture2D(colortex14, texcoord).a,3.0);
+		float custom_lightmap_T = clamp(pow(texture2D(colortex14, texcoord).a,3.0),0.0,1.0);
 	
-		vec3 ambientColVol =  (averageSkyCol_Clouds*8./150./2.) *  max(custom_lightmap_T,MIN_LIGHT_AMOUNT*0.0015);
+		vec3 lightningColor = (lightningEffect / 3) * (max(eyeBrightnessSmooth.y,0)/240.);
+		vec3 ambientColVol =  max((averageSkyCol_Clouds / 30.) *  custom_lightmap_T, vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision)) + lightningColor;
 		vec3 lightColVol = DirectLightColor;
 	
 		if (isEyeInWater == 0) waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));		
@@ -1205,7 +1215,7 @@ void main() {
 		#elif FOCUS_LASER_COLOR == 5 // White
 		laserColor = vec3(25);
 		#endif
-
+		
 		#if MANUAL_FOCUS == -2
 		float focusDist = rodExposureDepth.y*far;
 		#elif MANUAL_FOCUS == -1
