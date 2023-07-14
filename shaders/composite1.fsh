@@ -929,7 +929,7 @@ void main() {
 		
 
 		bool ShadowBounds = false;
-		if(shadowDistanceRenderMul > 0.0) ShadowBounds = length(p3_shadow) < max(shadowDistance,0);
+		if(shadowDistanceRenderMul > 0.0) ShadowBounds = length(p3_shadow) < shadowDistance;
 		
 		if(shadowDistanceRenderMul < 0.0) ShadowBounds = abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0;
 
@@ -957,7 +957,7 @@ void main() {
 
 		bool outsideShadowMap = shadowmapindicator < 1;
 
-		if(outsideShadowMap && !iswater) Shadows = min(max(lightmap.y-0.8, 0) * 25,1);
+		if(outsideShadowMap && !iswater) Shadows = min(max(lightmap.y-0.8, 0.0) * 25,1.0);
 
 			
 
@@ -991,10 +991,13 @@ void main() {
 				bool dodistantSSS = outsideShadowMap && LabSSS > 0.0;
 				float screenShadow = rayTraceShadow(lightCol.a*sunVec, fragpos_rtshadow, interleaved_gradientNoise(), dodistantSSS);
 				screenShadow *= screenShadow;
+
 				Shadows = min(screenShadow, Shadows);
 
 				if (outsideShadowMap) SSS *= Shadows;
+
 			#else
+
 				if (outsideShadowMap) SSS = vec3(0.0);
 			#endif
 		}
