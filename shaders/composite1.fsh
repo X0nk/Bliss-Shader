@@ -852,6 +852,8 @@ void main() {
 		DirectLightColor = vec3(0.0);
 	#endif
 
+	if(hand) DirectLightColor *= max(eyeBrightnessSmooth.y,0)/240.;
+
 	vec3 AmbientLightColor = averageSkyCol_Clouds;
 
 
@@ -929,7 +931,7 @@ void main() {
 		
 
 		bool ShadowBounds = false;
-		if(shadowDistanceRenderMul > 0.0) ShadowBounds = length(p3_shadow) < shadowDistance;
+		if(shadowDistanceRenderMul > 0.0) ShadowBounds = length(p3_shadow) < max(shadowDistance - 20,0.0);
 		
 		if(shadowDistanceRenderMul < 0.0) ShadowBounds = abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0;
 
