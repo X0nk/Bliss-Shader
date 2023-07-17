@@ -1202,7 +1202,7 @@ void main() {
 
 		Emission(FINAL_COLOR, albedo, SpecularTex.a);
 
-		if(lightningBolt) FINAL_COLOR.rgb += vec3(Lightning_R,Lightning_G,Lightning_B) * 255.0;
+		if(lightningBolt) FINAL_COLOR.rgb += vec3(77.0, 153.0, 255.0);
 
 		gl_FragData[0].rgb =  FINAL_COLOR;
 

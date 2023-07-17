@@ -469,7 +469,7 @@ void main() {
 
 		Emission(gl_FragData[0].rgb, albedo, SpecularTex.a);
 
-		if(lightningBolt) gl_FragData[0].rgb += vec3(Lightning_R,Lightning_G,Lightning_B) ;
+		if(lightningBolt) gl_FragData[0].rgb += vec3(77.0, 153.0, 255.0);
 
 	}
 
