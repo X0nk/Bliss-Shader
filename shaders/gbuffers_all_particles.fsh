@@ -160,8 +160,13 @@ void main() {
 		float lightleakfix = clamp(eyeBrightnessSmooth.y/240.0,0.0,1.0);
 		float phase = phaseg(clamp(dot(np3, WsunVec),0.0,1.0),(1.0-gl_FragData[0].a) * 0.8 + 0.1) + 1.0 ;
 		vec3 Direct_lighting = DoDirectLighting(DirectLightColor, Shadows, 1.0, 0.0) * phase * lightleakfix;
+		vec3 Torch_Color = vec3(TORCH_R,TORCH_G,TORCH_B);
 
-		vec3 Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), clamp(lmtexcoord.zw,0.0,1.0), 5.0);
+		#ifdef LIT
+			Torch_Color *= 2.0;
+		#endif
+
+		vec3 Indirect_lighting = DoAmbientLighting(AmbientLightColor, Torch_Color, clamp(lmtexcoord.zw,0.0,1.0), 5.0);
 		
 		// gl_FragData[0].a = TEXTURE.a;
 
