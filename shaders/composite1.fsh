@@ -852,8 +852,12 @@ void main() {
 		DirectLightColor = vec3(0.0);
 	#endif
 
-	if(hand) DirectLightColor *= max(eyeBrightnessSmooth.y,0)/240.;
-
+	#ifdef OLD_LIGHTLEAK_FIX
+		DirectLightColor *= pow(clamp(eyeBrightnessSmooth.y/240. + lightmap.y,0.0,1.0),2.0);
+	#else
+		if(hand) DirectLightColor *= pow(clamp(eyeBrightnessSmooth.y/240. + lightmap.y,0.0,1.0),2.0);
+	#endif
+	
 	vec3 AmbientLightColor = averageSkyCol_Clouds;
 
 
