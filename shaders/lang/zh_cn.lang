@@ -430,11 +430,6 @@ option.AEROCHROME_WOOL_ENABLED.comment=技术上,与羊毛相关的方块都会�
         option.ORB_G=天体颜色 - 绿色
         option.ORB_B=天体颜色 - 蓝色
 
-    screen.lightning_color=闪电颜色
-        option.Lightning_R=闪电 - 红色
-        option.Lightning_G=闪电 - 绿色
-        option.Lightning_B=闪电 - 蓝色
-
     option.WhiteWorld=全白世界
     option.WhiteWorld.comment=这是用于 Debug 的视图. 易于观察 环境光遮蔽 的效果. 易于观察 模拟全局光照 (绿光) 的效果.
     option.ambientLight_only=仅启用环境光
@@ -915,11 +910,6 @@ option.AEROCHROME_WOOL_ENABLED.comment=技术上,与羊毛相关的方块都会�
         option.ORB_R=天体颜色 - 红色
         option.ORB_G=天体颜色 - 绿色
         option.ORB_B=天体颜色 - 蓝色
-
-    screen.lightning_color=闪电颜色
-        option.Lightning_R=闪电 - 红色
-        option.Lightning_G=闪电 - 绿色
-        option.Lightning_B=闪电 - 蓝色
 
     option.WhiteWorld=全白世界
     option.WhiteWorld.comment=这是用于 Debug 的视图. 易于观察 环境光遮蔽 的效果. 易于观察 模拟全局光照 (绿光) 的效果.

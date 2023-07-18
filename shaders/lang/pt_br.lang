@@ -11,11 +11,6 @@ screen.Misc_Settings = Configurações Diversas
      option.ORB_G=Orb Verde
      option.ORB_B=Orb Azul
 
-screen.lightning_color=Relâmpago
-     option.Lightning_R=Relâmpago Vermelho
-     option.Lightning_G=Relâmpago Verde
-     option.Lightning_B=Relâmpago Azul
-
 option.WhiteWorld=Mundo Branco
     option.ambientLight_only=Apenas Luz Ambiente
     option.Glass_Tint=Tintura de Vidro
