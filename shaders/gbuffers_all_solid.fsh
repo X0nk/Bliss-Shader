@@ -417,8 +417,6 @@ void main() {
 	
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM) * color;
 
-
-
 	if(LIGHTNING > 0) Albedo = vec4(1);
 	float ENDPORTAL_EFFECT = PORTAL > 0 ? EndPortalEffect(Albedo, fragpos, worldpos, tbnMatrix) : 0;
 
@@ -533,7 +531,7 @@ void main() {
 	// hit glow effect...
 	#ifdef ENTITIES
 		Albedo.rgb = mix(Albedo.rgb, entityColor.rgb, entityColor.a);
-		gl_FragData[2].a = mix(gl_FragData[2].a, 0.5, entityColor.a);;
+		gl_FragData[2].a = mix(gl_FragData[2].a, 0.9, entityColor.a);;
 	#endif
 
 	//////////////////////////////// 				////////////////////////////////

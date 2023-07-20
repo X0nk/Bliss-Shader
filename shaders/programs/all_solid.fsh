@@ -67,6 +67,7 @@ uniform vec3 cameraPosition;
 uniform float rainStrength;
 uniform sampler2D noisetex;//depth
 uniform sampler2D depthtex0;
+uniform vec4 entityColor;
 
 flat varying float blockID;
 
@@ -361,6 +362,13 @@ void main() {
 		#if SSS_TYPE == 3		
 			gl_FragData[2].b = SpecularTex.b;
 		#endif
+
+		// hit glow effect...
+		#ifdef ENTITIES
+			Albedo.rgb = mix(Albedo.rgb, entityColor.rgb, entityColor.a);
+			gl_FragData[2].a = mix(gl_FragData[2].a, 0.9, entityColor.a);;
+		#endif
+
 	#endif
 
 	//////////////////////////////// 
