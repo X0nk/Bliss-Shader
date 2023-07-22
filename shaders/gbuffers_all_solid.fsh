@@ -418,13 +418,16 @@ void main() {
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM) * color;
 
 	if(LIGHTNING > 0) Albedo = vec4(1);
-	float ENDPORTAL_EFFECT = PORTAL > 0 ? EndPortalEffect(Albedo, fragpos, worldpos, tbnMatrix) : 0;
 
+	float ENDPORTAL_EFFECT = 0.0;
+	#ifndef ENTITIES
+		ENDPORTAL_EFFECT = PORTAL > 0 ? EndPortalEffect(Albedo, fragpos, worldpos, tbnMatrix) : 0;
+	#endif
+	
 	#ifdef WhiteWorld
 		Albedo.rgb = vec3(1.0);
 	#endif
 		
-
 	#ifdef AEROCHROME_MODE
 		vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), AEROCHROME_PINKNESS);
 		float gray = dot(Albedo.rgb, vec3(0.2, 01.0, 0.07));
@@ -521,11 +524,13 @@ void main() {
 		#if SSS_TYPE == 3		
 			gl_FragData[2].b = SpecularTex.b;
 		#endif
-
-		if(PORTAL > 0){
-			gl_FragData[2].rgb = vec3(0);
-			gl_FragData[2].a = clamp(ENDPORTAL_EFFECT * 0.9, 0,0.9);
-		}
+		
+		#ifndef ENTITIES
+			if(PORTAL > 0){
+				gl_FragData[2].rgb = vec3(0);
+				gl_FragData[2].a = clamp(ENDPORTAL_EFFECT * 0.9, 0,0.9);
+			}
+		#endif
 	#endif
 
 	// hit glow effect...
