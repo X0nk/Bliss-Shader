@@ -280,7 +280,7 @@ float EndPortalEffect(
 }
 
 float bias(){
-	return Texture_MipMap_Bias + (blueNoise()-0.5)*0.5;
+	return (Texture_MipMap_Bias + (blueNoise()-0.5)*0.5) - (1.0-RENDER_SCALE.x) * 2.0;
 }
 vec4 texture2D_POMSwitch(
 	sampler2D sampler, 

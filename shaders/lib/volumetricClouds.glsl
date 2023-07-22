@@ -79,6 +79,7 @@ float cloudVol(in vec3 pos,in vec3 samplePos,in float cov, in int LoD){
 	float pw2 = log(fbmPower2);
 
 	samplePos.xz -= cloud_movement/4;
+	
 	samplePos.xz += pow( max(pos.y - (CumulusHeight+20), 0.0) / 20.0,1.50);
 
 	noise += 1.0-densityAtPos(samplePos * 200.) ;
