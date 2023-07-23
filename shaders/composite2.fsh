@@ -401,7 +401,7 @@ void main() {
 		// estEyeDepth = max(Water_Top_Layer - cameraPosition.y,0.0);
 
 		vec3 vl = vec3(0.0);
-		waterVolumetrics(vl, vec3(0.0), fragpos, estEyeDepth, estEyeDepth, length(fragpos), noise, totEpsilon, scatterCoef, ambientColVol, lightColVol*(1.0-pow(1.0-sunElevation*lightCol.a,5.0)) , dot(normalize(fragpos), normalize(sunVec) * lightCol.a 	));
+		waterVolumetrics(vl, vec3(0.0), fragpos, estEyeDepth, estEyeDepth, length(fragpos), noise, totEpsilon, scatterCoef, ambientColVol, lightColVol*(1.0-pow(1.0-sunElevation*lightCol.a,5.0)) , dot(normalize(fragpos), normalize(sunVec* lightCol.a ) 	));
 		
 		gl_FragData[0] = clamp(vec4(vl,1.0),0.000001,65000.);
 	}
