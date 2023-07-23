@@ -254,19 +254,22 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 		float maxZ = min(rayLength,12.0)/(1e-8+rayLength);
 		dV *= maxZ;
 
+
 		rayLength *= maxZ;
 		
 		float dY = normalize(mat3(gbufferModelViewInverse) * rayEnd).y * rayLength;
 		estEndDepth *= maxZ;
 		estSunDepth *= maxZ;
 
-		vec3 absorbance = vec3(1.0);
-		vec3 vL = vec3(0.0);
-
-		float phase = phaseg(VdotL,0.7) * 1.5 + 0.1;
-
 		vec3 wpos = mat3(gbufferModelViewInverse) * rayStart  + gbufferModelViewInverse[3].xyz;
 		vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
+
+		// float phase = (phaseg(VdotL,0.5) + phaseg(VdotL,0.8)) ;
+		float phase = (phaseg(VdotL,0.6) + phaseg(VdotL,0.8)) * 0.5;
+		// float phase = phaseg(VdotL, 0.7);
+		
+		vec3 absorbance = vec3(1.0);
+		vec3 vL = vec3(0.0);
 
 		float expFactor = 11.0;
 		for (int i=0;i<spCount;i++) {
@@ -289,12 +292,13 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 				sh *= GetCloudShadow_VLFOG(progressW,WsunVec);
 			#endif
 
+			vec3 sunMul = exp(-max(estSunDepth * d,0.0) * waterCoefs) * 5.0;
+			vec3 ambientMul = exp(-max(estEndDepth * d,0.0) * waterCoefs );
 
-			vec3 ambientMul = exp(-max(estEndDepth * d,0.0) * waterCoefs ) * 1.5;
-			vec3 sunMul = exp(-max(estSunDepth * d,0.0) * waterCoefs);
+			vec3 Directlight = (lightSource * phase * sunMul) * sh;
+			vec3 Indirectlight = ambientMul*ambient;
 
-			vec3 light = (sh * lightSource * phase * sunMul + (ambientMul*ambient) )*scatterCoef;
-			// vec3 light = sh * vec3(1);
+			vec3 light = (Directlight + Indirectlight) * scatterCoef;
 
 			vL += (light - light * exp(-waterCoefs * dd * rayLength)) / waterCoefs * absorbance;
 			absorbance *= exp(-dd * rayLength * waterCoefs);
@@ -847,7 +851,8 @@ void main() {
 	vec3 ambientCoefs = normal/dot(abs(normal),vec3(1.));
 
 	vec3 DirectLightColor = lightCol.rgb/80.0;
-	// DirectLightColor *= clamp(abs(WsunVec.y)*2,0.,1.);
+	vec3 Direct_SSS = vec3(0.0);
+
 	#ifdef ambientLight_only
 		DirectLightColor = vec3(0.0);
 	#endif
@@ -859,6 +864,7 @@ void main() {
 	#endif
 	
 	vec3 AmbientLightColor = averageSkyCol_Clouds;
+	vec3 Indirect_SSS = vec3(0.0);
 
 
 
@@ -882,7 +888,7 @@ void main() {
 		vec3 background = vec3(0.0);
 		vec3 orbitstar = vec3(np3.x,abs(np3.y),np3.z);
 		orbitstar.x -= WsunVec.x*0.2; 
-		background += stars(orbitstar) * 5.0	;
+		background += stars(orbitstar) * 10.0	;
 
 		#ifndef ambientLight_only
 			background += Moon(np3, -WsunVec, DirectLightColor*20, background); // moon
@@ -968,7 +974,6 @@ void main() {
 			
 
 	////////////////////////////////	SUN SSS		////////////////////////////////
-		vec3 SSS = vec3(0.0);
 
 		#if SSS_TYPE != 0
 			#ifndef Variable_Penumbra_Shadows
@@ -986,10 +991,9 @@ void main() {
 			#endif
 
 
-			SSS = SubsurfaceScattering_sun(albedo, SHADOWBLOCKERDEPTBH, sunSSS_density, clamp(dot(np3, WsunVec),0.0,1.0)) ;
-			SSS *=	DirectLightColor;
+			Direct_SSS = SubsurfaceScattering_sun(albedo, SHADOWBLOCKERDEPTBH, sunSSS_density, clamp(dot(np3, WsunVec),0.0,1.0)) ;
 
-			if (isEyeInWater == 0) SSS *= clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
+			if (isEyeInWater == 0) Direct_SSS *= clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
 		#endif
 
 		if (!hand){
@@ -1000,23 +1004,23 @@ void main() {
 
 				Shadows = min(screenShadow, Shadows);
 
-				if (outsideShadowMap) SSS *= Shadows;
+				if (outsideShadowMap) Direct_SSS *= Shadows;
 
 			#else
 
-				if (outsideShadowMap) SSS = vec3(0.0);
+				if (outsideShadowMap) Direct_SSS = vec3(0.0);
 			#endif
 		}
 
 		#if SSS_TYPE != 0
-			SSS *= 1.0-clamp(NdotL*Shadows,0,1);
+			Direct_SSS *= 1.0-clamp(NdotL*Shadows,0,1);
 		#endif
 
 		#ifdef VOLUMETRIC_CLOUDS
 		#ifdef CLOUDS_SHADOWS
 			cloudShadow = GetCloudShadow(p3);
 			Shadows *= cloudShadow;
-			SSS *= cloudShadow;
+			Direct_SSS *= cloudShadow;
 		#endif
 		#endif
 			 
@@ -1040,7 +1044,7 @@ void main() {
 		
 		// do this to make underwater shading easier.
 		vec2 newLightmap = lightmap.xy;
-		if((isEyeInWater == 0 && iswater) || (isEyeInWater == 1 && !iswater)) newLightmap.y = clamp(newLightmap.y,0,1);
+		// if(isEyeInWater == 1 && !iswater) newLightmap.y = max(newLightmap.y, 0.5);
 
 		#ifndef ambientSSS_view
 			Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), newLightmap.xy, skylight);
@@ -1105,7 +1109,7 @@ void main() {
 				SSS_forSky *= uplimit;
 
 				// Combine with the other SSS
-				SSS += SSS_forSky;
+				Indirect_SSS += SSS_forSky;
 
 				SSS_forSky = vec3((1.0 - SkySSS) * LabSSS);
 				SSS_forSky *= ambientColor;
@@ -1139,22 +1143,18 @@ void main() {
 			vec3 Absorbtion = exp2(-totEpsilon*estimatedDepth);
 
 			// caustics...
-			float Direct_caustics  = waterCaustics(mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz + cameraPosition, WsunVec);
-			float Ambient_Caustics = waterCaustics(mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz + cameraPosition, vec3(0.5, 1.0, 0.5));
-
-			// apply caustics to the lightting
-			DirectLightColor  *= 0.5 + max(pow(Direct_caustics*2,2),0.0); 
-			// Indirect_lighting *= 0.5 + max(pow(Ambient_Caustics,2),0.0); 
-
-			// directLightCol 	  *= Direct_caustics; 
-			// Indirect_lighting *= Ambient_Caustics*0.5+0.5; 
-
-			// apply water absorbtion to the lighting
-			// waterabsorb_speculars.rgb *= Absorbtion;
+			float Direct_caustics  = waterCaustics(p3 + cameraPosition, WsunVec) * cloudShadow;
+			// float Ambient_Caustics = waterCaustics(p3 + cameraPosition, vec3(0.5, 1, 0.5));
+			
+			// apply caustics to the lighting
+			DirectLightColor *= 1.0 + max(pow(Direct_caustics * 3.0, 2.0),0.0);
+			// Indirect_lighting *= 0.5 + max(pow(Ambient_Caustics, 2.0),0.0); 
 
 			DirectLightColor *= Absorbtion;
-			// Indirect_lighting *= Absorbtion;
-			if(isEyeInWater == 0) DirectLightColor *= (max(eyeBrightnessSmooth.y,0)/240.);
+			Indirect_lighting = (Indirect_lighting/exp2(-estimatedDepth*0.5))  * Absorbtion;
+
+			if(isEyeInWater == 0) DirectLightColor *= max(eyeBrightnessSmooth.y/240., 0.0);
+			DirectLightColor *= cloudShadow;
 		}
 
 
@@ -1187,10 +1187,10 @@ void main() {
 		#endif
 		#endif
 
-
 		Direct_lighting = DoDirectLighting(DirectLightColor, Shadows, NdotL, 0.0);
+		Direct_SSS *= DirectLightColor; // do this here so it gets underwater absorbtion.
 
-		vec3 FINAL_COLOR = Indirect_lighting + Direct_lighting + SSS;
+		vec3 FINAL_COLOR = Indirect_lighting + Indirect_SSS + Direct_lighting + Direct_SSS ;
 
 		#ifndef ambientSSS_view
 			FINAL_COLOR *= albedo;
@@ -1212,7 +1212,7 @@ void main() {
 	////////////////////////////////	UNDERWATER FOG	////////////////////////////////
 	//////////////////////////////// 					////////////////////////////////
 
-	if (iswater){	
+	if (iswater){
 		vec3 fragpos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0));
 		float Vdiff = distance(fragpos,fragpos0);
 		float VdotU = np3.y;
@@ -1221,12 +1221,11 @@ void main() {
 	
 		float custom_lightmap_T = clamp(pow(texture2D(colortex14, texcoord).a,3.0),0.0,1.0);
 
+		vec3 lightColVol = lightCol.rgb / 80.;
+		// if(shadowmapindicator < 1) lightColVol *= clamp((custom_lightmap_T-0.8) * 15,0,1)
 
 		vec3 lightningColor = (lightningEffect / 3) * (max(eyeBrightnessSmooth.y,0)/240.);
-		vec3 ambientColVol =  max((averageSkyCol_Clouds / 30.) *  custom_lightmap_T, vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision)) + lightningColor;
-		vec3 lightColVol = DirectLightColor;
-	
-		if(shadowmapindicator < 1) lightColVol *= clamp((custom_lightmap_T-0.8) * 15,0,1);
+		vec3 ambientColVol =  max((averageSkyCol_Clouds / 30.0) *  custom_lightmap_T, vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision)) + lightningColor;
 
 		if (isEyeInWater == 0) waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));		
 	}

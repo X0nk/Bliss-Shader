@@ -464,7 +464,7 @@ void main() {
 		
 
 		#ifdef Specular_Reflections	
-			MaterialReflections_N(gl_FragData[0].rgb, SpecularTex.r, SpecularTex.ggg, albedo, normal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg,noise), hand);
+			MaterialReflections_N(gl_FragData[0].rgb, SpecularTex.r, vec3(SpecularTex.g), albedo, normal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg,noise), hand);
 		#endif
 
 		Emission(gl_FragData[0].rgb, albedo, SpecularTex.a);

@@ -252,7 +252,7 @@ void main() {
   #endif
 
   vec4 vl = BilateralUpscale(colortex0, depthtex1, gl_FragCoord.xy, frDepth, vec2(0.0));
-
+  float bloomyFogMult = 1.0;
 
   if (TranslucentShader.a > 0.0){
 		#ifdef Glass_Tint
@@ -296,11 +296,21 @@ void main() {
 
   // underwater fog
   if (isEyeInWater == 1){
-    float fogfade = clamp( exp(length(fragpos) /  -10)   ,0.0,1.0);
-    color.rgb = color.rgb * fogfade   ;
-    vl.a *= fogfade  ;
+    float dirtAmount = Dirt_Amount;
+    vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
+    vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
+    vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;
+
+    // float fogfade = clamp( exp(length(fragpos) /  -20)   ,0.0,1.0);
+    // vec3 fogfade =  clamp( exp( (length(fragpos) / -4) * totEpsilon  ) ,0.0,1.0);
+    vec3 fogfade =  clamp( exp( (length(fragpos) / -4) * totEpsilon  ) ,0.0,1.0);
+    fogfade *= 1.0 - clamp( length(fragpos) / far,0.0,1.0);
+
+    color.rgb *= fogfade ;
+    bloomyFogMult *= 0.4;
   }
 
+  // apply VL fog to the scene
   color *= vl.a;
   color += vl.rgb;
   
@@ -316,7 +326,7 @@ void main() {
   /// powdered snow
   if (isEyeInWater == 3){
     color.rgb = mix(color.rgb,vec3(10,15,20),clamp(length(fragpos)*0.5,0.,1.));
-    vl.a = 0.0;
+    bloomyFogMult = 0.0;
   }
 
   // blidnesss
@@ -331,7 +341,7 @@ void main() {
     if(luma(thingy) > 0.0 ) color.rgb =  thingy;
   #endif
 
-  gl_FragData[0].r = vl.a; // pass fog alpha so bloom can do bloomy fog
+  gl_FragData[0].r = vl.a * bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
 
   gl_FragData[1].rgb = clamp(color.rgb,0.0,68000.0);
 

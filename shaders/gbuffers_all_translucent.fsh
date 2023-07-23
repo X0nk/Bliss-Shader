@@ -324,7 +324,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 		#ifdef PhysicsMod_support
 		if(physics_iterationsNormal < 1.0){
 		#endif
-			float bumpmult = 1.;
+			float bumpmult = 1.0;
 			vec3 bump = vec3(0);
 			vec3 posxz = p3+cameraPosition;
 
@@ -457,15 +457,12 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 			vec3 reflectedVector = reflect(normalize(fragpos), normal);
 			float normalDotEye = dot(normal, normalize(fragpos));
 			float fresnel = pow(clamp(1.0 + normalDotEye,0.0,1.0), 5.0);
-			// float unchangedfresnel = fresnel;
-	
+
 			// snells window looking thing
-			if(isEyeInWater == 1 && iswater > 0.99) fresnel = clamp(pow(1.66 + normalDotEye,25),0.02,1.0);
-	
 			#ifdef PhysicsMod_support
 				if(isEyeInWater == 1 && physics_iterationsNormal > 0.0) fresnel = clamp( 1.0 - (pow( normalDotEye * 1.66 ,25)),0.02,1.0);
 			#else
-				if(isEyeInWater == 1) fresnel = clamp( 1.0 - (pow( normalDotEye * 1.66 ,25)),0.02,1.0);
+				if(isEyeInWater == 1 ) fresnel = pow(clamp(1.66 + normalDotEye,0.0,1.0), 25.0);
 			#endif
 
 			fresnel = mix(f0, 1.0, fresnel); 
@@ -475,8 +472,9 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 			// SSR, Sky, and Sun reflections
 			#ifdef WATER_BACKGROUND_SPECULAR
  				SkyReflection = skyCloudsFromTex(wrefl,colortex4).rgb / 30.0;
-				// SkyReflection = vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B)/
+				if(isEyeInWater == 1) SkyReflection = vec3(0.0);
 			#endif
+
 			#ifdef WATER_SUN_SPECULAR
 				SunReflection = Direct_lighting *  GGX(normal,  -normalize(fragpos),  lightSign*sunVec, roughness, vec3(f0)); 
 			#endif
