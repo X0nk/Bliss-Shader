@@ -1211,10 +1211,9 @@ void main() {
 		#ifdef Specular_Reflections	
 			// MaterialReflections(FINAL_COLOR, SpecularTex.r, SpecularTex.ggg, albedo, WsunVec, (Shadows*NdotL)*DirectLightColor, lightmap.y, slopednormal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise()), hand, entities);
 
-			float NdotL_spec = dot(AlteredNormal,WsunVec); NdotL_spec = clamp((-15 + NdotL_spec*255.0) / 240.0  ,0.0,1.0);
 			vec3 specNoise = vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise());
 
-			DoSpecularReflections(FINAL_COLOR, fragpos, np3, WsunVec, specNoise, slopednormal, SpecularTex.r, SpecularTex.g, albedo, DirectLightColor*NdotL_spec*Shadows, lightmap.y, hand);
+			DoSpecularReflections(FINAL_COLOR, fragpos, np3, WsunVec, specNoise, slopednormal, SpecularTex.r, SpecularTex.g, albedo, DirectLightColor*NdotL*Shadows, lightmap.y, hand);
 		#endif
 
 		Emission(FINAL_COLOR, albedo, SpecularTex.a);
