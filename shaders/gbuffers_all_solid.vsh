@@ -227,6 +227,7 @@ void main() {
 	blockID = mc_Entity.x;
 	velocity = at_velocity;
 
+	if(mc_Entity.x == 10009) normalMat.a = 0.60;
 
 
 	PORTAL = 0;
@@ -274,7 +275,7 @@ void main() {
 	#ifdef ENTITIES
 		if(entityId == 12345){
 			LIGHTNING = 1;
-			normalMat.a = 0.5;
+			normalMat.a = 0.50;
 		}
 	#endif
 
@@ -289,10 +290,11 @@ void main() {
 
 
 #ifdef WORLD
+	
 
     /////// ----- SSS ON BLOCKS ----- ///////
 	// strong
-	if(mc_Entity.x == 10001 || mc_Entity.x == 10003 || mc_Entity.x == 10004) SSSAMOUNT = 1.0;
+	if(mc_Entity.x == 10001 || mc_Entity.x == 10003 || mc_Entity.x == 10004 || mc_Entity.x == 10009) SSSAMOUNT = 1.0;
 	
 	// medium
 	if(mc_Entity.x == 10006 || mc_Entity.x == 200) SSSAMOUNT = 0.75;
@@ -340,7 +342,7 @@ void main() {
 		// #endif
 		// #endif
 
-		if ((mc_Entity.x == 10001 && istopv) && abs(position.z) < 64.0) {
+		if ((mc_Entity.x == 10001 || mc_Entity.x == 10009 && istopv) && abs(position.z) < 64.0) {
     		vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
 			worldpos.xyz += calcMovePlants(worldpos.xyz)*lmtexcoord.w - cameraPosition;
     		position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;

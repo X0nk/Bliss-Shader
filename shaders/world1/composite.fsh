@@ -84,6 +84,8 @@ vec2 RENDER_SCALE = vec2(1.0);
 
 #include "/lib/end_fog.glsl"
 
+#undef LIGHTSOURCE_REFLECTION
+#define ENDSPECULAR
 #include "/lib/specular.glsl"
 
 
@@ -453,8 +455,13 @@ void main() {
 		// finalize
 		gl_FragData[0].rgb = (Indirect_lighting + LightSource) * albedo;
 
+		// #ifdef Specular_Reflections	
+		// 	MaterialReflections_E(gl_FragData[0].rgb, SpecularTex.r, SpecularTex.ggg, albedo, normal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg,noise), hand, LightColor * LightFalloff, normalize(-LightPos), entities);
+		// #endif
+
 		#ifdef Specular_Reflections	
-			MaterialReflections_E(gl_FragData[0].rgb, SpecularTex.r, SpecularTex.ggg, albedo, normal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg,noise), hand, LightColor * LightFalloff, normalize(-LightPos), entities);
+			vec3 specNoise = vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise());
+			DoSpecularReflections(gl_FragData[0].rgb, fragpos, np3, vec3(0.0), specNoise, normal, SpecularTex.r, SpecularTex.g, albedo, vec3(0.0), 1.0, hand);
 		#endif
 
 		if(!hand) gl_FragData[0].rgb *= ssao(fragpos,noise,FlatNormals) * AO;

@@ -316,7 +316,7 @@ void main() {
   
 // bloomy rain effect
   float rainDrops =  clamp(texture2D(colortex9,texcoord).a,  0.0,1.0); 
-  if(rainDrops > 0.0) bloomyFogMult *= clamp(1.0 - pow(rainDrops*5.0,1),0.0,1.0); 
+  if(rainDrops > 0.0) bloomyFogMult *= clamp(1.0 - pow(rainDrops*5.0,2),0.0,1.0); 
 
   /// lava.
   if (isEyeInWater == 2){

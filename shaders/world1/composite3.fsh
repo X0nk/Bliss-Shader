@@ -12,6 +12,7 @@ uniform sampler2D depthtex1;
 uniform sampler2D colortex13;
 uniform sampler2D colortex11;
 uniform sampler2D colortex7;
+uniform sampler2D colortex4;
 uniform sampler2D colortex3;
 uniform sampler2D colortex2;
 uniform sampler2D colortex0;
@@ -183,5 +184,16 @@ void main() {
   }
 
   gl_FragData[0].r = bloomyfogmult;
+
+
+
+  #ifdef display_LUT
+  	vec2 movedTC = texcoord;
+    vec3 thingy = texture2D(colortex4,movedTC).rgb / 30.0;
+    if(luma(thingy) > 0.0 ) color.rgb =  thingy;
+  #endif
+
+
+
   gl_FragData[1].rgb = clamp(color,6.11*1e-5,65000.0);
 }

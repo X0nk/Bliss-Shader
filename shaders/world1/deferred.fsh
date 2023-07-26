@@ -83,11 +83,12 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
 	vec3 viewVector = cartToSphere(p);
 
-  mat2x3 vL = getVolumetricRays(fract(frameCounter/1.6180339887),mat3(gbufferModelView)*viewVector*1024.,fract(frameCounter/2.6180339887));
-  float absorbance = dot(vL[1],vec3(0.22,0.71,0.07));
+  mat2x3 vl = getVolumetricRays(fract(frameCounter/1.6180339887),mat3(gbufferModelView)*viewVector*1024.,fract(frameCounter/2.6180339887));
 
+	float absorbance = dot(vl[1],vec3(0.22,0.71,0.07));
+	
+	gl_FragData[0] = clamp(vec4(vl[0]*0.7,absorbance),0.000001,65000.);
 
-	gl_FragData[0] = vec4(vL[0].rgb * (1.0-absorbance),1.0);
 }
 
 //Temporally accumulate sky and light values

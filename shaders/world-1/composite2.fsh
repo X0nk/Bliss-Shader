@@ -82,7 +82,13 @@ float ld(float dist) {
 
 vec2 RENDER_SCALE = vec2(1.0);
 
+
+#undef LIGHTSOURCE_REFLECTION
+#define NETHERSPECULAR
 #include "/lib/specular.glsl"
+
+
+
 #include "/lib/nether_fog.glsl"
 
 
@@ -464,7 +470,9 @@ void main() {
 		
 
 		#ifdef Specular_Reflections	
-			MaterialReflections_N(gl_FragData[0].rgb, SpecularTex.r, vec3(SpecularTex.g), albedo, normal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg,noise), hand);
+			// MaterialReflections_N(gl_FragData[0].rgb, SpecularTex.r, vec3(SpecularTex.g), albedo, normal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg,noise), hand);
+			vec3 specNoise = vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise());
+			DoSpecularReflections(gl_FragData[0].rgb, fragpos, np3, vec3(0.0), specNoise, normal, SpecularTex.r, SpecularTex.g, albedo, vec3(0.0), 1.0, hand);
 		#endif
 
 		Emission(gl_FragData[0].rgb, albedo, SpecularTex.a);

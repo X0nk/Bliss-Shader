@@ -171,8 +171,6 @@ vec3 Cloud_lighting(
 	vec3 moonLighting = exp(MoonShadowing * coeeff/4  + powder) * moonContribution;
 
 	return skyLighting + moonLighting  + sunLighting ;
-
-	// return skyLighting;
 }
 
 
@@ -191,13 +189,6 @@ float CustomPhase(float LightPos, float S_1, float S_2){
 	float A = pow(1.0 - pow(max(R-LightPos,0.0), N2 ),N);
 
 	return A;
-}
-
-float PhaseHG(float cosTheta, float g) {
-    float denom = 1 + g * g + 2 * g * cosTheta;
-	const float Inv4Pi  = 0.07957747154594766788;
-
-    return Inv4Pi * (1 - g * g) / (denom * sqrt(denom));
 }
 
 uniform vec3 lightningEffect;
@@ -299,7 +290,6 @@ vec4 renderClouds(
 					Sunlight += HighAlt_shadow;
 				#endif
 				
-				// float phase = PhaseHG(-SdotV, (1.0-cumulus));
 
 				float ambientlightshadow = 1.0 - clamp(exp((progress_view.y - (MaxCumulusHeight - 50)) / 100.0),0.0,1.0) ;
 

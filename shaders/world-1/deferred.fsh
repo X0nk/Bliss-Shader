@@ -75,6 +75,18 @@ void main() {
 
 gl_FragData[0] = vec4(0.0);
 
+//Sky gradient with clouds
+if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+257.){
+
+	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
+	vec3 viewVector = cartToSphere(p);
+
+  vec3 BackgroundColor = (gl_Fog.color.rgb / max(dot(gl_Fog.color.rgb,vec3(0.3333)),0.01))  * 3.0;
+	BackgroundColor *= abs(viewVector.y+0.5);
+  
+  gl_FragData[0] = vec4(BackgroundColor,1.0);
+}
+
 //Exposure values
 if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 gl_FragData[0] = vec4(exposure,avgBrightness,exposureF,1.0);

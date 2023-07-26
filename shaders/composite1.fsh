@@ -6,7 +6,10 @@
 
 const bool colortex5MipmapEnabled = true;
 const bool colortex12MipmapEnabled = true;
-// const bool colortex4MipmapEnabled = true;
+
+#ifndef Rough_reflections
+	const bool colortex4MipmapEnabled = true;
+#endif
 
 const bool shadowHardwareFiltering = true;
 
@@ -147,9 +150,10 @@ vec3 viewToWorld(vec3 viewPosition) {
 #include "/lib/stars.glsl"
 #include "/lib/volumetricClouds.glsl"
 #include "/lib/waterBump.glsl"
-#include "/lib/specular.glsl"
 
 #define OVERWORLD
+
+#include "/lib/specular.glsl"
 #include "/lib/diffuse_lighting.glsl"
 
 float lengthVec (vec3 vec){
@@ -466,14 +470,38 @@ void ssAO(inout vec3 lighting, inout float sss, vec3 fragpos,float mulfov, vec2 
 	lighting = lighting*max(occlusion,pow(lightmap.x,4));
 }
 
-vec3 DoContrast(vec3 Color, float strength){
+vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 
-	float Contrast =  log(strength);
+	vec3 clipPosition = toClipSpace3(position);
+	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ?
+	                   (-near -position.z) / dir.z : far*sqrt(3.);
+	vec3 direction = normalize(toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
+	direction.xy = normalize(direction.xy);
 
-	return clamp(mix(vec3(0.5), Color, Contrast) ,0,255);
+	//get at which length the ray intersects with the edge of the screen
+	vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
+	float mult = maxLengths.y;
+
+	vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0) * dither;
+	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) ;
+
+	spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
+
+	float biasdist =  clamp(position.z*position.z/50.0,1,2); // shrink sample size as distance increases
+
+	for(int i = 0; i < int(quality); i++){
+		spos += stepv;
+		float sp = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4),0).w/65000.0);
+		float currZ = linZ(spos.z);
+
+		if( sp < currZ) {
+			float dist = abs(sp-currZ)/currZ;
+			if (abs(dist) < biasdist*0.05) return vec3(spos.xy, invLinZ(sp))/vec3(RENDER_SCALE,1.0);
+		}
+		spos += stepv;
+	}
+  return vec3(1.1);
 }
-
-
 vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes){
 	float dist = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
 
@@ -787,7 +815,6 @@ void main() {
 	vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;
 	vec3 scatterCoef = dirtAmount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / pi;
 
-
 	#ifdef AEROCHROME_MODE
 		totEpsilon *= 10.0;
 		scatterCoef *= 0.1;
@@ -808,6 +835,7 @@ void main() {
 	vec3 albedo = toLinear(vec3(dataUnpacked0.xz,dataUnpacked1.x));
 	vec2 lightmap = dataUnpacked1.yz;
 	vec3 normal = decode(dataUnpacked0.yw);
+	
 
 	////// --------------- UNPACK TRANSLUCENT GBUFFERS --------------- //////
 	// vec4 dataTranslucent = texture2D(colortex11,texcoord); 
@@ -817,8 +845,6 @@ void main() {
 
 	////// --------------- UNPACK MISC --------------- //////
 	vec4 SpecularTex = texture2D(colortex8,texcoord);
-	// float LabSSS = clamp((-65.0 + SpecularTex.z * 255.0) / 190.0 ,0.0,1.0);	
-	
 	float LabSSS = clamp((-64.0 + SpecularTex.z * 255.0) / 191.0 ,0.0,1.0);
 
 	vec4 normalAndAO = texture2D(colortex15,texcoord);
@@ -832,23 +858,20 @@ void main() {
 		#endif
 	#endif
 
-	float vanilla_AO = normalAndAO.a;
-
-	bool lightningBolt = abs(dataUnpacked1.w-0.5) <0.01;
+	// masks
 	bool isLeaf = abs(dataUnpacked1.w-0.55) <0.01;
-	// bool translucent2 = abs(dataUnpacked1.w-0.6) <0.01;	// Weak translucency
-	// bool translucent4 = abs(dataUnpacked1.w-0.65) <0.01;	// Weak translucency
+	bool lightningBolt = abs(dataUnpacked1.w-0.50) <0.01;
 	bool entities = abs(dataUnpacked1.w-0.45) < 0.01;	
-	
 	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
 	bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
-	
-	// vec3 AO = vec3(1.0);
-	float SkySSS = 0.0;
+	bool isGrass = abs(dataUnpacked1.w-0.60) < 0.01;
+
+	float vanilla_AO = normalAndAO.a;
+
 	vec3 filtered = vec3(1.412,1.0,0.0);
 	if (!hand) filtered = texture2D(colortex3,texcoord).rgb;
 
-	vec3 ambientCoefs = normal/dot(abs(normal),vec3(1.));
+	vec3 ambientCoefs = slopednormal/dot(abs(slopednormal),vec3(1.));
 
 	vec3 DirectLightColor = lightCol.rgb/80.0;
 	vec3 Direct_SSS = vec3(0.0);
@@ -863,16 +886,13 @@ void main() {
 		if(hand) DirectLightColor *= pow(clamp(eyeBrightnessSmooth.y/240. + lightmap.y,0.0,1.0),2.0);
 	#endif
 	
-	vec3 AmbientLightColor = averageSkyCol_Clouds;
-	vec3 Indirect_SSS = vec3(0.0);
-
-
-
 	int shadowmapindicator = 0;
 	float cloudShadow = 1.0;
 
-	vec3 debug = vec3(0.0);
+	vec3 AmbientLightColor = averageSkyCol_Clouds;
+	vec3 Indirect_SSS = vec3(0.0);
 
+	vec3 debug = vec3(0.0);
 	if ( z >= 1.) {//sky
 	
 	//////////////////////////////// 				////////////////////////////////
@@ -1030,29 +1050,23 @@ void main() {
 
 		vec3 Indirect_lighting = vec3(1.0);
 
-		// float skylight = clamp(abs(ambientCoefs.y + 1.0),0.35,2.0);
-
+		if(isGrass) ambientCoefs.y = 0.75;
 		float skylight = clamp(ambientCoefs.y + 0.5,0.25,2.0) * 1.35;
-		// skylight *= skylight;
-		// if(texcoord.x >0.5) skylight = clamp(abs(ambientCoefs.y + 1.0),0.35,2.0);
-
+	
 		#if indirect_effect == 2 || indirect_effect == 3 || indirect_effect == 4
 			if (!hand) skylight = 1.0;
 		#endif
 
 		AmbientLightColor += (lightningEffect * 10) * skylight * pow(lightmap.y,2);
 		
-		// do this to make underwater shading easier.
-		vec2 newLightmap = lightmap.xy;
-		// if(isEyeInWater == 1 && !iswater) newLightmap.y = max(newLightmap.y, 0.5);
-
 		#ifndef ambientSSS_view
-			Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), newLightmap.xy, skylight);
+			Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy, skylight);
 		#else
 			Indirect_lighting = vec3(0.0);
 		#endif
 
 		vec3 AO = vec3(1.0);
+		float SkySSS = 0.0;
 
 		// vanilla AO
 		#if indirect_effect == 0
@@ -1062,7 +1076,7 @@ void main() {
 		// SSAO + vanilla AO
 		#if indirect_effect == 1
 			AO = vec3( exp( (vanilla_AO*vanilla_AO) * -3) )  ;
-			if (!hand) ssAO(AO, SkySSS, fragpos, 1.0, blueNoise(gl_FragCoord.xy).rg,   FlatNormals , texcoord, ambientCoefs, newLightmap.xy, isLeaf);
+			if (!hand) ssAO(AO, SkySSS, fragpos, 1.0, blueNoise(gl_FragCoord.xy).rg,   FlatNormals , texcoord, ambientCoefs, lightmap.xy, isLeaf);
 		#endif
 
 		// GTAO
@@ -1074,12 +1088,12 @@ void main() {
 
 		// RTAO
 		#if indirect_effect == 3
-			if (!hand) rtAO(AO, normal, blueNoise(gl_FragCoord.xy).rg, fragpos, newLightmap.y, NdotL*Shadows);
+			if (!hand) rtAO(AO, normal, blueNoise(gl_FragCoord.xy).rg, fragpos, lightmap.y, NdotL*Shadows);
 		#endif
 
 		// SSGI
 		#if indirect_effect == 4
-			if (!hand) rtGI(Indirect_lighting, normal, blueNoise(gl_FragCoord.xy).rg, fragpos, newLightmap.y, albedo);
+			if (!hand) rtGI(Indirect_lighting, normal, blueNoise(gl_FragCoord.xy).rg, fragpos, lightmap.y, albedo);
 		#endif
 
 		#ifndef AO_in_sunlight
@@ -1100,12 +1114,12 @@ void main() {
 				#endif
 
 				vec3 ambientColor = ((AmbientLightColor * ambient_brightness) / 30.0 ) * 1.5;
-				float lightmap =  pow(newLightmap.y,3);
+				float skylightmap =  pow(lightmap.y,3);
 				float uplimit = clamp(1.0-pow(clamp(ambientCoefs.y + 0.5,0.0,1.0),2),0,1);
 
 				SSS_forSky = SubsurfaceScattering_sky(albedo, SkySSS, LabSSS);
 				SSS_forSky *= ambientColor;
-				SSS_forSky *= lightmap;
+				SSS_forSky *= skylightmap;
 				SSS_forSky *= uplimit;
 
 				// Combine with the other SSS
@@ -1113,12 +1127,10 @@ void main() {
 
 				SSS_forSky = vec3((1.0 - SkySSS) * LabSSS);
 				SSS_forSky *= ambientColor;
-				SSS_forSky *= lightmap;
+				SSS_forSky *= skylightmap;
 
 				////light up dark parts so its more visible
 				Indirect_lighting = max(Indirect_lighting, SSS_forSky);
-				
-
 			}
 		#endif
 
@@ -1197,7 +1209,12 @@ void main() {
 		#endif
 
 		#ifdef Specular_Reflections	
-			MaterialReflections(FINAL_COLOR, SpecularTex.r, SpecularTex.ggg, albedo, WsunVec, (Shadows*NdotL)*DirectLightColor, lightmap.y, slopednormal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise()), hand, entities);
+			// MaterialReflections(FINAL_COLOR, SpecularTex.r, SpecularTex.ggg, albedo, WsunVec, (Shadows*NdotL)*DirectLightColor, lightmap.y, slopednormal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise()), hand, entities);
+
+			float NdotL_spec = dot(AlteredNormal,WsunVec); NdotL_spec = clamp((-15 + NdotL_spec*255.0) / 240.0  ,0.0,1.0);
+			vec3 specNoise = vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise());
+
+			DoSpecularReflections(FINAL_COLOR, fragpos, np3, WsunVec, specNoise, slopednormal, SpecularTex.r, SpecularTex.g, albedo, DirectLightColor*NdotL_spec*Shadows, lightmap.y, hand);
 		#endif
 
 		Emission(FINAL_COLOR, albedo, SpecularTex.a);
@@ -1257,8 +1274,5 @@ void main() {
 		if( hideGUI < 1.0) gl_FragData[0].rgb += laserColor * pow( clamp( 	 1.0-abs(focusDist-abs(fragpos.z))		,0,1),25) ;
 	#endif
 	
-	
-	// gl_FragData[0].rgb = debug;
-
 /* DRAWBUFFERS:3 */
 }
