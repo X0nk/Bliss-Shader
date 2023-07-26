@@ -28,7 +28,10 @@ float cloudVol(in vec3 pos){
 	float noise_2 = pow(densityAtPosFog(samplePos*256 - frameTimeCounter*10 + wind*10),1) * 0.75 +0.25;
 
 	float rooffog = exp(max(100-pos.y,0.0) / -5);
-	finalfog = max(finalfog - noise_1*noise_2 - rooffog, max(floorfog -noise_2*0.2,0.0));
+
+	float maxdist = clamp((12 * 8) - length(pos - cameraPosition),0.0,1.0);
+
+	finalfog = max((finalfog - noise_1*noise_2 - rooffog) * maxdist, max(floorfog - noise_2*0.2,0.0)) ;
     
 	return finalfog;
 }
@@ -56,6 +59,7 @@ vec4 GetVolumetricFog(
 	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
 
 	float maxLength = min(length(dVWorld),far)/length(dVWorld);
+
 	dV *= maxLength;
 	dVWorld *= maxLength;
 
