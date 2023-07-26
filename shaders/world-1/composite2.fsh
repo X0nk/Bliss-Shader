@@ -89,10 +89,6 @@ vec2 RENDER_SCALE = vec2(1.0);
 
 
 
-#include "/lib/nether_fog.glsl"
-
-
-
 
 
 vec3 normVec (vec3 vec){

@@ -95,8 +95,6 @@ vec3 sky_transmittance(vec3 position, vec3 direction, const float steps) {
 vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 sunVector, vec3 moonVector, out vec2 pid, out vec3 transmittance, const int iSteps, float noise) {
 	const int jSteps = 4;
 
-	vec3 sunvec2 = sunVector;
-
 	vec3 viewPosition = (sky_planetRadius + eyeAltitude) * upVector;
 
 	vec2 aid = rsi(viewPosition, viewVector, sky_atmosphereRadius);
@@ -111,9 +109,8 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 	vec3  increment = viewVector * stepSize;
 	vec3  position  = viewVector * sd.x + viewPosition;
 	position += increment * (0.34*noise);
-	vec2 phaseSun  = (pow(sky_phase(dot(viewVector, sunVector ), 0.6)*3, vec2(2)) + sky_phase(dot(viewVector, sunVector ), 0.8))/2;
 
-	// phaseSun = sky_phase(dot(viewVector, sunVector ), 0.8);
+	vec2 phaseSun = sky_phase(dot(viewVector, sunVector ), 0.8);
 	vec2 phaseMoon = sky_phase(dot(viewVector, moonVector), sky_mieg);
 
 	vec3 scatteringSun     = vec3(0.0);
@@ -122,11 +119,8 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 
 	transmittance = vec3(1.0);
 
-
-	// float low_sun = clamp(pow(1.0-sunVector.y,10.0) + 1.0,1.0,	2.0);
-
-	float high_sun = clamp(pow(sunvec2.y+0.6,5),0.0,1.0) * 3.0; // make sunrise less blue, and allow sunset to be bluer
-	float low_sun = clamp(((1.0-abs(sunvec2.y))*3.) - high_sun,1.0,2.0) ;
+	float high_sun = clamp(pow(sunVector.y+0.6,5),0.0,1.0) * 3.0; // make sunrise less blue, and allow sunset to be bluer
+	float low_sun = clamp(((1.0-abs(sunVector.y))*3.) - high_sun,1.0,2.0) ;
 
 	for (int i = 0; i < iSteps; ++i, position += increment) {
 		vec3 density          = sky_density(length(position));
@@ -147,6 +141,6 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 	}
 	
 	vec3 scattering = scatteringSun * sunColorBase + scatteringAmbient * background + scatteringMoon*moonColorBase	;
-	// scattering = vec3(0,high_sun*255.,0);
+
 	return scattering;
 }

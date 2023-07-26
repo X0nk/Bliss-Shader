@@ -116,7 +116,7 @@ void main() {
   float glassdepth = clamp((ld(z2) - ld(z)) * 0.5,0.0,0.15);
 
   // vec4 vl = BilateralUpscale(colortex0,depthtex0,gl_FragCoord.xy,frDepth);
-  float bloomyfogmult = 1.0;
+  float bloomyFogMult = 1.0;
 
   vec4 Translucent_Programs = texture2D(colortex2,texcoord); // the shader for all translucent progams.
 
@@ -131,7 +131,7 @@ void main() {
 
 	vec3 normals = mat3(gbufferModelViewInverse) * worldToView(decode(dataUnpacked0.yw) );
 
-  // vec4 vl = BilateralUpscale(colortex0,depthtex0,gl_FragCoord.xy,frDepth);
+  vec4 vl = BilateralUpscale(colortex0,depthtex0,gl_FragCoord.xy,frDepth);
 
   #ifdef Refraction
     refractedCoord += normals.xy * glassdepth;
@@ -151,17 +151,16 @@ void main() {
     color = color*(1.0-Translucent_Programs.a) + Translucent_Programs.rgb; 
   } 
 
-  if (isEyeInWater == 0){
-    vec3 fragpos = toScreenSpace(vec3(texcoord-vec2(0.0)*texelSize*0.5,z));
-    float fogdistfade = 1.0 - clamp( exp(-pow(length(fragpos / far),2.)*5.0)  ,0.0,1.0);
-    bloomyfogmult = 1.0 - fogdistfade*0.5 ;
+  // if (isEyeInWater == 0){
+  //   vec3 fragpos = toScreenSpace(vec3(texcoord-vec2(0.0)*texelSize*0.5,z));
+  //   float fogdistfade = 1.0 - clamp( exp(-pow(length(fragpos / far),2.)*5.0)  ,0.0,1.0);
+  //   bloomyFogMult = 1.0 - fogdistfade*0.5 ;
 
-    color.rgb = mix(color.rgb, gl_Fog.color.rgb*0.5*NetherFog_brightness, fogdistfade) ;  
-  }
+  //   color.rgb = mix(color.rgb, gl_Fog.color.rgb*0.5*NetherFog_brightness, fogdistfade) ;  
+  // }
 
-  // color *= vl.a;
-  // color += vl.rgb;
-  // bloomyfogmult *= pow(vl.a,0.1);
+  color *= vl.a;
+  color += vl.rgb;
 
 
 
@@ -169,7 +168,7 @@ void main() {
   if (isEyeInWater == 1){
     vec3 fragpos = toScreenSpace(vec3(texcoord-vec2(0.0)*texelSize*0.5,z));
     float fogfade = clamp(exp(-length(fragpos) /5. )   ,0.0,1.0);
-    bloomyfogmult *= fogfade*0.70+0.3  ;
+    bloomyFogMult *= fogfade*0.70+0.3  ;
   }
   /// lava.
   if (isEyeInWater == 2){
@@ -179,7 +178,7 @@ void main() {
   if (isEyeInWater == 3){
     vec3 fragpos = toScreenSpace(vec3(texcoord-vec2(0.0)*texelSize*0.5,z));
     color.rgb = mix(color.rgb,vec3(10,15,20),clamp(length(fragpos)*0.5,0.,1.));
-    bloomyfogmult = 0.0;
+    bloomyFogMult = 0.0;
   }
   // blidnesss
   if (blindness > 0.0){
@@ -192,7 +191,7 @@ void main() {
     color.rgb *= mix(1.0, (1.0-darknessLightFactor*2.0) * clamp(1.0-pow(length(fragpos)*(darknessFactor*0.07),2.0),0.0,1.0), darknessFactor);
   }
 
-  gl_FragData[0].r = bloomyfogmult;
+  gl_FragData[0].r = vl.a * bloomyFogMult;
 
   #ifdef display_LUT
   	vec2 movedTC = texcoord;
