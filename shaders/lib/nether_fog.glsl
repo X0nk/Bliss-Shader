@@ -77,7 +77,7 @@ vec4 GetVolumetricFog(
 		float Density = cloudVol(progressW) * pow(exp(max(progressW.y-65,0.0) / -15),2);
 		float fireLight = cloudVol(progressW - vec3(0,1,0));
 
-		vec3 vL0 = vec3(1.0,0.5,0.2) * exp(fireLight * -25) * exp(max(progressW.y-30,0.0) / -10) * 25;
+		vec3 vL0 = vec3(1.0,0.4,0.2) * exp(fireLight * -25) * pow(exp(max(progressW.y-30,0.0) / -15),2) * 25;
 		vL0 += vec3(0.8,0.8,1.0) * (1.0 - exp(Density * -1)) / 10 ;
 
 		// do background fog lighting

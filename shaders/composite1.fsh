@@ -152,7 +152,6 @@ vec3 viewToWorld(vec3 viewPosition) {
 #include "/lib/waterBump.glsl"
 
 #define OVERWORLD
-
 #include "/lib/specular.glsl"
 #include "/lib/diffuse_lighting.glsl"
 
@@ -1209,8 +1208,6 @@ void main() {
 		#endif
 
 		#ifdef Specular_Reflections	
-			// MaterialReflections(FINAL_COLOR, SpecularTex.r, SpecularTex.ggg, albedo, WsunVec, (Shadows*NdotL)*DirectLightColor, lightmap.y, slopednormal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise()), hand, entities);
-
 			vec3 specNoise = vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise());
 
 			DoSpecularReflections(FINAL_COLOR, fragpos, np3, WsunVec, specNoise, slopednormal, SpecularTex.r, SpecularTex.g, albedo, DirectLightColor*NdotL*Shadows, lightmap.y, hand);
