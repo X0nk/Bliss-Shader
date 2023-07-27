@@ -13,27 +13,27 @@ float densityAtPosFog(in vec3 pos){
 }
 
 float cloudVol(in vec3 pos){
-
+	float Output = 0.0;
 	vec3 samplePos = pos*vec3(1.0,1./48.,1.0);
 
 
-    float finalfog = exp(max(100-pos.y,0.0) / -15) ;
+    float Wind = pow(max(pos.y-30,0.0) / 15.0,2.1);
 
-	float floorfog = pow(exp(max(pos.y-30,0.0) / -3.0),2);
+	float Plumes = texture2D(noisetex, (samplePos.xz + Wind)/256.0).b;
+	float floorPlumes = clamp(0.3 - exp(Plumes * -6),0,1);
+	Plumes *= Plumes;
 
+	float Erosion = densityAtPosFog(samplePos * 400	- frameTimeCounter*10 - Wind*10) *0.7+0.3 ;
 
-    float wind = pow(max(pos.y - 30,0.0) / 15.0,2.1);
+	// float maxdist = clamp((12 * 8) - length(pos - cameraPosition),0.0,1.0);
 
-	float noise_1 = pow(1-texture2D(noisetex, samplePos.xz/256.0 + wind/200).b,2.0);
-	float noise_2 = pow(densityAtPosFog(samplePos*256 - frameTimeCounter*10 + wind*10),1) * 0.75 +0.25;
+    float RoofToFloorDensityFalloff = exp(max(100-pos.y,0.0) / -15);
+	float FloorDensityFalloff = pow(exp(max(pos.y-31,0.0) / -3.0),2);
+	float RoofDensityFalloff = exp(max(120-pos.y,0.0) / -10);
 
-	float rooffog = exp(max(100-pos.y,0.0) / -5);
-
-	float maxdist = clamp((12 * 8) - length(pos - cameraPosition),0.0,1.0);
-
-	finalfog = max((finalfog - noise_1*noise_2 - rooffog) * maxdist, max(floorfog - noise_2*0.2,0.0)) ;
+	Output = max((RoofToFloorDensityFalloff - Plumes * (1.0-Erosion)) * 2.0,	clamp((FloorDensityFalloff - floorPlumes*0.5) * Erosion ,0.0,1.0) );
     
-	return finalfog;
+	return Output;
 }
 
 vec4 GetVolumetricFog(
@@ -72,23 +72,24 @@ vec4 GetVolumetricFog(
 		float dd = pow(expFactor, float(i+dither)/float(SAMPLES)) * log(expFactor) / float(SAMPLES)/(expFactor-1.0);
 		vec3 progress = start.xyz + d*dV;
 		vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
-	
-		float Density = cloudVol(progressW);
-		Density *= exp(max(progressW.y-80,0.0) / -5);
-		
+
+		// do main lighting
+		float Density = cloudVol(progressW) * pow(exp(max(progressW.y-65,0.0) / -15),2);
+		float fireLight = cloudVol(progressW - vec3(0,1,0));
+
+		vec3 vL0 = vec3(1.0,0.5,0.2) * exp(fireLight * -25) * exp(max(progressW.y-30,0.0) / -10) * 25;
+		vL0 += vec3(0.8,0.8,1.0) * (1.0 - exp(Density * -1)) / 10 ;
+
+		// do background fog lighting
 		float Air = 0.01;
-
-		// vec3 vL0 = vec3(TORCH_R,TORCH_G,TORCH_B) * exp(max(progressW.y-30,0.0) / -10.0);
-		vec3 vL0 = vec3(TORCH_R,TORCH_G,TORCH_B) * exp(Density * -50) * exp(max(progressW.y-30,0.0) / -10.0)*25   ;
-
-		vL0 += (vec3(0.5,0.5,1.0)/ 5) * exp(max(100-progressW.y,0.0) / -15.0) * (1.0 - exp(Density * -1));
-
 		vec3 vL1 = fogcolor / 20.0;
 
 		vL += (vL0 - vL0*exp(-Density*dd*dL)) * absorbance;
 		vL += (vL1 - vL1*exp(-Air*dd*dL)) * absorbance;
 
         absorbance *= exp(-(Density+Air)*dd*dL);
+
+		if (absorbance < 1e-5) break;
 	}
 	return vec4(vL,absorbance);
 }

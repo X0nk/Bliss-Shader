@@ -76,7 +76,7 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
 	direction.xy = normalize(direction.xy);
 
 	//get at which length the ray intersects with the edge of the screen
-	vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
+	vec3 maxLengths = (step(0.0,direction)-clipPosition) / direction;
 	float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z);
 
 	vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0);
@@ -87,9 +87,9 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
 	float maxZ = spos.z;
 	
 	spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
-	float depthcancleoffset = pow(1.0-(quality/reflection_quality),1);
+	float depthcancleoffset = pow(1.0-(quality/reflection_quality),1.0);
 
-	float dist = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
+	float dist = 1.0 + clamp(position.z*position.z/50.0,0.0,2.0); // shrink sample size as distance increases
   	for (int i = 0; i <= int(quality); i++) {
 
 		vec2 testthing = hand ? spos.xy*texelSize : spos.xy/texelSize/4.0; // fix for ssr on hand
