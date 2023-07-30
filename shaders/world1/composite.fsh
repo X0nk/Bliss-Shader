@@ -102,13 +102,20 @@ float triangularize(float dither)
     dither = center*inversesqrt(abs(center));
     return clamp(dither-fsign(center),0.0,1.0);
 }
-float interleaved_gradientNoise(float temp){
-	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+temp);
-}
+// float interleaved_gradientNoise(float temp){
+// 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+temp);
+// }
+// float interleaved_gradientNoise(){
+// 	vec2 coord = gl_FragCoord.xy;
+// 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
+// 	return noise;
+// }
 float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
+	vec2 coord = gl_FragCoord.xy + (frameCounter%40000);
+	// vec2 coord = gl_FragCoord.xy + frameTimeCounter;
+	// vec2 coord = gl_FragCoord.xy;
+	float noise = fract( 52.9829189 * fract( (coord.x * 0.06711056) + (coord.y * 0.00583715)) );
+	return noise ;
 }
 vec3 fp10Dither(vec3 color,float dither){
 	const vec3 mantissaBits = vec3(6.,6.,5.);
