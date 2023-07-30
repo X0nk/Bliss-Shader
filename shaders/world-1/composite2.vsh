@@ -5,7 +5,7 @@
 
 varying vec2 texcoord;
 
-flat varying vec3 avgAmbient;
+// flat varying vec3 avgAmbient;
 
 flat varying float tempOffsets;
 flat varying vec2 TAA_Offset;
@@ -46,6 +46,6 @@ void main() {
 	#endif
 
 
-	avgAmbient = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+	// avgAmbient = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 	zMults = vec3((far * near)*2.0,far+near,far-near);
 }

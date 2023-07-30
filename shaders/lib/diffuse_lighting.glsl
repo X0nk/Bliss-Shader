@@ -44,11 +44,9 @@ vec3 DoAmbientLighting_Nether(vec3 FogColor, vec3 TorchColor, float Lightmap, ve
 	LavaGlow *= clamp(exp2(-max((WorldPos.y - 50.0) / 5,0.0)),0.0,1.0);
     LavaGlow *= pow(Lightmap,0.2);
 
-    vec3 FogTint = FogColor*clamp(1.1 + dot(Normal,np3),0.0,1.0) * 0.05;
+    FogColor = max(FogColor, vec3(0.05) * (MIN_LIGHT_AMOUNT*0.01 + nightVision*0.5) ); 
 
-    vec3 AmbientLight = max(vec3(0.05), (MIN_LIGHT_AMOUNT*0.01 + nightVision*0.5) ); 
-
-    return  AmbientLight + FogTint + TorchLight + LavaGlow;
+    return  FogColor + TorchLight ;
 }
 #endif
 

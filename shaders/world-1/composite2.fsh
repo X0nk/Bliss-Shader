@@ -6,10 +6,7 @@
 #define NETHER
 #include "/lib/diffuse_lighting.glsl"
 
-
 varying vec2 texcoord;
-
-flat varying vec3 avgAmbient;
 
 flat varying vec2 TAA_Offset;
 flat varying float tempOffsets;
@@ -85,7 +82,6 @@ vec2 RENDER_SCALE = vec2(1.0);
 
 
 #undef LIGHTSOURCE_REFLECTION
-#define NETHERSPECULAR
 #include "/lib/specular.glsl"
 
 
@@ -380,9 +376,22 @@ void ScreenSpace_SSS(inout float sss, vec3 fragpos, vec2 noise, vec3 normal){
 
 
 
+vec3 cosineHemisphereSample(vec2 Xi, float roughness){
+    float r = sqrt(Xi.x);
+    float theta = 2.0 * 3.14159265359 * Xi.y;
 
+    float x = r * cos(theta);
+    float y = r * sin(theta);
 
+    return vec3(x, y, sqrt(clamp(1.0 - Xi.x,0.,1.)));
+}
+vec3 TangentToWorld(vec3 N, vec3 H, float roughness){
+    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+    vec3 T = normalize(cross(UpVector, N));
+    vec3 B = cross(N, T);
 
+    return vec3((T * H.x) + (B * H.y) + (N * H.z));
+}
 
 void main() {
 	float dirtAmount = Dirt_Amount;
@@ -432,8 +441,6 @@ void main() {
 	float vanilla_AO = normalAndAO.a;
 	normalAndAO.a = clamp(pow(normalAndAO.a*5,4),0,1);
 
-	
-
 	bool iswater = texture2D(colortex7,texcoord).a > 0.99;
 	bool lightningBolt = abs(dataUnpacked1.w-0.5) <0.01;
 	bool isLeaf = abs(dataUnpacked1.w-0.55) <0.01;
@@ -453,11 +460,13 @@ void main() {
 
     	// vec3 FogColor =  (gl_Fog.color.rgb / pow(0.00001 + dot(gl_Fog.color.rgb,vec3(0.3333)),1.0) ) * 0.2;
 		// vec3 fogColor = (gl_Fog.color.rgb / max(pow(dot(gl_Fog.color.rgb,vec3(0.3333)),1.1),0.01)  ) ;
-    	vec3 FogColor =  (gl_Fog.color.rgb / max(dot(gl_Fog.color.rgb,vec3(0.3333)),0.01)  );
+    	// vec3 FogColor =  (gl_Fog.color.rgb / max(dot(gl_Fog.color.rgb,vec3(0.3333)),0.01)  );
 
-		// do all ambient lighting stuff
-		vec3 Indirect_lighting = DoAmbientLighting_Nether(FogColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, np3, p3 );
+		vec3 AmbientLightColor = skyCloudsFromTexLOD2(normal, colortex4, 6).rgb / 30.0;
 		
+		// do all ambient lighting stuff
+		vec3 Indirect_lighting = DoAmbientLighting_Nether(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, np3, p3 );
+
 		vec3 AO = vec3( exp( (vanilla_AO*vanilla_AO) * -5) )  ;
 
 		if(!hand) Indirect_lighting *= ssao(fragpos,noise,FlatNormals) * AO;
@@ -476,7 +485,12 @@ void main() {
 
 		if(lightningBolt) gl_FragData[0].rgb += vec3(77.0, 153.0, 255.0);
 
+		// gl_FragData[0].rgb = skyCloudsFromTexLOD2(np3, colortex4, 6).rgb / 30.0;
+
 	}
+
+
+
 
   	// ////// border Fog
 	// if(Translucent_Programs > 0.0){

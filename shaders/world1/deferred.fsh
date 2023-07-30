@@ -79,11 +79,16 @@ void main() {
 gl_FragData[0] = vec4(0.0);
 
 //Fog for reflections
-if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+257.){
-	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
+// if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+257.){
+
+vec2 fogPos = vec2(256.0 - 256.0*0.12,1.0);
+//Sky gradient with clouds
+if (gl_FragCoord.x > (fogPos.x - fogPos.x*0.22) && gl_FragCoord.y > 0.4 && gl_FragCoord.x < 535){
+	// vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
+	vec2 p = clamp(floor(gl_FragCoord.xy-fogPos)/256.+tempOffsets/256.,-0.2,1.2);
 	vec3 viewVector = cartToSphere(p);
 
-  mat2x3 vl = getVolumetricRays(fract(frameCounter/1.6180339887),mat3(gbufferModelView)*viewVector*1024.,fract(frameCounter/2.6180339887));
+  	mat2x3 vl = getVolumetricRays(fract(frameCounter/1.6180339887),mat3(gbufferModelView)*viewVector*1024.,fract(frameCounter/2.6180339887));
 
 	float absorbance = dot(vl[1],vec3(0.22,0.71,0.07));
 	

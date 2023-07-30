@@ -9,6 +9,7 @@ vec2 sphereToCarte(vec3 dir) {
     float lonlat = atan(-dir.x, -dir.z);
     return vec2(lonlat * (0.5/pi) +0.5,0.5*dir.y+0.5);
 }
+
 vec3 skyFromTex(vec3 pos,sampler2D sampler){
 	vec2 p = sphereToCarte(pos);
 	return texture2D(sampler,p*texelSize*256.+vec2(18.5,1.5)*texelSize).rgb;
@@ -17,6 +18,8 @@ vec3 skyFromTexLOD(vec3 pos,sampler2D sampler, float LOD){
 	vec2 p = sphereToCarte(pos);
 	return texture2DLod(sampler,p*texelSize*256.+vec2(18.5,1.5)*texelSize,LOD).rgb;
 }
+
+
 float w0(float a)
 {
     return (1.0/6.0)*(a*(a*(-a + 3.0) - 3.0) + 1.0);
@@ -87,5 +90,14 @@ vec4 skyCloudsFromTex(vec3 pos,sampler2D sampler){
 }
 vec4 skyCloudsFromTexLOD(vec3 pos,sampler2D sampler, float LOD){
 	vec2 p = sphereToCarte(pos);
-	return texture2DLod(sampler,p*texelSize*256.+vec2(18.5+257.,1.5)*texelSize,LOD);
+	return texture2DLod(sampler,p*texelSize*256. + vec2(18.5 + 257., 1.5)*texelSize,LOD);
+}
+	// vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
+	// vec2 p = clamp(floor(gl_FragCoord.xy-vec2(256*0.75,256*0.25))/150.+tempOffsets/150.,0.0,1.0);
+    
+	// vec2 p = clamp(floor(gl_FragCoord.xy-fogPos)/256.+tempOffsets/256.,-0.33,1.0);
+
+vec4 skyCloudsFromTexLOD2(vec3 pos,sampler2D sampler, float LOD){
+	vec2 p = sphereToCarte(pos);
+	return texture2DLod(sampler,p*texelSize*256. + vec2(256.0 - 256.0*0.12,1.5)*texelSize,LOD);
 }

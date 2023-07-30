@@ -5,12 +5,13 @@
 #include "/lib/settings.glsl"
 
 
-// flat varying vec3 ambientUp;
-// flat varying vec3 ambientLeft;
-// flat varying vec3 ambientRight;
-// flat varying vec3 ambientB;
-// flat varying vec3 ambientF;
-// flat varying vec3 ambientDown;
+flat varying vec3 ambientUp;
+flat varying vec3 ambientLeft;
+flat varying vec3 ambientRight;
+flat varying vec3 ambientB;
+flat varying vec3 ambientF;
+flat varying vec3 ambientDown;
+
 flat varying vec3 lightSourceColor;
 flat varying vec3 sunColor;
 flat varying vec3 sunColorCloud;
@@ -74,20 +75,22 @@ const float[17] Slightmap = float[17](14.0,17.,19.0,22.0,24.0,28.0,31.0,40.0,60.
 void main() {
 /* DRAWBUFFERS:4 */
 
-gl_FragData[0] = vec4(0.0);
+gl_FragData[0] = vec4(0.0,0.0,0.0,0.0);
 
+vec2 fogPos = vec2(256.0 - 256.0*0.12,1.0);
 //Sky gradient with clouds
-if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+257.){
+if (gl_FragCoord.x > (fogPos.x - fogPos.x*0.22) && gl_FragCoord.y > 0.4 && gl_FragCoord.x < 535){
 
-	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
+	// vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
+	vec2 p = clamp(floor(gl_FragCoord.xy-fogPos)/256.+tempOffsets/256.,-0.2,1.2);
 	vec3 viewVector = cartToSphere(p);
 
   // vec3 BackgroundColor = (gl_Fog.color.rgb / max(dot(gl_Fog.color.rgb,vec3(0.3333)),0.01)) / 30.0;
 	// BackgroundColor *= abs(viewVector.y+0.5);
   vec3 BackgroundColor = vec3(0.0);
   
-  vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*1024.,  fract(frameCounter/1.6180339887));
-	BackgroundColor += VL_Fog.rgb/5;
+  vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*256.,  fract(frameCounter/1.6180339887));
+	BackgroundColor += VL_Fog.rgb/3.0;
 
   gl_FragData[0] = vec4(BackgroundColor,1.0);
 }
@@ -95,7 +98,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 //Temporally accumulate sky and light values
 vec3 temp = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy),0).rgb;
 vec3 curr = gl_FragData[0].rgb*150.;
-gl_FragData[0].rgb = clamp(mix(temp,curr,0.07),0.0,65000.);
+gl_FragData[0].rgb = clamp(mix(temp,curr,0.05),0.0,65000.);
 
 //Exposure values
 if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )

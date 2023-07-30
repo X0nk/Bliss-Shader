@@ -58,7 +58,7 @@ vec4 GetVolumetricFog(
 	vec3 dV = fragposition-start;
 	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
 
-	float maxLength = min(length(dVWorld),far)/length(dVWorld);
+	float maxLength = min(length(dVWorld),far*25)/length(dVWorld);
 
 	dV *= maxLength;
 	dVWorld *= maxLength;
@@ -80,7 +80,8 @@ vec4 GetVolumetricFog(
 		vec3 vL0 = vec3(1.0,0.4,0.2) * exp(fireLight * -25) * exp(max(progressW.y-30,0.0) / -10) * 25;
 		vL0 += vec3(0.8,0.8,1.0) * (1.0 - exp(Density * -1)) / 10 ;
 
-		// do background fog lighting
+		
+		// do background fog lighting	
 		float Air = 0.01;
 		vec3 vL1 = fogcolor / 20.0;
 

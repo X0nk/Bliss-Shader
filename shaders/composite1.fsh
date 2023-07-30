@@ -8,7 +8,7 @@ const bool colortex5MipmapEnabled = true;
 const bool colortex12MipmapEnabled = true;
 
 // #ifndef Rough_reflections
-// 	const bool colortex4MipmapEnabled = true;
+	// const bool colortex4MipmapEnabled = true;
 // #endif
 
 const bool shadowHardwareFiltering = true;
@@ -1057,7 +1057,7 @@ void main() {
 		#endif
 
 		AmbientLightColor += (lightningEffect * 10) * skylight * pow(lightmap.y,2);
-		
+
 		#ifndef ambientSSS_view
 			Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy, skylight);
 		#else
@@ -1208,6 +1208,8 @@ void main() {
 		#endif
 
 		#ifdef Specular_Reflections	
+			// MaterialReflections(FINAL_COLOR, SpecularTex.r, SpecularTex.ggg, albedo, WsunVec, (Shadows*NdotL)*DirectLightColor, lightmap.y, slopednormal, np3, fragpos, vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise()), hand, entities);
+
 			vec3 specNoise = vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise());
 
 			DoSpecularReflections(FINAL_COLOR, fragpos, np3, WsunVec, specNoise, slopednormal, SpecularTex.r, SpecularTex.g, albedo, DirectLightColor*NdotL*Shadows, lightmap.y, hand);

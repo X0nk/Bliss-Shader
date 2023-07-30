@@ -156,6 +156,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec3 sky = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150. ;	
 
 	if(viewVector.y < -0.025) sky = sky * clamp( exp(viewVector.y) - 1.0,0.25,1.0) ;
+
   
 	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024.,vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), sunColor, moonColor, averageSkyCol*5.0);
 	sky = sky*clouds.a + clouds.rgb/5.0; 
@@ -163,6 +164,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec4 VL_Fog = getVolumetricRays(mat3(gbufferModelView)*viewVector*1024.,  fract(frameCounter/1.6180339887), averageSkyCol);
 	sky = sky*VL_Fog.a + VL_Fog.rgb*20;
 
+	// if(viewVector.y < -0.025) sky *= clamp( viewVector.y,0.0,1.0) ;
 	gl_FragData[0] = vec4(sky,1.0);
 }
 
