@@ -90,7 +90,7 @@ if (gl_FragCoord.x > (fogPos.x - fogPos.x*0.22) && gl_FragCoord.y > 0.4 && gl_Fr
   vec3 BackgroundColor = vec3(0.0);
   
   vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*256.,  fract(frameCounter/1.6180339887));
-	BackgroundColor += VL_Fog.rgb/3.0;
+	BackgroundColor += VL_Fog.rgb/5.0;
 
   gl_FragData[0] = vec4(BackgroundColor,1.0);
 }
