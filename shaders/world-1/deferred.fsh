@@ -4,28 +4,13 @@
 
 #include "/lib/settings.glsl"
 
-
-flat varying vec3 ambientUp;
-flat varying vec3 ambientLeft;
-flat varying vec3 ambientRight;
-flat varying vec3 ambientB;
-flat varying vec3 ambientF;
-flat varying vec3 ambientDown;
-
-flat varying vec3 lightSourceColor;
-flat varying vec3 sunColor;
-flat varying vec3 sunColorCloud;
-flat varying vec3 moonColor;
-flat varying vec3 moonColorCloud;
-flat varying vec3 zenithColor;
-flat varying vec3 avgSky;
 flat varying vec2 tempOffsets;
+
 flat varying float exposure;
-flat varying float rodExposure;
 flat varying float avgBrightness;
-flat varying float exposureF;
-flat varying float fogAmount;
-flat varying float VFAmount;
+flat varying float rodExposure;
+flat varying float avgL2;
+flat varying float centerDepth;
 
 uniform sampler2D colortex4;
 uniform sampler2D noisetex;
@@ -67,8 +52,6 @@ float interleaved_gradientNoise(){
 float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
-vec4 lightCol = vec4(lightSourceColor, float(sunElevation > 1e-5)*2-1.);
-const float[17] Slightmap = float[17](14.0,17.,19.0,22.0,24.0,28.0,31.0,40.0,60.0,79.0,93.0,110.0,132.0,160.0,197.0,249.0,249.0);
 
 #include "/lib/nether_fog.glsl"
 
@@ -102,8 +85,8 @@ gl_FragData[0].rgb = clamp(mix(temp,curr,0.05),0.0,65000.);
 
 //Exposure values
 if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(exposure,avgBrightness,exposureF,1.0);
+gl_FragData[0] = vec4(exposure,avgBrightness,avgL2,1.0);
 if (gl_FragCoord.x > 14. && gl_FragCoord.x < 15.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(rodExposure,0.0,0.0,1.0);
+gl_FragData[0] = vec4(rodExposure,centerDepth,0.0, 1.0);
 
 }

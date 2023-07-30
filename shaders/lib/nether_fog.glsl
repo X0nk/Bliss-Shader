@@ -58,13 +58,13 @@ vec4 GetVolumetricFog(
 	vec3 dV = fragposition-start;
 	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
 
-	float maxLength = min(length(dVWorld),far*25)/length(dVWorld);
+	float maxLength = min(length(dVWorld),far)/length(dVWorld);
 
 	dV *= maxLength;
 	dVWorld *= maxLength;
 
 	float dL = length(dVWorld);
-	vec3 fogcolor = (gl_Fog.color.rgb / max(dot(gl_Fog.color.rgb,vec3(0.3333)),0.01)) ;
+	vec3 fogcolor = (gl_Fog.color.rgb / max(dot(gl_Fog.color.rgb,vec3(0.3333)),0.05)) ;
 
 	float expFactor = 11.0;
 	for (int i=0;i<SAMPLES;i++) {
@@ -75,7 +75,8 @@ vec4 GetVolumetricFog(
 
 		// do main lighting
 		float Density = cloudVol(progressW) * pow(exp(max(progressW.y-65,0.0) / -15),2);
-		float fireLight = cloudVol(progressW - vec3(0,1,0));
+
+		float fireLight = cloudVol(progressW - vec3(0,1,0)) * clamp(exp(max(30 - progressW.y,0.0) / -10.0),0,1);
 
 		vec3 vL0 = vec3(1.0,0.4,0.2) * exp(fireLight * -25) * exp(max(progressW.y-30,0.0) / -10) * 25;
 		vL0 += vec3(0.8,0.8,1.0) * (1.0 - exp(Density * -1)) / 10 ;
@@ -85,8 +86,8 @@ vec4 GetVolumetricFog(
 		float Air = 0.01;
 		vec3 vL1 = fogcolor / 20.0;
 
-		vL += (vL0 - vL0*exp(-Density*dd*dL)) * absorbance;
 		vL += (vL1 - vL1*exp(-Air*dd*dL)) * absorbance;
+		vL += (vL0 - vL0*exp(-Density*dd*dL)) * absorbance;
 
         absorbance *= exp(-(Density+Air)*dd*dL);
 
