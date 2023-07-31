@@ -130,7 +130,7 @@ void main() {
 
 	skyAbsorb = vec3(1.0);
 	moonColor = calculateAtmosphere(vec3(0.0), -sunVec, vec3(0.0,1.0,0.0), sunVec, -sunVec, planetSphere, skyAbsorb, 25,0.5);
-	moonColor = moonColorBase/4000.0*skyAbsorb;
+	moonColor = moonColorBase/4000.0;
 
 	lightSourceColor = sunVis >= 1e-5 ? sunColor * sunVis : moonColor * moonVis;
 
