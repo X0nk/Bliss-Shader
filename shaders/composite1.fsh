@@ -461,7 +461,7 @@ void ssAO(inout vec3 lighting, inout float sss, vec3 fragpos,float mulfov, vec2 
 	#ifdef Ambient_SSS
 		sss = max(1.0 - sss/n, 0.0) ;
 	#endif
-
+	occlusion *= AO_Strength;
 	occlusion *= 2.0;
 	occlusion = max(1.0 - occlusion/n, 0.0);
 

@@ -174,11 +174,11 @@ float ambient_occlusion(vec3 screen_pos, vec3 view_pos, vec3 view_normal, vec2 d
 		max_horizon_angles.x = calculate_maximum_horizon_angle(-view_slice_dir, viewer_dir, screen_pos, view_pos, dither.y);
 		max_horizon_angles.y = calculate_maximum_horizon_angle( view_slice_dir, viewer_dir, screen_pos, view_pos, dither.y);
 
-		max_horizon_angles = gamma + clamp(vec2(-1.0, 1.0) * max_horizon_angles - gamma, -half_pi, half_pi);
+		max_horizon_angles = gamma + clamp(vec2(-1.0, 1.0) * max_horizon_angles - gamma, -half_pi, half_pi) ;
 
         vec3 max_horizon_angles2 = mat3(gbufferModelViewInverse) * projected_normal;
 
-		ao += integrate_arc(max_horizon_angles, gamma, cos_gamma) * len_sq * norm * max_horizon_angles.y;
+		ao += integrate_arc(max_horizon_angles, gamma, cos_gamma) * len_sq * norm * max_horizon_angles.y ;
 	}
 
 	ao *= rcp(float(GTAO_SLICES));
