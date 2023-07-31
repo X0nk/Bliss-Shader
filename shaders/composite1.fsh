@@ -561,47 +561,22 @@ vec3 TangentToWorld(vec3 N, vec3 H, float roughness){
     return vec3((T * H.x) + (B * H.y) + (N * H.z));
 }
 
-void rtAO(inout vec3 lighting, vec3 normal, vec2 noise, vec3 fragpos, float lightmap, float inShadow){
-	int nrays = 4;
-	float occlude = 0.0;
-
-	float indoor = clamp(pow(lightmap,2)*2,0.0,AO_Strength);
-	
-	for (int i = 0; i < nrays; i++){
-		int seed = (frameCounter%40000)*nrays+i;
-		vec2 ij = fract(R2_samples(seed) + noise.rg);
-
-
-		vec3 rayDir = TangentToWorld(  normal, normalize(cosineHemisphereSample(ij,1.0)) ,1.0) ;
-		
-		#ifdef HQ_SSGI
-			vec3 rayHit = rayTrace_GI( mat3(gbufferModelView) * rayDir, fragpos,  blueNoise(), 30.); // ssr rt
-		#else
-			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, fragpos, blueNoise(), 24.);  // choc sspt 
-		#endif
-
-		// vec3 lightDir = normalize(vec3(0.2,0.8,0.2));
-		// float skyLightDir = dot(rayDir,lightDir); // the positons where the occlusion happens
-
-		float skyLightDir = rayDir.y > 0.0 ? 1.0 : max(rayDir.y,1.0-indoor); // the positons where the occlusion happens
-		if (rayHit.z > 1.0) occlude += max(rayDir.y,1-AO_Strength);
-
-
-	}
-	// occlude = mix( occlude,1, inShadow);
-	// occlude = occlude*0.5 + 0.5;
-	lighting *= 3.0;
-	lighting *= mix(occlude/nrays,1.0,0) ;
+vec3 applyContrast(vec3 color, float contrast){
+  return (color - 0.5) * contrast + 0.5;
 }
 
-void rtGI(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, float lightmap, vec3 albedo){
-	int nrays = RAY_COUNT;
-	vec3 intRadiance = vec3(0.0);
-	vec3 occlude = vec3(0.0);
 
-	lighting *= 1.50;
-	float indoor = clamp(pow(lightmap,2)*2,0.0,AO_Strength);
+void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 lightmaps, vec3 skylightcolor, vec3 torchcolor){
+	int nrays = RAY_COUNT;
+
+	vec3 radiance = vec3(0.0);
+	vec3 occlusion = vec3(0.0);
+	vec3 skycontribution = vec3(0.0);
 	
+    float skyLM = 0.0;
+	vec3 torchlight = vec3(0.0);
+	DoRTAmbientLighting(torchcolor, lightmaps, skyLM, torchlight, skylightcolor);
+
 	for (int i = 0; i < nrays; i++){
 		int seed = (frameCounter%40000)*nrays+i;
 		vec2 ij = fract(R2_samples(seed) + noise );
@@ -613,23 +588,35 @@ void rtGI(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, float lightm
 		#else
 			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, fragpos, blueNoise(), 30.);  // choc sspt 
 		#endif
-		
-		float skyLightDir = rayDir.y > 0.0 ? 1.0 : max(rayDir.y,1.0-indoor); // the positons where the occlusion happens
-	
+
+		#ifdef SKY_CONTRIBUTION_IN_SSRT
+			skycontribution = (skyCloudsFromTex(rayDir, colortex4).rgb / 15.0) * skyLM + torchlight;
+		#else
+			skycontribution = (skylightcolor * skyLM) * max(rayDir.y,1 - AO_Strength) + torchlight;
+		#endif
+
 		if (rayHit.z < 1.){
-			vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
-			previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
-			previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
-			if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0)
-				intRadiance = 0 + texture2D(colortex5,previousPosition.xy).rgb * GI_Strength ;
-			else
-				intRadiance += lighting*skyLightDir; // make sure ambient light exists but at screen edges when you turn
+			
+			#if indirect_effect == 4
+				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
+				previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
+				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
+				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0){
+					radiance += applyContrast(texture2D(colortex5,previousPosition.xy).rgb, GI_Strength) + skycontribution;
+				} else {
+					radiance += skycontribution;
+				}
+			#else
+				radiance += skycontribution;
+			#endif
+
+			occlusion += skycontribution;
 				
-		}else{
-			intRadiance += lighting*skyLightDir; 
+		} else {
+			radiance += skycontribution;
 		}
 	}
-	lighting = intRadiance/nrays; 
+	lighting = (radiance - occlusion)/nrays; 
 }
 
 
@@ -1052,14 +1039,18 @@ void main() {
 		if(isGrass) ambientCoefs.y = 0.75;
 		float skylight = clamp(ambientCoefs.y + 0.5,0.25,2.0) * 1.35;
 	
-		#if indirect_effect == 2 || indirect_effect == 3 || indirect_effect == 4
-			if (!hand) skylight = 1.0;
-		#endif
-
 		AmbientLightColor += (lightningEffect * 10) * skylight * pow(lightmap.y,2);
 
 		#ifndef ambientSSS_view
-			Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy, skylight);
+		
+			#if indirect_effect == 2
+				skylight = 1.0;
+			#endif
+
+			#if indirect_effect != 3 || indirect_effect != 4
+				Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy, skylight);
+			#endif
+
 		#else
 			Indirect_lighting = vec3(0.0);
 		#endif
@@ -1085,14 +1076,10 @@ void main() {
 			if (!hand) AO = ambient_occlusion(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z), fragpos, worldToView(slopednormal), r2, debug) * vec3(1.0);
 		#endif
 
-		// RTAO
-		#if indirect_effect == 3
-			if (!hand) rtAO(AO, normal, blueNoise(gl_FragCoord.xy).rg, fragpos, lightmap.y, NdotL*Shadows);
-		#endif
-
-		// SSGI
-		#if indirect_effect == 4
-			if (!hand) rtGI(Indirect_lighting, normal, blueNoise(gl_FragCoord.xy).rg, fragpos, lightmap.y, albedo);
+		// RTAO and/or SSGI
+		#if indirect_effect == 3 || indirect_effect == 4
+			AO = vec3(1.0);
+			if (!hand) ApplySSRT(Indirect_lighting, normal, blueNoise(gl_FragCoord.xy).rg, fragpos, lightmap.xy, AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B));
 		#endif
 
 		#ifndef AO_in_sunlight

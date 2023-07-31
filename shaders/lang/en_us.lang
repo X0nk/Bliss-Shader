@@ -74,6 +74,7 @@ screen.Ambient_light = Ambient Light
     option.GI_Strength = GI Multiplier
     option.HQ_SSGI = Long Range SSGI
     option.Hand_Held_lights = Hand Held Light
+    option.SKY_CONTRIBUTION_IN_SSRT = High Quality Ambient Light
     option.ambientOcclusionLevel = Vanilla AO Amount
     option.ambient_brightness = Ambient Light Brightness
     option.MIN_LIGHT_AMOUNT = Minimum Light Brightness
@@ -323,6 +324,8 @@ screen.Ambient_light.comment = Configure settings related to the lighting in sha
     option.GI_Strength.comment = Configure the strength of the global illumination created by SSGI. §bWhat is this?§r global illumination in this scenario specifically is the light bouncing off a surface and onto some other area.
     option.HQ_SSGI.comment = Toggle long range screen-space global illumination. §aPERFORMANCE COST:§r very high
     option.Hand_Held_lights.comment = Toggle shader-side hand held lightsources. §aPERFORMANCE COST:§r very low
+    option.SKY_CONTRIBUTION_IN_SSRT.comment = Allow the RTAO or SSGI to take the entire sky and fog into account to create high quality lighting for shaded areas. This may introduce more noise. §aPERFORMANCE COST:§r medium
+
     option.ambientOcclusionLevel.comment = Configure the strength of the ambient occlusion from vanilla minecraft. §bWhat is this?§r This ambient occlusion is in minecraft even without shaders enabled.
     option.ambient_brightness.comment = Configure the brightnes of lighting in shaded places
     option.MIN_LIGHT_AMOUNT.comment = Configure the minimum amount of light that can be in shaded places.

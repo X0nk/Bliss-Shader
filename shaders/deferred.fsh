@@ -161,6 +161,9 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	sky = sky*clouds.a + clouds.rgb/5.0; 
 
 	vec4 VL_Fog = getVolumetricRays(mat3(gbufferModelView)*viewVector*1024.,  fract(frameCounter/1.6180339887), averageSkyCol);
+	
+	if(viewVector.y < -0.025) VL_Fog.rgb *= clamp( exp(viewVector.y) - 1.0,0.25,1.0) ;
+	
 	sky = sky*VL_Fog.a + VL_Fog.rgb*20;
 
 	gl_FragData[0] = vec4(sky,1.0);
