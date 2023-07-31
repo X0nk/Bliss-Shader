@@ -8,7 +8,7 @@ const bool colortex5MipmapEnabled = true;
 const bool colortex12MipmapEnabled = true;
 
 // #ifndef Rough_reflections
-	const bool colortex4MipmapEnabled = true;
+	// const bool colortex4MipmapEnabled = true;
 // #endif
 
 const bool shadowHardwareFiltering = true;
