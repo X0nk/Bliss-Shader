@@ -586,6 +586,7 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 		#endif
 
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
+			if(isGrass) rayDir.y = clamp(rayDir.y +  0.5,-1,1);
 			skycontribution = (skyCloudsFromTex(rayDir, colortex4).rgb / 15.0) * skyLM + torchlight;
 		#else
 			if(isGrass) rayDir.y = clamp(rayDir.y +  0.25,-1,1);
