@@ -562,7 +562,7 @@ vec3 TangentToWorld(vec3 N, vec3 H, float roughness){
     return vec3((T * H.x) + (B * H.y) + (N * H.z));
 }
 
-void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 lightmaps, vec3 skylightcolor, vec3 torchcolor){
+void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 lightmaps, vec3 skylightcolor, vec3 torchcolor, bool isGrass){
 	int nrays = RAY_COUNT;
 
 	vec3 radiance = vec3(0.0);
@@ -588,6 +588,7 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
 			skycontribution = (skyCloudsFromTex(rayDir, colortex4).rgb / 15.0) * skyLM + torchlight;
 		#else
+			if(isGrass) rayDir.y = clamp(rayDir.y +  0.25,-1,1);
 			skycontribution = (skylightcolor * skyLM) * max(rayDir.y * min(AO_Strength,1.0), 0.05) + torchlight;
 		#endif
 
@@ -1080,7 +1081,7 @@ void main() {
 		// RTAO and/or SSGI
 		#if indirect_effect == 3 || indirect_effect == 4
 			AO = vec3(1.0);
-			if (!hand) ApplySSRT(Indirect_lighting, normal, blueNoise(gl_FragCoord.xy).rg, fragpos, lightmap.xy, AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B));
+			if (!hand) ApplySSRT(Indirect_lighting, normal, blueNoise(gl_FragCoord.xy).rg, fragpos, lightmap.xy, AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass);
 		#endif
 
 		#ifndef AO_in_sunlight
