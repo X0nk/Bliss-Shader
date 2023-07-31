@@ -553,6 +553,7 @@ vec3 cosineHemisphereSample(vec2 Xi, float roughness){
 
     return vec3(x, y, sqrt(clamp(1.0 - Xi.x,0.,1.)));
 }
+
 vec3 TangentToWorld(vec3 N, vec3 H, float roughness){
     vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
     vec3 T = normalize(cross(UpVector, N));
@@ -560,11 +561,6 @@ vec3 TangentToWorld(vec3 N, vec3 H, float roughness){
 
     return vec3((T * H.x) + (B * H.y) + (N * H.z));
 }
-
-vec3 applyContrast(vec3 color, float contrast){
-  return (color - 0.5) * contrast + 0.5;
-}
-
 
 void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 lightmaps, vec3 skylightcolor, vec3 torchcolor){
 	int nrays = RAY_COUNT;
@@ -592,7 +588,7 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
 			skycontribution = (skyCloudsFromTex(rayDir, colortex4).rgb / 15.0) * skyLM + torchlight;
 		#else
-			skycontribution = (skylightcolor * skyLM) * max(rayDir.y,1 - AO_Strength) + torchlight;
+			skycontribution = (skylightcolor * skyLM) * max(rayDir.y,1.0 - AO_Strength) + torchlight;
 		#endif
 
 		if (rayHit.z < 1.){
@@ -602,7 +598,7 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 				previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
 				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
 				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0){
-					radiance += applyContrast(texture2D(colortex5,previousPosition.xy).rgb, GI_Strength) + skycontribution;
+					radiance += (texture2D(colortex5,previousPosition.xy).rgb + skycontribution) * GI_Strength;
 				} else {
 					radiance += skycontribution;
 				}
@@ -610,13 +606,13 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 				radiance += skycontribution;
 			#endif
 
-			occlusion += skycontribution;
+			occlusion += skycontribution * GI_Strength;
 				
 		} else {
 			radiance += skycontribution;
 		}
 	}
-	lighting = (radiance - occlusion)/nrays; 
+	lighting = max(radiance - occlusion,0.0)/nrays; 
 }
 
 
