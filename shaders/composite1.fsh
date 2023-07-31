@@ -588,7 +588,7 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
 			skycontribution = (skyCloudsFromTex(rayDir, colortex4).rgb / 15.0) * skyLM + torchlight;
 		#else
-			skycontribution = (skylightcolor * skyLM) * max(rayDir.y,1.0 - AO_Strength) + torchlight;
+			skycontribution = (skylightcolor * skyLM) * max(rayDir.y * min(AO_Strength,1.0), 0.05) + torchlight;
 		#endif
 
 		if (rayHit.z < 1.){
@@ -612,6 +612,11 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 			radiance += skycontribution;
 		}
 	}
+	
+	// #ifdef SKY_CONTRIBUTION_IN_SSRT
+		occlusion *= AO_Strength;
+	// #endif
+
 	lighting = max(radiance - occlusion,0.0)/nrays; 
 }
 
