@@ -415,37 +415,20 @@ void main() {
 		p3 += gbufferModelViewInverse[3].xyz;
 
 		// do all ambient lighting stuff
-
 		vec3 AO = vec3( exp( (vanilla_AO*vanilla_AO) * -5) )  ;
-		vec3 Indirect_lighting = DoAmbientLighting_End(gl_Fog.color.rgb, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, np3) ;
-		// Indirect_lighting = vec3(TORCH_R,TORCH_G,TORCH_B) * curveinvert(clamp(lightmap.x,0.0,1.0),2);
-		
-		// float ambientfogshadow = GetCloudShadow2(p3+cameraPosition);
-		// Indirect_lighting *= ambientfogshadow;
-
+		vec3 Indirect_lighting = DoAmbientLighting_End(gl_Fog.color.rgb, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, np3);
 
         vec3 LightColor = LightSourceColor(clamp(sqrt(length(p3+cameraPosition) / 150.0 - 1.0)  ,0.0,1.0));
         vec3 LightPos = LightSourcePosition(p3+cameraPosition, cameraPosition);
 
 	     float LightFalloff = max(exp2(4.0 + length(LightPos) / -25),0.0);
-        // float LightFalloff = max(1.0-length(LightPos)/255,0.0);
-		// LightFalloff = pow(1.0-pow(1.0-LightFalloff,0.5),2.0);
-		// LightFalloff *= 10.0;
 
-        // float LightFalloff = max(1.0-length(LightPos)/250,0.0);
-        // float N = 2.50;
-		// LightFalloff = pow(1.0-pow(1.0-LightFalloff,1.0/N),N);
-		// LightFalloff *= 10.0;
-
-		// 0.5 added because lightsources are always high radius.
 		float NdotL = clamp( dot(normal,normalize(-LightPos)),0.0,1.0);
 		NdotL = clamp((-15 + NdotL*255.0) / 240.0  ,0.0,1.0);
 
 		float fogshadow = GetCloudShadow(p3+cameraPosition, LightPos, blueNoise());
-		vec3 LightSource = (LightColor * max(LightColor - (1-fogshadow) ,0.0)) * LightFalloff * NdotL ;
+		vec3 LightSource = (LightColor * max(LightColor - (1-fogshadow) ,0.0)) * LightFalloff * NdotL;
 		// vec3 LightSource = LightColor * fogshadow * LightFalloff * NdotL ;
-
-
 
 
 

@@ -305,6 +305,10 @@ void main() {
 		else Albedo.a = 0.0;
 	#endif
 
+	#ifdef WhiteWorld
+		Albedo.rgb = vec3(1.0);
+	#endif
+	
 	//////////////////////////////// 
 	//////////////////////////////// NORMAL
 	//////////////////////////////// 

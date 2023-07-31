@@ -469,24 +469,14 @@ void main() {
 		// vec3 fogColor = (gl_Fog.color.rgb / max(pow(dot(gl_Fog.color.rgb,vec3(0.3333)),1.1),0.01)  ) ;
     	// vec3 FogColor =  (gl_Fog.color.rgb / max(dot(gl_Fog.color.rgb,vec3(0.3333)),0.01)  );
 
-		// vec3 AmbientLightColor = skyCloudsFromTexLOD2(normal, colortex4, 6).rgb / 10.0;
+		vec3 AmbientLightColor = skyCloudsFromTexLOD2(normal, colortex4, 6).rgb / 10;
 		
-		vec3 up 	= skyCloudsFromTexLOD2( vec3(0,1,0), colortex4, 6).rgb/10;
-		vec3 down 	= skyCloudsFromTexLOD2(-vec3(0,1,0), colortex4, 6).rgb/10;
-		vec3 left 	= skyCloudsFromTexLOD2( vec3(1,0,0), colortex4, 6).rgb/10;
-		vec3 right 	= skyCloudsFromTexLOD2(-vec3(1,0,0), colortex4, 6).rgb/10;
-		vec3 front 	= skyCloudsFromTexLOD2( vec3(0,0,1), colortex4, 6).rgb/10;
-		vec3 back 	= skyCloudsFromTexLOD2(-vec3(0,0,1), colortex4, 6).rgb/10;
-		vec3 zero 	= vec3(0.0);
-		
-		up    = mix(zero, up,  	 pow(max( normal.y,0),2));
-		down  = mix(zero, down,  pow(max(-normal.y,0),2));
-		left  = mix(zero, left,  pow(max( normal.x,0),4));
-		right = mix(zero, right, pow(max(-normal.x,0),4));
-		front = mix(zero, front, pow(max( normal.z,0),4));
-		back  = mix(zero, back,  pow(max(-normal.z,0),4));
-		
-		vec3 AmbientLightColor = up + down + left + right + front + back;
+		vec3 up 	= skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb / 10;
+		vec3 down 	= skyCloudsFromTexLOD2(vec3( 0,-1, 0), colortex4, 6).rgb / 10;
+
+		up   *= pow( max( slopednormal.y, 0), 2);
+		down *= pow( max(-slopednormal.y, 0), 2);
+		AmbientLightColor += up + down;
 
 		// do all ambient lighting stuff
 		vec3 Indirect_lighting = DoAmbientLighting_Nether(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, np3, p3 );
