@@ -169,7 +169,7 @@ float triangularize(float dither)
 
 float interleaved_gradientNoise(){
 	// vec2 coord = gl_FragCoord.xy + (frameCounter%40000);
-	vec2 coord = gl_FragCoord.xy + frameTimeCounter;
+	vec2 coord = gl_FragCoord.xy + (frameCounter%40000);
 	// vec2 coord = gl_FragCoord.xy;
 	float noise = fract( 52.9829189 * fract( (coord.x * 0.06711056) + (coord.y * 0.00583715)) );
 	return noise ;
@@ -177,13 +177,13 @@ float interleaved_gradientNoise(){
 
 vec2 R2_dither(){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return vec2(fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter), fract((1.0-alpha.x) * gl_FragCoord.x + (1.0-alpha.y) * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter));
+	return vec2(fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * (frameCounter%40000)), fract((1.0-alpha.x) * gl_FragCoord.x + (1.0-alpha.y) * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter));
 }
 float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * (frameCounter*0.5+0.5)	);
+  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * (frameCounter%40000)	);
 }
 vec4 blueNoise(vec2 coord){
-  return texelFetch2D(colortex6, ivec2(coord )%512, 0) ;
+  return texelFetch2D(colortex6, ivec2(coord)%512, 0) ;
 }
 vec3 fp10Dither(vec3 color,float dither){
 	const vec3 mantissaBits = vec3(6.,6.,5.);
@@ -590,7 +590,7 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 			skycontribution = (skyCloudsFromTex(rayDir, colortex4).rgb / 15.0) * skyLM + torchlight;
 		#else
 			if(isGrass) rayDir.y = clamp(rayDir.y +  0.25,-1,1);
-			skycontribution = (skylightcolor * skyLM) * max(rayDir.y * min(AO_Strength,1.0), 0.05) + torchlight;
+			skycontribution = skylightcolor * max(rayDir.y * min(AO_Strength,1.0), 0.05) + torchlight;
 		#endif
 
 		if (rayHit.z < 1.){
@@ -601,9 +601,10 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
 				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0){
 					radiance += (texture2D(colortex5,previousPosition.xy).rgb + skycontribution) * GI_Strength;
-				} else {
+				}else{
 					radiance += skycontribution;
 				}
+
 			#else
 				radiance += skycontribution;
 			#endif
@@ -615,11 +616,9 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 		}
 	}
 	
-	// #ifdef SKY_CONTRIBUTION_IN_SSRT
-		occlusion *= AO_Strength;
-	// #endif
+	occlusion *= AO_Strength;
 
-	lighting = max(radiance - occlusion,0.0)/nrays; 
+	lighting = max(radiance/nrays - occlusion/nrays, 0.0); 
 }
 
 
@@ -765,7 +764,9 @@ vec3 Moon(vec3 PlayerPos, vec3 WorldSunVec, vec3 Color, inout vec3 occludeStars)
 	return Shape * pow(clamp(dot(sunNormal,LightDir)/5,0.0,1.5),5) * Color  + clamp(Shape * 4.0 * pow(shape2/200,2.0),0.0,1.0)*0.004;
 }
 
-
+vec3 applyContrast(vec3 color, float contrast){
+  return (color - 0.5) * contrast + 0.5;
+}
 
 
 #include "/lib/PhotonGTAO.glsl"
@@ -1235,6 +1236,8 @@ void main() {
 		if (isEyeInWater == 0) waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));		
 	}
 
+	
+	
 	#if DOF_QUALITY == 5
 		vec3 laserColor;
 		#if FOCUS_LASER_COLOR == 0 // Red

@@ -101,20 +101,24 @@ float triangularize(float dither)
     dither = center*inversesqrt(abs(center));
     return clamp(dither-fsign(center),0.0,1.0);
 }
-// float interleaved_gradientNoise(float temp){
-// 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+temp);
-// }
-// float interleaved_gradientNoise(){
-// 	vec2 coord = gl_FragCoord.xy;
-// 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-// 	return noise;
-// }
+
 float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy + (frameCounter%40000);
-	// vec2 coord = gl_FragCoord.xy + frameTimeCounter;
+	// vec2 coord = gl_FragCoord.xy + (frameCounter%40000);
+	vec2 coord = gl_FragCoord.xy + frameTimeCounter;
 	// vec2 coord = gl_FragCoord.xy;
 	float noise = fract( 52.9829189 * fract( (coord.x * 0.06711056) + (coord.y * 0.00583715)) );
 	return noise ;
+}
+
+vec2 R2_dither(){
+	vec2 alpha = vec2(0.75487765, 0.56984026);
+	return vec2(fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter), fract((1.0-alpha.x) * gl_FragCoord.x + (1.0-alpha.y) * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter));
+}
+float blueNoise(){
+  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * (frameCounter*0.5+0.5)	);
+}
+vec4 blueNoise(vec2 coord){
+  return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
 }
 vec3 fp10Dither(vec3 color,float dither){
 	const vec3 mantissaBits = vec3(6.,6.,5.);
@@ -141,22 +145,6 @@ vec2 decodeVec2(float a){
     const float constant2 = 256. / 255.;
     return fract( a * constant1 ) * constant2 ;
 }
-// float linZ(float depth) {
-//     return (2.0 * near) / (far + near - depth * (far - near));
-// 	// l = (2*n)/(f+n-d(f-n))
-// 	// f+n-d(f-n) = 2n/l
-// 	// -d(f-n) = ((2n/l)-f-n)
-// 	// d = -((2n/l)-f-n)/(f-n)
-
-// }
-// float invLinZ (float lindepth){
-// 	return -((2.0*near/lindepth)-far-near)/(far-near);
-// }
-
-// vec3 toClipSpace3(vec3 viewSpacePosition) {
-//     return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
-// }
-
 
 
 
@@ -181,13 +169,7 @@ vec3 BilateralFiltering(sampler2D tex, sampler2D depth,vec2 coord,float frDepth,
 
   return vec3(sampled.x,sampled.yz/sampled.w);
 }
-float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
-}
-float R2_dither(){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y);
-}
+
 vec3 toShadowSpaceProjected(vec3 p3){
     p3 = mat3(gbufferModelViewInverse) * p3 + gbufferModelViewInverse[3].xyz;
     p3 = mat3(shadowModelView) * p3 + shadowModelView[3].xyz;
@@ -307,10 +289,6 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 		inColor += vL;
 }
 
-vec4 blueNoise(vec2 coord){
-  return texelFetch2D(colortex6, ivec2(coord )%512  , 0);
-}
-
 void Emission(
 	inout vec3 Lighting,
 	vec3 Albedo,
@@ -383,6 +361,81 @@ void ScreenSpace_SSS(inout float sss, vec3 fragpos, vec2 noise, vec3 normal){
 
 
 
+vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
+
+	vec3 clipPosition = toClipSpace3(position);
+	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ?
+	                   (-near -position.z) / dir.z : far*sqrt(3.);
+	vec3 direction = normalize(toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
+	direction.xy = normalize(direction.xy);
+
+	//get at which length the ray intersects with the edge of the screen
+	vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
+	float mult = maxLengths.y;
+
+	vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0) * dither;
+	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) ;
+
+	spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
+
+	float biasdist =  clamp(position.z*position.z/50.0,1,2); // shrink sample size as distance increases
+
+	for(int i = 0; i < int(quality); i++){
+		spos += stepv;
+		float sp = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4),0).w/65000.0);
+		float currZ = linZ(spos.z);
+
+		if( sp < currZ) {
+			float dist = abs(sp-currZ)/currZ;
+			if (abs(dist) < biasdist*0.05) return vec3(spos.xy, invLinZ(sp))/vec3(RENDER_SCALE,1.0);
+		}
+		spos += stepv;
+	}
+  return vec3(1.1);
+}
+vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes){
+	float dist = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
+
+	float stepSize = stepsizes / dist;
+	int maxSteps = STEPS;
+	vec3 clipPosition = toClipSpace3(position);
+	float rayLength = ((position.z + dir.z * sqrt(3.0)*far) > -sqrt(3.0)*near) ?
+	   								(-sqrt(3.0)*near -position.z) / dir.z : sqrt(3.0)*far;
+	vec3 end = toClipSpace3(position+dir*rayLength) ;
+	vec3 direction = end-clipPosition ;  //convert to clip space
+
+	float len = max(abs(direction.x)/texelSize.x,abs(direction.y)/texelSize.y)/stepSize;
+	//get at which length the ray intersects with the edge of the screen
+	vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
+	
+	float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z)*2000.0;
+
+	vec3 stepv = direction/len;
+
+	int iterations = min(int(min(len, mult*len)-2), maxSteps);
+	
+	//Do one iteration for closest texel (good contact shadows)
+	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) ;
+	spos.xy += TAA_Offset*texelSize*0.5*RENDER_SCALE;
+	spos += stepv/(stepSize/2);
+	
+	float distancered = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
+
+  	for(int i = 0; i < iterations; i++){
+		if (spos.x < 0.0 || spos.y < 0.0 || spos.z < 0.0 || spos.x > 1.0 || spos.y > 1.0 || spos.z > 1.0) return vec3(1.1);
+		spos += stepv*noise;
+
+		float sp = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/ texelSize/4),0).w/65000.0);
+		float currZ = linZ(spos.z);
+		
+		if( sp < currZ) {
+			float dist = abs(sp-currZ)/currZ;
+			if (dist <= 0.1) return vec3(spos.xy, invLinZ(sp))/vec3(RENDER_SCALE,1.0);
+		}
+	}
+	return vec3(1.1);
+}
+
 vec3 cosineHemisphereSample(vec2 Xi, float roughness){
     float r = sqrt(Xi.x);
     float theta = 2.0 * 3.14159265359 * Xi.y;
@@ -392,6 +445,7 @@ vec3 cosineHemisphereSample(vec2 Xi, float roughness){
 
     return vec3(x, y, sqrt(clamp(1.0 - Xi.x,0.,1.)));
 }
+
 vec3 TangentToWorld(vec3 N, vec3 H, float roughness){
     vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
     vec3 T = normalize(cross(UpVector, N));
@@ -399,7 +453,59 @@ vec3 TangentToWorld(vec3 N, vec3 H, float roughness){
 
     return vec3((T * H.x) + (B * H.y) + (N * H.z));
 }
+vec2 R2_samples(int n){
+	vec2 alpha = vec2(0.75487765, 0.56984026);
+	return fract(alpha * n);
+}
 
+void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, float lightmaps, vec3 torchcolor){
+	int nrays = RAY_COUNT;
+
+	vec3 radiance = vec3(0.0);
+	vec3 occlusion = vec3(0.0);
+	vec3 skycontribution = vec3(0.0);
+
+	for (int i = 0; i < nrays; i++){
+		int seed = (frameCounter%40000)*nrays+i;
+		vec2 ij = fract(R2_samples(seed) + noise );
+
+		vec3 rayDir = TangentToWorld(normal, normalize(cosineHemisphereSample(ij,1.0)) ,1.0);
+
+		#ifdef HQ_SSGI
+			vec3 rayHit = rayTrace_GI( mat3(gbufferModelView) * rayDir, fragpos,  blueNoise(), 50.); // ssr rt
+		#else
+			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, fragpos, blueNoise(), 30.);  // choc sspt 
+		#endif
+
+		skycontribution = lighting;
+
+		if (rayHit.z < 1.){
+			
+			#if indirect_effect == 4
+				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
+				previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
+				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
+				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0){
+					radiance += (texture2D(colortex5,previousPosition.xy).rgb + skycontribution) * GI_Strength;
+				}else{
+					radiance += skycontribution;
+				}
+
+			#else
+				radiance += skycontribution;
+			#endif
+
+			occlusion += skycontribution * GI_Strength;
+				
+		} else {
+			radiance += skycontribution;
+		}
+	}
+	
+	occlusion *= AO_Strength;
+
+	lighting = max(radiance/nrays - occlusion/nrays, 0.0); 
+}
 void main() {
 	float dirtAmount = Dirt_Amount;
 	vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
@@ -481,9 +587,21 @@ void main() {
 		// do all ambient lighting stuff
 		vec3 Indirect_lighting = DoAmbientLighting_Nether(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, np3, p3 );
 
-		vec3 AO = vec3( exp( (vanilla_AO*vanilla_AO) * -5) )  ;
 
-		if(!hand) Indirect_lighting *= ssao(fragpos,noise,FlatNormals) * AO;
+		#if indirect_effect == 0
+			vec3 AO = vec3( exp( (vanilla_AO*vanilla_AO) * -5) )  ;
+			if(!hand) Indirect_lighting *= AO;
+		#endif
+
+		#if indirect_effect == 1
+			vec3 AO = vec3( exp( (vanilla_AO*vanilla_AO) * -5) )  ;
+			if(!hand) Indirect_lighting *= ssao(fragpos,noise,FlatNormals) * AO;
+		#endif
+		
+		// RTAO and/or SSGI
+		#if indirect_effect == 3 || indirect_effect == 4
+			if (!hand) ApplySSRT(Indirect_lighting, normal, blueNoise(gl_FragCoord.xy).rg, fragpos, lightmap.x,vec3(TORCH_R,TORCH_G,TORCH_B));
+		#endif
 
 		// finalize
 		gl_FragData[0].rgb = Indirect_lighting * albedo;

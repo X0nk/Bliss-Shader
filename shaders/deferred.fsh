@@ -125,6 +125,9 @@ gl_FragData[0] = vec4(sunColor,1.0);
 if (gl_FragCoord.x > 13. && gl_FragCoord.x < 14.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 gl_FragData[0] = vec4(moonColor,1.0);
 
+
+
+
 const float pi = 3.141592653589793238462643383279502884197169;
 
 //Sky gradient (no clouds)
@@ -163,7 +166,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec4 VL_Fog = getVolumetricRays(mat3(gbufferModelView)*viewVector*1024.,  fract(frameCounter/1.6180339887), averageSkyCol);
 	
 	if(viewVector.y < -0.025) VL_Fog.rgb *= clamp( exp(viewVector.y) - 1.0,0.25,1.0) ;
-	
+
 	sky = sky*VL_Fog.a + VL_Fog.rgb*20;
 
 	gl_FragData[0] = vec4(sky,1.0);
@@ -173,7 +176,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 vec3 temp = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy),0).rgb;
 vec3 curr = gl_FragData[0].rgb*150.;
 
-float flashtiming = pow(clamp((0.01-lightningFlash)*100,0,1),25);
+float flashtiming  =  pow(clamp((0.01-lightningFlash)*100,0,1),25);
 
 gl_FragData[0].rgb = clamp(mix(temp,curr, 0.07 * flashtiming),0.0,65000.);
 

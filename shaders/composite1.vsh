@@ -57,8 +57,10 @@ void main() {
 	gl_Position = ftransform();
 	
 
+// if (gl_FragCoord.x < 1. && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 
 	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+
 	// averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
 	// averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(1,37),0).rgb;;
 	// sunColor = texelFetch2D(colortex4,ivec2(6,37),0).rgb;

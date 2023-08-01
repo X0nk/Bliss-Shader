@@ -2,6 +2,19 @@
 
 uniform float nightVision;
 
+void DoRTAmbientLighting (vec3 TorchColor, vec2 Lightmap, inout float SkyLM, inout vec3 TorchLight, inout vec3 SkyLight){
+
+    float TorchLM = 10.0 - ( 1.0 / (pow(exp(-0.5*inversesqrt(Lightmap.x)),5.0)+0.1));
+    TorchLM = pow(TorchLM/4,10) + pow(Lightmap.x,1.5)*0.5;
+	TorchLight = (TorchColor * TorchLM * 0.75) * TORCH_AMOUNT;
+
+
+    SkyLM = (pow(Lightmap.y,15.0)*2.0 + pow(Lightmap.y,2.5))*0.5; 
+    
+    SkyLight = (SkyLight * ambient_brightness) / 10.0;
+    SkyLight = max(SkyLight * SkyLM,  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.025 + nightVision));
+}
+
 //// OVERWORLD ////
 #ifdef OVERWORLD
 vec3 DoAmbientLighting (vec3 SkyColor, vec3 TorchColor, vec2 Lightmap, float skyLightDir){
@@ -18,20 +31,8 @@ vec3 DoAmbientLighting (vec3 SkyColor, vec3 TorchColor, vec2 Lightmap, float sky
     float skyLM = (pow(Lightmap.y,15.0)*2.0 + pow(Lightmap.y,2.5))*0.5;
     vec3 SkyLight = max(SkyColor * skyLM,  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision) ); 
 
-    return   SkyLight * skyLightDir + TorchLight;
+    return  SkyLight * skyLightDir + TorchLight;
 }
-
-void DoRTAmbientLighting (vec3 TorchColor, vec2 Lightmap, inout float SkyLM, inout vec3 TorchLight, inout vec3 SkyLight){
-
-    float TorchLM = 10.0 - ( 1.0 / (pow(exp(-0.5*inversesqrt(Lightmap.x)),5.0)+0.1));
-    TorchLM = pow(TorchLM/4,10) + pow(Lightmap.x,1.5)*0.5;
-	TorchLight = (TorchColor * TorchLM * 0.75) * TORCH_AMOUNT;
-
-    SkyLM = (pow(Lightmap.y,15.0)*2.0 + pow(Lightmap.y,2.5))*0.5; 
-
-    SkyLight = max((SkyLight * ambient_brightness) / 10.0,  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision));
-}
-
 vec3 DoDirectLighting(vec3 SunColor, float Shadow, float NdotL, float SubsurfaceScattering){
 
     // vec3 SunLight = max(NdotL * Shadow, SubsurfaceScattering) * SunColor;
