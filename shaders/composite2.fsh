@@ -344,8 +344,6 @@ void main() {
 	#endif
 		
 	if (isEyeInWater == 0){
-
-
 		vec3 fragpos = toScreenSpace(vec3(tc/RENDER_SCALE,z));
 		
 		#ifdef Cumulus
@@ -372,9 +370,9 @@ void main() {
 			gl_FragData[0] = clamp(VL_Fog,0.0,65000.);
 
 		#endif
+	}
 
-
-	} else {
+	if (isEyeInWater == 1){
 
 		float dirtAmount = Dirt_Amount;
 		vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);

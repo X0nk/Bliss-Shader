@@ -590,7 +590,10 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 			skycontribution = (skyCloudsFromTex(rayDir, colortex4).rgb / 15.0) * skyLM + torchlight;
 		#else
 			if(isGrass) rayDir.y = clamp(rayDir.y +  0.25,-1,1);
-			skycontribution = skylightcolor * max(rayDir.y * min(AO_Strength,1.0), 0.05) + torchlight;
+			
+			float SkyLightDir = rayDir.y > 0.0 ? 1.0 : max(rayDir.y,0.25); // the positons where the occlusion happens
+			
+			skycontribution = skylightcolor * SkyLightDir + torchlight;
 		#endif
 
 		if (rayHit.z < 1.){
@@ -599,9 +602,10 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
 				previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
 				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
+				
 				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0){
 					radiance += (texture2D(colortex5,previousPosition.xy).rgb + skycontribution) * GI_Strength;
-				}else{
+				} else{
 					radiance += skycontribution;
 				}
 
@@ -610,6 +614,7 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 			#endif
 
 			occlusion += skycontribution * GI_Strength;
+
 				
 		} else {
 			radiance += skycontribution;
@@ -618,7 +623,14 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 	
 	occlusion *= AO_Strength;
 
-	lighting = max(radiance/nrays - occlusion/nrays, 0.0); 
+	lighting = radiance/nrays - occlusion/nrays;
+
+
+
+	// lighting = GI ;
+	// radiance = radiance/nrays - (skycontribution + occlusion/nrays); 
+	// lighting = skycontribution - occlusion/nrays + radiance;
+
 }
 
 
@@ -853,7 +865,7 @@ void main() {
 	bool lightningBolt = abs(dataUnpacked1.w-0.50) <0.01;
 	bool entities = abs(dataUnpacked1.w-0.45) < 0.01;	
 	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
-	bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
+	// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
 	bool isGrass = abs(dataUnpacked1.w-0.60) < 0.01;
 
 	float vanilla_AO = normalAndAO.a;
@@ -1129,7 +1141,6 @@ void main() {
 	////////////////////////////////	UNDER WATER SHADING		////////////////////////////////
 	//////////////////////////////// 							////////////////////////////////
 
-		vec3 waterabsorb_speculars = vec3(1);
  		if ((isEyeInWater == 0 && iswater) || (isEyeInWater == 1 && !iswater)){
 
 			vec3 fragpos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0));
@@ -1153,7 +1164,7 @@ void main() {
 			// Indirect_lighting *= 0.5 + max(pow(Ambient_Caustics, 2.0),0.0); 
 
 			DirectLightColor *= Absorbtion;
-			Indirect_lighting = (Indirect_lighting/exp2(-estimatedDepth*0.5))  * Absorbtion;
+			if(isEyeInWater == 1 ) Indirect_lighting = (Indirect_lighting/exp2(-estimatedDepth*0.5))  * Absorbtion;
 
 			if(isEyeInWater == 0) DirectLightColor *= max(eyeBrightnessSmooth.y/240., 0.0);
 			DirectLightColor *= cloudShadow;

@@ -104,18 +104,27 @@ void main() {
 
 
 
-	vec3 bloom = texture2D(colortex3,texcoord/clampedRes*vec2(1920.,1080.)*0.5*BLOOM_QUALITY).rgb/2./7.0;
+	// vec3 bloom = (texture2D(colortex3,texcoord/clampedRes*vec2(1920.,1080.)*0.5*BLOOM_QUALITY).rgb)/2./7.0;
 
-	float lightScat = clamp(BLOOM_STRENGTH  * 0.05 * pow(exposure.a ,0.2)  ,0.0,1.0)*vignette;
+	vec3 bloom = texture2D(colortex3, texcoord/clampedRes*vec2(1920.,1080.)*0.5*BLOOM_QUALITY).rgb / 2.0 / 7.0;
+
+
+	float lightScat = clamp(BLOOM_STRENGTH  * 0.05 * pow(exposure.a, 0.2)  ,0.0,1.0)*vignette;
 
  	float VL_abs = texture2D(colortex7,texcoord*RENDER_SCALE).r;
 	float purkinje = rodExposureDepth.x/(1.0+rodExposureDepth.x)*Purkinje_strength;
 
  	VL_abs = clamp( (1.0-VL_abs)*BLOOMY_FOG*0.75*(1.0-purkinje),0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
 
-	float lightleakfix = clamp(eyeBrightnessSmooth.y/240.0,0.0,1.0);
+	// bloom *= lightScat;
+	// apply bloom and bloomy fog
+	// col = mix(col, bloom, VL_abs);
+	// col += bloom*lightScat;
+	
+	// // apply exposure
+	// col *= exposure.rgb;
 
-	col = (mix(col,bloom,VL_abs)+bloom * lightScat) *	mix(exposure.rgb,min(exposure.rgb,0.01), 0);
+	col = (mix(col,bloom,VL_abs)+bloom * lightScat) * exposure.rgb;
 
 	//Purkinje Effect
   	float lum = dot(col,vec3(0.15,0.3,0.55));

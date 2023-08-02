@@ -11,7 +11,7 @@ void DoRTAmbientLighting (vec3 TorchColor, vec2 Lightmap, inout float SkyLM, ino
 
     SkyLM = (pow(Lightmap.y,15.0)*2.0 + pow(Lightmap.y,2.5))*0.5; 
     
-    SkyLight = (SkyLight * ambient_brightness) / 10.0;
+    SkyLight = (SkyLight * ambient_brightness) / 30.0;
     SkyLight = max(SkyLight * SkyLM,  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.025 + nightVision));
 }
 

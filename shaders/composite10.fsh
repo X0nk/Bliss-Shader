@@ -85,6 +85,7 @@ void main() {
 /* DRAWBUFFERS:3 */
 vec2 resScale = vec2(1920.,1080.)/(max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.))/BLOOM_QUALITY);
 vec2 texcoord = ((gl_FragCoord.xy)*2.+0.5)*texelSize;
+
 vec3 bloom = texture2D_bicubic(colortex3,texcoord/2.0).rgb;	//1/4 res
 
 bloom += texture2D_bicubic(colortex6,texcoord/4.).rgb; //1/8 res
@@ -94,7 +95,9 @@ bloom += texture2D_bicubic(colortex6,texcoord/8.+vec2(0.25*resScale.x+2.5*texelS
 bloom += texture2D_bicubic(colortex6,texcoord/16.+vec2(0.375*resScale.x+4.5*texelSize.x,.0)).rgb; //1/32 res
 
 bloom += texture2D_bicubic(colortex6,texcoord/32.+vec2(0.4375*resScale.x+6.5*texelSize.x,.0)).rgb*1.0; //1/64 res
+
 bloom += texture2D_bicubic(colortex6,texcoord/64.+vec2(0.46875*resScale.x+8.5*texelSize.x,.0)).rgb*1.0; //1/128 res
+
 bloom += texture2D_bicubic(colortex6,texcoord/128.+vec2(0.484375*resScale.x+10.5*texelSize.x,.0)).rgb*1.0; //1/256 res
 
 //bloom = texture2D_bicubic(colortex6,texcoord).rgb*6.; //1/8 res
