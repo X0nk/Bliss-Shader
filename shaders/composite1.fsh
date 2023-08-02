@@ -822,7 +822,6 @@ void main() {
 		scatterCoef *= 0.1;
 	#endif
 
-
 	float noise = blueNoise();
 
 	float iswaterstuff = texture2D(colortex7,texcoord).a ;
@@ -895,11 +894,12 @@ void main() {
 	vec3 Indirect_SSS = vec3(0.0);
 
 	vec3 debug = vec3(0.0);
+
 	if ( z >= 1.) {//sky
 	
-	//////////////////////////////// 				////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	SKY STUFF	////////////////////////////////
-	//////////////////////////////// 				////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
 
 	#ifdef Compositing_Sky
 
@@ -932,9 +932,9 @@ void main() {
 
 	}else{//land
 
-	//////////////////////////////// 						////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	DIRECT LIGHTING		////////////////////////////////
-	//////////////////////////////// 						////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////
 
 		vec3 Direct_lighting = vec3(1.0);
 
@@ -993,9 +993,9 @@ void main() {
 
 		if(outsideShadowMap && !iswater) Shadows = min(max(lightmap.y-0.8, 0.0) * 25,1.0);
 
-			
-
+	////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	SUN SSS		////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
 
 		#if SSS_TYPE != 0
 			#ifndef Variable_Penumbra_Shadows
@@ -1046,9 +1046,9 @@ void main() {
 		#endif
 		#endif
 			 
-	//////////////////////////////// 						////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	INDIRECT LIGHTING	////////////////////////////////
-	//////////////////////////////// 						////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////
 
 		vec3 Indirect_lighting = vec3(1.0);
 
@@ -1070,6 +1070,43 @@ void main() {
 		#else
 			Indirect_lighting = vec3(0.0);
 		#endif
+
+	////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////	UNDER WATER SHADING		////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////
+
+ 		if ((isEyeInWater == 0 && iswater) || (isEyeInWater == 1 && !iswater)){
+
+			vec3 fragpos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0));
+			float Vdiff = distance(fragpos,fragpos0);
+			float VdotU = np3.y;
+			float estimatedDepth = Vdiff * abs(VdotU);	//assuming water plane
+			estimatedDepth = estimatedDepth;
+			// make it such that the estimated depth flips to be correct when entering water.
+
+			if (isEyeInWater == 1) estimatedDepth = (1.0-lightmap.y)*16.0;
+			
+			float estimatedSunDepth = Vdiff; //assuming water plane
+			vec3 Absorbtion = exp2(-totEpsilon*estimatedDepth);
+
+			// caustics...
+			float Direct_caustics  = waterCaustics(p3 + cameraPosition, WsunVec) * cloudShadow;
+			// float Ambient_Caustics = waterCaustics(p3 + cameraPosition, vec3(0.5, 1, 0.5));
+			
+			// apply caustics to the lighting
+			DirectLightColor *= 1.0 + max(pow(Direct_caustics * 3.0, 2.0),0.0);
+			// Indirect_lighting *= 0.5 + max(pow(Ambient_Caustics, 2.0),0.0); 
+
+			DirectLightColor *= Absorbtion;
+			if(isEyeInWater == 1 ) Indirect_lighting = (Indirect_lighting/exp2(-estimatedDepth*0.5))  * Absorbtion;
+
+			if(isEyeInWater == 0) DirectLightColor *= max(eyeBrightnessSmooth.y/240., 0.0);
+			DirectLightColor *= cloudShadow;
+		}
+		
+	////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////	EFFECTS FOR INDIRECT	////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////
 
 		vec3 AO = vec3(1.0);
 		float SkySSS = 0.0;
@@ -1104,7 +1141,9 @@ void main() {
 		
 		Indirect_lighting *= AO;
 		
+	////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	SKY SSS		////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
 
 		#ifdef Ambient_SSS
 			if (!hand){
@@ -1135,41 +1174,6 @@ void main() {
 				Indirect_lighting = max(Indirect_lighting, SSS_forSky);
 			}
 		#endif
-
-
-	//////////////////////////////// 							////////////////////////////////
-	////////////////////////////////	UNDER WATER SHADING		////////////////////////////////
-	//////////////////////////////// 							////////////////////////////////
-
- 		if ((isEyeInWater == 0 && iswater) || (isEyeInWater == 1 && !iswater)){
-
-			vec3 fragpos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0));
-			float Vdiff = distance(fragpos,fragpos0);
-			float VdotU = np3.y;
-			float estimatedDepth = Vdiff * abs(VdotU);	//assuming water plane
-			estimatedDepth = estimatedDepth;
-			// make it such that the estimated depth flips to be correct when entering water.
-
-			if (isEyeInWater == 1) estimatedDepth = (1.0-lightmap.y)*16.0;
-			
-			float estimatedSunDepth = Vdiff; //assuming water plane
-			vec3 Absorbtion = exp2(-totEpsilon*estimatedDepth);
-
-			// caustics...
-			float Direct_caustics  = waterCaustics(p3 + cameraPosition, WsunVec) * cloudShadow;
-			// float Ambient_Caustics = waterCaustics(p3 + cameraPosition, vec3(0.5, 1, 0.5));
-			
-			// apply caustics to the lighting
-			DirectLightColor *= 1.0 + max(pow(Direct_caustics * 3.0, 2.0),0.0);
-			// Indirect_lighting *= 0.5 + max(pow(Ambient_Caustics, 2.0),0.0); 
-
-			DirectLightColor *= Absorbtion;
-			if(isEyeInWater == 1 ) Indirect_lighting = (Indirect_lighting/exp2(-estimatedDepth*0.5))  * Absorbtion;
-
-			if(isEyeInWater == 0) DirectLightColor *= max(eyeBrightnessSmooth.y/240., 0.0);
-			DirectLightColor *= cloudShadow;
-		}
-
 
 	//////////////////////////////// 				////////////////////////////////
 	////////////////////////////////	FINALIZE	////////////////////////////////
@@ -1225,11 +1229,11 @@ void main() {
 
 	}
 
-	//////////////////////////////// 					////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	UNDERWATER FOG	////////////////////////////////
-	//////////////////////////////// 					////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////
 
-	if (iswater){
+	if (iswater && isEyeInWater == 0){
 		vec3 fragpos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0));
 		float Vdiff = distance(fragpos,fragpos0);
 		float VdotU = np3.y;
@@ -1244,9 +1248,12 @@ void main() {
 		vec3 lightningColor = (lightningEffect / 3) * (max(eyeBrightnessSmooth.y,0)/240.);
 		vec3 ambientColVol =  max((averageSkyCol_Clouds / 30.0) *  custom_lightmap_T, vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision)) + lightningColor;
 
-		if (isEyeInWater == 0) waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));		
+		 waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));		
 	}
 
+	////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////	MISC EFFECTS	////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////
 	
 	
 	#if DOF_QUALITY == 5
