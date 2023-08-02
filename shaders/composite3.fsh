@@ -311,8 +311,8 @@ void main() {
   }
 
   // apply VL fog to the scene
-  // color *= vl.a;
-  // color += vl.rgb;
+  color *= vl.a;
+  color += vl.rgb;
   
 // bloomy rain effect
   float rainDrops =  clamp(texture2D(colortex9,texcoord).a,  0.0,1.0); 
