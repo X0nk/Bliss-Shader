@@ -71,7 +71,7 @@ flat varying vec3 averageSkyCol_Clouds;
 #include "/lib/clouds.glsl"
 #include "/lib/stars.glsl"
 #include "/lib/volumetricClouds.glsl"
-#define OVERWORLD
+#define OVERWORLD_SHADER
 #include "/lib/diffuse_lighting.glsl"
 
 

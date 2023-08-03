@@ -38,7 +38,8 @@ float cloudVol(in vec3 pos){
 
 vec4 GetVolumetricFog(
 	vec3 fragpos,
-	float dither
+	float dither,
+	float dither2
 ){
 	int SAMPLES = 16;
 	vec3 vL = vec3(0.0);
@@ -93,5 +94,5 @@ vec4 GetVolumetricFog(
 
 		if (absorbance < 1e-5) break;
 	}
-	return vec4(vL,absorbance);
+	return vec4(vL, absorbance);
 }

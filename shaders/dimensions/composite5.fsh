@@ -1,6 +1,3 @@
-#version 120
-//downsample 1st pass (half res) for bloom
-
 uniform sampler2D colortex3;
 uniform vec2 texelSize;
 uniform float viewWidth;

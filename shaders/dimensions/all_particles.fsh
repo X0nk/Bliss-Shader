@@ -2,21 +2,13 @@
 varying vec4 lmtexcoord;
 varying vec4 color;
 
-flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
-flat varying vec3 avgAmbient;
-
-uniform vec3 sunVec;
-flat varying vec3 WsunVec;
-
 uniform sampler2D texture;
-uniform sampler2DShadow shadow;
-uniform sampler2D gaux1;
-uniform sampler2D noisetex;
-uniform float frameTimeCounter;
-uniform ivec2 eyeBrightnessSmooth;
 
-uniform vec2 texelSize;
-uniform float rainStrength;
+uniform sampler2D noisetex;
+
+uniform sampler2D colortex4;
+
+
 uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;
@@ -24,12 +16,16 @@ uniform mat4 shadowModelView;
 uniform mat4 shadowProjection;
 uniform vec3 cameraPosition;
 
+uniform float frameTimeCounter;
+
+uniform vec2 texelSize;
+
+uniform ivec2 eyeBrightnessSmooth;
+uniform float rainStrength;
 
 #include "/lib/settings.glsl"
-
-#define END
-#define NETHER
 #include "/lib/diffuse_lighting.glsl"
+#include "/lib/sky_gradient.glsl"
 
 vec3 toLinear(vec3 sRGB){
 	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
@@ -76,8 +72,23 @@ void main() {
 	vec3 p3 = mat3(gbufferModelViewInverse) * fragpos;
 	vec3 np3 = normVec(p3);
 
+	vec3 Indirect_lighting = vec3(1.0);
+	float lightmap = lmtexcoord.z;
+	vec3 nothing = vec3(0.0);
 
-	vec3 Indirect_lighting = DoAmbientLighting_Nether(gl_Fog.color.rgb, vec3(TORCH_R,TORCH_G,TORCH_B), lmtexcoord.z, normalize(vec3(0.0)), normalize(vec3(0.0)), p3 + cameraPosition);
+	#ifdef END_SHADER
+   		float TorchLM = 10.0 - ( 1.0 / (pow(exp(-0.5*inversesqrt(lightmap)),5.0)+0.1));
+   		TorchLM = pow(TorchLM/4,10) + pow(lightmap,1.5)*0.5;
+		vec3 TorchLight = (vec3(TORCH_R,TORCH_G,TORCH_B) * TorchLM * 0.75) * TORCH_AMOUNT;
+
+		Indirect_lighting = max(vec3(0.5,0.75,1.0) * 0.1, (MIN_LIGHT_AMOUNT*0.01 + nightVision*0.5) ) + TorchLight;
+	#endif
+
+	#ifdef NETHER_SHADER
+		vec3 AmbientLightColor = skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb / 10;
+
+		Indirect_lighting = DoAmbientLighting_Nether(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap, nothing, nothing, nothing);
+	#endif
 		
 	gl_FragData[0].rgb = Indirect_lighting * Albedo;
 }

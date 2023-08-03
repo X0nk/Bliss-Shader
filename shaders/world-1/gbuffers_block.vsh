@@ -2,4 +2,7 @@
 
 #define WORLD
 #define BLOCKENTITIES
-#include "/programs/all_solid.vsh"
+
+#define NETHER_SHADER
+
+#include "/dimensions/all_solid.vsh"

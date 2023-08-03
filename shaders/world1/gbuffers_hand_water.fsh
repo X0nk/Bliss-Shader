@@ -1,3 +1,5 @@
 #version 120
 
-#include "/programs/all_translucent.fsh"
+#define END_SHADER
+
+#include "/dimensions/all_translucent.fsh"

@@ -1,5 +1,7 @@
 #version 120
 
+#define NETHER_SHADER
+
 #define WORLD
 
-#include "/programs/all_solid.fsh"
+#include "/dimensions/all_solid.fsh"

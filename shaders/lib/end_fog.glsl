@@ -223,7 +223,11 @@ float cloudVol(in vec3 pos, int LOD){
 }
 
 
-mat2x3 getVolumetricRays(float dither,vec3 fragpos,float dither2) {
+vec4 GetVolumetricFog(
+    vec3 fragpos, 
+    float dither, 
+    float dither2
+) {
     int SAMPLES = 16;
 	//project pixel position into projected shadowmap space
 	vec3 wpos = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
@@ -250,11 +254,10 @@ mat2x3 getVolumetricRays(float dither,vec3 fragpos,float dither2) {
 	vec3 vL = vec3(0.);
 	float dL = length(dVWorld);
 
-	vec3 absorbance = vec3(1.0);
+	float absorbance = 1.0;
 	float expFactor = 11.0;
 
 	vec3 fogColor = (gl_Fog.color.rgb / max(pow(dot(gl_Fog.color.rgb,vec3(0.3333)),1.1),0.01)  ) ;
-
 
 	for (int i=0;i<SAMPLES;i++) {
 		float d = (pow(expFactor, float(i+dither)/float(SAMPLES))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
@@ -308,7 +311,7 @@ mat2x3 getVolumetricRays(float dither,vec3 fragpos,float dither2) {
 
         absorbance *= exp(-(density+air)*dd*dL);
 	}
-	return mat2x3(vL,absorbance);
+	return vec4(vL, absorbance);
 }
 
 float GetCloudShadow(vec3 WorldPos, vec3 LightPos, float noise){

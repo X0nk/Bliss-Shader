@@ -1,7 +1,3 @@
-#version 120
-//Vignetting, applies bloom, applies exposure and tonemaps the final image
-//#extension GL_EXT_gpu_shader4 : disable
-
 #include "/lib/settings.glsl"
 
 #ifdef DOF
@@ -461,14 +457,8 @@ void main() {
   	VL_abs = clamp((1.0-VL_abs*1.05)*BLOOMY_FOG*0.5,0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
 
 	col = ( mix(col, bloom, VL_abs) + bloom*lightScat) * exposure.rgb;
-/*
-	//Purkinje Effect
-  float lum = dot(col,vec3(0.15,0.3,0.55));
-	float lum2 = dot(col,vec3(0.85,0.7,0.45))/2;
-	float rodLum = lum2*300.0;
-	float rodCurve = mix(1.0, rodLum/(2.5+rodLum), rodExposure/2.0*Purkinje_strength);
-	col = mix(lum*Purkinje_Multiplier*vec3(Purkinje_R, Purkinje_G, Purkinje_B)+0.001, col, rodCurve);
-*/
+
+
 	#ifndef USE_ACES_COLORSPACE_APPROXIMATION
   	col = LinearTosRGB(TONEMAP(col));
 	#else

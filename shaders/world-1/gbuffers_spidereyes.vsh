@@ -34,14 +34,9 @@ void main() {
 
 	gl_Position = ftransform();
 
-	// if(gl_Color.a < 0.1 ) gl_Position = vec4(10,10,10,1);
-
 	texcoord = (gl_MultiTexCoord0).xy;
 	color = gl_Color;
 
-	#ifdef TAA_UPSCALING
-		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
-	#endif
 	#ifdef TAA
 	    gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
 	#endif

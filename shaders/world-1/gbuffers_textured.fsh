@@ -1,3 +1,6 @@
 #version 120
 
-#include "/programs/all_particles.fsh"
+
+#define NETHER_SHADER
+
+#include "/dimensions/all_particles.fsh"

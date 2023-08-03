@@ -151,7 +151,7 @@ vec3 viewToWorld(vec3 viewPosition) {
 #include "/lib/volumetricClouds.glsl"
 #include "/lib/waterBump.glsl"
 
-#define OVERWORLD
+#define OVERWORLD_SHADER
 #include "/lib/specular.glsl"
 #include "/lib/diffuse_lighting.glsl"
 

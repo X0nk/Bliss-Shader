@@ -3,4 +3,7 @@
 // #define ENTITIES
 #define BLOCKENTITIES
 #define WORLD
-#include "/programs/all_solid.fsh"
+
+#define END_SHADER
+
+#include "/dimensions/all_solid.fsh"

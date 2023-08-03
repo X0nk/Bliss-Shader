@@ -1,3 +1,7 @@
 #version 120
 
-#include "/programs/all_translucent.vsh"
+#define NETHER
+
+#define NETHER_SHADER
+
+#include "/dimensions/all_translucent.vsh"

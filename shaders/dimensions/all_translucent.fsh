@@ -72,7 +72,7 @@ flat varying vec3 averageSkyCol_Clouds;
 #include "/lib/clouds.glsl"
 #include "/lib/stars.glsl"
 #include "/lib/volumetricClouds.glsl"
-#define OVERWORLD
+#define OVERWORLD_SHADER
 #include "/lib/diffuse_lighting.glsl"
 
 
@@ -298,7 +298,6 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 
 	vec4 COLORTEST = vec4(Albedo,UnchangedAlpha);
 
-
 	vec3 p3 = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
 
 	vec3 normal = normalMat.xyz;
@@ -337,13 +336,12 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 	gl_FragData[2] = vec4(encodeVec2(TangentNormal), encodeVec2(COLORTEST.rg), encodeVec2(COLORTEST.ba), UnchangedAlpha);
 
 
-
 	vec3 WS_normal = viewToWorld(normal);
 
 	vec2 lightmaps2 = lmtexcoord.zw;
 	vec3 Indirect_lighting = vec3(0.0);
 
-	#ifdef NETHER
+	#ifdef NETHER_SHADER
 		WS_normal.xz = -WS_normal.xz;
 		vec3 AmbientLightColor = skyCloudsFromTexLOD2(WS_normal, colortex4, 6).rgb / 15;
 		
@@ -359,7 +357,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 		Indirect_lighting = DoAmbientLighting_Nether(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmaps2.x, vec3(0.0), vec3(0.0), vec3(0.0));
 	#endif
 
-	#ifdef END
+	#ifdef END_SHADER
 		// do all ambient lighting stuff
 		Indirect_lighting = DoAmbientLighting_End(gl_Fog.color.rgb, vec3(TORCH_R,TORCH_G,TORCH_B), lightmaps2.x, normal, p3 );
 	#endif

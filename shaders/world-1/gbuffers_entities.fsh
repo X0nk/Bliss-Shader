@@ -3,4 +3,6 @@
 #define WORLD
 #define ENTITIES
 
-#include "/programs/all_solid.fsh"
+#define NETHER_SHADER
+
+#include "/dimensions/all_solid.fsh"

@@ -1,8 +1,3 @@
-#version 120
-//6 Vertical gaussian blurs and vertical downsampling
-
-
-
 uniform sampler2D colortex6;
 uniform vec2 texelSize;
 varying vec2 texcoord;

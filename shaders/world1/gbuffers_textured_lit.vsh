@@ -2,4 +2,7 @@
 
 // #define WEATHER
 #define PARTICLES
-#include "/programs/all_particles.vsh"
+
+#define END_SHADER
+
+#include "/dimensions/all_particles.vsh"

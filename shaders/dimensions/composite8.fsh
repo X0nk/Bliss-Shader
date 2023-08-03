@@ -1,6 +1,3 @@
-#version 120
-//Merge and upsample the blurs into a 1/4 res bloom buffer
-
 uniform sampler2D colortex3;
 uniform sampler2D colortex6;
 

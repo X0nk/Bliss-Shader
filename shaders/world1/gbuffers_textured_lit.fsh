@@ -1,3 +1,5 @@
 #version 120
 
-#include "/programs/all_particles.fsh"
+#define END_SHADER
+
+#include "/dimensions/all_particles.fsh"
