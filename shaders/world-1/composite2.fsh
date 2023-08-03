@@ -254,6 +254,7 @@ vec3 worldToView(vec3 worldPos) {
 }
 void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estEndDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient){
 		inColor *= exp(-rayLength * waterCoefs);	//No need to take the integrated value
+		
 		int spCount = rayMarchSampleCount;
 		vec3 start = toShadowSpaceProjected(rayStart);
 		vec3 end = toShadowSpaceProjected(rayEnd);
@@ -262,31 +263,38 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 		//you can't see above this anyway
 		float maxZ = min(rayLength,12.0)/(1e-8+rayLength);
 		dV *= maxZ;
-		vec3 dVWorld = -mat3(gbufferModelViewInverse) * (rayEnd - rayStart) * maxZ;
+
+
 		rayLength *= maxZ;
+		
 		float dY = normalize(mat3(gbufferModelViewInverse) * rayEnd).y * rayLength;
 		estEndDepth *= maxZ;
 		estSunDepth *= maxZ;
+
+		vec3 wpos = mat3(gbufferModelViewInverse) * rayStart  + gbufferModelViewInverse[3].xyz;
+		vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
+
 		vec3 absorbance = vec3(1.0);
 		vec3 vL = vec3(0.0);
 
-
 		float expFactor = 11.0;
-		vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition;
 		for (int i=0;i<spCount;i++) {
 			float d = (pow(expFactor, float(i+dither)/float(spCount))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
 			float dd = pow(expFactor, float(i+dither)/float(spCount)) * log(expFactor) / float(spCount)/(expFactor-1.0);
 			vec3 spPos = start.xyz + dV*d;
-			progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
 
-			vec3 ambientMul = exp(-max(estEndDepth * d,0.0) * waterCoefs);
+			vec3 progressW = start.xyz+cameraPosition+dVWorld;
 
-			vec3 light =  (ambientMul*ambient) * scatterCoef;
+			vec3 ambientMul = exp(-max(estEndDepth * d,0.0) * waterCoefs );
+			vec3 Indirectlight = ambientMul*ambient;
 
-			vL += (light - light * exp(-waterCoefs * dd * rayLength)) / waterCoefs *absorbance;
+			vec3 light = Indirectlight * scatterCoef;
+
+			vL += (light - light * exp(-waterCoefs * dd * rayLength)) / waterCoefs * absorbance;
 			absorbance *= exp(-dd * rayLength * waterCoefs);
 		}
 		inColor += vL;
+
 }
 
 void Emission(
@@ -562,6 +570,8 @@ void main() {
 	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
 	// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
 
+	vec3 waterAmbientLightCol = vec3(0.0);
+
 	if (z >=1.0) {
 		vec3 color = clamp(gl_Fog.color.rgb*pow(luma(gl_Fog.color.rgb),-0.75)*0.65,0.0,1.0)*0.02;
 
@@ -579,6 +589,8 @@ void main() {
 		
 		vec3 up 	= skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb / 10;
 		vec3 down 	= skyCloudsFromTexLOD2(vec3( 0,-1, 0), colortex4, 6).rgb / 10;
+
+		waterAmbientLightCol = down;
 
 		up   *= pow( max( slopednormal.y, 0), 2);
 		down *= pow( max(-slopednormal.y, 0), 2);
@@ -619,38 +631,21 @@ void main() {
 		
 		// gl_FragData[0].rgb = AmbientLightColor;
 
+
+
 	}
 
-
-
-
-  	// ////// border Fog
-	// if(Translucent_Programs > 0.0){
-	// 	vec3 fragpos = toScreenSpace(vec3(texcoord-vec2(0.0)*texelSize*0.5,z));
-    // 	float fogdistfade = 1.0 - clamp( exp(-pow(length(fragpos / far),2.)*5.0)  ,0.0,1.0);
-
-    // 	gl_FragData[0].rgb = mix(gl_FragData[0].rgb, gl_Fog.color.rgb*0.5*NetherFog_brightness, fogdistfade) ;
-	// }
-
-	
-  	////// Water Fog
- 	if ((isEyeInWater == 0 && iswater) || (isEyeInWater == 1 && !iswater)){
-		vec3 fragpos0 = toScreenSpace(vec3(texcoord-vec2(tempOffset)*texelSize*0.5,z0));
+	if (iswater && isEyeInWater == 0){
+		vec3 fragpos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0));
 		float Vdiff = distance(fragpos,fragpos0);
-
-		if(isEyeInWater == 1) Vdiff = (length(fragpos)); 
-
 		float VdotU = np3.y;
-		float estimatedDepth = Vdiff;	//assuming water plane
-		float estimatedSunDepth = estimatedDepth; //assuming water plane
+		float estimatedDepth = Vdiff * abs(VdotU) ;	//assuming water plane
 
-		vec3 ambientColVol = vec3(1.0,0.25,0.5) * 0.33 ;
+		vec3 ambientColVol =  max(vec3(1.0,0.5,1.0) * 0.3, vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision));
 
-		waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol);	
+		waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol);
 	}
 
 
-
-	// gl_FragData[0].rgb = SubsurfaceScattering_sky(albedo, Indirect_SSS, 1.0) * vec3(1);
 /* DRAWBUFFERS:3 */
 }

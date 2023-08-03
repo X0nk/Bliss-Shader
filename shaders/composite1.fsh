@@ -566,8 +566,12 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 	int nrays = RAY_COUNT;
 
 	vec3 radiance = vec3(0.0);
+
 	vec3 occlusion = vec3(0.0);
 	vec3 skycontribution = vec3(0.0);
+
+	vec3 occlusion2 = vec3(0.0);
+	vec3 skycontribution2 = vec3(0.0);
 	
     float skyLM = 0.0;
 	vec3 torchlight = vec3(0.0);
@@ -594,6 +598,11 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 			float SkyLightDir = rayDir.y > 0.0 ? 1.0 : max(rayDir.y,0.25); // the positons where the occlusion happens
 			
 			skycontribution = skylightcolor * SkyLightDir + torchlight;
+
+			#if indirect_effect == 4
+				skycontribution2 = skylightcolor + torchlight;
+			#endif
+
 		#endif
 
 		if (rayHit.z < 1.){
@@ -614,7 +623,10 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 			#endif
 
 			occlusion += skycontribution * GI_Strength;
-
+			
+			#if indirect_effect == 4
+				occlusion2 += skycontribution2 * GI_Strength;
+			#endif
 				
 		} else {
 			radiance += skycontribution;
@@ -622,14 +634,12 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 	}
 	
 	occlusion *= AO_Strength;
-
-	lighting = radiance/nrays - occlusion/nrays;
-
-
-
-	// lighting = GI ;
-	// radiance = radiance/nrays - (skycontribution + occlusion/nrays); 
-	// lighting = skycontribution - occlusion/nrays + radiance;
+	
+	#if indirect_effect == 4
+		lighting = max(radiance/nrays - max(occlusion, occlusion2*0.5)/nrays, 0.0);
+	#else
+		lighting = max(radiance/nrays - occlusion/nrays, 0.0);
+	#endif
 
 }
 

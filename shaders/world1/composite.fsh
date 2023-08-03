@@ -621,31 +621,18 @@ void main() {
 
 
 	}
-
-  	// ////// border Fog
-	// if(Translucent_Programs > 0.0){
-	// 	vec3 fragpos = toScreenSpace(vec3(texcoord-vec2(0.0)*texelSize*0.5,z));
-    // 	float fogdistfade = 1.0 - clamp( exp(-pow(length(fragpos / far),2.)*5.0)  ,0.0,1.0);
-
-    // 	gl_FragData[0].rgb = mix(gl_FragData[0].rgb, gl_Fog.color.rgb*0.5*NetherFog_brightness, fogdistfade) ;
-	// }
-
 	
-  	////// Water Fog
- 	if ((isEyeInWater == 0 && iswater) || (isEyeInWater == 1 && !iswater)){
-		vec3 fragpos0 = toScreenSpace(vec3(texcoord-vec2(tempOffset)*texelSize*0.5,z0));
+	if (iswater && isEyeInWater == 0){
+		vec3 fragpos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0));
 		float Vdiff = distance(fragpos,fragpos0);
-
-		if(isEyeInWater == 1) Vdiff = (length(fragpos)); 
-
 		float VdotU = np3.y;
-		float estimatedDepth = Vdiff;	//assuming water plane
-		float estimatedSunDepth = estimatedDepth; //assuming water plane
+		float estimatedDepth = Vdiff * abs(VdotU) ;	//assuming water plane
 
-		vec3 ambientColVol = vec3(1.0,0.25,0.5) * 0.33 ;
+		vec3 ambientColVol =  max(vec3(1.0,0.5,1.0) * 0.3, vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision));
 
-		waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol);	
+		waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol);
 	}
+
 
 /* DRAWBUFFERS:3 */
 }
