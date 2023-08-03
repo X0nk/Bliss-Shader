@@ -1,66 +1,52 @@
-// #version 120
-//#extension GL_EXT_gpu_shader4 : disable
+#include "/lib/settings.glsl"
+#include "/lib/res_params.glsl"
 
 varying vec4 lmtexcoord;
 varying vec4 color;
 
 
-uniform sampler2D normals;
-varying vec4 tangent;
+const bool colortex4MipmapEnabled = true;
+uniform sampler2D noisetex;
+uniform sampler2D depthtex1;
+uniform sampler2D colortex5;
 
+uniform sampler2D texture;
+uniform sampler2D specular;
+uniform sampler2D normals;
+
+varying vec4 tangent;
 varying vec4 normalMat;
 varying vec3 binormal;
 
 
 varying vec3 viewVector;
 
-#include "/lib/settings.glsl"
-#include "/lib/res_params.glsl"
-
-
-uniform sampler2D texture;
-uniform sampler2D noisetex;
-uniform sampler2DShadow shadow;
-// uniform sampler2D gaux2;
-// uniform sampler2D gaux1;
-
-uniform sampler2D colortex5;
-uniform sampler2D depthtex1;
-
-
-const bool colortex4MipmapEnabled = true;
 
 uniform vec3 sunVec;
-uniform float frameTimeCounter;
-uniform float lightSign;
 uniform float near;
 uniform float far;
+uniform float sunElevation;
+
+uniform int isEyeInWater;
+uniform float rainStrength;
+uniform float skyIntensityNight;
+uniform float skyIntensity;
+
+uniform int frameCounter;
+uniform float frameTimeCounter;
+uniform vec2 texelSize;
+uniform int framemod8;
+
+flat varying vec3 WsunVec;
+uniform mat4 gbufferPreviousModelView;
+uniform vec3 previousCameraPosition;
+
+
 uniform float moonIntensity;
 uniform float sunIntensity;
 uniform vec3 sunColor;
 uniform vec3 nsunColor;
-uniform vec3 upVec;
-uniform float sunElevation;
-uniform float fogAmount;
-uniform vec2 texelSize;
-uniform float rainStrength;
-uniform float skyIntensityNight;
-uniform float skyIntensity;
-flat varying vec3 WsunVec;
-uniform mat4 gbufferPreviousModelView;
-uniform vec3 previousCameraPosition;
-uniform int framemod8;
-uniform sampler2D specular;
-uniform int frameCounter;
-uniform int isEyeInWater;
-uniform ivec2 eyeBrightness;
-uniform ivec2 eyeBrightnessSmooth;
 
-
-flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
-
-flat varying vec3 averageSkyCol_Clouds;
-// flat varying vec3 averageSkyCol;
 
 
 
@@ -72,7 +58,7 @@ flat varying vec3 averageSkyCol_Clouds;
 #include "/lib/clouds.glsl"
 #include "/lib/stars.glsl"
 #include "/lib/volumetricClouds.glsl"
-#define OVERWORLD_SHADER
+#define OVERWORLD
 #include "/lib/diffuse_lighting.glsl"
 
 
@@ -298,6 +284,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 
 	vec4 COLORTEST = vec4(Albedo,UnchangedAlpha);
 
+
 	vec3 p3 = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
 
 	vec3 normal = normalMat.xyz;
@@ -334,6 +321,7 @@ if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize
 	}
 
 	gl_FragData[2] = vec4(encodeVec2(TangentNormal), encodeVec2(COLORTEST.rg), encodeVec2(COLORTEST.ba), UnchangedAlpha);
+
 
 
 	vec3 WS_normal = viewToWorld(normal);
