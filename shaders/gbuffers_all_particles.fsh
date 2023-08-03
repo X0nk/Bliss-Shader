@@ -163,7 +163,7 @@ void main() {
 		vec3 Torch_Color = vec3(TORCH_R,TORCH_G,TORCH_B);
 
 		#ifdef LIT
-			Torch_Color *= 2.0;
+			Torch_Color *= LIT_PARTICLE_BRIGHTNESS;
 		#endif
 
 		vec3 Indirect_lighting = DoAmbientLighting(AmbientLightColor, Torch_Color, clamp(lmtexcoord.zw,0.0,1.0), 5.0);
