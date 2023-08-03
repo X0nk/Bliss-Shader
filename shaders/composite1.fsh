@@ -595,9 +595,7 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 fragpos, vec2 li
 		#else
 			if(isGrass) rayDir.y = clamp(rayDir.y +  0.25,-1,1);
 			
-			float SkyLightDir = rayDir.y > 0.0 ? 1.0 : max(rayDir.y,0.25); // the positons where the occlusion happens
-			
-			skycontribution = skylightcolor * SkyLightDir + torchlight;
+			skycontribution = skylightcolor * 2 * (max(rayDir.y,0.0)*0.9+0.1) + torchlight;
 
 			#if indirect_effect == 4
 				skycontribution2 = skylightcolor + torchlight;
