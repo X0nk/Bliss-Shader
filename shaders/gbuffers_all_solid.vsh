@@ -342,7 +342,7 @@ void main() {
 		// #endif
 		// #endif
 
-		if ((mc_Entity.x == 10001 || mc_Entity.x == 10009 && istopv) && abs(position.z) < 64.0) {
+		if ((mc_Entity.x == 10001 || mc_Entity.x == 10009) && istopv && abs(position.z) < 64.0) {
     		vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
 			worldpos.xyz += calcMovePlants(worldpos.xyz)*lmtexcoord.w - cameraPosition;
     		position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;

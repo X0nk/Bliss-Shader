@@ -862,7 +862,9 @@ void main() {
 
 	#ifdef POM
 		#ifdef Horrible_slope_normals
+
     		vec3 ApproximatedFlatNormal = normalize(cross(dFdx(p3), dFdy(p3))); // it uses depth that has POM written to it.
+
 			slopednormal = normalize(clamp(normal, ApproximatedFlatNormal*2.0 - 1.0, ApproximatedFlatNormal*2.0 + 1.0) );
 		#endif
 	#endif
@@ -1258,7 +1260,7 @@ void main() {
 
 		 waterVolumetrics(gl_FragData[0].rgb, fragpos0, fragpos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(np3, WsunVec));		
 	}
-
+	
 	////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	MISC EFFECTS	////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////

@@ -26,6 +26,7 @@ uniform ivec2 eyeBrightnessSmooth;
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
 #include "/lib/projections.glsl"
+#include "/lib/res_params.glsl"
 
 #ifdef END_SHADER
 	#include "/lib/end_fog.glsl"
@@ -99,7 +100,7 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 void main() {
 /* DRAWBUFFERS:0 */
 
-	vec2 tc = floor(gl_FragCoord.xy)*2.0*texelSize+0.5*texelSize;
+	vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
 	float z = texture2D(depthtex0,tc).x;
 	vec3 fragpos = toScreenSpace(vec3(tc,z));
 

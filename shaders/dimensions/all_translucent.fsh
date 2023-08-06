@@ -187,14 +187,14 @@ vec3 rayTrace(vec3 dir,vec3 position,float dither, float fresnel, bool inwater){
     float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z);
 
 
-    vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0);
+    vec3 stepv = direction * mult / quality;
 
 
-	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) + stepv*dither;
+	vec3 spos = clipPosition+ stepv*dither;
 	float minZ = clipPosition.z;
 	float maxZ = spos.z+stepv.z*0.5;
 	
-	spos.xy += offsets[framemod8]*texelSize*0.5/RENDER_SCALE;
+	spos.xy += offsets[framemod8]*texelSize*0.5;
 
 	float dist = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
     for (int i = 0; i <= int(quality); i++) {
@@ -203,10 +203,10 @@ vec3 rayTrace(vec3 dir,vec3 position,float dither, float fresnel, bool inwater){
 				float sp = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4),0).w/65000.0);
 				sp = invLinZ(sp);
 
-         		if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ)) return vec3(spos.xy/RENDER_SCALE,sp);
+         		if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ)) return vec3(spos.xy,sp);
 		#else
 			float sp = texelFetch2D(depthtex1,ivec2(spos.xy/texelSize),0).r;
-          	if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ)) return vec3(spos.xy/RENDER_SCALE,sp);
+          	if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ)) return vec3(spos.xy,sp);
 	        
 
 		#endif
@@ -254,9 +254,9 @@ vec3 GGX (vec3 n, vec3 v, vec3 l, float r, vec3 F0) {
 
 /* RENDERTARGETS:2,7,11,14 */
 void main() {
-if (gl_FragCoord.x * texelSize.x < RENDER_SCALE.x  && gl_FragCoord.y * texelSize.y < RENDER_SCALE.y )	{
+if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	{
 	vec2 tempOffset = offsets[framemod8];
-	vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
+	vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
 
 	gl_FragData[0] = texture2D(texture, lmtexcoord.xy, Texture_MipMap_Bias) * color;
 	vec3 Albedo = toLinear(gl_FragData[0].rgb);
