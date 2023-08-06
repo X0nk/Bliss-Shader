@@ -74,25 +74,23 @@ vec4 GetVolumetricFog(
 		vec3 progress = start.xyz + d*dV;
 		vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
 
-		float densityVol = cloudVol(progressW) * pow(exp(max(progressW.y-65,0.0) / -15),2);
-		float density = min(densityVol,0.019);
+		// do main lighting
+		float Density = cloudVol(progressW) * pow(exp(max(progressW.y-65,0.0) / -15),2);
 
-
-		float fireLight = cloudVol(progressW - vec3(0,1,0)) * clamp(exp(abs(progressW.y-30) / -1),0,1);
+		float fireLight = cloudVol(progressW - vec3(0,1,0)) * clamp(exp(max(30 - progressW.y,0.0) / -10.0),0,1);
 
 		vec3 vL0 = vec3(1.0,0.4,0.2) * exp(fireLight * -25) * exp(max(progressW.y-30,0.0) / -10) * 25;
-		vL0 += vec3(0.8,0.8,1.0) * (1.0 - exp(densityVol * -1)) / 10 ;
-	
+		vL0 += vec3(0.8,0.8,1.0) * (1.0 - exp(Density * -1)) / 10 ;
+
 		
 		// do background fog lighting	
-		float AirDensity = 0.01;
+		float Air = 0.01;
 		vec3 vL1 = fogcolor / 20.0;
-;
 
-		vL += (vL1 - vL1*exp(-AirDensity*dd*dL)) * absorbance;
-		vL += (vL0 - vL0*exp(-density*dd*dL)) * absorbance;
+		vL += (vL1 - vL1*exp(-Air*dd*dL)) * absorbance;
+		vL += (vL0 - vL0*exp(-Density*dd*dL)) * absorbance;
 
-        absorbance *= exp(-(density+AirDensity)*dd*dL);
+        absorbance *= exp(-(Density+Air)*dd*dL);
 
 		if (absorbance < 1e-5) break;
 	}
