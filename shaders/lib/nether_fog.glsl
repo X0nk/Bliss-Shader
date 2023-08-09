@@ -74,7 +74,7 @@ vec4 GetVolumetricFog(
 		vec3 progress = start.xyz + d*dV;
 		vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
 
-		// do main lighting
+		// do your mom
 		float Density = cloudVol(progressW) * pow(exp(max(progressW.y-65,0.0) / -15),2);
 
 		float fireLight = cloudVol(progressW - vec3(0,1,0)) * clamp(exp(max(30 - progressW.y,0.0) / -10.0),0,1);
@@ -83,7 +83,7 @@ vec4 GetVolumetricFog(
 		vL0 += vec3(0.8,0.8,1.0) * (1.0 - exp(Density * -1)) / 10 ;
 
 		
-		// do background fog lighting	
+		// do your mom again	
 		float Air = 0.01;
 		vec3 vL1 = fogcolor / 20.0;
 
