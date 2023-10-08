@@ -104,7 +104,6 @@ void main() {
 
 	vec3 bloom = texture2D(colortex3, texcoord/clampedRes*vec2(1920.,1080.)*BLOOM_QUALITY).rgb / 2.0 / 7.0;
 
-
 	float lightScat = clamp(BLOOM_STRENGTH  * 0.05 * pow(exposure.a, 0.2)  ,0.0,1.0)*vignette;
 
  	float VL_abs = texture2D(colortex7,texcoord*RENDER_SCALE).r;
@@ -120,7 +119,7 @@ void main() {
 	// // apply exposure
 	// col *= exposure.rgb;
 
-	col = (mix(col,bloom,VL_abs)+bloom * lightScat) * exposure.rgb;
+	col = (mix(col, bloom, VL_abs) + bloom * lightScat) * exposure.rgb;
 
 	//Purkinje Effect
   	float lum = dot(col,vec3(0.15,0.3,0.55));

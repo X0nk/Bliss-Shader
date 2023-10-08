@@ -151,6 +151,7 @@ vec4 GetVolumetricFog(
 	vec3 progressW = gbufferModelViewInverse[3].xyz + cameraPosition;
 
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
+	
 	for (int i=0;i<VL_SAMPLES;i++) {
 		float d = (pow(expFactor, float(i+dither)/float(VL_SAMPLES))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
 		float dd = pow(expFactor, float(i+dither)/float(VL_SAMPLES)) * log(expFactor) / float(VL_SAMPLES)/(expFactor-1.0);
