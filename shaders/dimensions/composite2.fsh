@@ -223,6 +223,7 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 void main() {
 /* DRAWBUFFERS:0 */
 
+	// vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
 	vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
 	float z = texture2D(depthtex0,tc).x;
 	vec3 viewPos = toScreenSpace(vec3(tc/RENDER_SCALE,z));

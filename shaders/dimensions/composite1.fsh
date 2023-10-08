@@ -793,13 +793,16 @@ void main() {
 			inShadowmapBounds = true;
 		}
 
-		float lightmapAsShadows = 1.0 ;
+		float lightmapAsShadows = 1.0;
 		if(!inShadowmapBounds && !iswater){
 			lightmapAsShadows = min(max(lightmap.y-0.8, 0.0) * 25,1.0);
 			
 			Shadows = lightmapAsShadows;
 		}
-		// if(!inShadowmapBounds) Shadows = 1.0;
+
+		#ifdef OLD_LIGHTLEAK_FIX
+			if (isEyeInWater == 0) Shadows *= clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
+		#endif
 
 
 
@@ -840,8 +843,9 @@ void main() {
 			
 				Direct_SSS = SubsurfaceScattering_sun(albedo, ShadowBlockerDepth, sunSSS_density, clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), inShadowmapBounds) ;
 			}
-
+			
 			if (isEyeInWater == 0) Direct_SSS *= clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
+
 			if (!inShadowmapBounds) Direct_SSS *= lightmapAsShadows;
 		#endif
 

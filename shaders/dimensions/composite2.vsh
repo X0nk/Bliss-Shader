@@ -1,5 +1,6 @@
 #include "/lib/settings.glsl"
 #include "/lib/util.glsl"
+#include "/lib/res_params.glsl"
 
 flat varying vec4 lightCol;
 flat varying vec3 averageSkyCol;
@@ -29,7 +30,8 @@ uniform int frameCounter;
 void main() {
 	gl_Position = ftransform();
 
-	gl_Position.xy = (gl_Position.xy*0.5+0.5)*0.51*2.0-1.0;
+	// gl_Position.xy = (gl_Position.xy*0.5+0.5)*0.51*2.0-1.0;
+	gl_Position.xy = (gl_Position.xy*0.5+0.5)*(0.01+VL_RENDER_RESOLUTION)*2.0-1.0;
 	
 	tempOffsets = HaltonSeq2(frameCounter%10000);
 
