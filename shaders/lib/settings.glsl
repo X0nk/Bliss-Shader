@@ -1,5 +1,7 @@
 #define saturate(x) clamp(x,0.0,1.0)
 
+#define BLISS_SHADERS 0 // [0 1 2]
+
 ////////////////////////////////////////
 // ----- WATER RELATED SETTINGS ----- //
 ////////////////////////////////////////
@@ -488,5 +490,8 @@ uniform int moonPhase;
 
 #define LIGHTNING_FLASH // FOR OPTIFINE USERS. some mods change the sky color, which can trigger the lightning flash detection.
 
+// fix settings
 #ifdef LIGHTNING_FLASH
+#endif
+#if BLISS_SHADERS == 0
 #endif

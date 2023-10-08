@@ -1,3 +1,12 @@
+option.BLISS_SHADERS=Bliss
+	value.BLISS_SHADERS.0=A Chocapic13 Edit
+	value.BLISS_SHADERS.1=By Xonk
+	value.BLISS_SHADERS.2=Version GIT-HEAD
+
+# if you're here to translate, this is a joke, these don't do what they say
+profile.QUALITY=Quality
+profile.PERFORMANCE=Performance
+
 screen.Misc_Settings = Misc. Settings
 screen.Sun_and_Moon_Colors = Sun/Moon Colors
 option.sunPathRotation = Sun Angle
