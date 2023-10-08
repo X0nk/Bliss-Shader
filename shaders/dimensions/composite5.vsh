@@ -1,15 +1,29 @@
-uniform float viewWidth;
-uniform float viewHeight;
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
+#include "/lib/util.glsl"
+#include "/lib/res_params.glsl"
 
+varying vec2 texcoord;
+flat varying float tempOffsets;
+uniform sampler2D colortex4;
+uniform int frameCounter;
+
+
+uniform int framemod8;
+const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
+							vec2(-1.,3.)/8.,
+							vec2(5.0,1.)/8.,
+							vec2(-3,-5.)/8.,
+							vec2(-5.,5.)/8.,
+							vec2(-7.,-1.)/8.,
+							vec2(3,7.)/8.,
+							vec2(7.,-7.)/8.);
 void main() {
-	//Improves performances and makes sure bloom radius stays the same at high resolution (>1080p)
-	vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
+
 	gl_Position = ftransform();
-	//*0.51 to avoid errors when sampling outside since clearing is disabled
-	gl_Position.xy = (gl_Position.xy*0.5+0.5)*0.26/clampedRes*vec2(1920.0,1080.)*2-1.0;
+	texcoord = gl_MultiTexCoord0.xy;
+
+	tempOffsets = HaltonSeq2(frameCounter%10000);
+
+	#ifdef TAA_UPSCALING
+		gl_Position.xy = (gl_Position.xy*0.5+0.5)*RENDER_SCALE*2.0-1.0;
+	#endif
 }

@@ -95,19 +95,19 @@ vec3 sky_transmittance(vec3 position, vec3 direction, const float steps) {
 vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 sunVector, vec3 moonVector, out vec2 pid, out vec3 transmittance, const int iSteps, float noise) {
 	const int jSteps = 4;
 
-	vec3 viewPosition = (sky_planetRadius + eyeAltitude) * upVector;
+	vec3 viewPos = (sky_planetRadius + eyeAltitude) * upVector;
 
-	vec2 aid = rsi(viewPosition, viewVector, sky_atmosphereRadius);
+	vec2 aid = rsi(viewPos, viewVector, sky_atmosphereRadius);
 	if (aid.y < 0.0) {transmittance = vec3(1.0); return vec3(0.0);}
 
-	pid = rsi(viewPosition, viewVector, sky_planetRadius * 0.998);
+	pid = rsi(viewPos, viewVector, sky_planetRadius * 0.998);
 	bool planetIntersected = pid.y >= 0.0;
 
 	vec2 sd = vec2((planetIntersected && pid.x < 0.0) ? pid.y : max(aid.x, 0.0), (planetIntersected && pid.x > 0.0) ? pid.x : aid.y);
 
 	float stepSize  = (sd.y - sd.x) * (1.0 / iSteps);
 	vec3  increment = viewVector * stepSize;
-	vec3  position  = viewVector * sd.x + viewPosition;
+	vec3  position  = viewVector * sd.x + viewPos;
 	position += increment * (0.34*noise);
 
 	vec2 phaseSun = sky_phase(dot(viewVector, sunVector ), 0.8);

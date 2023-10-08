@@ -1,24 +1,21 @@
 
+//#extension GL_EXT_gpu_shader4 : disable
+
 #include "/lib/settings.glsl"
 
-varying vec2 texcoord;
-
-flat varying vec3 avgAmbient;
-
-flat varying float tempOffsets;
 flat varying vec2 TAA_Offset;
-flat varying vec3 zMults;
+flat varying vec3 WsunVec;
 
 uniform sampler2D colortex4;
 
-uniform float far;
-uniform float near;
-uniform mat4 gbufferModelViewInverse;
-uniform vec3 sunPosition;
-uniform float rainStrength;
-uniform float sunElevation;
 uniform int frameCounter;
+uniform float sunElevation;
+uniform vec3 sunPosition;
+uniform mat4 gbufferModelViewInverse;
+#include "/lib/util.glsl"
+#include "/lib/res_params.glsl"
 
+uniform int framemod8;
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-1.,3.)/8.,
 							vec2(5.0,1.)/8.,
@@ -27,23 +24,14 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-7.,-1.)/8.,
 							vec2(3,7.)/8.,
 							vec2(7.,-7.)/8.);
-
-
-#include "/lib/util.glsl"
-
 void main() {
 	gl_Position = ftransform();
-	texcoord = gl_MultiTexCoord0.xy;
 
-	tempOffsets = HaltonSeq2(frameCounter%10000);
+	WsunVec = (float(sunElevation > 1e-5)*2-1.)*normalize(mat3(gbufferModelViewInverse) * sunPosition);
 
-	TAA_Offset = offsets[frameCounter%8];
-	
-	#ifndef TAA
-		TAA_Offset = vec2(0.0);
+	TAA_Offset = offsets[framemod8];
+
+	#ifdef TAA_UPSCALING
+		gl_Position.xy = (gl_Position.xy*0.5+0.5)*RENDER_SCALE*2.0-1.0;
 	#endif
-
-
-	avgAmbient = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
-	zMults = vec3((far * near)*2.0,far+near,far-near);
 }

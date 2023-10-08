@@ -1,73 +1,20 @@
-uniform sampler2D colortex3;
 uniform sampler2D colortex6;
-
 uniform vec2 texelSize;
+varying vec2 texcoord;
 uniform float viewWidth;
 uniform float viewHeight;
-
-float w0(float a)
-{
-    return (1.0/6.0)*(a*(a*(-a + 3.0) - 3.0) + 1.0);
-}
-
-float w1(float a)
-{
-    return (1.0/6.0)*(a*a*(3.0*a - 6.0) + 4.0);
-}
-
-float w2(float a)
-{
-    return (1.0/6.0)*(a*(a*(-3.0*a + 3.0) + 3.0) + 1.0);
-}
-
-float w3(float a)
-{
-    return (1.0/6.0)*(a*a*a);
-}
-
-float g0(float a)
-{
-    return w0(a) + w1(a);
-}
-
-float g1(float a)
-{
-    return w2(a) + w3(a);
-}
-
-float h0(float a)
-{
-    return -1.0 + w1(a) / (w0(a) + w1(a));
-}
-
-float h1(float a)
-{
-    return 1.0 + w3(a) / (w2(a) + w3(a));
-}
-
-vec4 texture2D_bicubic(sampler2D tex, vec2 uv)
-{
-	vec4 texelSize = vec4(texelSize,1.0/texelSize);
-	uv = uv*texelSize.zw;
-	vec2 iuv = floor( uv );
-	vec2 fuv = fract( uv );
-
-    float g0x = g0(fuv.x);
-    float g1x = g1(fuv.x);
-    float h0x = h0(fuv.x);
-    float h1x = h1(fuv.x);
-    float h0y = h0(fuv.y);
-    float h1y = h1(fuv.y);
-
-	vec2 p0 = (vec2(iuv.x + h0x, iuv.y + h0y) - 0.5) * texelSize.xy;
-	vec2 p1 = (vec2(iuv.x + h1x, iuv.y + h0y) - 0.5) * texelSize.xy;
-	vec2 p2 = (vec2(iuv.x + h0x, iuv.y + h1y) - 0.5) * texelSize.xy;
-	vec2 p3 = (vec2(iuv.x + h1x, iuv.y + h1y) - 0.5) * texelSize.xy;
-
-    return g0(fuv.y) * (g0x * texture2D(tex, p0)  +
-                        g1x * texture2D(tex, p1)) +
-           g1(fuv.y) * (g0x * texture2D(tex, p2)  +
-                        g1x * texture2D(tex, p3));
+vec2 resScale = vec2(1920.,1080.)/max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
+vec3 gauss1D(vec2 coord,vec2 dir,float alpha,int maxIT){
+	vec4 tot = vec4(0.);
+	float maxTC = 0.25*resScale.x;
+	float minTC = 0.;
+	for (int i = -maxIT;i<maxIT+1;i++){
+		float weight = exp(-i*i*alpha*4.0);
+		//here we take advantage of bilinear filtering for 2x less sample, as a side effect the gaussian won't be totally centered for small blurs
+		vec2 spCoord = coord+dir*texelSize*(2.0*i+0.5);
+		tot += vec4(texture2D(colortex6,spCoord).rgb,1.0)*weight*float(spCoord.x > minTC && spCoord.x < maxTC);
+	}
+	return  tot.rgb/max(1.0,tot.a);
 }
 
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -77,24 +24,34 @@ vec4 texture2D_bicubic(sampler2D tex, vec2 uv)
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-/* DRAWBUFFERS:3 */
-vec2 resScale = vec2(1920.,1080.)/max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
-vec2 texcoord = ((gl_FragCoord.xy)*2.+0.5)*texelSize;
-vec3 bloom = texture2D_bicubic(colortex3,texcoord/2.0).rgb;	//1/4 res
+/* DRAWBUFFERS:6 */
 
-bloom += texture2D_bicubic(colortex6,texcoord/4.).rgb; //1/8 res
+vec2 texcoord = (gl_FragCoord.xy*vec2(2.0,4.0))*texelSize;
+vec2 gaussDir = vec2(1.0,0.0);
+gl_FragData[0].rgb = vec3(0.0);
+vec2 tc2 = texcoord*vec2(2.0,1.)/2.;
+if (tc2.x < 1.0*resScale.x && tc2.y <1.0*resScale.y)
+gl_FragData[0].xyz = gauss1D(tc2/2,gaussDir,0.16,0);
 
-bloom += texture2D_bicubic(colortex6,texcoord/8.+vec2(0.25*resScale.x+2.5*texelSize.x,.0)).rgb;  //1/16 res
+vec2 tc4 = texcoord*vec2(4.0,1.)/2.-vec2(0.5*resScale.x+4.0*texelSize.x,0.)*2.0;
+if (tc4.x > 0.0 && tc4.y > 0.0 && tc4.x < 1.0*resScale.x && tc4.y <1.0*resScale.y)
+gl_FragData[0].xyz = gauss1D(tc4/2,gaussDir,0.16,3);
 
-bloom += texture2D_bicubic(colortex6,texcoord/16.+vec2(0.375*resScale.x+4.5*texelSize.x,.0)).rgb; //1/32 res
+vec2 tc8 = texcoord*vec2(8.0,1.)/2.-vec2(0.75*resScale.x+8.*texelSize.x,0.)*4.0;
+if (tc8.x > 0.0 && tc8.y > 0.0 && tc8.x < 1.0*resScale.x && tc8.y <1.0*resScale.y)
+gl_FragData[0].xyz = gauss1D(tc8/2,gaussDir,0.035,6);
 
-bloom += texture2D_bicubic(colortex6,texcoord/32.+vec2(0.4375*resScale.x+6.5*texelSize.x,.0)).rgb*1.0; //1/64 res
-bloom += texture2D_bicubic(colortex6,texcoord/64.+vec2(0.46875*resScale.x+8.5*texelSize.x,.0)).rgb*1.0; //1/128 res
-bloom += texture2D_bicubic(colortex6,texcoord/128.+vec2(0.484375*resScale.x+10.5*texelSize.x,.0)).rgb*1.0; //1/256 res
+vec2 tc16 = texcoord*vec2(8.0,1./2.)-vec2(0.875*resScale.x+12.*texelSize.x,0.)*8.0;
+if (tc16.x > 0.0 && tc16.y > 0.0 && tc16.x < 1.0*resScale.x && tc16.y <1.0*resScale.y)
+gl_FragData[0].xyz = gauss1D(tc16/2,gaussDir,0.0085,12);
 
-//bloom = texture2D_bicubic(colortex6,texcoord).rgb*6.; //1/8 res
+vec2 tc32 = texcoord*vec2(16.0,1./2.)-vec2(0.9375*resScale.x+16.*texelSize.x,0.)*16.0;
+if (tc32.x > 0.0 && tc32.y > 0.0 && tc32.x < 1.0*resScale.x && tc32.y <1.0*resScale.y)
+gl_FragData[0].xyz = gauss1D(tc32/2,gaussDir,0.002,28);
 
-gl_FragData[0].rgb = bloom*2.;
+vec2 tc64 = texcoord*vec2(32.0,1./2.)-vec2(0.96875*resScale.x+20.*texelSize.x,0.)*32.0;
+if (tc64.x > 0.0 && tc64.y > 0.0 && tc64.x < 1.0*resScale.x && tc64.y <1.0*resScale.y)
+gl_FragData[0].xyz = gauss1D(tc64/2,gaussDir,0.0005,60);
 
 gl_FragData[0].rgb = clamp(gl_FragData[0].rgb,0.0,65000.);
 }

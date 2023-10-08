@@ -13,7 +13,7 @@ screen.Misc_Settings = Configurações Diversas
     option.ambientLight_only=Apenas Luz Ambiente
     option.Glass_Tint=Tintura de Vidro
     option.display_LUT=Mostrar LUT
-    option.ambientSSS_view=Visualização de SSS vindo do Céu
+    option.SSS_view=Visualização de SSS vindo do Céu
 
 screen.Sun_and_Moon_Colors = Cores Lua/Sol
 option.sunPathRotation = Ângulo do Sol
@@ -138,8 +138,7 @@ screen.Fog = Ajustes da Névoa
         option.Evening_Cloudy_Fog = Densidade da Nublagem à Tarde
         option.Night_Cloudy_Fog = Densidade da Nublagem à Noite
 
-    screen.Biome_Fog = Névoa Própria de Bioma
-        option.Biome_specific_environment = Névoa Própria de Bioma
+        option.PER_BIOME_ENVIRONMENT = Névoa Própria de Bioma
 
     screen.Cave_Fog = Névoa em Caverna
         option.Cave_Fog = Névoa em Caverna
@@ -423,8 +422,7 @@ screen.Fog.comment = Ajustes relacionados à névoa volumétrica ou névoa dista
     screen.TOD_fog.comment = Ajusta a densidade da névoa que aparece em horários especifícos do dia.
         option.TOD_Fog_mult.comment = Ajusta quantidade total de névoa que aparece em horários especifícos do dia. Isso não afeta a névoa atmosférica. 
 
-    screen.Biome_Fog.comment = Ajustes para a névoa que apenas aparece em biomas especifícos.
-        option.Biome_specific_environment.comment = Habilita uma névoa que apenas aparece em biomas especifícos. §aCUSTO DE PERFORMANCE:§r Baixo
+        option.PER_BIOME_ENVIRONMENT.comment = Habilita uma névoa que apenas aparece em biomas especifícos. §aCUSTO DE PERFORMANCE:§r Baixo
 
     screen.Cave_Fog.comment = Ajustes para a névoa que aparece em lugares escuros, como cavernas.
         option.Cave_Fog = Névoa de Caverna

@@ -1,4 +1,3 @@
-
 uniform int framemod8;
 
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
@@ -10,11 +9,11 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 									vec2(3,7.)/8.,
 									vec2(7.,-7.)/8.);
 
-vec3 mix_vec3(vec3 X, vec3 Y, float A){
+vec3 lerp(vec3 X, vec3 Y, float A){
 	return X * (1.0 - A) + Y * A;
 }
 
-float mix_float(float X, float Y, float A){
+float lerp(float X, float Y, float A){
 	return X * (1.0 - A) + Y * A;
 }
 
@@ -22,14 +21,14 @@ float square(float x){
   return x*x;
 }
 
-float invLinZ (float lindepth){
-	return -((2.0*near/lindepth)-far-near)/(far-near);
-}
+
 
 vec3 toClipSpace3(vec3 viewSpacePosition) {
     return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 }
-
+float invLinZ (float lindepth){
+	return -((2.0*near/lindepth)-far-near)/(far-near);
+}
 float linZ(float depth) {
     return (2.0 * near) / (far + near - depth * (far - near));
 	// l = (2*n)/(f+n-d(f-n))
@@ -55,11 +54,6 @@ mat3 CoordBase(vec3 n){
 	vec3 x,y;
     frisvad(n,x,y);
     return mat3(x,y,n);
-}
-
-float unpackRoughness(float x){
-  float r = 1.0 - x;
-  return clamp(r*r,0,1);
 }
 
 vec2 R2_Sample(int n){
@@ -194,7 +188,8 @@ void DoSpecularReflections(
 
 	Lightmap = clamp((Lightmap-0.6)*5.0, 0.0,1.0);
 	
-	Roughness = unpackRoughness(Roughness);
+	// Roughness = unpackRoughness(Roughness);
+	Roughness = 1.0 - Roughness; Roughness *= Roughness;
 	F0 = F0 == 0.0 ? 0.02 : F0;
 
 	// Roughness = 0.0;
@@ -214,7 +209,7 @@ void DoSpecularReflections(
 	vec3 L = Basis * Ln;
 
 	float Fresnel = pow(clamp(1.0 + dot(-Ln, SamplePoints),0.0,1.0), 5.0); // Schlick's approximation
-	float RayContribution = mix_float(F0, 1.0, Fresnel); // ensure that when the angle is 0 that the correct F0 is used.
+	float RayContribution = lerp(F0, 1.0, Fresnel); // ensure that when the angle is 0 that the correct F0 is used.
 	
 	#ifdef Rough_reflections
 		if(Hand) RayContribution = RayContribution * pow(1.0-Roughness,3.0);
@@ -225,7 +220,7 @@ void DoSpecularReflections(
     bool hasReflections = Roughness_Threshold == 1.0 ? true : F0 * (1.0 - Roughness * Roughness_Threshold) > 0.01;
 
 	// mulitply all reflections by the albedo if it is a metal.
-	vec3 Metals = F0 > 229.5/255.0 ? mix_vec3(Albedo, vec3(1.0), Fresnel) : vec3(1.0);
+	vec3 Metals = F0 > 229.5/255.0 ? lerp(Albedo, vec3(1.0), Fresnel) : vec3(1.0);
 
 	// --------------- BACKGROUND REFLECTIONS
 	// apply background reflections to the final color. make sure it does not exist based on the lightmap
@@ -238,7 +233,7 @@ void DoSpecularReflections(
 		#endif
 
 		// take fresnel and lightmap levels into account and write to the final color
-		Final_Reflection = mix_vec3(Output, Background_Reflection, Lightmap * RayContribution);
+		Final_Reflection = lerp(Output, Background_Reflection, Lightmap * RayContribution);
 	#endif
 
 	// --------------- SCREENSPACE REFLECTIONS
@@ -246,15 +241,17 @@ void DoSpecularReflections(
 	#ifdef Screen_Space_Reflections
 		if(hasReflections){
 			#ifdef Dynamic_SSR_quality
-				float SSR_Quality = mix_float(reflection_quality, 6.0, RayContribution); // Scale quality with ray contribution
+				float SSR_Quality = lerp(reflection_quality, 6.0, RayContribution); // Scale quality with ray contribution
 			#else
 				float SSR_Quality = reflection_quality;
 			#endif
 
 			float reflectLength = 0.0;
-			vec3 RaytracePos = rayTraceSpeculars(mat3(gbufferModelView) * L, FragPos,  Noise.z, SSR_Quality, Hand, reflectLength);
+			vec3 RaytracePos = rayTraceSpeculars(mat3(gbufferModelView) * L, FragPos,  Noise.z, float(SSR_Quality), Hand, reflectLength);
 			float LOD = clamp(pow(reflectLength, pow(1.0-sqrt(Roughness),5.0) * 3.0) * 6.0, 0.0, 6.0); // use higher LOD as the reflection goes on, to blur it. this helps denoise a little.
 			
+			if(Roughness <= 0.0) LOD = 0.0;
+
 			if (RaytracePos.z < 1.0){
 				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(RaytracePos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
 				previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
@@ -266,10 +263,10 @@ void DoSpecularReflections(
 				}
 			}
 			// make sure it takes the fresnel into account for SSR.
-			SS_Reflections.rgb = mix_vec3(Output, SS_Reflections.rgb, RayContribution);
+			SS_Reflections.rgb = lerp(Output, SS_Reflections.rgb, RayContribution);
 		
 			// occlude the background with the SSR and write to the final color.
-			Final_Reflection = mix_vec3(Final_Reflection, SS_Reflections.rgb, SS_Reflections.a);
+			Final_Reflection = lerp(Final_Reflection, SS_Reflections.rgb, SS_Reflections.a);
 		}
 	#endif
 
@@ -277,7 +274,7 @@ void DoSpecularReflections(
 	// slap the main lightsource reflections to the final color.
 	#ifdef LIGHTSOURCE_REFLECTION
 		Lightsource_Reflection = Diffuse * GGX(Normal, -WorldPos, LightPos, Roughness, F0) * Metals;
-		Final_Reflection += Lightsource_Reflection;
+		Final_Reflection += Lightsource_Reflection * Sun_specular_Strength;
 	#endif
 
 	Output = Final_Reflection;

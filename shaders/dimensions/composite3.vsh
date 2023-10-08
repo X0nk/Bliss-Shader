@@ -1,17 +1,17 @@
-#include "/lib/util.glsl"
 
 varying vec2 texcoord;
-flat varying float exposureA;
-flat varying float tempOffsets;
-uniform sampler2D colortex4;
-uniform int frameCounter;
-
-
+flat varying vec3 zMults;
+uniform float far;
+uniform float near;
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-
-	tempOffsets = HaltonSeq2(frameCounter%10000);
+	zMults = vec3(1.0/(far * near),far+near,far-near);
 	gl_Position = ftransform();
 	texcoord = gl_MultiTexCoord0.xy;
-	exposureA = texelFetch2D(colortex4,ivec2(10,37),0).r;
+
 }

@@ -1,6 +1,6 @@
 // in this here file im doing all the lighting for sunlight, ambient light, torches, for solids and translucents.
 
-uniform float nightVision;
+// uniform float nightVision;
 
 void DoRTAmbientLighting (vec3 TorchColor, vec2 Lightmap, inout float SkyLM, inout vec3 TorchLight, inout vec3 SkyLight){
 
@@ -66,13 +66,14 @@ void DoRTAmbientLighting (vec3 TorchColor, vec2 Lightmap, inout float SkyLM, ino
         TorchLight *= TORCH_AMOUNT;
 
 
-        FogColor =  (FogColor / pow(0.00001 + dot(FogColor,vec3(0.3333)),1.0) ) * 0.1;
+        FogColor = FogColor / max(dot(FogColor,vec3(0.3333)),0.05);
 
-        vec3 FogTint = FogColor*clamp(1.1 + dot(Normal,np3),0.0,1.0) * 0.05;
+        vec3 FogTint = FogColor*clamp(1.1 + dot(Normal,np3),0.0,1.0) * 0.1;
 
-        vec3 AmbientLight = max(vec3(0.5,0.75,1.0) * 0.05, (MIN_LIGHT_AMOUNT*0.01 + nightVision*0.5) ); 
+        vec3 AmbientLight = max(vec3(0.5,0.75,1.0)* 0.1, (MIN_LIGHT_AMOUNT*0.01 + nightVision*0.5) ); 
 
 
-        return TorchLight + AmbientLight + FogTint;
+        return TorchLight + AmbientLight;// + AmbientLight + FogTint;
     }
+
 #endif

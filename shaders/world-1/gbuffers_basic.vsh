@@ -1,10 +1,7 @@
 #version 120
 
-// #define ENTITIES
-// #define LINE
-#define BLOCKENTITIES
-#define WORLD
 
+#define LINES
 #define NETHER_SHADER
 
-#include "/dimensions/all_solid.vsh"
+#include "/dimensions/all_particles.vsh"

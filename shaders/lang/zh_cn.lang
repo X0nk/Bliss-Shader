@@ -119,8 +119,7 @@ screen.Fog = 雾气设置
         option.Night_Uniform_Fog = 夜晚 - 雾气密度
         option.Night_Cloudy_Fog =夜 晚 - 云雾密度
 
-    screen.Biome_Fog = 群系雾
-        option.Biome_specific_environment = 生物群系特定雾气
+        option.PER_BIOME_ENVIRONMENT = 生物群系特定雾气
 
     screen.Cave_Fog = 洞穴雾气
         option.Cave_fog = 洞穴雾气
@@ -378,8 +377,7 @@ screen.Fog.comment = 配置和光线行进体积雾, 基于距离的雾气相关
     screen.TOD_fog.comment = 配置一天中特定时间出现的雾气的密度.
         option.TOD_Fog_mult.comment = 配置一天中特定时间出现的总体雾气量. 本选项不影响大气雾霾密度. 
 
-    screen.Biome_Fog.comment = 配置仅出现在特定群系的的雾气.
-        option.Biome_specific_environment.comment = 特定群系的特殊雾气效果开关. §a性能消耗水平:§r 低.
+        option.PER_BIOME_ENVIRONMENT.comment = 特定群系的特殊雾气效果开关. §a性能消耗水平:§r 低.
 
     screen.Cave_Fog.comment = 配置仅出现在黑暗区域的雾气设置, 例如洞穴.
         option.Cave_Fog.comment = 仅出现在黑暗区域的雾气. 因为光影不可能准确地判断出你是否在一个洞穴里, 所以这种雾气可能会出现在不是洞穴的地方. §a性能消耗水平:§r 低.
@@ -564,7 +562,7 @@ screen.Post_Processing.comment = 配置所有后处理效果设置, 从抗锯齿
     option.Glass_Tint=玻璃色调
     option.Glass_Tint.comment=背景通过混合玻璃本身的颜色获得强烈的色调.
     option.display_LUT=显示 LUT
-    option.ambientSSS_view=天空光次表面散射视图
+    option.SSS_view=天空光次表面散射视图
 
 
 #Climate

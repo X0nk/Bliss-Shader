@@ -1,7 +1,7 @@
-//#extension GL_EXT_gpu_shader4 : disable
+#extension GL_EXT_gpu_shader4 : enable
 #include "/lib/settings.glsl"
-
 #include "/lib/res_params.glsl"
+#include "/lib/bokeh.glsl"
 
 /*
 !! DO NOT REMOVE !!
@@ -61,11 +61,23 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 flat varying int PHYSICSMOD_SNOW;
 flat varying int NameTags;
 
+uniform int frameCounter;
+uniform float far;
+uniform float aspectRatio;
+uniform float viewHeight;
+uniform float viewWidth;
+uniform int hideGUI;
+uniform float screenBrightness;
+
 flat varying float SSSAMOUNT;
 flat varying float EMISSIVE;
 flat varying int LIGHTNING;
 flat varying int PORTAL;
 flat varying int SIGN;
+
+// in vec3 at_velocity;
+// out vec3 velocity;
+
 
 
 uniform mat4 gbufferModelView;
@@ -83,6 +95,7 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-7.,-1.)/8.,
 							vec2(3,7.)/8.,
 							vec2(7.,-7.)/8.);
+							
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 vec4 toClipSpace3(vec3 viewSpacePosition) {
@@ -212,12 +225,19 @@ void main() {
 	FlatNormals = normalMat.xyz;
 
 	blockID = mc_Entity.x;
+	// velocity = at_velocity;
+
+	if(mc_Entity.x == 10009) normalMat.a = 0.60;
 
 
+	PORTAL = 0;
 	SIGN = 0;
+
 	#ifdef WORLD
 		// disallow POM to work on signs.
 		if(blockEntityId == 2200) SIGN = 1;
+
+		if(blockEntityId == 2100) PORTAL = 1;
 	#endif
 	
 	NameTags = 0;
@@ -255,7 +275,7 @@ void main() {
 	#ifdef ENTITIES
 		if(entityId == 12345){
 			LIGHTNING = 1;
-			normalMat.a = 0.5;
+			normalMat.a = 0.50;
 		}
 	#endif
 
@@ -270,26 +290,32 @@ void main() {
 
 
 #ifdef WORLD
+	
 
     /////// ----- SSS ON BLOCKS ----- ///////
 	// strong
-	if(mc_Entity.x == 10001 || mc_Entity.x == 10003 || mc_Entity.x == 10004) SSSAMOUNT = 1.0;
+	if(mc_Entity.x == 10001 || mc_Entity.x == 10003 || mc_Entity.x == 10004 || mc_Entity.x == 10009) SSSAMOUNT = 1.0;
 	
 	// medium
 	if(mc_Entity.x == 10006 || mc_Entity.x == 200) SSSAMOUNT = 0.75;
 	
 	// low
-	if(mc_Entity.x == 10007 || mc_Entity.x == 10008) SSSAMOUNT = 0.5;
-	
+
+	#ifdef MISC_BLOCK_SSS
+		if(mc_Entity.x == 10007 || mc_Entity.x == 10008) SSSAMOUNT = 0.5; // weird SSS on blocks like grass and stuff
+	#endif
+
 	#ifdef ENTITIES
-	    /////// ----- SSS ON MOBS----- ///////
-		// strong
-		if(entityId == 1100) SSSAMOUNT = 0.75;
-
-		// medium
-
-		// low
-		if(entityId == 1200) SSSAMOUNT = 0.3;
+		#ifdef MOB_SSS
+		    /////// ----- SSS ON MOBS----- ///////
+			// strong
+			if(entityId == 1100) SSSAMOUNT = 0.75;
+	
+			// medium
+	
+			// low
+			if(entityId == 1200) SSSAMOUNT = 0.3;
+		#endif
 	#endif
 
 	#ifdef BLOCKENTITIES
@@ -304,14 +330,62 @@ void main() {
 	#endif
 
 
+	#ifdef WAVY_PLANTS
+		bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
 
+		if ((mc_Entity.x == 10001 || mc_Entity.x == 10009) && istopv && abs(position.z) < 64.0) {
+    		vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
+			worldpos.xyz += calcMovePlants(worldpos.xyz)*lmtexcoord.w - cameraPosition;
+    		position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
+		}
+		
+		if (mc_Entity.x == 10003 && abs(position.z) < 64.0) {
+   			vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
+			worldpos.xyz += calcMoveLeaves(worldpos.xyz, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*lmtexcoord.w  - cameraPosition;
+   			position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
+		}
+	#endif
 
 	gl_Position = toClipSpace3(position);
 
 #endif
 
+	#ifdef Seasons 
+		#ifdef WORLD
+		#ifndef BLOCKENTITIES
+		#ifndef ENTITIES 
+		#ifndef HAND 
+			float blank = 0.0;
+			YearCycleColor(color.rgb, gl_Color.rgb, blank);
+		#endif
+		#endif
+		#endif
+		#endif
+	#endif
 
+	#ifdef TAA_UPSCALING
+		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
+	#endif
 	#ifdef TAA
-		gl_Position.xy += offsets[framemod8] * gl_Position.w * texelSize;
+		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+	#endif
+
+
+#if DOF_QUALITY == 5
+		vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);
+		jitter = rotate(radians(float(frameCounter))) * jitter;
+		jitter.y *= aspectRatio;
+		jitter.x *= DOF_ANAMORPHIC_RATIO;
+
+		#if MANUAL_FOCUS == -2
+		float focusMul = 0;
+		#elif MANUAL_FOCUS == -1
+		float focusMul = gl_Position.z - mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
+		#else
+		float focusMul = gl_Position.z - MANUAL_FOCUS;
+		#endif
+
+		vec2 totalOffset = (jitter * JITTER_STRENGTH) * focusMul * 1e-2;
+		gl_Position.xy += hideGUI >= 1 ? totalOffset : vec2(0);
 	#endif
 }

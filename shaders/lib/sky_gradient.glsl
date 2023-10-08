@@ -1,23 +1,38 @@
-
-
 #define ffstep(x,y) clamp((y - x) * 1e35,0.0,1.0)
+
 vec3 drawSun(float cosY, float sunInt,vec3 nsunlight,vec3 inColor){
 	return inColor+nsunlight/0.0008821203*pow(smoothstep(cos(0.0093084168595*3.2),cos(0.0093084168595*1.8),cosY),3.)*0.62;
 }
-const float pi = 3.141592653589793238462643383279502884197169;
-vec2 sphereToCarte(vec3 dir) {
-    float lonlat = atan(-dir.x, -dir.z);
-    return vec2(lonlat * (0.5/pi) +0.5,0.5*dir.y+0.5);
+
+vec3 drawMoon(vec3 PlayerPos, vec3 WorldSunVec, vec3 Color, inout vec3 occludeStars){
+
+	float Shape = clamp((exp(1 + -1000 * dot(WorldSunVec+PlayerPos,PlayerPos)) - 1.5),0.0,25.0);
+	occludeStars *= max(1.0-Shape*5,0.0);
+
+	float shape2 = pow(exp(Shape * -10),0.15) * 255.0;
+
+	vec3 sunNormal = vec3(dot(WorldSunVec+PlayerPos, vec3(shape2,0,0)), dot(PlayerPos+WorldSunVec, vec3(0,shape2,0)), -dot(WorldSunVec, PlayerPos) * 15.0);
+
+
+	// even has a little tilt approximation haha.... yeah....
+	vec3[8] phase = vec3[8](
+		vec3( -1.0,	 -0.5,	 1.0	),
+		vec3( -1.0,	 -0.5,	 0.35	),
+		vec3( -1.0,	 -0.5,   0.2	),
+		vec3( -1.0,	 -0.5,   0.1	),
+		vec3(  1.0,	 0.25,	-1.0	),
+		vec3(  1.0,	 0.25,	 0.1	),
+		vec3(  1.0,	 0.25,	 0.2	),
+		vec3(  1.0,	 0.25,	 0.35	)
+	);
+	
+	vec3 LightDir = phase[moonPhase];
+
+	return Shape * pow(clamp(dot(sunNormal,LightDir)/5,0.0,1.5),5) * Color  + clamp(Shape * 4.0 * pow(shape2/200,2.0),0.0,1.0)*0.004;
 }
 
-vec3 skyFromTex(vec3 pos,sampler2D sampler){
-	vec2 p = sphereToCarte(pos);
-	return texture2D(sampler,p*texelSize*256.+vec2(18.5,1.5)*texelSize).rgb;
-}
-vec3 skyFromTexLOD(vec3 pos,sampler2D sampler, float LOD){
-	vec2 p = sphereToCarte(pos);
-	return texture2DLod(sampler,p*texelSize*256.+vec2(18.5,1.5)*texelSize,LOD).rgb;
-}
+const float pi = 3.141592653589793238462643383279502884197169;
+
 
 
 float w0(float a)
@@ -84,6 +99,19 @@ vec4 texture2D_bicubic(sampler2D tex, vec2 uv)
            g1(fuv.y) * (g0x * texture2D(tex, p2)  +
                         g1x * texture2D(tex, p3));
 }
+vec2 sphereToCarte(vec3 dir) {
+    float lonlat = atan(-dir.x, -dir.z);
+    return vec2(lonlat * (0.5/pi) +0.5,0.5*dir.y+0.5);
+}
+
+vec3 skyFromTex(vec3 pos,sampler2D sampler){
+	vec2 p = sphereToCarte(pos);
+	return texture2D(sampler,p*texelSize*256.+vec2(18.5,1.5)*texelSize).rgb;
+}
+vec3 skyFromTexLOD(vec3 pos,sampler2D sampler, float LOD){
+	vec2 p = sphereToCarte(pos);
+	return texture2DLod(sampler,p*texelSize*256.+vec2(18.5,1.5)*texelSize,LOD).rgb;
+}
 vec4 skyCloudsFromTex(vec3 pos,sampler2D sampler){
 	vec2 p = sphereToCarte(pos);
 	return texture2D(sampler,p*texelSize*256.+vec2(18.5+257.,1.5)*texelSize);
@@ -92,10 +120,6 @@ vec4 skyCloudsFromTexLOD(vec3 pos,sampler2D sampler, float LOD){
 	vec2 p = sphereToCarte(pos);
 	return texture2DLod(sampler,p*texelSize*256. + vec2(18.5 + 257., 1.5)*texelSize,LOD);
 }
-	// vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
-	// vec2 p = clamp(floor(gl_FragCoord.xy-vec2(256*0.75,256*0.25))/150.+tempOffsets/150.,0.0,1.0);
-    
-	// vec2 p = clamp(floor(gl_FragCoord.xy-fogPos)/256.+tempOffsets/256.,-0.33,1.0);
 
 vec4 skyCloudsFromTexLOD2(vec3 pos,sampler2D sampler, float LOD){
 	vec2 p = sphereToCarte(pos);

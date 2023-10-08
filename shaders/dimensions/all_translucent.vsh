@@ -1,8 +1,7 @@
-// #version 120
-//#extension GL_EXT_gpu_shader4 : disable
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/bokeh.glsl"
+#include "/lib/Shadow_Params.glsl"
 
 /*
 !! DO NOT REMOVE !!
@@ -13,9 +12,17 @@ Read the terms of modification and sharing before changing something below pleas
 
 varying vec4 lmtexcoord;
 varying vec4 color;
+
+#ifdef OVERWORLD_SHADER
+	flat varying vec3 averageSkyCol_Clouds;
+	flat varying vec4 lightCol;
+	flat varying vec3 WsunVec;
+#endif
+
 varying vec4 normalMat;
 varying vec3 binormal;
 varying vec4 tangent;
+varying vec3 flatnormal;
 
 uniform mat4 gbufferModelViewInverse;
 varying vec3 viewVector;
@@ -28,13 +35,12 @@ attribute vec4 mc_Entity;
 uniform sampler2D colortex4;
 
 uniform vec3 sunPosition;
-flat varying vec3 WsunVec;
 uniform float sunElevation;
 
 varying vec4 tangent_other;
 
 uniform int frameCounter;
-uniform float far;
+// uniform float far;
 uniform float aspectRatio;
 uniform float viewHeight;
 uniform float viewWidth;
@@ -77,7 +83,6 @@ void main() {
  	vec3 position = mat3(gl_ModelViewMatrix) * vec3(Swtich_gl_vertex) + gl_ModelViewMatrix[3].xyz;
  	gl_Position = toClipSpace3(position);
 
-	color = vec4(gl_Color.rgb,1.0);
 
 	float mat = 0.0;
 	
@@ -106,10 +111,30 @@ void main() {
 	mat3 tbnMatrix = mat3(tangent2.x, binormal.x, normalMat.x,
 								  tangent2.y, binormal.y, normalMat.y,
 						     	  tangent2.z, binormal.z, normalMat.z);
+	
+	flatnormal = normalMat.xyz;
 
 	viewVector = ( gl_ModelViewMatrix * Swtich_gl_vertex).xyz;
 	viewVector = normalize(tbnMatrix * viewVector);
 
+
+	color = vec4(gl_Color.rgb, 1.0);
+
+	#ifdef OVERWORLD_SHADER
+		lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
+		lightCol.a = float(sunElevation > 1e-5)*2.0 - 1.0;
+	
+		averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+	
+		WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
+		// WsunVec = normalize(LightDir);
+	#endif
+
+
+
+	#ifdef TAA_UPSCALING
+		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
+	#endif
 	#ifdef TAA
 		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
 	#endif

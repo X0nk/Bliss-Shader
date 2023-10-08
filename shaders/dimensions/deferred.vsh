@@ -1,5 +1,16 @@
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
+#include "/lib/Shadow_Params.glsl"
+
+// #extension GL_EXT_gpu_shader4 : enable
+
+flat varying vec3 averageSkyCol_Clouds;
+flat varying vec3 averageSkyCol;
+
+flat varying vec3 sunColor;
+flat varying vec3 moonColor;
+flat varying vec3 lightSourceColor;
+flat varying vec3 zenithColor;
 
 flat varying vec2 tempOffsets;
 flat varying float exposure;
@@ -18,13 +29,14 @@ uniform vec2 texelSize;
 uniform float sunElevation;
 uniform float eyeAltitude;
 uniform float near;
-uniform float far;
+// uniform float far;
 uniform float frameTime;
 uniform int frameCounter;
 uniform float rainStrength;
 
 // uniform int worldTime;
-vec3 sunVec = normalize(mat3(gbufferModelViewInverse) *sunPosition);
+vec3 sunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
+// vec3 sunVec = normalize(LightDir);
 
 #include "/lib/sky_gradient.glsl"
 #include "/lib/util.glsl"
@@ -55,6 +67,79 @@ void main() {
 	gl_Position.xy = gl_Position.xy*vec2(18.+258*2,258.)*texelSize;
 	gl_Position.xy = gl_Position.xy*2.-1.0;
 
+#ifdef OVERWORLD_SHADER
+
+///////////////////////////////////
+/// --- AMBIENT LIGHT STUFF --- ///
+///////////////////////////////////
+
+	averageSkyCol_Clouds = vec3(0.0);
+	averageSkyCol = vec3(0.0);
+
+	vec2 sample3x3[9] = vec2[](
+
+     	vec2(-1.0, -0.3),
+	    vec2( 0.0,  0.0),
+	    vec2( 1.0, -0.3),
+
+		vec2(-1.0, -0.5),
+		vec2( 0.0, -0.5),
+		vec2( 1.0, -0.5),
+
+	    vec2(-1.0, -1.0),
+	    vec2( 0.0, -1.0),
+	    vec2( 1.0, -1.0)
+   	);
+
+	// sample in a 3x3 pattern to get a good area for average color
+	vec3 pos = normalize(vec3(0,1,0));
+	int maxIT = 9;
+	for (int i = 0; i < maxIT; i++) {
+		pos = normalize(vec3(0,1,0));
+		pos.xy += normalize(sample3x3[i]) * vec2(0.3183,0.90);
+
+		averageSkyCol_Clouds += 2.0*skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.;
+		
+		// pos = normalize(vec3(0,1,0));
+		// pos.xy += normalize(sample3x3[i]) * vec2(0.3183,0.90);
+		averageSkyCol += 1.5*skyFromTex(pos,colortex4).rgb/maxIT/150.; // please dont do an infinite feedback loop....
+		
+   	}
+	
+	/// TOOO DAMN BLUE
+	// // only need to sample one spot for this
+	// averageSkyCol += 2.0*skyFromTex(normalize(vec3(0.0,1.0,0.0)),colortex4).rgb/150.;
+	vec3 minimimlight =  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.0005 + nightVision);
+	averageSkyCol_Clouds = max(averageSkyCol_Clouds, minimimlight);
+	averageSkyCol = max(averageSkyCol, minimimlight);
+
+////////////////////////////////////////
+/// --- SUNLIGHT/MOONLIGHT STUFF --- ///
+////////////////////////////////////////
+
+	vec2 planetSphere = vec2(0.0);
+	vec3 sky = vec3(0.0);
+	vec3 skyAbsorb = vec3(0.0);
+
+	float sunVis = clamp(sunElevation,0.0,0.05)/0.05*clamp(sunElevation,0.0,0.05)/0.05;
+	float moonVis = clamp(-sunElevation,0.0,0.05)/0.05*clamp(-sunElevation,0.0,0.05)/0.05;
+
+	// zenithColor = calculateAtmosphere(vec3(0.0), vec3(0.0,1.0,0.0), vec3(0.0,1.0,0.0), sunVec, -sunVec, planetSphere, skyAbsorb, 25,tempOffsets.x);
+	skyAbsorb = vec3(0.0);
+	vec3 absorb = vec3(0.0);
+	sunColor = calculateAtmosphere(vec3(0.0), sunVec, vec3(0.0,1.0,0.0), sunVec, -sunVec, planetSphere, skyAbsorb, 25,0.0);
+	sunColor = sunColorBase/4000. * skyAbsorb;
+
+	skyAbsorb = vec3(1.0);
+	moonColor = calculateAtmosphere(vec3(0.0), -sunVec, vec3(0.0,1.0,0.0), sunVec, -sunVec, planetSphere, skyAbsorb, 25,0.5);
+	moonColor = moonColorBase/4000.0;
+
+	lightSourceColor = sunVis >= 1e-5 ? sunColor * sunVis : moonColor * moonVis;
+
+	float lightDir = float( sunVis >= 1e-5)*2.0-1.0;
+
+#endif
+
 //////////////////////////////
 /// --- EXPOSURE STUFF --- ///
 //////////////////////////////
@@ -71,7 +156,7 @@ void main() {
 	for (int i = 0; i < maxITexp; i++){
 			vec2 ij = R2_samples((frameCounter%2000)*maxITexp+i);
 			vec2 tc = 0.5 + (ij-0.5) * 0.7;
-			vec3 sp = texture2D(colortex6,tc/16. * resScale+vec2(0.375*resScale.x+4.5*texelSize.x,.0)).rgb;
+			vec3 sp = texture2D(colortex6, tc/16. * resScale+vec2(0.375*resScale.x+4.5*texelSize.x,.0)).rgb;
 			avgExp += log(luma(sp));
 			avgB += log(min(dot(sp,vec3(0.07,0.22,0.71)),8e-2));
 	}

@@ -3,15 +3,12 @@
 varying vec2 texcoord;
 
 uniform sampler2D colortex7;
-// uniform sampler2D noisetex;
 uniform vec2 texelSize;
-uniform float viewWidth;
-uniform float viewHeight;
-uniform float aspectRatio;
 uniform float frameTimeCounter;
-uniform int frameCounter;
-uniform int isEyeInWater;
 
+uniform sampler2D shadowcolor0;
+uniform sampler2D shadowtex0;
+uniform sampler2D shadowtex1;
 
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
@@ -99,6 +96,30 @@ void applyColorCurve(inout vec3 color, vec4 darks, vec4 brights){
   
 }
 
+#ifdef HURT_AND_DEATH_EFFECT
+  uniform float hurt;
+  uniform float dying;
+  uniform float dead;
+  
+  void PlayerDamagedEffect(inout vec3 outColor){
+  
+    if(dying > 0){
+    
+    	float vignette2 = clamp(1.0 - exp(-(sin(frameTimeCounter*7)*15+50) * dot(texcoord-0.5,texcoord-0.5)),0.0,1.0);
+  
+      outColor = mix(outColor, vec3(0.0), min(dying,1.0)*vignette2);
+      outColor = mix(outColor, vec3(0.0), dead);
+  
+    }else{
+    
+    	float vignette = clamp(1.0 - exp(-5 * dot(texcoord-0.5,texcoord-0.5)),0.0,1.0);
+  
+      outColor = mix(outColor, vec3(0.3,0.0,0.0), vignette*sqrt(hurt));
+  
+    }
+  }
+#endif
+
 void main() {
   #ifdef BICUBIC_UPSCALING
     vec3 col = SampleTextureCatmullRom(colortex7,texcoord,1.0/texelSize).rgb;
@@ -119,14 +140,18 @@ void main() {
     vec3 std = abs(col - m1) + abs(albedoCurrent1 - m1) + abs(albedoCurrent2 - m1) +
      abs(albedoCurrent3 - m1) + abs(albedoCurrent3 - m1) + abs(albedoCurrent4 - m1);
     float contrast = 1.0 - luma(std)/5.0;
-    col = col*(1.0+(SHARPENING)*contrast)
-          - (SHARPENING)/(1.0-0.5/3.5)*contrast*(m1 - 0.5/3.5*col);
+    col = col*(1.0+(SHARPENING+UPSCALING_SHARPNENING)*contrast)
+          - (SHARPENING+UPSCALING_SHARPNENING)/(1.0-0.5/3.5)*contrast*(m1 - 0.5/3.5*col);
   #endif
 
   float lum = luma(col);
   vec3 diff = col-lum;
   col = col + diff*(-lum*CROSSTALK + SATURATION);
-  
+
+  #ifdef HURT_AND_DEATH_EFFECT
+    PlayerDamagedEffect(col);
+  #endif
+
 	vec3 FINAL_COLOR = clamp(int8Dither(col,texcoord),0.0,1.0);
 
   #ifdef COLOR_CURVE
@@ -135,5 +160,15 @@ void main() {
 
 	applyContrast(FINAL_COLOR, CONTRAST); // for fun
 
-  gl_FragColor.rgb = FINAL_COLOR ;
+  gl_FragColor.rgb = FINAL_COLOR;
+
+
+
+  // uniform sampler2D shadowcolor0;
+  // uniform sampler2D shadowtex0;
+  // uniform sampler2D shadowtex1;
+  // if(texcoord.x > 0.5) gl_FragColor.rgb = texture2D(shadowcolor0, texcoord * vec2(2.0, 1.0) - vec2(1.0, 0.0)).rgb;
+  // vec2 texrood = texcoord * vec2(2.0, 1.0) - vec2(1.0, 0.0);
+  
+  // if(texrood.x > 0.49 && texrood.x < 0.51 && texrood.y > 0.49 && texrood.y < 0.51) gl_FragColor.rgb = vec3(1,0,0);
 }

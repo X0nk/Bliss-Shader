@@ -121,8 +121,7 @@ screen.Fog = Fog Settings
         option.Evening_Cloudy_Fog = Cloudy Evening Fog Density
         option.Night_Cloudy_Fog = Cloudy Night Fog Density
 
-    screen.Biome_Fog = Biome Specific Fog
-        option.Biome_specific_environment = Biome Specific Fog
+        option.PER_BIOME_ENVIRONMENT = Per Biome Environments
 
     screen.Cave_Fog = Cave Fog
         option.Cave_Fog = Cave Fog
@@ -190,7 +189,30 @@ screen.Climate = Climate Settings
         option.Spring_Leaf_R = Red Amount (for leaves)
         option.Spring_Leaf_G = Green Amount (for leaves)
         option.Spring_Leaf_B = Blue Amount (for leaves)
+        
+    screen.SWAMP = Swamp
+        option.SWAMP_ENV = Swamp Environment
+        option.SWAMP_UNIFORM_DENSITY = Uniform Fog Density
+        option.SWAMP_CLOUDY_DENSITY = Cloudy Fog Density
+        option.SWAMP_R = Red Amount
+        option.SWAMP_G = Green Amount
+        option.SWAMP_B = Blue Amount
 
+    screen.JUNGLE = Jungle
+        option.JUNGLE_ENV = Jungle Environment
+        option.JUNGLE_UNIFORM_DENSITY = Uniform Fog Density
+        option.JUNGLE_CLOUDY_DENSITY = Cloudy Fog Density
+        option.JUNGLE_R = Red Amount
+        option.JUNGLE_G = Green Amount
+        option.JUNGLE_B = Blue Amount
+
+    screen.DARKFOREST = Dark Forest
+        option.DARKFOREST_ENV = Dark Forest Environment
+        option.DARKFOREST_UNIFORM_DENSITY = Uniform Fog Density
+        option.DARKFOREST_CLOUDY_DENSITY = Cloudy Fog Density
+        option.DARKFOREST_R = Red Amount
+        option.DARKFOREST_G = Green Amount
+        option.DARKFOREST_B = Blue Amount
 
 screen.World = World
     screen.Water = Water Settings
@@ -252,6 +274,7 @@ screen.LabPBR = Lab PBR
 
 
 screen.POM = Parallax Occlusion Mapping / POM
+    option.HEIGTHMAP_DEPTH_OFFSET = Heightmap in Depth
     option.POM = Parallax Occlusion Mapping
     option.MAX_ITERATIONS = Quality
     option.POM_DEPTH = Depth
@@ -358,6 +381,7 @@ screen.Emissives.comment = §bWhat is this?§r Emissiveness is just how much lig
     option.Emissive_Curve.comment = This determines how quickly the emissive texture reaches its brightest point. 1.0 is linear.
 
 screen.POM.comment = Configure settings related to parallax occlusion mapping that uses information provided by a resourcepack.
+    option.HEIGTHMAP_DEPTH_OFFSET.comment = §bWhat is this?§r This makes the resourcepack provided "heightmap" offset the depth that a lot of effects use. This allows for finer details nearby, and can work as a "budget POM". §aPERFORMANCE COST:§r low to medium - use this if POM is too hard to run.
     option.POM.comment = §bWhat is this?§r This effect attempts to create 3D geometry where there previously was none, by using a special image from a resourcepack. This effect basically only pushes inwards, so some artifacts can exist when looking at steep angles. §aPERFORMANCE COST:§r medium to high
     option.MAX_ITERATIONS.comment = Configure the quality of the parallax occlusion mapping effect. if you see individual layers when looking up close, inscreasing this makes more layers, so they will become harder to see. §aPERFORMANCE COST:§r high
     option.POM_DEPTH.comment = How deep the parallax occlusion mapping effect can go into a surface. §aPERFORMANCE COST:§r very low
@@ -381,9 +405,6 @@ screen.Fog.comment = Configure settings related to the raymarched volumetric fog
 
     screen.TOD_fog.comment = Configure the density of fog that appears at specific times of the day.
         option.TOD_Fog_mult.comment = Configure how much total fog there is that appears at specific times during the day. this does not effect the atmospheric haze. 
-
-    screen.Biome_Fog.comment = Configure settings for fog that appear only in specific biomes.
-        option.Biome_specific_environment.comment = Toggle fog that only appears in specific biomes. §aPERFORMANCE COST:§r low
 
     screen.Cave_Fog.comment = Configure settings for fog that appears when you are in very dark places such as caves.
         option.Cave_Fog.comment = Toggle the fog that appears in dark places. It is impossible to accurately tell when you are in a cave with a shader, so this fog might appear in places that are not a cave. §aPERFORMANCE COST:§r low
@@ -428,6 +449,18 @@ screen.Climate.comment = Configure settings related to the climate, like seasona
         screen.Fall_colors.comment = Configure the colors of vegetation during fall.
         screen.Winter_colors.comment = Configure the colors of vegetation during winter.
         screen.Spring_colors.comment = Configure the colors of vegetation during spring.
+    
+    option.PER_BIOME_ENVIRONMENT.comment = Toggle all special environments that only appear in some biomes. §aPERFORMANCE COST:§r low
+
+        screen.SWAMP.comment = Configure the environment in this biome type.
+            option.SWAMP_ENV.comment = Toggle the environment only for this biome type. The other biome environments remain active even if this one is disabled.
+
+        screen.JUNGLE.comment = Configure the environment in this biome type.
+            option.JUNGLE_ENV.comment = Toggle the environment only for this biome type. The other biome environments remain active even if this one is disabled.
+
+        screen.DARKFOREST.comment = Configure the environment in this biome type.
+            option.DARKFOREST_ENV.comment = Toggle the environment only for this biome type. The other biome environments remain active even if this one is disabled.
+
 
 screen.Waving_Stuff.comment = Configure settings related to waving things.
     option.WAVY_PLANTS.comment = Toggle waving plants. §aPERFORMANCE COST:§r very low

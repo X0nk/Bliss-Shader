@@ -122,7 +122,7 @@ float calculate_maximum_horizon_angle(
 
 
 	for (int i = 0; i < GTAO_HORIZON_STEPS; ++i, ray_pos += ray_step) {
-		float depth = texelFetch(depthtex1, ivec2(clamp(ray_pos,0.0,1.0) * view_res * taau_render_scale - 0.5), 0).x;
+		float depth = texelFetch2D(depthtex1, ivec2(clamp(ray_pos,0.0,1.0) * view_res * taau_render_scale - 0.5), 0).x;
 
 		if (depth == 1.0 || depth < hand_depth || depth == screen_pos.z) continue;
 
@@ -142,9 +142,8 @@ float calculate_maximum_horizon_angle(
 	return fast_acos(clamp(max_cos_theta, -1.0, 1.0));
 }
 
-float ambient_occlusion(vec3 screen_pos, vec3 view_pos, vec3 view_normal, vec2 dither , inout vec3 debug) {
+float ambient_occlusion(vec3 screen_pos, vec3 view_pos, vec3 view_normal, vec2 dither) {
 	float ao = 0.0;
-	vec3 bent_normal = vec3(0.0);
 
 	// Construct local working space
 	vec3 viewer_dir   = normalize(-view_pos);
@@ -176,11 +175,9 @@ float ambient_occlusion(vec3 screen_pos, vec3 view_pos, vec3 view_normal, vec2 d
 
 		max_horizon_angles = gamma + clamp(vec2(-1.0, 1.0) * max_horizon_angles - gamma, -half_pi, half_pi) ;
 
-        vec3 max_horizon_angles2 = mat3(gbufferModelViewInverse) * projected_normal;
 
-		ao += integrate_arc(max_horizon_angles, gamma, cos_gamma) * len_sq * norm * max_horizon_angles.y ;
+		ao += integrate_arc(max_horizon_angles, gamma, cos_gamma) * len_sq * norm  ;
 	}
-
 	ao *= rcp(float(GTAO_SLICES));
-	return ao;
+	return ao*(ao*0.5+0.5);
 }

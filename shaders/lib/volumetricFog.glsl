@@ -2,8 +2,6 @@
 vec3 normVec (vec3 vec){
 	return vec*inversesqrt(dot(vec,vec));
 }
-
-
 float phaseRayleigh(float cosTheta) {
 	const vec2 mul_add = vec2(0.1, 0.28) /acos(-1.0);
 	return cosTheta * mul_add.x + mul_add.y; // optimized version from [Elek09], divided by 4 pi for energy conservation
@@ -27,23 +25,24 @@ float cloudVol(in vec3 pos){
 
 	vec3 samplePos = pos*vec3(1.0,1./24.,1.0);
 	vec3 samplePos2 = pos*vec3(1.0,1./48.,1.0);
+	float fogYstart = SEA_LEVEL-6;
 
-	float mult = exp( -max((pos.y - SEA_LEVEL) / 35.,0.0));
+	float mult = exp( -max((pos.y - fogYstart) / 35.,0.0));
 	float fog_shape = 1.0 - densityAtPosFog(samplePos * 24.0 );
 	float fog_eroded = 1.0 - densityAtPosFog(samplePos2 * 200.0 );
 
 	// float CloudyFog = max(	(fog_shape*2.0 - fog_eroded*0.5) - 1.2, max(fog_shape-0.8,0.0)) * mult;
 
-	float heightlimit = exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0));
+	float heightlimit = exp2( -max((pos.y - fogYstart * (1.0+snowStorm)) / 25.,0.0));
 	float CloudyFog = max((fog_shape*1.2 - fog_eroded*0.2) - 0.75,0.0) * heightlimit ;
 
-
-	float UniformFog = exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0));
+	float UniformFog = exp( max(pos.y - fogYstart,0.0)  / -25) + 0.05;
+	// UniformFog = 1.0;
 	
-	float RainFog = max(fog_shape*10. - 7.,0.5) * exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0)) * 5. * rainStrength * noPuddleAreas * RainFog_amount;
+	// float RainFog = max(fog_shape*10. - 7.,0.5) * exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0)) * 72. * rainStrength * noPuddleAreas * RainFog_amount;
+	float RainFog = (2 + max(fog_shape*10. - 7.,0.5)*2.0) * UniformFog * rainStrength * noPuddleAreas * RainFog_amount;
 	
-	
-	#ifdef Biome_specific_environment
+	#ifdef PER_BIOME_ENVIRONMENT
 		// sandstorms and snowstorms
 	  	if(sandStorm > 0 || snowStorm > 0) CloudyFog = mix(CloudyFog, max(densityAtPosFog((samplePos2  - vec3(frameTimeCounter,0,frameTimeCounter)*10) * 100.0 ) - 0.2,0.0) * heightlimit, sandStorm+snowStorm);
 	#endif
@@ -53,27 +52,50 @@ float cloudVol(in vec3 pos){
 	return CloudyFog + UniformFog + RainFog;
 }
 
+// // uniform vec4 lightningBoltPosition;
+// float Iris_Lightningflash_VLfog(vec3 feetPlayerPos, vec3 lightningBoltPos){
 
-vec4 getVolumetricRays(
-	vec3 fragpos,
+// 	vec3 LightningPos = feetPlayerPos - vec3(lightningBoltPosition.x, clamp(feetPlayerPos.y, lightningBoltPosition.y, lightningBoltPosition.y+116.0),lightningBoltPosition.z);
+
+// 	// point light, max distance is ~500 blocks (the maximim entity render distance)
+// 	float lightDistance = 300.0;
+
+// 	#ifdef TEST
+// 		float lightningLight = 0.0;
+// 	#else
+
+// 		float lightningLight = max(1.0 - length(LightningPos) / lightDistance, 0.0) ;
+
+// 		lightningLight = exp((1.0 - lightningLight) * -15.0) ;
+// 	#endif
+
+// 	// lightningLight = pow(lightningLight,5.0);
+
+// 	return lightningLight ;
+// }
+
+uniform bool inSpecialBiome;
+vec4 GetVolumetricFog(
+	vec3 viewPosition,
 	float dither,
+	vec3 LightColor,
 	vec3 AmbientColor
 ){
 	//project pixel position into projected shadowmap space
-	vec3 wpos = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
+	vec3 wpos = mat3(gbufferModelViewInverse) * viewPosition + gbufferModelViewInverse[3].xyz;
 	vec3 fragposition = mat3(shadowModelView) * wpos + shadowModelView[3].xyz;
 	fragposition = diagonal3(shadowProjection) * fragposition + shadowProjection[3].xyz;
 
 	//project view origin into projected shadowmap space
-	vec3 start = toShadowSpaceProjected(vec3(0.));
+	vec3 start = toShadowSpaceProjected(vec3(0.0));
 
 	//rayvector into projected shadow map space
 	//we can use a projected vector because its orthographic projection
 	//however we still have to send it to curved shadow map space every step
-	vec3 dV = fragposition-start;
+	vec3 dV = fragposition - start;
 	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
 
-	float maxLength = min(length(dVWorld),far)/length(dVWorld);
+	float maxLength = min(length(dVWorld), far)/length(dVWorld);
 	dV *= maxLength;
 	dVWorld *= maxLength;
 
@@ -82,33 +104,42 @@ vec4 getVolumetricRays(
 
 	vec3 vL = vec3(0.);
 
-	float SdotV = dot(sunVec,normalize(fragpos))*lightCol.a;
+	float SdotV = dot(sunVec,normalize(viewPosition))*lightCol.a;
 	float dL = length(dVWorld);
 
 	//Mie phase + somewhat simulates multiple scattering (Horizon zero down cloud approx)
-	float mie = phaseg(SdotV,0.7)*5.0 + 1.0;
+	float mie = phaseg(SdotV,0.7)*5.0 + 0.1;
 	float rayL = phaseRayleigh(SdotV);
-
-	
-	// Makes fog more white idk how to simulate it correctly
-	vec3 sunColor = lightCol.rgb / 80.0;
-	vec3 skyCol0 = AmbientColor / 150. * 5. ; // * max(abs(WsunVec.y)/150.0,0.);
-
-	vec3 lightningColor = (lightningEffect / 10) * (max(eyeBrightnessSmooth.y,0)/240.);
-	
-	vec3 np3 = normVec(wpos);
-	float ambfogfade =  clamp(exp(np3.y* 2 - 2),0.0,1.0) * 4 ;
-	skyCol0 += lightningColor * ambfogfade;
-
-
-	#ifdef Biome_specific_environment
-		// recolor change sun and sky color to some color, but make sure luminance is preserved.
-		BiomeFogColor(sunColor);
-		BiomeFogColor(skyCol0);
-	#endif
 
 	vec3 rC = vec3(fog_coefficientRayleighR*1e-6, fog_coefficientRayleighG*1e-5, fog_coefficientRayleighB*1e-5);
 	vec3 mC = vec3(fog_coefficientMieR*1e-6, fog_coefficientMieG*1e-6, fog_coefficientMieB*1e-6);
+	
+	// Makes fog more white idk how to simulate it correctly
+	vec3 LightSourceColor = LightColor;
+	vec3 skyCol0 = AmbientColor / 2.0;
+
+	// recolor change sun and sky color to a color, but make sure luminance is preserved.
+	#ifdef PER_BIOME_ENVIRONMENT
+		BiomeFogColor(LightSourceColor);
+		BiomeFogColor(skyCol0);
+	#endif
+
+	// float upGradient = 1.0 - (normalize(wpos).y*0.5 + 0.5);
+	// skyCol0 *= exp(upGradient * -5.0)*1.5 + 0.5;
+
+	// float upGradient = np3.y;
+	// skyCol0 = max(skyCol0 + skyCol0*upGradient,0.0);
+	
+	// #if defined Cave_fog && defined TEST
+	//     vec3 cavefogCol = vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B);
+
+	// 	#ifdef PER_BIOME_ENVIRONMENT
+	//       BiomeFogColor(cavefogCol);
+	//     #endif
+
+	//     cavefogCol = cavefogCol * clamp(1.0 - normalize(wpos).y, 0.0, 1.0) * 0.001 ;  
+	// #endif
+
 
 	float mu = 1.0;
 	float muS = mu;
@@ -117,7 +148,7 @@ vec4 getVolumetricRays(
 
 	vec3 WsunVec = mat3(gbufferModelViewInverse) * sunVec * lightCol.a;
 
-	vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition;
+	vec3 progressW = gbufferModelViewInverse[3].xyz + cameraPosition;
 
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 	for (int i=0;i<VL_SAMPLES;i++) {
@@ -129,38 +160,58 @@ vec4 getVolumetricRays(
 		//project into biased shadowmap space
 		float distortFactor = calcDistort(progress.xy);
 		vec3 pos = vec3(progress.xy*distortFactor, progress.z);
-		float densityVol = cloudVol(progressW);
+
 		float sh = 1.0;
-		
-		
 		if (abs(pos.x) < 1.0-0.5/2048. && abs(pos.y) < 1.0-0.5/2048){
 			pos = pos*vec3(0.5,0.5,0.5/6.0)+0.5;
-			sh = shadow2D( shadow, pos).x;
+			sh = shadow2D(shadow, pos).x;
 		}
+		
+		// #ifdef TEST
+		// 	lightleakfix = 1.0;
+		// #endif
 
 		#ifdef VL_CLOUDS_SHADOWS
-			sh *= GetCloudShadow_VLFOG(progressW,WsunVec);
+			sh *= GetCloudShadow_VLFOG(progressW, WsunVec);
 		#endif
+
+
 		
+		float densityVol = cloudVol(progressW) * lightleakfix;
+
 		//Water droplets(fog)
 		float density = densityVol*mu*300.;
 
 		//Just air
-		vec2 airCoef = exp(-max(progressW.y-SEA_LEVEL,0.0)/vec2(8.0e3, 1.2e3)*vec2(6.,7.0)) * 24 * Haze_amount;
+		vec2 airCoef = exp(-max(progressW.y - SEA_LEVEL, 0.0) / vec2(8.0e3, 1.2e3) * vec2(6.,7.0)) * 24 * Haze_amount;
 
 		//Pbr for air, yolo mix between mie and rayleigh for water droplets
 		vec3 rL = rC*airCoef.x;
-		vec3 m = (airCoef.y+density)*mC;
+		vec3 m = (airCoef.y+density) * mC;
 
-		vec3 DirectLight =  (sunColor*sh) * (rayL*rL+m*mie);
+		vec3 DirectLight =  (LightSourceColor*sh) * (rayL*rL*3.0 + m*mie);
 		vec3 AmbientLight =  skyCol0 * m;
-		vec3 AtmosphericFog = skyCol0 * (rL+m)  ;
+
+		// #ifdef TEST
+		// 	vec3 Lightning =  vec3(0.0);
+		// #else
+
+		vec3 Lightning = Iris_Lightningflash_VLfog(progressW-cameraPosition, lightningBoltPosition.xyz) * m;
+	
+		// #endif
+
+		vec3 AtmosphericFog = skyCol0 * (rL*3.0 + m);//  + (LightSourceColor * sh) * (rayL*rL*3.0 + m*mie);
 
 		// extra fog effects
-		vec3 rainRays =   (sunColor*sh) * (rayL*phaseg(SdotV,0.5)) * clamp(pow(WsunVec.y,5)*2,0.0,1) * rainStrength * noPuddleAreas * RainFog_amount * 0.5; 
-		vec3 CaveRays = (sunColor*sh)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - lightleakfix);
+		// vec3 rainRays =   (LightSourceColor*sh) * (rayL*(phaseg(SdotV,0.7))) * clamp(pow(WsunVec.y,5)*2,0.0,1) * rainStrength * noPuddleAreas * RainFog_amount; 
+		// vec3 CaveRays = (LightSourceColor*sh)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - lightleakfix);
  
-		vec3 vL0 = (DirectLight + AmbientLight + AtmosphericFog + rainRays ) * lightleakfix  ;
+		vec3 vL0 = (AtmosphericFog + AmbientLight + DirectLight + Lightning) * lightleakfix;
+
+		// #if defined Cave_fog && defined TEST
+		//     vL0 += cavefogCol;
+		// #endif
+
 
 
 		vL += (vL0 - vL0 * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*absorbance;
@@ -169,10 +220,10 @@ vec4 getVolumetricRays(
 	return vec4(vL,absorbance);
 }
 
-
+/*
 /// really dumb lmao
 vec4 InsideACloudFog(
-	vec3 fragpos,
+	vec3 viewPosition,
 	vec2 Dither,
 	vec3 SunColor,
 	vec3 MoonColor,
@@ -182,7 +233,7 @@ vec4 InsideACloudFog(
 	vec3 color = vec3(0.0);
 
 	//project pixel position into projected shadowmap space
-	vec3 wpos = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
+	vec3 wpos = mat3(gbufferModelViewInverse) * viewPosition + gbufferModelViewInverse[3].xyz;
 	vec3 fragposition = mat3(shadowModelView) * wpos + shadowModelView[3].xyz;
 	fragposition = diagonal3(shadowProjection) * fragposition + shadowProjection[3].xyz;
 
@@ -212,7 +263,7 @@ vec4 InsideACloudFog(
 	float shadowStep = 200.;
 	vec3 dV_Sun = normalize(mat3(gbufferModelViewInverse)*sunVec)*shadowStep;
 
-	float SdotV = dot(sunVec,normalize(fragpos));
+	float SdotV = dot(sunVec,normalize(viewPosition));
 
 	SkyColor *= clamp(abs(dV_Sun.y)/100.,0.75,1.0);
 	SunColor =  SunColor * clamp(dV_Sun.y ,0.0,1.0);
@@ -222,7 +273,7 @@ vec4 InsideACloudFog(
 
 
 
-	float fogSdotV = dot(sunVec,normalize(fragpos))*lightCol.a;
+	float fogSdotV = dot(sunVec,normalize(viewPosition))*lightCol.a;
 	float fogmie = phaseg(fogSdotV,0.7)*5.0 + 1.0;
 
 	// Makes fog more white idk how to simulate it correctly
@@ -258,7 +309,7 @@ vec4 InsideACloudFog(
 	float mie = phaseg(SdotV,0.7)*5.0 + 1.0;
 	float rayL = phaseRayleigh(SdotV);
 
-	#ifdef Biome_specific_environment
+	#ifdef PER_BIOME_ENVIRONMENT
 		// recolor change sun and sky color to some color, but make sure luminance is preserved.
 		BiomeFogColor(Fog_SunCol);
 		BiomeFogColor(Fog_SkyCol);
@@ -367,3 +418,4 @@ vec4 InsideACloudFog(
 	}
 	return vec4(color, total_extinction);
 }
+*/

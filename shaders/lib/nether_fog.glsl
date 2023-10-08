@@ -37,7 +37,7 @@ float cloudVol(in vec3 pos){
 }
 
 vec4 GetVolumetricFog(
-	vec3 fragpos,
+	vec3 viewPos,
 	float dither,
 	float dither2
 ){
@@ -46,7 +46,7 @@ vec4 GetVolumetricFog(
 	float absorbance = 1.0;
 
   	//project pixel position into projected shadowmap space
-	vec3 wpos = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
+	vec3 wpos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
 	vec3 fragposition = mat3(shadowModelView) * wpos + shadowModelView[3].xyz;
 	fragposition = diagonal3(shadowProjection) * fragposition + shadowProjection[3].xyz;
 
@@ -84,13 +84,13 @@ vec4 GetVolumetricFog(
 
 		
 		// do background fog lighting	
-		float Air = 0.01;
+		float AirDensity = 0.01;
 		vec3 vL1 = fogcolor / 20.0;
 
-		vL += (vL1 - vL1*exp(-Air*dd*dL)) * absorbance;
+		vL += (vL1 - vL1*exp(-AirDensity*dd*dL)) * absorbance;
 		vL += (vL0 - vL0*exp(-Density*dd*dL)) * absorbance;
 
-        absorbance *= exp(-(Density+Air)*dd*dL);
+        absorbance *= exp(-(Density+AirDensity)*dd*dL);
 
 		if (absorbance < 1e-5) break;
 	}
