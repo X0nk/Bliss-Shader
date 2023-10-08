@@ -151,7 +151,7 @@ void main() {
   #ifdef HURT_AND_DEATH_EFFECT
     PlayerDamagedEffect(col);
   #endif
-
+  
 	vec3 FINAL_COLOR = clamp(int8Dither(col,texcoord),0.0,1.0);
 
   #ifdef COLOR_CURVE
@@ -159,6 +159,7 @@ void main() {
   #endif
 
 	applyContrast(FINAL_COLOR, CONTRAST); // for fun
+
 
   gl_FragColor.rgb = FINAL_COLOR;
 
