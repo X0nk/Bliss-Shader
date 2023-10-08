@@ -1,5 +1,3 @@
-
-//#extension GL_EXT_gpu_shader4 : disable
 #include "/lib/settings.glsl"
 
 flat varying vec3 averageSkyCol;

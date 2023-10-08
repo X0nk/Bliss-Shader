@@ -1,4 +1,3 @@
-#extension GL_EXT_gpu_shader4 : enable
 #extension GL_ARB_shader_texture_lod : enable
 
 #include "/lib/settings.glsl"
@@ -464,11 +463,11 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 
 	#if defined WORLD && defined MC_NORMAL_MAP
-		vec3 NormalTex = texture2D_POMSwitch(normals, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM).xya;
+		vec3 NormalTex = texture2D_POMSwitch(normals, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM).xyw;
 		float Heightmap = 1.0 - NormalTex.z;
 
-		NormalTex.xy = NormalTex.xy*2.0-1.0;
-		NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0) ;
+		NormalTex.xy = NormalTex.xy * 2.0-1.0;
+		NormalTex.z = sqrt(max(1.0 - dot(NormalTex.xy, NormalTex.xy), 0.0));
 
 		#if defined HEIGTHMAP_DEPTH_OFFSET && !defined HAND
 			gl_FragDepth = gl_FragCoord.z;

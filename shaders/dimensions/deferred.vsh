@@ -2,7 +2,7 @@
 #include "/lib/res_params.glsl"
 #include "/lib/Shadow_Params.glsl"
 
-// #extension GL_EXT_gpu_shader4 : enable
+
 
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec3 averageSkyCol;

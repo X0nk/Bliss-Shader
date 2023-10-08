@@ -1,5 +1,3 @@
-
-//#extension GL_EXT_gpu_shader4 : disable
 #include "/lib/settings.glsl"
 //Computes volumetric clouds at variable resolution (default 1/4 res)
 
