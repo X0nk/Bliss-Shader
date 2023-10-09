@@ -101,7 +101,6 @@ void main() {
 	#endif
 
 	#ifdef WEATHER
-		// lightmap.x = clamp(max(lightmap.x - 0.5, 0.0) * 2.5, 0.0, 1.0);
 		gl_FragData[1].a = TEXTURE.a; // for bloomy rain and stuff
 	#endif
 

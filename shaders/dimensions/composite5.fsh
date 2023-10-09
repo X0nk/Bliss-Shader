@@ -10,6 +10,7 @@ const int colortex4Format = RGBA16F;				//light values and skyboxes (everything)
 const int colortex6Format = R11F_G11F_B10F;			//additionnal buffer for bloom (composite3->final)
 const int colortex7Format = RGBA8;			//Final output, transparencies id (gbuffer->composite4)
 
+const int colortex9Format = RGBA8;					// flat normals and vanilla AO
 const int colortex11Format = RGBA16; // unchanged translucents albedo, alpha and tangent normals
 const int colortex15Format = RGBA8;					// flat normals and vanilla AO
 */

@@ -522,35 +522,33 @@ void SSRT_Shadows(vec3 viewPos, vec3 lightDir, float noise, bool isSSS, bool ins
 	}
 #endif
 
-float CustomPhase(float LightPos, float S_1, float S_2){
-	float SCALE = S_2 + 0.001; // remember the epislons 0.001 is fine.
-	float N = S_1;
-	float N2 = N / SCALE;
+float CustomPhase(float LightPos){
 
-	float R = 1;
-	float A = pow(1.0 - pow(max(R-LightPos,0.0), N2 ),N);
+	float PhaseCurve = 1.0 - LightPos;
+	float Final = exp2(sqrt(PhaseCurve) * -25.0);
+	Final += exp(PhaseCurve * -10.0)*0.5;
 
-	return A;
+	return Final;
 }
 
 vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, float lightPos, bool inShadowmapBounds){
 
-	float labcurve = pow(Density,LabSSS_Curve);
-	// float density = sqrt(30 - labcurve*15);
+	float labcurve = pow(Density, LabSSS_Curve);
+
 	float density = 15 - labcurve*10;
 
 	vec3 absorbed = max(1.0 - albedo,0.0);
 
-	vec3 scatter = vec3(0.0);
-	// if(inShadowmapBounds) {
-		scatter = exp(absorbed * Scattering * -5) * exp(Scattering * -density);
-	// }else{
-		// scatter = exp(absorbed * Scattering * -10) * exp(Scattering * -max(density,5));
-	// }
-	// vec3 scatter = vec3(1)* exp(Scattering * -density);
+	vec3 scatter = exp(absorbed * Scattering * -5) * exp(Scattering * -density);
 
 	scatter *= labcurve;
-	scatter *= 0.5 + CustomPhase(lightPos, 1.0,30.0)*20;
+	
+	// PHASE TIME
+	// scatter *= 0.5 + CustomPhase(lightPos) * 13.0; // ~20x brighter at the peak
+	// scatter *= 1.0 + CustomPhase(lightPos) * 12.6; // ~20x brighter at the peak
+
+	// scatter *= 0.5 + CustomPhase(lightPos)*6.35; // ~10x brighter at the peak
+	scatter *= 1.0 + CustomPhase(lightPos)*6.0; // ~10x brighter at the peak
 
 	return scatter;
 
@@ -685,6 +683,11 @@ void main() {
 			#ifndef ambientLight_only
 				DirectLightColor = lightCol.rgb/80.0;
 			#endif
+			
+			#ifdef PER_BIOME_ENVIRONMENT
+				BiomeSunlightColor(DirectLightColor);
+			#endif
+			
 			AmbientLightColor = averageSkyCol_Clouds;
 
 			vec3 filteredShadow = vec3(1.412,1.0,0.0);
@@ -846,7 +849,10 @@ void main() {
 			
 			if (isEyeInWater == 0) Direct_SSS *= clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
 
-			if (!inShadowmapBounds) Direct_SSS *= lightmapAsShadows;
+			if (!inShadowmapBounds){
+				Direct_SSS *= lightmapAsShadows;
+				Direct_SSS *= 1.0-NdotL;
+			}
 		#endif
 
 
@@ -1053,7 +1059,11 @@ void main() {
 
 		#ifdef OVERWORLD_SHADER
 			Direct_lighting = DoDirectLighting(DirectLightColor, Shadows, NdotL, 0.0);
-			Direct_lighting += Direct_SSS * DirectLightColor; // do this here so it gets underwater absorbtion.
+			
+			// do this here so it gets underwater absorbtion.
+
+			// Direct_lighting += Direct_SSS * DirectLightColor; 
+			Direct_lighting = max(Direct_lighting, Direct_SSS * DirectLightColor);
 		#endif
 
 		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * albedo;
@@ -1103,7 +1113,7 @@ void main() {
 
 	// float phaseorigin = 1.0 - clamp(dot(feetPlayerPos_normalized, normalize(testPos) ),0.0,1.0);
 
-	// gl_FragData[0].rgb += lightningEffect * exp(sqrt(phaseorigin)	 * -10);
+	// gl_FragData[0].rgb = vec3(1) * CustomPhase(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0));
 
 /* DRAWBUFFERS:3 */
 }

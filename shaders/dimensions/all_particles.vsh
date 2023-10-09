@@ -23,8 +23,12 @@ uniform float sunElevation;
 
 uniform vec2 texelSize;
 uniform int framemod8;
-
+uniform float frameTimeCounter;
+uniform vec3 cameraPosition;
 uniform mat4 gbufferModelViewInverse;
+uniform mat4 gbufferModelView;
+uniform ivec2 eyeBrightnessSmooth;
+
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-1.,3.)/8.,
 							vec2(5.0,1.)/8.,
@@ -33,7 +37,12 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-7.,-1.)/8.,
 							vec2(3,7.)/8.,
 							vec2(7.,-7.)/8.);
-							
+
+#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
+#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+vec4 toClipSpace3(vec3 viewSpacePosition) {
+    return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
+}			
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -41,13 +50,33 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-	gl_Position = ftransform();
-
+	
 	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
 	vec2 lmcoord = gl_MultiTexCoord1.xy / 255.0; // is this even correct? lol'
 	lmtexcoord.zw = lmcoord;
 
+	#ifdef WEATHER
+		vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
+
+   		vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
+		bool istopv = worldpos.y > cameraPosition.y + 5.0 && lmtexcoord.w > 0.94;
+
+		if(!istopv){
+			worldpos.xyz -= cameraPosition;
+		}else{
+			worldpos.xyz -= cameraPosition + vec3(2.0,0.0,2.0);
+		}
+
+		position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
+
+		gl_Position = toClipSpace3(position);
+	#else
+		gl_Position = ftransform();
+	#endif
+
+
 	color = gl_Color;
+	// color.rgb = worldpos;
 	#ifdef LINES
 		color.a = 1.0;
 	#endif
