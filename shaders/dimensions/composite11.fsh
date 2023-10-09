@@ -109,8 +109,11 @@ void main() {
  	float VL_abs = texture2D(colortex7,texcoord*RENDER_SCALE).r;
 
 
-	// float purkinje = clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*Purkinje_strength,0,1);
-	float purkinje = clamp(exposure.a*exposure.a,0.0,1.0);
+	#ifdef AUTO_EXPOSURE
+		float purkinje = clamp(exposure.a*exposure.a,0.0,1.0) * clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*Purkinje_strength,0,1);
+	#else
+		float purkinje = clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*Purkinje_strength,0,1);
+	#endif	
 
   	VL_abs = clamp((1.0-VL_abs)*BLOOMY_FOG*0.75*(1.0+rainStrength) * (1.0-purkinje*0.3),0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
 
