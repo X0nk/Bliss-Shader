@@ -249,6 +249,18 @@ vec2 tapLocation(int sampleNumber, float spinAngle,int nb, float nbRot,float r0)
 
     return vec2(cos_v, sin_v)*ssR;
 }
+vec2 tapLocation_simple(
+	int samples, int totalSamples, float rotation, float rng
+){
+	const float PI = 3.141592653589793238462643383279502884197169;
+    float alpha = float(samples + rng) * (1.0 / float(totalSamples));
+    float angle = alpha * (rotation * PI);
+
+	float sin_v = sin(angle);
+	float cos_v = cos(angle);
+
+    return vec2(cos_v, sin_v) * sqrt(alpha);
+}
 
 vec3 viewToWorld(vec3 viewPos) {
     vec4 pos;
@@ -803,14 +815,19 @@ void main() {
 					smallbias = -0.0005;
 					noise = 0.5;
 				}
+				
 
 				projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
 
 				#ifdef BASIC_SHADOW_FILTER
+					#ifndef Variable_Penumbra_Shadows
+						if(LabSSS > 0) smallbias = -0.0002;
+					#endif
 					float rdMul = filteredShadow.x*distortFactor*d0*k/shadowMapResolution;
 
 					for(int i = 0; i < samples; i++){
-						vec2 offsetS = tapLocation(i,samples,1.618, noise,0.0);
+						// vec2 offsetS = tapLocation(i,samples,1.618, noise,0.0);
+						vec2 offsetS = tapLocation_simple(i, 7, 9, noise) * 0.5;
 
 						float isShadow = shadow2D(shadow, projectedShadowPosition + vec3(rdMul*offsetS, smallbias)	).x;
 						Shadows += isShadow/samples;

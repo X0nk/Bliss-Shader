@@ -42,7 +42,7 @@ vec3 HableTonemap(vec3 linearColor) {
 	// A = shoulder strength
 	const float A = 0.45;
 	// B = linear strength
-	const float B = 0.28;
+	const float B = 0.5;
 	// C = linear angle
 	const float C = 0.1;
 	// D = toe strength

@@ -138,17 +138,29 @@ vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
 	return normalize(bump*tbnMatrix);
 }
 
-vec2 tapLocation(int sampleNumber,int nb, float nbRot,float jitter,float distort)
-{
-    float alpha = (sampleNumber+jitter)/nb;
-    float angle = jitter*6.28 + alpha * nbRot * 6.28;
+// vec2 tapLocation(int sampleNumber,int nb, float nbRot,float jitter,float distort)
+// {
+//     float alpha = (sampleNumber+jitter)/nb;
+//     float angle = jitter*6.28 + alpha * nbRot * 6.28;
 
-    float sin_v, cos_v;
+//     float sin_v, cos_v;
 
-	sin_v = sin(angle);
-	cos_v = cos(angle);
+// 	sin_v = sin(angle);
+// 	cos_v = cos(angle);
 
-    return vec2(cos_v, sin_v)*sqrt(alpha);
+//     return vec2(cos_v, sin_v)*sqrt(alpha);
+// }
+vec2 tapLocation_simple(
+	int samples, int totalSamples, float rotation, float rng
+){
+	const float PI = 3.141592653589793238462643383279502884197169;
+    float alpha = float(samples + rng) * (1.0 / float(totalSamples));
+    float angle = alpha * (rotation * PI);
+
+	float sin_v = sin(angle);
+	float cos_v = cos(angle);
+
+    return vec2(cos_v, sin_v) * sqrt(alpha);
 }
 
 
@@ -398,7 +410,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 						int SampleCount = 7;
 						for(int i = 0; i < SampleCount; i++){
-							vec2 offsetS = tapLocation(i,SampleCount,1.618,noise,0.0);
+							// vec2 offsetS = tapLocation(i,SampleCount,1.618,noise,0.0);
+							vec2 offsetS = tapLocation_simple(i, 7, 9, noise) * 0.5;
 
 							float weight = 1.0+(i+noise)*rdMul/9.0*shadowMapResolution;
 							float isShadow = shadow2D(shadow, projectedShadowPosition + vec3(rdMul*offsetS, -diffthresh*weight)).x / SampleCount;

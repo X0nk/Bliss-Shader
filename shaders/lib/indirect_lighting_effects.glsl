@@ -53,7 +53,7 @@ vec2 SSAO(
 	int n = 0;
 	for (int i = 0; i < samples; i++) {
 		
-		vec2 sp = tapLocation_alternate(i, samples, 20, samplePos) * 0.2;
+		vec2 sp = tapLocation_alternate(i, 7, 9, samplePos) * 0.2;
 
 		float rd = mulfov2 ;
 

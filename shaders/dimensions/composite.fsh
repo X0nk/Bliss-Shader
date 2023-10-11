@@ -153,6 +153,19 @@ void GriAndEminShadowFix(
 
 #include "/lib/Shadow_Params.glsl"
 
+
+const float PI = 3.141592653589793238462643383279502884197169;
+vec2 tapLocation_simple(
+	int samples, int totalSamples, float rotation, float rng
+){
+    float alpha = float(samples + rng) * (1.0 / float(totalSamples));
+    float angle = alpha * (rotation * PI);
+
+	float sin_v = sin(angle);
+	float cos_v = cos(angle);
+
+    return vec2(cos_v, sin_v) * sqrt(alpha);
+}
 void main() {
 /* DRAWBUFFERS:3 */
 	vec2 texcoord = gl_FragCoord.xy*texelSize;
@@ -238,13 +251,18 @@ void main() {
 					float diffthreshM = diffthresh*mult*d0*k/20.;
 					float avgDepth = 0.0;
 
-					int seed = (frameCounter%40000) * 2 + (1+frameCounter);
-					float samplePos = fract(R2_samples(seed).x + blueNoise(gl_FragCoord.xy).x) * 1.61803398874;
+					// int seed = (frameCounter%40000) * 2 + (1+frameCounter);
+					// float samplePos = fract(R2_samples(seed).x + blueNoise(gl_FragCoord.xy).x) * 1.61803398874;
+					
+					int seed = (frameCounter%40000) + frameCounter*2;
+					float samplePos = fract(R2_samples(seed).y + blueNoise(gl_FragCoord.xy).y);
 					float noise = 0.5+blueNoise();
 
 					for(int i = 0; i < VPS_Search_Samples; i++){
 
-						vec2 offsetS = tapLocation_alternate(i+1, i/VPS_Search_Samples, 7, 20, samplePos) * noise;
+						// vec2 offsetS = tapLocation_alternate(i+1, i/VPS_Search_Samples, 7, 20, samplePos) * noise;
+						
+						vec2 offsetS = tapLocation_simple(i, 7, 9, samplePos);
 		
 
 						float weight = 3.0 + (i+blueNoise() ) *rdMul/SHADOW_FILTER_SAMPLE_COUNT*shadowMapResolution*distortFactor/2.7;
