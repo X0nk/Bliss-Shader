@@ -38,6 +38,12 @@ const bool colortex5MipmapEnabled = true;
 	// #define LIGHTSOURCE_REFLECTION
 #endif
 
+#ifdef FALLBACK_SHADER
+	uniform sampler2D colortex4;
+	uniform float nightVision;
+	// #define LIGHTSOURCE_REFLECTION
+#endif
+
 uniform sampler2D noisetex; //noise
 uniform sampler2D depthtex1; //depth
 uniform sampler2D depthtex0; //depth
@@ -51,7 +57,8 @@ uniform sampler2D colortex5; //TAA buffer/previous frame
 uniform sampler2D colortex6; //Noise
 uniform sampler2D colortex7; //water?
 uniform sampler2D colortex8; //Specular
-// uniform sampler2D colortex10;
+uniform sampler2D colortex9; //Specular
+uniform sampler2D colortex10;
 uniform sampler2D colortex15; // flat normals(rgb), vanillaAO(alpha)
 
 
@@ -615,6 +622,7 @@ void main() {
 	////// --------------- UNPACK OPAQUE GBUFFERS --------------- //////
 	
 		vec4 data = texture2D(colortex1,texcoord);
+
 		vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y)); // albedo, masks
 		vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w)); // normals, lightmaps
 		// vec4 dataUnpacked2 = vec4(decodeVec2(data.z),decodeVec2(data.w));
@@ -702,30 +710,48 @@ void main() {
 		
 		#ifdef OVERWORLD_SHADER
 			vec3 Background = vec3(0.0);
-			vec3 Sky = skyFromTex(feetPlayerPos_normalized, colortex4)/30.0;
-			vec4 Clouds = texture2D_bicubic(colortex0, texcoord*CLOUDS_QUALITY);
 
 			vec3 orbitstar = vec3(feetPlayerPos_normalized.x,abs(feetPlayerPos_normalized.y),feetPlayerPos_normalized.z); orbitstar.x -= WsunVec.x*0.2;
 			Background += stars(orbitstar) * 10.0;
 
-			#ifndef ambientLight_only
-				Background += drawSun(dot(lightCol.a * WsunVec, feetPlayerPos_normalized),0, DirectLightColor,vec3(0.0));
-				Background += drawMoon(feetPlayerPos_normalized,  lightCol.a * WsunVec, DirectLightColor*20, Background); 
+
+			#if RESOURCEPACK_SKY == 2
+				Background += toLinear(texture2D(colortex10, texcoord).rgb * (255.0 * 2.0));
+			#else
+				#if RESOURCEPACK_SKY == 1
+					Background += toLinear(texture2D(colortex10, texcoord).rgb * (255.0 * 2.0));
+				#endif
+					Background += drawSun(dot(lightCol.a * WsunVec, feetPlayerPos_normalized),0, DirectLightColor,vec3(0.0));
+					Background += drawMoon(feetPlayerPos_normalized,  lightCol.a * WsunVec, DirectLightColor*20, Background); 
 			#endif
+
 
 			Background *= clamp( (feetPlayerPos_normalized.y+ 0.02)*5.0 + (eyeAltitude - 319)/800000  ,0.0,1.0);
 			
+			vec3 Sky = skyFromTex(feetPlayerPos_normalized, colortex4)/30.0;
 			Background += Sky;
-			Background = Background * Clouds.a + Clouds.rgb;
-		
+
+			#ifdef VOLUMETRIC_CLOUDS
+				vec4 Clouds = texture2D_bicubic(colortex0, texcoord*CLOUDS_QUALITY);
+				Background = Background * Clouds.a + Clouds.rgb;
+			#endif
+
 			gl_FragData[0].rgb = clamp(fp10Dither(Background, triangularize(noise)), 0.0, 65000.);
 		#endif
-		#ifdef NETHER_SHADER
+
+		#if defined NETHER_SHADER || defined END_SHADER
 			gl_FragData[0].rgb = vec3(0);
 		#endif
-		#ifdef END_SHADER
-			gl_FragData[0].rgb = vec3(0);
+		
+		#ifdef FALLBACK_SHADER
+			vec3 Background = vec3(0.5,0.3,1.0)*0.025;
+			Background += vec3(0.8,1.0,0.5) * 0.5  * pow(normalize(-feetPlayerPos_normalized).y*0.5+0.5,3.0);
+
+			Background += stars(feetPlayerPos_normalized) * 100.0 * pow(normalize(feetPlayerPos_normalized).y*0.5+0.5,3.0);
+			gl_FragData[0].rgb = clamp(Background, 0.0, 65000.);
+
 		#endif
+
 	} else {
 
 		feetPlayerPos += gbufferModelViewInverse[3].xyz;
@@ -835,8 +861,7 @@ void main() {
 					SSRT_Shadows(toScreenSpace(vec3(texcoord/RENDER_SCALE, z)), normalize(WsunVec*mat3(gbufferModelViewInverse)), interleaved_gradientNoise(), !inShadowmapBounds && LabSSS > 0.0, inShadowmapBounds, SS_shadow, SS_shadowSSS);
 
 					Shadows = min(Shadows, SS_shadow);
-
-					// if (!inShadowmapBounds) Direct_SSS *= exp(-5 * SS_shadowSSS) * lightmapAsShadows;
+					
 					if (!inShadowmapBounds) ShadowBlockerDepth = max(ShadowBlockerDepth, SS_shadowSSS);
 				#else
 
@@ -931,6 +956,10 @@ void main() {
 			Indirect_lighting = DoAmbientLighting_End(gl_Fog.color.rgb, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, feetPlayerPos_normalized);
 		#endif
 
+		#ifdef FALLBACK_SHADER
+			Indirect_lighting = DoAmbientLighting_Fallback(vec3(1.0), vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, feetPlayerPos);
+			// if(hand) Indirect_lighting = vec3(TORCH_R,TORCH_G,TORCH_B) * 0.3;
+		#endif
 
 	////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	UNDER WATER SHADING		////////////////////////////////
@@ -1104,7 +1133,7 @@ void main() {
 			float estimatedDepth = Vdiff * abs(VdotU) ;	//assuming water plane
 
 			vec3 ambientColVol =  max(vec3(1.0,0.5,1.0) * 0.3, vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision));
-
+			
 			waterVolumetrics_notoverworld(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth , estimatedDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol);
 		}
 	#endif

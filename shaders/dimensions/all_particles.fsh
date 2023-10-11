@@ -99,7 +99,6 @@ void main() {
 	#ifndef OVERWORLD_SHADER
 		lightmap.y = 1.0;
 	#endif
-
 	#ifdef WEATHER
 		gl_FragData[1].a = TEXTURE.a; // for bloomy rain and stuff
 	#endif
@@ -144,6 +143,7 @@ void main() {
 		float cloudShadow = GetCloudShadow(feetPlayerPos);
 
 		Direct_lighting = (lightCol.rgb/80.0) * Shadows * cloudShadow;
+		
 
 		#ifndef LINES
 			Direct_lighting *= phaseg(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), 0.65)*2 + 0.5;
@@ -166,6 +166,10 @@ void main() {
 
 		vec3 nothing = vec3(0.0);
 		Indirect_lighting = DoAmbientLighting_Nether(AmbientLightColor, Torch_Color, lightmap.x, nothing, nothing, nothing);
+	#endif
+
+	#ifdef FALLBACK_SHADER
+		Indirect_lighting = DoAmbientLighting_Fallback(vec3(1.0), Torch_Color, lightmap.x, vec3(0.0), feetPlayerPos);
 	#endif
 
 	#ifndef LINES

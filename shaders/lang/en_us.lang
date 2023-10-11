@@ -13,6 +13,11 @@ option.sunPathRotation = Sun Angle
 option.sun_illuminance = Sun Illuminance
 option.moon_illuminance = Moon Illuminance
 
+option.RESOURCEPACK_SKY = RP Sky
+    value.RESOURCEPACK_SKY.0 = Do not use
+    value.RESOURCEPACK_SKY.1 = Sky + Shader sun/moon
+    value.RESOURCEPACK_SKY.2 = Full sky
+
 screen.Waving_Stuff = Waving Stuff
     option.WAVY_PLANTS = Waving Plants
     option.WAVY_STRENGTH = Waving Strength
@@ -489,3 +494,5 @@ screen.Post_Processing.comment = Configure settings for all post processing effe
         option.BLEND_FACTOR.comment = Configure how much of frame history is used. high number means it relies less on frame history, so it may look flickery and noisy. low numbers rely more on frame history, so it may look smudged and cause trailing.
         option.TAA_UPSCALING.comment = Toggle temporal upscaling. This retains a good amount of quality from a lower resolution image when it upscales. so you can still have a high looking resolution compared to typical upsanpling and still have better performance.
         option.SCALE_FACTOR.comment = Configure from what fraction of your resolution to upscale from. Below 0.5 is not recommended at all i only have it as an option because it's funny :P
+
+option.RESOURCEPACK_SKY.comment = Toggle resourcepack sky support. Configure settings to use the whole resourcepack sky, or keep the shader's sun and moon. §aPERFORMANCE COST:§r very low

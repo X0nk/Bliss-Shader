@@ -88,10 +88,13 @@ void main() {
 	
 		WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
 	#endif
+	
+	#ifndef WEATHER
 	#ifdef TAA_UPSCALING
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
 	#ifdef TAA
 		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+	#endif
 	#endif
 }

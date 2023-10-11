@@ -4,37 +4,29 @@ vec2 R2_samples(int n){
 }
 
 
+
 ////////////////////////////////////////////////////////////////
 /////////////////////////////	SSAO 	////////////////////////
 ////////////////////////////////////////////////////////////////
+const float PI = 3.141592653589793238462643383279502884197169;
+
 vec2 tapLocation_alternate(
-	int sampleNumber, float spinAngle, int nb, float nbRot, float r0
+	int samples, int totalSamples, float rotation, float rng
 ){
-    float alpha = (float(sampleNumber*1.0f + r0) * (1.0 / (nb)));
-    float angle = alpha * (nbRot * 3.14) ;
+    float alpha = float(samples + rng) * (1.0 / float(totalSamples));
+    float angle = alpha * (rotation * PI);
 
-    float ssR = alpha + spinAngle*3.14;
-    float sin_v, cos_v;
+	float sin_v = sin(angle);
+	float cos_v = cos(angle);
 
-	sin_v = sin(angle);
-	cos_v = cos(angle);
-
-    return vec2(cos_v, sin_v)*ssR;
+    return vec2(cos_v, sin_v) * alpha;
 }
+
 vec2 SSAO(
 	vec3 viewPos, vec3 normal, bool hand, bool leaves
 ){
 	if(hand) return vec2(1,0);
 
-	//  float radius[7] = float[](
-	// 	0.15,
-	// 	0.15,
-	// 	0.15,
-	// 	0.15,
-	// 	0.15,
-	// 	0.15,
-	// 	0.15
-   	// );
 
 	float dist = 1.0 + clamp(viewPos.z*viewPos.z/50.0,0,5); // shrink sample size as distance increases
 	float mulfov2 = gbufferProjection[1][1]/(3 * dist);
@@ -49,16 +41,20 @@ vec2 SSAO(
 
 	vec2 acc = -(TAA_Offset*(texelSize/2))*RENDER_SCALE ;
 
-	int seed = (frameCounter%40000) * 2 + (1+frameCounter);
-	float samplePos = fract(R2_samples(seed).x + blueNoise(gl_FragCoord.xy).x) * 1.61803398874;
-			
+	// int seed = (frameCounter%40000)*2 + (1+frameCounter);
+	// vec2 samplePos = fract(R2_samples(seed).xy + blueNoise(gl_FragCoord.xy).xy);
+
 	int samples = 7;
+
+	int seed = (frameCounter%40000) + frameCounter*2;
+	float samplePos = fract(R2_samples(seed).y + blueNoise(gl_FragCoord.xy).y);
 
 	float occlusion = 0.0; float sss = 0.0;
 	int n = 0;
 	for (int i = 0; i < samples; i++) {
 		
-		vec2 sp = tapLocation_alternate(i, 0.0, samples, 20, samplePos)* 0.2;
+		vec2 sp = tapLocation_alternate(i, samples, 20, samplePos) * 0.2;
+
 		float rd = mulfov2 ;
 
 		vec2 sampleOffset = sp * rd;
@@ -122,7 +118,7 @@ float ScreenSpace_SSS(
 	int n = 0;
 	for (int i = 0; i < samples; i++) {
 		
-		vec2 sp = tapLocation_alternate(i, 0.0, samples, 20, samplePos)* 0.2;
+		vec2 sp = tapLocation_alternate(i, samples, 20, samplePos)* 0.2;
 		float rd = mulfov2 ;
 
 		vec2 sampleOffset = sp * rd;

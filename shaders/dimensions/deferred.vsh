@@ -109,7 +109,7 @@ void main() {
 	/// TOOO DAMN BLUE
 	// // only need to sample one spot for this
 	// averageSkyCol += 2.0*skyFromTex(normalize(vec3(0.0,1.0,0.0)),colortex4).rgb/150.;
-	vec3 minimimlight =  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.0005 + nightVision);
+	vec3 minimimlight =  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.003 + nightVision);
 	averageSkyCol_Clouds = max(averageSkyCol_Clouds, minimimlight);
 	averageSkyCol = max(averageSkyCol, minimimlight);
 

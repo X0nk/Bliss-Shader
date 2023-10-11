@@ -55,6 +55,11 @@ uniform ivec2 eyeBrightnessSmooth;
 	#include "/lib/end_fog.glsl"
 #endif
 
+#ifdef FALLBACK_SHADER
+	uniform sampler2D colortex4;
+	#include "/lib/fallback_fog.glsl"
+#endif
+
 #define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
 
 float interleaved_gradientNoise(){
@@ -237,10 +242,8 @@ void main() {
 		#ifdef OVERWORLD_SHADER
 			vec4 VolumetricFog = GetVolumetricFog(viewPos, noise_1, lightCol.rgb/80.0, averageSkyCol/30.0);
 		#endif
-		#ifdef NETHER_SHADER
-			vec4 VolumetricFog = GetVolumetricFog(viewPos, noise_1, noise_2);
-		#endif
-		#ifdef END_SHADER
+		
+		#if defined NETHER_SHADER || defined END_SHADER || defined FALLBACK_SHADER
 			vec4 VolumetricFog = GetVolumetricFog(viewPos, noise_1, noise_2);
 		#endif
 
@@ -268,7 +271,6 @@ void main() {
 			vec3 vl = vec3(0.0);
 			waterVolumetrics(vl, vec3(0.0), viewPos, estEyeDepth, estEyeDepth, length(viewPos), noise_1, totEpsilon, scatterCoef, ambientColVol, lightColVol*(1.0-pow(1.0-sunElevation*lightCol.a,5.0)) , dot(normalize(viewPos), normalize(sunVec* lightCol.a ) 	));
 			gl_FragData[0] = clamp(vec4(vl,1.0),0.000001,65000.);
-
 		#else
 			vec3 fragpos0 = toScreenSpace(vec3(texcoord - TAA_Offset*texelSize*0.5,z));
 			vec3 ambientColVol =  max(vec3(1.0,0.5,1.0) * 0.6, vec3(0.2,0.4,1.0) * MIN_LIGHT_AMOUNT*0.01);

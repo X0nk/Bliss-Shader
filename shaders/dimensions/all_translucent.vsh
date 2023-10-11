@@ -80,7 +80,7 @@ void main() {
 	vec2 lmcoord = gl_MultiTexCoord1.xy / 255.0; // is this even correct? lol
 	lmtexcoord.zw = lmcoord;
 
- 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(Swtich_gl_vertex) + gl_ModelViewMatrix[3].xyz;
+ 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
  	gl_Position = toClipSpace3(position);
 
 

@@ -18,7 +18,6 @@ flat varying float rodExposure;
 flat varying float avgBrightness;
 flat varying float exposureF;
 
-// uniform sampler2D colortex4;
 uniform sampler2D noisetex;
 
 uniform float frameTime;
@@ -84,6 +83,10 @@ float blueNoise(){
 	#include "/lib/end_fog.glsl"
 #endif
 
+#ifdef FALLBACK_SHADER
+	uniform sampler2D colortex4;
+	#include "/lib/fallback_fog.glsl"
+#endif
 
 
 void main() {
@@ -168,7 +171,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 }
 #endif
 
-#ifdef NETHER_SHADER
+#if defined NETHER_SHADER || defined END_SHADER || defined FALLBACK_SHADER
 	vec2 fogPos = vec2(256.0 - 256.0*0.12,1.0);
 
 	//Sky gradient with clouds
@@ -187,26 +190,26 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	}
 #endif
 
-#ifdef END_SHADER
 
-	/* ---------------------- FOG SHADER ---------------------- */
-	vec2 fogPos = vec2(256.0 - 256.0*0.12,1.0);
+	// /* ---------------------- FOG SHADER ---------------------- */
+	// vec2 fogPos = vec2(256.0 - 256.0*0.12,1.0);
 	
-	//Sky gradient with clouds
-	if (gl_FragCoord.x > (fogPos.x - fogPos.x*0.22) && gl_FragCoord.y > 0.4 && gl_FragCoord.x < 535){
-		vec2 p = clamp(floor(gl_FragCoord.xy-fogPos)/256.+tempOffsets/256.,-0.2,1.2);
-		vec3 viewVector = cartToSphere(p);
+	// //Sky gradient with clouds
+	// if (gl_FragCoord.x > (fogPos.x - fogPos.x*0.22) && gl_FragCoord.y > 0.4 && gl_FragCoord.x < 535){
+	// 	vec2 p = clamp(floor(gl_FragCoord.xy-fogPos)/256.+tempOffsets/256.,-0.2,1.2);
+	// 	vec3 viewVector = cartToSphere(p);
 	
-	 	vec3 BackgroundColor = vec3(0.0);
+	//  	vec3 BackgroundColor = vec3(0.0);
 	
-		vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*256.,  fract(frameCounter/1.6180339887), fract(frameCounter/2.6180339887));
+	// 	vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*256.,  fract(frameCounter/1.6180339887), fract(frameCounter/2.6180339887));
 		
-		BackgroundColor += VL_Fog.rgb/5.0;
+	// 	BackgroundColor += VL_Fog.rgb/5.0;
 	
-	  	gl_FragData[0] = vec4(BackgroundColor, 1.0);
+	//   	gl_FragData[0] = vec4(BackgroundColor, 1.0);
 	
-	}
+	// }
 
+#ifdef END_SHADER
 	/* ---------------------- TIMER ---------------------- */
 
 	float flash = 0.0;

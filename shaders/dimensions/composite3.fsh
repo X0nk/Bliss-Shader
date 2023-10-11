@@ -235,7 +235,7 @@ void main() {
 
     float refractedalpha = decodeVec2(texture2D(colortex11,refractedCoord).b).g;
     float refractedalpha2 = texture2D(colortex7,refractedCoord).a;
-    if( refractedalpha <= 0.001 ||z < 0.56) refractedCoord = texcoord; // remove refracted coords on solids
+    if( refractedalpha <= 0.001 || z < 0.56) refractedCoord = texcoord; // remove refracted coords on solids
   #endif
   
   /// --- MAIN COLOR BUFFER --- ///
@@ -245,11 +245,11 @@ void main() {
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 
   #if defined OVERWORLD_SHADER && defined BorderFog
-  	vec3 sky = skyFromTex(np3,colortex4) / 150. * 5.0;
+  	vec3 sky = skyFromTex(np3, colortex4).rgb / 30.0;
   	float fog = 1.0 - clamp(exp(-pow(length(fragpos / far),10.)*4.0)  ,0.0,1.0);
   	float heightFalloff = clamp( pow(abs(np3.y-1.01),5) ,0,1)	;
 
-    if(z < 1.0 && isEyeInWater == 0) color.rgb = mix(color.rgb, sky, fog * heightFalloff * lightleakfix);
+    if(z < 1.0 && isEyeInWater == 0) color.rgb = mix(color.rgb, sky, fog);
   #endif
 
   vec4 vl = BilateralUpscale(colortex0, depthtex1, gl_FragCoord.xy, frDepth);
@@ -263,7 +263,7 @@ void main() {
     color = color*(1.0-TranslucentShader.a) + TranslucentShader.rgb; 
 
     #ifdef BorderFog
-        if(z < 1.0 && isEyeInWater == 0) color.rgb = mix(color.rgb, sky, fog * heightFalloff * lightleakfix);
+      if(z < 1.0 && isEyeInWater == 0) color.rgb = mix(color.rgb, sky, fog);
     #endif
   } 
 

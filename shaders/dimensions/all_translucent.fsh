@@ -15,6 +15,7 @@ varying vec4 color;
 	flat varying vec4 lightCol;
 #endif
 
+
 const bool colortex4MipmapEnabled = true;
 uniform sampler2D noisetex;
 uniform sampler2D depthtex1;
@@ -450,6 +451,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#ifdef END_SHADER
 		// do all ambient lighting stuff
 		Indirect_lighting = DoAmbientLighting_End(gl_Fog.color.rgb, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, feetPlayerPos );
+	#endif
+
+	#ifdef FALLBACK_SHADER
+		Indirect_lighting = DoAmbientLighting_Fallback(vec3(1.0), vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, WS_normal, feetPlayerPos);
 	#endif
 
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;

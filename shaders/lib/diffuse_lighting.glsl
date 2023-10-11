@@ -77,3 +77,22 @@ void DoRTAmbientLighting (vec3 TorchColor, vec2 Lightmap, inout float SkyLM, ino
     }
 
 #endif
+
+#ifdef FALLBACK_SHADER
+    vec3 DoAmbientLighting_Fallback(vec3 Color, vec3 TorchColor, float Lightmap, vec3 Normal, vec3 p3){
+
+        float TorchLM = 10.0 - ( 1.0 / (pow(exp(-0.5*inversesqrt(Lightmap)),5.0)+0.1));
+        TorchLM = pow(TorchLM/4,10) + pow(Lightmap,1.5)*0.5; 
+    	vec3 TorchLight = TorchColor * TorchLM * 0.75;
+        TorchLight *= TORCH_AMOUNT;
+
+        float NdotL = clamp(-dot(Normal,normalize(p3)),0.0,1.0);
+
+        float PlayerLight = exp(  (1.0-clamp(1.0 - length(p3) / 32.0,0.0,1.0)) *-10.0);
+        // vec3 AmbientLight = TorchColor * PlayerLight * NdotL; 
+        vec3 AmbientLight = vec3(0.5,0.3,1.0)*0.2 * (Normal.y*0.5+0.6);
+
+
+        return TorchLight + AmbientLight;// + AmbientLight + FogTint;
+    }
+#endif

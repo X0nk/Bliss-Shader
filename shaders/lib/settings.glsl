@@ -162,7 +162,7 @@ const float	sunPathRotation	= -35;	//[-90 -89 -88 -87 -86 -85 -84 -83 -82 -81 -8
 #define fog_coefficientMieG 3.0 // [0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
 #define fog_coefficientMieB 3.0 // [0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5 10.0]
 
-#define RainFog_amount  1 // [0 1 2 3 4 5 6 7 8 9  10 15 20 25]
+#define RainFog_amount  3 // [0 1 2 3 4 5 6 7 8 9  10 15 20 25]
 
 #define BLOOMY_FOG 2.0 // [0.0 0.25 0.5 0.75 1.0 1.25 1.5 1.75 2.0 3.0 4.0 6.0 10.0 15.0 20.0]
 #define BLOOM_STRENGTH  4.0 // [0.0 0.25 0.5 0.75 1.0 1.25 1.5 1.75 2.0 3.0 4.0]
@@ -490,8 +490,15 @@ uniform int moonPhase;
 
 #define LIGHTNING_FLASH // FOR OPTIFINE USERS. some mods change the sky color, which can trigger the lightning flash detection.
 
+#define RESOURCEPACK_SKY 0 // [0 1 2]
+
 // fix settings
+#if RESOURCEPACK_SKY == 0
+#endif
+#ifdef VANILLA_SUN_AND_MOON
+#endif
 #ifdef LIGHTNING_FLASH
 #endif
 #if BLISS_SHADERS == 0
 #endif
+

@@ -201,11 +201,11 @@ void main() {
 		if (LabSSS > 0.0 && !hand && NdotL < 0.001)  minshadowfilt += 50;
 	#endif
 
-	gl_FragData[0] = vec4(minshadowfilt, 0.1, 0.0, 0.0);
-
-			gl_FragData[0].y = 0;
 	if (z < 1.0 && !hand){
 
+		gl_FragData[0] = vec4(minshadowfilt, 0.1, 0.0, 0.0);
+		gl_FragData[0].y = 0;
+		
 		vec3 viewPos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
 
 		#ifdef Variable_Penumbra_Shadows
