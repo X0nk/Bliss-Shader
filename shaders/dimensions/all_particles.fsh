@@ -1,6 +1,5 @@
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
-#include "/lib/Shadow_Params.glsl"
 
 varying vec4 lmtexcoord;
 varying vec4 color;
@@ -28,6 +27,7 @@ uniform mat4 shadowProjection;
 uniform vec3 cameraPosition;
 
 uniform float frameTimeCounter;
+#include "/lib/Shadow_Params.glsl"
 
 uniform vec2 texelSize;
 

@@ -1,5 +1,7 @@
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
+
+uniform float frameTimeCounter;
 #include "/lib/Shadow_Params.glsl"
 
 
@@ -135,8 +137,6 @@ void main() {
 	moonColor = moonColorBase/4000.0;
 
 	lightSourceColor = sunVis >= 1e-5 ? sunColor * sunVis : moonColor * moonVis;
-
-	float lightDir = float( sunVis >= 1e-5)*2.0-1.0;
 
 #endif
 

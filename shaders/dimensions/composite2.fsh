@@ -275,7 +275,7 @@ void main() {
 			vec3 fragpos0 = toScreenSpace(vec3(texcoord - TAA_Offset*texelSize*0.5,z));
 			vec3 ambientColVol =  max(vec3(1.0,0.5,1.0) * 0.6, vec3(0.2,0.4,1.0) * MIN_LIGHT_AMOUNT*0.01);
 			gl_FragData[0].a = 1;
-			waterVolumetrics_notoverworld(gl_FragData[0].rgb, fragpos0, viewPos, 1 , 1, 1, blueNoise(), totEpsilon, scatterCoef, ambientColVol);
+			waterVolumetrics_notoverworld(gl_FragData[0].rgb, fragpos0, viewPos, 1.0, 1.0, 1.0, blueNoise(), totEpsilon, scatterCoef, ambientColVol);
 		#endif
 	}
 }

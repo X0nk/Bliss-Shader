@@ -9,8 +9,6 @@ Read the terms of modification and sharing before changing something below pleas
 !! DO NOT REMOVE !!
 */
 #include "/lib/settings.glsl"
-#include "/lib/Shadow_Params.glsl"
-#include "/lib/bokeh.glsl"
 
 #define SHADOW_MAP_BIAS 0.5
 const float PI = 3.1415927;
@@ -39,11 +37,14 @@ uniform vec3 shadowCamera;
 uniform vec3 shadowLightVec;
 uniform float shadowMaxProj;
 attribute vec4 mc_midTexCoord;
-varying vec4 glcolor;
+// varying vec4 color;
 
 attribute vec4 mc_Entity;
 uniform int blockEntityId;
 uniform int entityId;
+
+#include "/lib/Shadow_Params.glsl"
+#include "/lib/bokeh.glsl"
 
 const float PI48 = 150.796447372*WAVY_SPEED;
 float pi2wt = PI48*frameTimeCounter;
@@ -100,16 +101,25 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 }
 
 
-
-
-
-
-
+// uniform int renderStage;
 
 void main() {
-
+	texcoord.xy = gl_MultiTexCoord0.xy;
+	// color = gl_Color;
 
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
+
+	
+	// mat4 Custom_ViewMatrix = BuildShadowViewMatrix(LightDir);
+	// mat4 Custom_ProjectionMatrix = BuildShadowProjectionMatrix();
+
+	// position = gl_Vertex.xyz;
+
+	// if((renderStage == 10 || renderStage == 12) && mc_Entity.x != 3000) {
+	// 	position = (shadowModelViewInverse * vec4(gl_Vertex.xyz,1.0)).xyz;
+	// } 
+	
+	// position = mat3(Custom_ViewMatrix) * position + Custom_ViewMatrix[3].xyz;
 
 	// HHHHHHHHH ITS THE JITTER DOF HERE TO SAY HELLO
 	// It turns out 'position' above is just viewPos lmao
@@ -162,25 +172,13 @@ void main() {
   		}
 	#endif
 
-
-
-
-	// mat4 Custom_ViewMatrix = BuildShadowViewMatrix(LightDir);
-	// mat4 Custom_ProjectionMatrix = BuildShadowProjectionMatrix();
-
-	// vec3 position = mat3(Custom_ViewMatrix) * vec3(gl_Vertex) + Custom_ViewMatrix[3].xyz;
-	// vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-
 	gl_Position = BiasShadowProjection(toClipSpace3(position));
 
-	
-	texcoord.xy = gl_MultiTexCoord0.xy;
-	if(mc_Entity.x == 8 || mc_Entity.x == 9) gl_Position.w = -1.0;
 
+	if(mc_Entity.x == 8 || mc_Entity.x == 9) gl_Position.w = -1.0;
 
  	/// this is to ease the shadow acne on big fat entities like ghasts.
   	float bias = 6.0;
-
 	if(entityId == 1100){
 		// increase bias on parts facing the sun
 		vec3 FlatNormals = normalize(gl_NormalMatrix * gl_Normal);
@@ -188,9 +186,5 @@ void main() {
   		
 		bias = 6.0 + (1-clamp(dot(WsunVec,FlatNormals),0,1))*0.3;
 	}
-
   	gl_Position.z /= bias;
-
-
-
 }

@@ -3,7 +3,6 @@
 
 const bool colortex5MipmapEnabled = true;
 
-
 #ifdef OVERWORLD_SHADER
 	const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
@@ -18,8 +17,8 @@ const bool colortex5MipmapEnabled = true;
 	#endif
 	
 	#include "/lib/lightning_stuff.glsl"
-
 #endif
+
 #ifdef NETHER_SHADER
 
 	uniform float nightVision;
@@ -210,17 +209,20 @@ vec3 BilateralFiltering(sampler2D tex, sampler2D depth,vec2 coord,float frDepth,
   return vec3(sampled.x,sampled.yz/sampled.w);
 }
 float interleaved_gradientNoise(){
-	// vec2 coord = gl_FragCoord.xy + (frameCounter%40000);
-	vec2 coord = gl_FragCoord.xy + frameTimeCounter;
+	vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
+	// vec2 coord = gl_FragCoord.xy + frameTimeCounter;
 	// vec2 coord = gl_FragCoord.xy;
 	float noise = fract( 52.9829189 * fract( (coord.x * 0.06711056) + (coord.y * 0.00583715)) );
 	return noise ;
 }
-
-vec2 R2_dither(){
+float R2_dither(){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return vec2(fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter), fract((1.0-alpha.x) * gl_FragCoord.x + (1.0-alpha.y) * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter));
+	return fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter) ;
 }
+// vec2 R2_dither(){
+// 	vec2 alpha = vec2(0.75487765, 0.56984026);
+// 	return vec2(fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter), fract((1.0-alpha.x) * gl_FragCoord.x + (1.0-alpha.y) * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter));
+// }
 float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * (frameCounter*0.5+0.5)	);
 }
@@ -574,12 +576,16 @@ vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, floa
 }
 vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 
-	vec3 absorbed = max(luma(albedo) - albedo,0.0);
+
+	vec3 absorbed = max(1.0 - albedo,0.0);
 	// vec3 scatter =   sqrt(exp(-(absorbed * Scattering * 15))) * (1.0 - Scattering);
-	vec3 scatter =   exp(-5 * Scattering)*vec3(1);
+	// vec3 scatter =   exp(-5 * Scattering)*vec3(1);
+	
+	vec3 scatter = exp((Scattering*Scattering) * absorbed  * -5) * sqrt(1.0 - Scattering);
 
 	// scatter *= pow(Density,LabSSS_Curve);
 	scatter *= clamp(1 - exp(Density * -10),0,1);
+
 
 	return scatter ;
 }
@@ -614,22 +620,20 @@ vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 
 void main() {
 
-	vec2 texcoord = gl_FragCoord.xy*texelSize;
-
-	////// --------------- SETUP COORDINATE SPACES --------------- //////
+	////// --------------- SETUP STUFF --------------- //////
+		vec2 texcoord = gl_FragCoord.xy*texelSize;
 	
 		float z0 = texture2D(depthtex0,texcoord).x;
 		float z = texture2D(depthtex1,texcoord).x;
 
-		vec2 tempOffset = TAA_Offset;
-		float noise = blueNoise();
+		int seed = (frameCounter%40000) + frameCounter*2;
+		float noise = fract(R2_samples(seed).y + blueNoise(gl_FragCoord.xy).y);
+		float blueNoise = blueNoise();
 
+		vec2 tempOffset = TAA_Offset;
 		vec3 viewPos = toScreenSpace(vec3(texcoord/RENDER_SCALE - TAA_Offset*texelSize*0.5,z));
 		vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
 		vec3 feetPlayerPos_normalized = normVec(feetPlayerPos);
-		vec3 viewPos_handfix = viewPos;
-
-		if ( z < 0.56) viewPos_handfix.z /= MC_HAND_DEPTH; // fix lighting on hand
 
 	////// --------------- UNPACK OPAQUE GBUFFERS --------------- //////
 	
@@ -748,7 +752,7 @@ void main() {
 				Background = Background * Clouds.a + Clouds.rgb;
 			#endif
 
-			gl_FragData[0].rgb = clamp(fp10Dither(Background, triangularize(noise)), 0.0, 65000.);
+			gl_FragData[0].rgb = clamp(fp10Dither(Background, triangularize(blueNoise)), 0.0, 65000.);
 		#endif
 
 		#if defined NETHER_SHADER || defined END_SHADER
@@ -789,6 +793,9 @@ void main() {
 		vec3 feetPlayerPos_shadow = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
 
 		if(!hand) GriAndEminShadowFix(feetPlayerPos_shadow, viewToWorld(FlatNormals), vanilla_AO, lightmap.y, entities);
+
+		// mat4 Custom_ViewMatrix = BuildShadowViewMatrix(LightDir);
+		// vec3 projectedShadowPosition = mat3(Custom_ViewMatrix) * feetPlayerPos_shadow  + Custom_ViewMatrix[3].xyz;
 		
 		vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos_shadow  + shadowModelView[3].xyz;
 		projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
@@ -797,7 +804,6 @@ void main() {
 		float distortFactor = calcDistort(projectedShadowPosition.xy);
 		projectedShadowPosition.xy *= distortFactor;
 		
-
 		bool ShadowBounds = false;
 		if(shadowDistanceRenderMul > 0.0) ShadowBounds = length(feetPlayerPos_shadow) < max(shadowDistance - 20,0.0);
 		
@@ -825,8 +831,9 @@ void main() {
 					#endif
 					float rdMul = filteredShadow.x*distortFactor*d0*k/shadowMapResolution;
 
+
 					for(int i = 0; i < samples; i++){
-						// vec2 offsetS = tapLocation(i,samples,1.618, noise,0.0);
+						// vec2 offsetS = SpiralSample(i, 7, 8, noise)*0.5;
 						vec2 offsetS = tapLocation_simple(i, 7, 9, noise) * 0.5;
 
 						float isShadow = shadow2D(shadow, projectedShadowPosition + vec3(rdMul*offsetS, smallbias)	).x;
@@ -953,6 +960,7 @@ void main() {
 				Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy, skylight);
 			#endif
 
+
 			Indirect_lighting += LightningFlashLighting;
 		#endif
 
@@ -1024,18 +1032,12 @@ void main() {
 		#endif
 
 		#if indirect_effect == 1
-			vec3 AO = vec3( exp( (vanilla_AO*vanilla_AO) * -3) )  ;
-			// vec3 AO = vec3( exp( (vanilla_AO*vanilla_AO) * -5) )  ;
-			// if(!hand) Indirect_lighting *= ssao(viewPos,noise,FlatNormals) * AO;
-			
+			vec3 AO = vec3( exp( (vanilla_AO*vanilla_AO) * -3) );
 
-			// if (!hand) ssAO(AO, SkySSS, viewPos, 1.0, blueNoise(gl_FragCoord.xy).rg,   FlatNormals , texcoord, ambientCoefs, lightmap.xy, isLeaf);
-
-			vec2 SSAO_SSS = SSAO(viewPos, FlatNormals, hand, isLeaf);
+			vec2 SSAO_SSS = SSAO(viewPos, FlatNormals, hand, isLeaf, noise);
 			AO *= exp((1.0-SSAO_SSS.x) * -5.0);
 			SkySSS = SSAO_SSS.y;
 
-			// SampleSSAO(AO, SkySSS, texcoord);
 			Indirect_lighting *= AO;
 
 		#endif
@@ -1043,7 +1045,7 @@ void main() {
 		#if indirect_effect == 2
 			vec3 AO = vec3( exp( (vanilla_AO*vanilla_AO) * -3) );
 
-			vec2 r2 = fract(R2_samples(frameCounter%40000) + blueNoise(gl_FragCoord.xy).rg);
+			vec2 r2 = fract(R2_samples((frameCounter%40000) + frameCounter*2) + blueNoise(gl_FragCoord.xy).rg);
 			if (!hand) AO = ambient_occlusion(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z), viewPos, worldToView(slopednormal), r2) * vec3(1.0);
 			
 			Indirect_lighting *= AO;
@@ -1051,7 +1053,7 @@ void main() {
 
 		// RTAO and/or SSGI
 		#if indirect_effect == 3 || indirect_effect == 4
-			if (!hand) ApplySSRT(Indirect_lighting, normal, blueNoise(gl_FragCoord.xy).rg, viewPos, lightmap.xy, AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass);
+			if (!hand) ApplySSRT(Indirect_lighting, normal, blueNoise(gl_FragCoord.xy).xy, viewPos, lightmap.xy, AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass);
 		#endif
 		
 		#ifdef SSS_view
@@ -1063,31 +1065,26 @@ void main() {
 		#ifdef Ambient_SSS
 			if (!hand){
 
-				vec3 SSS_forSky = vec3(0.0);
-
 				#if indirect_effect != 1
-					SkySSS = ScreenSpace_SSS(viewPos, FlatNormals, hand, isLeaf);
+					SkySSS = ScreenSpace_SSS(viewPos, FlatNormals, hand, isLeaf, noise);
 				#endif
 
-				vec3 ambientColor = (AmbientLightColor / 30.0 ) * 1.5;
+				vec3 ambientColor = (AmbientLightColor / 30.0) * 2.5;
 				float skylightmap =  pow(lightmap.y,3);
-				float uplimit = clamp(1.0-pow(clamp(ambientCoefs.y + 0.5,0.0,1.0),2),0,1);
 
-				SSS_forSky = SubsurfaceScattering_sky(albedo, SkySSS, LabSSS);
-				SSS_forSky *= ambientColor;
-				SSS_forSky *= skylightmap;
-				// SSS_forSky *= uplimit;
+				Indirect_SSS = SubsurfaceScattering_sky(albedo, SkySSS, LabSSS);
+				Indirect_SSS *= ambientColor;
+				Indirect_SSS *= skylightmap;
 
-				// Combine with the other SSS
-				Indirect_SSS += SSS_forSky;
-
-				SSS_forSky = vec3((1.0 - SkySSS) * LabSSS);
+				vec3 SSS_forSky = vec3((1.0 - SkySSS) * LabSSS);
 				SSS_forSky *= ambientColor;
 				SSS_forSky *= skylightmap;
 
-				////light up dark parts so its more visible
+				//light up dark parts so its more visible
 				Indirect_lighting = max(Indirect_lighting, SSS_forSky);
-				Indirect_lighting += Indirect_SSS;
+
+				// apply to ambient light.
+				Indirect_lighting = max(Indirect_lighting, Indirect_SSS * ambientsss_brightness);
 			
 				#ifdef OVERWORLD_SHADER
 					if(LabSSS > 0.0) Indirect_lighting += (1.0-SkySSS) * LightningPhase * lightningEffect *  pow(lightmap.y,10);
@@ -1115,8 +1112,8 @@ void main() {
 		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * albedo;
 
 		#ifdef Specular_Reflections	
-			vec3 specNoise = vec3(blueNoise(gl_FragCoord.xy).rg, interleaved_gradientNoise());
-			DoSpecularReflections(gl_FragData[0].rgb, viewPos, feetPlayerPos_normalized, WsunVec, specNoise, normal, SpecularTex.r, SpecularTex.g, albedo, DirectLightColor*Shadows*NdotL, lightmap.y, hand);
+			vec2 specularNoises = vec2(noise, interleaved_gradientNoise());
+			DoSpecularReflections(gl_FragData[0].rgb, viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, normal, SpecularTex.r, SpecularTex.g, albedo, DirectLightColor*Shadows*NdotL, lightmap.y, hand);
 		#endif
 
 		Emission(gl_FragData[0].rgb, albedo, SpecularTex.a);
@@ -1140,7 +1137,7 @@ void main() {
 			vec3 lightningColor = (lightningEffect / 3) * (max(eyeBrightnessSmooth.y,0)/240.);
 			vec3 ambientColVol =  max((averageSkyCol_Clouds / 30.0) *  custom_lightmap_T, vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision)) ;
 
-			waterVolumetrics(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth , estimatedSunDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(feetPlayerPos_normalized, WsunVec));		
+			waterVolumetrics(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth , estimatedSunDepth, Vdiff, blueNoise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(feetPlayerPos_normalized, WsunVec));		
 		}
 	#else
 		if (iswater && isEyeInWater == 0){
@@ -1151,15 +1148,33 @@ void main() {
 
 			vec3 ambientColVol =  max(vec3(1.0,0.5,1.0) * 0.3, vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision));
 			
-			waterVolumetrics_notoverworld(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth , estimatedDepth, Vdiff, noise, totEpsilon, scatterCoef, ambientColVol);
+			waterVolumetrics_notoverworld(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth , estimatedDepth, Vdiff, blueNoise, totEpsilon, scatterCoef, ambientColVol);
 		}
 	#endif
 	// vec3 testPos = feetPlayerPos_normalized + vec3(lightningBoltPosition.x, clamp(feetPlayerPos.y, lightningBoltPosition.y, lightningBoltPosition.y+150.0),lightningBoltPosition.z);
 	// // vec3 testPos = feetPlayerPos_normalized + vec3(lightningBoltPosition.x, lightningBoltPosition.y + 60,lightningBoltPosition.z);
 
+	// gl_FragData[0].rgb = vec3(1) * CustomPhase(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0));
 	// float phaseorigin = 1.0 - clamp(dot(feetPlayerPos_normalized, normalize(testPos) ),0.0,1.0);
 
-	// gl_FragData[0].rgb = vec3(1) * CustomPhase(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0));
+
+		// mat4 Custom_ViewMatrix = BuildShadowViewMatrix(LightDir);
+		// mat4 Custom_ProjectionMatrix = BuildShadowProjectionMatrix();
+
+		// // vec3 projectedShadowPosition = mat3(Custom_ViewMatrix) * feetPlayerPos  + Custom_ViewMatrix[3].xyz;
+		// // projectedShadowPosition = mat3(Custom_ProjectionMatrix) * projectedShadowPosition + Custom_ProjectionMatrix[3].xyz;
+		
+		// vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos  + shadowModelView[3].xyz;
+		// projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
+		
+		// //apply distortion
+		// float distortFactor = calcDistort(projectedShadowPosition.xy);
+		// projectedShadowPosition.xy *= distortFactor;
+
+		// projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
+
+		// gl_FragData[0].rgb = vec3(1.0) * shadow2D(shadow, projectedShadowPosition - vec3(0.0,0.0, 0.00005)).x;
+
 
 /* DRAWBUFFERS:3 */
 }

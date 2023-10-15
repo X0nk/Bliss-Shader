@@ -3,29 +3,48 @@ vec2 R2_samples(int n){
 	return fract(alpha * n);
 }
 
+vec3 cosineHemisphereSample(vec2 Xi){
+    float theta = 2.0 * 3.14159265359 * Xi.y;
 
+    float r = sqrt(Xi.x);
+    float x = r * cos(theta);
+    float y = r * sin(theta);
 
+    return vec3(x, y, sqrt(clamp(1.0 - Xi.x,0.,1.)));
+}
+
+vec3 TangentToWorld(vec3 N, vec3 H, float roughness){
+    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+    vec3 T = normalize(cross(UpVector, N));
+    vec3 B = cross(N, T);
+
+    return vec3((T * H.x) + (B * H.y) + (N * H.z));
+}
+
+vec2 SpiralSample(
+	int samples, int totalSamples, float rotation, float Xi
+){
+    float alpha = float(samples + Xi) * (1.0 / float(totalSamples));
+	
+    float theta = 3.14159265359 * alpha * rotation ;
+
+    float r = sqrt(Xi);
+	float x = r * sin(theta);
+	float y = r * cos(theta);
+
+    return vec2(x, y);
+}
 ////////////////////////////////////////////////////////////////
 /////////////////////////////	SSAO 	////////////////////////
 ////////////////////////////////////////////////////////////////
-const float PI = 3.141592653589793238462643383279502884197169;
-
-vec2 tapLocation_alternate(
-	int samples, int totalSamples, float rotation, float rng
-){
-    float alpha = float(samples + rng) * (1.0 / float(totalSamples));
-    float angle = alpha * (rotation * PI);
-
-	float sin_v = sin(angle);
-	float cos_v = cos(angle);
-
-    return vec2(cos_v, sin_v) * alpha;
-}
 
 vec2 SSAO(
-	vec3 viewPos, vec3 normal, bool hand, bool leaves
+	vec3 viewPos, vec3 normal, bool hand, bool leaves, float noise
 ){
-	if(hand) return vec2(1,0);
+	if(hand) return vec2(1.0,0.0);
+	int samples = 7;
+	float occlusion = 0.0; 
+	float sss = 0.0;
 
 
 	float dist = 1.0 + clamp(viewPos.z*viewPos.z/50.0,0,5); // shrink sample size as distance increases
@@ -41,23 +60,11 @@ vec2 SSAO(
 
 	vec2 acc = -(TAA_Offset*(texelSize/2))*RENDER_SCALE ;
 
-	// int seed = (frameCounter%40000)*2 + (1+frameCounter);
-	// vec2 samplePos = fract(R2_samples(seed).xy + blueNoise(gl_FragCoord.xy).xy);
-
-	int samples = 7;
-
-	int seed = (frameCounter%40000) + frameCounter*2;
-	float samplePos = fract(R2_samples(seed).y + blueNoise(gl_FragCoord.xy).y);
-
-	float occlusion = 0.0; float sss = 0.0;
 	int n = 0;
 	for (int i = 0; i < samples; i++) {
 		
-		vec2 sp = tapLocation_alternate(i, 7, 9, samplePos) * 0.2;
+		vec2 sampleOffset = SpiralSample(i, 7, 8, noise) * 0.2 * mulfov2;
 
-		float rd = mulfov2 ;
-
-		vec2 sampleOffset = sp * rd;
 		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio)*RENDER_SCALE);
 
 		if (offset.x >= 0 && offset.y >= 0 && offset.x < viewWidth*RENDER_SCALE.x && offset.y < viewHeight*RENDER_SCALE.y ) {
@@ -85,19 +92,13 @@ vec2 SSAO(
 	return max(1.0 - vec2(occlusion, sss)/n, 0.0);
 }
 float ScreenSpace_SSS(
-	vec3 viewPos, vec3 normal, bool hand, bool leaves
+	vec3 viewPos, vec3 normal, bool hand, bool leaves, float noise
 ){
-	if(hand) return 1.0;
+	if(hand) return 0.0;
+	int samples = 7;
+	float occlusion = 0.0; 
+	float sss = 0.0;
 
-	//  float radius[7] = float[](
-	// 	0.15,
-	// 	0.15,
-	// 	0.15,
-	// 	0.15,
-	// 	0.15,
-	// 	0.15,
-	// 	0.15
-   	// );
 
 	float dist = 1.0 + clamp(viewPos.z*viewPos.z/50.0,0,5); // shrink sample size as distance increases
 	float mulfov2 = gbufferProjection[1][1]/(3 * dist);
@@ -106,22 +107,15 @@ float ScreenSpace_SSS(
 
 	float dist3 = clamp(1-exp( viewPos.z*viewPos.z / -50),0,1);
 	if(leaves) maxR2_2 = mix(10, maxR2_2, dist3);
+	
 
 	vec2 acc = -(TAA_Offset*(texelSize/2))*RENDER_SCALE ;
 
-	int seed = (frameCounter%40000) * 2 + (1+frameCounter);
-	float samplePos = fract(R2_samples(seed).x + blueNoise(gl_FragCoord.xy).x) * 1.61803398874;
-			
-	int samples = 7;
-
-	float sss = 0.0;
 	int n = 0;
 	for (int i = 0; i < samples; i++) {
 		
-		vec2 sp = tapLocation_alternate(i, samples, 20, samplePos)* 0.2;
-		float rd = mulfov2 ;
+		vec2 sampleOffset = SpiralSample(i, 7, 8, noise) * 0.2 * mulfov2;
 
-		vec2 sampleOffset = sp * rd;
 		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio)*RENDER_SCALE);
 
 		if (offset.x >= 0 && offset.y >= 0 && offset.x < viewWidth*RENDER_SCALE.x && offset.y < viewHeight*RENDER_SCALE.y ) {
@@ -130,12 +124,10 @@ float ScreenSpace_SSS(
 			float dsquared = dot(vec, vec);
 			
 			if (dsquared > 1e-5){
-
 				if(dsquared > maxR2_2){
 					float NdotV = 1.0 - clamp(dot(vec*dsquared, normalize(normal)),0.,1.);
 					sss += max((NdotV - (1.0-NdotV)) * clamp(1.0-maxR2_2/dsquared,0.0,1.0) ,0.0);
 				}
-
 				n += 1;
 			}
 		}
@@ -146,6 +138,7 @@ float ScreenSpace_SSS(
 ////////////////////////////////////////////////////////////////////
 /////////////////////////////	RTAO/SSGI 	////////////////////////
 ////////////////////////////////////////////////////////////////////
+
 vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 
 	vec3 clipPosition = toClipSpace3(position);
@@ -222,24 +215,6 @@ vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes){
 	return vec3(1.1);
 }
 
-vec3 cosineHemisphereSample(vec2 Xi, float roughness){
-    float r = sqrt(Xi.x);
-    float theta = 2.0 * 3.14159265359 * Xi.y;
-
-    float x = r * cos(theta);
-    float y = r * sin(theta);
-
-    return vec3(x, y, sqrt(clamp(1.0 - Xi.x,0.,1.)));
-}
-
-vec3 TangentToWorld(vec3 N, vec3 H, float roughness){
-    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
-    vec3 T = normalize(cross(UpVector, N));
-    vec3 B = cross(N, T);
-
-    return vec3((T * H.x) + (B * H.y) + (N * H.z));
-}
-
 void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 viewPos, vec2 lightmaps, vec3 skylightcolor, vec3 torchcolor, bool isGrass){
 	int nrays = RAY_COUNT;
 
@@ -255,14 +230,15 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 viewPos, vec2 li
 	vec3 torchlight = vec3(0.0);
 	DoRTAmbientLighting(torchcolor, lightmaps, skyLM, torchlight, skylightcolor);
 
+	vec2 noisey = blueNoise(gl_FragCoord.xy).xy;
+
 	for (int i = 0; i < nrays; i++){
 		int seed = (frameCounter%40000)*nrays+i;
-		vec2 ij = fract(R2_samples(seed) + noise );
-
-		vec3 rayDir = TangentToWorld(normal, normalize(cosineHemisphereSample(ij,1.0)) ,1.0);
+		vec2 ij = fract(R2_samples(seed) + noise);
+		vec3 rayDir = TangentToWorld(normal, normalize(cosineHemisphereSample(ij)) ,1.0);
 
 		#ifdef HQ_SSGI
-			vec3 rayHit = rayTrace_GI( mat3(gbufferModelView) * rayDir, viewPos,  blueNoise(), 50.); // ssr rt
+			vec3 rayHit = rayTrace_GI( mat3(gbufferModelView) * rayDir, viewPos, blueNoise(), 50.); // ssr rt
 		#else
 			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, viewPos, blueNoise(), 30.);  // choc sspt 
 		#endif

@@ -26,6 +26,7 @@ uniform int frameCounter;
 //////////////////////////////VOID MAIN//////////////////////////////
 
 
+uniform float frameTimeCounter;
 #include "/lib/Shadow_Params.glsl"
 void main() {
 	gl_Position = ftransform();

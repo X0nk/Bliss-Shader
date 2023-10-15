@@ -104,51 +104,12 @@ vec2 R2_samples(int n){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha * n);
 }
-vec2 tapLocation_alternate(
-	int sampleNumber, 
-	float spinAngle,
-	int nb, 
-	float nbRot,
-	float r0
-){
-    float alpha = (float(sampleNumber*1.0f + r0) * (1.0 / (nb)));
-    float angle = alpha * (nbRot * 3.14) ;
-
-    float ssR = alpha + spinAngle*3.14;
-    float sin_v, cos_v;
-
-	sin_v = sin(angle);
-	cos_v = cos(angle);
-    return vec2(cos_v, sin_v)*ssR;
-}
 vec3 viewToWorld(vec3 viewPos) {
     vec4 pos;
     pos.xyz = viewPos;
     pos.w = 0.0;
     pos = gbufferModelViewInverse * pos;
     return pos.xyz;
-}
-
-
-// Emin's and Gri's combined ideas to stop peter panning and light leaking, also has little shadowacne so thats nice
-// https://www.complementary.dev/reimagined
-// https://github.com/gri573
-void GriAndEminShadowFix(
-	inout vec3 WorldPos,
-	vec3 FlatNormal,
-	float VanillaAO,
-	float SkyLightmap,
-	bool Entities
-){
-	float DistanceOffset = clamp(0.1 + length(WorldPos) / (shadowMapResolution*0.20), 0.0,1.0) ;
-	vec3 Bias = FlatNormal * DistanceOffset; // adjust the bias thingy's strength as it gets farther away.
-	
-	// stop lightleaking
-	if(SkyLightmap < 0.1 && !Entities) {
-		WorldPos += mix(Bias, 0.5 * (0.5 - fract(WorldPos + cameraPosition + FlatNormal*0.01 )	), VanillaAO) ;
-	}else{
-		WorldPos += Bias;
-	}
 }
 
 #include "/lib/Shadow_Params.glsl"
@@ -166,6 +127,20 @@ vec2 tapLocation_simple(
 
     return vec2(cos_v, sin_v) * sqrt(alpha);
 }
+vec2 SpiralSample(
+	int samples, int totalSamples, float rotation, float Xi
+){
+    float alpha = float(samples + Xi) * (1.0 / float(totalSamples));
+	
+    float theta = 3.14159265359 * alpha * rotation ;
+
+    float r = sqrt(Xi);
+	float x = r * sin(theta);
+	float y = r * cos(theta);
+
+    return vec2(x, y);
+}
+
 void main() {
 /* DRAWBUFFERS:3 */
 	vec2 texcoord = gl_FragCoord.xy*texelSize;
@@ -229,6 +204,8 @@ void main() {
 
 				// GriAndEminShadowFix(p3, viewToWorld(FlatNormals), vanillAO, lightmap.y, entities);
 
+				// mat4 Custom_ViewMatrix = BuildShadowViewMatrix(LightDir);
+				// vec3 projectedShadowPosition = mat3(Custom_ViewMatrix) * feetPlayerPos  + Custom_ViewMatrix[3].xyz;
 				vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos  + shadowModelView[3].xyz;
 				projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
@@ -251,21 +228,15 @@ void main() {
 					float diffthreshM = diffthresh*mult*d0*k/20.;
 					float avgDepth = 0.0;
 
-					// int seed = (frameCounter%40000) * 2 + (1+frameCounter);
-					// float samplePos = fract(R2_samples(seed).x + blueNoise(gl_FragCoord.xy).x) * 1.61803398874;
-					
 					int seed = (frameCounter%40000) + frameCounter*2;
-					float samplePos = fract(R2_samples(seed).y + blueNoise(gl_FragCoord.xy).y);
-					float noise = 0.5+blueNoise();
+					float noise = fract(R2_samples(seed).y + blueNoise(gl_FragCoord.xy).y);
 
 					for(int i = 0; i < VPS_Search_Samples; i++){
 
-						// vec2 offsetS = tapLocation_alternate(i+1, i/VPS_Search_Samples, 7, 20, samplePos) * noise;
-						
-						vec2 offsetS = tapLocation_simple(i, 7, 9, samplePos);
+						vec2 offsetS = SpiralSample(i, 7, 8, noise);
 		
 
-						float weight = 3.0 + (i+blueNoise() ) *rdMul/SHADOW_FILTER_SAMPLE_COUNT*shadowMapResolution*distortFactor/2.7;
+						float weight = 3.0 + (i+noise) *rdMul/SHADOW_FILTER_SAMPLE_COUNT*shadowMapResolution*distortFactor/2.7;
 						// float d = texelFetch2D( shadow, ivec2((projectedShadowPosition.xy+offsetS*rdMul)*shadowMapResolution),0).x;
 						float d = texelFetch2D( shadow, ivec2((projectedShadowPosition.xy+offsetS*rdMul)*shadowMapResolution),0).x;
 

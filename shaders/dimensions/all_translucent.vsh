@@ -1,6 +1,8 @@
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/bokeh.glsl"
+
+uniform float frameTimeCounter;
 #include "/lib/Shadow_Params.glsl"
 
 /*

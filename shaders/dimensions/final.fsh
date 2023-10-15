@@ -120,6 +120,7 @@ void applyColorCurve(inout vec3 color, vec4 darks, vec4 brights){
   }
 #endif
 
+uniform int hideGUI;
 void main() {
   #ifdef BICUBIC_UPSCALING
     vec3 col = SampleTextureCatmullRom(colortex7,texcoord,1.0/texelSize).rgb;
@@ -168,8 +169,13 @@ void main() {
   // uniform sampler2D shadowcolor0;
   // uniform sampler2D shadowtex0;
   // uniform sampler2D shadowtex1;
-  // if(texcoord.x > 0.5) gl_FragColor.rgb = texture2D(shadowcolor0, texcoord * vec2(2.0, 1.0) - vec2(1.0, 0.0)).rgb;
-  // vec2 texrood = texcoord * vec2(2.0, 1.0) - vec2(1.0, 0.0);
+
+
+  // if( hideGUI == 1){
+  //   vec2 texrood = texcoord * vec2(2.0, 1.0) - vec2(1.0, 0.0);
+  //   if(texcoord.x > 0.5) gl_FragColor.rgb = texture2D(shadowcolor0, texrood).rgb;
+
   
-  // if(texrood.x > 0.49 && texrood.x < 0.51 && texrood.y > 0.49 && texrood.y < 0.51) gl_FragColor.rgb = vec3(1,0,0);
+  //   // if(texrood.x > 0.49 && texrood.x < 0.51 && texrood.y > 0.49 && texrood.y < 0.51) gl_FragColor.rgb = vec3(1,0,0);
+  // }
 }

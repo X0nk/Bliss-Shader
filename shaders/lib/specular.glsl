@@ -106,7 +106,7 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
   return vec3(1.1);
 }
 
-float xonk_fma(float a,float b,float c){
+float fma(float a,float b,float c){
  return a * b + c;
 }
 
@@ -114,7 +114,7 @@ float xonk_fma(float a,float b,float c){
 vec3 SampleVNDFGGX(
     vec3 viewerDirection, // Direction pointing towards the viewer, oriented such that +Z corresponds to the surface normal
     vec2 alpha, // Roughness parameter along X and Y of the distribution
-    vec2 xy // Pair of uniformly distributed numbers in [0, 1)
+    float xy // Pair of uniformly distributed numbers in [0, 1)
 ) {
 	// alpha *= alpha;
     // Transform viewer direction to the hemisphere configuration
@@ -122,9 +122,9 @@ vec3 SampleVNDFGGX(
 
     // Sample a reflection direction off the hemisphere
     const float tau = 6.2831853; // 2 * pi
-    float phi = tau * xy.x;
+    float phi = tau * xy;
 
-    float cosTheta = xonk_fma(1.0 - xy.y, 1.0 + viewerDirection.z, -viewerDirection.z) ;
+    float cosTheta = fma(1.0 - xy, 1.0 + viewerDirection.z, -viewerDirection.z) ;
     float sinTheta = sqrt(clamp(1.0 - cosTheta * cosTheta, 0.0, 1.0));
 
 	// xonk note, i dont know what im doing but this kinda does what i want so whatever
@@ -169,7 +169,7 @@ void DoSpecularReflections(
 	vec3 FragPos, // toScreenspace(vec3(screenUV, depth)
 	vec3 WorldPos,
     vec3 LightPos, // should be in world space
-    vec3 Noise, // xy = noise texure. z = simple blue noise
+    vec2 Noise, // x = bluenoise z = interleaved gradient noise
 
 	vec3 Normal, // normals in world space
 	float Roughness, // red channel of specular texture _S
@@ -199,7 +199,7 @@ void DoSpecularReflections(
 	vec3 ViewDir = -WorldPos*Basis;
 
 	#ifdef Rough_reflections
-		vec3 SamplePoints = SampleVNDFGGX(ViewDir, vec2(Roughness), fract(R2_Sample(frameCounter%40000) + Noise.xy));
+		vec3 SamplePoints = SampleVNDFGGX(ViewDir, vec2(Roughness), Noise.x);
 		if(Hand) SamplePoints = normalize(vec3(0.0,0.0,1.0));
 	#else
 		vec3 SamplePoints = normalize(vec3(0.0,0.0,1.0));
@@ -247,7 +247,7 @@ void DoSpecularReflections(
 			#endif
 
 			float reflectLength = 0.0;
-			vec3 RaytracePos = rayTraceSpeculars(mat3(gbufferModelView) * L, FragPos,  Noise.z, float(SSR_Quality), Hand, reflectLength);
+			vec3 RaytracePos = rayTraceSpeculars(mat3(gbufferModelView) * L, FragPos,  Noise.y, float(SSR_Quality), Hand, reflectLength);
 			float LOD = clamp(pow(reflectLength, pow(1.0-sqrt(Roughness),5.0) * 3.0) * 6.0, 0.0, 6.0); // use higher LOD as the reflection goes on, to blur it. this helps denoise a little.
 			
 			if(Roughness <= 0.0) LOD = 0.0;

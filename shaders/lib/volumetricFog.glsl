@@ -86,6 +86,13 @@ vec4 GetVolumetricFog(
 	vec3 fragposition = mat3(shadowModelView) * wpos + shadowModelView[3].xyz;
 	fragposition = diagonal3(shadowProjection) * fragposition + shadowProjection[3].xyz;
 
+	// mat4 Custom_ViewMatrix = BuildShadowViewMatrix(LightDir);
+	// mat4 Custom_ProjectionMatrix = BuildShadowProjectionMatrix();
+
+	// vec3 fragposition = mat3(Custom_ViewMatrix) * wpos + Custom_ViewMatrix[3].xyz;
+	// fragposition = diagonal3(Custom_ProjectionMatrix) * fragposition + Custom_ProjectionMatrix[3].xyz;
+	
+
 	//project view origin into projected shadowmap space
 	vec3 start = toShadowSpaceProjected(vec3(0.0));
 
@@ -105,6 +112,7 @@ vec4 GetVolumetricFog(
 	vec3 vL = vec3(0.);
 
 	float SdotV = dot(sunVec,normalize(viewPosition))*lightCol.a;
+	// float SdotV = dot(normalize(LightDir * mat3(gbufferModelViewInverse)),	normalize(viewPosition))*lightCol.a;
 	float dL = length(dVWorld);
 
 	//Mie phase + somewhat simulates multiple scattering (Horizon zero down cloud approx)
@@ -203,11 +211,8 @@ vec4 GetVolumetricFog(
 
 		vec3 AtmosphericFog = skyCol0 * (rL*3.0 + m);//  + (LightSourceColor * sh) * (rayL*rL*3.0 + m*mie);
 
-		// extra fog effects
-		// vec3 rainRays =   (LightSourceColor*sh) * (rayL*(phaseg(SdotV,0.7))) * clamp(pow(WsunVec.y,5)*2,0.0,1) * rainStrength * noPuddleAreas * RainFog_amount; 
-		// vec3 CaveRays = (LightSourceColor*sh)  * phaseg(SdotV,0.7) * 0.001 * (1.0 - lightleakfix);
- 
 		vec3 vL0 = (AtmosphericFog + AmbientLight + DirectLight + Lightning) * lightleakfix;
+		// vec3 vL0 = DirectLight;
 
 		// #if defined Cave_fog && defined TEST
 		//     vL0 += cavefogCol;

@@ -13,6 +13,7 @@ uniform float sunElevation;
 
 uniform sampler2D colortex4;
 uniform int frameCounter;
+uniform float frameTimeCounter;
 
 #include "/lib/util.glsl"
 #include "/lib/res_params.glsl"

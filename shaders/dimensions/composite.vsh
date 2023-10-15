@@ -25,6 +25,7 @@ void main() {
 	gl_Position = ftransform();
 
 	WsunVec = (float(sunElevation > 1e-5)*2-1.)*normalize(mat3(gbufferModelViewInverse) * sunPosition);
+	
 
 	TAA_Offset = offsets[framemod8];
 

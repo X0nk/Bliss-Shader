@@ -213,28 +213,7 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 									vec2(-7.,-1.)/8.,
 									vec2(3,7.)/8.,
 									vec2(7.,-7.)/8.);
-vec3 srgbToLinear2(vec3 srgb){
-    return mix(
-        srgb / 12.92,
-        pow(.947867 * srgb + .0521327, vec3(2.4) ),
-        step( .04045, srgb )
-    );
-}
-vec3 blackbody2(float Temp)
-{
-    float t = pow(Temp, -1.5);
-    float lt = log(Temp);
 
-    vec3 col = vec3(0.0);
-         col.x = 220000.0 * t + 0.58039215686;
-         col.y = 0.39231372549 * lt - 2.44549019608;
-         col.y = Temp > 6500. ? 138039.215686 * t + 0.72156862745 : col.y;
-         col.z = 0.76078431372 * lt - 5.68078431373;
-         col = clamp(col,0.0,1.0);
-         col = Temp < 1000. ? col * Temp * 0.001 : col;
-
-    return srgbToLinear2(col);
-}
 
 uniform float near;
 

@@ -40,7 +40,7 @@ vec3 ToneMap_Hejl2015(in vec3 hdr)
 }
 vec3 HableTonemap(vec3 linearColor) {
 	// A = shoulder strength
-	const float A = 0.45;
+	const float A = 0.6;
 	// B = linear strength
 	const float B = 0.5;
 	// C = linear angle
