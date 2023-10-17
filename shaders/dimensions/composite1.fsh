@@ -210,8 +210,6 @@ vec3 BilateralFiltering(sampler2D tex, sampler2D depth,vec2 coord,float frDepth,
 }
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
-	// vec2 coord = gl_FragCoord.xy + frameTimeCounter;
-	// vec2 coord = gl_FragCoord.xy;
 	float noise = fract( 52.9829189 * fract( (coord.x * 0.06711056) + (coord.y * 0.00583715)) );
 	return noise ;
 }
@@ -626,9 +624,10 @@ void main() {
 		float z0 = texture2D(depthtex0,texcoord).x;
 		float z = texture2D(depthtex1,texcoord).x;
 
+		vec2 bnoise = blueNoise(gl_FragCoord.xy).rg;
 		int seed = (frameCounter%40000) + frameCounter*2;
-		float noise = fract(R2_samples(seed).y + blueNoise(gl_FragCoord.xy).y);
-		float blueNoise = blueNoise();
+		float noise = fract(R2_samples(seed).y + bnoise.y);
+		float noise_2 = blueNoise();
 
 		vec2 tempOffset = TAA_Offset;
 		vec3 viewPos = toScreenSpace(vec3(texcoord/RENDER_SCALE - TAA_Offset*texelSize*0.5,z));
@@ -752,7 +751,7 @@ void main() {
 				Background = Background * Clouds.a + Clouds.rgb;
 			#endif
 
-			gl_FragData[0].rgb = clamp(fp10Dither(Background, triangularize(blueNoise)), 0.0, 65000.);
+			gl_FragData[0].rgb = clamp(fp10Dither(Background, triangularize(noise_2)), 0.0, 65000.);
 		#endif
 
 		#if defined NETHER_SHADER || defined END_SHADER
@@ -1045,7 +1044,7 @@ void main() {
 		#if indirect_effect == 2
 			vec3 AO = vec3( exp( (vanilla_AO*vanilla_AO) * -3) );
 
-			vec2 r2 = fract(R2_samples((frameCounter%40000) + frameCounter*2) + blueNoise(gl_FragCoord.xy).rg);
+			vec2 r2 = fract(R2_samples((frameCounter%40000) + frameCounter*2) + bnoise);
 			if (!hand) AO = ambient_occlusion(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z), viewPos, worldToView(slopednormal), r2) * vec3(1.0);
 			
 			Indirect_lighting *= AO;
@@ -1053,7 +1052,7 @@ void main() {
 
 		// RTAO and/or SSGI
 		#if indirect_effect == 3 || indirect_effect == 4
-			if (!hand) ApplySSRT(Indirect_lighting, normal, blueNoise(gl_FragCoord.xy).xy, viewPos, lightmap.xy, AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass);
+			if (!hand) ApplySSRT(Indirect_lighting, normal, vec3(bnoise, noise_2), viewPos, lightmap.xy, AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass);
 		#endif
 		
 		#ifdef SSS_view
@@ -1137,7 +1136,7 @@ void main() {
 			vec3 lightningColor = (lightningEffect / 3) * (max(eyeBrightnessSmooth.y,0)/240.);
 			vec3 ambientColVol =  max((averageSkyCol_Clouds / 30.0) *  custom_lightmap_T, vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision)) ;
 
-			waterVolumetrics(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth , estimatedSunDepth, Vdiff, blueNoise, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(feetPlayerPos_normalized, WsunVec));		
+			waterVolumetrics(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth , estimatedSunDepth, Vdiff, noise_2, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(feetPlayerPos_normalized, WsunVec));		
 		}
 	#else
 		if (iswater && isEyeInWater == 0){
@@ -1148,7 +1147,7 @@ void main() {
 
 			vec3 ambientColVol =  max(vec3(1.0,0.5,1.0) * 0.3, vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision));
 			
-			waterVolumetrics_notoverworld(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth , estimatedDepth, Vdiff, blueNoise, totEpsilon, scatterCoef, ambientColVol);
+			waterVolumetrics_notoverworld(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth , estimatedDepth, Vdiff, noise_2, totEpsilon, scatterCoef, ambientColVol);
 		}
 	#endif
 	// vec3 testPos = feetPlayerPos_normalized + vec3(lightningBoltPosition.x, clamp(feetPlayerPos.y, lightningBoltPosition.y, lightningBoltPosition.y+150.0),lightningBoltPosition.z);

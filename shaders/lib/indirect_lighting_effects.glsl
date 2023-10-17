@@ -215,7 +215,7 @@ vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes){
 	return vec3(1.1);
 }
 
-void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 viewPos, vec2 lightmaps, vec3 skylightcolor, vec3 torchcolor, bool isGrass){
+void ApplySSRT(inout vec3 lighting, vec3 normal, vec3 noise, vec3 viewPos, vec2 lightmaps, vec3 skylightcolor, vec3 torchcolor, bool isGrass){
 	int nrays = RAY_COUNT;
 
 	vec3 radiance = vec3(0.0);
@@ -230,17 +230,16 @@ void ApplySSRT(inout vec3 lighting, vec3 normal,vec2 noise,vec3 viewPos, vec2 li
 	vec3 torchlight = vec3(0.0);
 	DoRTAmbientLighting(torchcolor, lightmaps, skyLM, torchlight, skylightcolor);
 
-	vec2 noisey = blueNoise(gl_FragCoord.xy).xy;
 
 	for (int i = 0; i < nrays; i++){
 		int seed = (frameCounter%40000)*nrays+i;
-		vec2 ij = fract(R2_samples(seed) + noise);
+		vec2 ij = fract(R2_samples(seed) + noise.xy);
 		vec3 rayDir = TangentToWorld(normal, normalize(cosineHemisphereSample(ij)) ,1.0);
 
 		#ifdef HQ_SSGI
-			vec3 rayHit = rayTrace_GI( mat3(gbufferModelView) * rayDir, viewPos, blueNoise(), 50.); // ssr rt
+			vec3 rayHit = rayTrace_GI( mat3(gbufferModelView) * rayDir, viewPos, noise.z, 50.); // ssr rt
 		#else
-			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, viewPos, blueNoise(), 30.);  // choc sspt 
+			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, viewPos, noise.z, 30.);  // choc sspt 
 		#endif
 
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
