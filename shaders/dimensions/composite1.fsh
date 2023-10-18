@@ -1171,8 +1171,7 @@ void main() {
 		// projectedShadowPosition.xy *= distortFactor;
 
 		// projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
-
-		// gl_FragData[0].rgb = vec3(1.0) * shadow2D(shadow, projectedShadowPosition - vec3(0.0,0.0, 0.00005)).x;
+		
 
 
 /* DRAWBUFFERS:3 */

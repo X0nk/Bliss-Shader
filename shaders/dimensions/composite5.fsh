@@ -281,10 +281,8 @@ void main() {
 		#else
 			gl_FragData[0] = clamp(fp10Dither(color, triangularize(interleaved_gradientNoise())), 0.0, 65000.0);
 		#endif
-	#endif
-
-	#ifndef TAA
-		vec3 color = clamp(fp10Dither(texture2D(colortex3,texcoord).rgb, triangularize(interleaved_gradientNoise())),0.0,65000.);
+	#else
+		vec3 color = clamp(fp10Dither(vec4(texture2D(colortex3,texcoord).rgb,1.0), triangularize(interleaved_gradientNoise())).rgb,0.0,65000.);
 		gl_FragData[0].rgb = color;
 	#endif
 }
