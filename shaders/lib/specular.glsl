@@ -226,10 +226,10 @@ void DoSpecularReflections(
 	// apply background reflections to the final color. make sure it does not exist based on the lightmap
 	#ifdef Sky_reflection
 
-		#ifndef OVERWORLD_SHADER
-			if(hasReflections) Background_Reflection = (skyCloudsFromTexLOD2(L, colortex4, sqrt(Roughness) * 6.0).rgb / 30.0) * Metals;
-		#else
+		#ifdef OVERWORLD_SHADER
 			if(hasReflections) Background_Reflection = (skyCloudsFromTexLOD(L, colortex4, sqrt(Roughness) * 9.0).rgb / 30.0) * Metals;
+		#else
+			if(hasReflections) Background_Reflection = (skyCloudsFromTexLOD2(L, colortex4, sqrt(Roughness) * 6.0).rgb / 30.0) * Metals;
 		#endif
 
 		// take fresnel and lightmap levels into account and write to the final color

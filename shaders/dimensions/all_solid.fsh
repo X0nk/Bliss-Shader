@@ -397,7 +397,7 @@ void main() {
 	// #endif
 	
 	#ifdef WhiteWorld
-		Albedo.rgb = vec3(1.0);
+		Albedo.rgb = vec3(0.5);
 	#endif
 
 		

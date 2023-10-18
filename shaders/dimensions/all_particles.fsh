@@ -149,28 +149,23 @@ void main() {
 			Direct_lighting *= phaseg(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), 0.65)*2 + 0.5;
 		#endif
 
-		Indirect_lighting = DoAmbientLighting(averageSkyCol_Clouds, Torch_Color, clamp(lightmap.xy,0,1), 3.0);
-	#endif
-	
-	#ifdef END_SHADER
-   		float TorchLM = 10.0 - ( 1.0 / (pow(exp(-0.5*inversesqrt(lightmap.x)),5.0)+0.1));
-   		TorchLM = pow(TorchLM/4,10) + pow(lightmap.x,1.5)*0.5;
+		vec3 AmbientLightColor = averageSkyCol_Clouds;
 
-		vec3 TorchLight = (Torch_Color * TorchLM * 0.75) * TORCH_AMOUNT;
-
-		Indirect_lighting = max(vec3(0.5,0.75,1.0) * 0.1, (MIN_LIGHT_AMOUNT*0.01 + nightVision*0.5) ) + TorchLight;
 	#endif
 
 	#ifdef NETHER_SHADER
-		vec3 AmbientLightColor = skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb / 10;
+		vec3 AmbientLightColor = skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb / 15;
+	#endif
 
-		vec3 nothing = vec3(0.0);
-		Indirect_lighting = DoAmbientLighting_Nether(AmbientLightColor, Torch_Color, lightmap.x, nothing, nothing, nothing);
+	#ifdef END_SHADER
+		vec3 AmbientLightColor = vec3(1.0);
 	#endif
 
 	#ifdef FALLBACK_SHADER
-		Indirect_lighting = DoAmbientLighting_Fallback(vec3(1.0), Torch_Color, lightmap.x, vec3(0.0), feetPlayerPos);
+		vec3 AmbientLightColor = vec3(1.0);
 	#endif
+
+	Indirect_lighting = DoAmbientLightColor(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), clamp(lightmap.xy,0,1));
 
 	#ifndef LINES
 		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * Albedo;

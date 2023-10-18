@@ -210,19 +210,16 @@ vec3 BilateralFiltering(sampler2D tex, sampler2D depth,vec2 coord,float frDepth,
 }
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
-	float noise = fract( 52.9829189 * fract( (coord.x * 0.06711056) + (coord.y * 0.00583715)) );
+	float noise = fract( 52.9829189 * fract( (coord.x * 0.06711056) + (coord.y * 0.00583715) ) );
 	return noise ;
 }
 float R2_dither(){
+	vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
 	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter) ;
+	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
-// vec2 R2_dither(){
-// 	vec2 alpha = vec2(0.75487765, 0.56984026);
-// 	return vec2(fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter), fract((1.0-alpha.x) * gl_FragCoord.x + (1.0-alpha.y) * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter));
-// }
 float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * (frameCounter*0.5+0.5)	);
+  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
 vec4 blueNoise(vec2 coord){
   return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
@@ -943,47 +940,38 @@ void main() {
 	/////////////////////////////////////////////////////////////////////////////////
 
 		#ifdef OVERWORLD_SHADER
-
 			vec3 ambientcoefs = slopednormal / dot(abs(slopednormal), vec3(1));
 
 			float SkylightDir = ambientcoefs.y*1.5;
 			if(isGrass) SkylightDir = 1.25;
 			
 			float skylight = max(pow(viewToWorld(FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.25) ;
-			
-			// #if indirect_effect == 2
-			// 	skylight = 1.0;
-			// #endif
 
-			#if indirect_effect != 3 || indirect_effect != 4
-				Indirect_lighting = DoAmbientLighting(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy, skylight);
-			#endif
-
-
-			Indirect_lighting += LightningFlashLighting;
+			AmbientLightColor *= skylight;
 		#endif
 
 		#ifdef NETHER_SHADER
-			AmbientLightColor = skyCloudsFromTexLOD2(normal, colortex4, 6).rgb / 10;
+			AmbientLightColor = skyCloudsFromTexLOD2(normal, colortex4, 6).rgb;
 
-			vec3 up 	= skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb / 10;
-			vec3 down 	= skyCloudsFromTexLOD2(vec3( 0,-1, 0), colortex4, 6).rgb / 10;
+			vec3 up 	= skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb;
+			vec3 down 	= skyCloudsFromTexLOD2(vec3( 0,-1, 0), colortex4, 6).rgb;
 
 			up   *= pow( max( slopednormal.y, 0), 2);
 			down *= pow( max(-slopednormal.y, 0), 2);
 			AmbientLightColor += up + down;
-
-			Indirect_lighting = DoAmbientLighting_Nether(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, feetPlayerPos_normalized, feetPlayerPos );
 		#endif
-
+		
 		#ifdef END_SHADER
-			Indirect_lighting = DoAmbientLighting_End(gl_Fog.color.rgb, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, feetPlayerPos_normalized);
+			vec3 AmbientLightColor = vec3(1.0);
 		#endif
 
 		#ifdef FALLBACK_SHADER
-			Indirect_lighting = DoAmbientLighting_Fallback(vec3(1.0), vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, feetPlayerPos);
-			// if(hand) Indirect_lighting = vec3(TORCH_R,TORCH_G,TORCH_B) * 0.3;
+			vec3 AmbientLightColor = vec3(1.0);
 		#endif
+
+		Indirect_lighting = DoAmbientLightColor(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
+
+		// Indirect_lighting += LightningFlashLighting;
 
 	////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	UNDER WATER SHADING		////////////////////////////////
@@ -1034,12 +1022,13 @@ void main() {
 			vec3 AO = vec3( exp( (vanilla_AO*vanilla_AO) * -3) );
 
 			vec2 SSAO_SSS = SSAO(viewPos, FlatNormals, hand, isLeaf, noise);
-			AO *= exp((1.0-SSAO_SSS.x) * -5.0);
+			// AO *= exp((1.0-SSAO_SSS.x) * -5.0);
+			AO *= SSAO_SSS.x*SSAO_SSS.x*SSAO_SSS.x;
 			SkySSS = SSAO_SSS.y;
 
 			Indirect_lighting *= AO;
-
 		#endif
+
 		// GTAO
 		#if indirect_effect == 2
 			vec3 AO = vec3( exp( (vanilla_AO*vanilla_AO) * -3) );
@@ -1052,7 +1041,7 @@ void main() {
 
 		// RTAO and/or SSGI
 		#if indirect_effect == 3 || indirect_effect == 4
-			if (!hand) ApplySSRT(Indirect_lighting, normal, vec3(bnoise, noise_2), viewPos, lightmap.xy, AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass);
+			if (!hand) ApplySSRT(Indirect_lighting, viewPos, normal, vec3(bnoise, noise_2), lightmap.xy, AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass);
 		#endif
 		
 		#ifdef SSS_view
@@ -1100,18 +1089,14 @@ void main() {
 		#endif
 
 		#ifdef OVERWORLD_SHADER
-			Direct_lighting = DoDirectLighting(DirectLightColor, Shadows, NdotL, 0.0);
-			
-			// do this here so it gets underwater absorbtion.
-
-			// Direct_lighting += Direct_SSS * DirectLightColor; 
-			Direct_lighting = max(Direct_lighting, Direct_SSS * DirectLightColor);
+			// do these here so it gets underwater absorbtion.
+			Direct_lighting =  max(DirectLightColor * (NdotL * Shadows), DirectLightColor * Direct_SSS);
 		#endif
 
 		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * albedo;
 
 		#ifdef Specular_Reflections	
-			vec2 specularNoises = vec2(noise, interleaved_gradientNoise());
+			vec2 specularNoises = vec2(noise, R2_dither());
 			DoSpecularReflections(gl_FragData[0].rgb, viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, normal, SpecularTex.r, SpecularTex.g, albedo, DirectLightColor*Shadows*NdotL, lightmap.y, hand);
 		#endif
 
@@ -1150,29 +1135,9 @@ void main() {
 			waterVolumetrics_notoverworld(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth , estimatedDepth, Vdiff, noise_2, totEpsilon, scatterCoef, ambientColVol);
 		}
 	#endif
-	// vec3 testPos = feetPlayerPos_normalized + vec3(lightningBoltPosition.x, clamp(feetPlayerPos.y, lightningBoltPosition.y, lightningBoltPosition.y+150.0),lightningBoltPosition.z);
-	// // vec3 testPos = feetPlayerPos_normalized + vec3(lightningBoltPosition.x, lightningBoltPosition.y + 60,lightningBoltPosition.z);
 
-	// gl_FragData[0].rgb = vec3(1) * CustomPhase(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0));
-	// float phaseorigin = 1.0 - clamp(dot(feetPlayerPos_normalized, normalize(testPos) ),0.0,1.0);
-
-
-		// mat4 Custom_ViewMatrix = BuildShadowViewMatrix(LightDir);
-		// mat4 Custom_ProjectionMatrix = BuildShadowProjectionMatrix();
-
-		// // vec3 projectedShadowPosition = mat3(Custom_ViewMatrix) * feetPlayerPos  + Custom_ViewMatrix[3].xyz;
-		// // projectedShadowPosition = mat3(Custom_ProjectionMatrix) * projectedShadowPosition + Custom_ProjectionMatrix[3].xyz;
-		
-		// vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos  + shadowModelView[3].xyz;
-		// projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
-		
-		// //apply distortion
-		// float distortFactor = calcDistort(projectedShadowPosition.xy);
-		// projectedShadowPosition.xy *= distortFactor;
-
-		// projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
-		
-
-
+	// gl_FragData[0].rgb = vec3(1);
+	
+	
 /* DRAWBUFFERS:3 */
 }

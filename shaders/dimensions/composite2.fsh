@@ -10,6 +10,7 @@ uniform sampler2D depthtex0;
 uniform sampler2D colortex2;
 uniform sampler2D colortex3;
 // uniform sampler2D colortex4;
+uniform sampler2D colortex6;
 
 flat varying vec3 WsunVec;
 uniform vec3 sunVec;
@@ -68,7 +69,11 @@ float interleaved_gradientNoise(){
 float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a+ 1.0/1.6180339887 * frameCounter );
 }
-
+float R2_dither(){
+	vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
+	vec2 alpha = vec2(0.75487765, 0.56984026);
+	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
+}
 void waterVolumetrics_notoverworld(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estEndDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient){
 	inColor *= exp(-rayLength * waterCoefs);	//No need to take the integrated value
 	
@@ -223,7 +228,13 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
-
+vec4 blueNoise(vec2 coord){
+  return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
+}
+vec2 R2_samples(int n){
+	vec2 alpha = vec2(0.75487765, 0.56984026);
+	return fract(alpha * n);
+}
 
 void main() {
 /* DRAWBUFFERS:0 */
@@ -233,8 +244,8 @@ void main() {
 	float z = texture2D(depthtex0,tc).x;
 	vec3 viewPos = toScreenSpace(vec3(tc/RENDER_SCALE,z));
 
-	float noise_1 = blueNoise();
-	float noise_2 = interleaved_gradientNoise();
+	float noise_1 = R2_dither();
+	float noise_2 = blueNoise();
 
 
 	if (isEyeInWater == 0){

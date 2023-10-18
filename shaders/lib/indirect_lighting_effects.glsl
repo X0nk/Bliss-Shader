@@ -215,7 +215,18 @@ vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes){
 	return vec3(1.1);
 }
 
-void ApplySSRT(inout vec3 lighting, vec3 normal, vec3 noise, vec3 viewPos, vec2 lightmaps, vec3 skylightcolor, vec3 torchcolor, bool isGrass){
+void ApplySSRT(
+	inout vec3 lighting, 
+	vec3 viewPos,
+	vec3 normal,
+	vec3 noise,
+
+	vec2 lightmaps, 
+	vec3 skylightcolor, 
+	vec3 torchcolor, 
+
+	bool isGrass
+){
 	int nrays = RAY_COUNT;
 
 	vec3 radiance = vec3(0.0);
@@ -225,11 +236,10 @@ void ApplySSRT(inout vec3 lighting, vec3 normal, vec3 noise, vec3 viewPos, vec2 
 
 	vec3 occlusion2 = vec3(0.0);
 	vec3 skycontribution2 = vec3(0.0);
-	
-    float skyLM = 0.0;
-	vec3 torchlight = vec3(0.0);
-	DoRTAmbientLighting(torchcolor, lightmaps, skyLM, torchlight, skylightcolor);
 
+	// rgb = torch color * lightmap. a = sky lightmap.
+	vec4 Lighting = RT_AmbientLight(torchcolor, lightmaps);
+	skylightcolor = (skylightcolor/15.0) * Lighting.a;
 
 	for (int i = 0; i < nrays; i++){
 		int seed = (frameCounter%40000)*nrays+i;
@@ -243,15 +253,23 @@ void ApplySSRT(inout vec3 lighting, vec3 normal, vec3 noise, vec3 viewPos, vec2 
 		#endif
 
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
-			if(isGrass) rayDir.y = clamp(rayDir.y +  0.5,-1,1);
-			skycontribution = (skyCloudsFromTex(rayDir, colortex4).rgb / 15.0) * skyLM + torchlight;
+			#ifdef OVERWORLD_SHADER
+				if(isGrass) rayDir.y = clamp(rayDir.y +  0.5,-1,1);
+
+				skycontribution = (skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb / 10.0) * Lighting.a + Lighting.rgb;
+			#else
+				skycontribution = (skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 10.0) * Lighting.a + Lighting.rgb;
+			#endif
 		#else
-			if(isGrass) rayDir.y = clamp(rayDir.y +  0.25,-1,1);
-			
-			skycontribution = skylightcolor * 2 * (max(rayDir.y,0.0)*0.9+0.1) + torchlight;
+
+			#ifdef OVERWORLD_SHADER
+				if(isGrass) rayDir.y = clamp(rayDir.y +  0.25,-1,1);
+			#endif
+
+			skycontribution = skylightcolor * (max(rayDir.y,0.0)*0.9+0.1) + Lighting.rgb;
 
 			#if indirect_effect == 4
-				skycontribution2 = skylightcolor + torchlight;
+				skycontribution2 = skylightcolor + Lighting.rgb;
 			#endif
 
 		#endif

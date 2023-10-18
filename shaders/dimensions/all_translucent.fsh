@@ -368,9 +368,11 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	//////////////////////////////// 
 
 	vec2 lightmap = lmtexcoord.zw;
+	
 	#ifndef OVERWORLD_SHADER
 		lightmap.y = 1.0;
 	#endif
+
 	vec3 Indirect_lighting = vec3(0.0);
 	vec3 Direct_lighting = vec3(0.0);
 
@@ -437,14 +439,15 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		Direct_lighting = (lightCol.rgb/80.0) * NdotL * Shadows;
 
-
+		vec3 AmbientLightColor = averageSkyCol_Clouds;
+		
 		vec3 ambientcoefs = WS_normal / dot(abs(WS_normal), vec3(1));
 		float SkylightDir = ambientcoefs.y*1.5;
 		
 		float skylight = max(pow(viewToWorld(flatnormal).y*0.5+0.5,0.1) + SkylightDir, 0.25);
 
 		// float skylight = max(pow(viewToWorld(flatnormal).y*0.5+0.5,0.1) + viewToWorld(normal).y, 0.25) * 1.35;
-		Indirect_lighting = DoAmbientLighting(averageSkyCol_Clouds, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy, skylight);
+		// Indirect_lighting = DoAmbientLighting(averageSkyCol_Clouds, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy, skylight);
 	#endif
 
 	#ifdef NETHER_SHADER
@@ -459,18 +462,17 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		down *= pow( max(-WS_normal.y, 0), 2);
 		AmbientLightColor += up + down;
 		
-		// do all ambient lighting stuff
-		Indirect_lighting = DoAmbientLighting_Nether(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, vec3(0.0), vec3(0.0), vec3(0.0));
 	#endif
 
 	#ifdef END_SHADER
-		// do all ambient lighting stuff
-		Indirect_lighting = DoAmbientLighting_End(gl_Fog.color.rgb, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, normal, feetPlayerPos );
+		vec3 AmbientLightColor = vec3(1.0);
 	#endif
 
 	#ifdef FALLBACK_SHADER
-		Indirect_lighting = DoAmbientLighting_Fallback(vec3(1.0), vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, WS_normal, feetPlayerPos);
+		vec3 AmbientLightColor = vec3(1.0);
 	#endif
+
+	Indirect_lighting = DoAmbientLightColor(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
 
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
 	

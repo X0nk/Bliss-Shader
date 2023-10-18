@@ -39,12 +39,9 @@ vec3 toScreenSpace(vec3 p) {
     return fragposition.xyz / fragposition.w;
 }
 float R2_dither(){
+	vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
 	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter);
-}
-float R2_dither2(){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * (1.0-gl_FragCoord.x) + alpha.y * (1.0-gl_FragCoord.y) + 1.0/1.6180339887 * frameCounter);
+	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
 float interleaved_gradientNoise(){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
