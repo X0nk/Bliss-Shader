@@ -86,11 +86,6 @@ float blueNoise(){
 	#include "/lib/end_fog.glsl"
 #endif
 
-#ifdef FALLBACK_SHADER
-	uniform sampler2D colortex4;
-	#include "/lib/fallback_fog.glsl"
-#endif
-
 
 void main() {
 /* DRAWBUFFERS:4 */
@@ -115,14 +110,26 @@ float mixhistory = 0.07;
 	if (gl_FragCoord.x > 1. && gl_FragCoord.x < 2.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 	gl_FragData[0] = vec4((skyGroundCol/150.0) * AmbientLightTint,1.0);
 
-	if (gl_FragCoord.x > 6. && gl_FragCoord.x < 7.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-	gl_FragData[0] = vec4(lightSourceColor,1.0);
+	#ifdef ambientLight_only
+		if (gl_FragCoord.x > 6. && gl_FragCoord.x < 7.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
+		gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);
 
-	if (gl_FragCoord.x > 8. && gl_FragCoord.x < 9.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-	gl_FragData[0] = vec4(sunColor,1.0);
+		if (gl_FragCoord.x > 8. && gl_FragCoord.x < 9.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
+		gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);
 
-	if (gl_FragCoord.x > 13. && gl_FragCoord.x < 14.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-	gl_FragData[0] = vec4(moonColor,1.0);
+		if (gl_FragCoord.x > 13. && gl_FragCoord.x < 14.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
+		gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);
+	#else
+		if (gl_FragCoord.x > 6. && gl_FragCoord.x < 7.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
+		gl_FragData[0] = vec4(lightSourceColor,1.0);
+
+		if (gl_FragCoord.x > 8. && gl_FragCoord.x < 9.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
+		gl_FragData[0] = vec4(sunColor,1.0);
+		
+		if (gl_FragCoord.x > 13. && gl_FragCoord.x < 14.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
+		gl_FragData[0] = vec4(moonColor,1.0);
+	#endif
+	
 
 ////////////////////////////////
 /// --- ATMOSPHERE IMAGE --- ///

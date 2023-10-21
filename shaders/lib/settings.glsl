@@ -261,6 +261,7 @@ const float	sunPathRotation	= -35;	//[-90 -89 -88 -87 -86 -85 -84 -83 -82 -81 -8
 #endif
 #define Puddle_Size 1.0 // [0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5]
 
+// #define MATERIAL_AO
 
 
 //////////////////////////////////////
@@ -315,7 +316,9 @@ uniform int moonPhase;
 #ifdef VOLUMETRIC_CLOUDS
 	#define Cloud_Fog
 
-	#define CLOUDS_SHADOWS
+	#ifndef ambientLight_only
+		#define CLOUDS_SHADOWS
+	#endif
 	
 	#ifdef CLOUDS_SHADOWS
 		#define VL_CLOUDS_SHADOWS

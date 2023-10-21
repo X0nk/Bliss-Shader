@@ -56,11 +56,6 @@ uniform ivec2 eyeBrightnessSmooth;
 	#include "/lib/end_fog.glsl"
 #endif
 
-#ifdef FALLBACK_SHADER
-	uniform sampler2D colortex4;
-	#include "/lib/fallback_fog.glsl"
-#endif
-
 #define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
 
 float interleaved_gradientNoise(){

@@ -442,8 +442,13 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 
 	#if defined WORLD && defined MC_NORMAL_MAP
-		vec3 NormalTex = texture2D_POMSwitch(normals, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM).xyw;
-		float Heightmap = 1.0 - NormalTex.z;
+		vec4 NormalTex = texture2D_POMSwitch(normals, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM).xyzw;
+		
+		#ifdef MATERIAL_AO
+			Albedo.rgb *= NormalTex.b*0.5+0.5;
+		#endif
+
+		float Heightmap = 1.0 - NormalTex.w;
 
 		NormalTex.xy = NormalTex.xy * 2.0-1.0;
 		NormalTex.z = sqrt(max(1.0 - dot(NormalTex.xy, NormalTex.xy), 0.0));
@@ -455,6 +460,7 @@ void main() {
 	
 			gl_FragDepth = toClipSpace3(truePos).z;
 		#endif
+		
 
 		if(PHYSICSMOD_SNOW < 1) normal = applyBump(tbnMatrix, NormalTex.xyz,  mix(1.0,1-Puddle_shape,rainfall)	);
 	#endif

@@ -149,7 +149,7 @@ void main() {
 			Direct_lighting *= phaseg(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), 0.65)*2 + 0.5;
 		#endif
 
-		vec3 AmbientLightColor = averageSkyCol_Clouds;
+		vec3 AmbientLightColor = averageSkyCol_Clouds * 3.0;
 
 	#endif
 
@@ -158,10 +158,6 @@ void main() {
 	#endif
 
 	#ifdef END_SHADER
-		vec3 AmbientLightColor = vec3(1.0);
-	#endif
-
-	#ifdef FALLBACK_SHADER
 		vec3 AmbientLightColor = vec3(1.0);
 	#endif
 

@@ -90,8 +90,9 @@ vec2 decodeVec2(float a){
     return fract( a * constant1 ) * constant2 ;
 }
 float R2_dither(){
+	vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
 	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter);
+	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
 float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
@@ -228,8 +229,9 @@ void main() {
 					float diffthreshM = diffthresh*mult*d0*k/20.;
 					float avgDepth = 0.0;
 
-					int seed = (frameCounter%40000) + frameCounter*2;
-					float noise = fract(R2_samples(seed).y + blueNoise(gl_FragCoord.xy).y);
+					// int seed = (frameCounter%40000) + frameCounter*2;
+					// float noise = fract(R2_samples(seed).y + blueNoise(gl_FragCoord.xy).y);
+					float noise = R2_dither();
 
 					for(int i = 0; i < VPS_Search_Samples; i++){
 

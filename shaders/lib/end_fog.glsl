@@ -198,7 +198,7 @@ vec4 GetVolumetricFog(
 	float dither,
 	float dither2
 ){
-	int SAMPLES = 32;
+	int SAMPLES = 16;
 	vec3 vL = vec3(0.0);
 	float absorbance = 1.0;
 
@@ -286,7 +286,7 @@ vec4 GetVolumetricFog(
 
 		float AirDensity = 0.002;
 		// AirDensity = 0.0;
-		vec3 vL1 = vec3(0.5,0.75,1.0);
+		vec3 vL1 = vec3(0.5,0.75,1.0) * 0.5;
 		// vL1 += Light1 + Light2;
 
 		vL += (vL1 - vL1*exp2(-AirDensity*dd*dL)) * absorbance;

@@ -306,12 +306,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	#ifdef Vanilla_like_water
-		if (iswater > 0.5) {
-			gl_FragData[0].a = luma(Albedo.rgb);
+		if (iswater > 0.95){
+			// gl_FragData[0].a = luma(Albedo.rgb);
 			Albedo = color.rgb * sqrt(luma(Albedo.rgb));
 		}
 	#else
-		if (iswater > 0.9) {
+		if (iswater > 0.95){
 			Albedo = vec3(0.0);
 			gl_FragData[0] = vec4(vec3(0.0),1.0/255.0);
 		}
@@ -465,10 +465,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	#ifdef END_SHADER
-		vec3 AmbientLightColor = vec3(1.0);
-	#endif
-
-	#ifdef FALLBACK_SHADER
 		vec3 AmbientLightColor = vec3(1.0);
 	#endif
 

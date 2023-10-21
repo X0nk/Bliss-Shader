@@ -37,11 +37,6 @@ const bool colortex5MipmapEnabled = true;
 	// #define LIGHTSOURCE_REFLECTION
 #endif
 
-#ifdef FALLBACK_SHADER
-	uniform sampler2D colortex4;
-	uniform float nightVision;
-	// #define LIGHTSOURCE_REFLECTION
-#endif
 
 uniform sampler2D noisetex; //noise
 uniform sampler2D depthtex1; //depth
@@ -624,7 +619,7 @@ void main() {
 		vec2 bnoise = blueNoise(gl_FragCoord.xy).rg;
 		int seed = (frameCounter%40000) + frameCounter*2;
 		float noise = fract(R2_samples(seed).y + bnoise.y);
-		float noise_2 = blueNoise();
+		float noise_2 = R2_dither();
 
 		vec2 tempOffset = TAA_Offset;
 		vec3 viewPos = toScreenSpace(vec3(texcoord/RENDER_SCALE - TAA_Offset*texelSize*0.5,z));
@@ -643,7 +638,7 @@ void main() {
 		vec3 normal = decode(dataUnpacked0.yw);
 		vec2 lightmap = dataUnpacked1.yz;
 
-		#ifndef OVERWORLD_SHADER
+		#if defined END_SHADER || defined NETHER_SHADER
 			lightmap.y = 1.0;
 		#endif
 
@@ -700,9 +695,7 @@ void main() {
 		float NdotL = 1.0;
 
 		#ifdef OVERWORLD_SHADER
-			#ifndef ambientLight_only
-				DirectLightColor = lightCol.rgb/80.0;
-			#endif
+			DirectLightColor = lightCol.rgb/80.0;
 			
 			#ifdef PER_BIOME_ENVIRONMENT
 				BiomeSunlightColor(DirectLightColor);
@@ -753,15 +746,6 @@ void main() {
 
 		#if defined NETHER_SHADER || defined END_SHADER
 			gl_FragData[0].rgb = vec3(0);
-		#endif
-		
-		#ifdef FALLBACK_SHADER
-			vec3 Background = vec3(0.5,0.3,1.0)*0.025;
-			Background += vec3(0.8,1.0,0.5) * 0.5  * pow(normalize(-feetPlayerPos_normalized).y*0.5+0.5,3.0);
-
-			Background += stars(feetPlayerPos_normalized) * 100.0 * pow(normalize(feetPlayerPos_normalized).y*0.5+0.5,3.0);
-			gl_FragData[0].rgb = clamp(Background, 0.0, 65000.);
-
 		#endif
 
 	} else {
@@ -829,8 +813,7 @@ void main() {
 
 
 					for(int i = 0; i < samples; i++){
-						// vec2 offsetS = SpiralSample(i, 7, 8, noise)*0.5;
-						vec2 offsetS = tapLocation_simple(i, 7, 9, noise) * 0.5;
+						vec2 offsetS = tapLocation_simple(i, 7, 9, noise_2) * 0.5;
 
 						float isShadow = shadow2D(shadow, projectedShadowPosition + vec3(rdMul*offsetS, smallbias)	).x;
 						Shadows += isShadow/samples;
@@ -965,10 +948,6 @@ void main() {
 			vec3 AmbientLightColor = vec3(1.0);
 		#endif
 
-		#ifdef FALLBACK_SHADER
-			vec3 AmbientLightColor = vec3(1.0);
-		#endif
-
 		Indirect_lighting = DoAmbientLightColor(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
 
 		// Indirect_lighting += LightningFlashLighting;
@@ -1050,14 +1029,14 @@ void main() {
 		#endif
 
 	////////////////////////////////	SKY SSS		////////////////////////////////
-		#ifdef Ambient_SSS
+		#if defined Ambient_SSS && defined OVERWORLD_SHADER
 			if (!hand){
 
 				#if indirect_effect != 1
 					SkySSS = ScreenSpace_SSS(viewPos, FlatNormals, hand, isLeaf, noise);
 				#endif
 
-				vec3 ambientColor = (AmbientLightColor / 30.0) * 2.5;
+				vec3 ambientColor = (averageSkyCol_Clouds / 10.0);
 				float skylightmap =  pow(lightmap.y,3);
 
 				Indirect_SSS = SubsurfaceScattering_sky(albedo, SkySSS, LabSSS);
