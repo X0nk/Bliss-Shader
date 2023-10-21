@@ -300,7 +300,6 @@ void main() {
 	if(mc_Entity.x == 10006 || mc_Entity.x == 200) SSSAMOUNT = 0.75;
 	
 	// low
-
 	#ifdef MISC_BLOCK_SSS
 		if(mc_Entity.x == 10007 || mc_Entity.x == 10008) SSSAMOUNT = 0.5; // weird SSS on blocks like grass and stuff
 	#endif
@@ -350,17 +349,9 @@ void main() {
 
 #endif
 
-	#ifdef Seasons 
-		#ifdef WORLD
-		#ifndef BLOCKENTITIES
-		#ifndef ENTITIES 
-		#ifndef HAND 
-			float blank = 0.0;
-			YearCycleColor(color.rgb, gl_Color.rgb, blank);
-		#endif
-		#endif
-		#endif
-		#endif
+	#if defined Seasons && defined WORLD && !defined ENTITIES && !defined BLOCKENTITIES && !defined HAND
+		float blank = 0.0;
+		YearCycleColor(color.rgb, gl_Color.rgb, blank);
 	#endif
 
 	#ifdef TAA_UPSCALING

@@ -1,7 +1,7 @@
 #version 120
 
 
-// #define WORLD
+#define WORLD
 #define ENTITIES
 
 #define OVERWORLD_SHADER
