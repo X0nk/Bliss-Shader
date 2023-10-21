@@ -163,10 +163,10 @@ void main() {
 
 	Indirect_lighting = DoAmbientLightColor(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), clamp(lightmap.xy,0,1));
 
-	#ifndef LINES
-		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * Albedo;
-	#else
+	#ifdef LINES
 		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * toLinear(color.rgb);
+	#else
+		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * Albedo;
 	#endif
 
 	// distance fade targeting the world border...
