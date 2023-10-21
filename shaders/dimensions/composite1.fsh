@@ -726,8 +726,10 @@ void main() {
 				#if RESOURCEPACK_SKY == 1
 					Background += toLinear(texture2D(colortex10, texcoord).rgb * (255.0 * 2.0));
 				#endif
+				#ifndef ambientLight_only
 					Background += drawSun(dot(lightCol.a * WsunVec, feetPlayerPos_normalized),0, DirectLightColor,vec3(0.0));
 					Background += drawMoon(feetPlayerPos_normalized,  lightCol.a * WsunVec, DirectLightColor*20, Background); 
+				#endif
 			#endif
 
 

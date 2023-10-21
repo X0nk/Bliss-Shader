@@ -12,6 +12,7 @@ screen.Sun_and_Moon_Colors = Sun/Moon Colors
 option.sunPathRotation = Sun Angle
 option.sun_illuminance = Sun Illuminance
 option.moon_illuminance = Moon Illuminance
+option.MOONPHASE_BASED_MOONLIGHT = Moonphase brightness levels
 
 option.RESOURCEPACK_SKY = RP Sky
     value.RESOURCEPACK_SKY.0 = Do not use
@@ -501,3 +502,4 @@ option.RESOURCEPACK_SKY.comment = Toggle resourcepack sky support. Configure set
 
 option.MATERIAL_AO.comment = Toggle the use of ambient occlusion based on what the resourcepack provides. §aPERFORMANCE COST:§r very low
 option.WATER_WAVE_STRENGTH.comment = configure how strong the waves appear.
+option.MOONPHASE_BASED_MOONLIGHT.comment = §bWhat is this?§r every night, the moon has different lighting. This setting adjusts the moonlight brightness based on how much of the moon is glowing. §aPERFORMANCE COST:§r nearly nothing

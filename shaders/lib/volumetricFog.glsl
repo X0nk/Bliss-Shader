@@ -124,6 +124,9 @@ vec4 GetVolumetricFog(
 	
 	// Makes fog more white idk how to simulate it correctly
 	vec3 LightSourceColor = LightColor;
+	#ifdef ambientLight_only
+		LightSourceColor = vec3(0.0);
+	#endif
 	vec3 skyCol0 = AmbientColor / 2.0;
 
 	// recolor change sun and sky color to a color, but make sure luminance is preserved.

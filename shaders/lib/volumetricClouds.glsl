@@ -238,6 +238,11 @@ vec4 renderClouds(
 	SunColor =  SunColor * clamp(dV_Sun.y ,0.0,1.0);
 	MoonColor *=  clamp(-dV_Sun.y,0.0,1.0);
 
+	#ifdef ambientLight_only
+		SunColor = vec3(0.0);
+		MoonColor = vec3(0.0);
+	#endif
+
 	if(dV_Sun.y/shadowStep < -0.1) dV_Sun = -dV_Sun;
 	
 	float mieDay = phaseg(SdotV, 0.75);
