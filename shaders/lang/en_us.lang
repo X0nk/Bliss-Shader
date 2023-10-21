@@ -238,6 +238,7 @@ screen.World = World
         option.Refraction = Refraction In Water/Glass
         option.Dirt_Amount = Dirt Amount
         option.Water_Top_Layer = Ocean Y coordinate
+        option.WATER_WAVE_STRENGTH = Wave Strength
         
         screen.Water_fog_color = Water Fog Settings
             option.Dirt_Scatter_R = Scatter Red (dirt)
@@ -499,3 +500,4 @@ screen.Post_Processing.comment = Configure settings for all post processing effe
 option.RESOURCEPACK_SKY.comment = Toggle resourcepack sky support. Configure settings to use the whole resourcepack sky, or keep the shader's sun and moon. §aPERFORMANCE COST:§r very low
 
 option.MATERIAL_AO.comment = Toggle the use of ambient occlusion based on what the resourcepack provides. §aPERFORMANCE COST:§r very low
+option.WATER_WAVE_STRENGTH.comment = configure how strong the waves appear.

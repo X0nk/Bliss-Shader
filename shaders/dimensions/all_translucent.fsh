@@ -344,7 +344,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	
 	#ifndef HAND
 		if (iswater > 0.95){
-			float bumpmult = 1.0;
+			float bumpmult = WATER_WAVE_STRENGTH;
 			vec3 bump = vec3(0);
 			vec3 posxz = feetPlayerPos+cameraPosition;
 
