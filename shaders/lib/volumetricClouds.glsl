@@ -21,6 +21,7 @@ uniform int worldTime;
 #define WEATHERCLOUDS
 #include "/lib/climate_settings.glsl"
 
+
 float CumulusHeight = Cumulus_height;
 float MaxCumulusHeight = CumulusHeight + 100;
 float AltostratusHeight = 2000;

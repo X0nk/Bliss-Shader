@@ -15,6 +15,7 @@ const int colortex9Format = RGBA8;					// rain in alpha
 const int colortex10Format = RGBA16;		// resourcepack Skies
 
 const int colortex11Format = RGBA16; // unchanged translucents albedo, alpha and tangent normals
+const int colortex14Format = RGBA8; // a = skylightmap for translucents.
 const int colortex15Format = RGBA8;					// flat normals and vanilla AO
 */
 

@@ -1,7 +1,3 @@
-
-vec3 normVec (vec3 vec){
-	return vec*inversesqrt(dot(vec,vec));
-}
 float phaseRayleigh(float cosTheta) {
 	const vec2 mul_add = vec2(0.1, 0.28) /acos(-1.0);
 	return cosTheta * mul_add.x + mul_add.y; // optimized version from [Elek09], divided by 4 pi for energy conservation
@@ -51,28 +47,6 @@ float cloudVol(in vec3 pos){
 
 	return CloudyFog + UniformFog + RainFog;
 }
-
-// // uniform vec4 lightningBoltPosition;
-// float Iris_Lightningflash_VLfog(vec3 feetPlayerPos, vec3 lightningBoltPos){
-
-// 	vec3 LightningPos = feetPlayerPos - vec3(lightningBoltPosition.x, clamp(feetPlayerPos.y, lightningBoltPosition.y, lightningBoltPosition.y+116.0),lightningBoltPosition.z);
-
-// 	// point light, max distance is ~500 blocks (the maximim entity render distance)
-// 	float lightDistance = 300.0;
-
-// 	#ifdef TEST
-// 		float lightningLight = 0.0;
-// 	#else
-
-// 		float lightningLight = max(1.0 - length(LightningPos) / lightDistance, 0.0) ;
-
-// 		lightningLight = exp((1.0 - lightningLight) * -15.0) ;
-// 	#endif
-
-// 	// lightningLight = pow(lightningLight,5.0);
-
-// 	return lightningLight ;
-// }
 
 uniform bool inSpecialBiome;
 vec4 GetVolumetricFog(
@@ -141,17 +115,6 @@ vec4 GetVolumetricFog(
 	// float upGradient = np3.y;
 	// skyCol0 = max(skyCol0 + skyCol0*upGradient,0.0);
 	
-	// #if defined Cave_fog && defined TEST
-	//     vec3 cavefogCol = vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B);
-
-	// 	#ifdef PER_BIOME_ENVIRONMENT
-	//       BiomeFogColor(cavefogCol);
-	//     #endif
-
-	//     cavefogCol = cavefogCol * clamp(1.0 - normalize(wpos).y, 0.0, 1.0) * 0.001 ;  
-	// #endif
-
-
 	float mu = 1.0;
 	float muS = mu;
 	float absorbance = 1.0;

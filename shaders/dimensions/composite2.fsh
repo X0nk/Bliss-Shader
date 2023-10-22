@@ -45,7 +45,7 @@ uniform ivec2 eyeBrightnessSmooth;
 	#define TIMEOFDAYFOG
 	#include "/lib/lightning_stuff.glsl"
 	#include "/lib/volumetricClouds.glsl"
-	#include "/lib/volumetricFog.glsl"
+	#include "/lib/overworld_fog.glsl"
 #endif
 #ifdef NETHER_SHADER
 	uniform sampler2D colortex4;

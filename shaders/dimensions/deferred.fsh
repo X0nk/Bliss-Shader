@@ -67,14 +67,13 @@ float blueNoise(){
 
 
 #ifdef OVERWORLD_SHADER
-	
 	// const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
 	#define TEST
 	#define TIMEOFDAYFOG
 	#include "/lib/lightning_stuff.glsl"
 	#include "/lib/volumetricClouds.glsl"
-	#include "/lib/volumetricFog.glsl"
+	#include "/lib/overworld_fog.glsl"
 	
 #endif
 #ifdef NETHER_SHADER
