@@ -39,8 +39,9 @@ const bool colortex5MipmapEnabled = true;
 
 
 uniform sampler2D noisetex; //noise
-uniform sampler2D depthtex1; //depth
 uniform sampler2D depthtex0; //depth
+uniform sampler2D depthtex1; //depth
+uniform sampler2D depthtex2; //depth
 
 uniform sampler2D colortex0; //clouds
 uniform sampler2D colortex1; //albedo(rgb),material(alpha) RGBA16
@@ -1017,7 +1018,7 @@ void main() {
 		}
 	#endif
 
-	// gl_FragData[0].rgb = vec3(1);
+	// gl_FragData[0].rgb = vec3(1) ;
 	
 	
 /* DRAWBUFFERS:3 */

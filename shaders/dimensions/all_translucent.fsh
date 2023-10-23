@@ -445,6 +445,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		float SkylightDir = ambientcoefs.y*1.5;
 		
 		float skylight = max(pow(viewToWorld(flatnormal).y*0.5+0.5,0.1) + SkylightDir, 0.25);
+		AmbientLightColor *= skylight;
 
 		// float skylight = max(pow(viewToWorld(flatnormal).y*0.5+0.5,0.1) + viewToWorld(normal).y, 0.25) * 1.35;
 		// Indirect_lighting = DoAmbientLighting(averageSkyCol_Clouds, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy, skylight);

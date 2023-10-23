@@ -25,6 +25,8 @@ flat varying float centerDepth;
 uniform sampler2D colortex4;
 uniform sampler2D colortex6;
 uniform sampler2D depthtex0;
+uniform sampler2D depthtex1;
+uniform sampler2D depthtex2;
 
 uniform mat4 gbufferModelViewInverse;
 uniform vec3 sunPosition;
@@ -177,7 +179,7 @@ void main() {
 
 
 	exposure = max(targetExposure*EXPOSURE_MULTIPLIER, 0);
-	float currCenterDepth = ld(texture2D(depthtex0, vec2(0.5)).r);
+	float currCenterDepth = ld(texture2D(depthtex2, vec2(0.5)).r);
 	centerDepth = mix(sqrt(texelFetch2D(colortex4,ivec2(14,37),0).g/65000.0), currCenterDepth, clamp(DoF_Adaptation_Speed*exp(-0.016/frameTime+1.0)/(6.0+currCenterDepth*far),0.0,1.0));
 	centerDepth = centerDepth * centerDepth * 65000.0;
 
