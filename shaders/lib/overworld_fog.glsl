@@ -1,7 +1,4 @@
-float phaseRayleigh(float cosTheta) {
-	const vec2 mul_add = vec2(0.1, 0.28) /acos(-1.0);
-	return cosTheta * mul_add.x + mul_add.y; // optimized version from [Elek09], divided by 4 pi for energy conservation
-}
+
 
 uniform float noPuddleAreas;
 float densityAtPosFog(in vec3 pos){
@@ -48,7 +45,22 @@ float cloudVol(in vec3 pos){
 	return CloudyFog + UniformFog + RainFog;
 }
 
-uniform bool inSpecialBiome;
+float phaseRayleigh(float cosTheta) {
+	const vec2 mul_add = vec2(0.1, 0.28) / acos(-1.0);
+	return cosTheta * mul_add.x + mul_add.y; // optimized version from [Elek09], divided by 4 pi for energy conservation
+}
+float fogPhase(float lightPoint){
+	float linear = 1.0 - clamp(lightPoint*0.5+0.5,0.0,1.0);
+	float linear2 = 1.0 - clamp(lightPoint,0.0,1.0);
+
+	float exponential = exp2(pow(linear,0.3) * -15.0 ) * 1.5;
+	exponential += sqrt(exp2(sqrt(linear) * -12.5));
+
+	return exponential;
+}
+
+
+// uniform bool inSpecialBiome;
 vec4 GetVolumetricFog(
 	vec3 viewPosition,
 	float dither,
@@ -90,7 +102,8 @@ vec4 GetVolumetricFog(
 	float dL = length(dVWorld);
 
 	//Mie phase + somewhat simulates multiple scattering (Horizon zero down cloud approx)
-	float mie = phaseg(SdotV,0.7)*5.0 + 0.1;
+	// float mie = phaseg(SdotV,0.7)*5.0 + 0.1;
+	float mie = fogPhase(SdotV) * 5.0;
 	float rayL = phaseRayleigh(SdotV);
 
 	vec3 rC = vec3(fog_coefficientRayleighR*1e-6, fog_coefficientRayleighG*1e-5, fog_coefficientRayleighB*1e-5);
@@ -178,7 +191,8 @@ vec4 GetVolumetricFog(
 		vec3 AtmosphericFog = skyCol0 * (rL*3.0 + m);//  + (LightSourceColor * sh) * (rayL*rL*3.0 + m*mie);
 
 		vec3 vL0 = (AtmosphericFog + AmbientLight + DirectLight + Lightning) * lightleakfix;
-		// vec3 vL0 = DirectLight;
+
+		// vL0 = DirectLight;
 
 		// #if defined Cave_fog && defined TEST
 		//     vL0 += cavefogCol;

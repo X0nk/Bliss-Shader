@@ -13,10 +13,12 @@ flat varying vec3 moonColor;
 // flat varying vec3 WsunVec;
 
 flat varying vec2 tempOffsets;
+
 flat varying float exposure;
-flat varying float rodExposure;
 flat varying float avgBrightness;
-flat varying float exposureF;
+flat varying float rodExposure;
+flat varying float avgL2;
+flat varying float centerDepth;
 
 uniform sampler2D noisetex;
 
@@ -279,8 +281,8 @@ gl_FragData[0].rgb = clamp(mix(temp, curr, mixhistory),0.0,65000.);
 
 //Exposure values
 if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(exposure,avgBrightness,exposureF,1.0);
+gl_FragData[0] = vec4(exposure,avgBrightness,avgL2,1.0);
 if (gl_FragCoord.x > 14. && gl_FragCoord.x < 15.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(rodExposure,0.0,0.0,1.0);
+gl_FragData[0] = vec4(rodExposure,centerDepth,0.0, 1.0);
 
 }

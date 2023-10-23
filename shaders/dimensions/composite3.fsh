@@ -302,7 +302,7 @@ void main() {
     fogfade *= 1.0 - clamp( length(fragpos) / far,0.0,1.0);
 
     color.rgb *= fogfade ;
-    bloomyFogMult *= 0.4;
+    bloomyFogMult *= 0.0;
   }
 
   // apply VL fog to the scene

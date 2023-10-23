@@ -152,6 +152,8 @@ float waterCaustics(vec3 wPos, vec3 lightSource) { // water waves
 	return caustic / weightSum;
 }
 
+
+
 void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estEyeDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient, vec3 lightSource, float VdotL){
 	int spCount = 8;
 
@@ -170,7 +172,8 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 	vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition;
 	// vec3 WsunVec = mat3(gbufferModelViewInverse) * sunVec * lightCol.a;
 
-	float phase = (phaseg(VdotL,0.6) + phaseg(VdotL,0.8)) * 0.5;
+	// float phase = (phaseg(VdotL,0.6) + phaseg(VdotL,0.8)) * 0.5;
+	float phase = fogPhase(VdotL) ;
 	
 	vec3 absorbance = vec3(1.0);
 	vec3 vL = vec3(0.0);

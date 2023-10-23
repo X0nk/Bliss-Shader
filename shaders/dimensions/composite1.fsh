@@ -164,23 +164,6 @@ vec2 decodeVec2(float a){
     const float constant2 = 256. / 255.;
     return fract( a * constant1 ) * constant2 ;
 }
-// float linZ(float depth) {
-//     return (2.0 * near) / (far + near - depth * (far - near));
-// 	// l = (2*n)/(f+n-d(f-n))
-// 	// f+n-d(f-n) = 2n/l
-// 	// -d(f-n) = ((2n/l)-f-n)
-// 	// d = -((2n/l)-f-n)/(f-n)
-
-// }
-// float invLinZ (float lindepth){
-// 	return -((2.0*near/lindepth)-far-near)/(far-near);
-// }
-
-// vec3 toClipSpace3(vec3 viewSpacePosition) {
-//     return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
-// }
-
-
 
 
 vec2 tapLocation(int sampleNumber,int nb, float nbRot,float jitter,float distort)
@@ -342,7 +325,15 @@ float waterCaustics(vec3 wPos, vec3 lightSource) { // water waves
 	}
 	return caustic / weightSum;
 }
+float fogPhase(float lightPoint){
+	float linear = 1.0 - clamp(lightPoint*0.5+0.5,0.0,1.0);
+	float linear2 = 1.0 - clamp(lightPoint,0.0,1.0);
 
+	float exponential = exp2(pow(linear,0.3) * -15.0 ) * 1.5;
+	exponential += sqrt(exp2(sqrt(linear) * -12.5));
+
+	return exponential;
+}
 void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estEndDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient, vec3 lightSource, float VdotL){
 		inColor *= exp(-rayLength * waterCoefs);	//No need to take the integrated value
 		int spCount = rayMarchSampleCount;
@@ -364,9 +355,8 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 		vec3 wpos = mat3(gbufferModelViewInverse) * rayStart  + gbufferModelViewInverse[3].xyz;
 		vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
 
-		// float phase = (phaseg(VdotL,0.5) + phaseg(VdotL,0.8)) ;
-		float phase = (phaseg(VdotL,0.6) + phaseg(VdotL,0.8)) * 0.5;
-		// float phase = phaseg(VdotL, 0.7);
+		// float phase = (phaseg(VdotL,0.6) + phaseg(VdotL,0.8)) * 0.5;
+		float phase = fogPhase(VdotL) ;
 		
 		vec3 absorbance = vec3(1.0);
 		vec3 vL = vec3(0.0);
@@ -416,33 +406,6 @@ void Emission(
 	if( Emission < 255.0/255.0 ) Lighting += (Albedo * Emissive_Brightness) * pow(Emission, Emissive_Curve);
 }
 
-// float rayTraceShadow(vec3 dir,vec3 position,float dither){
-//     const float quality = 16.;
-//     vec3 clipPosition = toClipSpace3(position);
-// 	//prevents the ray from going behind the camera
-// 	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ?
-//       					 (-near -position.z) / dir.z : far*sqrt(3.) ;
-//     vec3 direction = toClipSpace3(position+dir*rayLength)-clipPosition;  //convert to clip space
-//     direction.xyz = direction.xyz/max(abs(direction.x)/texelSize.x,abs(direction.y)/texelSize.y);	//fixed step size
-//     vec3 stepv = direction * 3.0 * clamp(MC_RENDER_QUALITY,1.,2.0);
-	
-// 	vec3 spos = clipPosition;
-// 	spos += stepv*dither ;
-
-// 	for (int i = 0; i < int(quality); i++) {
-// 		spos += stepv;
-		
-// 		float sp = texture2D(depthtex1,spos.xy).x;
-	
-//         if( sp < spos.z) {
-// 			float dist = abs(linZ(sp)-linZ(spos.z))/linZ(spos.z);
-// 			if (dist < 0.015 ) return i / quality;
-// 		}
-// 	}
-//     return 1.0;
-// }
-
-
 void SSRT_Shadows(vec3 viewPos, vec3 lightDir, float noise, bool isSSS, bool inshadowmap, inout float Shadow, inout float SSS){
     float steps = 16.0;
     vec3 clipPosition = toClipSpace3(viewPos);
@@ -484,45 +447,6 @@ void SSRT_Shadows(vec3 viewPos, vec3 lightDir, float noise, bool isSSS, bool ins
 	}
 }
 
-// void SSRT_SkySSS(vec3 viewPos, vec3 lightDir, float noise, inout float SSS, bool isgrass){
-//     float steps = 16;
-//     vec3 clipPosition = toClipSpace3(viewPos);
-
-// 	//prevents the ray from going behind the camera
-// 	float rayLength = ((viewPos.z + lightDir.z * far*sqrt(3.)) > -near) ?
-//       				  (-near -viewPos.z) / lightDir.z : far*sqrt(3.);
-
-//     vec3 direction = toClipSpace3(viewPos + lightDir*rayLength) - clipPosition;  //convert to clip space
-//     direction.xyz = direction.xyz / max(abs(direction.x)/texelSize.x, abs(direction.y)/texelSize.y);	//fixed step size
-   
-// 	float dist = 1.0 + clamp(viewPos.z*viewPos.z/50.0,0,1); // shrink sample size as distance increases
-//     vec3 rayDir = direction  / dist;
-
-// 	vec3 screenPos = clipPosition + rayDir*noise;
-
-// 	float dist3 = clamp(1-exp( viewPos.z*viewPos.z / -50),0,1);
-
-
-// 	float depththing = isgrass ? 1 : 0.05;
-
-// 	for (int i = 0; i < int(steps); i++) {
-// 		screenPos += rayDir*3;
-		
-// 		float shadowgradient = clamp(i/steps,0.0,1.0);
-
-// 		float samplePos = texture2D(depthtex1, screenPos.xy).x;
-
-// 		if(samplePos <= screenPos.z) {
-// 			vec2 linearZ = vec2(linZ(screenPos.z), linZ(samplePos));
-// 			float calcthreshold = abs(linearZ.x - linearZ.y) / linearZ.x;
-
-// 			bool depthThreshold = calcthreshold < depththing;
-
-
-// 			if(depthThreshold) SSS = shadowgradient;	
-// 		}
-// 	}
-// }
 #ifdef END_SHADER
 	float GetShading( vec3 WorldPos, vec3 LightPos, vec3 Normal){
 
@@ -579,30 +503,6 @@ vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 
 	return scatter ;
 }
-// #ifdef IS_IRIS
-// uniform vec4 lightningBoltPosition;
-// float Iris_Lightningflash(vec3 feetPlayerPos, vec3 lightningBoltPos, vec3 WorldSpace_normal, inout float Phase){
-
-// 	vec3 LightningPos = feetPlayerPos - vec3(lightningBoltPosition.x, clamp(feetPlayerPos.y, lightningBoltPosition.y+16, lightningBoltPosition.y+116.0),lightningBoltPosition.z);
-
-// 	// point light, max distance is ~500 blocks (the maximim entity render distance)
-// 	float lightDistance = 300.0 ;
-// 	float lightningLight = max(1.0 - length(LightningPos) / lightDistance, 0.0);
-
-// 	// the light above ^^^ is a linear curve. me no likey. here's an exponential one instead.
-// 	lightningLight = exp((1.0 - lightningLight) * -10.0);
-
-// 	// a phase for subsurface scattering.
-// 	vec3 PhasePos = normalize(feetPlayerPos) + vec3(lightningBoltPosition.x, lightningBoltPosition.y + 60, lightningBoltPosition.z);
-// 	float PhaseOrigin = 1.0 - clamp(dot(normalize(feetPlayerPos), normalize(PhasePos)),0.0,1.0);
-// 	Phase = exp(sqrt(PhaseOrigin) * -2.0) * 5.0 * lightningLight;
-
-// 	// good old NdotL. only normals facing towards the lightning bolt origin rise to 1.0
-// 	float NdotL = clamp(dot(LightningPos, -WorldSpace_normal), 0.0, 1.0);
-
-// 	return lightningLight * NdotL;
-// }
-// #endif
 
 
 #include "/lib/indirect_lighting_effects.glsl"

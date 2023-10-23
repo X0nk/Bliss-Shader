@@ -15,6 +15,7 @@ flat varying vec3 lightSourceColor;
 flat varying vec3 zenithColor;
 
 flat varying vec2 tempOffsets;
+
 flat varying float exposure;
 flat varying float avgBrightness;
 flat varying float rodExposure;
