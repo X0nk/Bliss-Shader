@@ -492,7 +492,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		float roughness = max(pow(1.0-SpecularTex.r,2.0),0.05);
 		float f0 = SpecularTex.g;
 	
-		if (iswater > 0.0){
+		if (iswater > 0.0 && gl_FragData[0].a < 0.9999999){
 			vec3 Reflections_Final = vec3(0.0);
 			vec4 Reflections = vec4(0.0);
 			vec3 SkyReflection = vec3(0.0); 
@@ -560,6 +560,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		} else {
 			gl_FragData[0].rgb = FinalColor;
 		}
+	
 	#else
 		gl_FragData[0].rgb = FinalColor;
 	#endif

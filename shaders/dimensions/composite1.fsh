@@ -1018,7 +1018,6 @@ void main() {
 		}
 	#endif
 
-	// gl_FragData[0].rgb = vec3(1) ;
 	
 	
 /* DRAWBUFFERS:3 */

@@ -189,7 +189,6 @@ void main() {
 
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
 	
-
 	
     /////// ----- COLOR STUFF ----- ///////
 	color = gl_Color;

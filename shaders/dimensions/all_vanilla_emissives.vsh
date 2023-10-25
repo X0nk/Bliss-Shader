@@ -21,16 +21,33 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-7.,-1.)/8.,
 							vec2(3,7.)/8.,
 							vec2(7.,-7.)/8.);
-						
+
+#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
+#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+vec4 toClipSpace3(vec3 viewSpacePosition) {
+    return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
+}
+					
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
+
+uniform sampler2D colortex4;
+flat varying float exposure;
 
 void main() {
 
-	gl_Position = ftransform();
+
+	#if defined ENCHANT_GLINT || defined SPIDER_EYES
+		exposure = texelFetch2D(colortex4,ivec2(10,37),0).r;
+
+		vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
+		gl_Position = toClipSpace3(position);
+	#else
+		gl_Position = ftransform();
+	#endif
 
 	texcoord = (gl_MultiTexCoord0).xy;
 	#ifdef ENCHANT_GLINT

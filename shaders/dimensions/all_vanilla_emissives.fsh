@@ -3,6 +3,8 @@ varying vec2 texcoord;
 
 uniform sampler2D texture;
 
+flat varying float exposure;
+
 //faster and actually more precise than pow 2.2
 vec3 toLinear(vec3 sRGB){
 	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
@@ -36,14 +38,14 @@ float encodeVec2(float x,float y){
 #endif
 
 #ifdef ENCHANT_GLINT
-    /* DRAWBUFFERS:2 */
+	/* DRAWBUFFERS:2 */
 #endif
 
 void main() {
 
 	vec4 Albedo = texture2D(texture, texcoord);
 
-    #if defined SPIDER_EYES || defined BEACON_BEAM || defined GLOWING
+    #if defined SPIDER_EYES || defined BEACON_BEAM || defined GLOWING 
         vec4 data1 = vec4(1.0); float materialMask = 1.0;
 
         #if defined SPIDER_EYES || defined GLOWING
@@ -60,8 +62,8 @@ void main() {
     #endif
 
     #ifdef ENCHANT_GLINT
-        vec3 GlintColor = toLinear(Albedo.rgb * color.rgb) * Albedo.a;
+        vec3 GlintColor = toLinear(Albedo.rgb * color.rgb) / clamp(exposure,0.01,1.0);
 
-	    gl_FragData[0] = vec4(GlintColor, Albedo.a * 0.1);
+	    gl_FragData[0] = vec4(GlintColor , Albedo.a * 0.1);
     #endif
 }

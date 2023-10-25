@@ -7,6 +7,7 @@ flat varying vec2 TAA_Offset;
 uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
+uniform sampler2D depthtex2;
 uniform sampler2D colortex0;
 uniform sampler2D colortex1;
 uniform sampler2D colortex2;
@@ -17,12 +18,14 @@ uniform sampler2D colortex6;
 uniform sampler2D colortex7;
 uniform sampler2D colortex8;
 uniform sampler2D colortex9;
+uniform sampler2D colortex10;
 uniform sampler2D colortex11;
 uniform sampler2D colortex13;
 uniform sampler2D colortex15;
 uniform vec2 texelSize;
 
-flat varying vec3 noooormal;
+
+
 flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
 flat varying vec3 WsunVec;
 
@@ -262,6 +265,7 @@ void main() {
 
     color = color*(1.0-TranslucentShader.a) + TranslucentShader.rgb; 
 
+
     #ifdef BorderFog
       if(z < 1.0 && isEyeInWater == 0) color.rgb = mix(color.rgb, sky, fog);
     #endif
@@ -344,4 +348,5 @@ void main() {
   gl_FragData[0].r = vl.a * bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
 
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);
+  
 }
