@@ -257,6 +257,8 @@ void ApplySSRT(
 			#ifdef OVERWORLD_SHADER
 				if(isGrass) rayDir.y = clamp(rayDir.y +  0.5,-1,1);
 
+				rayDir.y = mix(-1.0,rayDir.y, lightmaps.y*lightmaps.y);
+
 				skycontribution = (skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb / 10.0) * Lighting.a + Lighting.rgb;
 			#else
 				skycontribution = (skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 10.0) * Lighting.a + Lighting.rgb;
@@ -267,7 +269,7 @@ void ApplySSRT(
 				if(isGrass) rayDir.y = clamp(rayDir.y +  0.25,-1,1);
 			#endif
 
-			skycontribution = skylightcolor * (max(rayDir.y,0.0)*0.9+0.1) + Lighting.rgb;
+			skycontribution = skylightcolor * (max(rayDir.y,pow(1.0-lightmaps.y,2))*0.9+0.1) + Lighting.rgb;
 
 			#if indirect_effect == 4
 				skycontribution2 = skylightcolor + Lighting.rgb;

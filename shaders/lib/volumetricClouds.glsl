@@ -261,13 +261,6 @@ vec4 renderClouds(
 
 
 	#ifdef Cumulus
-
-		// float shadowStepSize[3] = float[](
-		// 	0.05,
-		// 	0.25 + Dither.y*0.1,
-		// 	0.50 + Dither.y*0.1
- 		// );
-
 		for(int i=0;i<maxIT_clouds;i++) {
 
 			// IntersecTerrain = length(progress_view - cameraPosition) > lViewPosM;

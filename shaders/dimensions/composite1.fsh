@@ -825,15 +825,17 @@ void main() {
 	/////////////////////////////	INDIRECT LIGHTING 	/////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////////
 
-		#ifdef OVERWORLD_SHADER
+		#if defined OVERWORLD_SHADER && (indirect_effect == 0 || indirect_effect == 1)
+
 			vec3 ambientcoefs = slopednormal / dot(abs(slopednormal), vec3(1));
 
 			float SkylightDir = ambientcoefs.y*1.5;
 			if(isGrass) SkylightDir = 1.25;
-			
-			float skylight = max(pow(viewToWorld(FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.25) ;
 
+			float skylight = max(pow(viewToWorld(FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.25 + (1.0-lightmap.y) * 0.75) ;
+		
 			AmbientLightColor *= skylight;
+
 		#endif
 
 		#ifdef NETHER_SHADER
@@ -852,9 +854,10 @@ void main() {
 		#endif
 
 		Indirect_lighting = DoAmbientLightColor(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
-
-		// Indirect_lighting += LightningFlashLighting;
-
+		
+		#ifdef OVERWORLD_SHADER
+			Indirect_lighting += LightningFlashLighting;
+		#endif
 	////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	UNDER WATER SHADING		////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////
