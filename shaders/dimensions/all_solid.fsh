@@ -319,7 +319,7 @@ void main() {
 
 		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(fragpos)/10,0.0),1.5),0.0,1.0));
 		#ifdef HAND
-			torchlightmap = 0.7;
+			torchlightmap *= 0.9;
 		#endif
 
 	#endif
