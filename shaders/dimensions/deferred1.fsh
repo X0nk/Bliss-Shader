@@ -2,6 +2,7 @@
 
 uniform sampler2D colortex4;
 uniform sampler2D depthtex1;
+uniform sampler2D depthtex2;
 
 uniform float near;
 uniform float far;

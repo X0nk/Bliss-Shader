@@ -33,6 +33,7 @@ uniform vec2 texelSize;
 
 uniform ivec2 eyeBrightnessSmooth;
 uniform float rainStrength;
+flat varying float HELD_ITEM_BRIGHTNESS;
 
 #ifndef OVERWORLD_SHADER
 	uniform float nightVision;
@@ -99,6 +100,13 @@ void main() {
 	#ifndef OVERWORLD_SHADER
 		lightmap.y = 1.0;
 	#endif
+
+	#ifdef Hand_Held_lights
+		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(viewPos)/10,0.0),1.5),0.0,1.0));
+	#endif
+
+
+
 	#ifdef WEATHER
 		gl_FragData[1].a = TEXTURE.a; // for bloomy rain and stuff
 	#endif
@@ -117,9 +125,8 @@ void main() {
 	vec3 Indirect_lighting = vec3(0.0);
 	vec3 Torch_Color = vec3(TORCH_R,TORCH_G,TORCH_B);
 	
-	#ifdef LIT
-		Torch_Color *= LIT_PARTICLE_BRIGHTNESS;
-	#endif
+	
+	if(lightmap.x >= 0.9) Torch_Color *= LIT_PARTICLE_BRIGHTNESS;
 
 	#ifdef OVERWORLD_SHADER
 		float Shadows = 1.0;
@@ -161,7 +168,7 @@ void main() {
 		vec3 AmbientLightColor = vec3(1.0);
 	#endif
 
-	Indirect_lighting = DoAmbientLightColor(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), clamp(lightmap.xy,0,1));
+	Indirect_lighting = DoAmbientLightColor(AmbientLightColor, Torch_Color, clamp(lightmap.xy,0,1));
 
 	#ifdef LINES
 		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * toLinear(color.rgb);

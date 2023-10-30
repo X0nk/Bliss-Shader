@@ -264,7 +264,7 @@ vec4 TAA_hq(){
 		vec4 albedoPrev = texture2D(colortex5, previousPosition.xy);
 		vec3 supersampled =  albedoPrev.rgb * albedoPrev.a + albedoCurrent0;
 
-		if (length(velocity) > 1e-6 || hideGUI < 1) return vec4(albedoCurrent0,1.0);
+		if ( hideGUI < 1) return vec4(albedoCurrent0,1.0);
 		return vec4(supersampled/(albedoPrev.a+1.0), albedoPrev.a+1.0);
 	#endif
 }

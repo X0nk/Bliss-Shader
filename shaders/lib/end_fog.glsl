@@ -65,13 +65,20 @@ SOFTWARE.*/
 // vec3 RandomPosition = hash31(frameTimeCounter);
 vec3 ManualLightPos = vec3(ORB_X, ORB_Y, ORB_Z);
 
+// int switcher = frameCounter % 2 == 0 ? 0 : 1; 
+
+// float OneOrZero = int(mod(gl_FragCoord.x*gl_FragCoord.y + switcher, 2));
+
 void LightSourcePosition(vec3 WorldPos, vec3 CameraPos, inout vec3 Pos1, inout vec3 Pos2){
-	
+
 	Pos1 = WorldPos - vec3(0,200,0);
+	// Pos2 = WorldPos - vec3(-50,100,0);
+	// Pos1 = mix(Pos1, Pos2, OneOrZero);
+
+
 
     vec3 Origin = WorldPos - CameraPos - ManualLightPos;
 
-    
     float cellSize = 200;
     vec3 cellPos = CameraPos ;
 
@@ -82,6 +89,7 @@ void LightSourcePosition(vec3 WorldPos, vec3 CameraPos, inout vec3 Pos1, inout v
 
 	Origin -= (randomPos * 2.0 - 1.0);
 
+	// Pos1 = mix(Pos1, Origin, OneOrZero);
 
     Pos2 = Origin;
 }
@@ -169,8 +177,12 @@ float EndLightMie(vec3 LightPos){
 }
 
 void LightSourceColors(inout vec3 Color1, inout vec3 Color2){
-    Color1 = vec3(0.7,0.88,1.0); 
-    Color2 = vec3(ORB_R,ORB_G,ORB_B);
+    // Color1 = vec3(0.7,0.88,1.0); 
+    // Color2 = vec3(ORB_R,ORB_G,ORB_B);
+    Color1 = vec3(1.0,0.5,1.0); 
+    Color2 = vec3(0.0,0.5,1.0);
+
+	// Color1 = mix(Color1, Color2, OneOrZero);
 }
 
 vec3 LightSourceLighting( vec3 WorldPos, vec3 LightPos, float Dither, float VolumeDensity, vec3 LightColor, float Phase ){
@@ -178,7 +190,10 @@ vec3 LightSourceLighting( vec3 WorldPos, vec3 LightPos, float Dither, float Volu
     float Mie = EndLightMie(LightPos);
 	float Shadow = 0.0;
 
+	// vec3 shadowSamplePos = WorldPos - LightPos * 0.05;
+
 	for (int j=0; j < 3; j++){
+		// shadowSamplePos -= LightPos * 0.25 * Dither * min(j,1);
 		vec3 shadowSamplePos = WorldPos - LightPos * (0.05 + j * (0.25 + Dither*0.15));
 		Shadow += cloudVol(shadowSamplePos);
 	}
@@ -254,6 +269,7 @@ vec4 GetVolumetricFog(
         LightSourcePosition(progressW, cameraPosition, LightPos1, LightPos2);
 
 		float VolumeDensity = max(cloudVol(progressW),0.0);
+		// float VolumeDensity = 0.0;
 		float Density = max(VolumeDensity,0.0);
 
 
@@ -269,7 +285,7 @@ vec4 GetVolumetricFog(
 		vec3 Light1 = vec3(0); vec3 Light2 = vec3(0);
 
 
-		// Density += clamp((1.0 - length(LightPos1) / 10.0) * 10 ,0.0,1.0); // THE ORRRRRRRRRRRRRRRRRRRRRRRRRRB
+		Density += clamp((1.0 - length(LightPos1) / 10.0) * 10 ,0.0,1.0); // THE ORRRRRRRRRRRRRRRRRRRRRRRRRRB
 		Light1 = LightSourceLighting(progressW, LightPos1, dither2, VolumeDensity, LightCol1, Phase1);
 
 		#if lightsourceCount == 2

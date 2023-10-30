@@ -49,6 +49,10 @@ uniform float viewWidth;
 uniform int hideGUI;
 uniform float screenBrightness;
 
+uniform int heldItemId;
+uniform int heldItemId2;
+flat varying float HELD_ITEM_BRIGHTNESS;
+
 uniform vec2 texelSize;
 uniform int framemod8;
 
@@ -85,7 +89,12 @@ void main() {
  	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
  	gl_Position = toClipSpace3(position);
 
+	HELD_ITEM_BRIGHTNESS = 0.0;
 
+	#ifdef Hand_Held_lights
+		if(heldItemId == 100 || heldItemId2 == 100) HELD_ITEM_BRIGHTNESS = 0.9;
+	#endif
+	
 	float mat = 0.0;
 	
 	if(mc_Entity.x == 8.0) {

@@ -169,6 +169,13 @@ void main() {
   // uniform sampler2D shadowcolor0;
   // uniform sampler2D shadowtex0;
   // uniform sampler2D shadowtex1;
+  // vec2 coord = gl_FragCoord.xy;
+  // int invertChecker = int(mod(coord.x,2)) * int(mod(coord.y,2));
+
+  // int checker = int(mod(coord.x*coord.y,2));
+  // int checker2 = int(mod(coord.x*coord.y+1,2));
+
+  // gl_FragColor.rgb = vec3(0.2) * checker * checker2;
 
 
   // if( hideGUI == 1){

@@ -37,7 +37,7 @@ const bool colortex5MipmapEnabled = true;
 	// #define LIGHTSOURCE_REFLECTION
 #endif
 
-
+uniform int hideGUI;
 uniform sampler2D noisetex; //noise
 uniform sampler2D depthtex0; //depth
 uniform sampler2D depthtex1; //depth
@@ -420,18 +420,14 @@ void SSRT_Shadows(vec3 viewPos, vec3 lightDir, float noise, bool isSSS, bool ins
    
     vec3 rayDir = direction * (isSSS ? 1.5 : 3.0) * vec3(RENDER_SCALE,1.0);
 	
-	vec3 screenPos = clipPosition*vec3(RENDER_SCALE,1.0) + rayDir*noise;
+	vec3 screenPos = clipPosition * vec3(RENDER_SCALE,1.0) + rayDir*noise;
+	if(isSSS)screenPos -= rayDir*0.9;
 
-	if(isSSS) screenPos -= rayDir*0.9;
-
-	float shadowgradient = 0;
 	for (int i = 0; i < int(steps); i++) {
 		
 		screenPos += rayDir;
-
-		float shadowGradient = i/steps;
-
-		float samplePos = texture2D(depthtex1, screenPos.xy).x;
+		
+		float samplePos = texture2D(depthtex2, screenPos.xy).x;
 		if(samplePos <= screenPos.z) {
 			vec2 linearZ = vec2(linZ(screenPos.z), linZ(samplePos));
 			float calcthreshold = abs(linearZ.x - linearZ.y) / linearZ.x;
@@ -439,10 +435,9 @@ void SSRT_Shadows(vec3 viewPos, vec3 lightDir, float noise, bool isSSS, bool ins
 			bool depthThreshold1 = calcthreshold < 0.015;
 			bool depthThreshold2 = calcthreshold < 0.05;
 
-			// if (depthThreshold1) Shadow = inshadowmap ? shadowGradient : 0.0;
 			if (depthThreshold1) Shadow = 0.0;
 
-			if (depthThreshold2) SSS = shadowGradient;
+			if (depthThreshold2) SSS = i/steps;
 				
 		}
 	}
@@ -509,7 +504,10 @@ vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 #include "/lib/indirect_lighting_effects.glsl"
 #include "/lib/PhotonGTAO.glsl"
 
+
 void main() {
+
+		vec3 DEBUG =vec3( 1.0);
 
 	////// --------------- SETUP STUFF --------------- //////
 		vec2 texcoord = gl_FragCoord.xy*texelSize;
@@ -526,6 +524,8 @@ void main() {
 		vec3 viewPos = toScreenSpace(vec3(texcoord/RENDER_SCALE - TAA_Offset*texelSize*0.5,z));
 		vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
 		vec3 feetPlayerPos_normalized = normVec(feetPlayerPos);
+
+
 
 	////// --------------- UNPACK OPAQUE GBUFFERS --------------- //////
 	
@@ -570,7 +570,7 @@ void main() {
 		bool entities = abs(dataUnpacked1.w-0.45) < 0.01;	
 		// bool isBoss = abs(dataUnpacked1.w-0.60) < 0.01;
 		bool isGrass = abs(dataUnpacked1.w-0.60) < 0.01;
-		bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
+		bool hand = abs(dataUnpacked1.w-0.75) < 0.01 && z0 < 1.0;
 		// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
 
 
@@ -674,8 +674,10 @@ void main() {
 		#endif
 
 		vec3 feetPlayerPos_shadow = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
-
-		if(!hand) GriAndEminShadowFix(feetPlayerPos_shadow, viewToWorld(FlatNormals), vanilla_AO, lightmap.y, entities);
+		
+		if(!entities){
+			if(!hand) GriAndEminShadowFix(feetPlayerPos_shadow, viewToWorld(FlatNormals), vanilla_AO, lightmap.y, entities);
+		}
 
 		// mat4 Custom_ViewMatrix = BuildShadowViewMatrix(LightDir);
 		// vec3 projectedShadowPosition = mat3(Custom_ViewMatrix) * feetPlayerPos_shadow  + Custom_ViewMatrix[3].xyz;
@@ -697,13 +699,15 @@ void main() {
 			if (shadowNDOTL >= -0.001){
 				Shadows = 0.0;
 				int samples = SHADOW_FILTER_SAMPLE_COUNT;
-				float smallbias = 0;
+				float smallbias = 0.0;
 
 				if(hand){
 					samples = 1;
-					smallbias = -0.0005;
 					noise = 0.5;
+					smallbias = -0.0004;
 				}
+
+				if(entities) smallbias = -0.0001;
 				
 
 				projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
@@ -768,7 +772,10 @@ void main() {
 
 					Shadows = min(Shadows, SS_shadow);
 					
-					if (!inShadowmapBounds) ShadowBlockerDepth = max(ShadowBlockerDepth, SS_shadowSSS);
+					if (!inShadowmapBounds) ShadowBlockerDepth = max(ShadowBlockerDepth, clamp(SS_shadowSSS,0.0,1.0));
+
+
+					// DEBUG = 1.0-SS_shadowSSS;
 				#else
 
 					if (!inShadowmapBounds) Direct_SSS = vec3(0.0);
@@ -782,7 +789,7 @@ void main() {
 
 			if (!inShadowmapBounds){
 				Direct_SSS *= lightmapAsShadows;
-				Direct_SSS *= 1.0-NdotL;
+				// Direct_SSS *= 1.0-NdotL;
 			}
 		#endif
 
@@ -1020,8 +1027,7 @@ void main() {
 			waterVolumetrics_notoverworld(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth , estimatedDepth, Vdiff, noise_2, totEpsilon, scatterCoef, ambientColVol);
 		}
 	#endif
-
 	
-	
+	// gl_FragData[0].rgb = vec3(hand);
 /* DRAWBUFFERS:3 */
 }

@@ -15,6 +15,7 @@ varying vec4 color;
 	flat varying vec4 lightCol;
 #endif
 
+flat varying float HELD_ITEM_BRIGHTNESS;
 
 const bool colortex4MipmapEnabled = true;
 uniform sampler2D noisetex;
@@ -371,6 +372,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	
 	#ifndef OVERWORLD_SHADER
 		lightmap.y = 1.0;
+	#endif
+	
+	#ifdef Hand_Held_lights
+		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS*clamp( pow(max(1.0-length(viewPos)/10,0.0),1.5),0.0,1.0));
 	#endif
 
 	vec3 Indirect_lighting = vec3(0.0);

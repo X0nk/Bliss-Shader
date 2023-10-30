@@ -29,6 +29,10 @@ uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;
 uniform ivec2 eyeBrightnessSmooth;
 
+uniform int heldItemId;
+uniform int heldItemId2;
+flat varying float HELD_ITEM_BRIGHTNESS;
+
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-1.,3.)/8.,
 							vec2(5.0,1.)/8.,
@@ -54,6 +58,14 @@ void main() {
 	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
 	vec2 lmcoord = gl_MultiTexCoord1.xy / 255.0; // is this even correct? lol'
 	lmtexcoord.zw = lmcoord;
+
+
+	HELD_ITEM_BRIGHTNESS = 0.0;
+
+	#ifdef Hand_Held_lights
+		if(heldItemId == 100 || heldItemId2 == 100) HELD_ITEM_BRIGHTNESS = 0.9;
+	#endif
+
 
 	#ifdef WEATHER
 		vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;

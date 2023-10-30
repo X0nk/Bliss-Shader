@@ -261,6 +261,8 @@ vec4 renderClouds(
 
 
 	#ifdef Cumulus
+
+
 		for(int i=0;i<maxIT_clouds;i++) {
 
 			// IntersecTerrain = length(progress_view - cameraPosition) > lViewPosM;

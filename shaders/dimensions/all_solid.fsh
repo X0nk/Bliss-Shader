@@ -311,7 +311,13 @@ void main() {
 	float torchlightmap = lmtexcoord.z;
 
 	#ifdef Hand_Held_lights
+
+
 		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(fragpos)/10,0.0),1.5),0.0,1.0));
+		#ifdef HAND
+			torchlightmap = 0.7;
+		#endif
+
 	#endif
 	
 	float lightmap = clamp( (lmtexcoord.w-0.8) * 10.0,0.,1.);
@@ -435,7 +441,7 @@ void main() {
 		else Albedo.a = 0.0;
 	#endif
 
-	#if defined HAND
+	#ifdef HAND
 		if (Albedo.a > 0.1) Albedo.a = 0.75;
 		else Albedo.a = 0.0;
 	#endif

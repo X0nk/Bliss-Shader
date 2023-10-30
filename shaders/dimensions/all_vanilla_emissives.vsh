@@ -38,7 +38,13 @@ uniform sampler2D colortex4;
 flat varying float exposure;
 
 void main() {
+	color = gl_Color;
 
+	#ifdef ENCHANT_GLINT
+		texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).st;
+	#else
+		texcoord = (gl_MultiTexCoord0).xy;
+	#endif
 
 	#if defined ENCHANT_GLINT || defined SPIDER_EYES
 		exposure = texelFetch2D(colortex4,ivec2(10,37),0).r;
@@ -49,17 +55,10 @@ void main() {
 		gl_Position = ftransform();
 	#endif
 
-	texcoord = (gl_MultiTexCoord0).xy;
-	#ifdef ENCHANT_GLINT
-		texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).st;
-		// float exposure = texelFetch2D(colortex4, ivec2(10,37),0).r;
-	#endif
-	
-	color = gl_Color;
+
 	#ifdef BEACON_BEAM
 		if(gl_Color.a < 1.0) gl_Position = vec4(10,10,10,0);
 	#endif
-
 
 
 	#ifdef TAA_UPSCALING
