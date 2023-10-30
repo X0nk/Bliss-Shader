@@ -282,7 +282,11 @@ vec4 texture2D_POMSwitch(
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 
-/* RENDERTARGETS: 1,7,8,15 */
+#ifdef HAND
+	/* RENDERTARGETS: 1,7,8,15,2 */
+#else
+	/* RENDERTARGETS: 1,7,8,15 */
+#endif
 void main() {
 
 
@@ -442,8 +446,11 @@ void main() {
 	#endif
 
 	#ifdef HAND
-		if (Albedo.a > 0.1) Albedo.a = 0.75;
-		else Albedo.a = 0.0;
+		if (Albedo.a > 0.1){
+			Albedo.a = 0.75;
+			gl_FragData[4].a = 0.0;
+		} else Albedo.a = 1.0;
+
 	#endif
 
 
