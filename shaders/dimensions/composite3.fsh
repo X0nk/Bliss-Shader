@@ -98,7 +98,8 @@ vec4 BilateralUpscale(sampler2D tex, sampler2D depth,vec2 coord,float frDepth){
   ivec2 posD = ivec2(coord*VL_RENDER_RESOLUTION)*scaling;
   ivec2 posVl = ivec2(coord*VL_RENDER_RESOLUTION);
   float dz = zMults.x;
-  ivec2 pos = (ivec2(gl_FragCoord.xy+frameCounter) % 2 )*2;
+  ivec2 pos = (ivec2(gl_FragCoord.xy) % 2 )*2;
+	//pos = ivec2(1,-1);
 
   ivec2 tcDepth =  posD + ivec2(-2,-2) * scaling + pos * scaling;
   float dsample = ld(texelFetch2D(depth,tcDepth,0).r);
@@ -194,12 +195,12 @@ void main() {
   // vec4 vl = texture2D(colortex0,texcoord * 0.5);
 
 	////// --------------- UNPACK OPAQUE GBUFFERS --------------- //////
-	vec4 data_opaque = texture2D(colortex1,texcoord);
-	vec4 dataUnpacked1 = vec4(decodeVec2(data_opaque.z),decodeVec2(data_opaque.w)); // normals, lightmaps
+	// vec4 data_opaque = texture2D(colortex1,texcoord);
+	// vec4 dataUnpacked1 = vec4(decodeVec2(data_opaque.z),decodeVec2(data_opaque.w)); // normals, lightmaps
 	// vec4 dataUnpacked2 = vec4(decodeVec2(data.z),decodeVec2(data.w));
 	
-	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
-	vec2 lightmap = dataUnpacked1.yz;
+	// bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
+	// vec2 lightmap = dataUnpacked1.yz;
 
 	////// --------------- UNPACK TRANSLUCENT GBUFFERS --------------- //////
 
@@ -306,7 +307,7 @@ void main() {
     fogfade *= 1.0 - clamp( length(fragpos) / far,0.0,1.0);
 
     color.rgb *= fogfade ;
-    bloomyFogMult *= 0.0;
+    bloomyFogMult *= 0.3;
   }
 
   // apply VL fog to the scene

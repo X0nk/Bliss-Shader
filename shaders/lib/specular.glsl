@@ -209,6 +209,7 @@ void DoSpecularReflections(
 	vec3 L = Basis * Ln;
 
 	float Fresnel = pow(clamp(1.0 + dot(-Ln, SamplePoints),0.0,1.0), 5.0); // Schlick's approximation
+
 	float RayContribution = lerp(F0, 1.0, Fresnel); // ensure that when the angle is 0 that the correct F0 is used.
 	
 	#ifdef Rough_reflections

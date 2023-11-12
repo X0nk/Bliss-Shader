@@ -308,13 +308,13 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	#ifdef Vanilla_like_water
 		if (iswater > 0.95){
-			// gl_FragData[0].a = luma(Albedo.rgb);
-			Albedo = color.rgb * sqrt(luma(Albedo.rgb));
+			Albedo *= sqrt(luma(Albedo));
+			// Albedo = toLinear( gl_FragData[0].rgb * sqrt(luma(gl_FragData[0].rgb)));
 		}
 	#else
 		if (iswater > 0.95){
 			Albedo = vec3(0.0);
-			gl_FragData[0] = vec4(vec3(0.0),1.0/255.0);
+			gl_FragData[0].a = 1.0/255.0;
 		}
 	#endif
 
@@ -454,6 +454,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		// float skylight = max(pow(viewToWorld(flatnormal).y*0.5+0.5,0.1) + viewToWorld(normal).y, 0.25) * 1.35;
 		// Indirect_lighting = DoAmbientLighting(averageSkyCol_Clouds, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy, skylight);
+	
+	
 	#endif
 
 	#ifdef NETHER_SHADER
@@ -475,6 +477,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	Indirect_lighting = DoAmbientLightColor(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
+	// Albedo = Albedo * exp2( (clamp(-dot(normal, normalize(viewPos)),0.0,1.0))  * -10.0);//pow(clamp(1.0 + dot(normal, normalize(viewPos)), 0.0, 1.0),5.0);
 
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
 	
@@ -496,7 +499,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	
 		float roughness = max(pow(1.0-SpecularTex.r,2.0),0.05);
 		float f0 = SpecularTex.g;
-	
+
+		roughness = 0.0;
+		// f0 = 0.9;
+
 		if (iswater > 0.0 && gl_FragData[0].a < 0.9999999){
 			vec3 Reflections_Final = vec3(0.0);
 			vec4 Reflections = vec4(0.0);
@@ -509,8 +515,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 			float normalDotEye = dot(normal, normalize(viewPos));
 			float fresnel =  pow(clamp(1.0 + dot(normal, normalize(viewPos)), 0.0, 1.0),5.0);
-			
-			// float fresnel = exp(clamp(0.0 - dot(normal, normalize(viewPos)), 0.0, 1.0) * -5);
 
 			// snells window looking thing
 			if(isEyeInWater == 1 ) fresnel = pow(clamp(1.66 + normalDotEye,0.0,1.0), 25.0);

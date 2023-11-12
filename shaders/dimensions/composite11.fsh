@@ -100,9 +100,9 @@ void main() {
 
 
 
-	// vec3 bloom = (texture2D(colortex3,texcoord/clampedRes*vec2(1920.,1080.)*0.5*BLOOM_QUALITY).rgb)/2./7.0;
+	vec3 bloom = (texture2D(colortex3,texcoord/clampedRes*vec2(1920.,1080.)*BLOOM_QUALITY).rgb)/2./7.0;
 
-	vec3 bloom = texture2D(colortex3, texcoord/clampedRes*vec2(1920.,1080.)*BLOOM_QUALITY).rgb / 2.0 / 7.0;
+	// vec3 bloom = texture2D(colortex3, texcoord/clampedRes*vec2(1920.,1080.)*BLOOM_QUALITY).rgb / 2.0 / 7.0;
 
 	float lightScat = clamp(BLOOM_STRENGTH  * 0.05 * pow(exposure.a, 0.2)  ,0.0,1.0)*vignette;
 
