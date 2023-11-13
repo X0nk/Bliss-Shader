@@ -92,7 +92,7 @@ void main() {
 /* DRAWBUFFERS:4 */
 
 gl_FragData[0] = vec4(0.0);
-float mixhistory = 0.07;
+float mixhistory = 0.06;
 
 #ifdef OVERWORLD_SHADER
 	///////////////////////////////
