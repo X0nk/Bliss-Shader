@@ -491,7 +491,7 @@ vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 	// vec3 scatter =   sqrt(exp(-(absorbed * Scattering * 15))) * (1.0 - Scattering);
 	// vec3 scatter =   exp(-5 * Scattering)*vec3(1);
 	
-	vec3 scatter = exp((Scattering*Scattering) * absorbed  * -5) * sqrt(1.0 - Scattering);
+	vec3 scatter = exp((Scattering*Scattering) * absorbed  * -5.0) * sqrt(1.0 - Scattering);
 
 	// scatter *= pow(Density,LabSSS_Curve);
 	scatter *= clamp(1 - exp(Density * -10),0,1);
@@ -640,7 +640,7 @@ void main() {
 			Background += Sky;
 
 			#ifdef VOLUMETRIC_CLOUDS
-				vec4 Clouds = texture2D_bicubic(colortex0, texcoord*CLOUDS_QUALITY);
+				vec4 Clouds = texture2D_bicubic_offset(colortex0, texcoord*CLOUDS_QUALITY, noise);
 				Background = Background * Clouds.a + Clouds.rgb;
 			#endif
 
@@ -839,6 +839,7 @@ void main() {
 			float SkylightDir = ambientcoefs.y*1.5;
 			if(isGrass) SkylightDir = 1.25;
 
+
 			float skylight = max(pow(viewToWorld(FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.25 + (1.0-lightmap.y) * 0.75) ;
 		
 			AmbientLightColor *= skylight;
@@ -949,7 +950,7 @@ void main() {
 					SkySSS = ScreenSpace_SSS(viewPos, FlatNormals, hand, isLeaf, noise);
 				#endif
 
-				vec3 ambientColor = (averageSkyCol_Clouds / 10.0);
+				vec3 ambientColor = averageSkyCol_Clouds / 12.0; // divide by 12 to match the brightest part of ambient light facing up
 				float skylightmap =  pow(lightmap.y,3);
 
 				Indirect_SSS = SubsurfaceScattering_sky(albedo, SkySSS, LabSSS);
@@ -961,7 +962,7 @@ void main() {
 				SSS_forSky *= skylightmap;
 
 				//light up dark parts so its more visible
-				Indirect_lighting = max(Indirect_lighting, SSS_forSky);
+				Indirect_lighting = max(Indirect_lighting, SSS_forSky * ambientsss_brightness);
 
 				// apply to ambient light.
 				Indirect_lighting = max(Indirect_lighting, Indirect_SSS * ambientsss_brightness);

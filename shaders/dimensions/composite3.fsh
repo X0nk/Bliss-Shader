@@ -174,6 +174,20 @@ vec3 viewToWorld(vec3 viewPosition) {
 void applyContrast(inout vec3 color, float contrast){
   color = ((color - 0.5) * max(contrast, 0.0)) + 0.5;
 }
+
+void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, vec2 depths){
+
+  vec2 UnalteredTexcoord = Texcoord;
+
+  // Texcoord = min(Texcoord, 1.0-abs(Texcoord));
+
+  Texcoord = abs(Texcoord + (TangentNormals * clamp((ld(depths.x) - ld(depths.y)) * 0.5,0.0,0.15)) * RENDER_SCALE );
+
+  float DistortedAlpha = decodeVec2(texture2D(colortex11,Texcoord).b).g;
+  
+  if(DistortedAlpha <= 0.001) Texcoord = UnalteredTexcoord; // remove distortion on non-translucents
+}
+
 void main() {
   /* DRAWBUFFERS:73 */
 
@@ -234,12 +248,18 @@ void main() {
     
   /// --- REFRACTION --- ///
   #ifdef Refraction
-    refractedCoord += (tangentNormals * clamp((ld(z2) - ld(z)) * 0.5,0.0,0.15)) * RENDER_SCALE;
-    // refractedCoord += tangentNormals * 0.1 * RENDER_SCALE;
+    // refractedCoord = clamp(refractedCoord + (tangentNormals * clamp((ld(z2) - ld(z)) * 0.5,0.0,0.15)) * RENDER_SCALE ,-1.0,1.0);
 
-    float refractedalpha = decodeVec2(texture2D(colortex11,refractedCoord).b).g;
-    float refractedalpha2 = texture2D(colortex7,refractedCoord).a;
-    if( refractedalpha <= 0.001 || z < 0.56) refractedCoord = texcoord; // remove refracted coords on solids
+    // // refractedCoord = clamp(refractedCoord - tangentNormals, refractedCoord-0.5,refractedCoord);
+
+    // // if(tangentNormals.xy <= vec2(0.0, 0.0) ) refractedCoord = abs(refractedCoord - tangentNormals);
+    // // refractedCoord += tangentNormals * 0.1 * RENDER_SCALE;
+
+    // float refractedalpha = decodeVec2(texture2D(colortex11,refractedCoord).b).g;
+    // // float refractedalpha2 = texture2D(colortex7,refractedCoord).a;
+    // if( refractedalpha <= 0.001) refractedCoord = texcoord; // remove refracted coords on solids
+
+    ApplyDistortion(refractedCoord, tangentNormals, vec2(z2,z));
   #endif
   
   /// --- MAIN COLOR BUFFER --- ///

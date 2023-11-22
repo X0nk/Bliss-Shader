@@ -99,6 +99,35 @@ vec4 texture2D_bicubic(sampler2D tex, vec2 uv)
            g1(fuv.y) * (g0x * texture2D(tex, p2)  +
                         g1x * texture2D(tex, p3));
 }
+vec4 texture2D_bicubic_offset(sampler2D tex, vec2 uv, float noise)
+{
+	float offsets = noise * (2.0 * 3.141592653589793238462643383279502884197169);
+	vec2 circleOffsets = vec2(sin(offsets), cos(offsets));
+
+	vec4 texelSize = vec4(texelSize,1.0/texelSize);
+	uv = uv*texelSize.zw;
+	
+	vec2 iuv = floor( uv + circleOffsets );
+	vec2 fuv = fract( uv + circleOffsets );
+
+    float g0x = g0(fuv.x);
+    float g1x = g1(fuv.x);
+    float h0x = h0(fuv.x);
+    float h1x = h1(fuv.x);
+    float h0y = h0(fuv.y);
+    float h1y = h1(fuv.y);
+
+	vec2 p0 = (vec2(iuv.x + h0x, iuv.y + h0y) - 0.5) * (texelSize.xy);
+	vec2 p1 = (vec2(iuv.x + h1x, iuv.y + h0y) - 0.5) * (texelSize.xy);
+	vec2 p2 = (vec2(iuv.x + h0x, iuv.y + h1y) - 0.5) * (texelSize.xy);
+	vec2 p3 = (vec2(iuv.x + h1x, iuv.y + h1y) - 0.5) * (texelSize.xy);
+
+    return (g0(fuv.y) * (g0x * texture2D(tex, p0)  +
+                        g1x * texture2D(tex, p1)) +
+           g1(fuv.y) * (g0x * texture2D(tex, p2)  +
+                        g1x * texture2D(tex, p3)));
+}
+
 vec2 sphereToCarte(vec3 dir) {
     float lonlat = atan(-dir.x, -dir.z);
     return vec2(lonlat * (0.5/pi) +0.5,0.5*dir.y+0.5);
