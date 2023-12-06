@@ -94,7 +94,8 @@ vec3 sky_transmittance(vec3 position, vec3 direction, const float steps) {
 
 vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 sunVector, vec3 moonVector, out vec2 pid, out vec3 transmittance, const int iSteps, float noise) {
 	const int jSteps = 4;
-
+// clamp(sunVector.y*2.0,0.0,1.0)
+	float GroundDarkening = max(exp2(-15 * clamp(-viewVector.y,0.0,1.0)) * 0.7+0.3, clamp(sunVector.y*2.0,0.0,1.0)); // darken the ground in the sky.
 	vec3 viewPos = (sky_planetRadius + eyeAltitude) * upVector;
 
 	vec2 aid = rsi(viewPos, viewVector, sky_atmosphereRadius);
@@ -128,9 +129,9 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 		vec3 stepAirmass      = density * stepSize ;
 		vec3 stepOpticalDepth = sky_coefficientsAttenuation * stepAirmass ;
 
-		vec3 stepTransmittance       = exp2(-stepOpticalDepth * rLOG2) ;
+		vec3 stepTransmittance       = exp2(-stepOpticalDepth * rLOG2);
 		vec3 stepTransmittedFraction = clamp01((stepTransmittance - 1.0) / -stepOpticalDepth) ;
-		vec3 stepScatteringVisible   = transmittance * stepTransmittedFraction ;
+		vec3 stepScatteringVisible   = transmittance * stepTransmittedFraction * GroundDarkening ;
 
 		scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun ) * stepScatteringVisible * sky_transmittance(position, sunVector*0.5+0.1,  jSteps)  ;
 		scatteringMoon += sky_coefficientsScattering * (stepAirmass.xy * phaseMoon) * stepScatteringVisible * sky_transmittance(position, moonVector, jSteps);

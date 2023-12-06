@@ -12,7 +12,6 @@ uniform sampler2D colortex0;
 uniform sampler2D colortex1;
 uniform sampler2D colortex2;
 uniform sampler2D colortex3;
-// uniform sampler2D colortex4;
 uniform sampler2D colortex5;
 uniform sampler2D colortex6;
 uniform sampler2D colortex7;
@@ -20,11 +19,14 @@ uniform sampler2D colortex8;
 uniform sampler2D colortex9;
 uniform sampler2D colortex10;
 uniform sampler2D colortex11;
+// uniform sampler2D colortex12;
 uniform sampler2D colortex13;
 uniform sampler2D colortex15;
 uniform vec2 texelSize;
 
-
+#if defined NETHER_SHADER || defined END_SHADER
+  uniform sampler2D colortex4;
+#endif
 
 flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
 flat varying vec3 WsunVec;
@@ -360,6 +362,7 @@ void main() {
   #ifdef display_LUT
   	vec2 movedTC = texcoord;
     vec3 thingy = texture2D(colortex4,movedTC).rgb / 30;
+
     if(luma(thingy) > 0.0){
       color.rgb =  thingy;
       vl.a = 1.0;

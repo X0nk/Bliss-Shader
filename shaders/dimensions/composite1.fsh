@@ -6,8 +6,7 @@ const bool colortex5MipmapEnabled = true;
 #ifdef OVERWORLD_SHADER
 	const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
-
-
+	
 	flat varying vec3 averageSkyCol_Clouds;
 	flat varying vec4 lightCol;
 
@@ -54,6 +53,7 @@ uniform sampler2D colortex7; //water?
 uniform sampler2D colortex8; //Specular
 uniform sampler2D colortex9; //Specular
 uniform sampler2D colortex10;
+uniform sampler2D colortex12;
 uniform sampler2D colortex15; // flat normals(rgb), vanillaAO(alpha)
 
 
@@ -507,7 +507,7 @@ vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 
 void main() {
 
-		vec3 DEBUG =vec3( 1.0);
+		vec3 DEBUG = vec3( 1.0);
 
 	////// --------------- SETUP STUFF --------------- //////
 		vec2 texcoord = gl_FragCoord.xy*texelSize;
@@ -640,7 +640,7 @@ void main() {
 			Background += Sky;
 
 			#ifdef VOLUMETRIC_CLOUDS
-				vec4 Clouds = texture2D_bicubic_offset(colortex0, texcoord*CLOUDS_QUALITY, noise);
+				vec4 Clouds = texture2D_bicubic_offset(colortex0, texcoord*CLOUDS_QUALITY, noise_2);
 				Background = Background * Clouds.a + Clouds.rgb;
 			#endif
 
@@ -793,18 +793,11 @@ void main() {
 			}
 		#endif
 
-
-
-		// #if SSS_TYPE != 0
-		// 	Direct_SSS *= 1.0-clamp(NdotL*Shadows,0,1);
-		// #endif
-
 		#ifdef CLOUDS_SHADOWS
 			cloudShadow = GetCloudShadow(feetPlayerPos);
 			Shadows *= cloudShadow;
 			Direct_SSS *= cloudShadow;
 		#endif
-
 	#endif
 
 
@@ -843,7 +836,6 @@ void main() {
 			float skylight = max(pow(viewToWorld(FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.25 + (1.0-lightmap.y) * 0.75) ;
 		
 			AmbientLightColor *= skylight;
-
 		#endif
 
 		#ifdef NETHER_SHADER
@@ -996,6 +988,7 @@ void main() {
 		Emission(gl_FragData[0].rgb, albedo, SpecularTex.a);
 		
 		if(lightningBolt) gl_FragData[0].rgb = vec3(77.0, 153.0, 255.0);
+
 	}
 	
 	#ifdef OVERWORLD_SHADER
@@ -1028,7 +1021,8 @@ void main() {
 			waterVolumetrics_notoverworld(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth , estimatedDepth, Vdiff, noise_2, totEpsilon, scatterCoef, ambientColVol);
 		}
 	#endif
+
+	// gl_FragData[0].rgb = skyCloudsFromTexLOD2(feetPlayerPos_normalized, colortex12, 6).rgb/30;
 	
-	// gl_FragData[0].rgb = vec3(hand);
 /* DRAWBUFFERS:3 */
 }

@@ -126,11 +126,8 @@ void main() {
 
 	col = mix(lum * vec3(Purkinje_R, Purkinje_G, Purkinje_B) * Purkinje_Multiplier, col, rodCurve);
 
-
-	// if(texcoord.x > 0.75)col = vec3(1) * ;
-
 	#ifndef USE_ACES_COLORSPACE_APPROXIMATION
-  		col = LinearTosRGB(TONEMAP(col));
+		col = LinearTosRGB(TONEMAP(col));
 	#else
 		col = col * ACESInputMat;
 		col = TONEMAP(col);

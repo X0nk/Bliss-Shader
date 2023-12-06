@@ -69,6 +69,7 @@ float blueNoise(){
 
 
 #ifdef OVERWORLD_SHADER
+	// uniform sampler2D colortex12;
 	// const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
 	#define TEST
@@ -102,7 +103,7 @@ float mixhistory = 0.06;
 	vec3 AmbientLightTint = vec3(AmbientLight_R, AmbientLight_G, AmbientLight_B);
 
 	// --- the color of the atmosphere + the average color of the atmosphere.
-	vec3 skyGroundCol = skyFromTex(vec3(0, -1 ,0), colortex4).rgb  ;
+	vec3 skyGroundCol = skyFromTex(vec3(0, -1 ,0), colortex4).rgb;// * clamp(WsunVec.y*2.0,0.2,1.0);
 
 	/// --- Save light values
 	if (gl_FragCoord.x < 1. && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
@@ -144,12 +145,11 @@ if (gl_FragCoord.x > 18. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257){
 	vec2 planetSphere = vec2(0.0);
 	vec3 sky = vec3(0.0);
 	vec3 skyAbsorb = vec3(0.0);
-	// vec3 WsunVec = mat3(gbufferModelViewInverse)*sunVec;
-	// vec3 WsunVec = normalize(LightDir);
 
-	sky = calculateAtmosphere(averageSkyCol*4000./2.0, viewVector, vec3(0.0,1.0,0.0), WsunVec, -WsunVec, planetSphere, skyAbsorb, 10, blueNoise());
+	// float GroundDarkening = (exp2(-15 * clamp(-viewVector.y,0.0,1.0)) * 0.7+0.3); // darken the ground in the sky.
+	sky = calculateAtmosphere((averageSkyCol*4000./2.0), viewVector, vec3(0.0,1.0,0.0), WsunVec, -WsunVec, planetSphere, skyAbsorb, 10, blueNoise());
 
-	// sky = mix(sky, (averageSkyCol + skyAbsorb)*4000./2.0  ,(1.0 - exp(pow(clamp(-viewVector.y+0.5,0.0,1.0),2) * -25)));
+	// sky = mix(sky, (averageSkyCol + skyAbsorb)*4000./2.0, (1.0 - exp(pow(clamp(-viewVector.y+0.5,0.0,1.0),2) * -25)));
 
 	// fade atmosphere conditions for rain away when you pass above the cloud plane.
 	float heightRelativeToClouds = clamp(1.0 - max(eyeAltitude - Cumulus_height,0.0) / 200.0 ,0.0,1.0);
@@ -167,8 +167,6 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
 	vec3 viewVector = cartToSphere(p);
 
-	// vec3 WsunVec = mat3(gbufferModelViewInverse)*sunVec;
-	// vec3 WsunVec = normalize(LightDir);
 	vec3 sky = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150.0;	
 
 	if(viewVector.y < -0.025) sky = sky * clamp( exp(viewVector.y) - 1.0,0.25,1.0) ;
@@ -180,7 +178,6 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	sky = sky * VL_Fog.a + VL_Fog.rgb / 5.0;
 
 	gl_FragData[0] = vec4(sky,1.0);
-
 }
 #endif
 
@@ -284,5 +281,4 @@ if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. &&
 gl_FragData[0] = vec4(exposure,avgBrightness,avgL2,1.0);
 if (gl_FragCoord.x > 14. && gl_FragCoord.x < 15.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 gl_FragData[0] = vec4(rodExposure,centerDepth,0.0, 1.0);
-
 }

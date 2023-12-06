@@ -27,7 +27,7 @@ void main() {
 vec2 resScale = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.))/vec2(1920.,1080.);
 vec2 quarterResTC = gl_FragCoord.xy*2.0*resScale*texelSize;
 
-vec2 texcoord = (gl_FragCoord.xy*2.0*texelSize) * RENDER_SCALE; 
+vec2 texcoord = (gl_FragCoord.xy*2.0*resScale*texelSize) * RENDER_SCALE; 
 
 bool hand = abs(decodeVec2(texture2D(colortex1,texcoord).w).y-0.75) < 0.01 && texture2D(depthtex0,texcoord).x < 1.0;
 

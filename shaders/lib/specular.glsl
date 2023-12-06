@@ -202,7 +202,7 @@ void DoSpecularReflections(
 		vec3 SamplePoints = SampleVNDFGGX(ViewDir, vec2(Roughness), Noise.x);
 		if(Hand) SamplePoints = normalize(vec3(0.0,0.0,1.0));
 	#else
-		vec3 SamplePoints = normalize(vec3(0.0,0.0,1.0));
+		vec3 SamplePoints = vec3(0.0,0.0,1.0);
 	#endif
 
 	vec3 Ln = reflect(-ViewDir, SamplePoints);

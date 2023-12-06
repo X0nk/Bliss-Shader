@@ -106,10 +106,10 @@ float cloudVol(in vec3 pos,in vec3 samplePos,in float cov, in int LoD, float min
 		noise += ((1-smallnoise) - max(0.15 - abs(smallnoise * 2.0 - 0.55) * 0.5,0.0)*1.5) * 0.6 * sqrt(noise);
 	}
 
-	noise *= 1.0-cov;
+	noise *= (1.0-cov);
 
 
-	noise = noise*noise  * (upperPlane*0.5+0.5);
+	noise = noise*noise  * (upperPlane*0.7+0.3);
 	float cloud = max(cov - noise*noise*fbmAmount,0.0);
 
 	return cloud;
@@ -182,10 +182,12 @@ vec3 DoCloudLighting(
 	// skyLight *= exp(skyScatter * -10); 
 
 	vec3 sunLight = exp(sunShadows * -15 + powder ) * sunScatter;
-	sunLight +=  exp(sunShadows * -4) * sunMultiScatter * (powder*0.7+0.3);
-
+	sunLight +=  exp(sunShadows * -3) * sunMultiScatter * (powder*0.7+0.3);
+	
 	// vec3 moonLighting = exp(MoonShadowing * -7  + powder) * moonContribution;
-
+	
+	// return skyLight;
+	// return sunLight;
 	return skyLight + sunLight;
 }
 
@@ -203,11 +205,12 @@ vec4 renderClouds(
 	float total_extinction = 1.0;
 	vec3 color = vec3(0.0);
 
+//////////////////////////////////////////
+////// lighting stuff 
+//////////////////////////////////////////
 
-	////// lighting stuff 
-	float shadowStep = 200.;
+	float shadowStep = 200.0;
 	vec3 dV_Sun = WsunVec*shadowStep;
-	// vec3 dV_Sun_small = dV_Sun/shadowStep;
 	float SdotV = dot(mat3(gbufferModelView)*WsunVec,normalize(FragPosition));
 	// if(dV_Sun.y/shadowStep < -0.1) dV_Sun = -dV_Sun;
 	
@@ -217,15 +220,29 @@ vec4 renderClouds(
 	vec3 sunScattering = SunColor * mieDay * 3.14;
 	vec3 sunMultiScattering = SunColor * mieDayMulti * 4.0;
 
-	SkyColor *= clamp(abs(dV_Sun.y)/100.,0.5,1.0);
+	vec3 sunIndirectScattering = SunColor * phaseg(dot(mat3(gbufferModelView)*vec3(0,1,0),normalize(FragPosition)), 0.5);
+	
+	// SkyColor *= clamp(dV_Sun.y/100.0,0.5,1.0);
 	SunColor =  SunColor * clamp(dV_Sun.y ,0.0,1.0);
 	MoonColor *=  clamp(-dV_Sun.y,0.0,1.0);
 
+//////////////////////////////////////////
+////// Raymarching stuff 
+//////////////////////////////////////////
+
+	//project pixel position into projected shadowmap space
+	vec4 viewPos = normalize(gbufferModelViewInverse * vec4(FragPosition,1.0) );
+	// maxIT_clouds = int(clamp(maxIT_clouds / sqrt(exp2(viewPos.y)),0.0, maxIT));
+	maxIT_clouds = int(clamp(maxIT_clouds / sqrt(exp2(viewPos.y)),0.0, maxIT));
+	// maxIT_clouds = 30;
 
 
+	vec3 dV_view = normalize(viewPos.xyz);
 
 
-
+	dV_view *= 300/abs(dV_view.y)/maxIT_clouds;
+	float mult = length(dV_view);
+	
 	// first cloud layer
 	float MinHeight_0 = Cumulus_height;
 	float MaxHeight_0 = 100 + MinHeight_0;
@@ -234,26 +251,10 @@ vec4 renderClouds(
 	float MinHeight_1 = MaxHeight_0 + 50;
 	float MaxHeight_1 = 100 + MinHeight_1;
 
-	float allDensities = Cumulus_density;
-	float StepSize = 200;
-
-	//project pixel position into projected shadowmap space
-	vec4 viewPos = normalize(gbufferModelViewInverse * vec4(FragPosition,1.0) );
-
-	// maxIT_clouds = int(clamp(maxIT_clouds / sqrt(exp2(viewPos.y)),0.0, maxIT));
-
-	maxIT_clouds = int(clamp(maxIT_clouds / sqrt(exp2(viewPos.y)),0.0, maxIT));
-	// maxIT_clouds = 30;
-	
-	vec3 dV_view = normalize(viewPos.xyz);
-
-	// dV_view.y += 0.05; /// cloud plane curvature
-
-	dV_view *= 300/abs(dV_view.y)/maxIT_clouds;
-	float mult = length(dV_view);
-	
 	float startFlip = mix(max(cameraPosition.y - MaxHeight_0 - 200,0.0), max(MinHeight_0 - cameraPosition.y,0), clamp(dV_view.y,0,1));
-	vec3 progress_view = dV_view*Dither.x + cameraPosition + dV_view/abs(dV_view.y) * startFlip;
+	vec3 progress_view = dV_view*Dither.y + cameraPosition + dV_view/abs(dV_view.y) * startFlip;
+
+	float allDensities = Cumulus_density;
 
 #ifdef Cumulus
 		for(int i = 0; i < maxIT_clouds; i++) {
@@ -274,32 +275,40 @@ vec4 renderClouds(
 				// float MoonLight = 0.0;
 				for (int j=0; j < 3; j++){
 
-					vec3 shadowSamplePos = progress_view + dV_Sun * (0.1 + j * (0.1 + Dither.y*0.05));
+					vec3 shadowSamplePos = progress_view + dV_Sun * (0.1 + j * (0.1 + Dither.x*0.05));
 					float shadow = GetCumulusDensity(shadowSamplePos, 0, MinHeight_0, MaxHeight_0) * allDensities;
 
 					sunLight += shadow;
 					// MoonLight += shadow;
 				}
+				if(max(progress_view.y - MaxHeight_1 + 50,0.0) < 1.0) sunLight += allDensities * 2.0 * GetCumulusDensity(progress_view + dV_Sun/abs(dV_Sun.y) * max((MaxHeight_1 - 30.0) - progress_view.y,0.0), 0, MinHeight_0, MaxHeight_0);
 				
-				if(max(progress_view.y - MaxHeight_1 + 20,0.0) < 1.0) sunLight += allDensities * 2.0 * GetCumulusDensity(progress_view + dV_Sun/abs(dV_Sun.y) * max(MaxHeight_1 - progress_view.y,0.0), 0, MinHeight_0, MaxHeight_0);
 
+
+				float upperLayerOcclusion = !isUpperLayer ? allDensities * 2.0 * GetCumulusDensity(progress_view + vec3(0.0,1.0,0.0) * max((MaxHeight_1 - 30.0) - progress_view.y,0.0), 0, MinHeight_0, MaxHeight_0) : 0.0;
+				float skylightOcclusion = max(exp2((upperLayerOcclusion*upperLayerOcclusion) * -5),0.5);
+				
 				float skyScatter = clamp((CloudBaseHeights - 20 - progress_view.y) / 275.0,0.0,1.0);
+				vec3 Lighting = DoCloudLighting(muE, cumulus, SkyColor * skylightOcclusion, skyScatter, sunLight, sunScattering, sunMultiScattering);
 
-				vec3 Lighting = DoCloudLighting(muE, cumulus, SkyColor, skyScatter, sunLight, sunScattering, sunMultiScattering);
+				vec3 indirectSunlight = sunIndirectScattering * skylightOcclusion * exp(-20.0 * pow(abs(upperLayerOcclusion - 0.3),2)) * exp((cumulus*cumulus) * -10.0) ;
+				Lighting += indirectSunlight;
 
-				// Lighting = vec3(1,0,0) * 30 * cumulus;
-				// if(max(progress_view.y - MaxHeight_0,0.0) > 0.0) Lighting = vec3(0,1,0) * 30 * cumulus;
-				// if(max(progress_view.y - MaxHeight_0 - 99,0.0) > 0.0) Lighting = vec3(0,0,1) * 30 * cumulus;
+
 
 				color += max(Lighting - Lighting*exp(-mult*muE),0.0) * total_extinction;
 				total_extinction *= max(exp(-mult*muE),0.0);
 
 				if (total_extinction < 1e-5) break;
 			}
-			
 			progress_view += dV_view;
 		}
 #endif
+
+//////////////////////////////////////////
+////// fade off in the distance stuff 
+//////////////////////////////////////////
+	// return vec4(color, total_extinction);
 
 	vec3 normView = normalize(dV_view);
 
@@ -307,14 +316,13 @@ vec4 renderClouds(
 	vec4 fogColor = vec4(skyFromTex(normView, colortex4)/30.0, 0.0);
 	float fog = clamp(abs(max(cameraPosition.y, 255.0) + MaxHeight_0) / max(abs(MinHeight_0-cameraPosition.y),0.00001) * abs(normView.y/1.5),0,1);
 
-	fog = 1.0 - clamp(exp((fog*fog) * -35.0),0.0,1.0);
+	fog = max(1.0 - clamp(exp((fog*fog) * -100.0),0.0,1.0),0.0);
+	
 
-	return mix(fogColor, vec4(color, total_extinction), clamp(fog,0.0,1.0));
-	// return vec4(color, total_extinction);
+	return mix(fogColor, vec4(color, total_extinction), fog);
 }
 
 #endif
-
 
 float GetCloudShadow(vec3 feetPlayerPos){
 #ifdef CLOUDS_SHADOWS
@@ -371,10 +379,10 @@ float GetCloudShadow_VLFOG(vec3 WorldPos, vec3 WorldSpace_sunVec){
 
 	#endif
 
-	#ifdef Altostratus 
-		vec3 highShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.2)) * max(AltostratusHeight - WorldPos.y,0.0);
-		shadow += GetAltostratusDensity(highShadowStart)*0.5;
-	#endif
+	// #ifdef Altostratus 
+	// 	vec3 highShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.2)) * max(AltostratusHeight - WorldPos.y,0.0);
+	// 	shadow += GetAltostratusDensity(highShadowStart)*0.5;
+	// #endif
 
 	shadow = clamp(shadow,0.0,1.0);
 	shadow *= shadow;

@@ -28,6 +28,7 @@ uniform int isEyeInWater;
 uniform float rainStrength;
 uniform ivec2 eyeBrightnessSmooth;
 
+uniform float eyeAltitude;
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
 #include "/lib/projections.glsl"
