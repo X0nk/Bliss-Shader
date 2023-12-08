@@ -94,8 +94,23 @@ vec3 sky_transmittance(vec3 position, vec3 direction, const float steps) {
 
 vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 sunVector, vec3 moonVector, out vec2 pid, out vec3 transmittance, const int iSteps, float noise) {
 	const int jSteps = 4;
-// clamp(sunVector.y*2.0,0.0,1.0)
-	float GroundDarkening = max(exp2(-15 * clamp(-viewVector.y,0.0,1.0)) * 0.7+0.3, clamp(sunVector.y*2.0,0.0,1.0)); // darken the ground in the sky.
+
+
+
+
+	// viewVector.y = viewVector.y - 0.05;
+
+	// float GroundDarkening = max(exp2(-15 * clamp(-viewVector.y,0.0,1.0)) * 0.7+0.3, clamp(sunVector.y*2.0,0.0,1.0)); // darken the ground in the sky.
+
+	float GroundDarkening2 = exp(-100 * pow(max(-viewVector.y*5,0.0),2)); // darken the ground in the sky.
+	float GroundDarkening = max(GroundDarkening2 * 0.7+0.3,clamp(sunVector.y*2.0,0.0,1.0));
+
+
+
+
+
+	// viewVector.y = max(viewVector.y,0.0);
+
 	vec3 viewPos = (sky_planetRadius + eyeAltitude) * upVector;
 
 	vec2 aid = rsi(viewPos, viewVector, sky_atmosphereRadius);
@@ -111,8 +126,8 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 	vec3  position  = viewVector * sd.x + viewPos;
 	position += increment * (0.34*noise);
 
-	vec2 phaseSun = sky_phase(dot(viewVector, sunVector ), 0.8);
-	vec2 phaseMoon = sky_phase(dot(viewVector, moonVector), sky_mieg);
+	vec2 phaseSun = sky_phase(dot(viewVector, sunVector), 0.8);
+	vec2 phaseMoon = sky_phase(dot(viewVector, moonVector), 0.8);
 
 	vec3 scatteringSun     = vec3(0.0);
 	vec3 scatteringMoon    = vec3(0.0);
@@ -123,8 +138,9 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 	float high_sun = clamp(pow(sunVector.y+0.6,5),0.0,1.0) * 3.0; // make sunrise less blue, and allow sunset to be bluer
 	float low_sun = clamp(((1.0-abs(sunVector.y))*3.) - high_sun,1.0,2.0) ;
 
+
 	for (int i = 0; i < iSteps; ++i, position += increment) {
-		vec3 density          = sky_density(length(position));
+		vec3 density = sky_density(length(position));
 		if (density.y > 1e35) break;
 		vec3 stepAirmass      = density * stepSize ;
 		vec3 stepOpticalDepth = sky_coefficientsAttenuation * stepAirmass ;
@@ -133,8 +149,9 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 		vec3 stepTransmittedFraction = clamp01((stepTransmittance - 1.0) / -stepOpticalDepth) ;
 		vec3 stepScatteringVisible   = transmittance * stepTransmittedFraction * GroundDarkening ;
 
-		scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun ) * stepScatteringVisible * sky_transmittance(position, sunVector*0.5+0.1,  jSteps)  ;
-		scatteringMoon += sky_coefficientsScattering * (stepAirmass.xy * phaseMoon) * stepScatteringVisible * sky_transmittance(position, moonVector, jSteps);
+		scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun) * stepScatteringVisible * sky_transmittance(position, sunVector*0.5+0.1,  jSteps) * GroundDarkening2;
+		scatteringMoon += sky_coefficientsScattering * (stepAirmass.xy * phaseMoon) * stepScatteringVisible * sky_transmittance(position, moonVector, jSteps) * GroundDarkening2;
+		
 		// Nice way to fake multiple scattering.
 		scatteringAmbient += sky_coefficientsScattering * stepAirmass.xy * stepScatteringVisible * low_sun;
 

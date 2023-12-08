@@ -67,17 +67,13 @@ vec4 GetVolumetricFog(
 	vec3 LightColor,
 	vec3 AmbientColor
 ){
+
+	/// -------------  RAYMARCHING STUFF ------------- \\\
+
 	//project pixel position into projected shadowmap space
 	vec3 wpos = mat3(gbufferModelViewInverse) * viewPosition + gbufferModelViewInverse[3].xyz;
 	vec3 fragposition = mat3(shadowModelView) * wpos + shadowModelView[3].xyz;
 	fragposition = diagonal3(shadowProjection) * fragposition + shadowProjection[3].xyz;
-
-	// mat4 Custom_ViewMatrix = BuildShadowViewMatrix(LightDir);
-	// mat4 Custom_ProjectionMatrix = BuildShadowProjectionMatrix();
-
-	// vec3 fragposition = mat3(Custom_ViewMatrix) * wpos + Custom_ViewMatrix[3].xyz;
-	// fragposition = diagonal3(Custom_ProjectionMatrix) * fragposition + Custom_ProjectionMatrix[3].xyz;
-	
 
 	//project view origin into projected shadowmap space
 	vec3 start = toShadowSpaceProjected(vec3(0.0));
@@ -91,54 +87,45 @@ vec4 GetVolumetricFog(
 	float maxLength = min(length(dVWorld), far)/length(dVWorld);
 	dV *= maxLength;
 	dVWorld *= maxLength;
-
-	//apply dither
-	vec3 progress = start.xyz;
-
-	vec3 vL = vec3(0.);
-
-	float SdotV = dot(sunVec,normalize(viewPosition))*lightCol.a;
-	// float SdotV = dot(normalize(LightDir * mat3(gbufferModelViewInverse)),	normalize(viewPosition))*lightCol.a;
 	float dL = length(dVWorld);
 
+	vec3 progress = start.xyz;
+	vec3 progressW = gbufferModelViewInverse[3].xyz + cameraPosition;
+
+	vec3 WsunVec = mat3(gbufferModelViewInverse) * sunVec * lightCol.a;
+	float SdotV = dot(sunVec,normalize(viewPosition))*lightCol.a;
+
+
+	/// -------------  COLOR/LIGHTING STUFF ------------- \\\
+
+	vec3 color = vec3(0.0);
+	vec3 absorbance = vec3(1.0);
+	
 	//Mie phase + somewhat simulates multiple scattering (Horizon zero down cloud approx)
-	// float mie = phaseg(SdotV,0.7)*5.0 + 0.1;
 	float mie = fogPhase(SdotV) * 5.0;
 	float rayL = phaseRayleigh(SdotV);
 
 	vec3 rC = vec3(fog_coefficientRayleighR*1e-6, fog_coefficientRayleighG*1e-5, fog_coefficientRayleighB*1e-5);
 	vec3 mC = vec3(fog_coefficientMieR*1e-6, fog_coefficientMieG*1e-6, fog_coefficientMieB*1e-6);
-	
-	// Makes fog more white idk how to simulate it correctly
+
 	vec3 LightSourceColor = LightColor;
 	#ifdef ambientLight_only
 		LightSourceColor = vec3(0.0);
 	#endif
-	vec3 skyCol0 = AmbientColor / 2.0;
 
-	// recolor change sun and sky color to a color, but make sure luminance is preserved.
+	vec3 skyCol0 = AmbientColor;
 	#ifdef PER_BIOME_ENVIRONMENT
 		BiomeFogColor(LightSourceColor);
 		BiomeFogColor(skyCol0);
 	#endif
 
-	// float upGradient = 1.0 - (normalize(wpos).y*0.5 + 0.5);
-	// skyCol0 *= exp(upGradient * -5.0)*1.5 + 0.5;
-
-	float upGradient = normalize(wpos).y*0.9+0.1;
-	skyCol0 = max(skyCol0 + skyCol0*upGradient,0.0);
+	skyCol0 = max(skyCol0 + skyCol0*(normalize(wpos).y*0.9+0.1),0.0);
 	
-	float mu = 1.0;
-	float muS = mu;
-	float absorbance = 1.0;
-	float expFactor = 11.0;
 
-	vec3 WsunVec = mat3(gbufferModelViewInverse) * sunVec * lightCol.a;
-
-	vec3 progressW = gbufferModelViewInverse[3].xyz + cameraPosition;
 
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 	
+	float expFactor = 11.0;
 	for (int i=0;i<VL_SAMPLES;i++) {
 		float d = (pow(expFactor, float(i+dither)/float(VL_SAMPLES))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
 		float dd = pow(expFactor, float(i+dither)/float(VL_SAMPLES)) * log(expFactor) / float(VL_SAMPLES)/(expFactor-1.0);
@@ -155,17 +142,13 @@ vec4 GetVolumetricFog(
 			sh = shadow2D(shadow, pos).x;
 		}
 		
-		// #ifdef TEST
-		// 	lightleakfix = 1.0;
-		// #endif
-
 		#ifdef VL_CLOUDS_SHADOWS
 			sh *= GetCloudShadow_VLFOG(progressW, WsunVec);
 		#endif
 		
-		float densityVol = cloudVol(progressW) * lightleakfix ;
+		float densityVol = cloudVol(progressW) * lightleakfix;
 		//Water droplets(fog)
-		float density = densityVol*mu*300.;
+		float density = densityVol*300.;
 
 		//Just air
 		vec2 airCoef = exp(-max(progressW.y - SEA_LEVEL, 0.0) / vec2(8.0e3, 1.2e3) * vec2(6.,7.0)) * 24 * Haze_amount;
@@ -174,35 +157,21 @@ vec4 GetVolumetricFog(
 		vec3 rL = rC*airCoef.x;
 		vec3 m = (airCoef.y+density) * mC;
 
+		vec3 AtmosphericFog = skyCol0 * (rL*3.0 + m);
 		vec3 DirectLight =  (LightSourceColor*sh) * (rayL*rL*3.0 + m*mie);
 		vec3 AmbientLight =  skyCol0 * m;
-
-		// #ifdef TEST
-		// 	vec3 Lightning =  vec3(0.0);
-		// #else
-
 		vec3 Lightning = Iris_Lightningflash_VLfog(progressW-cameraPosition, lightningBoltPosition.xyz) * m;
-	
-		// #endif
 
-		vec3 AtmosphericFog = skyCol0 * (rL*3.0 + m);//  + (LightSourceColor * sh) * (rayL*rL*3.0 + m*mie);
-
-		vec3 vL0 = (AtmosphericFog + AmbientLight + DirectLight + Lightning) * lightleakfix;
-
-		// vL0 = DirectLight;
-
-		// #if defined Cave_fog && defined TEST
-		//     vL0 += cavefogCol;
-		// #endif
+		vec3 lighting = (AtmosphericFog + AmbientLight + DirectLight + Lightning) * lightleakfix;
 
 
-
-		vL += (vL0 - vL0 * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*absorbance;
-		absorbance *= dot(clamp(exp(-(rL+m)*dd*dL),0.0,1.0), vec3(0.333333));
+		color += max(lighting - lighting * exp(-(rL+m)*dd*dL),0.0) / max(rL+m, 0.00000001)*absorbance;
+		absorbance *= max(exp(-(rL+m)*dd*dL),0.0);
 	}
-	return vec4(vL,absorbance);
+	return vec4(color, dot(absorbance,vec3(0.333333)));
 }
 
+/*
 /// experimental functions to render clouds and fog in 2 passes
 
 float cloudCoverage(in vec3 pos, float minHeight, float maxHeight){
@@ -356,3 +325,4 @@ vec4 renderVolumetrics(
 	}
 	return vec4(color, absorbance);
 }
+*/

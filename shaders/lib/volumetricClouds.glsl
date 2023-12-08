@@ -51,14 +51,16 @@ float cloudCov(in vec3 pos, vec3 samplePos, float minHeight, float maxHeight){
 	vec2 SampleCoords0 = (samplePos.xz + cloud_movement) / 5000;
 	vec2 SampleCoords1 = (samplePos.xz - cloud_movement) / 500;
 
+	float thedistance = 1.0-clamp(1.0-length((pos-cameraPosition).xz)/15000,0,1);
+
 	/// when the coordinates reach a certain height, alter the sample coordinates
 	if(max(pos.y - (maxHeight + 80),0.0) > 0.0){
 		SampleCoords0 = -( (samplePos.zx + cloud_movement*2) / 15000);
 		SampleCoords1 = -( (samplePos.zx - cloud_movement*2) / 1500);
 	}
 	
-	float CloudLarge = texture2D(noisetex, SampleCoords0 ).b;
-	float CloudSmall = texture2D(noisetex, SampleCoords1 ).r;
+	float CloudLarge = max(texture2D(noisetex, SampleCoords0 ).b+thedistance,thedistance);
+	float CloudSmall = max(texture2D(noisetex, SampleCoords1 ).r+thedistance,thedistance);
 
 	float coverage = abs(pow(CloudLarge,1)*2.0 - 1.2)*0.5 - (1.0-CloudSmall);
 	float FirstLayerCoverage = DailyWeather_Cumulus(coverage);
@@ -167,7 +169,8 @@ vec3 DoCloudLighting(
 
 	float sunShadows,
 	vec3 sunScatter,
-	vec3 sunMultiScatter
+	vec3 sunMultiScatter,
+	float distantfog
 
 	// float moonShadows,
 	// vec3 moonScatter
@@ -178,13 +181,10 @@ vec3 DoCloudLighting(
 	
 	vec3 skyLight = skyLightCol;
 
-	skyLight *= exp2((skyScatter*skyScatter) * densityFaded * -35.0) * lesspowder;
-	// skyLight *= exp(skyScatter * -10); 
+	skyLight *= mix(1.0, exp2((skyScatter*skyScatter) * densityFaded * -35.0) * lesspowder, distantfog);
 
 	vec3 sunLight = exp(sunShadows * -15 + powder ) * sunScatter;
 	sunLight +=  exp(sunShadows * -3) * sunMultiScatter * (powder*0.7+0.3);
-	
-	// vec3 moonLighting = exp(MoonShadowing * -7  + powder) * moonContribution;
 	
 	// return skyLight;
 	// return sunLight;
@@ -212,19 +212,15 @@ vec4 renderClouds(
 	float shadowStep = 200.0;
 	vec3 dV_Sun = WsunVec*shadowStep;
 	float SdotV = dot(mat3(gbufferModelView)*WsunVec,normalize(FragPosition));
-	// if(dV_Sun.y/shadowStep < -0.1) dV_Sun = -dV_Sun;
-	
+
 	float mieDay = phaseg(SdotV, 0.75);
 	float mieDayMulti = (phaseg(SdotV, 0.35) + phaseg(-SdotV, 0.35) * 0.5) ;
-
+	
 	vec3 sunScattering = SunColor * mieDay * 3.14;
 	vec3 sunMultiScattering = SunColor * mieDayMulti * 4.0;
 
 	vec3 sunIndirectScattering = SunColor * phaseg(dot(mat3(gbufferModelView)*vec3(0,1,0),normalize(FragPosition)), 0.5);
 	
-	// SkyColor *= clamp(dV_Sun.y/100.0,0.5,1.0);
-	SunColor =  SunColor * clamp(dV_Sun.y ,0.0,1.0);
-	MoonColor *=  clamp(-dV_Sun.y,0.0,1.0);
 
 //////////////////////////////////////////
 ////// Raymarching stuff 
@@ -238,10 +234,12 @@ vec4 renderClouds(
 
 
 	vec3 dV_view = normalize(viewPos.xyz);
-
+	dV_view.y += 0.05;
 
 	dV_view *= 300/abs(dV_view.y)/maxIT_clouds;
+	
 	float mult = length(dV_view);
+	
 	
 	// first cloud layer
 	float MinHeight_0 = Cumulus_height;
@@ -255,10 +253,15 @@ vec4 renderClouds(
 	vec3 progress_view = dV_view*Dither.y + cameraPosition + dV_view/abs(dV_view.y) * startFlip;
 
 	float allDensities = Cumulus_density;
-
+	
+	vec3 forg = normalize(dV_view);
+	float distantfog = max(1.0 - clamp(exp2(pow(abs(forg.y),1.5) * -35.0),0.0,1.0),0.0);
+	
+	// sunScattering *= distantfog;
+	// sunMultiScattering *= distantfog;
+	
 #ifdef Cumulus
 		for(int i = 0; i < maxIT_clouds; i++) {
-			
 			// determine the base of each cloud layer
 			bool isUpperLayer = max(progress_view.y - MinHeight_1,0.0) > 0.0;
 			float CloudBaseHeights = isUpperLayer ? 200.0 + MaxHeight_0 : MaxHeight_0;
@@ -286,13 +289,13 @@ vec4 renderClouds(
 
 
 				float upperLayerOcclusion = !isUpperLayer ? allDensities * 2.0 * GetCumulusDensity(progress_view + vec3(0.0,1.0,0.0) * max((MaxHeight_1 - 30.0) - progress_view.y,0.0), 0, MinHeight_0, MaxHeight_0) : 0.0;
-				float skylightOcclusion = max(exp2((upperLayerOcclusion*upperLayerOcclusion) * -5),0.5);
+				float skylightOcclusion = max(exp2((upperLayerOcclusion*upperLayerOcclusion) * -5), 0.5 + (1.0-distantfog)*0.5);
 				
 				float skyScatter = clamp((CloudBaseHeights - 20 - progress_view.y) / 275.0,0.0,1.0);
-				vec3 Lighting = DoCloudLighting(muE, cumulus, SkyColor * skylightOcclusion, skyScatter, sunLight, sunScattering, sunMultiScattering);
+				vec3 Lighting = DoCloudLighting(muE, cumulus, SkyColor * skylightOcclusion, skyScatter, sunLight, sunScattering, sunMultiScattering, distantfog);
 
 				vec3 indirectSunlight = sunIndirectScattering * skylightOcclusion * exp(-20.0 * pow(abs(upperLayerOcclusion - 0.3),2)) * exp((cumulus*cumulus) * -10.0) ;
-				Lighting += indirectSunlight;
+				Lighting += indirectSunlight ;
 
 
 
@@ -307,16 +310,17 @@ vec4 renderClouds(
 
 //////////////////////////////////////////
 ////// fade off in the distance stuff 
-//////////////////////////////////////////
-	// return vec4(color, total_extinction);
+////////////////////////////////////////
+	return vec4(color, total_extinction);
 
 	vec3 normView = normalize(dV_view);
 
 	// Assume fog color = sky gradient at long distance
 	vec4 fogColor = vec4(skyFromTex(normView, colortex4)/30.0, 0.0);
-	float fog = clamp(abs(max(cameraPosition.y, 255.0) + MaxHeight_0) / max(abs(MinHeight_0-cameraPosition.y),0.00001) * abs(normView.y/1.5),0,1);
+	float fog = clamp(abs(max(cameraPosition.y, 255.0) + MaxHeight_0) / max(abs(MinHeight_0-cameraPosition.y),0.00001) * abs(normView.y),0,1);
 
-	fog = max(1.0 - clamp(exp((fog*fog) * -100.0),0.0,1.0),0.0);
+	fog = max(1.0 - clamp(exp((fog*fog) * -35.0),0.0,1.0),0.0);
+	// fog = max(1.0 - clamp(exp2(fog * -10.0),0.0,1.0),0.0);
 	
 
 	return mix(fogColor, vec4(color, total_extinction), fog);
