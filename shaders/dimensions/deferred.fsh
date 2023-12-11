@@ -168,10 +168,13 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec3 viewVector = cartToSphere(p);
 
 	vec3 sky = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150.0;	
+	
+	vec3 suncol = sunColor;
+	#ifdef ambientLight_only
+		suncol = vec3(0.0);
+	#endif
 
-	// if(viewVector.y < -0.025) sky = sky * clamp( exp(viewVector.y) - 1.0,0.25,1.0) ;
-
-	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024.,vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), sunColor, moonColor, skyGroundCol/30.0);
+	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024.,vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), suncol, moonColor, skyGroundCol/30.0);
 	sky = sky*clouds.a + clouds.rgb / 5.0; 
 
 	vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*1024.,  fract(frameCounter/1.6180339887), lightSourceColor*1.75, skyGroundCol/30.0);
@@ -278,7 +281,7 @@ gl_FragData[0].rgb = clamp(mix(temp, curr, mixhistory),0.0,65000.);
 
 //Exposure values
 if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(exposure,avgBrightness,avgL2,1.0);
+gl_FragData[0] = vec4(exposure, avgBrightness, avgL2,1.0);
 if (gl_FragCoord.x > 14. && gl_FragCoord.x < 15.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(rodExposure,centerDepth,0.0, 1.0);
+gl_FragData[0] = vec4(rodExposure, centerDepth,0.0, 1.0);
 }

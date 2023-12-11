@@ -135,6 +135,5 @@ void main() {
 		col = LinearTosRGB(clamp(col * ACESOutputMat, 0.0, 1.0));
 	#endif
 
-
 	gl_FragData[0].rgb = clamp(int8Dither(col,texcoord),0.0,1.0);
 }

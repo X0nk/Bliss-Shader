@@ -95,21 +95,8 @@ vec3 sky_transmittance(vec3 position, vec3 direction, const float steps) {
 vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 sunVector, vec3 moonVector, out vec2 pid, out vec3 transmittance, const int iSteps, float noise) {
 	const int jSteps = 4;
 
-
-
-
-	// viewVector.y = viewVector.y - 0.05;
-
-	// float GroundDarkening = max(exp2(-15 * clamp(-viewVector.y,0.0,1.0)) * 0.7+0.3, clamp(sunVector.y*2.0,0.0,1.0)); // darken the ground in the sky.
-
-	float GroundDarkening2 = exp(-100 * pow(max(-viewVector.y*5,0.0),2)); // darken the ground in the sky.
-	float GroundDarkening = max(GroundDarkening2 * 0.7+0.3,clamp(sunVector.y*2.0,0.0,1.0));
-
-
-
-
-
-	// viewVector.y = max(viewVector.y,0.0);
+	float planetGround = exp(-100 * pow(max(-viewVector.y*5,0.0),2)); // darken the ground in the sky.
+	float GroundDarkening = max(planetGround * 0.7+0.3,clamp(sunVector.y*2.0,0.0,1.0));
 
 	vec3 viewPos = (sky_planetRadius + eyeAltitude) * upVector;
 
@@ -149,8 +136,8 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 		vec3 stepTransmittedFraction = clamp01((stepTransmittance - 1.0) / -stepOpticalDepth) ;
 		vec3 stepScatteringVisible   = transmittance * stepTransmittedFraction * GroundDarkening ;
 
-		scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun) * stepScatteringVisible * sky_transmittance(position, sunVector*0.5+0.1,  jSteps) * GroundDarkening2;
-		scatteringMoon += sky_coefficientsScattering * (stepAirmass.xy * phaseMoon) * stepScatteringVisible * sky_transmittance(position, moonVector, jSteps) * GroundDarkening2;
+		scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun) * stepScatteringVisible * sky_transmittance(position, sunVector*0.5+0.1,  jSteps) * planetGround;
+		scatteringMoon += sky_coefficientsScattering * (stepAirmass.xy * phaseMoon) * stepScatteringVisible * sky_transmittance(position, moonVector, jSteps) * planetGround;
 		
 		// Nice way to fake multiple scattering.
 		scatteringAmbient += sky_coefficientsScattering * stepAirmass.xy * stepScatteringVisible * low_sun;

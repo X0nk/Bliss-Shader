@@ -18,7 +18,7 @@ float cloudVol(in vec3 pos){
 
 	vec3 samplePos = pos*vec3(1.0,1./24.,1.0);
 	vec3 samplePos2 = pos*vec3(1.0,1./48.,1.0);
-	float fogYstart = SEA_LEVEL-6;
+	float fogYstart = FOG_START_HEIGHT+3;
 
 	float mult = exp( -max((pos.y - fogYstart) / 35.,0.0));
 	float fog_shape = 1.0 - densityAtPosFog(samplePos * 24.0 );
@@ -29,7 +29,7 @@ float cloudVol(in vec3 pos){
 	float heightlimit = exp2( -max((pos.y - fogYstart * (1.0+snowStorm)) / 25.,0.0));
 	float CloudyFog = max((fog_shape*1.2 - fog_eroded*0.2) - 0.75,0.0) * heightlimit ;
 
-	float UniformFog = exp( max(pos.y - fogYstart,0.0)  / -25) + 0.05;
+	float UniformFog = exp( max(pos.y - fogYstart,0.0)  / -25);
 	// UniformFog = 1.0;
 	
 	// float RainFog = max(fog_shape*10. - 7.,0.5) * exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0)) * 72. * rainStrength * noPuddleAreas * RainFog_amount;
@@ -42,7 +42,10 @@ float cloudVol(in vec3 pos){
 
 	TimeOfDayFog(UniformFog, CloudyFog);
 
-	return CloudyFog + UniformFog + RainFog;
+	float testfogshapes = exp(sqrt(max(pos.y - fogYstart - 5,0.0)) / -1) * 50;
+
+
+	return CloudyFog + UniformFog + RainFog;// + testfogshapes;
 }
 
 float phaseRayleigh(float cosTheta) {

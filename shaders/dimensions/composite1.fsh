@@ -633,8 +633,7 @@ void main() {
 				#endif
 			#endif
 
-
-			Background *= clamp( (feetPlayerPos_normalized.y+ 0.02)*5.0 + (eyeAltitude - 319)/800000  ,0.0,1.0);
+			Background *= exp(-25.0 * pow(clamp(-feetPlayerPos_normalized.y*5.0 + 0.5 ,0.0,1.0),2.0)); // darken the ground in the sky.
 			
 			vec3 Sky = skyFromTex(feetPlayerPos_normalized, colortex4)/30.0;
 			Background += Sky;

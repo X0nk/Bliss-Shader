@@ -59,8 +59,8 @@ float cloudCov(in vec3 pos, vec3 samplePos, float minHeight, float maxHeight){
 		SampleCoords1 = -( (samplePos.zx - cloud_movement*2) / 1500);
 	}
 	
-	float CloudLarge = max(texture2D(noisetex, SampleCoords0 ).b+thedistance,thedistance);
-	float CloudSmall = max(texture2D(noisetex, SampleCoords1 ).r+thedistance,thedistance);
+	float CloudLarge = texture2D(noisetex, SampleCoords0 ).b+thedistance;
+	float CloudSmall = texture2D(noisetex, SampleCoords1 ).r+thedistance;
 
 	float coverage = abs(pow(CloudLarge,1)*2.0 - 1.2)*0.5 - (1.0-CloudSmall);
 	float FirstLayerCoverage = DailyWeather_Cumulus(coverage);
@@ -294,8 +294,8 @@ vec4 renderClouds(
 				float skyScatter = clamp((CloudBaseHeights - 20 - progress_view.y) / 275.0,0.0,1.0);
 				vec3 Lighting = DoCloudLighting(muE, cumulus, SkyColor * skylightOcclusion, skyScatter, sunLight, sunScattering, sunMultiScattering, distantfog);
 
-				vec3 indirectSunlight = sunIndirectScattering * skylightOcclusion * exp(-20.0 * pow(abs(upperLayerOcclusion - 0.3),2)) * exp((cumulus*cumulus) * -10.0) ;
-				Lighting += indirectSunlight ;
+				// vec3 indirectSunlight = sunIndirectScattering * skylightOcclusion * exp(-20.0 * pow(abs(upperLayerOcclusion - 0.3),2)) * exp((cumulus*cumulus) * -10.0) ;
+				// Lighting += indirectSunlight ;
 
 
 
@@ -308,22 +308,7 @@ vec4 renderClouds(
 		}
 #endif
 
-//////////////////////////////////////////
-////// fade off in the distance stuff 
-////////////////////////////////////////
 	return vec4(color, total_extinction);
-
-	vec3 normView = normalize(dV_view);
-
-	// Assume fog color = sky gradient at long distance
-	vec4 fogColor = vec4(skyFromTex(normView, colortex4)/30.0, 0.0);
-	float fog = clamp(abs(max(cameraPosition.y, 255.0) + MaxHeight_0) / max(abs(MinHeight_0-cameraPosition.y),0.00001) * abs(normView.y),0,1);
-
-	fog = max(1.0 - clamp(exp((fog*fog) * -35.0),0.0,1.0),0.0);
-	// fog = max(1.0 - clamp(exp2(fog * -10.0),0.0,1.0),0.0);
-	
-
-	return mix(fogColor, vec4(color, total_extinction), fog);
 }
 
 #endif

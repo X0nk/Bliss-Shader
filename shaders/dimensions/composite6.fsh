@@ -27,9 +27,9 @@ void main() {
 vec2 resScale = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.))/vec2(1920.,1080.);
 vec2 quarterResTC = gl_FragCoord.xy*2.0*resScale*texelSize;
 
-vec2 texcoord = (gl_FragCoord.xy*2.0*resScale*texelSize) * RENDER_SCALE; 
+// vec2 texcoord = (gl_FragCoord.xy*2.0*resScale*texelSize) * RENDER_SCALE; 
 
-bool hand = abs(decodeVec2(texture2D(colortex1,texcoord).w).y-0.75) < 0.01 && texture2D(depthtex0,texcoord).x < 1.0;
+// bool hand = abs(decodeVec2(texture2D(colortex1,texcoord).w).y-0.75) < 0.01 && texture2D(depthtex0,texcoord).x < 1.0;
 
 		//0.5
 		gl_FragData[0] = texture2D(colortex5,quarterResTC-1.0*vec2(texelSize.x,texelSize.y))/4.*0.5;
@@ -53,6 +53,6 @@ bool hand = abs(decodeVec2(texture2D(colortex1,texcoord).w).y-0.75) < 0.01 && te
 		gl_FragData[0] += texture2D(colortex5,quarterResTC)*0.125;
 
 		gl_FragData[0].rgb = clamp(gl_FragData[0].rgb,0.0,65000.);
-		if (hand || quarterResTC.x > 1.0 - 3.5*texelSize.x || quarterResTC.y > 1.0 -3.5*texelSize.y || quarterResTC.x < 3.5*texelSize.x || quarterResTC.y < 3.5*texelSize.y) gl_FragData[0].rgb = vec3(0.0);
+		if (quarterResTC.x > 1.0 - 3.5*texelSize.x || quarterResTC.y > 1.0 -3.5*texelSize.y || quarterResTC.x < 3.5*texelSize.x || quarterResTC.y < 3.5*texelSize.y) gl_FragData[0].rgb = vec3(0.0);
 
 }
