@@ -253,9 +253,11 @@ void main() {
 			vec4 VolumetricFog = GetVolumetricFog(viewPos, noise_1, lightCol.rgb/80.0, averageSkyCol/30.0);
 		#endif
 		
-		#if defined NETHER_SHADER || defined END_SHADER || defined FALLBACK_SHADER
+		#if defined NETHER_SHADER || defined END_SHADER
 			vec4 VolumetricFog = GetVolumetricFog(viewPos, noise_1, noise_2);
 		#endif
+
+		// VolumetricFog = vec4(0,0,0,1);
 
 		gl_FragData[0] = clamp(VolumetricFog, 0.0, 65000.0);
 	} 

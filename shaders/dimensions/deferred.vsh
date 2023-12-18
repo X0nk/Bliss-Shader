@@ -41,6 +41,7 @@ uniform float rainStrength;
 
 // uniform int worldTime;
 vec3 sunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
+
 // vec3 sunVec = normalize(LightDir);
 
 #include "/lib/sky_gradient.glsl"
@@ -104,16 +105,11 @@ void main() {
 		pos.xy += normalize(sample3x3[i]) * vec2(0.3183,0.90);
 
 		averageSkyCol_Clouds += 2.0*skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.;
-		
-		// pos = normalize(vec3(0,1,0));
-		// pos.xy += normalize(sample3x3[i]) * vec2(0.3183,0.90);
-		averageSkyCol += 1.5*skyFromTex(pos,colortex4).rgb/maxIT/150.; // please dont do an infinite feedback loop....
-		
+
+		averageSkyCol += 1.5*skyFromTex(pos,colortex4).rgb/maxIT/150.;
    	}
-	
-	/// TOOO DAMN BLUE
-	// // only need to sample one spot for this
-	// averageSkyCol += 2.0*skyFromTex(normalize(vec3(0.0,1.0,0.0)),colortex4).rgb/150.;
+
+	// only need to sample one spot for this
 	vec3 minimumlight =  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.003 + nightVision);
 	averageSkyCol_Clouds = max(averageSkyCol_Clouds, minimumlight);
 	averageSkyCol = max(averageSkyCol, minimumlight);
@@ -141,6 +137,8 @@ void main() {
 
 	lightSourceColor = sunVis >= 1e-5 ? sunColor * sunVis : moonColor * moonVis;
 
+	
+	// WsunVec = ( float(sunElevation > 1e-5)*2-1. )*normalize(mat3(gbufferModelViewInverse) * sunPosition);
 #endif
 
 //////////////////////////////

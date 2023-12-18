@@ -421,7 +421,7 @@ void SSRT_Shadows(vec3 viewPos, vec3 lightDir, float noise, bool isSSS, bool ins
     vec3 rayDir = direction * (isSSS ? 1.5 : 3.0) * vec3(RENDER_SCALE,1.0);
 	
 	vec3 screenPos = clipPosition * vec3(RENDER_SCALE,1.0) + rayDir*noise;
-	if(isSSS)screenPos -= rayDir*0.9;
+	if(isSSS) screenPos -= rayDir*0.9;
 
 	for (int i = 0; i < int(steps); i++) {
 		
@@ -444,12 +444,13 @@ void SSRT_Shadows(vec3 viewPos, vec3 lightDir, float noise, bool isSSS, bool ins
 }
 
 #ifdef END_SHADER
-	float GetShading( vec3 WorldPos, vec3 LightPos, vec3 Normal){
+	float GetShading(vec3 WorldPos, vec3 LightPos, vec3 Normal){
 
-		float NdotL = clamp(dot(Normal, normalize(-LightPos)),0.0,1.0);
+		float NdotL = clamp(dot(Normal, normalize(-LightPos))*0.5+0.5,0.0,1.0);
+		NdotL *= NdotL;
 		float FogShadow = GetCloudShadow(WorldPos, LightPos);
 
-		return EndLightMie(LightPos) * NdotL * FogShadow;
+		return endFogPhase(LightPos) * NdotL * FogShadow;
 	}
 #endif
 
@@ -503,7 +504,36 @@ vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 
 #include "/lib/indirect_lighting_effects.glsl"
 #include "/lib/PhotonGTAO.glsl"
+vec4 renderInfiniteWaterPlane(
+	vec3 FragPosition, inout vec3 oceanNormals
+){	
 
+	float planeHeight = 20 + 0.50;
+	float total_extinction = 1.0;
+	vec3 color = vec3(0.0);
+
+	//project pixel position into projected shadowmap space
+	vec4 viewPos = normalize(gbufferModelViewInverse * vec4(FragPosition,1.0) );
+	vec3 dV_view = normalize(viewPos.xyz); dV_view *= 1.0/abs(dV_view.y);
+	
+	float mult = length(dV_view);
+	
+	float startFlip = mix(max(cameraPosition.y - planeHeight,0.0), max(planeHeight - cameraPosition.y,0), clamp(dV_view.y,0,1));
+	float signFlip = mix(-1.0, 1.0, clamp(cameraPosition.y - planeHeight,0.0,1.0)); 
+	if(max(signFlip * normalize(dV_view).y,0.0) > 0.0) return vec4(0,0,0,1);
+	
+	vec3 progress_view = vec3(0,cameraPosition.y,0) + dV_view/abs(dV_view.y) * startFlip;
+
+	oceanNormals = normalize(getWaveHeight((progress_view+cameraPosition).xz,1));
+
+	vec3 Lighting = vec3(1);
+	float object = 1;
+
+	color += max(Lighting - Lighting*exp(-mult*object),0.0) * total_extinction;
+	total_extinction *= max(exp(-mult*object),0.0);
+
+	return vec4(color, total_extinction);
+}
 
 void main() {
 
@@ -542,6 +572,7 @@ void main() {
 		#if defined END_SHADER || defined NETHER_SHADER
 			lightmap.y = 1.0;
 		#endif
+
 
 	////// --------------- UNPACK MISC --------------- //////
 	
@@ -617,9 +648,11 @@ void main() {
 		#ifdef OVERWORLD_SHADER
 			vec3 Background = vec3(0.0);
 
-			vec3 orbitstar = vec3(feetPlayerPos_normalized.x,abs(feetPlayerPos_normalized.y),feetPlayerPos_normalized.z); orbitstar.x -= WsunVec.x*0.2;
-			Background += stars(orbitstar) * 10.0;
-
+			
+			#if RESOURCEPACK_SKY == 1 || RESOURCEPACK_SKY == 0
+				vec3 orbitstar = vec3(feetPlayerPos_normalized.x,abs(feetPlayerPos_normalized.y),feetPlayerPos_normalized.z); orbitstar.x -= WsunVec.x*0.2;
+				Background += stars(orbitstar) * 10.0;
+			#endif
 
 			#if RESOURCEPACK_SKY == 2
 				Background += toLinear(texture2D(colortex10, texcoord).rgb * (255.0 * 2.0));
@@ -633,7 +666,7 @@ void main() {
 				#endif
 			#endif
 
-			Background *= exp(-25.0 * pow(clamp(-feetPlayerPos_normalized.y*5.0 + 0.5 ,0.0,1.0),2.0)); // darken the ground in the sky.
+			// Background *= 1.0 - exp2(-50.0 * pow(clamp(feetPlayerPos_normalized.y+0.025,0.0,1.0),2.0)  ); // darken the ground in the sky.
 			
 			vec3 Sky = skyFromTex(feetPlayerPos_normalized, colortex4)/30.0;
 			Background += Sky;
@@ -802,22 +835,17 @@ void main() {
 
 
 	#ifdef END_SHADER
-		vec3 LightPos1 = vec3(0); vec3 LightPos2 = vec3(0);
-        LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition, LightPos1, LightPos2);
 
-		vec3 LightCol1 = vec3(0); vec3 LightCol2 = vec3(0);
-		LightSourceColors(LightCol1, LightCol2);
-		// LightCol1 *= Flashing; 
-		LightCol2 *= Flashing;
+		float vortexBounds = clamp(vortexBoundRange - length(feetPlayerPos+cameraPosition), 0.0,1.0);
+        vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds);
 
-		Direct_lighting += LightCol1 * GetShading(feetPlayerPos+cameraPosition, LightPos1, slopednormal) ;
-		
-		#if lightsourceCount == 2
-			Direct_lighting += LightCol2 * GetShading(feetPlayerPos+cameraPosition, LightPos2, slopednormal);
-		#endif
 
-		// float RT_Shadows = rayTraceShadow(worldToView(normalize(-LightPos)), viewPos, noise);
-		// if(!hand) Direct_lighting *= RT_Shadows*RT_Shadows;
+		float lightningflash = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
+		vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
+
+		Direct_lighting += lightColors * GetShading(feetPlayerPos+cameraPosition, lightPos, slopednormal) ;
+
+
 	#endif
 	
 	/////////////////////////////////////////////////////////////////////////////////
@@ -849,7 +877,8 @@ void main() {
 		#endif
 		
 		#ifdef END_SHADER
-			vec3 AmbientLightColor = vec3(1.0);
+			float fresnelGlow = pow(clamp(1.5 + dot(normal, feetPlayerPos_normalized)*0.5,0,2),2);
+			vec3 AmbientLightColor = (vec3(0.5,0.75,1.0) *0.9 + 0.1)* fresnelGlow;
 		#endif
 
 		Indirect_lighting = DoAmbientLightColor(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
@@ -889,11 +918,12 @@ void main() {
 			if(isEyeInWater == 0) DirectLightColor *= max(eyeBrightnessSmooth.y/240., 0.0);
 			DirectLightColor *= cloudShadow;
 		}
+
+
 	#endif
 	/////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////	EFFECTS FOR INDIRECT	/////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////////////
-	
 
 		float SkySSS = 0.0;
 

@@ -145,6 +145,9 @@ screen.Fog = Fog Settings
         option.CaveFogColor_G = Fog G
         option.CaveFogColor_B = Fog B
 
+    screen.END_AND_NETHER_FOG = Nether/End Fog
+        option.END_STORM_DENSTIY = End Storm Density
+        option.PLUME_DENSITY = Nether Smoke Density
 
 screen.Clouds = Cloud Settings
     option.VOLUMETRIC_CLOUDS = Volumetric Clouds
@@ -503,3 +506,6 @@ option.RESOURCEPACK_SKY.comment = Toggle resourcepack sky support. Configure set
 option.MATERIAL_AO.comment = Toggle the use of ambient occlusion based on what the resourcepack provides. §aPERFORMANCE COST:§r very low
 option.WATER_WAVE_STRENGTH.comment = configure how strong the waves appear.
 option.MOONPHASE_BASED_MOONLIGHT.comment = §bWhat is this?§r every night, the moon has different lighting. This setting adjusts the moonlight brightness based on how much of the moon is glowing. §aPERFORMANCE COST:§r nearly nothing
+
+option.END_STORM_DENSTIY.comment =  §bWhat is this?§r This is the dark cloudy fog in the end. Confingure the density of the end storm.
+option.PLUME_DENSITY.comment =  §bWhat is this?§r This is the thick, glowing smoke towers in the nether. Confingure the density of the nether smoke.

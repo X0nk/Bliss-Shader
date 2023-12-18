@@ -1,5 +1,5 @@
 float getWaterHeightmap(vec2 posxz, float waveM, float waveZ, float iswater) { // water waves
-	vec2 movement = vec2(frameTimeCounter*0.05);// *0;
+	vec2 movement = vec2(frameTimeCounter*0.05);
 	vec2 pos = posxz ;
 	float caustic = 1.0;
 	float weightSum = 0.0;

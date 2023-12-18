@@ -190,6 +190,7 @@ void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, vec2 depths){
   if(DistortedAlpha <= 0.001) Texcoord = UnalteredTexcoord; // remove distortion on non-translucents
 }
 
+uniform float eyeAltitude;
 void main() {
   /* DRAWBUFFERS:73 */
 
@@ -294,9 +295,8 @@ void main() {
     #endif
   } 
 
-#ifdef OVERWORLD_SHADER
-  #ifdef Cave_fog
-    if (isEyeInWater == 0){
+#if defined OVERWORLD_SHADER && defined Cave_fog
+    if (isEyeInWater == 0 && eyeAltitude < 1500){
 
       float fogdistfade = clamp( pow(length(fragpos) / far, CaveFogFallOff) ,0.0,1.0);
       
@@ -310,12 +310,17 @@ void main() {
       #endif
       
       color.rgb = mix(color.rgb,  cavefogCol*fogfade,  fogdistfade * (1.0-lightleakfix) * (1.0-darknessFactor) * clamp( 1.5 - np3.y,0.,1)) ;  
-      // color.rgb = mix(color.rgb, vec3(0.),  fogdistfade * (1.0-lightleakfix) * (1.0-darknessFactor) * clamp( 1.5 - np3.y,0.,1)) ;  
-      // color.rgb = vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B)*fogfade ;  
     }
-  #endif
 #endif
+#ifdef END_SHADER
 
+    if (isEyeInWater == 0){
+      vec3 hazeColor = vec3(0.3,0.75,1.0) * 0.3;
+
+      float hazeDensity = clamp(1.0 - length(fragpos) / max(far, 32.0 * 24.0),0.0,1.0);
+      color.rgb = mix(hazeColor,  color.rgb,  hazeDensity) ; 
+    }
+#endif
   // underwater fog
   if (isEyeInWater == 1){
     float dirtAmount = Dirt_Amount;

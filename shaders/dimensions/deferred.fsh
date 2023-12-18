@@ -37,6 +37,7 @@ uniform mat4 gbufferModelView;
 uniform mat4 shadowModelView;
 uniform mat4 shadowProjection;
 uniform float sunElevation;
+uniform vec3 sunPosition;
 uniform vec3 cameraPosition;
 // uniform float far;
 uniform ivec2 eyeBrightnessSmooth;
@@ -95,6 +96,19 @@ void main() {
 gl_FragData[0] = vec4(0.0);
 float mixhistory = 0.06;
 
+float accumuteSpeed = texelFetch2D(colortex4, ivec2(5,5), 0).r/150.0;
+
+vec2 pixelPos6 = vec2(5,5);
+
+if (gl_FragCoord.x > pixelPos6.x && gl_FragCoord.x < pixelPos6.x + 1 && gl_FragCoord.y > pixelPos6.y && gl_FragCoord.y < pixelPos6.y + 1){
+	mixhistory = 0.1;
+	gl_FragData[0] = vec4(1,0,0,1);
+}
+
+if(accumuteSpeed < 1.0) mixhistory = 1.0;
+
+
+
 #ifdef OVERWORLD_SHADER
 	///////////////////////////////
 	/// --- STORE COLOR LUT --- ///
@@ -139,6 +153,8 @@ float mixhistory = 0.06;
 
 /// --- Sky only
 if (gl_FragCoord.x > 18. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257){
+	
+
 	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.,1.))/256.+tempOffsets/256.,0.0,1.0);
 	vec3 viewVector = cartToSphere(p);
 
@@ -147,7 +163,7 @@ if (gl_FragCoord.x > 18. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257){
 	vec3 skyAbsorb = vec3(0.0);
 
 	// float GroundDarkening = (exp2(-15 * clamp(-viewVector.y,0.0,1.0)) * 0.7+0.3); // darken the ground in the sky.
-	sky = calculateAtmosphere((averageSkyCol*4000./2.0), viewVector, vec3(0.0,1.0,0.0), WsunVec, -WsunVec, planetSphere, skyAbsorb, 10, blueNoise());
+	sky = calculateAtmosphere((averageSkyCol*4000./2.0) , viewVector, vec3(0.0,1.0,0.0), WsunVec, -WsunVec, planetSphere, skyAbsorb, 10, blueNoise());
 
 	// sky = mix(sky, (averageSkyCol + skyAbsorb)*4000./2.0, (1.0 - exp(pow(clamp(-viewVector.y+0.5,0.0,1.0),2) * -25)));
 
@@ -167,14 +183,16 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
 	vec3 viewVector = cartToSphere(p);
 
+	WsunVec = ( float(sunElevation > 1e-5)*2-1. )*normalize(mat3(gbufferModelViewInverse) * sunPosition);
+
 	vec3 sky = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150.0;	
 	
-	vec3 suncol = sunColor;
+	vec3 suncol = lightSourceColor;
 	#ifdef ambientLight_only
 		suncol = vec3(0.0);
 	#endif
 
-	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024.,vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), suncol, moonColor, skyGroundCol/30.0);
+	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024., vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), suncol*1.75, skyGroundCol/30.0);
 	sky = sky*clouds.a + clouds.rgb / 5.0; 
 
 	vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*1024.,  fract(frameCounter/1.6180339887), lightSourceColor*1.75, skyGroundCol/30.0);
@@ -184,7 +202,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 }
 #endif
 
-#if defined NETHER_SHADER || defined END_SHADER || defined FALLBACK_SHADER
+#if defined NETHER_SHADER || defined END_SHADER
 	vec2 fogPos = vec2(256.0 - 256.0*0.12,1.0);
 
 	//Sky gradient with clouds
@@ -203,30 +221,11 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	}
 #endif
 
-
-	// /* ---------------------- FOG SHADER ---------------------- */
-	// vec2 fogPos = vec2(256.0 - 256.0*0.12,1.0);
-	
-	// //Sky gradient with clouds
-	// if (gl_FragCoord.x > (fogPos.x - fogPos.x*0.22) && gl_FragCoord.y > 0.4 && gl_FragCoord.x < 535){
-	// 	vec2 p = clamp(floor(gl_FragCoord.xy-fogPos)/256.+tempOffsets/256.,-0.2,1.2);
-	// 	vec3 viewVector = cartToSphere(p);
-	
-	//  	vec3 BackgroundColor = vec3(0.0);
-	
-	// 	vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*256.,  fract(frameCounter/1.6180339887), fract(frameCounter/2.6180339887));
-		
-	// 	BackgroundColor += VL_Fog.rgb/5.0;
-	
-	//   	gl_FragData[0] = vec4(BackgroundColor, 1.0);
-	
-	// }
-
 #ifdef END_SHADER
 	/* ---------------------- TIMER ---------------------- */
 
 	float flash = 0.0;
-	float maxWaitTime = 10;
+	float maxWaitTime = 5;
 
 	float Timer = texelFetch2D(colortex4, ivec2(3,1), 0).x/150.0;
 	Timer -= frameTime;
@@ -247,7 +246,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 
 	vec2 pixelPos1 = vec2(1,1);
 	if (gl_FragCoord.x > pixelPos1.x && gl_FragCoord.x < pixelPos1.x + 1 && gl_FragCoord.y > pixelPos1.y && gl_FragCoord.y < pixelPos1.y + 1){
-		mixhistory = clamp(5.0 * frameTime,0.0,1.0);
+		mixhistory = clamp(4.0 * frameTime,0.0,1.0);
 		gl_FragData[0] = vec4(flash, 0.0, 0.0, 1.0);
 	}
 
@@ -259,7 +258,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 
 		vec3 LastPos = (texelFetch2D(colortex4,ivec2(2,1),0).xyz/150.0) * 2.0 - 1.0;
 		
-		LastPos += (hash31(frameCounter / 75) * 2.0 - 1.0);
+		LastPos += (hash31(frameCounter / 50) * 2.0 - 1.0);
 		LastPos = LastPos * 0.5 + 0.5;
 
 		if(Timer > maxWaitTime * 0.7 ){ 
@@ -277,7 +276,10 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 //Temporally accumulate sky and light values
 vec3 temp = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy),0).rgb;
 vec3 curr = gl_FragData[0].rgb*150.;
+
+
 gl_FragData[0].rgb = clamp(mix(temp, curr, mixhistory),0.0,65000.);
+
 
 //Exposure values
 if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )

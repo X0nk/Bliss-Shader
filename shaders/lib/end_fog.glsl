@@ -63,35 +63,33 @@ SOFTWARE.*/
 //----------------------------------------------------------------------------------------
 
 // vec3 RandomPosition = hash31(frameTimeCounter);
+float vortexBoundRange = 300.0;
 vec3 ManualLightPos = vec3(ORB_X, ORB_Y, ORB_Z);
 
-// int switcher = frameCounter % 2 == 0 ? 0 : 1; 
+vec3 LightSourcePosition(vec3 worldPos, vec3 cameraPos, float vortexBounds){
 
-// float OneOrZero = int(mod(gl_FragCoord.x*gl_FragCoord.y + switcher, 2));
+	// this is static so it can just sit in one place
+	vec3 vortexPos = worldPos - vec3(0.0,200.0,0.0);
 
-void LightSourcePosition(vec3 WorldPos, vec3 CameraPos, inout vec3 Pos1, inout vec3 Pos2){
+    vec3 lightningPos = worldPos - cameraPos - ManualLightPos;
+    
+	// snap-to coordinates in worldspace.
+	float cellSize = 200.0;
+    lightningPos += fract(cameraPos/cellSize)*cellSize - cellSize*0.5;
 
-	Pos1 = WorldPos - vec3(0,200,0);
-	// Pos2 = WorldPos - vec3(-50,100,0);
-	// Pos1 = mix(Pos1, Pos2, OneOrZero);
+	// make the position offset to random places (RNG.xyz from non-clearing buffer).
+	vec3 randomOffset = (texelFetch2D(colortex4,ivec2(2,1),0).xyz / 150.0) * 2.0 - 1.0;
+	lightningPos -= randomOffset * 2.5;
+	
+	#ifdef THE_ORB
+		cellSize = 200.0;
+    	vec3 orbpos = worldPos - cameraPos - ManualLightPos;// - vec3(sin(frameTimeCounter), cos(frameTimeCounter), cos(frameTimeCounter))*100;
+    	orbpos += fract(cameraPos/cellSize)*cellSize - cellSize*0.5;
 
-
-
-    vec3 Origin = WorldPos - CameraPos - ManualLightPos;
-
-    float cellSize = 200;
-    vec3 cellPos = CameraPos ;
-
-    Origin += fract(cellPos/cellSize)*cellSize - cellSize*0.5;
-	// Origin -= vec3(sin(frameTimeCounter),0,-cos(frameTimeCounter)) * 20;
-
-	vec3 randomPos = texelFetch2D(colortex4,ivec2(2,1),0).xyz / 150.0;
-
-	Origin -= (randomPos * 2.0 - 1.0);
-
-	// Pos1 = mix(Pos1, Origin, OneOrZero);
-
-    Pos2 = Origin;
+		return orbpos;
+	#else
+		return mix(lightningPos, vortexPos, vortexBounds);
+	#endif
 }
 
 float densityAtPosFog(in vec3 pos){
@@ -134,39 +132,41 @@ void VolumeBounds(inout float Volume, vec3 Origin){
     float thickness = 50.0 * radius;
     float Torus =  (thickness - clamp( pow( length( vec2(length(Origin.xz) - radius, Origin2.y) ),2.0) - radius, 0.0, thickness) ) / thickness;
 	
-	Origin2.xz *= 0.3;
+	Origin2.xz *= 0.5;
 	Origin2.y -= 100;
 
-	float orb = clamp((1.0 - length(Origin2) / 15.0) * 1.5,0.0,1.0);
-    Volume = max(Volume - Bounds - Torus, orb);
+	float orb = clamp((1.0 - length(Origin2) / 15.0) * 1.0,0.0,1.0);
+    Volume = max(Volume - Bounds - Torus, 0);
 	
 }
 
 // create the volume shape
-float cloudVol(in vec3 pos){
+float fogShape(in vec3 pos){
+	float vortexBounds = clamp(vortexBoundRange - length(pos), 0.0,1.0);
+	vec3 samplePos = pos*vec3(1.0,1.0/48.0,1.0);
+	float fogYstart = -60;
 
-	float Output = 0.0;
-	vec3 samplePos = pos*vec3(1.0,1./48.,1.0);
+    
+	// this is below down where you fall to your death.
+	float voidZone = max(exp2(-1.0 * sqrt(max(pos.y - -60,0.0))) ,0.0) ;
 
-    // swirly swirly :DDDDDDDDDDD
+	// swirly swirly :DDDDDDDDDDD
     SwirlAroundOrigin(samplePos, pos);
-
-	float NoisePlane = texture2D(noisetex, samplePos.xz/1024 ).b;
-
-    float MainShape = clamp(max(0.5 - densityAtPosFog(samplePos * 16),0.0) * 2,0.0,1.0);
-    float Erosion = abs(0.6 - densityAtPosFog(samplePos * (160. - MainShape*50) - vec3(0,frameTimeCounter*3,0) 	));
+	
+	float noise = densityAtPosFog(samplePos * 12.0);
+    float erosion = 1.0-densityAtPosFog((samplePos - frameTimeCounter/20) * (124 + (1-noise)*7));
     
 
-    Output = MainShape;
-    Output = max(Output - Erosion*0.5,0.0);
-    // apply limts
-    VolumeBounds(Output, pos);
+	float clumpyFog = max(exp(noise * -mix(10,4,vortexBounds))*mix(2,1,vortexBounds) - erosion*0.3, 0.0);
+    
+	// apply limts
+    VolumeBounds(clumpyFog, pos);
 
-    // Output = max(max(100 - pos.y,0.0) - NoisePlane * 50        ,0.0);
-	return Output;
+
+	return clumpyFog + voidZone;
 }
 
-float EndLightMie(vec3 LightPos){
+float endFogPhase(vec3 LightPos){
 
     float mie = exp(length(LightPos) / -150);
     mie *= mie;
@@ -176,49 +176,50 @@ float EndLightMie(vec3 LightPos){
     return mie;
 }
 
-void LightSourceColors(inout vec3 Color1, inout vec3 Color2){
-    // Color1 = vec3(0.7,0.88,1.0); 
-    // Color2 = vec3(ORB_R,ORB_G,ORB_B);
-    Color1 = vec3(1.0,0.5,1.0); 
-    Color2 = vec3(0.0,0.5,1.0);
+vec3 LightSourceColors(float vortexBounds, float lightningflash){
 
-	// Color1 = mix(Color1, Color2, OneOrZero);
+    // vec3 vortexColor = vec3(0.7,0.88,1.0); 
+    // vec3 lightningColor = vec3(ORB_R,ORB_G,ORB_B);
+
+    vec3 vortexColor = vec3(0.5,0.68,1.0);
+    vec3 lightningColor = vec3(1.0,0.3,0.2) * lightningflash;
+
+	#ifdef THE_ORB
+		return vec3(ORB_R, ORB_G, ORB_B) * ORB_ColMult;
+	#else
+		return mix(lightningColor, vortexColor, vortexBounds);
+	#endif
 }
 
-vec3 LightSourceLighting( vec3 WorldPos, vec3 LightPos, float Dither, float VolumeDensity, vec3 LightColor, float Phase ){
+vec3 LightSourceLighting(vec3 startPos, vec3 lightPos, float noise, float density, vec3 lightColor, float vortexBound){
 
-    float Mie = EndLightMie(LightPos);
-	float Shadow = 0.0;
+    float phase = endFogPhase(lightPos);
+	float shadow = 0.0;
 
-	// vec3 shadowSamplePos = WorldPos - LightPos * 0.05;
-
-	for (int j=0; j < 3; j++){
-		// shadowSamplePos -= LightPos * 0.25 * Dither * min(j,1);
-		vec3 shadowSamplePos = WorldPos - LightPos * (0.05 + j * (0.25 + Dither*0.15));
-		Shadow += cloudVol(shadowSamplePos);
+	for (int j = 0; j < 3; j++){
+		vec3 shadowSamplePos = startPos - lightPos * (0.05 + j * (0.25 + noise*0.15));
+		shadow += fogShape(shadowSamplePos);
 	}
 
-    vec3 FinalLighting = LightColor * Mie * exp(Shadow * -5.0) ;
+    vec3 finalLighting = lightColor * phase * exp(shadow * -10.0);
 
-	FinalLighting += LightColor * exp2(-5 * max(2.5-Shadow,0.0) * vec3(1.2,1.0,0.8+VolumeDensity*0.4)) * (Mie*Mie)  * clamp((1.0 - length(LightPos) / 100.0),0.0,1.0); 
+	finalLighting += lightColor * phase*phase * (1.0-exp((shadow*shadow*shadow) * vec3(0.6,2.0,2) * -1)) * (1.0 - exp(-density*density)); 
 
-	return FinalLighting;
+	return finalLighting;
 }
 
-
-#define lightsourceCount 2 // [1 2]
-
 vec4 GetVolumetricFog(
-	vec3 viewPos,
+	vec3 viewPosition,
 	float dither,
 	float dither2
 ){
-	int SAMPLES = 16;
-	vec3 vL = vec3(0.0);
-	float absorbance = 1.0;
 
-  	//project pixel position into projected shadowmap space
-	vec3 wpos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
+	/// -------------  RAYMARCHING STUFF ------------- \\\
+
+	int SAMPLES = 16;
+
+	//project pixel position into projected shadowmap space
+	vec3 wpos = mat3(gbufferModelViewInverse) * viewPosition + gbufferModelViewInverse[3].xyz;
 	vec3 fragposition = mat3(shadowModelView) * wpos + shadowModelView[3].xyz;
 	fragposition = diagonal3(shadowProjection) * fragposition + shadowProjection[3].xyz;
 
@@ -228,91 +229,67 @@ vec4 GetVolumetricFog(
 	//rayvector into projected shadow map space
 	//we can use a projected vector because its orthographic projection
 	//however we still have to send it to curved shadow map space every step
-	vec3 dV = fragposition-start;
+	vec3 dV = fragposition - start;
 	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
 
 	float maxLength = min(length(dVWorld),32.0 * 12.0)/length(dVWorld);
-
 	dV *= maxLength;
 	dVWorld *= maxLength;
-
 	float dL = length(dVWorld);
+
+	vec3 progressW = gbufferModelViewInverse[3].xyz + cameraPosition;
+	
+	/// -------------  COLOR/LIGHTING STUFF ------------- \\\
+
+	vec3 color = vec3(0.0);
+	vec3 absorbance = vec3(1.0);
+
 	vec3 fogcolor = (gl_Fog.color.rgb / max(dot(gl_Fog.color.rgb,vec3(0.3333)),0.05)) ;
     
-	vec3 LightCol1 = vec3(0); vec3 LightCol2 = vec3(0);
-	LightSourceColors(LightCol1, LightCol2);
-
-	float Flashing = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
-	// LightCol1 *= Flashing; 
-	LightCol2 *= Flashing;
-
-
-	vec3 LightPos1 = vec3(0); vec3 LightPos2 = vec3(0);
-
-    LightSourcePosition(cameraPosition, cameraPosition, LightPos1, LightPos2);
-
-	float Phase1 = sqrt(1.0 - clamp( dot(normalize(dVWorld), normalize(-LightPos1)),0.0,1.0));
-	Phase1 = exp(Phase1 * -5.0) * 10;
-	
-	float Phase2 = sqrt(1.0 - clamp( dot(normalize(dVWorld), normalize(-LightPos2)),0.0,1.0));
-	Phase2 = exp(Phase2 * -5.0) * 10;
-
+	float lightningflash = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
 
 	float expFactor = 11.0;
 	for (int i=0;i<SAMPLES;i++) {
 		float d = (pow(expFactor, float(i+dither)/float(SAMPLES))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
 		float dd = pow(expFactor, float(i+dither)/float(SAMPLES)) * log(expFactor) / float(SAMPLES)/(expFactor-1.0);
-		vec3 progress = start.xyz + d*dV;
+
 		vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
+		
+		// determine where the vortex area ends and chaotic lightning area begins.
+		float vortexBounds = clamp(vortexBoundRange - length(progressW), 0.0,1.0);
 
-		// vec3 LightPos1 = vec3(0); vec3 LightPos2 = vec3(0);
-        LightSourcePosition(progressW, cameraPosition, LightPos1, LightPos2);
+        vec3 lightPosition = LightSourcePosition(progressW, cameraPosition, vortexBounds);
+		vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
 
-		float VolumeDensity = max(cloudVol(progressW),0.0);
-		// float VolumeDensity = 0.0;
-		float Density = max(VolumeDensity,0.0);
+		float volumeDensity = fogShape(progressW);
+		// volumeDensity += max(1.0 - length(vec3(lightPosition.x,lightPosition.y*2,lightPosition.z))/50,0.0) * vortexBounds;
+		
+		float clearArea =  1.0-min(max(1.0 - length(progressW - cameraPosition) / 100,0.0),1.0);
+		float density = min(volumeDensity * clearArea, END_STORM_DENSTIY);
 
+		///// ----- air lighting, the haze
+			float distanceFog =  max(1.0 - length(progressW - cameraPosition) / max(far, 32.0 * 13.0),0.0);
+			float hazeDensity = min(exp2(distanceFog * -25)+0.0005,1.0);
+			vec3 hazeColor = vec3(0.3,0.75,1.0) * 0.3;
+			color += (hazeColor - hazeColor*exp(-hazeDensity*dd*dL)) * absorbance;
 
-        ////////////////////////////////////////////////////////////////
-        ///////////////////////// AMBIENT LIGHT ////////////////////////
-        ////////////////////////////////////////////////////////////////
+		///// ----- main lighting
+			vec3 voidLighting = vec3(1.0,0.0,0.8) * 0.1 * (1-exp(volumeDensity * -25)) * max(exp2(-1 * sqrt(max(progressW.y - -60,0.0))),0.0) ;
 
-		vec3 vL0 = fogcolor * exp2(VolumeDensity * -25) * 0.1 ;
+			vec3 ambient = vec3(0.5,0.75,1.0) * 0.2  * (exp((volumeDensity*volumeDensity) * -50) * 0.9 + 0.1);
+			float shadows = 0;
+			vec3 lightsources = LightSourceLighting(progressW, lightPosition, dither2, volumeDensity, lightColors, vortexBounds);
+			vec3 lighting = lightsources + ambient + voidLighting;
 
-        ////////////////////////////////////////////////////////////////
-        /////////////////////// MAIN LIGHTSOURCE ///////////////////////
-        ////////////////////////////////////////////////////////////////
-		vec3 Light1 = vec3(0); vec3 Light2 = vec3(0);
+			#ifdef THE_ORB
+				density += min(50.0*max(1.0 - length(lightPosition)/10,0.0),1.0);
+			#endif
 
-
-		Density += clamp((1.0 - length(LightPos1) / 10.0) * 10 ,0.0,1.0); // THE ORRRRRRRRRRRRRRRRRRRRRRRRRRB
-		Light1 = LightSourceLighting(progressW, LightPos1, dither2, VolumeDensity, LightCol1, Phase1);
-
-		#if lightsourceCount == 2
-			Density += clamp((1.0 - length(LightPos2) / 10.0) * 10 ,0.0,1.0); // THE ORRRRRRRRRRRRRRRRRRRRRRRRRRB
-
-			Light2 += LightSourceLighting(progressW, LightPos2, dither2, VolumeDensity, LightCol2, Phase2);
-		#endif
-
-		vL0 += Light1 + Light2;
-
-        ////////////////////////////////////////////////////////////////
-        /////////////////////////// FINALIZE ///////////////////////////
-        ////////////////////////////////////////////////////////////////
-
-		float AirDensity = 0.002;
-		// AirDensity = 0.0;
-		vec3 vL1 = vec3(0.5,0.75,1.0) * 0.5;
-		// vL1 += Light1 + Light2;
-
-		vL += (vL1 - vL1*exp2(-AirDensity*dd*dL)) * absorbance;
-		vL += (vL0 - vL0*exp(-Density*dd*dL)) * absorbance;
-
-        absorbance *= exp2(-(AirDensity+Density)*dd*dL);
-
-		if (absorbance < 1e-5) break;
+		///// ----- blend
+			color += (lighting - lighting*exp(-(density)*dd*dL)) * absorbance;
+        	absorbance *= exp(-max(density,hazeDensity)*dd*dL);
 	}
-	return vec4(vL, absorbance);
+	return vec4(color, absorbance);
 }
 
 float GetCloudShadow(vec3 WorldPos, vec3 LightPos){
@@ -320,11 +297,10 @@ float GetCloudShadow(vec3 WorldPos, vec3 LightPos){
 
 	for (int i=0; i < 3; i++){
 
-	    vec3 shadowSamplePos = WorldPos - LightPos * (0.1 + pow(i,0.75)*0.25); 
-		// vec3 shadowSamplePos = WorldPos - LightPos * i * 0.5;
-	    float Cast = cloudVol(shadowSamplePos);
+	    vec3 shadowSamplePos = WorldPos - LightPos * (pow(i,0.75)*0.25); 
+	    float Cast = fogShape(shadowSamplePos)*END_STORM_DENSTIY;
 	    Shadow += Cast;
     }
 
-	return clamp(exp(-Shadow*5.0),0.0,1.0);
+	return clamp(exp(Shadow * -5.0),0.0,1.0);
 }

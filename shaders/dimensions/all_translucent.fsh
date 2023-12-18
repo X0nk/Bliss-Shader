@@ -59,15 +59,11 @@ uniform float sunIntensity;
 uniform vec3 sunColor;
 uniform vec3 nsunColor;
 
-
-
-
 #include "/lib/Shadow_Params.glsl"
 #include "/lib/color_transforms.glsl"
 #include "/lib/projections.glsl"
 #include "/lib/sky_gradient.glsl"
 #include "/lib/waterBump.glsl"
-#include "/lib/clouds.glsl"
 #include "/lib/stars.glsl"
 
 #ifdef OVERWORLD_SHADER
@@ -77,6 +73,10 @@ uniform vec3 nsunColor;
 #else
 	uniform sampler2D colortex4;
 	uniform float nightVision;
+#endif
+
+#ifdef END_SHADER
+	#include "/lib/end_fog.glsl"
 #endif
 
 #include "/lib/diffuse_lighting.glsl"
@@ -275,6 +275,7 @@ vec3 GGX (vec3 n, vec3 v, vec3 l, float r, vec3 F0) {
 
 
 
+
 #define PHYSICSMOD_FRAGMENT
 #include "/lib/oceans.glsl"
 
@@ -291,6 +292,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	vec2 tempOffset = offsets[framemod8];
 	vec3 viewPos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
 	vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
+	
 
 	//////////////////////////////// 
 	//////////////////////////////// ALBEDO
@@ -336,6 +338,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 						  tangent.z, tangent2.z, normal.z);
 
 	vec4 NormalTex = texture2D(normals, lmtexcoord.xy, Texture_MipMap_Bias).rgba;
+	
 	NormalTex.xy = NormalTex.xy*2.0-1.0;
 	NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0) ;
 	TangentNormal = NormalTex.xy*0.5+0.5;
@@ -473,7 +476,22 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	#ifdef END_SHADER
-		vec3 AmbientLightColor = vec3(1.0);
+		float fresnelGlow = pow(clamp(1.5 + dot(WS_normal, normalize(feetPlayerPos))*0.5,0,2),2);
+		vec3 AmbientLightColor = (vec3(0.5,0.75,1.0) *0.9 + 0.1)* fresnelGlow;
+
+		
+		float vortexBounds = clamp(vortexBoundRange - length(feetPlayerPos+cameraPosition), 0.0,1.0);
+        vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds);
+
+
+		float lightningflash = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
+		vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
+
+		float NdotL = clamp(dot(WS_normal, normalize(-lightPos))*0.5+0.5,0.0,1.0);
+		NdotL *= NdotL;
+
+		Direct_lighting = lightColors * endFogPhase(lightPos) * NdotL;
+
 	#endif
 
 	Indirect_lighting = DoAmbientLightColor(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
@@ -500,7 +518,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		float roughness = max(pow(1.0-SpecularTex.r,2.0),0.05);
 		float f0 = SpecularTex.g;
 
-		roughness = 0.0;
+		// roughness = 0.0;
 		// f0 = 0.9;
 
 		if (iswater > 0.0 && gl_FragData[0].a < 0.9999999){
@@ -577,7 +595,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#ifndef HAND
 		gl_FragData[1] = vec4(Albedo, iswater);
 	#endif
-
+	
 	gl_FragData[3].a = max(lmtexcoord.w*blueNoise()*0.05 + lmtexcoord.w,0.0);
 }
 }

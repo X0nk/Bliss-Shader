@@ -29,7 +29,7 @@ void main() {
 	sunColor = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
 	moonColor = texelFetch2D(colortex4,ivec2(13,37),0).rgb;
 
-	WsunVec = ( float(sunElevation > 1e-5)*2-1. )*normalize(mat3(gbufferModelViewInverse) *sunPosition);
+	WsunVec = ( float(sunElevation > 1e-5)*2-1. )*normalize(mat3(gbufferModelViewInverse) * sunPosition);
 	// WsunVec = normalize(LightDir);
 
 	tempOffsets = HaltonSeq2(frameCounter%10000);
