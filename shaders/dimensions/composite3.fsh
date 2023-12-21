@@ -312,8 +312,8 @@ void main() {
       color.rgb = mix(color.rgb,  cavefogCol*fogfade,  fogdistfade * (1.0-lightleakfix) * (1.0-darknessFactor) * clamp( 1.5 - np3.y,0.,1)) ;  
     }
 #endif
-#ifdef END_SHADER
 
+#ifdef END_SHADER
     if (isEyeInWater == 0){
       vec3 hazeColor = vec3(0.3,0.75,1.0) * 0.3;
 
@@ -321,6 +321,8 @@ void main() {
       color.rgb = mix(hazeColor,  color.rgb,  hazeDensity) ; 
     }
 #endif
+
+
   // underwater fog
   if (isEyeInWater == 1){
     float dirtAmount = Dirt_Amount;
@@ -345,6 +347,7 @@ void main() {
     // bloomy rain effect
     float rainDrops =  clamp(texture2D(colortex9,texcoord).a,  0.0,1.0); 
     if(rainDrops > 0.0) bloomyFogMult *= clamp(1.0 - pow(rainDrops*5.0,2),0.0,1.0); 
+    // if(rainDrops > 0.0) bloomyFogMult *= exp((1.0 - rainDrops) * -0.1); 
   #endif
   
   /// lava.

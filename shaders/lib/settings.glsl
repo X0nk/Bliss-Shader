@@ -508,6 +508,8 @@ uniform int moonPhase;
 
 #define RESOURCEPACK_SKY 0 // [0 1 2]
 
+// #define BLOOMY_PARTICLES
+
 // fix settings
 #if RESOURCEPACK_SKY == 0
 #endif
