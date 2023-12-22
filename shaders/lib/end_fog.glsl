@@ -302,5 +302,5 @@ float GetCloudShadow(vec3 WorldPos, vec3 LightPos){
 	    Shadow += Cast;
     }
 
-	return clamp(exp(Shadow * -5.0),0.0,1.0);
+	return clamp(exp(Shadow * -10.0),0.0,1.0);
 }

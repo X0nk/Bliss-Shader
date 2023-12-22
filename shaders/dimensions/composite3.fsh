@@ -346,8 +346,7 @@ void main() {
   #ifdef OVERWORLD_SHADER
     // bloomy rain effect
     float rainDrops =  clamp(texture2D(colortex9,texcoord).a,  0.0,1.0); 
-    if(rainDrops > 0.0) bloomyFogMult *= clamp(1.0 - pow(rainDrops*5.0,2),0.0,1.0); 
-    // if(rainDrops > 0.0) bloomyFogMult *= exp((1.0 - rainDrops) * -0.1); 
+    if(rainDrops > 0.0) bloomyFogMult *= clamp(1.0 - pow(rainDrops*5.0,2),0.0,1.0);
   #endif
   
   /// lava.

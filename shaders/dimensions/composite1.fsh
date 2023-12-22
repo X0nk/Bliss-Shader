@@ -443,17 +443,6 @@ void SSRT_Shadows(vec3 viewPos, vec3 lightDir, float noise, bool isSSS, bool ins
 	}
 }
 
-#ifdef END_SHADER
-	float GetShading(vec3 WorldPos, vec3 LightPos, vec3 Normal){
-
-		float NdotL = clamp(dot(Normal, normalize(-LightPos))*0.5+0.5,0.0,1.0);
-		NdotL *= NdotL;
-		float FogShadow = GetCloudShadow(WorldPos, LightPos);
-
-		return endFogPhase(LightPos) * NdotL * FogShadow;
-	}
-#endif
-
 float CustomPhase(float LightPos){
 
 	float PhaseCurve = 1.0 - LightPos;
@@ -835,17 +824,20 @@ void main() {
 
 
 	#ifdef END_SHADER
-
 		float vortexBounds = clamp(vortexBoundRange - length(feetPlayerPos+cameraPosition), 0.0,1.0);
         vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds);
 
-
 		float lightningflash = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
 		vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
+		
+		float end_NdotL = clamp(dot(slopednormal, normalize(-lightPos))*0.5+0.5,0.0,1.0);
+		end_NdotL *= end_NdotL;
 
-		Direct_lighting += lightColors * GetShading(feetPlayerPos+cameraPosition, lightPos, slopednormal) ;
+		float fogShadow = GetCloudShadow(feetPlayerPos+cameraPosition, lightPos);
+		float endPhase = endFogPhase(lightPos);
 
-
+		Direct_lighting += lightColors * endPhase * end_NdotL * fogShadow;
+		AmbientLightColor += lightColors * (endPhase*endPhase) * (1.0-exp(vec3(0.6,2.0,2) * -(endPhase*0.1))) ;
 	#endif
 	
 	/////////////////////////////////////////////////////////////////////////////////
@@ -877,8 +869,10 @@ void main() {
 		#endif
 		
 		#ifdef END_SHADER
-			float fresnelGlow = pow(clamp(1.5 + dot(normal, feetPlayerPos_normalized)*0.5,0,2),2);
-			vec3 AmbientLightColor = (vec3(0.5,0.75,1.0) *0.9 + 0.1)* fresnelGlow;
+
+			AmbientLightColor += vec3(0.5,0.75,1.0) * 0.9 + 0.1;
+
+			AmbientLightColor *= clamp(1.5 + dot(normal, feetPlayerPos_normalized)*0.5,0,2);
 		#endif
 
 		Indirect_lighting = DoAmbientLightColor(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);

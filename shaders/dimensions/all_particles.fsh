@@ -121,6 +121,7 @@ void main() {
 	#ifndef BLOOMY_PARTICLES
 		gl_FragData[1].a = 0.0; // for bloomy rain and stuff
 	#endif
+	
 	vec3 Direct_lighting = vec3(0.0);
 	vec3 Indirect_lighting = vec3(0.0);
 	vec3 Torch_Color = vec3(TORCH_R,TORCH_G,TORCH_B);
