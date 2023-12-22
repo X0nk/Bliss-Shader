@@ -285,13 +285,13 @@ vec4 renderClouds(
 				if(max(progress_view.y - MaxHeight_1 + 50,0.0) < 1.0) directLight += Cumulus_density * 2.0 * GetCumulusDensity(progress_view + dV_Sun/abs(dV_Sun.y) * max((MaxHeight_1 - 30.0) - progress_view.y,0.0), 0, MinHeight_0, MaxHeight_0);
 
 				float upperLayerOcclusion = !isUpperLayer ? Cumulus_density * 2.0 * GetCumulusDensity(progress_view + vec3(0.0,1.0,0.0) * max((MaxHeight_1 - 30.0) - progress_view.y,0.0), 0, MinHeight_0, MaxHeight_0) : 0.0;
-				float skylightOcclusion = max(exp2((upperLayerOcclusion*upperLayerOcclusion) * -5), 0.75 + (1.0-distantfog)*0.25);
+				float skylightOcclusion = max(exp2((upperLayerOcclusion*upperLayerOcclusion) * -5), 0.5 + (1.0-distantfog)*0.5);
 				
 				float skyScatter = clamp((CloudBaseHeights - 20 - progress_view.y) / 275.0,0.0,1.0);
 				vec3 Lighting = DoCloudLighting(muE, cumulus, SkyColor, skyScatter, directLight, directScattering, directMultiScattering, distantfog);
 
 				// a horrible approximation of direct light indirectly hitting the lower layer of clouds after scattering through/bouncing off the upper layer.
-				Lighting += sunIndirectScattering * skylightOcclusion * exp(-20.0 * pow(abs(upperLayerOcclusion - 0.3),2)) * exp((cumulus*cumulus) * -10.0) ; ;
+				Lighting = sunIndirectScattering * skylightOcclusion * exp(-20.0 * pow(abs(upperLayerOcclusion - 0.3),2)) * exp((cumulus*cumulus) * -10.0) ; ;
 
 
 				color += max(Lighting - Lighting*exp(-mult*muE),0.0) * total_extinction;

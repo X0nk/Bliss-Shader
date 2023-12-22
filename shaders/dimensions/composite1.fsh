@@ -655,7 +655,7 @@ void main() {
 				#endif
 			#endif
 
-			// Background *= 1.0 - exp2(-50.0 * pow(clamp(feetPlayerPos_normalized.y+0.025,0.0,1.0),2.0)  ); // darken the ground in the sky.
+			Background *= 1.0 - exp2(-50.0 * pow(clamp(feetPlayerPos_normalized.y+0.025,0.0,1.0),2.0)  ); // darken the ground in the sky.
 			
 			vec3 Sky = skyFromTex(feetPlayerPos_normalized, colortex4)/30.0;
 			Background += Sky;
@@ -869,7 +869,6 @@ void main() {
 		#endif
 		
 		#ifdef END_SHADER
-
 			AmbientLightColor += vec3(0.5,0.75,1.0) * 0.9 + 0.1;
 
 			AmbientLightColor *= clamp(1.5 + dot(normal, feetPlayerPos_normalized)*0.5,0,2);
