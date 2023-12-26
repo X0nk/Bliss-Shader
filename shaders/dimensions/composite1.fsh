@@ -688,6 +688,7 @@ void main() {
 	#ifdef OVERWORLD_SHADER
 
 		NdotL = clamp((-15 + dot(slopednormal, WsunVec)*255.0) / 240.0  ,0.0,1.0);
+
 		
 		float shadowNDOTL = NdotL;
 		#ifndef Variable_Penumbra_Shadows
@@ -795,15 +796,14 @@ void main() {
 					
 					if (!inShadowmapBounds) ShadowBlockerDepth = max(ShadowBlockerDepth, clamp(SS_shadowSSS,0.0,1.0));
 
-
-					// DEBUG = 1.0-SS_shadowSSS;
 				#else
 
-					if (!inShadowmapBounds) Direct_SSS = vec3(0.0);
+					if (!inShadowmapBounds) ShadowBlockerDepth = 1.0-min(max(lightmap.y-0.85,0.0)*10.0,1.0);
 
 				#endif
-			
+					
 				Direct_SSS = SubsurfaceScattering_sun(albedo, ShadowBlockerDepth, sunSSS_density, clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), inShadowmapBounds) ;
+			
 			}
 			
 			if (isEyeInWater == 0) Direct_SSS *= clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
