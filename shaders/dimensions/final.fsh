@@ -6,9 +6,9 @@ uniform sampler2D colortex7;
 uniform vec2 texelSize;
 uniform float frameTimeCounter;
 
-uniform sampler2D shadowcolor0;
-uniform sampler2D shadowtex0;
-uniform sampler2D shadowtex1;
+// uniform sampler2D shadowcolor0;
+// uniform sampler2D shadowtex0;
+// uniform sampler2D shadowtex1;
 
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
@@ -161,28 +161,5 @@ void main() {
 
 	applyContrast(FINAL_COLOR, CONTRAST); // for fun
 
-
   gl_FragColor.rgb = FINAL_COLOR;
-
-
-
-  // uniform sampler2D shadowcolor0;
-  // uniform sampler2D shadowtex0;
-  // uniform sampler2D shadowtex1;
-  // vec2 coord = gl_FragCoord.xy;
-  // int invertChecker = int(mod(coord.x,2)) * int(mod(coord.y,2));
-
-  // int checker = int(mod(coord.x*coord.y,2));
-  // int checker2 = int(mod(coord.x*coord.y+1,2));
-
-  // gl_FragColor.rgb = vec3(0.2) * checker * checker2;
-
-
-  // if( hideGUI == 1){
-  //   vec2 texrood = texcoord * vec2(2.0, 1.0) - vec2(1.0, 0.0);
-  //   if(texcoord.x > 0.5) gl_FragColor.rgb = texture2D(shadowcolor0, texrood).rgb;
-
-  
-  //   // if(texrood.x > 0.49 && texrood.x < 0.51 && texrood.y > 0.49 && texrood.y < 0.51) gl_FragColor.rgb = vec3(1,0,0);
-  // }
 }

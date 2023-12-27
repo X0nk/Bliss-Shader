@@ -3,6 +3,7 @@
 flat varying vec3 zMults;
 flat varying vec2 TAA_Offset;
 
+flat varying vec3 skyGroundColor;
 
 uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
@@ -251,17 +252,6 @@ void main() {
     
   /// --- REFRACTION --- ///
   #ifdef Refraction
-    // refractedCoord = clamp(refractedCoord + (tangentNormals * clamp((ld(z2) - ld(z)) * 0.5,0.0,0.15)) * RENDER_SCALE ,-1.0,1.0);
-
-    // // refractedCoord = clamp(refractedCoord - tangentNormals, refractedCoord-0.5,refractedCoord);
-
-    // // if(tangentNormals.xy <= vec2(0.0, 0.0) ) refractedCoord = abs(refractedCoord - tangentNormals);
-    // // refractedCoord += tangentNormals * 0.1 * RENDER_SCALE;
-
-    // float refractedalpha = decodeVec2(texture2D(colortex11,refractedCoord).b).g;
-    // // float refractedalpha2 = texture2D(colortex7,refractedCoord).a;
-    // if( refractedalpha <= 0.001) refractedCoord = texcoord; // remove refracted coords on solids
-
     ApplyDistortion(refractedCoord, tangentNormals, vec2(z2,z));
   #endif
   
@@ -272,11 +262,10 @@ void main() {
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 
   #if defined OVERWORLD_SHADER && defined BorderFog
-  	vec3 sky = skyFromTex(np3, colortex4).rgb / 30.0;
-  	float fog = 1.0 - clamp(exp(-pow(length(fragpos / far),10.)*4.0)  ,0.0,1.0);
-  	float heightFalloff = clamp( pow(abs(np3.y-1.01),5) ,0,1)	;
-
-    if(z < 1.0 && isEyeInWater == 0) color.rgb = mix(color.rgb, sky, fog);
+  	float fog =  exp2(-100.0 * pow(clamp(1.0-length(p3)/far,0.0,1.0),2.0));
+  	fog *= exp(-30.0*(pow(clamp(np3.y,0.0,1.0),2.0)))	;
+   
+    if(z < 1.0 && isEyeInWater == 0) color.rgb = mix(color.rgb, skyGroundColor, fog);
   #endif
 
   vec4 vl = BilateralUpscale(colortex0, depthtex1, gl_FragCoord.xy, frDepth);
@@ -291,7 +280,7 @@ void main() {
 
 
     #ifdef BorderFog
-      if(z < 1.0 && isEyeInWater == 0) color.rgb = mix(color.rgb, sky, fog);
+      if(z < 1.0 && isEyeInWater == 0) color.rgb = mix(color.rgb, skyGroundColor, fog);
     #endif
   } 
 

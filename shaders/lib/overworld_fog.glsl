@@ -42,8 +42,8 @@ float cloudVol(in vec3 pos){
 
 	TimeOfDayFog(UniformFog, CloudyFog);
 
-	float testfogshapes = exp(sqrt(max(pos.y - fogYstart - 5,0.0)) / -1) * 50;
-
+	float testfogshapes = clamp(130 - pos.y,0,1) * 100;
+	// return testfogshapes;
 
 	return CloudyFog + UniformFog + RainFog;// + testfogshapes;
 }
@@ -108,28 +108,26 @@ vec4 GetVolumetricFog(
 	float mie = fogPhase(SdotV) * 5.0;
 	float rayL = phaseRayleigh(SdotV);
 
-	vec3 rC = vec3(fog_coefficientRayleighR*1e-6, fog_coefficientRayleighG*1e-5, fog_coefficientRayleighB*1e-5);
+	vec3 rC = vec3(sky_coefficientRayleighR*1e-6, sky_coefficientRayleighG*1e-5, sky_coefficientRayleighB*1e-5) * 3.0;
 	vec3 mC = vec3(fog_coefficientMieR*1e-6, fog_coefficientMieG*1e-6, fog_coefficientMieB*1e-6);
 
-	vec3 LightSourceColor = LightColor;
+	vec3 skyLightPhased = AmbientColor;
+	vec3 LightSourcePhased = LightColor;
+
 	#ifdef ambientLight_only
-		LightSourceColor = vec3(0.0);
+		LightSourcePhased = vec3(0.0);
 	#endif
-
-	vec3 skyCol0 = AmbientColor;
-
 	#ifdef PER_BIOME_ENVIRONMENT
-		BiomeFogColor(LightSourceColor);
-		BiomeFogColor(skyCol0);
+		BiomeFogColor(LightSourcePhased);
+		BiomeFogColor(skyLightPhased);
 	#endif
 
-	skyCol0 = max(skyCol0 + skyCol0*(normalize(wpos).y*0.9+0.1),0.0);
+	skyLightPhased = max(skyLightPhased + skyLightPhased*(normalize(wpos).y*0.9+0.1),0.0);
+	LightSourcePhased *= mie;
 	
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 
 	#ifdef RAYMARCH_CLOUDS_WITH_FOG
-	///// ----- cloud stuff
-
 		// first cloud layer
 		float MinHeight_0 = Cumulus_height;
 		float MaxHeight_0 = 100 + MinHeight_0;
@@ -138,7 +136,11 @@ vec4 GetVolumetricFog(
 		float MinHeight_1 = MaxHeight_0 + 50;
 		float MaxHeight_1 = 100 + MinHeight_1;
 
-		vec3 SkyColor = AmbientColor;
+		vec3 SkyLightColor = AmbientColor;
+		vec3 LightSourceColor = LightColor;
+		#ifdef ambientLight_only
+			LightSourceColor = vec3(0.0);
+		#endif
 
 		float shadowStep = 200.0;
 
@@ -147,10 +149,10 @@ vec4 GetVolumetricFog(
 		float mieDay = phaseg(SdotV, 0.75);
 		float mieDayMulti = (phaseg(SdotV, 0.35) + phaseg(-SdotV, 0.35) * 0.5) ;
 
-		vec3 directScattering = LightColor * mieDay * 3.14;
-		vec3 directMultiScattering = LightColor * mieDayMulti * 4.0;
+		vec3 directScattering = LightSourceColor * mieDay * 3.14;
+		vec3 directMultiScattering = LightSourceColor * mieDayMulti * 4.0;
 
-		vec3 sunIndirectScattering = LightColor * phaseg(dot(mat3(gbufferModelView)*vec3(0,1,0),normalize(viewPosition)), 0.5) * 3.14;
+		vec3 sunIndirectScattering = LightSourceColor * phaseg(dot(mat3(gbufferModelView)*vec3(0,1,0),normalize(viewPosition)), 0.5) * 3.14;
 	#endif
 
 	float expFactor = 11.0;
@@ -189,30 +191,27 @@ vec4 GetVolumetricFog(
 		vec3 rL = rC*airCoef.x;
 		vec3 m = (airCoef.y+density) * mC;
 
-		vec3 AtmosphericFog = skyCol0 * (rL*3.0 + m);
-		vec3 DirectLight =  (LightSourceColor*sh) * (rayL*rL*3.0 + m*mie);
-		vec3 AmbientLight =  skyCol0 * m;
-		vec3 Lightning = Iris_Lightningflash_VLfog(progressW-cameraPosition, lightningBoltPosition.xyz) * m;
+		vec3 Atmosphere = skyLightPhased * (rL + m); // not pbr so just make the atmosphere also dense fog heh
+		vec3 DirectLight = LightSourcePhased * sh * (rL*rayL + m);
+		vec3 Lightning = Iris_Lightningflash_VLfog(progressW-cameraPosition, lightningBoltPosition.xyz) * (rL + m);
 
-		vec3 lighting = (AtmosphericFog + AmbientLight + DirectLight + Lightning) * lightleakfix;
+		vec3 lighting = (Atmosphere + DirectLight + Lightning) * lightleakfix;
 
-
-		color += max(lighting - lighting * exp(-(rL+m)*dd*dL),0.0) / max(rL+m, 0.00000001)*absorbance;
-		absorbance *= max(exp(-(rL+m)*dd*dL),0.0);
+		color += (lighting - lighting * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*absorbance;
+		absorbance *= clamp(exp(-(rL+m)*dd*dL),0.0,1.0);
 
 	#ifdef RAYMARCH_CLOUDS_WITH_FOG
 		//////////////////////////////////////////
 		///// ----- cloud part
 		//////////////////////////////////////////
 
+		float curvature = pow(clamp(1.0 - length(progressW)/far,0,1),2) * 50;
+
 		// determine the base of each cloud layer
 		bool isUpperLayer = max(progressW.y - MinHeight_1,0.0) > 0.0;
 		float CloudBaseHeights = isUpperLayer ? 200.0 + MaxHeight_0 : MaxHeight_0;
 
-		float curvature = pow(clamp(1.0 - length(progressW)/far,0,1),2) * 50;
-
 		float cumulus = GetCumulusDensity(progressW, 1, MinHeight_0, MaxHeight_0);
-		
 		float fadedDensity = Cumulus_density * clamp(exp( (progressW.y - (CloudBaseHeights - 70)) / 9.0	 ),0.0,1.0);
 
 		if(cumulus > 1e-5){
@@ -233,17 +232,15 @@ vec4 GetVolumetricFog(
 			float skylightOcclusion = max(exp2((upperLayerOcclusion*upperLayerOcclusion) * -5), 0.75);
 			
 			float skyScatter = clamp((CloudBaseHeights - 20 - progressW.y) / 275.0,0.0,1.0);
-			vec3 Lighting = DoCloudLighting(muE, cumulus, SkyColor*skylightOcclusion, skyScatter, directLight, directScattering*sh2, directMultiScattering*sh2, 1);
+			vec3 Lighting = DoCloudLighting(muE, cumulus, SkyLightColor*skylightOcclusion, skyScatter, directLight, directScattering*sh2, directMultiScattering*sh2, 1.0);
 
 			// a horrible approximation of direct light indirectly hitting the lower layer of clouds after scattering through/bouncing off the upper layer.
 			Lighting += sunIndirectScattering * exp((skyScatter*skyScatter) * cumulus * -35.0) * upperLayerOcclusion * exp(-20.0 * pow(abs(upperLayerOcclusion - 0.3),2));
 
-			
 			color += max(Lighting - Lighting*exp(-muE*dd*dL),0.0) * absorbance;
 			absorbance *= max(exp(-muE*dd*dL),0.0);
 		}
 	#endif /// VL CLOUDS
-
 	}
 	return vec4(color, min(dot(absorbance,vec3(0.335)),1.0));
 }
