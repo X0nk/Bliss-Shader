@@ -250,7 +250,7 @@ void main() {
 	if (isEyeInWater == 0){
 		
 		#ifdef OVERWORLD_SHADER
-			vec4 VolumetricFog = GetVolumetricFog(viewPos, noise_1, lightCol.rgb/80.0, averageSkyCol/30.0);
+			vec4 VolumetricFog = GetVolumetricFog(viewPos, vec2(noise_1,noise_2), lightCol.rgb/80.0, averageSkyCol/30.0);
 		#endif
 		
 		#if defined NETHER_SHADER || defined END_SHADER

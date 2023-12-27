@@ -124,7 +124,7 @@ screen.Fog = Ajustes da Névoa
     option.BLOOMY_FOG = Quantidade de Névoa Difusa
     option.Haze_amount = Densidade da Névoa Atmosférica
     option.RainFog_amount = Quantidade de Névoa na Chuva
-    option.Cloud_Fog = Névoa Dentro das Nuvens
+    option.RAYMARCH_CLOUDS_WITH_FOG = Névoa Dentro das Nuvens
     option.BorderFog = Névoa na Borda dos Chunks
 
     screen.TOD_fog = Névoa por Horário
@@ -416,7 +416,7 @@ screen.Fog.comment = Ajustes relacionados à névoa volumétrica ou névoa dista
     option.BLOOMY_FOG.comment = Ajuste à força do bloom que é aplicada a névoa. §bO Que é Isso?§r Esse efeito faz a névoa ter um aspecto suave, isso ajuda a diminuir o ruído. Pode causar flick em bordas detalhadas. §aCUSTO DE PERFORMANCE:§r Muito Baixo
     option.Haze_amount.comment = Ajuste a densidade da atmosféra ao seu redor. §bO Que é Isso?§r É aquela névoa azul que você vê na distância. 
     option.RainFog_amount.comment = Ajuste a densidade da névoa quando chove.
-    option.Cloud_Fog.comment = Habilita uma névoa detalhada quando você vai dentro ou do lado de uma nuvem. §aCUSTO DE PERFORMANCE:§r Baixo para Médio
+    option.RAYMARCH_CLOUDS_WITH_FOG.comment = Habilita uma névoa detalhada quando você vai dentro ou do lado de uma nuvem. §aCUSTO DE PERFORMANCE:§r Baixo para Médio
     option.BorderFog.comment = Habilita uma névoa que esconde chunks não carregados.
 
     screen.TOD_fog.comment = Ajusta a densidade da névoa que aparece em horários especifícos do dia.

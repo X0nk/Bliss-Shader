@@ -105,7 +105,7 @@ screen.Fog = 雾气设置
     option.BLOOMY_FOG = 雾气泛化值
     option.Haze_amount = 大气雾霾密度
     option.RainFog_amount = 雨雾密度
-    option.Cloud_Fog = 云中雾
+    option.RAYMARCH_CLOUDS_WITH_FOG = 云中雾
     option.BorderFog = 边界雾
 
     screen.TOD_fog = 全天雾气
@@ -371,7 +371,7 @@ screen.Fog.comment = 配置和光线行进体积雾, 基于距离的雾气相关
     option.BLOOMY_FOG.comment = 配置作用于雾气的泛化强度. §b这啥?§r 本选项的效果使雾气看起来更柔和, 同时有助于隐藏部分噪点. 但可能会导致在细节边缘出现一些明显的闪烁. §a性能消耗水平:§r 非常低.
     option.Haze_amount.comment = 配置周遭的大气密度. §b这啥?§r 在远处看到的蓝色雾霾.
     option.RainFog_amount.comment = 配置雨天时的雾气密度.
-    option.Cloud_Fog.comment = 进入云层内或靠近云层周围时, 更细致的雾气的开关. §a性能消耗水平:§r 低偏中.
+    option.RAYMARCH_CLOUDS_WITH_FOG.comment = 进入云层内或靠近云层周围时, 更细致的雾气的开关. §a性能消耗水平:§r 低偏中.
     option.BorderFog.comment = 隐藏未加载区块的雾气开关.
 
     screen.TOD_fog.comment = 配置一天中特定时间出现的雾气的密度.

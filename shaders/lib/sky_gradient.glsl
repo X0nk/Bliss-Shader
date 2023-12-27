@@ -103,6 +103,8 @@ vec4 texture2D_bicubic_offset(sampler2D tex, vec2 uv, float noise)
 {
 	float offsets = noise * (2.0 * 3.141592653589793238462643383279502884197169);
 	vec2 circleOffsets = vec2(sin(offsets), cos(offsets));
+	
+	// circleOffsets = vec2(0.0);
 
 	vec4 texelSize = vec4(texelSize,1.0/texelSize);
 	uv = uv*texelSize.zw;

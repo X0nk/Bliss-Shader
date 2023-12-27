@@ -104,7 +104,7 @@ void main() {
 		pos = normalize(vec3(0,1,0));
 		pos.xy += normalize(sample3x3[i]) * vec2(0.3183,0.90);
 
-		averageSkyCol_Clouds += 2.0*skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.;
+		averageSkyCol_Clouds += 1.5*skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.;
 
 		averageSkyCol += 1.5*skyFromTex(pos,colortex4).rgb/maxIT/150.;
    	}
