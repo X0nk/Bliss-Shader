@@ -108,7 +108,7 @@ vec4 GetVolumetricFog(
 	float mie = fogPhase(SdotV) * 5.0;
 	float rayL = phaseRayleigh(SdotV);
 
-	vec3 rC = vec3(sky_coefficientRayleighR*1e-6, sky_coefficientRayleighG*1e-5, sky_coefficientRayleighB*1e-5) * 3.0;
+	vec3 rC = vec3(sky_coefficientRayleighR*1e-6, sky_coefficientRayleighG*1e-5, sky_coefficientRayleighB*1e-5);
 	vec3 mC = vec3(fog_coefficientMieR*1e-6, fog_coefficientMieG*1e-6, fog_coefficientMieB*1e-6);
 
 	vec3 skyLightPhased = AmbientColor;
@@ -191,8 +191,8 @@ vec4 GetVolumetricFog(
 		vec3 rL = rC*airCoef.x;
 		vec3 m = (airCoef.y+density) * mC;
 
-		vec3 Atmosphere = skyLightPhased * (rL + m); // not pbr so just make the atmosphere also dense fog heh
-		vec3 DirectLight = LightSourcePhased * sh * (rL*rayL + m);
+		vec3 Atmosphere = skyLightPhased * (rL * 3.0 + m); // not pbr so just make the atmosphere also dense fog heh
+		vec3 DirectLight = LightSourcePhased * sh * ((rL* 3.0)*rayL + m);
 		vec3 Lightning = Iris_Lightningflash_VLfog(progressW-cameraPosition, lightningBoltPosition.xyz) * (rL + m);
 
 		vec3 lighting = (Atmosphere + DirectLight + Lightning) * lightleakfix;
