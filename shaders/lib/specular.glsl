@@ -221,7 +221,7 @@ void DoSpecularReflections(
     bool hasReflections = Roughness_Threshold == 1.0 ? true : F0 * (1.0 - Roughness * Roughness_Threshold) > 0.01;
 
 	// mulitply all reflections by the albedo if it is a metal.
-	vec3 Metals = F0 > 229.5/255.0 ? lerp(Albedo, vec3(1.0), Fresnel) : vec3(1.0);
+	vec3 Metals = F0 > 229.5/255.0 ? max(Albedo, Fresnel) : vec3(1.0);
 
 	// --------------- BACKGROUND REFLECTIONS
 	// apply background reflections to the final color. make sure it does not exist based on the lightmap

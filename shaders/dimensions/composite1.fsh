@@ -631,7 +631,6 @@ void main() {
 			bool inShadowmapBounds = false;
 		#endif
 	///////////////////////////// start drawin :D
-
 	if (z >= 1.0) {
 		
 		#ifdef OVERWORLD_SHADER

@@ -182,8 +182,6 @@ void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, vec2 depths){
 
   vec2 UnalteredTexcoord = Texcoord;
 
-  // Texcoord = min(Texcoord, 1.0-abs(Texcoord));
-
   Texcoord = abs(Texcoord + (TangentNormals * clamp((ld(depths.x) - ld(depths.y)) * 0.5,0.0,0.15)) * RENDER_SCALE );
 
   float DistortedAlpha = decodeVec2(texture2D(colortex11,Texcoord).b).g;
@@ -192,84 +190,69 @@ void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, vec2 depths){
 }
 
 uniform float eyeAltitude;
+
 void main() {
   /* DRAWBUFFERS:73 */
 
+	////// --------------- SETUP STUFF --------------- //////
   vec2 texcoord = gl_FragCoord.xy*texelSize;
 
-  vec4 trpData = texture2D(colortex7,texcoord);
-
-  bool iswater = trpData.a > 0.99;
-  float translucentAlpha = trpData.a;
-
-	// vec4 speculartex = texture2D(colortex8,texcoord); // translucents
-  // float sunlight = speculartex.b;
-
-  //3x3 bilateral upscale from half resolution
   float z = texture2D(depthtex0,texcoord).x;
   float z2 = texture2D(depthtex1,texcoord).x;
   float frDepth = ld(z2);
-
-  // vec4 vl = texture2D(colortex0,texcoord * 0.5);
-
-	////// --------------- UNPACK OPAQUE GBUFFERS --------------- //////
-	// vec4 data_opaque = texture2D(colortex1,texcoord);
-	// vec4 dataUnpacked1 = vec4(decodeVec2(data_opaque.z),decodeVec2(data_opaque.w)); // normals, lightmaps
-	// vec4 dataUnpacked2 = vec4(decodeVec2(data.z),decodeVec2(data.w));
-	
-	// bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
-	// vec2 lightmap = dataUnpacked1.yz;
-
-	////// --------------- UNPACK TRANSLUCENT GBUFFERS --------------- //////
-
-	vec3 data = texture2D(colortex11,texcoord).rgb;
-
-	vec4 unpack0 =  vec4(decodeVec2(data.r),decodeVec2(data.g)) ;
-	vec4 unpack1 = vec4(decodeVec2(data.b),0,0) ;
-	
-  
-
-	vec4 albedo = vec4(unpack0.ba,unpack1.rg);
-
-	vec2 tangentNormals = unpack0.xy*2.0-1.0;
-
-  if(albedo.a <= 0.0) tangentNormals = vec2(0.0);
-
-  vec4 TranslucentShader = texture2D(colortex2,texcoord);
-
-
 
 	vec2 tempOffset = TAA_Offset;
 	vec3 fragpos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
 	vec3 fragpos2 = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z2));
   
-
 	vec3 p3 = mat3(gbufferModelViewInverse) * fragpos;
 	vec3 np3 = normVec(p3);
 
+  float linearDistance = length(p3);
 
+	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
+
+	////// --------------- UNPACK TRANSLUCENT GBUFFERS --------------- //////
+	vec3 data = texture2D(colortex11,texcoord).rgb;
+	vec4 unpack0 =  vec4(decodeVec2(data.r),decodeVec2(data.g)) ;
+	vec4 unpack1 = vec4(decodeVec2(data.b),0,0) ;
+	
+	vec4 albedo = vec4(unpack0.ba,unpack1.rg);
+	vec2 tangentNormals = unpack0.xy*2.0-1.0;
+  if(albedo.a <= 0.0) tangentNormals = vec2(0.0);
+  vec4 TranslucentShader = texture2D(colortex2,texcoord);
+
+	////// --------------- UNPACK MISC --------------- //////
+  float trpData = texture2D(colortex7,texcoord).a;
+
+	////// --------------- MASKS/BOOLEANS --------------- //////
+  bool iswater = trpData > 0.99;
+  float translucentAlpha = trpData;
+
+  ////// --------------- get volumetrics
+  vec4 vl = BilateralUpscale(colortex0, depthtex1, gl_FragCoord.xy, frDepth);
+  float bloomyFogMult = 1.0;
+
+  ////// --------------- distort texcoords as a refraction effect
   vec2 refractedCoord = texcoord;
-    
-  /// --- REFRACTION --- ///
   #ifdef Refraction
     ApplyDistortion(refractedCoord, tangentNormals, vec2(z2,z));
   #endif
   
-  /// --- MAIN COLOR BUFFER --- ///
-  // it is sampled with distorted texcoords 
-  vec3 color = texture2D(colortex3,refractedCoord).rgb;
+  ////// --------------- MAIN COLOR BUFFER
+  vec3 color = texture2D(colortex3, refractedCoord).rgb;
 
-	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 
-  #if defined OVERWORLD_SHADER && defined BorderFog
-  	float fog =  exp2(-100.0 * pow(clamp(1.0-length(p3)/far,0.0,1.0),2.0));
-  	fog *= exp(-30.0*(pow(clamp(np3.y,0.0,1.0),2.0)))	;
-   
-    if(z < 1.0 && isEyeInWater == 0) color.rgb = mix(color.rgb, skyGroundColor, fog);
+  ////// --------------- BLEND TRANSLUCENT GBUFFERS 
+  //////////// and do border fog on opaque and translucents
+
+  #if defined BorderFog
+  	float fog =  exp(-50.0 * pow(clamp(1.0-linearDistance/far,0.0,1.0),2.0));
+  	fog *= exp(-10.0 * pow(clamp(np3.y,0.0,1.0)*4.0,2.0));
+    if(z >= 1.0 || isEyeInWater != 0) fog = 0.0;
+
+    color.rgb = mix(color.rgb, skyGroundColor, fog);
   #endif
-
-  vec4 vl = BilateralUpscale(colortex0, depthtex1, gl_FragCoord.xy, frDepth);
-  float bloomyFogMult = 1.0;
 
   if (TranslucentShader.a > 0.0){
 		#ifdef Glass_Tint
@@ -278,83 +261,89 @@ void main() {
 
     color = color*(1.0-TranslucentShader.a) + TranslucentShader.rgb; 
 
-
     #ifdef BorderFog
-      if(z < 1.0 && isEyeInWater == 0) color.rgb = mix(color.rgb, skyGroundColor, fog);
+      color.rgb = mix(color.rgb, skyGroundColor, fog);
     #endif
   } 
 
-#if defined OVERWORLD_SHADER && defined Cave_fog
-    if (isEyeInWater == 0 && eyeAltitude < 1500){
+////// --------------- VARIOUS FOG EFFECTS (behind volumetric fog)
+//////////// blindness, nightvision, liquid fogs and misc fogs
 
-      float fogdistfade = clamp( pow(length(fragpos) / far, CaveFogFallOff) ,0.0,1.0);
-      
-      fogdistfade = fogdistfade*0.95 + clamp( pow(1.0 - exp((length(fragpos) / far) * -5), 2.0) ,0.0,1.0)*0.05;
-      float fogfade = clamp( exp(clamp(np3.y * 0.5 + 0.5,0,1) * -3.0)  ,0.0,1.0);
-  
-      vec3 cavefogCol = vec3(CaveFogColor_R,CaveFogColor_G,CaveFogColor_B);
-      
-	    #ifdef PER_BIOME_ENVIRONMENT
+#if defined OVERWORLD_SHADER && defined CAVE_FOG
+    if (isEyeInWater == 0 && eyeAltitude < 1500 && lightleakfix < 1.0){
+
+      float cavefog = clamp( pow(linearDistance / far, CaveFogFallOff) ,0.0,1.0);
+      cavefog = cavefog*0.95 + clamp( pow(1.0 - exp((linearDistance / far) * -5), 2.0) ,0.0,1.0)*0.05;
+
+  	  cavefog *= exp(-30.0*(pow(clamp(np3.y-0.5,0.0,1.0),2.0))); // create a hole in the fog above, so the sky is a little visible.
+
+      vec3 cavefogCol = vec3(CaveFogColor_R, CaveFogColor_G, CaveFogColor_B);
+      cavefogCol *= clamp( exp(clamp(np3.y * 0.5 + 0.5,0,1) * -3.0)  ,0.0,1.0); // apply a vertical gradient to the fog color
+
+      #ifdef PER_BIOME_ENVIRONMENT
         BiomeFogColor(cavefogCol);
       #endif
-      
-      color.rgb = mix(color.rgb,  cavefogCol*fogfade,  fogdistfade * (1.0-lightleakfix) * (1.0-darknessFactor) * clamp( 1.5 - np3.y,0.,1)) ;  
+
+      color.rgb = mix(color.rgb,  cavefogCol,  cavefog * (1-lightleakfix));
     }
 #endif
 
+////// --------------- Distance fog for the end shader
 #ifdef END_SHADER
     if (isEyeInWater == 0){
       vec3 hazeColor = vec3(0.3,0.75,1.0) * 0.3;
 
-      float hazeDensity = clamp(1.0 - length(fragpos) / max(far, 32.0 * 24.0),0.0,1.0);
+      float hazeDensity = clamp(1.0 - linearDistance / max(far, 32.0 * 24.0),0.0,1.0);
       color.rgb = mix(hazeColor,  color.rgb,  hazeDensity) ; 
     }
 #endif
 
-
-  // underwater fog
+////// --------------- underwater fog
   if (isEyeInWater == 1){
     float dirtAmount = Dirt_Amount;
     vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
     vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
     vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;
 
-    // float fogfade = clamp( exp(length(fragpos) /  -20)   ,0.0,1.0);
-    // vec3 fogfade =  clamp( exp( (length(fragpos) / -4) * totEpsilon  ) ,0.0,1.0);
-    vec3 fogfade =  clamp( exp( (length(fragpos) / -4) * totEpsilon  ) ,0.0,1.0);
-    fogfade *= 1.0 - clamp( length(fragpos) / far,0.0,1.0);
+    vec3 fogfade =  clamp( exp( (linearDistance / -4) * totEpsilon  ) ,0.0,1.0);
+    fogfade *= 1.0 - clamp( linearDistance / far,0.0,1.0);
 
-    color.rgb *= fogfade ;
+    color.rgb *= fogfade;
     bloomyFogMult *= 0.3;
   }
 
-  // apply VL fog to the scene
+////// --------------- BLEND FOG INTO SCENE
+//////////// apply VL fog over opaque and translucents
   color *= vl.a;
   color += vl.rgb;
   
+////// --------------- VARIOUS FOG EFFECTS (in front of volumetric fog)
+//////////// blindness, nightvision, liquid fogs and misc fogs
+
+////// --------------- bloomy rain effect
   #ifdef OVERWORLD_SHADER
-    // bloomy rain effect
     float rainDrops =  clamp(texture2D(colortex9,texcoord).a,  0.0,1.0); 
     if(rainDrops > 0.0) bloomyFogMult *= clamp(1.0 - pow(rainDrops*5.0,2),0.0,1.0);
   #endif
   
-  /// lava.
+////// --------------- lava.
   if (isEyeInWater == 2){
     color.rgb = vec3(4.0,0.5,0.1);
   }
 
-  /// powdered snow
+///////// --------------- powdered snow
   if (isEyeInWater == 3){
-    color.rgb = mix(color.rgb,vec3(10,15,20),clamp(length(fragpos)*0.5,0.,1.));
+    color.rgb = mix(color.rgb,vec3(10,15,20),clamp(linearDistance*0.5,0.,1.));
     bloomyFogMult = 0.0;
   }
 
-  // blidnesss
-  color.rgb *= mix(1.0,clamp( exp(pow(length(fragpos)*(blindness*0.2),2) * -5),0.,1.)   ,    blindness);
+////// --------------- blidnesss
+  color.rgb *= mix(1.0,clamp( exp(pow(linearDistance*(blindness*0.2),2) * -5),0.,1.)   ,    blindness);
 
-  // darkness effect
+//////// --------------- darkness effect
   color.rgb *= mix(1.0, (1.0-darknessLightFactor*2.0) * clamp(1.0-pow(length(fragpos2)*(darknessFactor*0.07),2.0),0.0,1.0), darknessFactor);
   
+////// --------------- FINALIZE
   #ifdef display_LUT
   	vec2 movedTC = texcoord;
     vec3 thingy = texture2D(colortex4,movedTC).rgb / 30;
@@ -366,7 +355,5 @@ void main() {
   #endif
 
   gl_FragData[0].r = vl.a * bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
-
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);
-  
 }

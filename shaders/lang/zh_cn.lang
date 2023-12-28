@@ -122,7 +122,7 @@ screen.Fog = 雾气设置
         option.PER_BIOME_ENVIRONMENT = 生物群系特定雾气
 
     screen.Cave_Fog = 洞穴雾气
-        option.Cave_fog = 洞穴雾气
+        option.CAVE_FOG = 洞穴雾气
         option.CaveFogFallOff = 洞穴雾气渐消曲线
         option.CaveFogColor_R = 洞穴雾气红色比重
         option.CaveFogColor_G = 洞穴雾气绿色比重
