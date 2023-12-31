@@ -329,7 +329,6 @@ uniform int moonPhase;
 #define CLOUDS_QUALITY 0.5 // [0.1 0.125 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.9 1.0]
 
 #ifdef VOLUMETRIC_CLOUDS
-	#define RAYMARCH_CLOUDS_WITH_FOG
 
 	#ifndef ambientLight_only
 		#define CLOUDS_SHADOWS
@@ -351,6 +350,9 @@ uniform int moonPhase;
 
 #define Cumulus2_coverage 0.3 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
 
+#if defined Cumulus && defined VOLUMETRIC_CLOUDS
+	#define RAYMARCH_CLOUDS_WITH_FOG
+#endif
 
 #define Altostratus
 #define Alto_coverage 0.1 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]

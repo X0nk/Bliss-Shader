@@ -268,11 +268,11 @@ vec4 renderClouds(
 	// terrible fake rayleigh scattering
 	vec3 rC = vec3(sky_coefficientRayleighR*1e-6, sky_coefficientRayleighG*1e-5, sky_coefficientRayleighB*1e-5)*3;
 	float atmosphere =  exp(abs(forg.y) * -5.0);
-	vec3 scatter = exp(-10000.0 * rC * atmosphere) * distantfog;
+	vec3 scatter = mix(vec3(1.0), exp(-10000.0 * rC * atmosphere) * distantfog, heightRelativeToClouds);
 
-	directScattering *= distantfog;
-	directMultiScattering *= distantfog;
-	sunIndirectScattering *= distantfog;
+	directScattering *= scatter;
+	directMultiScattering *= scatter;
+	sunIndirectScattering *= scatter;
 
 #ifdef Cumulus
 		for(int i = 0; i < maxIT_clouds; i++) {
