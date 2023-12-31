@@ -240,10 +240,10 @@ vec4 renderClouds(
 	maxIT_clouds = int(clamp(maxIT_clouds / sqrt(exp2(viewPos.y)),0.0, maxIT));
 	maxIT_clouds = 30;
 
-
 	vec3 dV_view = normalize(viewPos.xyz);
-
-	dV_view.y += 0.05 * heightRelativeToClouds;
+	
+	// this is the cloud curvature.
+	// dV_view.y += 0.05 * heightRelativeToClouds;
 
 	dV_view *= 300/abs(dV_view.y)/maxIT_clouds;
 	
@@ -270,9 +270,9 @@ vec4 renderClouds(
 	float atmosphere =  exp(abs(forg.y) * -5.0);
 	vec3 scatter = exp(-10000.0 * rC * atmosphere) * distantfog;
 
-	directScattering *= scatter;
-	directMultiScattering *= scatter;
-	sunIndirectScattering *= scatter;
+	directScattering *= distantfog;
+	directMultiScattering *= distantfog;
+	sunIndirectScattering *= distantfog;
 
 #ifdef Cumulus
 		for(int i = 0; i < maxIT_clouds; i++) {
