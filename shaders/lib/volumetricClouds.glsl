@@ -243,7 +243,7 @@ vec4 renderClouds(
 	vec3 dV_view = normalize(viewPos.xyz);
 	
 	// this is the cloud curvature.
-	// dV_view.y += 0.05 * heightRelativeToClouds;
+	dV_view.y += 0.05 * heightRelativeToClouds;
 
 	dV_view *= 300/abs(dV_view.y)/maxIT_clouds;
 	
