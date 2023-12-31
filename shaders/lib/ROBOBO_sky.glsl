@@ -135,13 +135,22 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 		vec3 stepTransmittance       = exp2(-stepOpticalDepth * rLOG2);
 		vec3 stepTransmittedFraction = clamp01((stepTransmittance - 1.0) / -stepOpticalDepth) ;
 		vec3 stepScatteringVisible   = transmittance * stepTransmittedFraction * GroundDarkening ;
+		
+		#ifdef ORIGINAL_CHOCAPIC_SKY
+			scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun) * stepScatteringVisible * sky_transmittance(position, sunVector,  jSteps) * planetGround;
+		#else
+			scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun) * stepScatteringVisible * sky_transmittance(position, sunVector*0.5+0.1,  jSteps) * planetGround;
+		#endif
 
-		scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun) * stepScatteringVisible * sky_transmittance(position, sunVector*0.5+0.1,  jSteps) * planetGround;
 		scatteringMoon += sky_coefficientsScattering * (stepAirmass.xy * phaseMoon) * stepScatteringVisible * sky_transmittance(position, moonVector, jSteps) * planetGround;
 		
 		// Nice way to fake multiple scattering.
-		scatteringAmbient += sky_coefficientsScattering * stepAirmass.xy * stepScatteringVisible * low_sun;
-
+		#ifdef ORIGINAL_CHOCAPIC_SKY
+			scatteringAmbient += sky_coefficientsScattering * stepAirmass.xy * stepScatteringVisible;
+		#else
+			scatteringAmbient += sky_coefficientsScattering * stepAirmass.xy * stepScatteringVisible * low_sun;
+		#endif
+		
 		transmittance *= stepTransmittance ;
 	}
 	

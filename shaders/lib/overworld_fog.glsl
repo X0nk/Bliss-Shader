@@ -32,8 +32,8 @@ float cloudVol(in vec3 pos){
 	float UniformFog = exp( max(pos.y - fogYstart,0.0)  / -25);
 	// UniformFog = 1.0;
 	
-	// float RainFog = max(fog_shape*10. - 7.,0.5) * exp2( -max((pos.y - SEA_LEVEL) / 25.,0.0)) * 72. * rainStrength * noPuddleAreas * RainFog_amount;
-	float RainFog = (2 + max(fog_shape*10. - 7.,0.5)*2.0) * UniformFog * rainStrength * noPuddleAreas * RainFog_amount;
+	float RainFog = ((2 + max(fog_shape*10. - 7.0,0.5)*2.0)) *UniformFog* rainStrength * noPuddleAreas * RainFog_amount;
+	// float RainFog = (CloudyFog*255) * rainStrength * noPuddleAreas * RainFog_amount;
 	
 	#ifdef PER_BIOME_ENVIRONMENT
 		// sandstorms and snowstorms
@@ -42,10 +42,16 @@ float cloudVol(in vec3 pos){
 
 	TimeOfDayFog(UniformFog, CloudyFog);
 
-	float testfogshapes = clamp(130 - pos.y,0,1) * 100;
+	float noise = densityAtPosFog(samplePos * 12.0);
+    float erosion = 1.0-densityAtPosFog(samplePos2 * (125 - (1-pow(1-noise,5))*25));
+    
+
+	// float clumpyFog = max(exp(noise * -5)*2 - (erosion*erosion), 0.0);
+
+	// float testfogshapes = clumpyFog*30;
 	// return testfogshapes;
 
-	return CloudyFog + UniformFog + RainFog;// + testfogshapes;
+	return CloudyFog + UniformFog + RainFog;
 }
 
 float phaseRayleigh(float cosTheta) {
@@ -195,9 +201,9 @@ vec4 GetVolumetricFog(
 		vec3 DirectLight = LightSourcePhased * sh * ((rL* 3.0)*rayL + m);
 		vec3 Lightning = Iris_Lightningflash_VLfog(progressW-cameraPosition, lightningBoltPosition.xyz) * (rL + m);
 
-		vec3 lighting = (Atmosphere + DirectLight + Lightning) * lightleakfix;
+		vec3 foglighting = (Atmosphere + DirectLight + Lightning) * lightleakfix;
 
-		color += (lighting - lighting * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*absorbance;
+		color += (foglighting - foglighting * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*absorbance;
 		absorbance *= clamp(exp(-(rL+m)*dd*dL),0.0,1.0);
 
 	#ifdef RAYMARCH_CLOUDS_WITH_FOG
@@ -232,12 +238,12 @@ vec4 GetVolumetricFog(
 			float skylightOcclusion = max(exp2((upperLayerOcclusion*upperLayerOcclusion) * -5), 0.75);
 			
 			float skyScatter = clamp((CloudBaseHeights - 20 - progressW.y) / 275.0,0.0,1.0);
-			vec3 Lighting = DoCloudLighting(muE, cumulus, SkyLightColor*skylightOcclusion, skyScatter, directLight, directScattering*sh2, directMultiScattering*sh2, 1.0);
+			vec3 cloudlighting = DoCloudLighting(muE, cumulus, SkyLightColor*skylightOcclusion, skyScatter, directLight, directScattering*sh2, directMultiScattering*sh2, 1.0);
 
 			// a horrible approximation of direct light indirectly hitting the lower layer of clouds after scattering through/bouncing off the upper layer.
-			Lighting += sunIndirectScattering * exp((skyScatter*skyScatter) * cumulus * -35.0) * upperLayerOcclusion * exp(-20.0 * pow(abs(upperLayerOcclusion - 0.3),2));
+			cloudlighting += sunIndirectScattering * exp((skyScatter*skyScatter) * cumulus * -35.0) * upperLayerOcclusion * exp(-20.0 * pow(abs(upperLayerOcclusion - 0.3),2));
 
-			color += max(Lighting - Lighting*exp(-muE*dd*dL),0.0) * absorbance;
+			color += max(cloudlighting - cloudlighting*exp(-muE*dd*dL),0.0) * absorbance;
 			absorbance *= max(exp(-muE*dd*dL),0.0);
 		}
 	#endif /// VL CLOUDS

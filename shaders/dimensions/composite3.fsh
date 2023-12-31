@@ -48,6 +48,7 @@ uniform vec3 previousCameraPosition;
 
 uniform int isEyeInWater;
 uniform ivec2 eyeBrightnessSmooth;
+uniform ivec2 eyeBrightness;
 uniform float rainStrength;
 uniform float blindness;
 uniform float darknessFactor;
@@ -211,6 +212,7 @@ void main() {
   float linearDistance = length(p3);
 
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
+	float lightleakfixfast = clamp(eyeBrightness.y/240.,0.0,1.0);
 
 	////// --------------- UNPACK TRANSLUCENT GBUFFERS --------------- //////
 	vec3 data = texture2D(colortex11,texcoord).rgb;
@@ -250,6 +252,8 @@ void main() {
   	float fog =  exp(-50.0 * pow(clamp(1.0-linearDistance/far,0.0,1.0),2.0));
   	fog *= exp(-10.0 * pow(clamp(np3.y,0.0,1.0)*4.0,2.0));
     if(z >= 1.0 || isEyeInWater != 0) fog = 0.0;
+    
+    if(lightleakfixfast < 1.0) fog *= lightleakfix;
 
     color.rgb = mix(color.rgb, skyGroundColor, fog);
   #endif

@@ -515,6 +515,7 @@ uniform int moonPhase;
 #define RESOURCEPACK_SKY 0 // [0 1 2]
 
 // #define BLOOMY_PARTICLES
+// #define ORIGINAL_CHOCAPIC_SKY
 
 // fix settings
 #if RESOURCEPACK_SKY == 0

@@ -963,7 +963,7 @@ void main() {
 					SkySSS = ScreenSpace_SSS(viewPos, FlatNormals, hand, isLeaf, noise);
 				#endif
 
-				vec3 ambientColor = averageSkyCol_Clouds / 12.0; // divide by 12 to match the brightest part of ambient light facing up
+				vec3 ambientColor = (averageSkyCol_Clouds / 12.0) * ambient_brightness; // divide by 12 to match the brightest part of ambient light facing up
 				float skylightmap =  pow(lightmap.y,3);
 
 				Indirect_SSS = SubsurfaceScattering_sky(albedo, SkySSS, LabSSS);

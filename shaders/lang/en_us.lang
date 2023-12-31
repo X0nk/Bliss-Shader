@@ -421,7 +421,7 @@ screen.Fog.comment = Configure settings related to the raymarched volumetric fog
     option.Haze_amount.comment = Configure how dense the atmosphere around you is. §bWhat is this?§r This is the blue haze you see in the distance.
     option.RainFog_amount.comment = Configure how dense the fog gets when it rains.
     option.RAYMARCH_CLOUDS_WITH_FOG.comment = Toggle detailed fog when you go within or around a cloud. §aPERFORMANCE COST:§r medium to high
-    option.BorderFog.comment = Toggle a fog that hides the unloaded chunks.
+    option.BorderFog.comment = §bWhat is this?§r Toggle a fog that attempts to hide the chunks loading in. But because the sky is all over the place, it is difficult to do well. §aPERFORMANCE COST:§r very very low
 
     screen.TOD_fog.comment = Configure the density of fog that appears at specific times of the day.
         option.TOD_Fog_mult.comment = Configure how much total fog there is that appears at specific times during the day. this does not effect the atmospheric haze. 

@@ -112,7 +112,7 @@ void main() {
 	// only need to sample one spot for this
 	vec3 minimumlight =  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.003 + nightVision);
 	averageSkyCol_Clouds = max(averageSkyCol_Clouds, minimumlight);
-	averageSkyCol = max(averageSkyCol, minimumlight);
+	averageSkyCol = max(averageSkyCol*PLANET_GROUND_BRIGHTNESS, minimumlight);
 
 ////////////////////////////////////////
 /// --- SUNLIGHT/MOONLIGHT STUFF --- ///
@@ -125,9 +125,8 @@ void main() {
 
 	vec3 skyAbsorb = vec3(0.0);
 	sunColor = calculateAtmosphere(vec3(0.0), sunVec, vec3(0.0,1.0,0.0), sunVec, -sunVec, planetSphere, skyAbsorb, 25,0.0);
-	sunColor = sunColorBase/4000. * (skyAbsorb*skyAbsorb);
-	// skyAbsorb = vec3(1.0);
-	// moonColor = calculateAtmosphere(vec3(0.0), -sunVec, vec3(0.0,1.0,0.0), sunVec, -sunVec, planetSphere, skyAbsorb, 25,0.5);
+	sunColor = sunColorBase/4000. * skyAbsorb;
+	
 	moonColor = moonColorBase/4000.0;
 
 	lightSourceColor = sunVis >= 1e-5 ? sunColor * sunVis : moonColor * moonVis;
