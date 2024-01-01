@@ -101,7 +101,6 @@ screen.Ambient_light = Ambient Light
             value.indirect_effect.4 = SSGI
 
     screen.Ambient_Colors =  Ambient Light Color
-        option.ambient_temp = Temperature
         option.AmbientLight_R = Red Amount
         option.AmbientLight_G = Green Amount
         option.AmbientLight_B = Blue Amount
@@ -157,15 +156,21 @@ screen.Clouds = Cloud Settings
     option.Cloud_Speed = Cloud Speed Multiplier
     option.Rain_coverage = Coverage When Raining
 
-    option.Cumulus = Cumulus Clouds
-    option.Cumulus_coverage = Coverage
-    option.Cumulus_density = Density
-    option.Cumulus_height = Cumulus Height
+    option.CloudLayer0          = Small Cumulus Clouds
+    option.CloudLayer0_coverage = Coverage
+    option.CloudLayer0_density  = Density
+    option.CloudLayer0_height   = Height
 
-    option.Altostratus = Altostratus Clouds
-    option.Alto_coverage = Coverage
-    option.Alto_density = Density
-    option.Alto_height = Altostratus Height
+    option.CloudLayer1          = Large Cumulus Clouds
+    option.CloudLayer1_coverage = Coverage
+    option.CloudLayer1_density  = Density
+    option.CloudLayer1_height   = Height
+
+    option.CloudLayer2          = Altostratus Clouds
+    option.CloudLayer2_coverage = Coverage
+    option.CloudLayer2_density  = Density
+    option.CloudLayer2_height   = Height
+
 
 
 screen.Climate = Climate Settings
@@ -439,15 +444,6 @@ screen.Clouds.comment = Configure settings related to the raymarched volumetric 
     option.Cloud_Speed.comment = Configure how fast the clouds move as the day goes by.
     option.Rain_coverage.comment = Configure how much of the sky the clouds cover during rain.
 
-    option.Cumulus.comment = Toggle the lower layer of clouds. §aPERFORMANCE COST:§r medium
-    option.Cumulus_coverage.comment = Configure how much of the sky the lower layer clouds cover. This setting does not work when daily weather is enabled.
-    option.Cumulus_density.comment = Configure how dense the lower layer of clouds are.
-    option.Cumulus_height.comment = Configure the height that the lower layer of clouds fly at. 
-
-    option.Altostratus.comment = Toggle the higher layer of clouds. §aPERFORMANCE COST:§r low
-    option.Alto_coverage.comment = Configure how much of the sky the higher layer of clouds cover. This setting does not work when daily weather is enabled.
-    option.Alto_density.comment = Configure how dense the higher layer of clouds are.
-
 screen.World.comment = Configure settings for various things that happen in the world, from waving plants to water related settings.
     screen.Water.comment = Configure settings related to the water.
         option.WATER_REFLECTIONS.comments = Toggle all reflections for translucent things. This allows other settings to be enabled below. §aPERFORMANCE COST:§r low
@@ -511,4 +507,17 @@ option.MOONPHASE_BASED_MOONLIGHT.comment = §bWhat is this?§r every night, the 
 option.END_STORM_DENSTIY.comment =  §bWhat is this?§r This is the dark cloudy fog in the end. Confingure the density of the end storm.
 option.NETHER_PLUME_DENSITY.comment =  §bWhat is this?§r This is the thick, glowing smoke towers in the nether. Confingure the density of the nether smoke.
 
-option.Alto_height.comment = Configure the height that the very highest layer of clouds fly at. 
+option.CloudLayer0.comment          = Toggle the layer of clouds that are small. §aPERFORMANCE COST:§r medium
+option.CloudLayer0_coverage.comment = Configure how much of the sky these clouds cover.
+option.CloudLayer0_density.comment  = Configure how dense, or thick these clouds are.
+option.CloudLayer0_height.comment   = Configure the height at which these clouds fly at.
+
+option.CloudLayer1.comment          = Toggle the layer of clouds that are large. §aPERFORMANCE COST:§r medium
+option.CloudLayer1_coverage.comment = Configure how much of the sky these clouds cover.
+option.CloudLayer1_density.comment  = Configure how dense, or thick these clouds are.
+option.CloudLayer1_height.comment   = Configure the height at which these clouds fly at. §cTHESE CANNOT BE LOWER THAN THE SMALL CLOUDS§r
+
+option.CloudLayer2.comment          = Toggle the layer of clouds that are very high and thin. §aPERFORMANCE COST:§r low
+option.CloudLayer2_coverage.comment = Configure how much of the sky these clouds cover.
+option.CloudLayer2_density.comment  = Configure how dense, or thick these clouds are.
+option.CloudLayer2_height.comment   = Configure the height at which these clouds fly at. §cTHESE CANNOT BE LOWER THAN THE LARGE CLOUDS§r

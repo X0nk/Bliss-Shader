@@ -168,7 +168,7 @@ if (gl_FragCoord.x > 18. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257){
 	// sky = mix(sky, (averageSkyCol + skyAbsorb)*4000./2.0, (1.0 - exp(pow(clamp(-viewVector.y+0.5,0.0,1.0),2) * -25)));
 
 	// fade atmosphere conditions for rain away when you pass above the cloud plane.
-	float heightRelativeToClouds = clamp(1.0 - max(eyeAltitude - Cumulus_height,0.0) / 200.0 ,0.0,1.0);
+	float heightRelativeToClouds = clamp(1.0 - max(eyeAltitude - CloudLayer0_height,0.0) / 200.0 ,0.0,1.0);
 	if(rainStrength > 0.0) sky = mix(sky, 3.0 + averageSkyCol*4000 * (skyAbsorb*0.7+0.3), clamp(1.0 - exp(pow(clamp(-viewVector.y+0.9,0.0,1.0),2) * -5.0),0.0,1.0) * heightRelativeToClouds * rainStrength);
 	
 	#ifdef AEROCHROME_MODE

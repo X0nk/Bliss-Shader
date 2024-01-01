@@ -103,7 +103,6 @@ screen.Ambient_light = Luz Ambiente
             value.indirect_effect.4 = SSGI
 
     screen.Ambient_Colors =  Cor da Luz Ambiente 
-        option.ambient_temp = Temperatura
         option.AmbientLight_R = Quant. Vermelho
         option.AmbientLight_G = Quant. Verde
         option.AmbientLight_B = Quant. Azul

@@ -98,7 +98,7 @@
 		#ifdef Daily_Weather
 			Coverage += mix(Cumulus_Cov, Rain_coverage, rainStrength);
 		#else
-			Coverage += mix(Cumulus_coverage, Rain_coverage, rainStrength);
+			Coverage += mix(CloudLayer0_coverage, Rain_coverage, rainStrength);
 		#endif
 
 		return Coverage;
@@ -115,8 +115,8 @@
 			Coverage = Alto_Cov;
 			Density  = Alto_Den;
 		#else
-			Coverage = Alto_coverage;
-			Density  = Alto_density;
+			Coverage = CloudLayer2_coverage;
+			Density  = CloudLayer2_density;
 		#endif
 	}
 

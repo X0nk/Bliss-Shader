@@ -84,7 +84,6 @@ screen.Ambient_light = 环境光
             value.indirect_effect.4 = SSGI
 
     screen.Ambient_Colors = 环境光颜色
-        option.ambient_temp = 环境光色温
         option.AmbientLight_R = 环境光红色比重
         option.AmbientLight_G = 环境光绿色比重
         option.AmbientLight_B = 环境光蓝色比重
@@ -472,8 +471,6 @@ screen.Post_Processing.comment = 配置所有后处理效果设置, 从抗锯齿
         option.Vanilla_like_water=原版水体样式
 
 
-#Ambient_light
-        suffix.ambient_temp=K
 
 
 #Fog

@@ -133,33 +133,33 @@ vec4 GetVolumetricFog(
 	
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 
-	#ifdef RAYMARCH_CLOUDS_WITH_FOG
-		// first cloud layer
-		float MinHeight_0 = Cumulus_height;
-		float MaxHeight_0 = 100 + MinHeight_0;
+	// #ifdef RAYMARCH_CLOUDS_WITH_FOG
+	// 	// first cloud layer
+	// 	float MinHeight_0 = Cumulus_height;
+	// 	float MaxHeight_0 = 100 + MinHeight_0;
 
-		// second cloud layer
-		float MinHeight_1 = MaxHeight_0 + 50;
-		float MaxHeight_1 = 100 + MinHeight_1;
+	// 	// second cloud layer
+	// 	float MinHeight_1 = MaxHeight_0 + 50;
+	// 	float MaxHeight_1 = 100 + MinHeight_1;
 
-		vec3 SkyLightColor = AmbientColor;
-		vec3 LightSourceColor = LightColor;
-		#ifdef ambientLight_only
-			LightSourceColor = vec3(0.0);
-		#endif
+	// 	vec3 SkyLightColor = AmbientColor;
+	// 	vec3 LightSourceColor = LightColor;
+	// 	#ifdef ambientLight_only
+	// 		LightSourceColor = vec3(0.0);
+	// 	#endif
 
-		float shadowStep = 200.0;
+	// 	float shadowStep = 200.0;
 
-		vec3 dV_Sun = WsunVec*shadowStep;
+	// 	vec3 dV_Sun = WsunVec*shadowStep;
 
-		float mieDay = phaseg(SdotV, 0.75);
-		float mieDayMulti = (phaseg(SdotV, 0.35) + phaseg(-SdotV, 0.35) * 0.5) ;
+	// 	float mieDay = phaseg(SdotV, 0.75);
+	// 	float mieDayMulti = (phaseg(SdotV, 0.35) + phaseg(-SdotV, 0.35) * 0.5) ;
 
-		vec3 directScattering = LightSourceColor * mieDay * 3.14;
-		vec3 directMultiScattering = LightSourceColor * mieDayMulti * 4.0;
+	// 	vec3 directScattering = LightSourceColor * mieDay * 3.14;
+	// 	vec3 directMultiScattering = LightSourceColor * mieDayMulti * 4.0;
 
-		vec3 sunIndirectScattering = LightSourceColor * phaseg(dot(mat3(gbufferModelView)*vec3(0,1,0),normalize(viewPosition)), 0.5) * 3.14;
-	#endif
+	// 	vec3 sunIndirectScattering = LightSourceColor * phaseg(dot(mat3(gbufferModelView)*vec3(0,1,0),normalize(viewPosition)), 0.5) * 3.14;
+	// #endif
 
 	float expFactor = 11.0;
 	for (int i=0;i<VL_SAMPLES;i++) {
@@ -206,47 +206,47 @@ vec4 GetVolumetricFog(
 		color += (foglighting - foglighting * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*absorbance;
 		absorbance *= clamp(exp(-(rL+m)*dd*dL),0.0,1.0);
 
-	#ifdef RAYMARCH_CLOUDS_WITH_FOG
-		//////////////////////////////////////////
-		///// ----- cloud part
-		//////////////////////////////////////////
+	// #ifdef RAYMARCH_CLOUDS_WITH_FOG
+	// 	//////////////////////////////////////////
+	// 	///// ----- cloud part
+	// 	//////////////////////////////////////////
 
-		float curvature = pow(clamp(1.0 - length(progressW)/far,0,1),2) * 50;
+	// 	float curvature = pow(clamp(1.0 - length(progressW)/far,0,1),2) * 50;
 
-		// determine the base of each cloud layer
-		bool isUpperLayer = max(progressW.y - MinHeight_1,0.0) > 0.0;
-		float CloudBaseHeights = isUpperLayer ? 200.0 + MaxHeight_0 : MaxHeight_0;
+	// 	// determine the base of each cloud layer
+	// 	bool isUpperLayer = max(progressW.y - MinHeight_1,0.0) > 0.0;
+	// 	float CloudBaseHeights = isUpperLayer ? 200.0 + MaxHeight_0 : MaxHeight_0;
 
-		float cumulus = GetCumulusDensity(progressW, 1, MinHeight_0, MaxHeight_0);
-		float fadedDensity = Cumulus_density * clamp(exp( (progressW.y - (CloudBaseHeights - 70)) / 9.0	 ),0.0,1.0);
+	// 	float cumulus = GetCumulusDensity(progressW, 1, MinHeight_0, MaxHeight_0);
+	// 	float fadedDensity = Cumulus_density * clamp(exp( (progressW.y - (CloudBaseHeights - 70)) / 9.0	 ),0.0,1.0);
 
-		if(cumulus > 1e-5){
-			float muE =	cumulus*fadedDensity;
+	// 	if(cumulus > 1e-5){
+	// 		float muE =	cumulus*fadedDensity;
 
-			float directLight = 0.0;
-			for (int j=0; j < 3; j++){
+	// 		float directLight = 0.0;
+	// 		for (int j=0; j < 3; j++){
 
-				vec3 shadowSamplePos = progressW + dV_Sun * (0.1 + j * (0.1 + dither.y*0.05));
-				float shadow = GetCumulusDensity(shadowSamplePos, 0, MinHeight_0, MaxHeight_0) * Cumulus_density;
+	// 			vec3 shadowSamplePos = progressW + dV_Sun * (0.1 + j * (0.1 + dither.y*0.05));
+	// 			float shadow = GetCumulusDensity(shadowSamplePos, 0, MinHeight_0, MaxHeight_0) * Cumulus_density;
 
-				directLight += shadow;
-			}
+	// 			directLight += shadow;
+	// 		}
 
-			if(max(progressW.y - MaxHeight_1 + 50,0.0) < 1.0) directLight += Cumulus_density * 2.0 * GetCumulusDensity(progressW + dV_Sun/abs(dV_Sun.y) * max((MaxHeight_1 - 30.0) - progressW.y,0.0), 0, MinHeight_0, MaxHeight_0);
+	// 		if(max(progressW.y - MaxHeight_1 + 50,0.0) < 1.0) directLight += Cumulus_density * 2.0 * GetCumulusDensity(progressW + dV_Sun/abs(dV_Sun.y) * max((MaxHeight_1 - 30.0) - progressW.y,0.0), 0, MinHeight_0, MaxHeight_0);
 
-			float upperLayerOcclusion = !isUpperLayer ? Cumulus_density * 2.0 * GetCumulusDensity(progressW + vec3(0.0,1.0,0.0) * max((MaxHeight_1 - 30.0) - progressW.y,0.0), 0, MinHeight_0, MaxHeight_0) : 0.0;
-			float skylightOcclusion = max(exp2((upperLayerOcclusion*upperLayerOcclusion) * -5), 0.75);
+	// 		float upperLayerOcclusion = !isUpperLayer ? Cumulus_density * 2.0 * GetCumulusDensity(progressW + vec3(0.0,1.0,0.0) * max((MaxHeight_1 - 30.0) - progressW.y,0.0), 0, MinHeight_0, MaxHeight_0) : 0.0;
+	// 		float skylightOcclusion = max(exp2((upperLayerOcclusion*upperLayerOcclusion) * -5), 0.75);
 			
-			float skyScatter = clamp((CloudBaseHeights - 20 - progressW.y) / 275.0,0.0,1.0);
-			vec3 cloudlighting = DoCloudLighting(muE, cumulus, SkyLightColor*skylightOcclusion, skyScatter, directLight, directScattering*sh2, directMultiScattering*sh2, 1.0);
+	// 		float skyScatter = clamp((CloudBaseHeights - 20 - progressW.y) / 275.0,0.0,1.0);
+	// 		vec3 cloudlighting = DoCloudLighting(muE, cumulus, SkyLightColor*skylightOcclusion, skyScatter, directLight, directScattering*sh2, directMultiScattering*sh2, 1.0);
 
-			// a horrible approximation of direct light indirectly hitting the lower layer of clouds after scattering through/bouncing off the upper layer.
-			cloudlighting += sunIndirectScattering * exp((skyScatter*skyScatter) * cumulus * -35.0) * upperLayerOcclusion * exp(-20.0 * pow(abs(upperLayerOcclusion - 0.3),2));
+	// 		// a horrible approximation of direct light indirectly hitting the lower layer of clouds after scattering through/bouncing off the upper layer.
+	// 		cloudlighting += sunIndirectScattering * exp((skyScatter*skyScatter) * cumulus * -35.0) * upperLayerOcclusion * exp(-20.0 * pow(abs(upperLayerOcclusion - 0.3),2));
 
-			color += max(cloudlighting - cloudlighting*exp(-muE*dd*dL),0.0) * absorbance;
-			absorbance *= max(exp(-muE*dd*dL),0.0);
-		}
-	#endif /// VL CLOUDS
+	// 		color += max(cloudlighting - cloudlighting*exp(-muE*dd*dL),0.0) * absorbance;
+	// 		absorbance *= max(exp(-muE*dd*dL),0.0);
+	// 	}
+	// #endif /// VL CLOUDS
 	}
 	return vec4(color, min(dot(absorbance,vec3(0.335)),1.0));
 }
