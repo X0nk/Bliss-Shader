@@ -259,6 +259,7 @@ vec4 renderLayer(
 	in vec3 skyLightCol,
 	in vec3 sunScatter,
 	in vec3 sunMultiScatter,
+	in vec3 indirectScatter,
 	in float distantfog,
 	bool notVisible
 ){
@@ -339,7 +340,7 @@ if(layer == 2){
 
 		#if defined CloudLayer1 && defined CloudLayer0
 			// a horrible approximation of direct light indirectly hitting the lower layer of clouds after scattering through/bouncing off the upper layer.
-			lighting += sunScatter * exp((skyScatter*skyScatter) * cumulus * -35.0) * upperLayerOcclusion * exp(-20.0 * pow(abs(upperLayerOcclusion - 0.3),2));
+			lighting += indirectScatter * exp((skyScatter*skyScatter) * cumulus * -35.0) * upperLayerOcclusion * exp(-20.0 * pow(abs(upperLayerOcclusion - 0.3),2));
 		#endif
 
 			COLOR += max(lighting - lighting*exp(-mult*muE),0.0) * TOTAL_EXTINCTION;
@@ -458,7 +459,7 @@ vec4 renderClouds(
 	#endif
 
 	#ifdef CloudLayer0
-		vec4 layer0 = renderLayer(0, layer0_start, dV_view, mult, Dither.x, maxIT_clouds, MinHeight, MaxHeight, dV_Sun, CloudLayer0_density, SkyColor, directScattering, directMultiScattering, distantfog, false);
+		vec4 layer0 = renderLayer(0, layer0_start, dV_view, mult, Dither.x, maxIT_clouds, MinHeight, MaxHeight, dV_Sun, CloudLayer0_density, SkyColor, directScattering, directMultiScattering, sunIndirectScattering, distantfog, false);
 		total_extinction *= layer0.a;
 
 		// stop overdraw.
@@ -470,7 +471,7 @@ vec4 renderClouds(
 	#endif
 
 	#ifdef CloudLayer1
-		vec4 layer1 = renderLayer(1, layer1_start, dV_view, mult, Dither.x, maxIT_clouds, MinHeight1, MaxHeight1, dV_Sun, CloudLayer1_density, SkyColor, directScattering, directMultiScattering, distantfog, notVisible);
+		vec4 layer1 = renderLayer(1, layer1_start, dV_view, mult, Dither.x, maxIT_clouds, MinHeight1, MaxHeight1, dV_Sun, CloudLayer1_density, SkyColor, directScattering, directMultiScattering,sunIndirectScattering, distantfog, notVisible);
 		total_extinction *= layer1.a;
 
 		// stop overdraw.
@@ -478,7 +479,7 @@ vec4 renderClouds(
 	#endif
 
 	#ifdef CloudLayer2
-		vec4 layer2 = renderLayer(2, layer2_start, dV_view_Alto, mult_alto, Dither.x, maxIT_clouds, Height2, Height2, dV_Sun, CloudLayer2_density, SkyColor, directScattering, directMultiScattering, distantfog, altoNotVisible);
+		vec4 layer2 = renderLayer(2, layer2_start, dV_view_Alto, mult_alto, Dither.x, maxIT_clouds, Height2, Height2, dV_Sun, CloudLayer2_density, SkyColor, directScattering, directMultiScattering,sunIndirectScattering, distantfog, altoNotVisible);
 		total_extinction *= layer2.a;
 	#endif
 	
