@@ -143,7 +143,7 @@ float GetAltostratusDensity(vec3 pos){
 	float small = texture2D(noisetex, (pos.xz - cloud_movement)/10000. - vec2(-large,1-large)/5).b;
 	
 	float shape = (small + pow((1.0-large),2.0))/2.0;
-	
+
 	float Coverage; float Density;
 	DailyWeather_Alto(Coverage, Density);
 
@@ -185,7 +185,6 @@ vec3 DoCloudLighting(
 	vec3 skyLight = skyLightCol;
 
 	float skyLightShading = exp2((skyScatter*skyScatter) * densityFaded * -35.0) * lesspowder;
-	// float skyLightShading = exp(skyScatter * densityFaded * -30/2.0 ) * lesspowder;
 
 	skyLight *= mix(1.0, skyLightShading, distantfog);
 
@@ -211,6 +210,8 @@ vec4 renderClouds(
 	vec3 color = vec3(0.0);
 
 	float heightRelativeToClouds = clamp(1.0 - max(cameraPosition.y - (Cumulus_height+150),0.0) / 200.0 ,0.0,1.0);
+	
+	bool isAlto = false;
 
 //////////////////////////////////////////
 ////// lighting stuff 
@@ -245,6 +246,10 @@ vec4 renderClouds(
 	// this is the cloud curvature.
 	dV_view.y += 0.05 * heightRelativeToClouds;
 
+	vec3 dV_view_Alto = dV_view;
+	dV_view_Alto *= 300/abs(dV_view_Alto.y)/30;
+	
+
 	dV_view *= 300/abs(dV_view.y)/maxIT_clouds;
 	
 	float mult = length(dV_view);
@@ -274,6 +279,39 @@ vec4 renderClouds(
 	directMultiScattering *= scatter;
 	sunIndirectScattering *= scatter;
 
+#ifdef Altostratus
+		isAlto = true;
+
+		float startFlip_alto = mix(max(cameraPosition.y - AltostratusHeight,0.0), max(AltostratusHeight - cameraPosition.y,0), clamp(dV_view.y,0,1));
+		float signFlip = mix(-1.0, 1.0, clamp(cameraPosition.y - AltostratusHeight,0.0,1.0)); 
+		
+		// blend alt clouds at different stages so it looks correct when flying above or below it, in relation to the cumulus clouds.
+		float altostratus = 0; vec3 Lighting_alto = vec3(0);
+		if(max(signFlip * normalize(dV_view).y,0.0) <= 0.0){ 
+
+			vec3 progress_view_high = dV_view_Alto + cameraPosition + dV_view_Alto/abs(dV_view_Alto.y) * startFlip_alto; //max(AltostratusHeight-cameraPosition.y,0.0);
+			altostratus = GetAltostratusDensity(progress_view_high);
+
+			float directLight = 0.0;
+
+			if(altostratus > 1e-5){
+				for (int j = 0; j < 2; j++){
+					vec3 shadowSamplePos_high = progress_view_high + dV_Sun * (0.1 + j + Dither.y);
+					float shadow = GetAltostratusDensity(shadowSamplePos_high);
+					directLight += shadow; /// (1+j);
+				}
+				float skyscatter_alto = sqrt(altostratus*0.05);
+				Lighting_alto = DoCloudLighting(altostratus, 1.0, SkyColor, skyscatter_alto, directLight, directScattering, directMultiScattering, distantfog);
+			}
+		}
+
+		if(signFlip > 0){
+			color += max(Lighting_alto - Lighting_alto*exp(-mult*altostratus),0.0) * total_extinction;
+			total_extinction *= max(exp(-mult*altostratus),0.0);
+		}
+
+#endif // Altostratus
+
 #ifdef Cumulus
 		for(int i = 0; i < maxIT_clouds; i++) {
 			// determine the base of each cloud layer
@@ -298,6 +336,13 @@ vec4 renderClouds(
 
 				if(max(progress_view.y - MaxHeight_1 + 50,0.0) < 1.0) directLight += Cumulus_density * 2.0 * GetCumulusDensity(progress_view + dV_Sun/abs(dV_Sun.y) * max((MaxHeight_1 - 30.0) - progress_view.y,0.0), 0, MinHeight_0, MaxHeight_0);
 
+				#ifdef Altostratus
+					// cast a shadow from higher clouds onto lower clouds
+					vec3 HighAlt_shadowPos = progress_view + dV_Sun/abs(dV_Sun.y) * max(AltostratusHeight - progress_view.y,0.0);
+					float HighAlt_shadow = 2.0 * GetAltostratusDensity(HighAlt_shadowPos) ;
+					directLight += HighAlt_shadow;
+				#endif
+
 				float upperLayerOcclusion = !isUpperLayer ? Cumulus_density * 2.0 * GetCumulusDensity(progress_view + vec3(0.0,1.0,0.0) * max((MaxHeight_1 - 30.0) - progress_view.y,0.0), 0, MinHeight_0, MaxHeight_0) : 0.0;
 				float skylightOcclusion = max(exp2((upperLayerOcclusion*upperLayerOcclusion) * -5), 0.75 + (1.0-distantfog)*0.25);
 				
@@ -316,8 +361,17 @@ vec4 renderClouds(
 			}
 			progress_view += dV_view;
 		}
-#endif
+#endif // Cumulus
+
+#ifdef Altostratus
+	if(signFlip < 0){
+		color += max(Lighting_alto - Lighting_alto*exp(-mult*altostratus),0.0) * total_extinction;
+		total_extinction *= max(exp(-mult*altostratus),0.0);
+	}
+#endif // Altostratus
+
 	return vec4(color, total_extinction);
+
 }
 
 #endif
@@ -341,13 +395,10 @@ float GetCloudShadow(vec3 feetPlayerPos){
 		shadow += GetCumulusDensity(higherShadowStart, 0, MinHeight_0, MaxHeight_0)*Cumulus_density;
 	#endif
 
-
-
-
-	// #ifdef Altostratus 
-	// 	vec3 highShadowStart = playerPos + (WsunVec / max(abs(WsunVec.y),0.2)) * max(AltostratusHeight - playerPos.y,0.0);
-	// 	shadow += GetAltostratusDensity(highShadowStart) * 0.5;
-	// #endif
+	#ifdef Altostratus 
+		vec3 highShadowStart = playerPos + (WsunVec / max(abs(WsunVec.y),0.2)) * max(AltostratusHeight - playerPos.y,0.0);
+		shadow += GetAltostratusDensity(highShadowStart) * 0.5;
+	#endif
 
 	shadow = clamp(shadow,0.0,1.0);
 	shadow *= shadow;
@@ -378,10 +429,10 @@ float GetCloudShadow_VLFOG(vec3 WorldPos, vec3 WorldSpace_sunVec){
 
 	#endif
 
-	// #ifdef Altostratus 
-	// 	vec3 highShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.2)) * max(AltostratusHeight - WorldPos.y,0.0);
-	// 	shadow += GetAltostratusDensity(highShadowStart)*0.5;
-	// #endif
+	#ifdef Altostratus 
+		vec3 highShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.2)) * max(AltostratusHeight - WorldPos.y,0.0);
+		shadow += GetAltostratusDensity(highShadowStart)*0.5;
+	#endif
 
 	shadow = clamp(shadow,0.0,1.0);
 	shadow *= shadow;
