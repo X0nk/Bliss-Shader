@@ -77,6 +77,9 @@ vec4 GetVolumetricFog(
 		// do main lighting
 		float Density = cloudVol(progressW) * pow(exp(max(progressW.y-65,0.0) / -15),2);
 
+		float clearArea =  1.0-min(max(1.0 - length(progressW - cameraPosition) / 100,0.0),1.0);
+		Density = min(Density * clearArea, NETHER_PLUME_DENSITY);
+		
 		float fireLight = cloudVol(progressW - vec3(0,1,0)) * clamp(exp(max(30 - progressW.y,0.0) / -10.0),0,1);
 
 		vec3 vL0 = vec3(1.0,0.4,0.2) * exp(fireLight * -25) * exp(max(progressW.y-30,0.0) / -10) * 25;

@@ -306,7 +306,7 @@ vec4 renderClouds(
 			}
 		}
 
-		// if(signFlip > 0 || (signFlip < 0 && is_alto_below_cumulus)){
+		// blend them to appear IN FRONT the cumulus clouds in conditions
 		if((signFlip > 0 && !is_alto_below_cumulus) || (signFlip < 0 && is_alto_below_cumulus)){
 			color += max(Lighting_alto - Lighting_alto*exp(-mult*altostratus),0.0) * total_extinction;
 			total_extinction *= max(exp(-mult*altostratus),0.0);
@@ -366,6 +366,7 @@ vec4 renderClouds(
 #endif // Cumulus
 
 #ifdef Altostratus
+	// blend them to appear BEHIND the cumulus clouds in conditions
 	if((signFlip < 0 && !is_alto_below_cumulus) || (signFlip > 0 && is_alto_below_cumulus)){
 		color += max(Lighting_alto - Lighting_alto*exp(-mult*altostratus),0.0) * total_extinction;
 		total_extinction *= max(exp(-mult*altostratus),0.0);
