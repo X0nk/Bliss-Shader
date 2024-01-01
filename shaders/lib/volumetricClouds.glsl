@@ -24,7 +24,7 @@ uniform int worldTime;
 
 float CumulusHeight = Cumulus_height;
 float MaxCumulusHeight = CumulusHeight + 100;
-float AltostratusHeight = 2000;
+float AltostratusHeight = Alto_height;
 
 
 float rainCloudwetness = rainStrength;

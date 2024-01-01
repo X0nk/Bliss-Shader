@@ -165,6 +165,7 @@ screen.Clouds = Cloud Settings
     option.Altostratus = Altostratus Clouds
     option.Alto_coverage = Coverage
     option.Alto_density = Density
+    option.Alto_height = Altostratus Height
 
 
 screen.Climate = Climate Settings
@@ -509,3 +510,5 @@ option.MOONPHASE_BASED_MOONLIGHT.comment = §bWhat is this?§r every night, the 
 
 option.END_STORM_DENSTIY.comment =  §bWhat is this?§r This is the dark cloudy fog in the end. Confingure the density of the end storm.
 option.PLUME_DENSITY.comment =  §bWhat is this?§r This is the thick, glowing smoke towers in the nether. Confingure the density of the nether smoke.
+
+option.Alto_height.comment = Configure the height that the very highest layer of clouds fly at. 
