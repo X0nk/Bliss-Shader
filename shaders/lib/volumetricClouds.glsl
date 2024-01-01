@@ -389,7 +389,7 @@ vec4 renderClouds(
 	dV_view_Alto *= 100/abs(dV_view_Alto.y)/15;
 	float mult_alto = length(dV_view_Alto);
 
-	dV_view *= 75/abs(dV_view.y)/maxIT_clouds;
+	dV_view *= 90/abs(dV_view.y)/maxIT_clouds;
 	
 	float mult = length(dV_view);
 
@@ -548,7 +548,7 @@ float GetCloudShadow(vec3 feetPlayerPos){
 
 	shadow = exp2(shadow * -100.0);
 
-	return shadow;
+	return mix(1.0, shadow, CLOUD_SHADOW_STRENGTH);
 	
 #else
 	return 1.0;
@@ -578,7 +578,7 @@ float GetCloudShadow_VLFOG(vec3 WorldPos, vec3 WorldSpace_sunVec){
 
 	shadow = exp2(shadow * -150.0);
 
-	return shadow;
+	return mix(1.0, shadow, CLOUD_SHADOW_STRENGTH);
 
 #else
 	return 1.0;
