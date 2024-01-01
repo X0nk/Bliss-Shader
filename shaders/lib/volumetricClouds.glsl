@@ -283,7 +283,8 @@ vec4 renderClouds(
 		isAlto = true;
 
 		float startFlip_alto = mix(max(cameraPosition.y - AltostratusHeight,0.0), max(AltostratusHeight - cameraPosition.y,0), clamp(dV_view.y,0,1));
-		float signFlip = mix(-1.0, 1.0, clamp(cameraPosition.y - AltostratusHeight,0.0,1.0)); 
+		float signFlip = mix(-1.0, 1.0, clamp(cameraPosition.y - AltostratusHeight,0.0,1.0));
+		bool is_alto_below_cumulus = AltostratusHeight < MinHeight_0;
 		
 		// blend alt clouds at different stages so it looks correct when flying above or below it, in relation to the cumulus clouds.
 		float altostratus = 0; vec3 Lighting_alto = vec3(0);
@@ -305,7 +306,8 @@ vec4 renderClouds(
 			}
 		}
 
-		if(signFlip > 0){
+		// if(signFlip > 0 || (signFlip < 0 && is_alto_below_cumulus)){
+		if((signFlip > 0 && !is_alto_below_cumulus) || (signFlip < 0 && is_alto_below_cumulus)){
 			color += max(Lighting_alto - Lighting_alto*exp(-mult*altostratus),0.0) * total_extinction;
 			total_extinction *= max(exp(-mult*altostratus),0.0);
 		}
@@ -364,7 +366,7 @@ vec4 renderClouds(
 #endif // Cumulus
 
 #ifdef Altostratus
-	if(signFlip < 0){
+	if((signFlip < 0 && !is_alto_below_cumulus) || (signFlip > 0 && is_alto_below_cumulus)){
 		color += max(Lighting_alto - Lighting_alto*exp(-mult*altostratus),0.0) * total_extinction;
 		total_extinction *= max(exp(-mult*altostratus),0.0);
 	}
