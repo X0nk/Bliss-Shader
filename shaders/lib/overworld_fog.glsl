@@ -237,12 +237,13 @@ vec4 GetVolumetricFog(
 			#endif
 
 			float skyScatter = clamp((DUAL_MAX_HEIGHT - 20 - progressW.y) / 275.0,0.0,1.0);
-			vec3 cloudlighting = DoCloudLighting(muE, cumulus,  AmbientColor*skylightOcclusion, skyScatter, directLight, directScattering, directMultiScattering, 1.0);
+			vec3 cloudlighting = DoCloudLighting(muE, cumulus,  AmbientColor*skylightOcclusion, skyScatter, directLight, directScattering*sh2, directMultiScattering*sh2, 1.0);
 			
 			#if defined CloudLayer1 && defined CloudLayer0
 				// a horrible approximation of direct light indirectly hitting the lower layer of clouds after scattering through/bouncing off the upper layer.
 				cloudlighting += sunIndirectScattering * exp((skyScatter*skyScatter) * cumulus * -35.0) * upperLayerOcclusion * exp(-20.0 * pow(abs(upperLayerOcclusion - 0.3),2));
 			#endif
+			
 			color += max(cloudlighting - cloudlighting*exp(-muE*dd*dL),0.0) * absorbance;
 			absorbance *= max(exp(-muE*dd*dL),0.0);
 		}
