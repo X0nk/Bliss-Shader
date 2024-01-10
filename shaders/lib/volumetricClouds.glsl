@@ -65,6 +65,17 @@ float cloudCov(int layer, in vec3 pos, vec3 samplePos, float minHeight, float ma
 		SampleCoords1 = -( (samplePos.zx - cloud_movement*2) / 1500);
 	}
 
+	if(layer == -1){
+		float otherlayer = max(pos.y - (CloudLayer0_height+99.5), 0.0) > 0 ? 0.0 : 1.0;
+		if(otherlayer > 0.0){
+			SampleCoords0 = (samplePos.xz + cloud_movement) / 5000;
+			SampleCoords1 = (samplePos.xz - cloud_movement) / 500;
+		}else{
+			SampleCoords0 = -( (samplePos.zx + cloud_movement*2) / 15000);
+			SampleCoords1 = -( (samplePos.zx - cloud_movement*2) / 1500);
+		}
+	}
+
 	float CloudSmall = texture2D(noisetex, SampleCoords1 ).r;
 	float CloudLarge = texture2D(noisetex, SampleCoords0 ).b;
 
@@ -77,10 +88,10 @@ float cloudCov(int layer, in vec3 pos, vec3 samplePos, float minHeight, float ma
 
 		float layer0 = min(min(coverage + CloudLayer0_coverage, clamp(maxHeight - pos.y,0,1)), 1.0 - clamp(minHeight - pos.y,0,1));
 
-		float Topshape = max(pos.y - (maxHeight - 75),0.0) / 200.0;
+		Topshape = max(pos.y - (maxHeight - 75),0.0) / 200.0;
 		Topshape += max(pos.y - (maxHeight - 10),0.0) / 50.0;
 
-		float Baseshape = max(minHeight + 12.5 - pos.y, 0.0) / 50.0;
+		Baseshape = max(minHeight + 12.5 - pos.y, 0.0) / 50.0;
 
 		FinalCloudCoverage = max(layer0 - Topshape - Baseshape,0.0);
 	}
@@ -95,25 +106,33 @@ float cloudCov(int layer, in vec3 pos, vec3 samplePos, float minHeight, float ma
 		FinalCloudCoverage = max(layer1 - Topshape - Baseshape, 0.0);
 	}
 
+
 	if(layer == -1){
-		// float FirstLayerCoverage = DailyWeather_Cumulus(coverage);
+		float LAYER0_minHEIGHT_FOG = CloudLayer0_height; 
+		float LAYER0_maxHEIGHT_FOG = 100 + LAYER0_minHEIGHT_FOG;
 
-		float layer0 = min(min(coverage + CloudLayer0_coverage, clamp(LAYER0_maxHEIGHT - pos.y,0,1)), 1.0 - clamp(LAYER0_minHEIGHT - pos.y,0,1));
+		float LAYER1_minHEIGHT_FOG = max(CloudLayer1_height,LAYER0_maxHEIGHT); 
+		float LAYER1_maxHEIGHT_FOG = 100 + LAYER1_minHEIGHT_FOG;
 
-		float Topshape = max(pos.y - (LAYER0_maxHEIGHT - 75),0.0) / 200.0;
-		Topshape += max(pos.y - (LAYER0_maxHEIGHT - 10),0.0) / 50.0;
+		#ifdef CloudLayer0 
+			float layer0 = min(min(coverage + CloudLayer0_coverage, clamp(LAYER0_maxHEIGHT_FOG - pos.y,0,1)), 1.0 - clamp(LAYER0_minHEIGHT_FOG - pos.y,0,1));
 
-		float Baseshape = max(LAYER0_minHEIGHT + 12.5 - pos.y, 0.0) / 50.0;
+			Topshape = max(pos.y - (LAYER0_maxHEIGHT_FOG - 75),0.0) / 200.0;
+			Topshape += max(pos.y - (LAYER0_maxHEIGHT_FOG - 10),0.0) / 50.0;
+			Baseshape = max(LAYER0_minHEIGHT_FOG + 12.5 - pos.y, 0.0) / 50.0;
 
-		FinalCloudCoverage += max(layer0 - Topshape - Baseshape,0.0);
+			FinalCloudCoverage += max(layer0 - Topshape - Baseshape,0.0);
+		#endif
+		
+		#ifdef CloudLayer1
+			float layer1 = min(min(coverage + CloudLayer1_coverage, clamp(LAYER1_maxHEIGHT - pos.y,0,1)), 1.0 - clamp(LAYER1_minHEIGHT_FOG - pos.y,0,1));
 
-		float layer1 = min(min(coverage + CloudLayer1_coverage, clamp(LAYER1_maxHEIGHT - pos.y,0,1)), 1.0 - clamp(LAYER1_minHEIGHT - pos.y,0,1));
+			Topshape = max(pos.y - (LAYER1_maxHEIGHT_FOG - 75), 0.0) / 200;
+			Topshape += max(pos.y - (LAYER1_maxHEIGHT_FOG - 10 ), 0.0) / 50;
+			Baseshape = max(LAYER1_minHEIGHT_FOG + 12.5 - pos.y, 0.0) / 50.0;
 
-		Topshape = max(pos.y - (LAYER1_maxHEIGHT - 75), 0.0) / 200;
-		Topshape += max(pos.y - (LAYER1_maxHEIGHT - 10 ), 0.0) / 50;
-		Baseshape = max(LAYER1_minHEIGHT + 12.5 - pos.y, 0.0) / 50.0;
-
-		FinalCloudCoverage += max(layer1 - Topshape - Baseshape, 0.0);
+			FinalCloudCoverage += max(layer1 - Topshape - Baseshape, 0.0);
+		#endif
 	}
 
 	return FinalCloudCoverage;
@@ -121,7 +140,7 @@ float cloudCov(int layer, in vec3 pos, vec3 samplePos, float minHeight, float ma
 
 //Erode cloud with 3d Perlin-worley noise, actual cloud value
 float cloudVol(int layer, in vec3 pos,in vec3 samplePos,in float cov, in int LoD, float minHeight, float maxHeight){
-	float otherlayer = layer == 0 ? 1.0 : 0.0;
+	float otherlayer = max(pos.y - (CloudLayer0_height+99.5), 0.0) > 0 ? 0.0 : 1.0;
 	float upperPlane = otherlayer;
 
 	float noise = 0.0 ;
@@ -369,7 +388,8 @@ vec4 renderClouds(
 	float total_extinction = 1.0;
 	vec3 color = vec3(0.0);
 
-	float heightRelativeToClouds = clamp(1.0 - max(cameraPosition.y - LAYER0_minHEIGHT,0.0) / 200.0 ,0.0,1.0);
+	float heightRelativeToClouds = clamp(1.0 - max(cameraPosition.y - LAYER0_minHEIGHT,0.0) / 100.0 ,0.0,1.0);
+	// heightRelativeToClouds*=heightRelativeToClouds;
 
 //////////////////////////////////////////
 ////// Raymarching stuff 
@@ -384,7 +404,7 @@ vec4 renderClouds(
 	vec3 dV_view = normalize(viewPos.xyz);
 	
 	// this is the cloud curvature.
-	dV_view.y += 0.05 * heightRelativeToClouds;
+	dV_view.y += 0.025 * heightRelativeToClouds;
 
 	vec3 dV_view_Alto = dV_view;
 	dV_view_Alto *= 100/abs(dV_view_Alto.y)/15;
@@ -414,19 +434,19 @@ vec4 renderClouds(
 
 	// use this to blend into the atmosphere's ground.
 	vec3 approxdistance = normalize(dV_view);
-	float distantfog = max(1.0 - clamp(exp2(pow(abs(approxdistance.y),1.5) * -35.0),0.0,1.0),0.0);
-
+	float distantfog = mix(1.0, max(1.0 - clamp(exp2(pow(abs(approxdistance.y),1.5) * -35.0),0.0,1.0),0.0), heightRelativeToClouds);
+	// distantfog = 1;
 	// terrible fake rayleigh scattering
 	vec3 rC = vec3(sky_coefficientRayleighR*1e-6, sky_coefficientRayleighG*1e-5, sky_coefficientRayleighB*1e-5)*3;
 	float atmosphere =  exp(abs(approxdistance.y) * -5.0);
-	vec3 scatter = mix(vec3(1.0), exp(-10000.0 * rC * atmosphere) * distantfog, heightRelativeToClouds);
+	vec3 scatter = exp(-10000.0 * rC * atmosphere) * distantfog;
 
 	directScattering *= scatter;
 	directMultiScattering *= scatter;
 	sunIndirectScattering *= scatter;
 
 //////////////////////////////////////////
-////// Cloud layer Positions
+////// render Cloud layers and do blending orders
 //////////////////////////////////////////
 
 	// first cloud layer
@@ -483,42 +503,43 @@ vec4 renderClouds(
 		total_extinction *= layer2.a;
 	#endif
 	
+	/// i know this looks confusing
+	/// it is changing blending order based on the players position relative to the clouds.
+	/// to keep it simple for myself, it all revolves around layer0, the lowest cloud layer.
+	/// for layer1, swap between back to front and front to back blending if you are above or below layer0
+	/// for layer2, swap between back to front and front to back blending if you are above or below layer1
+	
 
-	// order DOES matter here.
-	// if(layer1_below_layer0){
+	/// blend the altostratus clouds first, so it is BEHIND all the cumulus clouds, if the player postion is below the cumulus clouds.
+	/// handle the case if one of the cloud layers is disabled.
+	#if !defined CloudLayer1 && defined CloudLayer2
+		if(below_Layer2) color = color * layer2.a + layer2.rgb;
+	#endif
+	#if defined CloudLayer1 && defined CloudLayer2 
+		if(below_Layer2) layer1.rgb = layer2.rgb * layer1.a + layer1.rgb;
+	#endif
 
-	// 	color = mix(layer1.rgb, layer0.rgb, float(above_Layer1));
-	// 	color = mix(color * layer0.a + layer0.rgb, color * layer1.a + layer1.rgb, float(above_Layer1)); ;
-		
-	// } else {
-		
-		#if defined CloudLayer1 && defined CloudLayer2 
-			if(below_Layer2) layer1.rgb = layer2.rgb * layer1.a + layer1.rgb;
-		#endif
+	/// blend the cumulus clouds together. swap the blending order from (BACK TO FRONT -> FRONT TO BACK) depending on the player position relative to the lowest cloud layer.
+	#if defined CloudLayer0 && defined CloudLayer1
+		color = mix(layer0.rgb, layer1.rgb,  float(below_Layer0));
+		color = mix(color * layer1.a + layer1.rgb, color * layer0.a + layer0.rgb, float(below_Layer0));
+	#endif
 
-		#if !defined CloudLayer1 && defined CloudLayer2
-			if(below_Layer2) color = color * layer2.a + layer2.rgb;
-		#endif
+	/// handle the case of one of the cloud layers being disabled.
+	#if defined CloudLayer0 && !defined CloudLayer1
+		color = color * layer0.a + layer0.rgb;
+	#endif
+	#if !defined CloudLayer0 && defined CloudLayer1
+		color = color * layer1.a + layer1.rgb;
+	#endif
 
-		#if defined CloudLayer0 && defined CloudLayer1
-			color = mix(layer0.rgb, layer1.rgb,  float(below_Layer0));
-			color = mix(color * layer1.a + layer1.rgb, color * layer0.a + layer0.rgb, float(below_Layer0));
-		#endif
-
-		#if defined CloudLayer0 && !defined CloudLayer1
-			color = color * layer0.a + layer0.rgb;
-		#endif
-
-		#if !defined CloudLayer0 && defined CloudLayer1
-			color = color * layer1.a + layer1.rgb;
-		#endif
-
-		#ifdef CloudLayer2
-			if(!below_Layer2) color = color * layer2.a + layer2.rgb;
-		#endif
-	// }
+	/// blend the altostratus clouds last, so it is IN FRONT of all the cumulus clouds when the player position is above them.
+	#ifdef CloudLayer2
+		if(!below_Layer2) color = color * layer2.a + layer2.rgb;
+	#endif
 
 	return vec4(color, total_extinction);
+	// return mix(vec4(color, total_extinction),vec4(0.0,0.0,0.0,1.0),exp(abs(approxdistance.y) * -1) * (1-clamp(1.0-max(cameraPosition.y - LAYER2_HEIGHT,0.0) / 1000.0 ,0.0,1.0)));
 }
 
 #endif
@@ -562,11 +583,11 @@ float GetCloudShadow_VLFOG(vec3 WorldPos, vec3 WorldSpace_sunVec){
 	float shadow = 0.0;
 
 	#ifdef CloudLayer0
-		vec3 lowShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.2)) * max((CloudLayer0_height) - WorldPos.y,0.0)  ;
+		vec3 lowShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.2)) * max((CloudLayer0_height+ 30) - WorldPos.y,0.0)  ;
 		shadow += GetCumulusDensity(0, lowShadowStart, 0, CloudLayer0_height,CloudLayer0_height+100)*CloudLayer0_density;
 	#endif
 	#ifdef CloudLayer1
-		vec3 higherShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.2)) * max((CloudLayer1_height) - WorldPos.y,0.0)  ;
+		vec3 higherShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.2)) * max((CloudLayer1_height+ 30) - WorldPos.y,0.0)  ;
 		shadow += GetCumulusDensity(1,higherShadowStart, 0, CloudLayer1_height,CloudLayer1_height+100)*CloudLayer1_density;
 	#endif
 	#ifdef CloudLayer2 

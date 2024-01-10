@@ -660,7 +660,7 @@ void main() {
 			Background += Sky;
 
 			#ifdef VOLUMETRIC_CLOUDS
-				vec4 Clouds = texture2D_bicubic_offset(colortex0, texcoord*CLOUDS_QUALITY, noise_2);
+				vec4 Clouds = texture2D_bicubic_offset(colortex0, texcoord*CLOUDS_QUALITY, noise, RENDER_SCALE.x);
 				Background = Background * Clouds.a + Clouds.rgb;
 			#endif
 

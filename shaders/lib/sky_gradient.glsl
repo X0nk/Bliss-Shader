@@ -99,13 +99,15 @@ vec4 texture2D_bicubic(sampler2D tex, vec2 uv)
            g1(fuv.y) * (g0x * texture2D(tex, p2)  +
                         g1x * texture2D(tex, p3));
 }
-vec4 texture2D_bicubic_offset(sampler2D tex, vec2 uv, float noise)
+vec4 texture2D_bicubic_offset(sampler2D tex, vec2 uv, float noise, float scale)
 {
 	float offsets = noise * (2.0 * 3.141592653589793238462643383279502884197169);
-	vec2 circleOffsets = vec2(sin(offsets), cos(offsets));
+	vec2 circleOffsets = vec2(sin(offsets), cos(offsets)) * scale;
 	
-	// circleOffsets = vec2(0.0);
-
+	#ifdef SCREENSHOT_MODE
+		circleOffsets = vec2(0.0);
+	#endif
+	
 	vec4 texelSize = vec4(texelSize,1.0/texelSize);
 	uv = uv*texelSize.zw;
 	

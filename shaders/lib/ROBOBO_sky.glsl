@@ -95,7 +95,7 @@ vec3 sky_transmittance(vec3 position, vec3 direction, const float steps) {
 vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 sunVector, vec3 moonVector, out vec2 pid, out vec3 transmittance, const int iSteps, float noise) {
 	const int jSteps = 4;
 
-	float planetGround = exp(-100 * pow(max(-viewVector.y*5,0.0),2)); // darken the ground in the sky.
+	float planetGround = exp(-100 * pow(max(-viewVector.y*5 + 0.1,0.0),2)); // darken the ground in the sky.
 	float GroundDarkening = max(planetGround * 0.7+0.3,clamp(sunVector.y*2.0,0.0,1.0));
 
 	vec3 viewPos = (sky_planetRadius + eyeAltitude) * upVector;
