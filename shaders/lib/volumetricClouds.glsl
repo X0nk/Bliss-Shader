@@ -544,12 +544,14 @@ vec4 renderClouds(
 	#endif
 
 	#ifndef SKY_GROUND
-		color = color * distantfog2;
-		total_extinction = mix(1.0, total_extinction, distantfog2);
+		vec3 normView = normalize(dV_view);
+		vec4 fogcolor = vec4(skyFromTex(normView, colortex4)/30.0, 0.0);
+		
+		return mix(fogcolor, vec4(color, total_extinction), clamp(distantfog2,0.0,1.0));
+	#else
+		return vec4(color, total_extinction);
 	#endif
 	
-	return vec4(color, total_extinction);
-	// return mix(vec4(color, total_extinction),vec4(0.0,0.0,0.0,1.0),exp(abs(approxdistance.y) * -1) * (1-clamp(1.0-max(cameraPosition.y - LAYER2_HEIGHT,0.0) / 1000.0 ,0.0,1.0)));
 }
 
 #endif
