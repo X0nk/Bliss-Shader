@@ -58,7 +58,6 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 
 
 
-flat varying int PHYSICSMOD_SNOW;
 flat varying int NameTags;
 
 uniform int frameCounter;
@@ -240,15 +239,10 @@ void main() {
 	#endif
 	
 	NameTags = 0;
-	PHYSICSMOD_SNOW = 0;
 
 #ifdef ENTITIES
 	// disallow POM to work on item frames.
 	if(entityId == 2300) SIGN = 1;
-
-	#ifdef ENTITY_PHYSICSMOD_SNOW
-		 if(entityId == 829925) PHYSICSMOD_SNOW = 1;
-	#endif
 
 
 	// try and single out nametag text and then discard nametag background

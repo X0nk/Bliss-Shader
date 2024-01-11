@@ -80,8 +80,6 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 
 void main() {
 
-	vec4 Swtich_gl_vertex = gl_Vertex;
-
 	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
 	vec2 lmcoord = gl_MultiTexCoord1.xy / 255.0; // is this even correct? lol
 	lmtexcoord.zw = lmcoord;
@@ -125,7 +123,7 @@ void main() {
 	
 	flatnormal = normalMat.xyz;
 
-	viewVector = ( gl_ModelViewMatrix * Swtich_gl_vertex).xyz;
+	viewVector = ( gl_ModelViewMatrix * gl_Vertex).xyz;
 	viewVector = normalize(tbnMatrix * viewVector);
 
 

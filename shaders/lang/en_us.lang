@@ -249,6 +249,7 @@ screen.World = World
         option.Dirt_Amount = Dirt Amount
         option.Water_Top_Layer = Ocean Y coordinate
         option.WATER_WAVE_STRENGTH = Wave Strength
+        option.SNELLS_WINDOW = Snell's Window
         
         screen.Water_fog_color = Water Fog Settings
             option.Dirt_Scatter_R = Scatter Red (dirt)
@@ -524,3 +525,4 @@ option.CloudLayer2_density.comment  = Configure how dense, or thick these clouds
 option.CloudLayer2_height.comment   = Configure the height at which these clouds fly at. §cTHESE CANNOT BE LOWER THAN THE LARGE CLOUDS§r
 
 option.SKY_GROUND.comment = §bWhat is this?§r This is the dark bottom half of the sky that WOULD be the ground, if minecraft had infinite render distance. §aPERFORMANCE COST:§r very very low. §cdisabling this is very slightly slower than having it on due to extra math.§r
+option.SNELLS_WINDOW.comment = §bWhat is this?§r this is the dark reflective circle you see when under-water. This is an approximation of a thing that happens in reality known as "total internal reflection". §aPERFORMANCE COST:§r very very very small.

@@ -102,7 +102,7 @@ void main() {
 	#endif
 
 	#ifdef Hand_Held_lights
-		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(viewPos)/10,0.0),1.5),0.0,1.0));
+		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(viewPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
 	#endif
 
 

@@ -273,12 +273,6 @@ vec3 GGX (vec3 n, vec3 v, vec3 l, float r, vec3 F0) {
   return dotNL * D * F / (dotLH*dotLH*(1.0-k2)+k2);
 }
 
-
-
-
-#define PHYSICSMOD_FRAGMENT
-#include "/lib/oceans.glsl"
-
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -378,7 +372,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 	
 	#ifdef Hand_Held_lights
-		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS*clamp( pow(max(1.0-length(viewPos)/10,0.0),1.5),0.0,1.0));
+		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS*clamp( pow(max(1.0-length(viewPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
 	#endif
 
 	vec3 Indirect_lighting = vec3(0.0);
@@ -534,8 +528,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			float normalDotEye = dot(normal, normalize(viewPos));
 			float fresnel =  pow(clamp(1.0 + dot(normal, normalize(viewPos)), 0.0, 1.0),5.0);
 
-			// snells window looking thing
-			if(isEyeInWater == 1 ) fresnel = pow(clamp(1.66 + normalDotEye,0.0,1.0), 25.0);
+			#ifdef SNELLS_WINDOW
+				// snells window looking thing
+				if(isEyeInWater == 1 ) fresnel = pow(clamp(1.66 + normalDotEye,0.0,1.0), 25.0);
+			#endif
 
 			fresnel = mix(f0, 1.0, fresnel); 
 			

@@ -565,6 +565,3 @@ screen.Post_Processing.comment = 配置所有后处理效果设置, 从抗锯齿
 #Climate
     screen.Seasons=季节
         suffix.Season_Length=MC日
-
-option.PhysicsMod_support=Physics (物理) 模组支持
-option.PhysicsMod_support.comment=在 AMD 显卡上这个选项会破坏整个光影的功能. 如果没发现奇怪的东西那就没问题.

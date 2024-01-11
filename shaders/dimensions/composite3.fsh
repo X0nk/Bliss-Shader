@@ -182,6 +182,7 @@ void applyContrast(inout vec3 color, float contrast){
 void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, vec2 depths){
 
   vec2 UnalteredTexcoord = Texcoord;
+  
 
   Texcoord = abs(Texcoord + (TangentNormals * clamp((ld(depths.x) - ld(depths.y)) * 0.5,0.0,0.15)) * RENDER_SCALE );
 

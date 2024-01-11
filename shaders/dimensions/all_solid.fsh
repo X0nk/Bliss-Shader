@@ -78,8 +78,6 @@ uniform sampler2D depthtex0;
 uniform vec4 entityColor;
 
 // in vec3 velocity;
-
-flat varying int PHYSICSMOD_SNOW;
 flat varying float blockID;
 
 flat varying float SSSAMOUNT;
@@ -316,8 +314,8 @@ void main() {
 
 	#ifdef Hand_Held_lights
 
-
-		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(fragpos)/10,0.0),1.5),0.0,1.0));
+		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(fragpos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
+		
 		#ifdef HAND
 			torchlightmap *= 0.9;
 		#endif
@@ -477,9 +475,6 @@ void main() {
 	
 			gl_FragDepth = toClipSpace3(truePos).z;
 		#endif
-		
-
-		if(PHYSICSMOD_SNOW < 1) normal = applyBump(tbnMatrix, NormalTex.xyz,  mix(1.0,1-Puddle_shape,rainfall)	);
 	#endif
 	
 	//////////////////////////////// 				////////////////////////////////
