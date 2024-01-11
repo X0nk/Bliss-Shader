@@ -862,6 +862,7 @@ void main() {
 
 
 			float skylight = max(pow(viewToWorld(FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.25 + (1.0-lightmap.y) * 0.75) ;
+			// skylight = 0.0;
 		
 			AmbientLightColor *= skylight;
 		#endif
