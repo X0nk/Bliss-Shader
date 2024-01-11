@@ -504,6 +504,7 @@ uniform int moonPhase;
 // #define Compositing_Sky // make the sky some color to make compositing a sky in some photoediting software easier.
 // #define display_LUT
 // #define SSS_view
+// #define BIOME_TINT_WATER
 
 #define Texture_MipMap_Bias 0.0 // [-5.00 -4.75 -4.50 -4.25 -4.00 -3.75 -3.50 -3.25 -3.00 -2.75 -2.50 -2.25 -2.00 -1.75 -1.50 -1.25 -1.00 -0.75 -0.50 -0.25 0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00 2.25 2.50 2.75 3.00 3.25 3.50 3.75 4.00 4.25 4.50 4.75 5.00]
 

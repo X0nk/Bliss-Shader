@@ -223,7 +223,7 @@ void main() {
 	vec4 albedo = vec4(unpack0.ba,unpack1.rg);
 	vec2 tangentNormals = unpack0.xy*2.0-1.0;
   if(albedo.a <= 0.0) tangentNormals = vec2(0.0);
-  vec4 TranslucentShader = texture2D(colortex2,texcoord);
+  vec4 TranslucentShader = texture2D(colortex2, texcoord);
 
 	////// --------------- UNPACK MISC --------------- //////
   float trpData = texture2D(colortex7,texcoord).a;

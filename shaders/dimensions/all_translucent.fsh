@@ -316,7 +316,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 
 	vec4 COLORTEST = vec4(Albedo, UnchangedAlpha);
-
+	
+	#ifdef BIOME_TINT_WATER
+		if (iswater > 0.95) COLORTEST.rgb = color.rgb;
+	#endif
 
 
 	//////////////////////////////// 
