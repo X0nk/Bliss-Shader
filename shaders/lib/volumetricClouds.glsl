@@ -438,7 +438,7 @@ vec4 renderClouds(
 		float distantfog = mix(1.0, max(1.0 - clamp(exp2(pow(abs(approxdistance.y),1.5) * -35.0),0.0,1.0),0.0), heightRelativeToClouds);
 	#else
 		float distantfog = 1.0;
-		float distantfog2 = mix(1.0, max(1.0 - clamp(exp(pow(abs(approxdistance.y),1) * -35.0),0.0,1.0),0.0), heightRelativeToClouds);
+		float distantfog2 = mix(1.0, max(1.0 - clamp(exp(pow(abs(approxdistance.y),1.5) * -35.0),0.0,1.0),0.0), heightRelativeToClouds);
 	#endif
 	
 	// terrible fake rayleigh scattering
