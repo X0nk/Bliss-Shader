@@ -53,6 +53,7 @@ uniform sampler2D colortex7; //water?
 uniform sampler2D colortex8; //Specular
 uniform sampler2D colortex9; //Specular
 uniform sampler2D colortex10;
+uniform sampler2D colortex11;
 uniform sampler2D colortex12;
 uniform sampler2D colortex15; // flat normals(rgb), vanillaAO(alpha)
 
@@ -602,6 +603,15 @@ void main() {
 		vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;
 		vec3 scatterCoef = dirtAmount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / 3.14;
 
+		#ifdef BIOME_TINT_WATER
+			// yoink the biome tint written in this buffer for water only.
+			if(iswater){
+				vec2 translucentdata = texture2D(colortex11,texcoord).gb;
+				vec3 wateralbedo = vec3(decodeVec2(translucentdata.x),decodeVec2(translucentdata.y).x);
+				scatterCoef = dirtAmount * wateralbedo / 3.14;
+			}
+		#endif
+
 		vec3 Indirect_lighting = vec3(1.0);
 		vec3 AmbientLightColor = vec3(0.0);
 		vec3 Indirect_SSS = vec3(0.0);
@@ -1011,7 +1021,8 @@ void main() {
 		if(lightningBolt) gl_FragData[0].rgb = vec3(77.0, 153.0, 255.0);
 
 	}
-	
+
+
 	#ifdef OVERWORLD_SHADER
 		if (iswater && isEyeInWater == 0){
 			vec3 viewPos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0));
@@ -1025,10 +1036,14 @@ void main() {
 			vec3 lightColVol = lightCol.rgb / 80.;
 			// if(shadowmapindicator < 1) lightColVol *= clamp((custom_lightmap_T-0.8) * 15,0,1)
 
+			
 			vec3 lightningColor = (lightningEffect / 3) * (max(eyeBrightnessSmooth.y,0)/240.);
 			vec3 ambientColVol =  max((averageSkyCol_Clouds / 30.0) *  custom_lightmap_T, vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision)) ;
 
+
 			waterVolumetrics(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth , estimatedSunDepth, Vdiff, noise_2, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(feetPlayerPos_normalized, WsunVec));		
+			
+		
 		}
 	#else
 		if (iswater && isEyeInWater == 0){
