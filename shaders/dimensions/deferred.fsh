@@ -277,7 +277,6 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 vec3 temp = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy),0).rgb;
 vec3 curr = gl_FragData[0].rgb*150.;
 
-
 gl_FragData[0].rgb = clamp(mix(temp, curr, mixhistory),0.0,65000.);
 
 

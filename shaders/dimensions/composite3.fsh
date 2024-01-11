@@ -254,8 +254,14 @@ void main() {
     if(z >= 1.0 || isEyeInWater != 0) fog = 0.0;
     
     if(lightleakfixfast < 1.0) fog *= lightleakfix;
+  
+    #ifdef SKY_GROUND
+      vec3 borderFogColor = skyGroundColor;
+    #else
+     vec3 borderFogColor = skyFromTex(np3, colortex4)/30.0;
+    #endif
 
-    color.rgb = mix(color.rgb, skyGroundColor, fog);
+    color.rgb = mix(color.rgb, borderFogColor, fog);
   #endif
 
   if (TranslucentShader.a > 0.0){
@@ -266,7 +272,7 @@ void main() {
     color = color*(1.0-TranslucentShader.a) + TranslucentShader.rgb; 
 
     #ifdef BorderFog
-      color.rgb = mix(color.rgb, skyGroundColor, fog);
+      color.rgb = mix(color.rgb, borderFogColor, fog);
     #endif
   } 
 

@@ -319,6 +319,7 @@ uniform int moonPhase;
 
 #endif
 
+#define SKY_GROUND
 
 
 ////////////////////////////////////////

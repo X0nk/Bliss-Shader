@@ -499,6 +499,7 @@ screen.Post_Processing.comment = Configure settings for all post processing effe
         option.SCALE_FACTOR.comment = Configure from what fraction of your resolution to upscale from. Below 0.5 is not recommended at all i only have it as an option because it's funny :P
 
 option.RESOURCEPACK_SKY.comment = Toggle resourcepack sky support. Configure settings to use the whole resourcepack sky, or keep the shader's sun and moon. §aPERFORMANCE COST:§r very low
+option.SKY_GROUND = Atmosphere ground
 
 option.MATERIAL_AO.comment = Toggle the use of ambient occlusion based on what the resourcepack provides. §aPERFORMANCE COST:§r very low
 option.WATER_WAVE_STRENGTH.comment = configure how strong the waves appear.
@@ -521,3 +522,5 @@ option.CloudLayer2.comment          = Toggle the layer of clouds that are very h
 option.CloudLayer2_coverage.comment = Configure how much of the sky these clouds cover.
 option.CloudLayer2_density.comment  = Configure how dense, or thick these clouds are.
 option.CloudLayer2_height.comment   = Configure the height at which these clouds fly at. §cTHESE CANNOT BE LOWER THAN THE LARGE CLOUDS§r
+
+option.SKY_GROUND.comment = §bWhat is this?§r This is the dark bottom half of the sky that WOULD be the ground, if minecraft had infinite render distance. §aPERFORMANCE COST:§r very very low. §cdisabling this is very slightly slower than having it on due to extra math.§r

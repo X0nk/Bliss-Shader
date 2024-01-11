@@ -434,8 +434,13 @@ vec4 renderClouds(
 
 	// use this to blend into the atmosphere's ground.
 	vec3 approxdistance = normalize(dV_view);
-	float distantfog = mix(1.0, max(1.0 - clamp(exp2(pow(abs(approxdistance.y),1.5) * -35.0),0.0,1.0),0.0), heightRelativeToClouds);
-	// distantfog = 1;
+	#ifdef SKY_GROUND
+		float distantfog = mix(1.0, max(1.0 - clamp(exp2(pow(abs(approxdistance.y),1.5) * -35.0),0.0,1.0),0.0), heightRelativeToClouds);
+	#else
+		float distantfog = 1.0;
+		float distantfog2 = mix(1.0, max(1.0 - clamp(exp(pow(abs(approxdistance.y),1) * -35.0),0.0,1.0),0.0), heightRelativeToClouds);
+	#endif
+	
 	// terrible fake rayleigh scattering
 	vec3 rC = vec3(sky_coefficientRayleighR*1e-6, sky_coefficientRayleighG*1e-5, sky_coefficientRayleighB*1e-5)*3;
 	float atmosphere =  exp(abs(approxdistance.y) * -5.0);
@@ -538,6 +543,11 @@ vec4 renderClouds(
 		if(!below_Layer2) color = color * layer2.a + layer2.rgb;
 	#endif
 
+	#ifndef SKY_GROUND
+		color = color * distantfog2;
+		total_extinction = mix(1.0, total_extinction, distantfog2);
+	#endif
+	
 	return vec4(color, total_extinction);
 	// return mix(vec4(color, total_extinction),vec4(0.0,0.0,0.0,1.0),exp(abs(approxdistance.y) * -1) * (1-clamp(1.0-max(cameraPosition.y - LAYER2_HEIGHT,0.0) / 1000.0 ,0.0,1.0)));
 }
