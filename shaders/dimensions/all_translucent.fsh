@@ -15,6 +15,10 @@ varying vec4 color;
 	flat varying vec4 lightCol;
 #endif
 
+#ifdef BLOCKENTITIES
+	#undef WATER_REFLECTIONS
+#endif
+
 #ifdef ENTITIES
 	#undef WATER_BACKGROUND_SPECULAR
 	#undef SCREENSPACE_REFLECTIONS
@@ -474,8 +478,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		up   *= pow( max( WS_normal.y, 0), 2);
 		down *= pow( max(-WS_normal.y, 0), 2);
 		AmbientLightColor += up + down;
-
-
 	#endif
 
 	#ifdef END_SHADER
