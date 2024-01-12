@@ -186,8 +186,8 @@ void main() {
 
 	gl_Position = ftransform();
 
+
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-	
 	
     /////// ----- COLOR STUFF ----- ///////
 	color = gl_Color;
@@ -239,6 +239,7 @@ void main() {
 	#endif
 	
 	NameTags = 0;
+	
 
 #ifdef ENTITIES
 	// disallow POM to work on item frames.

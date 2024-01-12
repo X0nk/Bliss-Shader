@@ -1059,7 +1059,5 @@ void main() {
 		}
 	#endif
 
-	// gl_FragData[0].rgb = skyCloudsFromTexLOD2(feetPlayerPos_normalized, colortex12, 6).rgb/30;
-	
 /* DRAWBUFFERS:3 */
 }

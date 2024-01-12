@@ -105,7 +105,7 @@ void main() {
 	if (mc_Entity.x == 72) mat = 0.5;
 
 	#ifdef ENTITIES
-		mat = 0.2;
+		mat = 0.1;
 	#endif
 
 	

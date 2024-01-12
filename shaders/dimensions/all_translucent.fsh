@@ -15,6 +15,11 @@ varying vec4 color;
 	flat varying vec4 lightCol;
 #endif
 
+#ifdef ENTITIES
+	#undef WATER_BACKGROUND_SPECULAR
+	#undef SCREENSPACE_REFLECTIONS
+#endif
+
 flat varying float HELD_ITEM_BRIGHTNESS;
 
 const bool colortex4MipmapEnabled = true;
@@ -293,6 +298,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	//////////////////////////////// 
 
 	gl_FragData[0] = texture2D(texture, lmtexcoord.xy, Texture_MipMap_Bias) * color;
+	
+	
 	vec3 Albedo = toLinear(gl_FragData[0].rgb);
 	float UnchangedAlpha = gl_FragData[0].a;
 
@@ -549,7 +556,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 					if(isEyeInWater == 1) SkyReflection = vec3(0.0);
 				#endif
 			#else
-				#ifdef WATER_BACKGROUND_SPECULAR
+				#ifdef WATER_BACKGROUND_SPECULAR 
  					SkyReflection = skyCloudsFromTexLOD2(mat3(gbufferModelViewInverse) * reflectedVector, colortex4, 0).rgb / 30.0;
 					if(isEyeInWater == 1) SkyReflection = vec3(0.0);
 				#endif
@@ -571,16 +578,23 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 			float visibilityFactor = clamp(exp2((pow(roughness,3.0) / f0) * -4),0,1);
 
-			Reflections_Final = mix(SkyReflection*indoors, Reflections.rgb, Reflections.a);
-			Reflections_Final = mix(FinalColor, Reflections_Final, fresnel);
+			#ifdef ENTITIES
+				Reflections_Final = FinalColor;
+			#else
+				Reflections_Final = mix(SkyReflection*indoors, Reflections.rgb, Reflections.a);
+				Reflections_Final = mix(FinalColor, Reflections_Final, fresnel);
+			#endif
+			
 			Reflections_Final += SunReflection;
 
 			
 			gl_FragData[0].rgb = Reflections_Final;
 			
-			//correct alpha channel with fresnel
-			gl_FragData[0].a = mix(gl_FragData[0].a, 1.0, fresnel);
-	
+			#ifndef ENTITIES
+				//correct alpha channel with fresnel
+				gl_FragData[0].a = mix(gl_FragData[0].a, 1.0, fresnel);
+			#endif
+
 			if (gl_FragData[0].r > 65000.) gl_FragData[0].rgba = vec4(0.);
 	
 		} else {

@@ -179,12 +179,13 @@ void applyContrast(inout vec3 color, float contrast){
   color = ((color - 0.5) * max(contrast, 0.0)) + 0.5;
 }
 
-void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, vec2 depths){
+void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, vec2 depths, bool isEntity){
 
   vec2 UnalteredTexcoord = Texcoord;
   
+  float refractionStrength = isEntity ? 0.5 : 1.0;
 
-  Texcoord = abs(Texcoord + (TangentNormals * clamp((ld(depths.x) - ld(depths.y)) * 0.5,0.0,0.15)) * RENDER_SCALE );
+  Texcoord = abs(Texcoord + (TangentNormals * clamp((ld(depths.x) - ld(depths.y)) * 0.5,0.0,0.15)) * RENDER_SCALE * refractionStrength );
 
   float DistortedAlpha = decodeVec2(texture2D(colortex11,Texcoord).b).g;
   
@@ -222,7 +223,7 @@ void main() {
 	
 	vec4 albedo = vec4(unpack0.ba,unpack1.rg);
 	vec2 tangentNormals = unpack0.xy*2.0-1.0;
-  if(albedo.a <= 0.0) tangentNormals = vec2(0.0);
+  if(albedo.a < 0.01) tangentNormals = vec2(0.0);
   vec4 TranslucentShader = texture2D(colortex2, texcoord);
 
 	////// --------------- UNPACK MISC --------------- //////
@@ -230,6 +231,7 @@ void main() {
 
 	////// --------------- MASKS/BOOLEANS --------------- //////
   bool iswater = trpData > 0.99;
+  bool isTranslucentEntity = abs(trpData-0.1) < 0.01;	
   float translucentAlpha = trpData;
 
   ////// --------------- get volumetrics
@@ -239,7 +241,7 @@ void main() {
   ////// --------------- distort texcoords as a refraction effect
   vec2 refractedCoord = texcoord;
   #ifdef Refraction
-    ApplyDistortion(refractedCoord, tangentNormals, vec2(z2,z));
+    ApplyDistortion(refractedCoord, tangentNormals, vec2(z2,z), isTranslucentEntity);
   #endif
   
   ////// --------------- MAIN COLOR BUFFER
@@ -367,4 +369,8 @@ void main() {
 
   gl_FragData[0].r = vl.a * bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);
+
+// if(isTranslucentEntity) gl_FragData[1].rgb = vec3(255);
+
+  // gl_FragData[1].rgb = clamp(vec3(tangentNormals.xy,0), 0.0,68000.0);
 }

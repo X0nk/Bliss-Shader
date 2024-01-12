@@ -20,9 +20,9 @@ uniform float sunElevation;
 uniform int frameCounter;
 uniform float frameTimeCounter;
 
-varying vec2 texcoord;
+// varying vec2 texcoord;
 uniform vec2 texelSize;
-flat varying vec2 TAA_Offset;
+// flat varying vec2 TAA_Offset;
 
 uniform int isEyeInWater;
 uniform float rainStrength;
@@ -284,7 +284,7 @@ void main() {
 			waterVolumetrics(vl, vec3(0.0), viewPos, estEyeDepth, estEyeDepth, length(viewPos), noise_1, totEpsilon, scatterCoef, ambientColVol, lightColVol*(1.0-pow(1.0-sunElevation*lightCol.a,5.0)) , dot(normalize(viewPos), normalize(sunVec* lightCol.a ) 	));
 			gl_FragData[0] = clamp(vec4(vl,1.0),0.000001,65000.);
 		#else
-			vec3 fragpos0 = toScreenSpace(vec3(texcoord - TAA_Offset*texelSize*0.5,z));
+			vec3 fragpos0 = toScreenSpace(vec3(tc,z));
 			vec3 ambientColVol =  max(vec3(1.0,0.5,1.0) * 0.6, vec3(0.2,0.4,1.0) * MIN_LIGHT_AMOUNT*0.01);
 			gl_FragData[0].a = 1;
 			waterVolumetrics_notoverworld(gl_FragData[0].rgb, fragpos0, viewPos, 1.0, 1.0, 1.0, blueNoise(), totEpsilon, scatterCoef, ambientColVol);

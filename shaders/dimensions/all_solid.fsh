@@ -397,7 +397,7 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 	
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM) * color;
-	
+
 	#if defined HAND
 		if (Albedo.a < 0.1) discard;
 	#endif
