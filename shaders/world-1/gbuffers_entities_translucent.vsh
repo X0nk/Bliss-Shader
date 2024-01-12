@@ -1,6 +1,6 @@
 #version 120
 
 #define ENTITIES
-#define OVERWORLD_SHADER
+#define NETHER_SHADER
 
 #include "/dimensions/all_translucent.vsh"

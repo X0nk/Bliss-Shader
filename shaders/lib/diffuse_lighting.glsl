@@ -3,6 +3,7 @@ vec3 DoAmbientLightColor(
     vec3 TorchColor, 
     vec2 Lightmap
 ){
+    
     // do sky lighting.
     float skyLM = (pow(Lightmap.y,15.0)*2.0 + pow(Lightmap.y,2.5))*0.5;
     SkyColor = (SkyColor / 30.0) * ambient_brightness * skyLM;

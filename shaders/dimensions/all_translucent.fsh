@@ -466,22 +466,19 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	#ifdef NETHER_SHADER
-		WS_normal.xz = -WS_normal.xz;
-		vec3 AmbientLightColor = skyCloudsFromTexLOD2(WS_normal, colortex4, 6).rgb / 15;
+		vec3 AmbientLightColor = skyCloudsFromTexLOD2(WS_normal, colortex4, 6).rgb ;
 		
-		vec3 up 	= skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb / 15;
-		vec3 down 	= skyCloudsFromTexLOD2(vec3( 0,-1, 0), colortex4, 6).rgb / 15;
-		
-		
+		vec3 up 	= skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb;
+		vec3 down 	= skyCloudsFromTexLOD2(vec3( 0,-1, 0), colortex4, 6).rgb;
+
 		up   *= pow( max( WS_normal.y, 0), 2);
 		down *= pow( max(-WS_normal.y, 0), 2);
 		AmbientLightColor += up + down;
-		
+
+
 	#endif
 
 	#ifdef END_SHADER
-		float fresnelGlow = pow(clamp(1.5 + dot(WS_normal, normalize(feetPlayerPos))*0.5,0,2),2);
-		vec3 AmbientLightColor = (vec3(0.5,0.75,1.0) *0.9 + 0.1)* fresnelGlow;
 
 		
 		float vortexBounds = clamp(vortexBoundRange - length(feetPlayerPos+cameraPosition), 0.0,1.0);
@@ -496,6 +493,9 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		Direct_lighting = lightColors * endFogPhase(lightPos) * NdotL;
 
+		vec3 AmbientLightColor = vec3(0.5,0.75,1.0) * 0.9 + 0.1;
+		AmbientLightColor *= clamp(1.5 + dot(WS_normal, normalize(feetPlayerPos))*0.5,0,2);
+	
 	#endif
 
 	Indirect_lighting = DoAmbientLightColor(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
