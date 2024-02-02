@@ -114,7 +114,7 @@ float R2_dither(){
 	return fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter) ;
 }
 
-mat3 inverse(mat3 m) {
+mat3 inverseMatrix(mat3 m) {
   float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
   float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];
   float a20 = m[2][0], a21 = m[2][1], a22 = m[2][2];
@@ -317,6 +317,7 @@ void main() {
 
 
 		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(fragpos)/10,0.0),1.5),0.0,1.0));
+
 		#ifdef HAND
 			torchlightmap *= 0.9;
 		#endif
@@ -381,7 +382,7 @@ void main() {
 			
 			adjustedTexCoord = mix(fract(coord.st)*vtexcoordam.pq+vtexcoordam.st, adjustedTexCoord, max(dist-MIX_OCCLUSION_DISTANCE,0.0)/(MAX_OCCLUSION_DISTANCE-MIX_OCCLUSION_DISTANCE));
 
-			vec3 truePos = fragpos + sumVec*inverse(tbnMatrix)*interval;
+			vec3 truePos = fragpos + sumVec*inverseMatrix(tbnMatrix)*interval;
 			// #ifdef Depth_Write_POM
 				gl_FragDepth = toClipSpace3(truePos).z;
 			// #endif
@@ -562,9 +563,8 @@ void main() {
 			// PackLightmaps = clamp(PackLightmaps*blueNoise()*0.05 + PackLightmaps,0.0,1.0);
 		#endif
 
-	
 		vec4 data1 = clamp( encode(viewToWorld(normal), PackLightmaps), 0.0, 1.0);
-
+		// gl_FragData[0] = vec4(.0);
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
 
 
