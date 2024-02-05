@@ -68,8 +68,53 @@ float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
 
+#define DHVLFOG
+#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
+#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+
+vec3 toScreenSpace(vec3 p) {
+	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
+    vec3 feetPlayerPos = p * 2. - 1.;
+    vec4 viewPos = iProjDiag * feetPlayerPos.xyzz + gbufferProjectionInverse[3];
+    return viewPos.xyz / viewPos.w;
+}
+
+uniform float dhFarPlane;
+uniform float dhNearPlane;
+
+#include "/lib/DistantHorizons_projections.glsl"
+
+vec3 DH_toScreenSpace(vec3 p) {
+	vec4 iProjDiag = vec4(dhProjectionInverse[0].x, dhProjectionInverse[1].y, dhProjectionInverse[2].zw);
+    vec3 feetPlayerPos = p * 2. - 1.;
+    vec4 viewPos = iProjDiag * feetPlayerPos.xyzz + dhProjectionInverse[3];
+    return viewPos.xyz / viewPos.w;
+}
+
+vec3 DH_toClipSpace3(vec3 viewSpacePosition) {
+    return projMAD(dhProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+}
+
+// float DH_ld(float dist) {
+//     return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+// }
+// float DH_invLinZ (float lindepth){
+// 	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
+// }
+
+float DH_ld(float dist) {
+    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+}
+float DH_inv_ld (float lindepth){
+	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
+}
+
+float linearizeDepthFast(const in float depth, const in float near, const in float far) {
+    return (near * far) / (depth * (near - far) + far);
+}
 
 #ifdef OVERWORLD_SHADER
+
 	// uniform sampler2D colortex12;
 	// const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
@@ -88,7 +133,18 @@ float blueNoise(){
 	uniform sampler2D colortex4;
 	#include "/lib/end_fog.glsl"
 #endif
+vec3 rodSample(vec2 Xi)
+{
+	float r = sqrt(1.0f - Xi.x*Xi.y);
+    float phi = 2 * 3.14159265359 * Xi.y;
 
+    return normalize(vec3(cos(phi) * r, sin(phi) * r, Xi.x)).xzy;
+}
+//Low discrepancy 2D sequence, integration error is as low as sobol but easier to compute : http://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
+vec2 R2_samples(float n){
+	vec2 alpha = vec2(0.75487765, 0.56984026);
+	return fract(alpha * n);
+}
 
 void main() {
 /* DRAWBUFFERS:4 */
@@ -195,8 +251,13 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024., vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), suncol*1.75, skyGroundCol/30.0);
 	sky = sky*clouds.a + clouds.rgb / 5.0; 
 
-	vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*1024.,  vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), lightSourceColor*1.75, skyGroundCol/30.0);
+	// vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*1024.,  vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), lightSourceColor*1.75, skyGroundCol/30.0);
+	vec4 VL_Fog = DH_GetVolumetricFog(mat3(gbufferModelView)*viewVector*1024.,  vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), lightSourceColor*1.75, skyGroundCol/30.0);
+	
 	sky = sky * VL_Fog.a + VL_Fog.rgb / 5.0;
+
+
+	// if(p.y < 0.05) sky = averageSkyCol_Clouds;
 
 	gl_FragData[0] = vec4(sky,1.0);
 }

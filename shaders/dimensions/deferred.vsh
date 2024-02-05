@@ -51,7 +51,13 @@ vec3 sunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
 float luma(vec3 color) {
 	return dot(color,vec3(0.21, 0.72, 0.07));
 }
+vec3 rodSample(vec2 Xi)
+{
+	float r = sqrt(1.0f - Xi.x*Xi.y);
+    float phi = 2 * 3.14159265359 * Xi.y;
 
+    return normalize(vec3(cos(phi) * r, sin(phi) * r, Xi.x)).xzy;
+}
 //Low discrepancy 2D sequence, integration error is as low as sobol but easier to compute : http://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
 vec2 R2_samples(int n){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
@@ -98,20 +104,20 @@ void main() {
    	);
 
 	// sample in a 3x3 pattern to get a good area for average color
-	vec3 pos = normalize(vec3(0,1,0));
+	
 	int maxIT = 9;
+	// int maxIT = 20;
 	for (int i = 0; i < maxIT; i++) {
-		pos = normalize(vec3(0,1,0));
-		pos.xy += normalize(sample3x3[i]) * vec2(0.3183,0.90);
+		vec3 pos = vec3(0.0,1.0,0.0);
+		pos.xy += normalize(sample3x3[i]) * vec2(0.3183,0.9000);
 
-		averageSkyCol_Clouds += 1.5*skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.;
-
-		averageSkyCol += 1.5*skyFromTex(pos,colortex4).rgb/maxIT/150.;
+		averageSkyCol_Clouds += 1.5 * (skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.0);
+		averageSkyCol += 1.5 * (skyFromTex(pos,colortex4).rgb/maxIT/150.0);
    	}
 
 	// only need to sample one spot for this
 	vec3 minimumlight =  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.003 + nightVision);
-	averageSkyCol_Clouds = max(averageSkyCol_Clouds, minimumlight);
+	averageSkyCol_Clouds = max(averageSkyCol_Clouds * (1.0/(luma(averageSkyCol_Clouds)*0.25+0.75)), minimumlight);
 	averageSkyCol = max(averageSkyCol*PLANET_GROUND_BRIGHTNESS, minimumlight);
 
 ////////////////////////////////////////

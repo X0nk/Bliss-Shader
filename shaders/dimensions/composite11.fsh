@@ -62,6 +62,40 @@ float ld(float depth) {
     return (2.0 * near) / (far + near - depth * (far - near));		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
 }
 
+// uniform float viewWidth;
+// uniform float viewHeight;
+
+// uniform sampler2D depthtex0;
+uniform sampler2D dhDepthTex;
+
+// uniform mat4 gbufferProjectionInverse;
+uniform mat4 dhProjectionInverse;
+
+vec3 getViewPos() {
+    ivec2 uv = ivec2(gl_FragCoord.xy);
+    vec2 viewSize = vec2(viewWidth, viewHeight);
+    vec2 texcoord = gl_FragCoord.xy / viewSize;
+
+    vec4 viewPos = vec4(0.0);
+    
+    float depth = texelFetch(depthtex0, uv, 0).r;
+
+    if (depth < 1.0) {
+        vec4 ndcPos = vec4(texcoord, depth, 1.0) * 2.0 - 1.0;
+        viewPos = gbufferProjectionInverse * ndcPos;
+        viewPos.xyz /= viewPos.w;
+    } else {
+        depth = texelFetch(dhDepthTex, ivec2(gl_FragCoord.xy), 0).r;
+    
+        vec4 ndcPos = vec4(texcoord, depth, 1.0) * 2.0 - 1.0;
+        viewPos = dhProjectionInverse * ndcPos;
+        viewPos.xyz /= viewPos.w;
+    }
+
+    return viewPos.xyz;
+}
+
+#define linear_to_srgb(x) (pow(x, vec3(1.0/2.2)))
 void main() {
   /* DRAWBUFFERS:7 */
 	float vignette = (1.5-dot(texcoord-0.5,texcoord-0.5)*2.);
@@ -125,6 +159,12 @@ void main() {
 	float rodCurve = clamp(mix(1.0, rodLum/(2.5+rodLum), purkinje),0.0,1.0);
 
 	col = mix(lum * vec3(Purkinje_R, Purkinje_G, Purkinje_B) * Purkinje_Multiplier, col, rodCurve);
+
+
+
+  	// gl_FragColor = vec4(getViewPos() * 0.001,1.0);
+	// gl_FragColor.rgb = linear_to_srgb(gl_FragColor.rgb);
+
 
 	#ifndef USE_ACES_COLORSPACE_APPROXIMATION
 		col = LinearTosRGB(TONEMAP(col));

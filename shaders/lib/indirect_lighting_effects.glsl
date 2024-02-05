@@ -69,7 +69,13 @@ vec2 SSAO(
 		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio)*RENDER_SCALE);
 
 		if (offset.x >= 0 && offset.y >= 0 && offset.x < viewWidth*RENDER_SCALE.x && offset.y < viewHeight*RENDER_SCALE.y ) {
-			vec3 t0 = toScreenSpace(vec3(offset*texelSize+acc+0.5*texelSize, texelFetch2D(depthtex1, offset,0).x) * vec3(1.0/RENDER_SCALE, 1.0) );
+			#ifdef DISTANT_HORIZONS
+				float dhdepth = texelFetch2D(dhDepthTex1, offset,0).x;
+			#else
+				float dhdepth = 0.0;
+			#endif
+
+			vec3 t0 = toScreenSpace_DH((offset*texelSize+acc+0.5*texelSize) * (1.0/RENDER_SCALE), texelFetch2D(depthtex1, offset,0).x, dhdepth);
 			vec3 vec = (t0.xyz - viewPos);
 			float dsquared = dot(vec, vec);
 			

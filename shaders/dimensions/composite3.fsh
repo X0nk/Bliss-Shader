@@ -1,14 +1,16 @@
 #include "/lib/settings.glsl"
 
 flat varying vec3 zMults;
-flat varying vec2 TAA_Offset;
 
+flat varying vec2 TAA_Offset;
 flat varying vec3 skyGroundColor;
 
 uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
-uniform sampler2D depthtex2;
+uniform sampler2D dhDepthTex;
+
+
 uniform sampler2D colortex0;
 uniform sampler2D colortex1;
 uniform sampler2D colortex2;
@@ -37,6 +39,9 @@ uniform float frameTimeCounter;
 uniform int frameCounter;
 uniform float far;
 uniform float near;
+uniform float dhNearPlane;
+uniform float dhFarPlane;
+
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferPreviousModelView;
@@ -87,8 +92,18 @@ vec3 toScreenSpace(vec3 p) {
     return fragposition.xyz / fragposition.w;
 }
 
+#include "/lib/DistantHorizons_projections.glsl"
 
-// #include "/lib/specular.glsl"
+float DH_ld(float dist) {
+    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+}
+float DH_inv_ld (float lindepth){
+	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
+}
+float linearizeDepthFast(const in float depth, const in float near, const in float far) {
+    return (near * far) / (depth * (near - far) + far);
+}
+
 
 
 
@@ -192,6 +207,7 @@ void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, vec2 depths, bool
   if(DistortedAlpha <= 0.001) Texcoord = UnalteredTexcoord; // remove distortion on non-translucents
 }
 
+uniform float dhRenderDistance;
 uniform float eyeAltitude;
 
 void main() {
@@ -204,10 +220,33 @@ void main() {
   float z2 = texture2D(depthtex1,texcoord).x;
   float frDepth = ld(z2);
 
-	vec2 tempOffset = TAA_Offset;
-	vec3 fragpos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
-	vec3 fragpos2 = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z2));
+	float swappedDepth = z;
   
+	#ifdef DISTANT_HORIZONS
+    float DH_depth0 = texture2D(dhDepthTex,texcoord).x;
+  #else
+    float DH_depth0 = 0.0;
+  #endif
+
+	#ifdef DISTANT_HORIZONS
+	  float mixedDepth = z;
+	  float _near = near;
+	  float _far = far*4.0;
+	  if (mixedDepth >= 1.0) {
+	      mixedDepth = DH_depth0;
+	      _near = dhNearPlane;
+	      _far = dhFarPlane;
+	  }
+	  mixedDepth = linearizeDepthFast(mixedDepth, _near, _far);
+	  mixedDepth = mixedDepth / dhFarPlane;
+		
+    swappedDepth = DH_inv_ld(mixedDepth);
+	  if(swappedDepth >= 0.999999) swappedDepth = 1.0;
+	#endif
+
+	vec3 fragpos = toScreenSpace_DH(texcoord/RENDER_SCALE-vec2(TAA_Offset)*texelSize*0.5, z, DH_depth0);
+  
+	// vec3 fragpos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(TAA_Offset)*texelSize*0.5,z));
 	vec3 p3 = mat3(gbufferModelViewInverse) * fragpos;
 	vec3 np3 = normVec(p3);
 
@@ -223,7 +262,9 @@ void main() {
 	
 	vec4 albedo = vec4(unpack0.ba,unpack1.rg);
 	vec2 tangentNormals = unpack0.xy*2.0-1.0;
+
   if(albedo.a < 0.01) tangentNormals = vec2(0.0);
+
   vec4 TranslucentShader = texture2D(colortex2, texcoord);
 
 	////// --------------- UNPACK MISC --------------- //////
@@ -252,9 +293,15 @@ void main() {
   //////////// and do border fog on opaque and translucents
 
   #if defined BorderFog
-  	float fog =  exp(-50.0 * pow(clamp(1.0-linearDistance/far,0.0,1.0),2.0));
-  	fog *= exp(-10.0 * pow(clamp(np3.y,0.0,1.0)*4.0,2.0));
-    if(z >= 1.0 || isEyeInWater != 0) fog = 0.0;
+
+    #ifdef DISTANT_HORIZONS
+    	float fog =  exp(-25.0 * pow(clamp(1.0-linearDistance/max(dhFarPlane-1000,0.0),0.0,1.0),2.0));
+    #else
+    	float fog =  exp(-50.0 * pow(clamp(1.0-linearDistance/far,0.0,1.0),2.0));
+    #endif
+
+    fog *= exp(-10.0 * pow(clamp(np3.y,0.0,1.0)*4.0,2.0));
+    if(swappedDepth >= 1.0 || isEyeInWater != 0) fog = 0.0;
     
     if(lightleakfixfast < 1.0) fog *= lightleakfix;
   
@@ -354,7 +401,7 @@ void main() {
   color.rgb *= mix(1.0,clamp( exp(pow(linearDistance*(blindness*0.2),2) * -5),0.,1.)   ,    blindness);
 
 //////// --------------- darkness effect
-  color.rgb *= mix(1.0, (1.0-darknessLightFactor*2.0) * clamp(1.0-pow(length(fragpos2)*(darknessFactor*0.07),2.0),0.0,1.0), darknessFactor);
+  color.rgb *= mix(1.0, (1.0-darknessLightFactor*2.0) * clamp(1.0-pow(length(fragpos)*(darknessFactor*0.07),2.0),0.0,1.0), darknessFactor);
   
 ////// --------------- FINALIZE
   #ifdef display_LUT

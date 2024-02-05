@@ -96,8 +96,19 @@ bool intersectCone(float coneHalfAngle, vec3 coneTip , vec3 coneAxis, vec3 rayOr
 }
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+
+
+
+// uniform float far;
+uniform float dhFarPlane;
+
+#include "/lib/DistantHorizons_projections.glsl"
+
 vec4 toClipSpace3(vec3 viewSpacePosition) {
-    return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),1.0);
+
+	mat4 projection = DH_shadowProjectionTweak(gl_ProjectionMatrix);
+
+    return vec4(projMAD(projection, viewSpacePosition),1.0);
 }
 
 
@@ -171,8 +182,12 @@ void main() {
   		  position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz ;
   		}
 	#endif
-
-	gl_Position = BiasShadowProjection(toClipSpace3(position));
+	
+	#ifdef DISTORT_SHADOWMAP
+		gl_Position = BiasShadowProjection(toClipSpace3(position));
+	#else
+		gl_Position = toClipSpace3(position);
+	#endif
 
 
 	if(mc_Entity.x == 8 || mc_Entity.x == 9) gl_Position.w = -1.0;

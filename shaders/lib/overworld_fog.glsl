@@ -52,6 +52,9 @@ float cloudVol(in vec3 pos){
 	// return testfogshapes;
 
 	return CloudyFog + UniformFog + RainFog;
+	
+	// float groundFog = max(exp( max(pos.y - 90,0.0)  / -1), 0.0) * 100;
+	// return groundFog;
 }
 
 float phaseRayleigh(float cosTheta) {
@@ -74,13 +77,15 @@ vec4 GetVolumetricFog(
 	vec3 LightColor,
 	vec3 AmbientColor
 ){
-
+	int SAMPLECOUNT = VL_SAMPLES;
 	/// -------------  RAYMARCHING STUFF ------------- \\\
 
 	//project pixel position into projected shadowmap space
+	
+	mat4 DH_shadowProjection = DH_shadowProjectionTweak(shadowProjection);
 	vec3 wpos = mat3(gbufferModelViewInverse) * viewPosition + gbufferModelViewInverse[3].xyz;
 	vec3 fragposition = mat3(shadowModelView) * wpos + shadowModelView[3].xyz;
-	fragposition = diagonal3(shadowProjection) * fragposition + shadowProjection[3].xyz;
+	fragposition = diagonal3(DH_shadowProjection) * fragposition + DH_shadowProjection[3].xyz;
 
 	//project view origin into projected shadowmap space
 	vec3 start = toShadowSpaceProjected(vec3(0.0));
@@ -91,9 +96,16 @@ vec4 GetVolumetricFog(
 	vec3 dV = fragposition - start;
 	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
 
-	float maxLength = min(length(dVWorld), far)/length(dVWorld);
+	#ifdef DISTANT_HORIZONS
+		float maxLength = min(length(dVWorld), max(dhFarPlane-1000,0.0))/length(dVWorld);
+		SAMPLECOUNT += SAMPLECOUNT;
+	#else
+		float maxLength = min(length(dVWorld), far)/length(dVWorld);
+	#endif
+	
 	dV *= maxLength;
 	dVWorld *= maxLength;
+
 	float dL = length(dVWorld);
 	float mult = length(dVWorld)/25;
 
@@ -153,16 +165,23 @@ vec4 GetVolumetricFog(
 
 		vec3 sunIndirectScattering = LightSourceColor * phaseg(dot(mat3(gbufferModelView)*vec3(0,1,0),normalize(viewPosition)), 0.5) * 3.14;
 	#endif
-
+	float RLmult = 3.0;
+	#ifdef DISTANT_HORIZONS
+		RLmult = 1.0;
+	#endif
 	float expFactor = 11.0;
-	for (int i=0;i<VL_SAMPLES;i++) {
-		float d = (pow(expFactor, float(i+dither.x)/float(VL_SAMPLES))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
-		float dd = pow(expFactor, float(i+dither.x)/float(VL_SAMPLES)) * log(expFactor) / float(VL_SAMPLES)/(expFactor-1.0);
+	for (int i=0;i<SAMPLECOUNT;i++) {
+		float d = (pow(expFactor, float(i+dither.x)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
+		float dd = pow(expFactor, float(i+dither.x)/float(SAMPLECOUNT)) * log(expFactor) / float(SAMPLECOUNT)/(expFactor-1.0);
 		progress = start.xyz + d*dV;
 		progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
 
 		//project into biased shadowmap space
-		float distortFactor = calcDistort(progress.xy);
+		#ifdef DISTORT_SHADOWMAP
+			float distortFactor = calcDistort(progress.xy);
+		#else
+			float distortFactor = 1.0;
+		#endif
 		vec3 pos = vec3(progress.xy*distortFactor, progress.z);
 
 		float sh = 1.0;
@@ -184,14 +203,14 @@ vec4 GetVolumetricFog(
 		///// ----- main fog lighting
 
 		//Just air
-		vec2 airCoef = exp(-max(progressW.y - SEA_LEVEL, 0.0) / vec2(8.0e3, 1.2e3) * vec2(6.,7.0)) * 24 * Haze_amount;
+		vec2 airCoef = exp(-max(progressW.y - SEA_LEVEL, 0.0) / vec2(8.0e3, 1.2e3) * vec2(6.,7.0)) * 24.0 * Haze_amount;
 
 		//Pbr for air, yolo mix between mie and rayleigh for water droplets
 		vec3 rL = rC*airCoef.x;
 		vec3 m = (airCoef.y+density) * mC;
 
-		vec3 Atmosphere = skyLightPhased * (rL * 3.0 + m); // not pbr so just make the atmosphere also dense fog heh
-		vec3 DirectLight = LightSourcePhased * sh * ((rL* 3.0)*rayL + m);
+		vec3 Atmosphere = skyLightPhased * (rL*RLmult + m); // not pbr so just make the atmosphere also dense fog heh
+		vec3 DirectLight = LightSourcePhased * sh * ((rL*RLmult)*rayL + m);
 		vec3 Lightning = Iris_Lightningflash_VLfog(progressW-cameraPosition, lightningBoltPosition.xyz) * (rL + m);
 
 		vec3 foglighting = (Atmosphere + DirectLight + Lightning) * lightleakfix;
@@ -252,11 +271,34 @@ vec4 GetVolumetricFog(
 	return vec4(color, min(dot(absorbance,vec3(0.335)),1.0));
 }
 
-/*
-// uniform bool inSpecialBiome;
-vec4 GetVolumetricFog(
+#ifdef DHVLFOG
+float DH_cloudVol(in vec3 pos){
+
+	vec3 samplePos = pos*vec3(1.0,1./24.,1.0);
+	vec3 samplePos2 = pos*vec3(1.0,1./48.,1.0);
+
+
+	float noise = densityAtPosFog(samplePos2 * 6.0);
+	float area_noise = 1-texture2D(noisetex, samplePos.xz/5000).b;
+
+	// noise += area_noise*area_noise*0.5;
+    // float erosion = 1.0-densityAtPosFog(samplePos2 * (125 - (1-pow(1-noise,5))*25));
+    
+
+	// float clumpyFog = max(exp(noise * -5)*2 - (erosion*erosion), 0.0);
+
+	float groundFog = max(exp( max(pos.y - 70,0.0)  / -40) - noise*noise * 2 , 0.0) * TOD_Fog_mult;
+
+
+	// float rainfall = pos.y < CloudLayer0_height ? clamp(1.0-GetCloudShadow_VLFOG(pos, vec3(0,1,0))-0.95,0,1) * clamp(exp( sqrt((CloudLayer0_height)-pos.y) / -5.0	 ),0.0,1.0) * 255: 0;
+
+	return groundFog;
+	// return CloudyFog + UniformFog + RainFog;
+}
+
+vec4 DH_GetVolumetricFog(
 	vec3 viewPosition,
-	float dither,
+	vec2 dither,
 	vec3 LightColor,
 	vec3 AmbientColor
 ){
@@ -277,90 +319,92 @@ vec4 GetVolumetricFog(
 	vec3 dV = fragposition - start;
 	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
 
-	float maxLength = min(length(dVWorld), far)/length(dVWorld);
+	float maxLength = (min(length(dVWorld), max(dhFarPlane-1500,0.0) )/length(dVWorld));// * (1.0-min(max(1.0-length(dVWorld)/(far+32*2),0)*2,1.0));
 	dV *= maxLength;
 	dVWorld *= maxLength;
+
 	float dL = length(dVWorld);
+	float mult = length(dVWorld)/25;
 
 	vec3 progress = start.xyz;
+
+
+	// float maxLength = (min(length(dVWorld), max(dhFarPlane+3000,0.0)/4)/length(dVWorld));// * (1.0-min(max(1.0-length(dVWorld)/(far+32*2),0)*2,1.0));
+	// dV *= maxLength;
+	// dVWorld *= maxLength;
+	// float dL = length(dVWorld);
+
 	vec3 progressW = gbufferModelViewInverse[3].xyz + cameraPosition;
 
 	vec3 WsunVec = mat3(gbufferModelViewInverse) * sunVec * lightCol.a;
 	float SdotV = dot(sunVec,normalize(viewPosition))*lightCol.a;
-
 
 	/// -------------  COLOR/LIGHTING STUFF ------------- \\\
 
 	vec3 color = vec3(0.0);
 	vec3 absorbance = vec3(1.0);
 	
+	///// ----- fog lighting
 	//Mie phase + somewhat simulates multiple scattering (Horizon zero down cloud approx)
 	float mie = fogPhase(SdotV) * 5.0;
 	float rayL = phaseRayleigh(SdotV);
 
-	vec3 rC = vec3(fog_coefficientRayleighR*1e-6, fog_coefficientRayleighG*1e-5, fog_coefficientRayleighB*1e-5);
+	vec3 rC = vec3(sky_coefficientRayleighR*1e-6, sky_coefficientRayleighG*1e-5, sky_coefficientRayleighB*1e-5);
 	vec3 mC = vec3(fog_coefficientMieR*1e-6, fog_coefficientMieG*1e-6, fog_coefficientMieB*1e-6);
 
-	vec3 LightSourceColor = LightColor;
+	vec3 skyLightPhased = AmbientColor;
+	vec3 LightSourcePhased = LightColor;
+
 	#ifdef ambientLight_only
-		LightSourceColor = vec3(0.0);
+		LightSourcePhased = vec3(0.0);
 	#endif
 
-	vec3 skyCol0 = AmbientColor;
-	#ifdef PER_BIOME_ENVIRONMENT
-		BiomeFogColor(LightSourceColor);
-		BiomeFogColor(skyCol0);
-	#endif
+	skyLightPhased = max(skyLightPhased + skyLightPhased*(normalize(wpos).y*0.9+0.1),0.0);
+	LightSourcePhased *= mie;
 
-	skyCol0 = max(skyCol0 + skyCol0*(normalize(wpos).y*0.9+0.1),0.0);
-	
-
-
-	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
-	
 	float expFactor = 11.0;
-	for (int i=0;i<VL_SAMPLES;i++) {
-		float d = (pow(expFactor, float(i+dither)/float(VL_SAMPLES))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
-		float dd = pow(expFactor, float(i+dither)/float(VL_SAMPLES)) * log(expFactor) / float(VL_SAMPLES)/(expFactor-1.0);
+	int SAMPLE = 16;
+	for (int i=0;i<SAMPLE;i++) {
+		float d = (pow(expFactor, float(i+dither.x)/float(SAMPLE))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
+		float dd = pow(expFactor, float(i+dither.x)/float(SAMPLE)) * log(expFactor) / float(SAMPLE)/(expFactor-1.0);
 		progress = start.xyz + d*dV;
 		progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
-		
+
 		//project into biased shadowmap space
 		float distortFactor = calcDistort(progress.xy);
 		vec3 pos = vec3(progress.xy*distortFactor, progress.z);
 
 		float sh = 1.0;
+	
 		if (abs(pos.x) < 1.0-0.5/2048. && abs(pos.y) < 1.0-0.5/2048){
 			pos = pos*vec3(0.5,0.5,0.5/6.0)+0.5;
 			sh = shadow2D(shadow, pos).x;
 		}
-		
+
 		#ifdef VL_CLOUDS_SHADOWS
 			sh *= GetCloudShadow_VLFOG(progressW, WsunVec);
 		#endif
-		
-		float densityVol = cloudVol(progressW) * lightleakfix;
+		float densityVol = DH_cloudVol(progressW);
 		//Water droplets(fog)
-		float density = densityVol*300.;
+		float density = densityVol*300.0;
+
+		///// ----- main fog lighting
 
 		//Just air
-		vec2 airCoef = exp(-max(progressW.y - SEA_LEVEL, 0.0) / vec2(8.0e3, 1.2e3) * vec2(6.,7.0)) * 24 * Haze_amount;
+		vec2 airCoef = exp(-max(progressW.y - SEA_LEVEL, 0.0) / vec2(8.0e3, 1.2e3) * vec2(6.,7.0)) * 6 * Haze_amount;
 
 		//Pbr for air, yolo mix between mie and rayleigh for water droplets
 		vec3 rL = rC*airCoef.x;
 		vec3 m = (airCoef.y+density) * mC;
 
-		vec3 AtmosphericFog = skyCol0 * (rL*3.0 + m);
-		vec3 DirectLight =  (LightSourceColor*sh) * (rayL*rL*3.0 + m*mie);
-		vec3 AmbientLight =  skyCol0 * m;
-		vec3 Lightning = Iris_Lightningflash_VLfog(progressW-cameraPosition, lightningBoltPosition.xyz) * m;
+		vec3 Atmosphere = skyLightPhased * (rL * 1.0 + m) ; // not pbr so just make the atmosphere also dense fog heh
+		vec3 DirectLight = LightSourcePhased * sh * ((rL* 1.0)*rayL + m);
+	
+		vec3 foglighting = (Atmosphere + DirectLight);//  * max(exp(densityVol * -0.1),0.0) ;
 
-		vec3 lighting = (AtmosphericFog + AmbientLight + DirectLight + Lightning) * lightleakfix;
-
-
-		color += max(lighting - lighting * exp(-(rL+m)*dd*dL),0.0) / max(rL+m, 0.00000001)*absorbance;
-		absorbance *= max(exp(-(rL+m)*dd*dL),0.0);
+		color += (foglighting - foglighting * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*absorbance;
+		absorbance *= clamp(exp(-(rL+m)*dd*dL),0.0,1.0);
 	}
-	return vec4(color, dot(absorbance,vec3(0.333333)));
+	return vec4(color, min(dot(absorbance,vec3(0.335)),1.0));
 }
-*/
+#endif

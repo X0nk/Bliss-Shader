@@ -11,12 +11,18 @@ Read the terms of modification and sharing before changing something below pleas
 varying vec4 lmtexcoord;
 varying vec4 color;
 
+#ifdef LINES
+	flat varying int SELECTION_BOX;
+#endif
+
 #ifdef OVERWORLD_SHADER
 	flat varying vec3 averageSkyCol_Clouds;
 	flat varying vec4 lightCol;
 	flat varying vec3 WsunVec;
 	uniform sampler2D colortex4;
 #endif
+	
+
 
 uniform vec3 sunPosition;
 uniform float sunElevation;
@@ -89,9 +95,12 @@ void main() {
 
 	color = gl_Color;
 	// color.rgb = worldpos;
+	
 	#ifdef LINES
-		color.a = 1.0;
+		SELECTION_BOX = 0;
+		if(dot(color.rgb,vec3(0.33333))	 < 0.00001) SELECTION_BOX = 1;
 	#endif
+	
 	#ifdef OVERWORLD_SHADER
 		lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
 		lightCol.a = float(sunElevation > 1e-5)*2.0 - 1.0;

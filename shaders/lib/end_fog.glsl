@@ -289,6 +289,7 @@ vec4 GetVolumetricFog(
 			color += (lighting - lighting*exp(-(density)*dd*dL)) * absorbance;
         	absorbance *= exp(-max(density,hazeDensity)*dd*dL);
 	}
+	// return vec4(0.0,0.0,0.0,1.0);
 	return vec4(color, absorbance);
 }
 
@@ -297,10 +298,10 @@ float GetCloudShadow(vec3 WorldPos, vec3 LightPos){
 
 	for (int i=0; i < 3; i++){
 
-	    vec3 shadowSamplePos = WorldPos - LightPos * (pow(i,0.75)*0.25); 
-	    float Cast = fogShape(shadowSamplePos)*END_STORM_DENSTIY;
-	    Shadow += Cast;
+	    // vec3 shadowSamplePos = WorldPos - LightPos * (pow(i,0.75)*0.25); 
+	    vec3 shadowSamplePos = WorldPos - LightPos * (0.01 + pow(i,0.75)*0.25); 
+	    Shadow += fogShape(shadowSamplePos)*END_STORM_DENSTIY;
     }
 
-	return clamp(exp(Shadow * -10.0),0.0,1.0);
+	return clamp(exp2(Shadow * -5.0),0.0,1.0);
 }

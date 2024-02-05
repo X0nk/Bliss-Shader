@@ -4,6 +4,10 @@
 varying vec4 lmtexcoord;
 varying vec4 color;
 
+#ifdef LINES
+	flat varying int SELECTION_BOX;
+#endif
+
 #ifdef OVERWORLD_SHADER
 	const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
@@ -86,6 +90,13 @@ float phaseg(float x, float g){
 /* DRAWBUFFERS:29 */
 
 void main() {
+	
+	#ifdef LINES
+		#ifndef SELECT_BOX
+			if(SELECTION_BOX > 0) discard;
+		#endif
+	#endif
+
 	vec2 tempOffset = offsets[framemod8];
 	vec3 viewPos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
 	vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
@@ -137,8 +148,12 @@ void main() {
 		projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
 		//apply distortion
-		float distortFactor = calcDistort(projectedShadowPosition.xy);
-		projectedShadowPosition.xy *= distortFactor;
+		#ifdef DISTORT_SHADOWMAP
+			float distortFactor = calcDistort(projectedShadowPosition.xy);
+			projectedShadowPosition.xy *= distortFactor;
+		#else
+			float distortFactor = 1.0;
+		#endif
 
 		//do shadows only if on shadow map
 		if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution){

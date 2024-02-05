@@ -14,6 +14,8 @@ const int colortex9Format = RGBA8;					// rain in alpha
 const int colortex10Format = RGBA16;				// resourcepack Skies
 const int colortex11Format = RGBA16; 				// unchanged translucents albedo, alpha and tangent normals
 
+const int colortex12Format = RGBA16F;				// DISTANT HORIZONS + VANILLA MIXED DEPTHs
+
 const int colortex14Format = RGBA8;					// a = skylightmap for translucents.
 const int colortex15Format = RGBA8;					// flat normals and vanilla AO
 */
@@ -36,6 +38,7 @@ const bool colortex13Clear = false;
 const bool colortex14Clear = true;
 const bool colortex15Clear = false;
 
+
 #ifdef SCREENSHOT_MODE
 	/*
 	const int colortex5Format = RGBA32F;			//TAA buffer (everything)
@@ -54,6 +57,7 @@ uniform sampler2D colortex3;
 uniform sampler2D colortex5;
 uniform sampler2D colortex6;
 uniform sampler2D colortex10;
+uniform sampler2D colortex12;
 uniform sampler2D depthtex0;
 
 uniform vec2 texelSize;
@@ -189,6 +193,30 @@ vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth)
 
 	return dmin;
 }
+
+uniform sampler2D dhDepthTex;
+uniform float dhFarPlane;
+uniform float dhNearPlane;
+float DH_ld(float dist) {
+    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+}
+float DH_inv_ld (float lindepth){
+	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
+}
+uniform mat4 dhProjectionInverse;
+uniform mat4 dhProjection;
+vec3 DH_toScreenSpace(vec3 p) {
+	vec4 iProjDiag = vec4(dhProjectionInverse[0].x, dhProjectionInverse[1].y, dhProjectionInverse[2].zw);
+    vec3 feetPlayerPos = p * 2. - 1.;
+    vec4 viewPos = iProjDiag * feetPlayerPos.xyzz + dhProjectionInverse[3];
+    return viewPos.xyz / viewPos.w;
+}
+vec3 DH_toClipSpace3(vec3 viewSpacePosition) {
+    return projMAD(dhProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+}
+
+
+
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-1.,3.)/8.,
 							vec2(5.0,1.)/8.,
@@ -208,7 +236,11 @@ vec4 TAA_hq(){
 
 	//use velocity from the nearest texel from camera in a 3x3 box in order to improve edge quality in motion
 	#ifdef CLOSEST_VELOCITY
-		vec3 closestToCamera = closestToCamera5taps(adjTC,	depthtex0);
+		#ifdef DISTANT_HORIZONS
+			vec3 closestToCamera = closestToCamera5taps(adjTC,	texture2D(depthtex0,adjTC).x < 1.0 ? depthtex0 : dhDepthTex);
+		#else
+			vec3 closestToCamera = closestToCamera5taps(adjTC,	depthtex0);
+		#endif
 	#endif
 
 	#ifndef CLOSEST_VELOCITY
@@ -216,7 +248,12 @@ vec4 TAA_hq(){
 	#endif
 
 	//reproject previous frame
-	vec3 viewPos = toScreenSpace(closestToCamera);
+	#ifdef DISTANT_HORIZONS
+		vec3 viewPos = DH_toScreenSpace(closestToCamera);
+	#else
+		vec3 viewPos = toScreenSpace(closestToCamera);
+	#endif
+	
 	viewPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
 	
 	vec3 previousPosition = mat3(gbufferPreviousModelView) * viewPos + gbufferPreviousModelView[3].xyz;

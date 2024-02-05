@@ -29,6 +29,7 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 const bool colortex4MipmapEnabled = true;
 uniform sampler2D noisetex;
 uniform sampler2D depthtex1;
+uniform sampler2D depthtex0;
 uniform sampler2D colortex5;
 
 uniform sampler2D texture;
@@ -246,7 +247,7 @@ vec3 rayTrace(vec3 dir, vec3 position,float dither, float fresnel, bool inwater)
 		#else
 			vec2 testthing = spos.xy/texelSize/4.0;
 		#endif
-		float sp = sqrt((texelFetch2D(colortex4,ivec2(testthing),0).a+0.1)/65000.0);
+		float sp = sqrt((texelFetch2D(colortex4,ivec2(testthing),0).a)/65000.0);
 		sp = invLinZ(sp);
 
         if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ)) return vec3(spos.xy/RENDER_SCALE,sp);
@@ -276,12 +277,15 @@ vec3 GGX (vec3 n, vec3 v, vec3 l, float r, vec3 F0) {
 
   float denom = dotNHsq * r - dotNHsq + 1.;
   float D = r / (3.141592653589793 * denom * denom);
-  vec3 F = F0 + (1. - F0) * exp2((-5.55473*dotLH-6.98316)*dotLH);
+  vec3 F = 0.2 + (1. - F0) * exp2((-5.55473*dotLH-6.98316)*dotLH);
   float k2 = .25 * r;
 
   return dotNL * D * F / (dotLH*dotLH*(1.0-k2)+k2);
 }
 
+uniform float dhFarPlane;
+
+#include "/lib/DistantHorizons_projections.glsl"
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -293,7 +297,9 @@ void main() {
 if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	{
 	
 	vec2 tempOffset = offsets[framemod8];
+	
 	vec3 viewPos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
+
 	vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
 	
 
@@ -399,14 +405,20 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		vec3 feetPlayerPos_shadow = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
 
+		mat4 DH_shadowProjection = DH_shadowProjectionTweak(shadowProjection);
+
 		// mat4 Custom_ViewMatrix = BuildShadowViewMatrix(LightDir);
 		// vec3 projectedShadowPosition = mat3(Custom_ViewMatrix) * feetPlayerPos_shadow  + Custom_ViewMatrix[3].xyz;
 		vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos_shadow  + shadowModelView[3].xyz;
-		projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
+		projectedShadowPosition = diagonal3(DH_shadowProjection) * projectedShadowPosition + DH_shadowProjection[3].xyz;
 
 		//apply distortion
-		float distortFactor = calcDistort(projectedShadowPosition.xy);
-		projectedShadowPosition.xy *= distortFactor;
+		#ifdef DISTORT_SHADOWMAP
+			float distortFactor = calcDistort(projectedShadowPosition.xy);
+			projectedShadowPosition.xy *= distortFactor;
+		#else
+			float distortFactor = 1.0;
+		#endif
 		
 		bool ShadowBounds = false;
 		if(shadowDistanceRenderMul > 0.0) ShadowBounds = length(feetPlayerPos_shadow) < max(shadowDistance - 20,0.0);
@@ -597,7 +609,9 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 				gl_FragData[0].a = mix(gl_FragData[0].a, 1.0, fresnel);
 			#endif
 
-			if (gl_FragData[0].r > 65000.) gl_FragData[0].rgba = vec4(0.);
+			#ifdef DISTANT_HORIZONS 
+    			gl_FragData[0].a = mix(gl_FragData[0].a, 0.0,  1.0-min(max(1.0 - length(feetPlayerPos.xz)/far,0.0)*2.0,1.0) );
+			#endif
 	
 		} else {
 			gl_FragData[0].rgb = FinalColor;
@@ -611,6 +625,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[1] = vec4(Albedo, iswater);
 	#endif
 	
+	// if(gl_FragCoord.x*texelSize.x < 0.47) gl_FragData[0] = vec4(0.0);
+
 	gl_FragData[3].a = max(lmtexcoord.w*blueNoise()*0.05 + lmtexcoord.w,0.0);
 }
 }

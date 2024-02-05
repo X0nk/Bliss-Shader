@@ -62,6 +62,8 @@ screen.Direct_Light = Direct Light
         option.shadowDistanceRenderMul = Max Shadow Bounds
             value.shadowDistanceRenderMul.-1.0 = Un-Optimized
             value.shadowDistanceRenderMul.1.0 = Optimized
+        option.entityShadowDistanceMul = Entity Shadow Distance
+
     screen.Filtering = Shadow Filtering Settings
         option.SHADOW_FILTER_SAMPLE_COUNT = Basic Shadow Filter Samples
         option.Min_Shadow_Filter_Radius = Minimum Shadow filter Radius
@@ -447,7 +449,7 @@ screen.Clouds.comment = Configure settings related to the raymarched volumetric 
 
 screen.World.comment = Configure settings for various things that happen in the world, from waving plants to water related settings.
     screen.Water.comment = Configure settings related to the water.
-        option.WATER_REFLECTIONS.comments = Toggle all reflections for translucent things. This allows other settings to be enabled below. §aPERFORMANCE COST:§r low
+        option.WATER_REFLECTIONS.comment = Toggle all reflections for translucent things. This allows other settings to be enabled below. §aPERFORMANCE COST:§r low-high
         option.SCREENSPACE_REFLECTIONS.comment = Toggle screen-space reflections on translucent things. §aPERFORMANCE COST:§r medium
         option.SSR_STEPS.comment = Configure the quality of the screen-space reflections on translucent things.  §aPERFORMANCE COST:§r medium to high
         option.WATER_SUN_SPECULAR.comment = Toggle the sun and moon reflections on translucent things. §aPERFORMANCE COST:§r low
@@ -526,3 +528,4 @@ option.CloudLayer2_height.comment   = Configure the height at which these clouds
 
 option.SKY_GROUND.comment = §bWhat is this?§r This is the dark bottom half of the sky that WOULD be the ground, if minecraft had infinite render distance. §aPERFORMANCE COST:§r very very low. §cdisabling this is very slightly slower than having it on due to extra math.§r
 option.SNELLS_WINDOW.comment = §bWhat is this?§r this is the dark reflective circle you see when under-water. This is an approximation of a thing that happens in reality known as "total internal reflection". §aPERFORMANCE COST:§r very very very small.
+option.entityShadowDistanceMul.comment = §bWhat is this?§r Configure how far shadows should work for entities. This is good if you want to keep entity shadows and improved performance in high entity areas.

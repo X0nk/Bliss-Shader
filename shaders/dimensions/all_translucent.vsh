@@ -72,6 +72,7 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
     return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
 }
 
+varying vec4 pos;
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -86,6 +87,8 @@ void main() {
 
  	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
  	gl_Position = toClipSpace3(position);
+
+    pos = vec4(position,1);
 
 	HELD_ITEM_BRIGHTNESS = 0.0;
 

@@ -6,6 +6,7 @@ flat varying vec3 averageSkyCol;
 
 uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
+uniform sampler2D dhDepthTex;
 
 uniform sampler2D colortex2;
 uniform sampler2D colortex3;
@@ -15,7 +16,10 @@ uniform sampler2D colortex6;
 flat varying vec3 WsunVec;
 uniform vec3 sunVec;
 uniform float sunElevation;
+
 // uniform float far;
+uniform float dhFarPlane;
+uniform float dhNearPlane;
 
 uniform int frameCounter;
 uniform float frameTimeCounter;
@@ -27,8 +31,12 @@ uniform vec2 texelSize;
 uniform int isEyeInWater;
 uniform float rainStrength;
 uniform ivec2 eyeBrightnessSmooth;
-
 uniform float eyeAltitude;
+
+#define DHVLFOG
+#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
+#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
 #include "/lib/projections.glsl"
@@ -36,8 +44,21 @@ uniform float eyeAltitude;
 #include "/lib/sky_gradient.glsl"
 #include "/lib/Shadow_Params.glsl"
 
+#include "/lib/DistantHorizons_projections.glsl"
+
+float DH_ld(float dist) {
+    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+}
+float DH_inv_ld (float lindepth){
+	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
+}
+
+float linearizeDepthFast(const in float depth, const in float near, const in float far) {
+    return (near * far) / (depth * (near - far) + far);
+}
+
+
 #ifdef OVERWORLD_SHADER
-	
 	const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
 
@@ -186,7 +207,11 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 		vec3 spPos = start.xyz + dV*d;
 		progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
 		//project into biased shadowmap space
-		float distortFactor = calcDistort(spPos.xy);
+		#ifdef DISTORT_SHADOWMAP
+			float distortFactor = calcDistort(spPos.xy);
+		#else
+			float distortFactor = 1.0;
+		#endif
 		vec3 pos = vec3(spPos.xy*distortFactor, spPos.z);
 
 		float sh = 1.0;
@@ -222,11 +247,7 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 	inColor += vL;
 }
 #endif
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
+
 vec4 blueNoise(vec2 coord){
   return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
 }
@@ -234,18 +255,31 @@ vec2 R2_samples(int n){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha * n);
 }
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+
 
 void main() {
 /* DRAWBUFFERS:0 */
 
-	// vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
-	vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
-	float z = texture2D(depthtex0,tc).x;
-	vec3 viewPos = toScreenSpace(vec3(tc/RENDER_SCALE,z));
-
 	float noise_1 = R2_dither();
 	float noise_2 = blueNoise();
+	
+	vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
 
+	float z = texture2D(depthtex0,tc).x;
+	
+	#ifdef DISTANT_HORIZONS
+		float DH_z = texture2D(dhDepthTex,tc).x;
+	#else
+		float DH_z = 0.0;
+	#endif
+	
+	vec3 viewPos = toScreenSpace_DH(tc/RENDER_SCALE, z, DH_z);
+	// vec3 viewPos = toScreenSpace(vec3(tc/RENDER_SCALE,z));
 
 	if (isEyeInWater == 0){
 		
@@ -256,8 +290,6 @@ void main() {
 		#if defined NETHER_SHADER || defined END_SHADER
 			vec4 VolumetricFog = GetVolumetricFog(viewPos, noise_1, noise_2);
 		#endif
-
-		// VolumetricFog = vec4(0,0,0,1);
 
 		gl_FragData[0] = clamp(VolumetricFog, 0.0, 65000.0);
 	} 
@@ -282,6 +314,7 @@ void main() {
 
 			vec3 vl = vec3(0.0);
 			waterVolumetrics(vl, vec3(0.0), viewPos, estEyeDepth, estEyeDepth, length(viewPos), noise_1, totEpsilon, scatterCoef, ambientColVol, lightColVol*(1.0-pow(1.0-sunElevation*lightCol.a,5.0)) , dot(normalize(viewPos), normalize(sunVec* lightCol.a ) 	));
+			
 			gl_FragData[0] = clamp(vec4(vl,1.0),0.000001,65000.);
 		#else
 			vec3 fragpos0 = toScreenSpace(vec3(tc,z));
@@ -289,5 +322,6 @@ void main() {
 			gl_FragData[0].a = 1;
 			waterVolumetrics_notoverworld(gl_FragData[0].rgb, fragpos0, viewPos, 1.0, 1.0, 1.0, blueNoise(), totEpsilon, scatterCoef, ambientColVol);
 		#endif
+	
 	}
 }

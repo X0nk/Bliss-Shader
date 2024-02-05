@@ -14,8 +14,11 @@ flat varying float tempOffsets;
 // uniform float far;
 uniform float near;
 uniform sampler2D depthtex0;
+uniform sampler2D dhDepthTex;
 // uniform sampler2D colortex4;
 uniform sampler2D noisetex;
+
+uniform sampler2D colortex12;
 
 flat varying vec3 WsunVec;
 uniform vec3 sunVec;
@@ -71,11 +74,38 @@ vec3 normVec (vec3 vec){
 	return vec*inversesqrt(dot(vec,vec));
 }
 
+#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
+#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+	uniform mat4 dhPreviousProjection;
+	uniform mat4 dhProjectionInverse;
+	uniform mat4 dhProjection;
+
+	vec3 DH_toScreenSpace(vec3 p) {
+		vec4 iProjDiag = vec4(dhProjectionInverse[0].x, dhProjectionInverse[1].y, dhProjectionInverse[2].zw);
+	    vec3 feetPlayerPos = p * 2. - 1.;
+	    vec4 viewPos = iProjDiag * feetPlayerPos.xyzz + dhProjectionInverse[3];
+	    return viewPos.xyz / viewPos.w;
+	}
+
+	vec3 DH_toClipSpace3(vec3 viewSpacePosition) {
+	    return projMAD(dhProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+	}
+
+	uniform float dhFarPlane;
+	uniform float dhNearPlane;
+	float DH_ld(float dist) {
+	    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+	}
+	float DH_inv_ld (float lindepth){
+		return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
+	}
+	
 #include "/lib/lightning_stuff.glsl"
 
 #include "/lib/sky_gradient.glsl"
 #include "/lib/volumetricClouds.glsl"
 #include "/lib/res_params.glsl"
+
 
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -91,7 +121,7 @@ void main() {
 	#ifdef VOLUMETRIC_CLOUDS
 		vec2 halfResTC = vec2(floor(gl_FragCoord.xy)/CLOUDS_QUALITY/RENDER_SCALE+0.5+offsets[framemod8]*CLOUDS_QUALITY*RENDER_SCALE*0.5);
 
-		vec3 viewPos = toScreenSpace(vec3(halfResTC*texelSize,1));
+		vec3 viewPos = toScreenSpace(vec3(halfResTC*texelSize,1.0));
 
 		vec4 VolumetricClouds = renderClouds(viewPos, vec2(R2_dither(),blueNoise2()), sunColor/80.0, averageSkyCol/30.0);
 

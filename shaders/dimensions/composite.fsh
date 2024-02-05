@@ -7,6 +7,9 @@ flat varying vec2 TAA_Offset;
 #include "/lib/res_params.glsl"
 
 uniform sampler2D depthtex1;
+uniform sampler2D dhDepthTex;
+uniform sampler2D dhDepthTex1;
+
 uniform sampler2D colortex1;
 uniform sampler2D colortex6; // Noise
 uniform sampler2D colortex8; // Noise
@@ -29,8 +32,11 @@ uniform vec3 cameraPosition;
 uniform float viewWidth;
 uniform float aspectRatio;
 uniform float viewHeight;
+
 // uniform float far;
 uniform float near;
+uniform float dhFarPlane;
+uniform float dhNearPlane;
 
 #define ffstep(x,y) clamp((y - x) * 1e35,0.0,1.0)
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
@@ -41,6 +47,8 @@ vec3 toScreenSpace(vec3 p) {
     vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
     return fragposition.xyz / fragposition.w;
 }
+
+
 vec3 worldToView(vec3 worldPos) {
     vec4 pos = vec4(worldPos, 0.0);
     pos = gbufferModelView * pos;
@@ -142,11 +150,29 @@ vec2 SpiralSample(
     return vec2(x, y);
 }
 
+
+
+#include "/lib/DistantHorizons_projections.glsl"
+
+float DH_ld(float dist) {
+    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+}
+float DH_inv_ld (float lindepth){
+	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
+}
+
+float linearizeDepthFast(const in float depth, const in float near, const in float far) {
+    return (near * far) / (depth * (near - far) + far);
+}
+
+
+
 void main() {
 /* DRAWBUFFERS:3 */
 	vec2 texcoord = gl_FragCoord.xy*texelSize;
 	
 	float z = texture2D(depthtex1,texcoord).x;
+	float DH_depth1 = texture2D(depthtex1,texcoord).x;
 
 	vec2 tempOffset=TAA_Offset;
 
@@ -194,28 +220,32 @@ void main() {
 
 		gl_FragData[0] = vec4(minshadowfilt, 0.1, 0.0, 0.0);
 		gl_FragData[0].y = 0;
+
+		// vec3 viewPos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
 		
-		vec3 viewPos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
+		vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5, z, DH_depth1);
 
 		#ifdef Variable_Penumbra_Shadows
 
-			if (NdotL > 0.001 || LabSSS > 0.0) {
+			if (LabSSS > 0.0) {
 
+				mat4 DH_shadowProjection = DH_shadowProjectionTweak(shadowProjection);
+				
 				vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
 
-				// GriAndEminShadowFix(p3, viewToWorld(FlatNormals), vanillAO, lightmap.y, entities);
 
-				// mat4 Custom_ViewMatrix = BuildShadowViewMatrix(LightDir);
-				// vec3 projectedShadowPosition = mat3(Custom_ViewMatrix) * feetPlayerPos  + Custom_ViewMatrix[3].xyz;
 				vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos  + shadowModelView[3].xyz;
-				projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
-
-				//apply distortion
-				float distortFactor = calcDistort(projectedShadowPosition.xy);
-				projectedShadowPosition.xy *= distortFactor;
+				projectedShadowPosition = diagonal3(DH_shadowProjection) * projectedShadowPosition + DH_shadowProjection[3].xyz;
 				
+				//apply distortion
+				#ifdef DISTORT_SHADOWMAP
+					float distortFactor = calcDistort(projectedShadowPosition.xy);
+					projectedShadowPosition.xy *= distortFactor;
+				#else
+					float distortFactor = 1.0;
+				#endif
 				//do shadows only if on shadow map
-				if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0){
+				if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0 || length(feetPlayerPos) < far){
 					const float threshMul = max(2048.0/shadowMapResolution*shadowDistance/128.0,0.95);
 					float distortThresh = (sqrt(1.0-NdotL*NdotL)/NdotL+0.7)/distortFactor;
 					float diffthresh = distortThresh/6000.0*threshMul;

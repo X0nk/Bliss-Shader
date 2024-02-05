@@ -191,6 +191,7 @@ float GetAltostratusDensity(vec3 pos){
 	float small = texture2D(noisetex, (pos.xz - cloud_movement)/10000. - vec2(-large,1-large)/5).b;
 	large = max(large + Coverage - 0.5, 0.0);
 	// float shape = (small + pow((1.0-large),2.0))/2.0;
+	
 	float weight = 0.7;
 	float shape = max(	large*weight - small*(1.0-weight)		,0.0);
 	shape *= shape;
@@ -327,6 +328,11 @@ if(layer == 2){
 }else{
 
 	for(int i = 0; i < QUALITY; i++) {
+		
+		// IntersecTerrain = length(rayProgress - cameraPosition) > lViewPosM;
+		
+		// if(IntersecTerrain) break;
+
 		/// avoid overdraw
 		if(notVisible) break;
 
@@ -338,14 +344,14 @@ if(layer == 2){
 			float muE =	cumulus * fadedDensity;
 
 			float directLight = 0.0;
-			for (int j=0; j < 3; j++){
+			if(clamp(rayProgress.y - maxHeight,0.0,1.0) < 1.0 && clamp(rayProgress.y - minHeight,0.0,1.0) > 0.0){ // make sure no work is done on pixels with no densities
+				for (int j=0; j < 3; j++){
+					vec3 shadowSamplePos = rayProgress + dV_Sun * (0.1 + j * (0.1 + dither*0.05));
+					float shadow = GetCumulusDensity(layer, shadowSamplePos, 0, minHeight, maxHeight) * cloudDensity;
 
-				vec3 shadowSamplePos = rayProgress + dV_Sun * (0.1 + j * (0.1 + dither*0.05));
-				float shadow = GetCumulusDensity(layer, shadowSamplePos, 0, minHeight, maxHeight) * cloudDensity;
-
-				directLight += shadow;
+					directLight += shadow;
+				}
 			}
-
 		#if defined CloudLayer1 && defined CloudLayer0
 			if(layer == 0) directLight += CloudLayer1_density * 2.0 * GetCumulusDensity(1, rayProgress + dV_Sun/abs(dV_Sun.y) * max((LAYER1_maxHEIGHT-70) - rayProgress.y,0.0), 0, LAYER1_minHEIGHT, LAYER1_maxHEIGHT);
 		#endif
@@ -380,7 +386,6 @@ if(layer == 2){
 
 		rayProgress += dV_view;
 	}
-
 	return vec4(COLOR, TOTAL_EXTINCTION);
 }
 }
@@ -392,6 +397,10 @@ vec4 renderClouds(
 	vec3 SkyColor
 ){	
 
+    // float lViewPosM = length(FragPosition) < dhRenderDistance *1.5? length(FragPosition) - 1.0 : 1000000000.0;
+	// bool IntersecTerrain = false;
+
+
 	#ifndef VOLUMETRIC_CLOUDS
 		return vec4(0.0,0.0,0.0,1.0);
 	#endif
@@ -399,7 +408,6 @@ vec4 renderClouds(
 	vec3 color = vec3(0.0);
 
 	float heightRelativeToClouds = clamp(1.0 - max(cameraPosition.y - LAYER0_minHEIGHT,0.0) / 100.0 ,0.0,1.0);
-	// heightRelativeToClouds*=heightRelativeToClouds;
 
 //////////////////////////////////////////
 ////// Raymarching stuff 
@@ -445,7 +453,7 @@ vec4 renderClouds(
 	// use this to blend into the atmosphere's ground.
 	vec3 approxdistance = normalize(dV_view);
 	#ifdef SKY_GROUND
-		float distantfog = mix(1.0, max(1.0 - clamp(exp2(pow(abs(approxdistance.y),1.5) * -35.0),0.0,1.0),0.0), heightRelativeToClouds);
+		float distantfog = mix(1.0, max(1.0 - clamp(exp2(pow(abs(approxdistance.y),1.5) * -100.0),0.0,1.0),0.0), heightRelativeToClouds);
 	#else
 		float distantfog = 1.0;
 		float distantfog2 = mix(1.0, max(1.0 - clamp(exp(pow(abs(approxdistance.y),1.5) * -35.0),0.0,1.0),0.0), heightRelativeToClouds);
@@ -575,15 +583,15 @@ float GetCloudShadow(vec3 feetPlayerPos){
 
 	// assume a flat layer of cloud, and stretch the sampled density along the sunvector, starting from some vertical layer in the cloud.
 	#ifdef CloudLayer0
-		vec3 lowShadowStart = playerPos + (WsunVec / max(abs(WsunVec.y),0.2)) * max((CloudLayer0_height + 30) - playerPos.y,0.0) ;
+		vec3 lowShadowStart = playerPos + (WsunVec / max(abs(WsunVec.y),0.0)) * max((CloudLayer0_height + 20) - playerPos.y,0.0) ;
 		shadow += GetCumulusDensity(0, lowShadowStart, 1, CloudLayer0_height, CloudLayer0_height+100)*CloudLayer0_density;
 	#endif
 	#ifdef CloudLayer1
-		vec3 higherShadowStart = playerPos + (WsunVec / max(abs(WsunVec.y),0.2)) * max((CloudLayer1_height + 30) - playerPos.y,0.0) ;
+		vec3 higherShadowStart = playerPos + (WsunVec / max(abs(WsunVec.y),0.0)) * max((CloudLayer1_height + 30) - playerPos.y,0.0) ;
 		shadow += GetCumulusDensity(1, higherShadowStart, 0, CloudLayer1_height, CloudLayer1_height+100)*CloudLayer1_density;
 	#endif
 	#ifdef CloudLayer2 
-		vec3 highShadowStart = playerPos + (WsunVec / max(abs(WsunVec.y),0.2)) * max(CloudLayer2_height - playerPos.y,0.0);
+		vec3 highShadowStart = playerPos + (WsunVec / max(abs(WsunVec.y),0.0)) * max(CloudLayer2_height - playerPos.y,0.0);
 		shadow += GetAltostratusDensity(highShadowStart) * CloudLayer2_density;
 	#endif
 
@@ -605,15 +613,15 @@ float GetCloudShadow_VLFOG(vec3 WorldPos, vec3 WorldSpace_sunVec){
 	float shadow = 0.0;
 
 	#ifdef CloudLayer0
-		vec3 lowShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.2)) * max((CloudLayer0_height+ 30) - WorldPos.y,0.0)  ;
+		vec3 lowShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.0)) * max((CloudLayer0_height + 20) - WorldPos.y,0.0)  ;
 		shadow += GetCumulusDensity(0, lowShadowStart, 0, CloudLayer0_height,CloudLayer0_height+100)*CloudLayer0_density;
 	#endif
 	#ifdef CloudLayer1
-		vec3 higherShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.2)) * max((CloudLayer1_height+ 30) - WorldPos.y,0.0)  ;
+		vec3 higherShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.0)) * max((CloudLayer1_height + 20) - WorldPos.y,0.0)  ;
 		shadow += GetCumulusDensity(1,higherShadowStart, 0, CloudLayer1_height,CloudLayer1_height+100)*CloudLayer1_density;
 	#endif
 	#ifdef CloudLayer2 
-		vec3 highShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.2)) * max(CloudLayer2_height - WorldPos.y,0.0);
+		vec3 highShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.0)) * max(CloudLayer2_height - WorldPos.y,0.0);
 		shadow += GetAltostratusDensity(highShadowStart)*CloudLayer2_density;
 	#endif
 

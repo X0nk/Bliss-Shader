@@ -6,9 +6,10 @@ uniform sampler2D colortex7;
 uniform vec2 texelSize;
 uniform float frameTimeCounter;
 
-// uniform sampler2D shadowcolor0;
-// uniform sampler2D shadowtex0;
-// uniform sampler2D shadowtex1;
+uniform sampler2D shadowcolor0;
+uniform sampler2D shadowcolor1;
+uniform sampler2D shadowtex0;
+uniform sampler2D shadowtex1;
 
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
@@ -162,4 +163,9 @@ void main() {
 	applyContrast(FINAL_COLOR, CONTRAST); // for fun
 
   gl_FragColor.rgb = FINAL_COLOR;
+
+
+  // vec2 texrood = texcoord * vec2(2.0, 1.0) - vec2(1.0, 0.0);
+  // if(texcoord.x > 0.5) gl_FragColor.rgb = texture2D(shadowcolor0, texrood).rgb;
+
 }
