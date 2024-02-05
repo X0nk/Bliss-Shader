@@ -39,7 +39,7 @@ void main() {
 	if(dhMaterialId == DH_BLOCK_ILLUMINATED || gl_MultiTexCoord1.x >= 0.95) EMISSIVE = 0.5;
 
 	SSSAMOUNT = 0.0;
-	if (dhMaterialId == DH_BLOCK_LEAVES ) SSSAMOUNT = 1.0;
+	if (dhMaterialId == DH_BLOCK_LEAVES) SSSAMOUNT = 1.0;
 	if (dhMaterialId == DH_BLOCK_SNOW) SSSAMOUNT = 0.5;
 
 	// a mask for DH terrain in general.

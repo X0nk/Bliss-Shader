@@ -64,7 +64,7 @@ vec3 toScreenSpace(vec3 p) {
 /* RENDERTARGETS:1,7,8 */
 void main() {
     // overdraw prevention
-    // if(clamp(1.0-length(pos.xyz)/max(far-16,0.0),0,1) > 0 ) discard;
+    if(clamp(1.0-length(pos.xyz)/max(far-16,0.0),0,1) > 0 ) discard;
 
     vec3 normals = viewToWorld(normals_and_materials.xyz);
     float materials = normals_and_materials.a;
