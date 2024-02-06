@@ -1181,7 +1181,7 @@ void main() {
 			vec3 lightningColor = (lightningEffect / 3) * (max(eyeBrightnessSmooth.y,0)/240.);
 			vec3 ambientColVol =  max((averageSkyCol_Clouds / 30.0) * custom_lightmap_T, vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision)) ;
 
-			// waterVolumetrics(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth, estimatedSunDepth, Vdiff, noise_2, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(feetPlayerPos_normalized, WsunVec));		
+			waterVolumetrics(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth, estimatedSunDepth, Vdiff, noise_2, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(feetPlayerPos_normalized, WsunVec));		
 		}
 	#else
 		if (iswater && isEyeInWater == 0){
