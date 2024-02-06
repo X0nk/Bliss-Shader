@@ -315,9 +315,15 @@ void main() {
     gl_FragData[0].rgb =  (Indirect_lighting + Direct_lighting) * Albedo;
     // specular
     vec3 reflectedVector = reflect(normalize(pos.xyz), normals);
-	float fresnel =  pow(clamp(1.0 + dot(normals, normalize(pos.xyz)), 0.0, 1.0),5.0);
+
+	float normalDotEye = dot(normals, normalize(pos.xyz));
+	float fresnel =  pow(clamp(1.0 + normalDotEye, 0.0, 1.0),5.0);
 	fresnel = mix(0.02, 1.0, fresnel); 
-    
+    #ifdef SNELLS_WINDOW
+		// snells window looking thing
+		if(isEyeInWater == 1 ) fresnel = pow(clamp(1.66 + normalDotEye,0.0,1.0), 25.0);
+	#endif
+
     #ifdef WATER_REFLECTIONS
     
         vec4 ssReflections = vec4(0);

@@ -550,7 +550,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			vec3 reflectedVector = reflect(normalize(viewPos), normal);
 
 			float normalDotEye = dot(normal, normalize(viewPos));
-			float fresnel =  pow(clamp(1.0 + dot(normal, normalize(viewPos)), 0.0, 1.0),5.0);
+			float fresnel =  pow(clamp(1.0 + normalDotEye, 0.0, 1.0),5.0);
 
 			#ifdef SNELLS_WINDOW
 				// snells window looking thing

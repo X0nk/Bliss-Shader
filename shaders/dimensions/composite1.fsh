@@ -1203,7 +1203,7 @@ void main() {
 	#if DEBUG_VIEW == debug_SHADOWMAP
 		vec3 OutsideShadowMap_and_DH_shadow = (shadowMapFalloff > 0.0 && z >= 1.0) ? vec3(0.25,1.0,0.25) : vec3(1.0,0.25,0.25);
 		vec3 Normal_Shadowmap =  z < 1.0 ? vec3(0.25,0.25,1.0) : OutsideShadowMap_and_DH_shadow;
-		gl_FragData[0].rgb = Normal_Shadowmap * shadowMap;
+		gl_FragData[0].rgb = mix(vec3(0.1) * (normal.y * 0.1 +0.9), Normal_Shadowmap,  shadowMap);
 	#endif
 	#if DEBUG_VIEW == debug_NORMALS
 		gl_FragData[0].rgb = normal;
@@ -1224,7 +1224,7 @@ void main() {
 
 	#ifdef CLOUDS_INFRONT_OF_WORLD
 		gl_FragData[1] = texture2D(colortex2, texcoord);
-		if(heightRelativeToClouds > 0.0){
+		if(heightRelativeToClouds > 0.0 && !hand){
 			gl_FragData[0].rgb = gl_FragData[0].rgb * Clouds.a + Clouds.rgb;
 			gl_FragData[1].a = gl_FragData[1].a*Clouds.a*Clouds.a*Clouds.a;
 		}
