@@ -47,7 +47,7 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 void main() {
     water = 0;
 
-    // if(gl_Color.a < 1.0) water = 1;
+    if(gl_Color.a < 1.0) water = 1;
 
 	texcoord.xy = gl_MultiTexCoord0.xy;
 

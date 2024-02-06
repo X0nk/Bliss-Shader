@@ -13,7 +13,7 @@ uniform sampler2D tex;
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-    // if(water > 0) discard;
+    if(water > 0) discard;
     
 	gl_FragData[0] = texture2D(tex, texcoord.xy);
 }
