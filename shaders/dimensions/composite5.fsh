@@ -237,7 +237,7 @@ vec4 TAA_hq(){
 	//use velocity from the nearest texel from camera in a 3x3 box in order to improve edge quality in motion
 	#ifdef CLOSEST_VELOCITY
 		#ifdef DISTANT_HORIZONS
-			vec3 closestToCamera = closestToCamera5taps(adjTC,	texture2D(depthtex0,adjTC).x < 1.0 ? depthtex0 : dhDepthTex);
+			vec3 closestToCamera = closestToCamera5taps(adjTC,	depthtex0);
 		#else
 			vec3 closestToCamera = closestToCamera5taps(adjTC,	depthtex0);
 		#endif

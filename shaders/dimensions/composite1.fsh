@@ -1181,7 +1181,7 @@ void main() {
 			vec3 lightningColor = (lightningEffect / 3) * (max(eyeBrightnessSmooth.y,0)/240.);
 			vec3 ambientColVol =  max((averageSkyCol_Clouds / 30.0) * custom_lightmap_T, vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision)) ;
 
-			waterVolumetrics(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth, estimatedSunDepth, Vdiff, noise_2, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(feetPlayerPos_normalized, WsunVec));		
+			// waterVolumetrics(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth, estimatedSunDepth, Vdiff, noise_2, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(feetPlayerPos_normalized, WsunVec));		
 		}
 	#else
 		if (iswater && isEyeInWater == 0){
@@ -1201,7 +1201,9 @@ void main() {
 	
 	//////// DEBUG VIEW STUFF
 	#if DEBUG_VIEW == debug_SHADOWMAP
-		gl_FragData[0].rgb = (shadowMapFalloff > 0.0 ? vec3(1.0,1.0,1.0) : vec3(1.0,0.25,0.25)) * shadowMap  ;
+		vec3 OutsideShadowMap_and_DH_shadow = (shadowMapFalloff > 0.0 && z >= 1.0) ? vec3(0.25,1.0,0.25) : vec3(1.0,0.25,0.25);
+		vec3 Normal_Shadowmap =  z < 1.0 ? vec3(0.25,0.25,1.0) : OutsideShadowMap_and_DH_shadow;
+		gl_FragData[0].rgb = Normal_Shadowmap * shadowMap;
 	#endif
 	#if DEBUG_VIEW == debug_NORMALS
 		gl_FragData[0].rgb = normal;
