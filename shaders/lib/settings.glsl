@@ -115,11 +115,14 @@ const float ambientOcclusionLevel = 1.0; // this controls vanilla minecrafts amb
 // ----- SHADOW RELATED SETTINGS ----- //
 /////////////////////////////////////////
 
+const float	sunPathRotation	= -35;	//[-90 -89 -88 -87 -86 -85 -84 -83 -82 -81 -80 -79 -78 -77 -76 -75 -74 -73 -72 -71 -70 -69 -68 -67 -66 -65 -64 -63 -62 -61 -60 -59 -58 -57 -56 -55 -54 -53 -52 -51 -50 -49 -48 -47 -46 -45 -44 -43 -42 -41 -40 -39 -38 -37 -36 -35 -34 -33 -32 -31 -30 -29 -28 -27 -26 -25 -24 -23 -22 -21 -20 -19 -18 -17 -16 -15 -14 -13 -12 -11 -10 -9 -8 -7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 ]
+
 const int shadowMapResolution = 2048; // [512 768 1024 1536 2048 3172 4096 8192 16384]
 const float shadowDistance = 128.0; // [64.0 80.0 96.0 112.0 128.0 144.0 160.0 176.0 192.0 208.0 224.0 240.0 256.0 272.0 288.0 304.0 320.0 336.0 352.0 384.0 400.0 416.0 432.0 448.0 464.0 480.0 496.0 512.0 800.0 1000.0 2000.0 3000.0]
 
 const float shadowDistanceRenderMul = 1.0; // [-1.0 1.0]
 const float entityShadowDistanceMul = 1.0; // [0.05 0.10 1.50 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.0]
+
 
 #define RENDER_ENTITY_SHADOWS
 
@@ -137,7 +140,7 @@ const float entityShadowDistanceMul = 1.0; // [0.05 0.10 1.50 0.20 0.25 0.30 0.3
 #define Stochastic_Transparent_Shadows
 
 //#define SHADOW_FRUSTRUM_CULLING
-const float	sunPathRotation	= -35;	//[-90 -89 -88 -87 -86 -85 -84 -83 -82 -81 -80 -79 -78 -77 -76 -75 -74 -73 -72 -71 -70 -69 -68 -67 -66 -65 -64 -63 -62 -61 -60 -59 -58 -57 -56 -55 -54 -53 -52 -51 -50 -49 -48 -47 -46 -45 -44 -43 -42 -41 -40 -39 -38 -37 -36 -35 -34 -33 -32 -31 -30 -29 -28 -27 -26 -25 -24 -23 -22 -21 -20 -19 -18 -17 -16 -15 -14 -13 -12 -11 -10 -9 -8 -7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 ]
+
 
 
 
@@ -534,6 +537,10 @@ uniform int moonPhase;
 // #define DISTANT_HORIZONS_SHADOWMAP
 #ifdef DISTANT_HORIZONS_SHADOWMAP
 	#undef DISTORT_SHADOWMAP
+	
+	const float shadowNearPlane = -1.0;
+	const float shadowFarPlane = -1.0;
+
 #endif
 
 // #define DH_SHADOWPROJECTIONTWEAK
@@ -545,7 +552,8 @@ uniform int moonPhase;
 #define debug_INDIRECT 4
 #define debug_DIRECT 5
 #define debug_VIEW_POSITION 6
-#define DEBUG_VIEW debug_OFF // [debug_OFF debug_SHADOWMAP debug_NORMALS debug_SPECULAR debug_INDIRECT debug_DIRECT debug_VIEW_POSITION]
+#define debug_DH_WATER_BLENDING 7
+#define DEBUG_VIEW debug_OFF // [debug_OFF debug_SHADOWMAP debug_NORMALS debug_SPECULAR debug_INDIRECT debug_DIRECT debug_VIEW_POSITION debug_DH_WATER_BLENDING]
 
 // #define BLOOMY_PARTICLES
 // #define ORIGINAL_CHOCAPIC_SKY

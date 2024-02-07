@@ -14,6 +14,7 @@ const bool colortex5MipmapEnabled = true;
 	flat varying vec4 lightCol;
 
 	uniform sampler2D colortex14;
+
 	#if Sun_specular_Strength != 0
 		#define LIGHTSOURCE_REFLECTION
 	#endif
@@ -81,6 +82,7 @@ uniform vec3 previousCameraPosition;
 
 // uniform float far;
 uniform float near;
+uniform float farPlane;
 uniform float dhFarPlane;
 uniform float dhNearPlane;
 
@@ -436,15 +438,6 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 }
 #endif
 
-void Emission(
-	inout vec3 Lighting,
-	vec3 Albedo,
-	float Emission
-){
-	// if( Emission < 255.0/255.0 ) Lighting = mix(Lighting, Albedo * Emissive_Brightness, pow(Emission, Emissive_Curve)); // old method.... idk why
-	if( Emission < 255.0/255.0 ) Lighting += (Albedo * Emissive_Brightness) * pow(Emission, Emissive_Curve);
-}
-
 vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, bool isSSS){
     float steps = 16.0;
 	
@@ -521,30 +514,29 @@ vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, floa
 
 	scatter *= labcurve;
 	
-	// PHASE TIME
-	// scatter *= 0.5 + CustomPhase(lightPos) * 13.0; // ~20x brighter at the peak
-	// scatter *= 1.0 + CustomPhase(lightPos) * 12.6; // ~20x brighter at the peak
-
-	// scatter *= 0.5 + CustomPhase(lightPos)*6.35; // ~10x brighter at the peak
 	scatter *= 1.0 + CustomPhase(lightPos)*6.0; // ~10x brighter at the peak
 
 	return scatter;
-
 }
+
 vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 
-
 	vec3 absorbed = max(1.0 - albedo,0.0);
-	// vec3 scatter =   sqrt(exp(-(absorbed * Scattering * 15))) * (1.0 - Scattering);
-	// vec3 scatter =   exp(-5 * Scattering)*vec3(1);
 	
 	vec3 scatter = exp((Scattering*Scattering) * absorbed  * -5.0) * sqrt(1.0 - Scattering);
 
-	// scatter *= pow(Density,LabSSS_Curve);
 	scatter *= clamp(1 - exp(Density * -10),0,1);
 
+	return scatter;
+}
 
-	return scatter ;
+void Emission(
+	inout vec3 Lighting,
+	vec3 Albedo,
+	float Emission
+){
+	// if( Emission < 255.0/255.0 ) Lighting = mix(Lighting, Albedo * Emissive_Brightness, pow(Emission, Emissive_Curve)); // old method.... idk why
+	if( Emission < 255.0/255.0 ) Lighting += (Albedo * Emissive_Brightness) * pow(Emission, Emissive_Curve);
 }
 
 #include "/lib/indirect_lighting_effects.glsl"
@@ -580,52 +572,6 @@ vec4 renderInfiniteWaterPlane(
 	return vec4(color, total_extinction);
 }
 
-
-
-
-
-// uniform float viewWidth;
-// uniform float viewHeight;
-
-// uniform sampler2D depthtex0;
-// uniform sampler2D dhDepthTex;
-
-// uniform mat4 gbufferProjectionInverse;
-// uniform mat4 dhProjectionInverse;
-
-vec3 getViewPos() {
-    ivec2 uv = ivec2(gl_FragCoord.xy);
-    vec2 viewSize = vec2(viewWidth, viewHeight);
-    vec2 texcoord = gl_FragCoord.xy / viewSize;
-
-	vec4 viewPos = vec4(0.0);
-
-	float depth = texelFetch(depthtex0, uv, 0).r;
-
-	if (depth < 1.0) {
-	    vec4 ndcPos = vec4(texcoord, depth, 1.0) * 2.0 - 1.0;
-	    viewPos = gbufferProjectionInverse * ndcPos;
-	    viewPos.xyz /= viewPos.w;
-	}
-	else {
-	    depth = texelFetch(dhDepthTex, ivec2(gl_FragCoord.xy), 0).r;
-	
-	    vec4 ndcPos = vec4(texcoord, depth, 1.0) * 2.0 - 1.0;
-	    viewPos = dhProjectionInverse * ndcPos;
-	    viewPos.xyz /= viewPos.w;
-	}
-
-    return viewPos.xyz;
-}
-vec3 DH_viewSpacePos(vec2 texcoord, float depth) {
-
-	vec4 ndcPos = vec4(texcoord, depth, 1.0) * 2.0 - 1.0;
-	vec4 viewPos = dhProjectionInverse * ndcPos;
-	return viewPos.xyz /= viewPos.w;
-
-}
-
-
 void main() {
 
 		vec3 DEBUG = vec3(1.0);
@@ -641,27 +587,27 @@ void main() {
 		float z0 = texture2D(depthtex0,texcoord).x;
 		float z = texture2D(depthtex1,texcoord).x;
 		float swappedDepth = z;
+
 		bool isDHrange = z >= 1.0;
 
 		#ifdef DISTANT_HORIZONS
 			float DH_depth0 = texture2D(dhDepthTex,texcoord).x;
 			float DH_depth1 = texture2D(dhDepthTex1,texcoord).x;
 
-			float mixedDepth = z;
+			float depthOpaque = z;
+			float depthOpaqueL = linearizeDepthFast(depthOpaque, near, farPlane);
+			
+			#ifdef DISTANT_HORIZONS
+			    float dhDepthOpaque = DH_depth1;
+			    float dhDepthOpaqueL = linearizeDepthFast(dhDepthOpaque, dhNearPlane, dhFarPlane);
 
-		    float _near = near;
-		    float _far = far*4.0;
+				if (depthOpaque >= 1.0 || (dhDepthOpaqueL < depthOpaqueL && dhDepthOpaque > 0.0)){
+			        depthOpaque = dhDepthOpaque;
+			        depthOpaqueL = dhDepthOpaqueL;
+			    }
+			#endif
 
-		    if (mixedDepth >= 1.0) {
-		        mixedDepth = DH_depth1;
-		        _near = dhNearPlane;
-		        _far = dhFarPlane;
-		    }
-		    mixedDepth = linearizeDepthFast(mixedDepth, _near, _far);
-		    mixedDepth = mixedDepth / dhFarPlane;
-
-			swappedDepth = DH_inv_ld(mixedDepth);
-			if(swappedDepth >= 0.999999) swappedDepth = 1.0;
+			swappedDepth = depthOpaque;
 		#else
 			float DH_depth0 = 0.0;
 			float DH_depth1 = 0.0;
@@ -852,13 +798,13 @@ void main() {
 	#ifdef OVERWORLD_SHADER
 
 		NdotL = clamp((-15 + dot(slopednormal, WsunVec)*255.0) / 240.0  ,0.0,1.0);
-		// float shadowNDOTL = NdotL;
-		// #ifndef Variable_Penumbra_Shadows
-		// 	shadowNDOTL += LabSSS;
-		// #endif
+		float shadowNDOTL = NdotL;
+		#ifndef Variable_Penumbra_Shadows
+			shadowNDOTL += LabSSS;
+		#endif
 
 
-		// if(shadowNDOTL > 0.001){
+		if(shadowNDOTL > 0.001){
 
 			mat4 DH_shadowProjection = DH_shadowProjectionTweak(shadowProjection);
 
@@ -905,7 +851,7 @@ void main() {
 			#ifdef OLD_LIGHTLEAK_FIX
 				if (isEyeInWater == 0) Shadows *= clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
 			#endif
-		// }
+		}
 
 	////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	SUN SSS		////////////////////////////////
@@ -1220,7 +1166,7 @@ void main() {
 	#if DEBUG_VIEW == debug_VIEW_POSITION
 		gl_FragData[0].rgb = viewPos;
 	#endif
-
+	
 
 	#ifdef CLOUDS_INFRONT_OF_WORLD
 		gl_FragData[1] = texture2D(colortex2, texcoord);

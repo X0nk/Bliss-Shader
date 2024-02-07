@@ -625,7 +625,9 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[1] = vec4(Albedo, iswater);
 	#endif
 	
-	// if(gl_FragCoord.x*texelSize.x < 0.47) gl_FragData[0] = vec4(0.0);
+	#if DEBUG_VIEW == debug_DH_WATER_BLENDING
+		if(gl_FragCoord.x*texelSize.x < 0.47) gl_FragData[0] = vec4(0.0);
+	#endif
 
 	gl_FragData[3].a = max(lmtexcoord.w*blueNoise()*0.05 + lmtexcoord.w,0.0);
 }
