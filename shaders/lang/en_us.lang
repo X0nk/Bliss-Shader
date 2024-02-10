@@ -154,9 +154,9 @@ screen.Clouds = Cloud Settings
     option.VOLUMETRIC_CLOUDS = Volumetric Clouds
     option.CLOUDS_QUALITY = Cloud Resolution Scaling
     option.CLOUDS_SHADOWS = Cloud Shadows
-    option.Daily_Weather = Daily Weather
     option.Cloud_Speed = Cloud Speed Multiplier
     option.Rain_coverage = Coverage When Raining
+    option.Daily_Weather = Daily Weather
 
     option.CloudLayer0          = Small Cumulus Clouds
     option.CloudLayer0_coverage = Coverage
@@ -173,7 +173,107 @@ screen.Clouds = Cloud Settings
     option.CloudLayer2_density  = Density
     option.CloudLayer2_height   = Height
 
+screen.DAILY_WEATHER = Daily Weather Settings
+    screen.DAY0_WEATHER = Day 0 Weather
+        option.DAY0_l0_coverage = Small Cumulus coverage
+        option.DAY0_l0_density = Small Cumulus Density
+        option.DAY0_l1_coverage = Large Cumulus Coverage
+        option.DAY0_l1_density = Large Cumulus Density
+        option.DAY0_l2_coverage = Altostratus Clouds Coverage
+        option.DAY0_l2_density =  Altostratus Clouds Density
+        option.DAY0_ufog_density = Uniform Fog Density
+        option.DAY0_cfog_density = Cloudy Fog Density
+        
+    screen.DAY1_WEATHER = Day 1 Weather
+        option.DAY1_l0_coverage = Small Cumulus coverage
+        option.DAY1_l0_density = Small Cumulus Density
+        option.DAY1_l1_coverage = Large Cumulus Coverage
+        option.DAY1_l1_density = Large Cumulus Density
+        option.DAY1_l2_coverage = Altostratus Clouds Coverage
+        option.DAY1_l2_density =  Altostratus Clouds Density
+        option.DAY1_ufog_density = Uniform Fog Density
+        option.DAY1_cfog_density = Cloudy Fog Density
+        
+    screen.DAY2_WEATHER = Day 2 Weather
+        option.DAY2_l0_coverage = Small Cumulus coverage
+        option.DAY2_l0_density = Small Cumulus Density
+        option.DAY2_l1_coverage = Large Cumulus Coverage
+        option.DAY2_l1_density = Large Cumulus Density
+        option.DAY2_l2_coverage = Altostratus Clouds Coverage
+        option.DAY2_l2_density =  Altostratus Clouds Density
+        option.DAY2_ufog_density = Uniform Fog Density
+        option.DAY2_cfog_density = Cloudy Fog Density
 
+    screen.DAY3_WEATHER = Day 3 Weather
+        option.DAY3_l0_coverage = Small Cumulus coverage
+        option.DAY3_l0_density = Small Cumulus Density
+        option.DAY3_l1_coverage = Large Cumulus Coverage
+        option.DAY3_l1_density = Large Cumulus Density
+        option.DAY3_l2_coverage = Altostratus Clouds Coverage
+        option.DAY3_l2_density =  Altostratus Clouds Density
+        option.DAY3_ufog_density = Uniform Fog Density
+        option.DAY3_cfog_density = Cloudy Fog Density
+
+    screen.DAY4_WEATHER = Day 4 Weather
+        option.DAY4_l0_coverage = Small Cumulus coverage
+        option.DAY4_l0_density = Small Cumulus Density
+        option.DAY4_l1_coverage = Large Cumulus Coverage
+        option.DAY4_l1_density = Large Cumulus Density
+        option.DAY4_l2_coverage = Altostratus Clouds Coverage
+        option.DAY4_l2_density =  Altostratus Clouds Density
+        option.DAY4_ufog_density = Uniform Fog Density
+        option.DAY4_cfog_density = Cloudy Fog Density
+
+    screen.DAY5_WEATHER = Day 5 Weather
+        option.DAY5_l0_coverage = Small Cumulus coverage
+        option.DAY5_l0_density = Small Cumulus Density
+        option.DAY5_l1_coverage = Large Cumulus Coverage
+        option.DAY5_l1_density = Large Cumulus Density
+        option.DAY5_l2_coverage = Altostratus Clouds Coverage
+        option.DAY5_l2_density =  Altostratus Clouds Density
+        option.DAY5_ufog_density = Uniform Fog Density
+        option.DAY5_cfog_density = Cloudy Fog Density
+
+    screen.DAY6_WEATHER = Day 6 Weather
+        option.DAY6_l0_coverage = Small Cumulus coverage
+        option.DAY6_l0_density = Small Cumulus Density
+        option.DAY6_l1_coverage = Large Cumulus Coverage
+        option.DAY6_l1_density = Large Cumulus Density
+        option.DAY6_l2_coverage = Altostratus Clouds Coverage
+        option.DAY6_l2_density =  Altostratus Clouds Density
+        option.DAY6_ufog_density = Uniform Fog Density
+        option.DAY6_cfog_density = Cloudy Fog Density
+
+    screen.DAY7_WEATHER = Day 7 Weather
+        option.DAY7_l0_coverage = Small Cumulus coverage
+        option.DAY7_l0_density = Small Cumulus Density
+        option.DAY7_l1_coverage = Large Cumulus Coverage
+        option.DAY7_l1_density = Large Cumulus Density
+        option.DAY7_l2_coverage = Altostratus Clouds Coverage
+        option.DAY7_l2_density =  Altostratus Clouds Density
+        option.DAY7_ufog_density = Uniform Fog Density
+        option.DAY7_cfog_density = Cloudy Fog Density
+
+    screen.DAY8_WEATHER = Day 8 Weather
+        option.DAY8_l0_coverage = Small Cumulus coverage
+        option.DAY8_l0_density = Small Cumulus Density
+        option.DAY8_l1_coverage = Large Cumulus Coverage
+        option.DAY8_l1_density = Large Cumulus Density
+        option.DAY8_l2_coverage = Altostratus Clouds Coverage
+        option.DAY8_l2_density =  Altostratus Clouds Density
+        option.DAY8_ufog_density = Uniform Fog Density
+        option.DAY8_cfog_density = Cloudy Fog Density
+
+    screen.DAY9_WEATHER = Day 9 Weather
+        option.DAY9_l0_coverage = Small Cumulus coverage
+        option.DAY9_l0_density = Small Cumulus Density
+        option.DAY9_l1_coverage = Large Cumulus Coverage
+        option.DAY9_l1_density = Large Cumulus Density
+        option.DAY9_l2_coverage = Altostratus Clouds Coverage
+        option.DAY9_l2_density =  Altostratus Clouds Density
+        option.DAY9_ufog_density = Uniform Fog Density
+        option.DAY9_cfog_density = Cloudy Fog Density
+        
 
 screen.Climate = Climate Settings
     option.Seasons = Seasonal Colors
@@ -529,3 +629,18 @@ option.CloudLayer2_height.comment   = Configure the height at which these clouds
 option.SKY_GROUND.comment = §bWhat is this?§r This is the dark bottom half of the sky that WOULD be the ground, if minecraft had infinite render distance. §aPERFORMANCE COST:§r very very low. §cdisabling this is very slightly slower than having it on due to extra math.§r
 option.SNELLS_WINDOW.comment = §bWhat is this?§r this is the dark reflective circle you see when under-water. This is an approximation of a thing that happens in reality known as "total internal reflection". §aPERFORMANCE COST:§r very very very small.
 option.entityShadowDistanceMul.comment = §bWhat is this?§r Configure how far shadows should work for entities. This is good if you want to keep entity shadows and improved performance in high entity areas.
+
+screen.DISTANT_HORIZONS_SETTINGS = §2Distant Horizons §fsettings
+
+option.DH_KNOWN_ISSUES =
+value.DH_KNOWN_ISSUES.0 = §c CLICK THIS TEXT TO LOOP THROUGH A LIST OF KNOWN ISSUES
+value.DH_KNOWN_ISSUES.1 = §a the DH shadowmap is broken - do not use it.
+value.DH_KNOWN_ISSUES.2 = §a GTAO, RTAO, and SSGI break on LODs - DH support unimplemented
+value.DH_KNOWN_ISSUES.3 = §a fog has little lines on edges - caused by an incapable upsampler
+value.DH_KNOWN_ISSUES.4 = §a LOD water has outlines of non-LOD water - depth test issue
+value.DH_KNOWN_ISSUES.5 = §a Cloud shadows move a little when really high in the sky - yep
+
+option.DISTANT_HORIZONS_SHADOWMAP = §c(BROKEN)§r DH shadowmap support
+option.DISTANT_HORIZONS_SHADOWMAP.comment =  §cTHIS SETTING WILL DESTROY PERFORMANCE§r. set shadow distance to 32 chunks (or more). set shadow resolution to 4096 (or more)
+option.TOGGLE_VL_FOG = Toggle Volumetric Fog
+option.TOGGLE_VL_FOG.comment = one big button to just turn all the fog off.

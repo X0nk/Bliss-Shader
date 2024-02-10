@@ -279,7 +279,6 @@ void main() {
 	#endif
 	
 	vec3 viewPos = toScreenSpace_DH(tc/RENDER_SCALE, z, DH_z);
-	// vec3 viewPos = toScreenSpace(vec3(tc/RENDER_SCALE,z));
 
 	if (isEyeInWater == 0){
 		

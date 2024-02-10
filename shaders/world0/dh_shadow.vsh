@@ -35,9 +35,9 @@ uniform float dhFarPlane;
 
 vec4 toClipSpace3(vec3 viewSpacePosition) {
 
-	mat4 projection = DH_shadowProjectionTweak(gl_ProjectionMatrix);
+	// mat4 projection = DH_shadowProjectionTweak(gl_ProjectionMatrix);
 
-    return vec4(projMAD(projection, viewSpacePosition),1.0);
+    return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),1.0);
 }
 
 

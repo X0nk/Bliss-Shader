@@ -572,6 +572,41 @@ vec4 renderInfiniteWaterPlane(
 	return vec4(color, total_extinction);
 }
 
+
+// uniform float viewWidth;
+// uniform float viewHeight;
+
+// uniform sampler2D depthtex0;
+// uniform sampler2D dhDepthTex;
+
+// uniform mat4 gbufferProjectionInverse;
+// uniform mat4 dhProjectionInverse;
+
+vec3 getViewPos() {
+    ivec2 uv = ivec2(gl_FragCoord.xy);
+    vec2 viewSize = vec2(viewWidth, viewHeight);
+    vec2 texcoord = gl_FragCoord.xy / viewSize;
+
+    vec4 viewPos = vec4(0.0);
+	
+    float depth = texelFetch(depthtex0, uv, 0).r;
+
+    if (depth < 1.0) {
+        vec4 ndcPos = vec4(texcoord, depth, 1.0) * 2.0 - 1.0;
+        viewPos = gbufferProjectionInverse * ndcPos;
+        viewPos.xyz /= viewPos.w;
+    } else {
+        depth = texelFetch(dhDepthTex, ivec2(gl_FragCoord.xy), 0).r;
+    
+        vec4 ndcPos = vec4(texcoord, depth, 1.0) * 2.0 - 1.0;
+        viewPos = dhProjectionInverse * ndcPos;
+        viewPos.xyz /= viewPos.w;
+    }
+
+    return viewPos.xyz;
+}
+
+
 void main() {
 
 		vec3 DEBUG = vec3(1.0);
@@ -623,6 +658,8 @@ void main() {
 		vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
 		vec3 feetPlayerPos_normalized = normVec(feetPlayerPos);
 
+
+		vec3 playerPos = mat3(gbufferModelViewInverse) * getViewPos();
 	////// --------------- UNPACK OPAQUE GBUFFERS --------------- //////
 	
 		vec4 data = texture2D(colortex1,texcoord);
@@ -798,22 +835,21 @@ void main() {
 	#ifdef OVERWORLD_SHADER
 
 		NdotL = clamp((-15 + dot(slopednormal, WsunVec)*255.0) / 240.0  ,0.0,1.0);
-		float shadowNDOTL = NdotL;
-		#ifndef Variable_Penumbra_Shadows
-			shadowNDOTL += LabSSS;
-		#endif
+		// float shadowNDOTL = NdotL;
+		// #ifndef Variable_Penumbra_Shadows
+		// 	shadowNDOTL += LabSSS;
+		// #endif
 
 
-		if(shadowNDOTL > 0.001){
+		// if(shadowNDOTL > 0.001){
 
-			mat4 DH_shadowProjection = DH_shadowProjectionTweak(shadowProjection);
 
 			vec3 shadowPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
 
 			if(!hand || !entities) GriAndEminShadowFix(shadowPlayerPos, viewToWorld(FlatNormals), vanilla_AO, lightmap.y, entities);
 
 			vec3 projectedShadowPosition = mat3(shadowModelView) * shadowPlayerPos + shadowModelView[3].xyz;
-			projectedShadowPosition = diagonal3(DH_shadowProjection) * projectedShadowPosition + DH_shadowProjection[3].xyz;
+			projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
 			//apply distortion
 			#ifdef DISTORT_SHADOWMAP
@@ -851,7 +887,7 @@ void main() {
 			#ifdef OLD_LIGHTLEAK_FIX
 				if (isEyeInWater == 0) Shadows *= clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
 			#endif
-		}
+		// }
 
 	////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	SUN SSS		////////////////////////////////
@@ -1164,7 +1200,7 @@ void main() {
 		gl_FragData[0].rgb = Direct_lighting;
 	#endif
 	#if DEBUG_VIEW == debug_VIEW_POSITION
-		gl_FragData[0].rgb = viewPos;
+		gl_FragData[0].rgb = viewPos * 0.001;
 	#endif
 	
 

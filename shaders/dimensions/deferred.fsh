@@ -2,6 +2,13 @@
 
 #define ReflectedFog
 
+#define USE_WEATHER_PARAMS
+
+#ifdef Daily_Weather
+	flat varying vec4 dailyWeatherParams0;
+	flat varying vec4 dailyWeatherParams1;
+#endif
+
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec3 averageSkyCol;
 
@@ -41,6 +48,7 @@ uniform vec3 sunPosition;
 uniform vec3 cameraPosition;
 // uniform float far;
 uniform ivec2 eyeBrightnessSmooth;
+
 
 vec4 lightCol = vec4(lightSourceColor, float(sunElevation > 1e-5)*2-1.);
 
@@ -161,11 +169,33 @@ if (gl_FragCoord.x > pixelPos6.x && gl_FragCoord.x < pixelPos6.x + 1 && gl_FragC
 	gl_FragData[0] = vec4(1,0,0,1);
 }
 
-if(accumuteSpeed < 1.0) mixhistory = 1.0;
 
 
 
 #ifdef OVERWORLD_SHADER
+
+	//////////////////////////////////////////////
+	/// --- STORE DAILY WEATHER PARAMETERS --- ///
+	//////////////////////////////////////////////
+
+	// the idea is to store the 8 values, coverage + density of 3 cloud layers and 2 fog density values.
+
+	#ifdef Daily_Weather
+		ivec2 pixelPos = ivec2(0,0);
+		if (gl_FragCoord.x > 1 && gl_FragCoord.x < 3 && gl_FragCoord.y > 1 && gl_FragCoord.y < 2){
+			
+			mixhistory = 0.01;
+	
+			if(gl_FragCoord.x < 2) gl_FragData[0] = dailyWeatherParams0;
+			if(gl_FragCoord.x > 2) gl_FragData[0] = dailyWeatherParams1;
+	
+		}
+	#endif
+
+
+
+
+
 	///////////////////////////////
 	/// --- STORE COLOR LUT --- ///
 	///////////////////////////////
@@ -174,6 +204,8 @@ if(accumuteSpeed < 1.0) mixhistory = 1.0;
 
 	// --- the color of the atmosphere + the average color of the atmosphere.
 	vec3 skyGroundCol = skyFromTex(vec3(0, -1 ,0), colortex4).rgb;// * clamp(WsunVec.y*2.0,0.2,1.0);
+
+
 
 	/// --- Save light values
 	if (gl_FragCoord.x < 1. && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
@@ -338,6 +370,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 vec3 temp = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy),0).rgb;
 vec3 curr = gl_FragData[0].rgb*150.;
 
+if(accumuteSpeed < 1.0) mixhistory = 1.0;
 gl_FragData[0].rgb = clamp(mix(temp, curr, mixhistory),0.0,65000.);
 
 

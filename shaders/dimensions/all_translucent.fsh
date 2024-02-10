@@ -405,12 +405,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		vec3 feetPlayerPos_shadow = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
 
-		mat4 DH_shadowProjection = DH_shadowProjectionTweak(shadowProjection);
-
 		// mat4 Custom_ViewMatrix = BuildShadowViewMatrix(LightDir);
 		// vec3 projectedShadowPosition = mat3(Custom_ViewMatrix) * feetPlayerPos_shadow  + Custom_ViewMatrix[3].xyz;
 		vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos_shadow  + shadowModelView[3].xyz;
-		projectedShadowPosition = diagonal3(DH_shadowProjection) * projectedShadowPosition + DH_shadowProjection[3].xyz;
+		projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
 		//apply distortion
 		#ifdef DISTORT_SHADOWMAP

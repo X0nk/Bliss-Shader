@@ -197,24 +197,57 @@ vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth)
 uniform sampler2D dhDepthTex;
 uniform float dhFarPlane;
 uniform float dhNearPlane;
+
+#include "/lib/DistantHorizons_projections.glsl"
+
 float DH_ld(float dist) {
     return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
 }
 float DH_inv_ld (float lindepth){
 	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
 }
-uniform mat4 dhProjectionInverse;
-uniform mat4 dhProjection;
-vec3 DH_toScreenSpace(vec3 p) {
-	vec4 iProjDiag = vec4(dhProjectionInverse[0].x, dhProjectionInverse[1].y, dhProjectionInverse[2].zw);
-    vec3 feetPlayerPos = p * 2. - 1.;
-    vec4 viewPos = iProjDiag * feetPlayerPos.xyzz + dhProjectionInverse[3];
-    return viewPos.xyz / viewPos.w;
+
+float linearizeDepthFast(const in float depth, const in float near, const in float far) {
+    return (near * far) / (depth * (near - far) + far);
 }
-vec3 DH_toClipSpace3(vec3 viewSpacePosition) {
-    return projMAD(dhProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+float invertlinearDepthFast(const in float depth, const in float near, const in float far) {
+	return ((2.0*near/depth)-far-near)/(far-near);
 }
 
+vec3 toClipSpace3Prev_DH( vec3 viewSpacePosition, bool depthCheck ) {
+
+	mat4 projectionMatrix = depthCheck ? dhPreviousProjection : gbufferPreviousProjection;
+
+    return projMAD(projectionMatrix, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+}
+
+vec3 toScreenSpace_DH_special(vec3 POS, bool depthCheck ) {
+
+	vec4 viewPos = vec4(0.0);
+	vec3 feetPlayerPos = vec3(0.0);
+	vec4 iProjDiag = vec4(0.0);
+	#ifdef DISTANT_HORIZONS
+    	if (depthCheck) {
+			iProjDiag = vec4(dhProjectionInverse[0].x, dhProjectionInverse[1].y, dhProjectionInverse[2].zw);
+
+    		feetPlayerPos = POS * 2.0 - 1.0;
+    		viewPos = iProjDiag * feetPlayerPos.xyzz + dhProjectionInverse[3];
+			viewPos.xyz /= viewPos.w;
+
+		} else {
+	#endif
+			iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
+
+    		feetPlayerPos = POS * 2.0 - 1.0;
+    		viewPos = iProjDiag * feetPlayerPos.xyzz + gbufferProjectionInverse[3];
+			viewPos.xyz /= viewPos.w;
+			
+	#ifdef DISTANT_HORIZONS
+		}
+	#endif
+
+    return viewPos.xyz;
+}
 
 
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
@@ -226,6 +259,17 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(3,7.)/8.,
 							vec2(7.,-7.)/8.);
 
+sampler2D swapSampler(sampler2D depth, sampler2D DHdepth, bool depthCheck ){
+
+	if(depthCheck){
+		return dhDepthTex;
+	}else{
+		return depth;
+	}
+}
+  
+
+
 vec4 TAA_hq(){
 
 	#ifdef TAA_UPSCALING
@@ -233,23 +277,25 @@ vec4 TAA_hq(){
 	#else
 		vec2 adjTC = texcoord;
 	#endif
+	
+	bool depthCheck = texture2D(depthtex0,adjTC).x >= 1.0;
 
 	//use velocity from the nearest texel from camera in a 3x3 box in order to improve edge quality in motion
 	#ifdef CLOSEST_VELOCITY
 		#ifdef DISTANT_HORIZONS
-			vec3 closestToCamera = closestToCamera5taps(adjTC,	depthtex0);
+			vec3 closestToCamera = closestToCamera5taps(adjTC,	swapSampler(depthtex0, dhDepthTex, depthCheck));
 		#else
 			vec3 closestToCamera = closestToCamera5taps(adjTC,	depthtex0);
 		#endif
 	#endif
 
 	#ifndef CLOSEST_VELOCITY
-		vec3 closestToCamera = vec3(texcoord,texture2D(depthtex1,adjTC).x);
+		vec3 closestToCamera = vec3(texcoord, texture2D(depthtex1,adjTC).x);
 	#endif
 
 	//reproject previous frame
 	#ifdef DISTANT_HORIZONS
-		vec3 viewPos = DH_toScreenSpace(closestToCamera);
+		vec3 viewPos = toScreenSpace_DH_special(closestToCamera, depthCheck);
 	#else
 		vec3 viewPos = toScreenSpace(closestToCamera);
 	#endif
@@ -257,7 +303,7 @@ vec4 TAA_hq(){
 	viewPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
 	
 	vec3 previousPosition = mat3(gbufferPreviousModelView) * viewPos + gbufferPreviousModelView[3].xyz;
-	previousPosition = toClipSpace3Prev(previousPosition);
+	previousPosition = toClipSpace3Prev_DH(previousPosition, depthCheck);
 	
 	vec2 velocity = previousPosition.xy - closestToCamera.xy;
 	previousPosition.xy = texcoord + velocity;

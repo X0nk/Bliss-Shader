@@ -1,5 +1,7 @@
 #include "/lib/settings.glsl"
 
+flat varying vec3 dailyWeatherParams0;
+flat varying vec3 dailyWeatherParams1;
 flat varying vec3 averageSkyCol;
 flat varying vec3 sunColor;
 flat varying vec3 moonColor;
@@ -24,6 +26,9 @@ void main() {
 
 	gl_Position = ftransform();
 	gl_Position.xy = (gl_Position.xy*0.5+0.5)*clamp(CLOUDS_QUALITY+0.01,0.0,1.0)*2.0-1.0;
+
+	dailyWeatherParams0 = texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0;
+	dailyWeatherParams1 = texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0;
 
 	averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
 	sunColor = texelFetch2D(colortex4,ivec2(6,37),0).rgb;

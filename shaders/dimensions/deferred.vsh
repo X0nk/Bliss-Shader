@@ -22,6 +22,9 @@ flat varying float rodExposure;
 flat varying float avgL2;
 flat varying float centerDepth;
 
+flat varying vec4 dailyWeatherParams0;
+flat varying vec4 dailyWeatherParams1;
+
 uniform sampler2D colortex4;
 uniform sampler2D colortex6;
 uniform sampler2D depthtex0;
@@ -72,6 +75,24 @@ float ld(float depth) {
 
 uniform float nightVision;
 
+uniform int worldDay;
+void getWeatherParams(
+	inout vec4 weatherParams0,
+	inout vec4 weatherParams1,
+
+	float layer0_coverage,
+	float layer1_coverage,
+	float layer2_coverage,
+	float uniformFog_density,
+
+	float layer0_density,
+	float layer1_density,
+	float layer2_density,
+	float cloudyFog_density
+){
+	weatherParams0 = vec4(layer0_coverage, layer1_coverage, layer2_coverage, uniformFog_density);
+	weatherParams1 = vec4(layer0_density, layer1_density, layer2_density, cloudyFog_density);
+}
 
 void main() {
 
@@ -137,6 +158,25 @@ void main() {
 
 	lightSourceColor = sunVis >= 1e-5 ? sunColor * sunVis : moonColor * moonVis;
 
+#endif
+
+//////////////////////////////////
+/// --- WEATHER PARAMETERS --- ///
+//////////////////////////////////
+
+#ifdef Daily_Weather
+	int dayCounter = int(mod(worldDay, 10));
+
+	if(dayCounter == 0) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY0_l0_coverage, DAY0_l1_coverage, DAY0_l2_coverage, DAY0_ufog_density, DAY0_l0_density, DAY0_l1_density, DAY0_l2_density, DAY0_cfog_density);
+	if(dayCounter == 1) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY1_l0_coverage, DAY1_l1_coverage, DAY1_l2_coverage, DAY1_ufog_density, DAY1_l0_density, DAY1_l1_density, DAY1_l2_density, DAY1_cfog_density);
+	if(dayCounter == 2) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY2_l0_coverage, DAY2_l1_coverage, DAY2_l2_coverage, DAY2_ufog_density, DAY2_l0_density, DAY2_l1_density, DAY2_l2_density, DAY2_cfog_density);
+	if(dayCounter == 3) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY3_l0_coverage, DAY3_l1_coverage, DAY3_l2_coverage, DAY3_ufog_density, DAY3_l0_density, DAY3_l1_density, DAY3_l2_density, DAY3_cfog_density);
+	if(dayCounter == 4) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY4_l0_coverage, DAY4_l1_coverage, DAY4_l2_coverage, DAY4_ufog_density, DAY4_l0_density, DAY4_l1_density, DAY4_l2_density, DAY4_cfog_density);
+	if(dayCounter == 5) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY5_l0_coverage, DAY5_l1_coverage, DAY5_l2_coverage, DAY5_ufog_density, DAY5_l0_density, DAY5_l1_density, DAY5_l2_density, DAY5_cfog_density);
+	if(dayCounter == 6) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY6_l0_coverage, DAY6_l1_coverage, DAY6_l2_coverage, DAY6_ufog_density, DAY6_l0_density, DAY6_l1_density, DAY6_l2_density, DAY6_cfog_density);
+	if(dayCounter == 7) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY7_l0_coverage, DAY7_l1_coverage, DAY7_l2_coverage, DAY7_ufog_density, DAY7_l0_density, DAY7_l1_density, DAY7_l2_density, DAY7_cfog_density);
+	if(dayCounter == 8) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY8_l0_coverage, DAY8_l1_coverage, DAY8_l2_coverage, DAY8_ufog_density, DAY8_l0_density, DAY8_l1_density, DAY8_l2_density, DAY8_cfog_density);
+	if(dayCounter == 9) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY9_l0_coverage, DAY9_l1_coverage, DAY9_l2_coverage, DAY9_ufog_density, DAY9_l0_density, DAY9_l1_density, DAY9_l2_density, DAY9_cfog_density);
 #endif
 
 //////////////////////////////

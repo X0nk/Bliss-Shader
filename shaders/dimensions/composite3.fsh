@@ -405,8 +405,7 @@ void main() {
   
 ////// --------------- FINALIZE
   #ifdef display_LUT
-  	vec2 movedTC = texcoord;
-    vec3 thingy = texture2D(colortex4,movedTC).rgb / 30;
+    vec3 thingy = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy),0).rgb / 30;
 
     if(luma(thingy) > 0.0){
       color.rgb =  thingy;

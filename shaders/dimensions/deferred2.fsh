@@ -1,11 +1,15 @@
 #include "/lib/settings.glsl"
 //Computes volumetric clouds at variable resolution (default 1/4 res)
 
+#define USE_WEATHER_PARAMS
 
+#ifdef Daily_Weather
+	flat varying vec3 dailyWeatherParams0;
+	flat varying vec3 dailyWeatherParams1;
+#endif
 
 flat varying vec3 sunColor;
 flat varying vec3 moonColor;
-
 flat varying vec3 averageSkyCol;
 
 

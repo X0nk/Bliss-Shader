@@ -281,11 +281,10 @@ void main() {
     #ifdef DISTANT_HORIZONS_SHADOWMAP
         float Shadows = 1.0;
         
-		mat4 DH_shadowProjection = DH_shadowProjectionTweak(shadowProjection);
 	    vec3 feetPlayerPos_shadow = mat3(gbufferModelViewInverse) * pos.xyz + gbufferModelViewInverse[3].xyz;
 
 	    vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos_shadow  + shadowModelView[3].xyz;
-	    projectedShadowPosition = diagonal3(DH_shadowProjection) * projectedShadowPosition + DH_shadowProjection[3].xyz;
+	    projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
 	    //apply distortion
 	    #ifdef DISTORT_SHADOWMAP
@@ -344,7 +343,7 @@ void main() {
         vec3 skyReflection = skyCloudsFromTex(mat3(gbufferModelViewInverse) * reflectedVector, colortex4).rgb / 30.0 ;
         skyReflection = mix(skyReflection, ssReflections.rgb, ssReflections.a);
 
-        vec3 sunReflection = Direct_lighting * GGX(normals, -normalize(pos.xyz), WsunVec2, 0.05, vec3(0.02));
+        vec3 sunReflection = Direct_lighting * GGX(normals, -normalize(pos.xyz), WsunVec2, 0.05, vec3(0.02)) * (1-ssReflections.a) ;
 
         gl_FragData[0].rgb = mix(gl_FragData[0].rgb, skyReflection, fresnel) + sunReflection ;
 	    gl_FragData[0].a = mix(gl_FragData[0].a, 1.0, fresnel);

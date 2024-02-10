@@ -77,15 +77,18 @@ vec4 GetVolumetricFog(
 	vec3 LightColor,
 	vec3 AmbientColor
 ){
+
+	#ifndef TOGGLE_VL_FOG
+		return vec4(0.0,0.0,0.0,1.0);
+	#endif
 	int SAMPLECOUNT = VL_SAMPLES;
 	/// -------------  RAYMARCHING STUFF ------------- \\\
 
 	//project pixel position into projected shadowmap space
 	
-	mat4 DH_shadowProjection = DH_shadowProjectionTweak(shadowProjection);
 	vec3 wpos = mat3(gbufferModelViewInverse) * viewPosition + gbufferModelViewInverse[3].xyz;
 	vec3 fragposition = mat3(shadowModelView) * wpos + shadowModelView[3].xyz;
-	fragposition = diagonal3(DH_shadowProjection) * fragposition + DH_shadowProjection[3].xyz;
+	fragposition = diagonal3(shadowProjection) * fragposition + shadowProjection[3].xyz;
 
 	//project view origin into projected shadowmap space
 	vec3 start = toShadowSpaceProjected(vec3(0.0));
@@ -169,6 +172,7 @@ vec4 GetVolumetricFog(
 	#ifdef DISTANT_HORIZONS
 		RLmult = 1.0;
 	#endif
+	
 	float expFactor = 11.0;
 	for (int i=0;i<SAMPLECOUNT;i++) {
 		float d = (pow(expFactor, float(i+dither.x)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
@@ -203,7 +207,7 @@ vec4 GetVolumetricFog(
 		///// ----- main fog lighting
 
 		//Just air
-		vec2 airCoef = exp(-max(progressW.y - SEA_LEVEL, 0.0) / vec2(8.0e3, 1.2e3) * vec2(6.,7.0)) * 24.0 * Haze_amount;
+		vec2 airCoef = exp(-max(progressW.y - SEA_LEVEL, 0.0) / vec2(8.0e3, 1.2e3) * vec2(6.,7.0)) * 24.0 * Haze_amount * clamp(CloudLayer0_height - progressW.y,0.0,1.0);
 
 		//Pbr for air, yolo mix between mie and rayleigh for water droplets
 		vec3 rL = rC*airCoef.x;

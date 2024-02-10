@@ -167,8 +167,8 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 
 
 
-void main() {
 /* DRAWBUFFERS:3 */
+void main() {
 	vec2 texcoord = gl_FragCoord.xy*texelSize;
 	
 	float z = texture2D(depthtex1,texcoord).x;
@@ -229,13 +229,12 @@ void main() {
 
 			if (LabSSS > 0.0) {
 
-				mat4 DH_shadowProjection = DH_shadowProjectionTweak(shadowProjection);
 				
 				vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
 
 
 				vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos  + shadowModelView[3].xyz;
-				projectedShadowPosition = diagonal3(DH_shadowProjection) * projectedShadowPosition + DH_shadowProjection[3].xyz;
+				projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 				
 				//apply distortion
 				#ifdef DISTORT_SHADOWMAP
