@@ -41,7 +41,8 @@ void main() {
     isWater = 0;
 	if (dhMaterialId == DH_BLOCK_WATER){
 	    isWater = 1;
-		// gl_Position.y -= 6.0/16.0;
+		gl_Position.y -= 6.0/16.0;
+    	gl_Position.z -= 1e-4;
 	}
 
 	normals_and_materials = vec4(normalize(gl_Normal), 1.0);

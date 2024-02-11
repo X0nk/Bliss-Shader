@@ -348,10 +348,10 @@ void main() {
         gl_FragData[0].rgb = mix(gl_FragData[0].rgb, skyReflection, fresnel) + sunReflection ;
 	    gl_FragData[0].a = mix(gl_FragData[0].a, 1.0, fresnel);
     #endif
+    float distancefade = min(max(1.0 - length(pos.xz)/far,0.0)*2.0,1.0);
+    gl_FragData[0].a = mix(gl_FragData[0].a, 0.0, distancefade);
 
-    gl_FragData[0].a = mix(gl_FragData[0].a, 0.0, min(max(1.0 - length(pos.xz)/far,0.0)*2.0,1.0)             );
-
-    float material = 1.0;
+    float material = distancefade < 1.0 ?  1.0 : 0.0;
     
     if(texture2D(depthtex1, gl_FragCoord.xy*texelSize).x < 1.0){
         gl_FragData[0].a = 0.0;

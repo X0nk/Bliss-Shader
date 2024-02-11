@@ -1202,7 +1202,6 @@ void main() {
 	#if DEBUG_VIEW == debug_VIEW_POSITION
 		gl_FragData[0].rgb = viewPos * 0.001;
 	#endif
-	
 
 	#ifdef CLOUDS_INFRONT_OF_WORLD
 		gl_FragData[1] = texture2D(colortex2, texcoord);
