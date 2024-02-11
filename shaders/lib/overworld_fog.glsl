@@ -144,7 +144,7 @@ vec4 GetVolumetricFog(
 	#endif
 
 	skyLightPhased = max(skyLightPhased + skyLightPhased*(normalize(wpos).y*0.9+0.1),0.0);
-	LightSourcePhased *= mie;
+	LightSourcePhased *= mie;	
 	
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 

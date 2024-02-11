@@ -170,6 +170,7 @@ vec3 tonemap(vec3 col){
 vec3 invTonemap(vec3 col){
 	return col/(1-luma(col));
 }
+
 vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth)
 {
 	vec2 du = vec2(texelSize.x*2., 0.0);
@@ -193,6 +194,34 @@ vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth)
 
 	return dmin;
 }
+
+
+
+
+vec3 closestToCamera5taps_DH(vec2 texcoord, sampler2D depth, sampler2D dhDepth, bool depthCheck)
+{
+	vec2 du = vec2(texelSize.x*2., 0.0);
+	vec2 dv = vec2(0.0, texelSize.y*2.);
+
+	vec3 dtl = vec3(texcoord,0.) + vec3(-texelSize, 					texture2D(depthCheck ? dhDepth : depth, texcoord - dv - du).x);
+	vec3 dtr = vec3(texcoord,0.) +  vec3( texelSize.x, -texelSize.y, 	texture2D(depthCheck ? dhDepth : depth, texcoord - dv + du).x);
+	vec3 dmc = vec3(texcoord,0.) + vec3( 0.0, 0.0, 				   		texture2D(depthCheck ? dhDepth : depth, texcoord).x);
+	vec3 dbl = vec3(texcoord,0.) + vec3(-texelSize.x, texelSize.y, 		texture2D(depthCheck ? dhDepth : depth, texcoord + dv - du).x);
+	vec3 dbr = vec3(texcoord,0.) + vec3( texelSize.x, texelSize.y, 		texture2D(depthCheck ? dhDepth : depth, texcoord + dv + du).x);
+
+	vec3 dmin = dmc;
+	dmin = dmin.z > dtr.z? dtr : dmin;
+	dmin = dmin.z > dtl.z? dtl : dmin;
+	dmin = dmin.z > dbl.z? dbl : dmin;
+	dmin = dmin.z > dbr.z? dbr : dmin;
+	
+	#ifdef TAA_UPSCALING
+		dmin.xy = dmin.xy/RENDER_SCALE;
+	#endif
+
+	return dmin;
+}
+
 
 uniform sampler2D dhDepthTex;
 uniform float dhFarPlane;
@@ -249,7 +278,6 @@ vec3 toScreenSpace_DH_special(vec3 POS, bool depthCheck ) {
     return viewPos.xyz;
 }
 
-
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-1.,3.)/8.,
 							vec2(5.0,1.)/8.,
@@ -259,15 +287,6 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(3,7.)/8.,
 							vec2(7.,-7.)/8.);
 
-sampler2D swapSampler(sampler2D depth, sampler2D DHdepth, bool depthCheck ){
-
-	if(depthCheck){
-		return dhDepthTex;
-	}else{
-		return depth;
-	}
-}
-  
 
 
 vec4 TAA_hq(){
@@ -283,7 +302,7 @@ vec4 TAA_hq(){
 	//use velocity from the nearest texel from camera in a 3x3 box in order to improve edge quality in motion
 	#ifdef CLOSEST_VELOCITY
 		#ifdef DISTANT_HORIZONS
-			vec3 closestToCamera = closestToCamera5taps(adjTC,	swapSampler(depthtex0, dhDepthTex, depthCheck));
+			vec3 closestToCamera = closestToCamera5taps_DH(adjTC,	depthtex0, dhDepthTex, depthCheck);
 		#else
 			vec3 closestToCamera = closestToCamera5taps(adjTC,	depthtex0);
 		#endif

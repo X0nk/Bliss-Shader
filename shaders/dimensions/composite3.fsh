@@ -39,6 +39,7 @@ uniform float frameTimeCounter;
 uniform int frameCounter;
 uniform float far;
 uniform float near;
+uniform float farPlane;
 uniform float dhNearPlane;
 uniform float dhFarPlane;
 
@@ -221,28 +222,24 @@ void main() {
   float frDepth = ld(z2);
 
 	float swappedDepth = z;
-  
 	#ifdef DISTANT_HORIZONS
     float DH_depth0 = texture2D(dhDepthTex,texcoord).x;
-  #else
-    float DH_depth0 = 0.0;
-  #endif
-
-	#ifdef DISTANT_HORIZONS
-	  float mixedDepth = z;
-	  float _near = near;
-	  float _far = far*4.0;
-	  if (mixedDepth >= 1.0) {
-	      mixedDepth = DH_depth0;
-	      _near = dhNearPlane;
-	      _far = dhFarPlane;
-	  }
-	  mixedDepth = linearizeDepthFast(mixedDepth, _near, _far);
-	  mixedDepth = mixedDepth / dhFarPlane;
+		float depthOpaque = z;
+		float depthOpaqueL = linearizeDepthFast(depthOpaque, near, farPlane);
 		
-    swappedDepth = DH_inv_ld(mixedDepth);
-	  if(swappedDepth >= 0.999999) swappedDepth = 1.0;
-	#endif
+		#ifdef DISTANT_HORIZONS
+		    float dhDepthOpaque = DH_depth0;
+		    float dhDepthOpaqueL = linearizeDepthFast(dhDepthOpaque, dhNearPlane, dhFarPlane);
+			if (depthOpaque >= 1.0 || (dhDepthOpaqueL < depthOpaqueL && dhDepthOpaque > 0.0)){
+		      depthOpaque = dhDepthOpaque;
+		      depthOpaqueL = dhDepthOpaqueL;
+		    }
+		#endif
+
+			swappedDepth = depthOpaque;
+		#else
+			float DH_depth0 = 0.0;
+		#endif
 
 	vec3 fragpos = toScreenSpace_DH(texcoord/RENDER_SCALE-vec2(TAA_Offset)*texelSize*0.5, z, DH_depth0);
   
@@ -295,9 +292,9 @@ void main() {
   #if defined BorderFog
 
     #ifdef DISTANT_HORIZONS
-    	float fog =  exp(-25.0 * pow(clamp(1.0-linearDistance/max(dhFarPlane-1000,0.0),0.0,1.0),2.0));
+      float fog = 1.0 - pow(1.0-pow(1.0-min(max(1.0 - linearDistance / dhFarPlane,0.0)*3.0,1.0),2.0),2.0);
     #else
-    	float fog =  exp(-50.0 * pow(clamp(1.0-linearDistance/far,0.0,1.0),2.0));
+    	float fog =  1.0 - pow(1.0-pow(1.0-min(max(1.0 - linearDistance / far,0.0)*5.0,1.0),2.0),2.0);
     #endif
 
     fog *= exp(-10.0 * pow(clamp(np3.y,0.0,1.0)*4.0,2.0));

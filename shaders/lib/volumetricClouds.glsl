@@ -209,8 +209,9 @@ float cloudVol(int layer, in vec3 pos, in vec3 samplePos, in float cov, in int L
 
 	samplePos.xz -= cloud_movement/4;
 
-	// WIND
-	samplePos.xz += pow( max(pos.y - (minHeight+20), 0.0) / 20.0,1.50) * upperPlane;
+	if(layer == 0 || layer == 1)  samplePos.xz += pow( max(pos.y - (minHeight+20), 0.0) / 20.0,1.50);
+
+	if(layer == -1) samplePos.xz += pow( max(pos.y - (minHeight+20), 0.0) / 20.0,1.50) * upperPlane;
 
 	noise += (1.0-densityAtPos(samplePos * mix(100.0,200.0,upperPlane)) ) * mix(2.0,1.0,upperPlane);
 
@@ -267,21 +268,39 @@ vec3 DoCloudLighting(
 	float distantfog
 
 ){
-	float powder = 1.0 - exp(densityFaded * -10);
+	float powder = 1.0 - exp(-10.0 * densityFaded);
 	float lesspowder = powder*0.4+0.6;
 	
-	vec3 skyLight = skyLightCol;
+	float indirectScatter = exp( -10 *  sqrt((skyScatter*skyScatter*skyScatter) * densityFaded)) * lesspowder;
 
-	float skyLightShading = exp2((skyScatter*skyScatter) * densityFaded * -35.0) * lesspowder;
+	vec3 indirectLight = skyLightCol *  mix(1.0, indirectScatter, distantfog);
 
-	skyLight *= mix(1.0, skyLightShading, distantfog);
+	vec3 directLight = sunScatter * exp(-10.0 * sunShadows + powder);
+	directLight += sunMultiScatter * exp(-3.0 * sunShadows ) * (powder*0.7+0.3);
 
-	vec3 sunLight = exp(sunShadows * -15 + powder ) * sunScatter;
-	sunLight +=  exp(sunShadows * -3) * sunMultiScatter * (powder*0.7+0.3);
+	// return indirectLight;
+	// return directLight;
+	return indirectLight + directLight;
+}
+vec3 rodSample_CLOUD(vec2 Xi)
+{
+	float r = sqrt(1.0f - Xi.x*Xi.y);
+    float phi = 2 * 3.14159265359 * Xi.y;
 
-	// return skyLight;
-	// return sunLight;
-	return skyLight + sunLight;
+    return normalize(vec3(cos(phi) * r, sin(phi) * r, Xi.x)).xzy;
+}
+vec2 R2_samples_CLOUD(int n){
+	vec2 alpha = vec2(0.75487765, 0.56984026);
+	return fract(alpha * n);
+}
+vec3 cosineHemisphereSample_CLOUD(vec2 Xi){
+    float theta = 2.0 * 3.14159265359 * Xi.y;
+
+    float r = sqrt(Xi.x);
+    float x = r * cos(theta);
+    float y = r * sin(theta);
+
+    return vec3(x, y, sqrt(clamp(1.0 - Xi.x,0.,1.)));
 }
 
 vec4 renderLayer(
@@ -341,6 +360,12 @@ if(layer == 2){
 	return vec4(COLOR, TOTAL_EXTINCTION);
 
 }else{
+	#if defined CloudLayer1 && defined CloudLayer0
+		float upperLayerOcclusion = layer == 0 ? LAYER1_DENSITY *2* GetCumulusDensity(1, rayProgress + vec3(0.0,1.0,0.0) * max((LAYER1_minHEIGHT+30) - rayProgress.y,0.0), 0, LAYER1_minHEIGHT, LAYER1_maxHEIGHT) : 0.0;
+		float skylightOcclusion =  max(exp2(-5.0 * (upperLayerOcclusion*upperLayerOcclusion)), 0.75 + (1.0-distantfog)*0.25);
+	#else
+		float skylightOcclusion = 1.0;
+	#endif
 
 	for(int i = 0; i < QUALITY; i++) {
 		
@@ -363,37 +388,26 @@ if(layer == 2){
 			}
 
 			/// shadows cast from one layer to another
+			/// large cumulus -> small cumulus
 			#if defined CloudLayer1 && defined CloudLayer0
 				if(layer == 0) directLight += LAYER1_DENSITY * 2.0 * GetCumulusDensity(1, rayProgress + dV_Sun/abs(dV_Sun.y) * max((LAYER1_minHEIGHT+70*dither) - rayProgress.y,0.0), 0, LAYER1_minHEIGHT, LAYER1_maxHEIGHT);
 			#endif
+			// altostratus -> cumulus
 			#ifdef CloudLayer2
-				// cast a shadow from higher clouds onto lower clouds
 				vec3 HighAlt_shadowPos = rayProgress + dV_Sun/abs(dV_Sun.y) * max(LAYER2_HEIGHT - rayProgress.y,0.0);
 				float HighAlt_shadow = GetAltostratusDensity(HighAlt_shadowPos) * CloudLayer2_density;
 				directLight += HighAlt_shadow;
 			#endif
-		
-			#if defined CloudLayer1 && defined CloudLayer0
-				float upperLayerOcclusion = layer == 0 ? LAYER1_DENSITY * 2.0 * GetCumulusDensity(1, rayProgress + vec3(0.0,1.0,0.0) * max((LAYER1_maxHEIGHT-70) - rayProgress.y,0.0), 0, LAYER1_minHEIGHT, LAYER1_maxHEIGHT) : 0.0;
-				float skylightOcclusion = max(exp2((upperLayerOcclusion*upperLayerOcclusion) * -5), 0.75 + (1.0-distantfog)*0.25);
-			#else
-				float skylightOcclusion = 1.0;
-			#endif
-
 			float skyScatter = clamp(((maxHeight - 20 - rayProgress.y) / 275.0)  * (0.5+cloudDensity),0.0,1.0);
-			vec3 lighting = DoCloudLighting(muE, cumulus, skyLightCol*skylightOcclusion, skyScatter, directLight, sunScatter, sunMultiScatter, distantfog);
+			vec3 lighting = DoCloudLighting(muE, cumulus, skyLightCol * skylightOcclusion, skyScatter, directLight, sunScatter, sunMultiScatter, distantfog);
 
-		// #if defined CloudLayer1 && defined CloudLayer0
-		// 	// a horrible approximation of direct light indirectly hitting the lower layer of clouds after scattering through/bouncing off the upper layer.
-		// 	lighting += indirectScatter * exp((skyScatter*skyScatter) * cumulus * -35.0) * upperLayerOcclusion * exp(-20.0 * pow(abs(upperLayerOcclusion - 0.3),2));
-		// #endif
+
 
 			COLOR += max(lighting - lighting*exp(-mult*muE),0.0) * TOTAL_EXTINCTION;
 			TOTAL_EXTINCTION *= max(exp(-mult*muE),0.0);
 
 			if (TOTAL_EXTINCTION < 1e-5) break;
 		}
-
 		rayProgress += dV_view;
 	}
 	return vec4(COLOR, TOTAL_EXTINCTION);
@@ -490,7 +504,7 @@ vec4 renderClouds(
 
 	directScattering *= scatter;
 	directMultiScattering *= scatter;
-	sunIndirectScattering *= scatter;
+	// sunIndirectScattering *= scatter;
 
 //////////////////////////////////////////
 ////// render Cloud layers and do blending orders
@@ -641,12 +655,12 @@ float GetCloudShadow_VLFOG(vec3 WorldPos, vec3 WorldSpace_sunVec){
 		shadow += GetCumulusDensity(0, lowShadowStart, 0, CloudLayer0_height,CloudLayer0_height+100)*LAYER0_DENSITY;
 	#endif
 	#ifdef CloudLayer1
-		vec3 higherShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.0)) * max((CloudLayer1_height + 70) - WorldPos.y,0.0)  ;
+		vec3 higherShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.0)) * max((CloudLayer1_height + 50) - WorldPos.y,0.0)  ;
 		shadow += GetCumulusDensity(1,higherShadowStart, 0, CloudLayer1_height,CloudLayer1_height+100)*LAYER1_DENSITY;
 	#endif
 	#ifdef CloudLayer2 
 		vec3 highShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.0)) * max(CloudLayer2_height - WorldPos.y,0.0);
-		shadow += GetAltostratusDensity(highShadowStart)*LAYER2_DENSITY;
+		shadow += GetAltostratusDensity(highShadowStart)*LAYER2_DENSITY * 0.5;
 	#endif
 
 	shadow = clamp(shadow,0.0,1.0);

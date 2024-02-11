@@ -12,8 +12,6 @@ flat varying vec3 sunColor;
 flat varying vec3 moonColor;
 flat varying vec3 averageSkyCol;
 
-
-
 flat varying float tempOffsets;
 // uniform float far;
 uniform float near;
