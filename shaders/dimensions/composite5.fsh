@@ -208,19 +208,11 @@ vec3 closestToCamera5taps_DH(vec2 texcoord, sampler2D depth, sampler2D dhDepth, 
 	vec3 dbl = vec3(texcoord,0.);
 	vec3 dbr = vec3(texcoord,0.);
 
-	if(depthCheck){
-		dtl += vec3(-texelSize, 					texture2D(dhDepth, texcoord - dv - du).x);
-		dtr += vec3( texelSize.x, -texelSize.y, 	texture2D(dhDepth, texcoord - dv + du).x);
-		dmc += vec3( 0.0, 0.0, 				   		texture2D(dhDepth, texcoord).x);
-		dbl += vec3(-texelSize.x, texelSize.y, 		texture2D(dhDepth, texcoord + dv - du).x);
-		dbr += vec3( texelSize.x, texelSize.y, 		texture2D(dhDepth, texcoord + dv + du).x);
-	}else{
-		dtl += vec3(-texelSize, 					texture2D(depth, texcoord - dv - du).x);
-		dtr += vec3( texelSize.x, -texelSize.y, 	texture2D(depth, texcoord - dv + du).x);
-		dmc += vec3( 0.0, 0.0, 				   		texture2D(depth, texcoord).x);
-		dbl += vec3(-texelSize.x, texelSize.y, 		texture2D(depth, texcoord + dv - du).x);
-		dbr += vec3( texelSize.x, texelSize.y, 		texture2D(depth, texcoord + dv + du).x);
-	}
+	dtl += vec3(-texelSize, 					depthCheck ? texture2D(dhDepth, texcoord - dv - du).x	:	texture2D(depth, texcoord - dv - du).x);
+	dtr += vec3( texelSize.x, -texelSize.y, 	depthCheck ? texture2D(dhDepth, texcoord - dv + du).x	:	texture2D(depth, texcoord - dv + du).x);
+	dmc += vec3( 0.0, 0.0, 				   		depthCheck ? texture2D(dhDepth, texcoord).x				:	texture2D(depth, texcoord).x);
+	dbl += vec3(-texelSize.x, texelSize.y, 		depthCheck ? texture2D(dhDepth, texcoord + dv - du).x	:	texture2D(depth, texcoord + dv - du).x);
+	dbr += vec3( texelSize.x, texelSize.y, 		depthCheck ? texture2D(dhDepth, texcoord + dv + du).x	:	texture2D(depth, texcoord + dv + du).x);
 
 	vec3 dmin = dmc;
 	dmin = dmin.z > dtr.z? dtr : dmin;
