@@ -93,11 +93,14 @@ uniform vec3 cameraPosition;
 
 /* RENDERTARGETS:1,7,8 */
 void main() {
-    // overdraw prevention
-    if(clamp(1.0-length(pos.xyz)/max(far - 16.0,0.0),0.0,1.0) > 0.0 ){
-        discard;
-        return;
-    }
+    
+    #ifdef DH_OVERDRAW_PREVENTION
+        // overdraw prevention
+        if(clamp(1.0-length(pos.xyz)/max(far - 16.0,0.0),0.0,1.0) > 0.0 ){
+            discard;
+            return;
+        }
+    #endif
 
     vec3 normals = viewToWorld(normals_and_materials.xyz);
     float materials = normals_and_materials.a;

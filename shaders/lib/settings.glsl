@@ -654,6 +654,7 @@ uniform int moonPhase;
 // #define ORIGINAL_CHOCAPIC_SKY
 // #define CLOUDS_INFRONT_OF_WORLD
 
+#define DH_OVERDRAW_PREVENTION
 #define DH_KNOWN_ISSUES 0 // [0 1 2 3 4 5]
 
 // fix settings

@@ -348,15 +348,18 @@ void main() {
         gl_FragData[0].rgb = mix(gl_FragData[0].rgb, skyReflection, fresnel) + sunReflection ;
 	    gl_FragData[0].a = mix(gl_FragData[0].a, 1.0, fresnel);
     #endif
-    float distancefade = min(max(1.0 - length(pos.xz)/far,0.0)*2.0,1.0);
-    gl_FragData[0].a = mix(gl_FragData[0].a, 0.0, distancefade);
-
-    float material = distancefade < 1.0 ?  1.0 : 0.0;
     
-    if(texture2D(depthtex1, gl_FragCoord.xy*texelSize).x < 1.0){
-        gl_FragData[0].a = 0.0;
-        material = 0.0;
-    }
+    float material = 1.0;
+    #ifdef DH_OVERDRAW_PREVENTION
+        float distancefade = min(max(1.0 - length(pos.xz)/far,0.0)*2.0,1.0);
+        gl_FragData[0].a = mix(gl_FragData[0].a, 0.0, distancefade);
+        material = distancefade < 1.0 ?  1.0 : 0.0;
+
+        if(texture2D(depthtex1, gl_FragCoord.xy*texelSize).x < 1.0){
+            gl_FragData[0].a = 0.0;
+            material = 0.0;
+        }
+    #endif
 
 	#if DEBUG_VIEW == debug_DH_WATER_BLENDING
         if(gl_FragCoord.x*texelSize.x > 0.53) gl_FragData[0] = vec4(0.0);
