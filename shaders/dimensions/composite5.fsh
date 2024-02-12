@@ -229,6 +229,7 @@ vec3 closestToCamera5taps_DH(vec2 texcoord, sampler2D depth, sampler2D dhDepth, 
 
 
 uniform sampler2D dhDepthTex;
+uniform float far;
 uniform float dhFarPlane;
 uniform float dhNearPlane;
 
@@ -250,9 +251,12 @@ float invertlinearDepthFast(const in float depth, const in float near, const in 
 
 vec3 toClipSpace3Prev_DH( vec3 viewSpacePosition, bool depthCheck ) {
 
-	mat4 projectionMatrix = depthCheck ? dhPreviousProjection : gbufferPreviousProjection;
-
-    return projMAD(projectionMatrix, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+	#ifdef DISTANT_HORIZONS
+		mat4 projectionMatrix = depthCheck ? dhPreviousProjection : gbufferPreviousProjection;
+   		return projMAD(projectionMatrix, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+	#else
+    	return projMAD(gbufferPreviousProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+	#endif
 }
 
 vec3 toScreenSpace_DH_special(vec3 POS, bool depthCheck ) {
@@ -309,7 +313,7 @@ vec4 TAA_hq(){
 		#ifdef DISTANT_HORIZONS
 			vec3 closestToCamera = closestToCamera5taps_DH(adjTC,	depthtex0, dhDepthTex, depthCheck);
 		#else
-			vec3 closestToCamera = closestToCamera5taps(adjTC,	depthtex0);
+			vec3 closestToCamera = closestToCamera5taps(adjTC,depthtex0);
 		#endif
 	#endif
 

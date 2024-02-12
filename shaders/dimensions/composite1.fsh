@@ -754,12 +754,18 @@ void main() {
 
 		#ifdef OVERWORLD_SHADER
 			DirectLightColor = lightCol.rgb/80.0;
+			AmbientLightColor = averageSkyCol_Clouds;
 			
 			#ifdef PER_BIOME_ENVIRONMENT
-				BiomeSunlightColor(DirectLightColor);
+				// BiomeSunlightColor(DirectLightColor);
+				vec3 biomeDirect = DirectLightColor; 
+				vec3 biomeIndirect = AmbientLightColor;
+				float inBiome = BiomeVLFogColors(biomeDirect, biomeIndirect);
+
+				float maxDistance = inBiome * min(max(1.0 -  length(feetPlayerPos)/(32*8),0.0)*2.0,1.0);
+				DirectLightColor = mix(DirectLightColor, biomeDirect, maxDistance);
 			#endif
-			
-			AmbientLightColor = averageSkyCol_Clouds;
+
 
 			vec3 filteredShadow = vec3(1.412,1.0,0.0);
 			if (!hand) filteredShadow = texture2D(colortex3,texcoord).rgb;
@@ -845,7 +851,7 @@ void main() {
 
 
 			vec3 shadowPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
-
+			
 			if(!hand || !entities) GriAndEminShadowFix(shadowPlayerPos, viewToWorld(FlatNormals), vanilla_AO, lightmap.y, entities);
 
 			vec3 projectedShadowPosition = mat3(shadowModelView) * shadowPlayerPos + shadowModelView[3].xyz;

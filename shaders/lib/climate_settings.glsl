@@ -175,25 +175,26 @@
 		FinalFogColor = mix(FinalFogColor, BiomeColors, Inbiome);
 	}
 
-	void BiomeSunlightColor(
-		inout vec3 FinalSunlightColor
-	){	
-		// this is a little complicated? lmao
-		vec3 BiomeColors = vec3(0.0);
-		BiomeColors.r = isSwamps*SWAMP_R + isJungles*JUNGLE_R + isDarkForests*DARKFOREST_R + sandStorm*1.0 + snowStorm*0.6;
-		BiomeColors.g = isSwamps*SWAMP_G + isJungles*JUNGLE_G + isDarkForests*DARKFOREST_G + sandStorm*0.5 + snowStorm*0.8;
-		BiomeColors.b = isSwamps*SWAMP_B + isJungles*JUNGLE_B + isDarkForests*DARKFOREST_B + sandStorm*0.3 + snowStorm*1.0;
+	// void BiomeSunlightColor(
+	// 	inout vec3 FinalSunlightColor
+	// ){	
+	// 	// this is a little complicated? lmao
+	// 	vec3 BiomeColors = vec3(0.0);
+	// 	BiomeColors.r = isSwamps*SWAMP_R + isJungles*JUNGLE_R + isDarkForests*DARKFOREST_R + sandStorm*1.0 + snowStorm*0.6;
+	// 	BiomeColors.g = isSwamps*SWAMP_G + isJungles*JUNGLE_G + isDarkForests*DARKFOREST_G + sandStorm*0.5 + snowStorm*0.8;
+	// 	BiomeColors.b = isSwamps*SWAMP_B + isJungles*JUNGLE_B + isDarkForests*DARKFOREST_B + sandStorm*0.3 + snowStorm*1.0;
 
-		// these range 0.0-1.0. they will never overlap.
-		float Inbiome = isJungles+isSwamps+isDarkForests+sandStorm+snowStorm;
+	// 	// these range 0.0-1.0. they will never overlap.
+	// 	float Inbiome = isJungles+isSwamps+isDarkForests+sandStorm+snowStorm;
 
-		// interpoloate between normal fog colors and biome colors. the transition speeds are conrolled by the biome uniforms.
-		FinalSunlightColor = mix(FinalSunlightColor, FinalSunlightColor * (BiomeColors*0.8+0.2), Inbiome);
-	}
+	// 	// interpoloate between normal fog colors and biome colors. the transition speeds are conrolled by the biome uniforms.
+	// 	FinalSunlightColor = mix(FinalSunlightColor, FinalSunlightColor * (BiomeColors*0.8+0.2), Inbiome);
+	// }
 
 	void BiomeFogDensity(
 		inout vec4 UniformDensity,
-		inout vec4 CloudyDensity
+		inout vec4 CloudyDensity,
+		float maxDistance
 	){	
 		// these range 0.0-1.0. they will never overlap.
 		float Inbiome = isJungles+isSwamps+isDarkForests+sandStorm+snowStorm;
@@ -202,9 +203,29 @@
 		BiomeFogDensity.x = isSwamps*SWAMP_UNIFORM_DENSITY + isJungles*JUNGLE_UNIFORM_DENSITY + isDarkForests*DARKFOREST_UNIFORM_DENSITY + sandStorm*15  + snowStorm*150;
 		BiomeFogDensity.y = isSwamps*SWAMP_CLOUDY_DENSITY + isJungles*JUNGLE_CLOUDY_DENSITY + isDarkForests*DARKFOREST_CLOUDY_DENSITY + sandStorm*255 + snowStorm*255;
 		
-		UniformDensity = mix(UniformDensity, vec4(BiomeFogDensity.x), Inbiome);
-		CloudyDensity  = mix(CloudyDensity,  vec4(BiomeFogDensity.y), Inbiome);
+		UniformDensity = mix(UniformDensity, vec4(BiomeFogDensity.x), Inbiome*maxDistance);
+		CloudyDensity  = mix(CloudyDensity,  vec4(BiomeFogDensity.y), Inbiome*maxDistance);
 	}
+
+	float BiomeVLFogColors(inout vec3 DirectLightCol, inout vec3 IndirectLightCol){
+		
+		// this is a little complicated? lmao
+		vec3 BiomeColors = vec3(0.0);
+		BiomeColors.r = isSwamps*SWAMP_R + isJungles*JUNGLE_R + isDarkForests*DARKFOREST_R + sandStorm*1.0 + snowStorm*0.6;
+		BiomeColors.g = isSwamps*SWAMP_G + isJungles*JUNGLE_G + isDarkForests*DARKFOREST_G + sandStorm*0.5 + snowStorm*0.8;
+		BiomeColors.b = isSwamps*SWAMP_B + isJungles*JUNGLE_B + isDarkForests*DARKFOREST_B + sandStorm*0.3 + snowStorm*1.0;
+
+		// insure the biome colors are locked to the fog shape and lighting, but not its orignal color.
+		DirectLightCol = BiomeColors * max(dot(DirectLightCol,vec3(0.33333)), MIN_LIGHT_AMOUNT*0.025 + nightVision*0.2); 
+		
+		IndirectLightCol = BiomeColors * max(dot(IndirectLightCol,vec3(0.33333)), MIN_LIGHT_AMOUNT*0.025 + nightVision*0.2); 
+		
+		// these range 0.0-1.0. they will never overlap.
+		float Inbiome = isJungles+isSwamps+isDarkForests+sandStorm+snowStorm;
+
+		return Inbiome;
+	}
+
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -213,7 +234,9 @@
 
 #ifdef TIMEOFDAYFOG
 	// uniform int worldTime;
-	void TimeOfDayFog(inout float Uniform, inout float Cloudy) {
+	void TimeOfDayFog(
+		inout float Uniform, inout float Cloudy, float maxDistance
+	) {
 	
 	    float Time = worldTime%24000; 
 
@@ -233,7 +256,7 @@
 		#endif
 
 		#ifdef PER_BIOME_ENVIRONMENT
-			BiomeFogDensity(UniformDensity, CloudyDensity); // let biome fog hijack to control densities, and overrride any other density controller...
+			BiomeFogDensity(UniformDensity, CloudyDensity, maxDistance); // let biome fog hijack to control densities, and overrride any other density controller...
 		#endif
 
 		Uniform *= Morning*UniformDensity.r + Noon*UniformDensity.g + Evening*UniformDensity.b + Night*UniformDensity.a;

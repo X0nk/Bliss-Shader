@@ -248,6 +248,7 @@ void main() {
 	vec3 np3 = normVec(p3);
 
   float linearDistance = length(p3);
+  float linearDistance_cylinder = length(p3.xz);
 
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 	float lightleakfixfast = clamp(eyeBrightness.y/240.,0.0,1.0);
@@ -292,9 +293,9 @@ void main() {
   #if defined BorderFog
 
     #ifdef DISTANT_HORIZONS
-      float fog = 1.0 - pow(1.0-pow(1.0-min(max(1.0 - linearDistance / dhFarPlane,0.0)*3.0,1.0),2.0),2.0);
+      float fog = 1.0 - pow(1.0-pow(1.0-min(max(1.0 - linearDistance_cylinder / dhFarPlane,0.0)*3.0,1.0),2.0),2.0);
     #else
-    	float fog =  1.0 - pow(1.0-pow(1.0-min(max(1.0 - linearDistance / far,0.0)*5.0,1.0),2.0),2.0);
+    	float fog =  1.0 - pow(1.0-pow(1.0-min(max(1.0 - linearDistance_cylinder / far,0.0)*5.0,1.0),2.0),2.0);
     #endif
 
     fog *= exp(-10.0 * pow(clamp(np3.y,0.0,1.0)*4.0,2.0));

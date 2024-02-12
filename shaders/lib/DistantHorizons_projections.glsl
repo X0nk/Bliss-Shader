@@ -33,9 +33,13 @@ vec3 toScreenSpace_DH( vec2 texcoord, float depth, float DHdepth ) {
 }
 vec3 toClipSpace3_DH( vec3 viewSpacePosition, bool depthCheck ) {
 
-	mat4 projectionMatrix = depthCheck ? dhProjection : gbufferProjection;
+	#ifdef DISTANT_HORIZONS
+		mat4 projectionMatrix = depthCheck ? dhProjection : gbufferProjection;
+   		return projMAD(projectionMatrix, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+	#else
+    	return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+	#endif
 
-    return projMAD(projectionMatrix, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 }
 
 mat4 DH_shadowProjectionTweak( in mat4 projection){

@@ -43,6 +43,7 @@ vec3 toScreenSpace(vec3 p) {
     vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
     return fragposition.xyz / fragposition.w;
 }
+
 float R2_dither(){
 	vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
 	vec2 alpha = vec2(0.75487765, 0.56984026);
@@ -76,32 +77,6 @@ vec3 normVec (vec3 vec){
 	return vec*inversesqrt(dot(vec,vec));
 }
 
-#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
-	uniform mat4 dhPreviousProjection;
-	uniform mat4 dhProjectionInverse;
-	uniform mat4 dhProjection;
-
-	vec3 DH_toScreenSpace(vec3 p) {
-		vec4 iProjDiag = vec4(dhProjectionInverse[0].x, dhProjectionInverse[1].y, dhProjectionInverse[2].zw);
-	    vec3 feetPlayerPos = p * 2. - 1.;
-	    vec4 viewPos = iProjDiag * feetPlayerPos.xyzz + dhProjectionInverse[3];
-	    return viewPos.xyz / viewPos.w;
-	}
-
-	vec3 DH_toClipSpace3(vec3 viewSpacePosition) {
-	    return projMAD(dhProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
-	}
-
-	uniform float dhFarPlane;
-	uniform float dhNearPlane;
-	float DH_ld(float dist) {
-	    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
-	}
-	float DH_inv_ld (float lindepth){
-		return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
-	}
-	
 #include "/lib/lightning_stuff.glsl"
 
 #include "/lib/sky_gradient.glsl"

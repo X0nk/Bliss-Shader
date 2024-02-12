@@ -75,6 +75,22 @@ float R2_dither(){
 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
 
+//3D noise from 2d texture
+float densityAtPos(in vec3 pos){
+	pos /= 18.;
+	pos.xz *= 0.5;
+	vec3 p = floor(pos);
+	vec3 f = fract(pos);
+	vec2 uv =  p.xz + f.xz + p.y * vec2(0.0,193.0);
+	vec2 coord =  uv / 512.0;
+	
+	//The y channel has an offset to avoid using two textures fetches
+	vec2 xy = texture2D(noisetex, coord).yx;
+
+	return mix(xy.r,xy.g, f.y);
+}
+uniform vec3 cameraPosition;
+
 /* RENDERTARGETS:1,7,8 */
 void main() {
     // overdraw prevention
@@ -90,7 +106,16 @@ void main() {
     
     // alpha is material masks, set it to 0.65 to make a DH LODs mask. 
     vec4 Albedo = vec4(gcolor.rgb, 1.0);
- 
+
+    // vec3 worldPos = mat3(gbufferModelViewInverse)*pos.xyz + cameraPosition;
+    // worldPos = (worldPos*vec3(1.0,1./48.,1.0)/4) ;
+    // worldPos = floor(worldPos * 4.0 + 0.001) / 32.0;
+    // float noiseTexture = densityAtPos(worldPos* 5000 ) +0.5;
+
+    // float noiseFactor = max(1.0 - 0.3 * dot(Albedo.rgb, Albedo.rgb),0.0);
+    // Albedo.rgb *= pow(noiseTexture, 0.6 * noiseFactor);
+    // Albedo.rgb *= (noiseTexture*noiseTexture)*0.5 + 0.5;
+
     #ifdef WhiteWorld
         Albedo.rgb = vec3(0.5);
     #endif

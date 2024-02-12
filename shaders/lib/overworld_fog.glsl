@@ -14,7 +14,7 @@ float densityAtPosFog(in vec3 pos){
 }
 
 
-float cloudVol(in vec3 pos){
+float cloudVol(in vec3 pos, float maxDistance ){
 
 	vec3 samplePos = pos*vec3(1.0,1./24.,1.0);
 	vec3 samplePos2 = pos*vec3(1.0,1./48.,1.0);
@@ -40,7 +40,7 @@ float cloudVol(in vec3 pos){
 	  	if(sandStorm > 0 || snowStorm > 0) CloudyFog = mix(CloudyFog, max(densityAtPosFog((samplePos2  - vec3(frameTimeCounter,0,frameTimeCounter)*10) * 100.0 ) - 0.2,0.0) * heightlimit, sandStorm+snowStorm);
 	#endif
 
-	TimeOfDayFog(UniformFog, CloudyFog);
+	TimeOfDayFog(UniformFog, CloudyFog, maxDistance);
 
 	float noise = densityAtPosFog(samplePos * 12.0);
     float erosion = 1.0-densityAtPosFog(samplePos2 * (125 - (1-pow(1-noise,5))*25));
@@ -51,9 +51,9 @@ float cloudVol(in vec3 pos){
 	// float testfogshapes = clumpyFog*30;
 	// return testfogshapes;
 
+	// return max(exp( max(pos.y - 90,0.0)  / -1), 0.0) * 100;
 	return CloudyFog + UniformFog + RainFog;
 	
-	// float groundFog = max(exp( max(pos.y - 90,0.0)  / -1), 0.0) * 100;
 
 }
 
@@ -139,8 +139,9 @@ vec4 GetVolumetricFog(
 		LightSourcePhased = vec3(0.0);
 	#endif
 	#ifdef PER_BIOME_ENVIRONMENT
-		BiomeFogColor(LightSourcePhased);
-		BiomeFogColor(skyLightPhased);
+		vec3 biomeDirect = LightSourcePhased; 
+		vec3 biomeIndirect = skyLightPhased;
+		float inBiome = BiomeVLFogColors(biomeDirect, biomeIndirect);
 	#endif
 
 	skyLightPhased = max(skyLightPhased + skyLightPhased*(normalize(wpos).y*0.9+0.1),0.0);
@@ -200,7 +201,13 @@ vec4 GetVolumetricFog(
 			sh *= GetCloudShadow_VLFOG(progressW, WsunVec);
 		#endif
 		
-		float densityVol = cloudVol(progressW) * lightleakfix;
+
+		#ifdef PER_BIOME_ENVIRONMENT
+			float maxDistance = inBiome * min(max(1.0 -  length(d*dVWorld.xz)/(32*8),0.0)*2.0,1.0);
+			float densityVol = cloudVol(progressW, maxDistance) * lightleakfix;
+		#else
+			float densityVol = cloudVol(progressW, 0.0) * lightleakfix;
+		#endif
 		//Water droplets(fog)
 		float density = densityVol*300.0;
 
@@ -213,11 +220,18 @@ vec4 GetVolumetricFog(
 		vec3 rL = rC*airCoef.x;
 		vec3 m = (airCoef.y+density) * mC;
 
-		vec3 Atmosphere = skyLightPhased * (rL*RLmult + m); // not pbr so just make the atmosphere also dense fog heh
-		vec3 DirectLight = LightSourcePhased * sh * ((rL*RLmult)*rayL + m);
+		#ifdef PER_BIOME_ENVIRONMENT
+			vec3 Atmosphere = mix(skyLightPhased, biomeDirect, maxDistance) * (rL*RLmult + m); // not pbr so just make the atmosphere also dense fog heh
+			vec3 DirectLight = mix(LightSourcePhased, biomeIndirect, maxDistance)  * sh * ((rL*RLmult)*rayL + m);
+		#else
+			vec3 Atmosphere = skyLightPhased * (rL*RLmult + m); // not pbr so just make the atmosphere also dense fog heh
+			vec3 DirectLight = LightSourcePhased * sh * ((rL*RLmult)*rayL + m);
+		#endif
 		vec3 Lightning = Iris_Lightningflash_VLfog(progressW-cameraPosition, lightningBoltPosition.xyz) * (rL + m);
 
 		vec3 foglighting = (Atmosphere + DirectLight + Lightning) * lightleakfix;
+		
+
 
 		color += (foglighting - foglighting * exp(-(rL+m)*dd*dL)) / ((rL+m)+0.00000001)*absorbance;
 		absorbance *= clamp(exp(-(rL+m)*dd*dL),0.0,1.0);
