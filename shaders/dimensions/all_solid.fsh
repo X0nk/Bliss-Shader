@@ -279,14 +279,15 @@ vec4 texture2D_POMSwitch(
 //////////////////////////////VOID MAIN//////////////////////////////
 
 varying vec3 pos;
+
 #ifdef HAND
 	/* RENDERTARGETS: 1,7,8,15,2 */
 #else
 	/* RENDERTARGETS: 1,7,8,15 */
 #endif
+
 void main() {
 	
-    #endif
 
 	bool ifPOM = false;
 
