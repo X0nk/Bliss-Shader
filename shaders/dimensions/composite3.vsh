@@ -2,8 +2,11 @@
 
 varying vec2 texcoord;
 flat varying vec3 zMults;
+flat varying vec3 zMults_DH;
 uniform float far;
 uniform float near;
+uniform float dhFarPlane;
+uniform float dhNearPlane;
 
 flat varying vec2 TAA_Offset;
 uniform int framemod8;
@@ -37,6 +40,8 @@ void main() {
 	TAA_Offset = offsets[framemod8];
 
 	zMults = vec3(1.0/(far * near),far+near,far-near);
+	zMults_DH = vec3(1.0/(dhFarPlane * dhNearPlane),dhFarPlane+dhNearPlane,dhFarPlane-dhNearPlane);
+
 	gl_Position = ftransform();
 	texcoord = gl_MultiTexCoord0.xy;
 

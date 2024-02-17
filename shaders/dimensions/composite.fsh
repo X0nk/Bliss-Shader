@@ -13,6 +13,7 @@ uniform sampler2D dhDepthTex1;
 uniform sampler2D colortex1;
 uniform sampler2D colortex6; // Noise
 uniform sampler2D colortex8; // Noise
+uniform sampler2D colortex14; // Noise
 uniform sampler2D colortex15; // Noise
 uniform sampler2D shadow;
 uniform sampler2D noisetex;
@@ -77,12 +78,13 @@ vec2 tapLocation2(int sampleNumber, int nb, float jitter){
 
     return vec2(cos_v, sin_v)*sqrt(alpha);
 }
+float interleaved_gradientNoise_temporal(){
+	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
+}
 float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy + (frameCounter%40000);
-	// vec2 coord = gl_FragCoord.xy + frameTimeCounter;
-	// vec2 coord = gl_FragCoord.xy;
-	float noise = fract( 52.9829189 * fract( (coord.x * 0.06711056) + (coord.y * 0.00583715)) );
-	return noise ;
+	vec2 coord = gl_FragCoord.xy;
+	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
+	return noise;
 }
 vec3 decode (vec2 encn){
     vec3 n = vec3(0.0);
@@ -136,12 +138,15 @@ vec2 tapLocation_simple(
 
     return vec2(cos_v, sin_v) * sqrt(alpha);
 }
+
 vec2 SpiralSample(
 	int samples, int totalSamples, float rotation, float Xi
 ){
+	Xi = max(Xi,0.0015);
+	
     float alpha = float(samples + Xi) * (1.0 / float(totalSamples));
 	
-    float theta = 3.14159265359 * alpha * rotation ;
+    float theta = (2.0 *3.14159265359) * alpha * rotation;
 
     float r = sqrt(Xi);
 	float x = r * sin(theta);
@@ -150,6 +155,23 @@ vec2 SpiralSample(
     return vec2(x, y);
 }
 
+vec3 cosineHemisphereSample(vec2 Xi){
+    float theta = 2.0 * 3.14159265359 * Xi.y;
+
+    float r = sqrt(Xi.x);
+    float x = r * cos(theta);
+    float y = r * sin(theta);
+
+    return vec3(x, y, sqrt(clamp(1.0 - Xi.x,0.,1.)));
+}
+
+vec3 rodSample(vec2 Xi)
+{
+	float r = sqrt(Xi.x);
+    float phi = 2 * 3.14159265359 * Xi.y;
+
+    return normalize(vec3(cos(phi) * r, sin(phi) * r, sqrt(clamp(1.0 - Xi.x,0.,1.)))).xzy;
+}
 
 
 #include "/lib/DistantHorizons_projections.glsl"
@@ -165,16 +187,105 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
     return (near * far) / (depth * (near - far) + far);
 }
 
+vec2 SSAO(
+	vec3 viewPos, vec3 normal, bool hand, bool leaves, float noise
+){
+	if(hand) return vec2(1.0,0.0);
+	int samples = 7;
+	float occlusion = 0.0; 
+	float sss = 0.0;
 
 
-/* DRAWBUFFERS:3 */
-void main() {
-	vec2 texcoord = gl_FragCoord.xy*texelSize;
+	float dist = 1.0 + clamp(viewPos.z*viewPos.z/50.0,0,5); // shrink sample size as distance increases
+	float mulfov2 = gbufferProjection[1][1]/(3 * dist);
+	float maxR2 = viewPos.z*viewPos.z*mulfov2*2.*5/50.0;
+
+	#ifdef Ambient_SSS
+		float maxR2_2 = viewPos.z*viewPos.z*mulfov2*2.*2./50.0;
+
+		float dist3 = clamp(1-exp( viewPos.z*viewPos.z / -50),0,1);
+		if(leaves) maxR2_2 = mix(10, maxR2_2, dist3);
+	#endif
+
+	vec2 acc = -(TAA_Offset*(texelSize/2))*RENDER_SCALE ;
+
+
+	int n = 0;
+	for (int i = 0; i < samples; i++) {
+		
+		vec2 sampleOffset = SpiralSample(i, 7, 8, noise) * clamp(0.05 + i*0.095, 0.0,0.3)  * mulfov2;
+
+		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio)*RENDER_SCALE);
+
+		if (offset.x >= 0 && offset.y >= 0 && offset.x < viewWidth*RENDER_SCALE.x && offset.y < viewHeight*RENDER_SCALE.y ) {
+			#ifdef DISTANT_HORIZONS
+				float dhdepth = texelFetch2D(dhDepthTex1, offset,0).x;
+			#else
+				float dhdepth = 0.0;
+			#endif
+
+			vec3 t0 = toScreenSpace_DH((offset*texelSize+acc+0.5*texelSize) * (1.0/RENDER_SCALE), texelFetch2D(depthtex1, offset,0).x, dhdepth);
+			vec3 vec = (t0.xyz - viewPos);
+			float dsquared = dot(vec, vec);
+			
+			if (dsquared > 1e-5){
+				if (dsquared < maxR2){
+					float NdotV = clamp(dot(vec*inversesqrt(dsquared), normalize(normal)),0.,1.);
+					occlusion += NdotV * clamp(1.0-dsquared/maxR2,0.0,1.0);
+				}
+
+				#ifdef Ambient_SSS
+					if(dsquared > maxR2_2){
+						float NdotV = 1.0 - clamp(dot(vec*dsquared, normalize(normal)),0.,1.);
+						sss += max((NdotV - (1.0-NdotV)) * clamp(1.0-maxR2_2/dsquared,0.0,1.0) ,0.0);
+					}
+				#endif
+
+				n += 1;
+			}
+		}
+	}
+	return max(1.0 - vec2(occlusion, sss)/n, 0.0);
+}
+
+vec4 encode (vec3 n, vec2 lightmaps){
+	n.xy = n.xy / dot(abs(n), vec3(1.0));
+	n.xy = n.z <= 0.0 ? (1.0 - abs(n.yx)) * sign(n.xy) : n.xy;
+    vec2 encn = clamp(n.xy * 0.5 + 0.5,-1.0,1.0);
 	
-	float z = texture2D(depthtex1,texcoord).x;
-	float DH_depth1 = texture2D(depthtex1,texcoord).x;
+    return vec4(encn,vec2(lightmaps.x,lightmaps.y));
+}
 
-	vec2 tempOffset=TAA_Offset;
+//encoding by jodie
+float encodeVec2(vec2 a){
+    const vec2 constant1 = vec2( 1., 256.) / 65535.;
+    vec2 temp = floor( a * 255. );
+	return temp.x*constant1.x+temp.y*constant1.y;
+}
+float encodeVec2(float x,float y){
+    return encodeVec2(vec2(x,y));
+}
+
+// #include "/lib/indirect_lighting_effects.glsl"
+
+#ifdef DENOISE_SSS_AND_SSAO
+	/* RENDERTARGETS:3,14,12*/
+#else
+	/* RENDERTARGETS:3*/
+#endif
+
+void main() {
+
+	float noise = R2_dither();
+
+	vec2 texcoord = gl_FragCoord.xy*texelSize;
+
+	float z = texture2D(depthtex1,texcoord).x;
+	float DH_depth1 = texture2D(dhDepthTex1,texcoord).x;
+	
+	vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE - TAA_Offset*texelSize*0.5, z, DH_depth1);
+
+
 
 	vec4 data = texture2D(colortex1,texcoord);
 	vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y));
@@ -183,34 +294,65 @@ void main() {
 	vec2 lightmap = dataUnpacked1.yz;
 
 
+
+
 	// bool lightningBolt = abs(dataUnpacked1.w-0.5) <0.01;
-	// bool isLeaf = abs(dataUnpacked1.w-0.55) <0.01;
+	bool isLeaf = abs(dataUnpacked1.w-0.55) <0.01;
 	// bool translucent2 = abs(dataUnpacked1.w-0.6) <0.01;	// Weak translucency
 	// bool translucent4 = abs(dataUnpacked1.w-0.65) <0.01;	// Weak translucency
 	bool entities = abs(dataUnpacked1.w-0.45) < 0.01;	
 	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
 	// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
 
+	
+	#ifdef DENOISE_SSS_AND_SSAO
+		float depth = z;
+
+		#ifdef DISTANT_HORIZONS
+		    float _near = near;
+		    float _far = far*4.0;
+		    if (depth >= 1.0) {
+		        depth = DH_depth1;
+		        _near = dhNearPlane;
+		        _far = dhFarPlane;
+		    }
+
+		    depth = linearizeDepthFast(depth, _near, _far);
+		    depth = depth / dhFarPlane;
+		#endif
+
+		if(depth < 1.0)
+    		gl_FragData[2] = vec4(vec3(0.0), depth * depth * 65000.0);
+		else
+			gl_FragData[2] = vec4(vec3(0.0), 65000.0);
+
+
+		vec3 FlatNormals =  texture2D(colortex15,texcoord).rgb * 2.0 - 1.0;
+
+		if(z >= 1.0){
+			FlatNormals = worldToView(normal);
+		}
+	
+
+		gl_FragData[1] = vec4(0.0,0.0,0.0,texture2D(colortex14,texcoord).a);
+		gl_FragData[1].xy = SSAO(viewPos, FlatNormals, hand, isLeaf, noise);
+
+	#endif
+
+
+	float SpecularTex = texture2D(colortex8,texcoord).z;
+	float LabSSS = clamp((-64.0 + SpecularTex * 255.0) / 191.0 ,0.0,1.0);
+
+	float NdotL = clamp(dot(normal,WsunVec),0.0,1.0);
+	float vanillAO = clamp(texture2D(colortex15,texcoord).a,0.0,1.0)  ;
 
 	float minshadowfilt = Min_Shadow_Filter_Radius;
 	float maxshadowfilt = Max_Shadow_Filter_Radius;
-
-	float NdotL = clamp(dot(normal,WsunVec),0.0,1.0);
-
-	// vec4 normalAndAO = texture2D(colortex15,texcoord);
-	// vec3 FlatNormals = normalAndAO.rgb * 2.0 - 1.0;
-	// float vanillAO = clamp(normalAndAO.a,0.0,1.0)  ;
-
-	float vanillAO = clamp(texture2D(colortex15,texcoord).a,0.0,1.0)  ;
 
 	if(lightmap.y < 0.1 && !entities){
 		// minshadowfilt *= vanillAO;
 		maxshadowfilt = mix(minshadowfilt, maxshadowfilt, 	vanillAO);
 	}
-
-
-	float SpecularTex = texture2D(colortex8,texcoord).z;
-	float LabSSS = clamp((-64.0 + SpecularTex * 255.0) / 191.0 ,0.0,1.0);
 
 	#ifndef Variable_Penumbra_Shadows
 		if (LabSSS > 0.0 && !hand && NdotL < 0.001)  minshadowfilt += 50;
@@ -219,15 +361,14 @@ void main() {
 	if (z < 1.0 && !hand){
 
 		gl_FragData[0] = vec4(minshadowfilt, 0.1, 0.0, 0.0);
-		gl_FragData[0].y = 0;
+		gl_FragData[0].a = 0;
 
 		// vec3 viewPos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5,z));
 		
-		vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE-vec2(tempOffset)*texelSize*0.5, z, DH_depth1);
 
 		#ifdef Variable_Penumbra_Shadows
 
-			if (LabSSS > 0.0) {
+			if (LabSSS > 0.0 || NdotL > 0.0001) {
 
 				
 				vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
@@ -258,13 +399,9 @@ void main() {
 					float diffthreshM = diffthresh*mult*d0*k/20.;
 					float avgDepth = 0.0;
 
-					// int seed = (frameCounter%40000) + frameCounter*2;
-					// float noise = fract(R2_samples(seed).y + blueNoise(gl_FragCoord.xy).y);
-					float noise = R2_dither();
-
 					for(int i = 0; i < VPS_Search_Samples; i++){
 
-						vec2 offsetS = SpiralSample(i, 7, 8, noise);
+						vec2 offsetS = SpiralSample(i, 7, 8, noise) * 0.5;
 		
 
 						float weight = 3.0 + (i+noise) *rdMul/SHADOW_FILTER_SAMPLE_COUNT*shadowMapResolution*distortFactor/2.7;
@@ -281,6 +418,7 @@ void main() {
 					
 					gl_FragData[0].g = avgDepth / VPS_Search_Samples;
 					gl_FragData[0].b = blockerCount / VPS_Search_Samples;
+					
 					if (blockerCount >= 0.9){
 						avgBlockerDepth /= blockerCount;
 						float ssample = max(projectedShadowPosition.z - avgBlockerDepth,0.0)*1500.0;

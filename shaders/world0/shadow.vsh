@@ -1,4 +1,5 @@
 #version 120
+#include "/lib/settings.glsl"
 
 
 
@@ -8,7 +9,6 @@ This code is from Chocapic13' shaders
 Read the terms of modification and sharing before changing something below please !
 !! DO NOT REMOVE !!
 */
-#include "/lib/settings.glsl"
 
 #define SHADOW_MAP_BIAS 0.5
 const float PI = 3.1415927;
@@ -37,7 +37,7 @@ uniform vec3 shadowCamera;
 uniform vec3 shadowLightVec;
 uniform float shadowMaxProj;
 attribute vec4 mc_midTexCoord;
-// varying vec4 color;
+varying vec4 color;
 
 attribute vec4 mc_Entity;
 uniform int blockEntityId;
@@ -116,7 +116,7 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 
 void main() {
 	texcoord.xy = gl_MultiTexCoord0.xy;
-	// color = gl_Color;
+	color = gl_Color;
 
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
 

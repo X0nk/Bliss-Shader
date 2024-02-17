@@ -19,6 +19,11 @@ uniform int frameCounter;
 float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 );
 }
+// float R2_dither(){
+// 	vec2 coord = gl_FragCoord.xy;
+// 	vec2 alpha = vec2(0.75487765, 0.56984026);
+// 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
+// }
 void main() {
 	gl_FragData[0] = texture2D(tex,texcoord.xy);
 	
@@ -26,10 +31,10 @@ void main() {
 		gl_FragData[0].a = texture2DLod(tex,texcoord.xy, 0).a;
 	#endif
 
+  	#ifdef Stochastic_Transparent_Shadows
+		if(gl_FragData[0].a < blueNoise()) { discard; return;}
+  	#endif
+
 	#ifdef RENDER_ENTITY_SHADOWS
 	#endif
-
-  #ifdef Stochastic_Transparent_Shadows
-		gl_FragData[0].a = float(gl_FragData[0].a >= blueNoise());
-  #endif
 }

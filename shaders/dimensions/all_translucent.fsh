@@ -30,6 +30,9 @@ const bool colortex4MipmapEnabled = true;
 uniform sampler2D noisetex;
 uniform sampler2D depthtex1;
 uniform sampler2D depthtex0;
+uniform sampler2D dhDepthTex1;
+uniform sampler2D colortex12;
+uniform sampler2D colortex14;
 uniform sampler2D colortex5;
 
 uniform sampler2D texture;
@@ -307,8 +310,11 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	//////////////////////////////// ALBEDO
 	//////////////////////////////// 
 
+
+
 	gl_FragData[0] = texture2D(texture, lmtexcoord.xy, Texture_MipMap_Bias) * color;
-	
+
+
 	
 	vec3 Albedo = toLinear(gl_FragData[0].rgb);
 	float UnchangedAlpha = gl_FragData[0].a;
@@ -607,16 +613,21 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 				gl_FragData[0].a = mix(gl_FragData[0].a, 1.0, fresnel);
 			#endif
 
-			#ifdef DISTANT_HORIZONS 
-    			gl_FragData[0].a = mix(gl_FragData[0].a, 0.0,  1.0-min(max(1.0 - length(feetPlayerPos.xz)/far,0.0)*2.0,1.0) );
-			#endif
 	
 		} else {
+			
 			gl_FragData[0].rgb = FinalColor;
 		}
 	
 	#else
 		gl_FragData[0].rgb = FinalColor;
+	#endif
+	
+    // gl_FragData[0].rgb = vec3(1) * (texelFetch2D(depthtex0,ivec2(gl_FragCoord.xy),0).x - texelFetch2D(dhDepthTex1,ivec2(gl_FragCoord.xy),0).x);
+
+
+	#if defined DISTANT_HORIZONS && defined DH_OVERDRAW_PREVENTION
+    	gl_FragData[0].a = mix(gl_FragData[0].a, 0.0,  1.0-min(max(1.0 - length(feetPlayerPos.xz)/max(far,0.0),0.0)*2.0,1.0) );
 	#endif
 
 	#ifndef HAND

@@ -182,6 +182,7 @@ float luma(vec3 color) {
 //////////////////////////////VOID MAIN//////////////////////////////
 
 
+varying vec3 pos;
 void main() {
 
 	gl_Position = ftransform();
@@ -189,6 +190,7 @@ void main() {
 
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
 	
+    pos = position;
     /////// ----- COLOR STUFF ----- ///////
 	color = gl_Color;
 

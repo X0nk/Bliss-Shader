@@ -102,6 +102,7 @@ void main() {
 
 		vec4 VolumetricClouds = renderClouds(viewPos, vec2(R2_dither(),blueNoise2()), sunColor/80.0, averageSkyCol/30.0);
 
+		// gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);
 		gl_FragData[0] = VolumetricClouds;
 
 

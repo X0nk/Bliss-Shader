@@ -20,13 +20,14 @@ vec3 TangentToWorld(vec3 N, vec3 H, float roughness){
 
     return vec3((T * H.x) + (B * H.y) + (N * H.z));
 }
-
 vec2 SpiralSample(
 	int samples, int totalSamples, float rotation, float Xi
 ){
+	Xi = max(Xi,0.0015);
+	
     float alpha = float(samples + Xi) * (1.0 / float(totalSamples));
 	
-    float theta = 3.14159265359 * alpha * rotation ;
+    float theta = (2.0 *3.14159265359) * alpha * rotation;
 
     float r = sqrt(Xi);
 	float x = r * sin(theta);
@@ -38,6 +39,42 @@ vec2 SpiralSample(
 ////////////////////////////////////////////////////////////////
 /////////////////////////////	SSAO 	////////////////////////
 ////////////////////////////////////////////////////////////////
+
+vec4 BilateralUpscale_SSAO(sampler2D tex, sampler2D depth, vec2 coord, float referenceDepth){
+	const ivec2 scaling = ivec2(1.0);
+	ivec2 posDepth  = ivec2(coord)*scaling;
+	ivec2 posColor  = ivec2(coord);
+
+  	ivec2 pos = ivec2(coord*texelSize);
+
+	ivec2 getRadius[4] = ivec2[](
+    	ivec2(-2,-2),
+	  	ivec2(-2, 0),
+		ivec2( 0, 0),
+		ivec2( 0,-2)
+  	);
+
+	float diffThreshold = 0.005;
+
+	vec4 RESULT = vec4(0.0);
+	float SUM = 0.0;
+
+	for (int i = 0; i < 4; i++) {
+		
+		ivec2 radius = getRadius[i];
+		
+		float offsetDepth = ld(texelFetch2D(depth, (posDepth + radius * scaling + pos * scaling),0).r);
+		
+		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
+		
+		RESULT += texelFetch2D(tex, (posColor + radius + pos),0) * EDGES;
+		
+		SUM += EDGES;
+	}
+
+	return RESULT / SUM;
+
+}
 
 vec2 SSAO(
 	vec3 viewPos, vec3 normal, bool hand, bool leaves, float noise
@@ -64,7 +101,9 @@ vec2 SSAO(
 	int n = 0;
 	for (int i = 0; i < samples; i++) {
 		
-		vec2 sampleOffset = SpiralSample(i, 7, 8, noise) * 0.2 * mulfov2;
+		// vec2 sampleOffset = SpiralSample(i, 7, 8, noise) * 0.2 * mulfov2;
+		
+		vec2 sampleOffset = SpiralSample(i, 7, 8, noise) * clamp(0.05 + i*0.095, 0.0,0.3)  * mulfov2;
 
 		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio)*RENDER_SCALE);
 

@@ -1,6 +1,7 @@
 #include "/lib/settings.glsl"
 
 flat varying vec3 zMults;
+flat varying vec3 zMults_DH;
 
 flat varying vec2 TAA_Offset;
 flat varying vec3 skyGroundColor;
@@ -9,6 +10,7 @@ uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 uniform sampler2D dhDepthTex;
+uniform sampler2D dhDepthTex1;
 
 
 uniform sampler2D colortex0;
@@ -22,7 +24,7 @@ uniform sampler2D colortex8;
 uniform sampler2D colortex9;
 uniform sampler2D colortex10;
 uniform sampler2D colortex11;
-// uniform sampler2D colortex12;
+uniform sampler2D colortex12;
 uniform sampler2D colortex13;
 uniform sampler2D colortex15;
 uniform vec2 texelSize;
@@ -109,45 +111,121 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 
 
 
-vec4 BilateralUpscale(sampler2D tex, sampler2D depth,vec2 coord,float frDepth){
-  coord = coord;
-  vec4 vl = vec4(0.0);
-  float sum = 0.0;
-  mat3x3 weights;
-  const ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
-  ivec2 posD = ivec2(coord*VL_RENDER_RESOLUTION)*scaling;
-  ivec2 posVl = ivec2(coord*VL_RENDER_RESOLUTION);
-  float dz = zMults.x;
-  ivec2 pos = (ivec2(gl_FragCoord.xy) % 2 )*2;
-	//pos = ivec2(1,-1);
+vec4 BilateralUpscale(sampler2D tex, sampler2D depth, vec2 coord, float referenceDepth){
+  
+	const ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
+	ivec2 posDepth  = ivec2(coord*VL_RENDER_RESOLUTION)*scaling;
+	ivec2 posColor  = ivec2(coord*VL_RENDER_RESOLUTION);
 
-  ivec2 tcDepth =  posD + ivec2(-2,-2) * scaling + pos * scaling;
-  float dsample = ld(texelFetch2D(depth,tcDepth,0).r);
-  float w = abs(dsample-frDepth) < dz ? 1.0 : 1e-5;
-  vl += texelFetch2D(tex,posVl+ivec2(-2)+pos,0)*w;
-  sum += w;
+	// vec2 pos = mod(coord,2)*2 - 1;
+  ivec2 pos = ivec2((coord*texelSize) + 1.0);
+  // ivec2 pos = (ivec2(gl_FragCoord.xy) % 2 )*2;
 
-	tcDepth =  posD + ivec2(-2,0) * scaling + pos * scaling;
-  dsample = ld(texelFetch2D(depth,tcDepth,0).r);
-  w = abs(dsample-frDepth) < dz ? 1.0 : 1e-5;
-  vl += texelFetch2D(tex,posVl+ivec2(-2,0)+pos,0)*w;
-  sum += w;
+	ivec2 getRadius[4] = ivec2[](
+    ivec2(-2,-2),
+	  ivec2(-2, 0),
+		ivec2( 0, 0),
+		ivec2( 0,-2)
+  );
 
-	tcDepth =  posD + ivec2(0) + pos * scaling;
-  dsample = ld(texelFetch2D(depth,tcDepth,0).r);
-  w = abs(dsample-frDepth) < dz ? 1.0 : 1e-5;
-  vl += texelFetch2D(tex,posVl+ivec2(0)+pos,0)*w;
-  sum += w;
+	float diffThreshold = zMults.x;
 
-	tcDepth =  posD + ivec2(0,-2) * scaling + pos * scaling;
-  dsample = ld(texelFetch2D(depth,tcDepth,0).r);
-  w = abs(dsample-frDepth) < dz ? 1.0 : 1e-5;
-  vl += texelFetch2D(tex,posVl+ivec2(0,-2)+pos,0)*w;
-  sum += w;
+	vec4 RESULT = vec4(0.0);
+	float SUM = 0.0;
 
-  return vl/sum;
+	for (int i = 0; i < 4; i++) {
+		
+		ivec2 radius = getRadius[i];
+		
+		float offsetDepth = ld(texelFetch2D(depth, (posDepth + radius * scaling + pos * scaling),0).r);
+		
+		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
+		
+		RESULT += texelFetch2D(tex, (posColor + radius + pos),0) * EDGES;
+		
+		SUM += EDGES;
+	}
+
+	return RESULT / SUM;
+  
+  
+  // coord = coord;
+  // vec4 vl = vec4(0.0);
+  // float sum = 0.0;
+  // mat3x3 weights;
+  // const ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
+  // ivec2 posD = ivec2(coord*VL_RENDER_RESOLUTION)*scaling;
+  // ivec2 posVl = ivec2(coord*VL_RENDER_RESOLUTION);
+  // float dz = zMults.x;
+  // ivec2 pos = (ivec2(gl_FragCoord.xy) % 2 )*2;
+	// //pos = ivec2(1,-1);
+
+  // ivec2 tcDepth =  posD + ivec2(-2,-2) * scaling + pos * scaling;
+  // float dsample = ld(texelFetch2D(depth,tcDepth,0).r);
+  // float w = abs(dsample-frDepth) < dz ? 1.0 : 1e-5;
+  // vl += texelFetch2D(tex,posVl+ivec2(-2)+pos,0)*w;
+  // sum += w;
+
+	// tcDepth =  posD + ivec2(-2,0) * scaling + pos * scaling;
+  // dsample = ld(texelFetch2D(depth,tcDepth,0).r);
+  // w = abs(dsample-frDepth) < dz ? 1.0 : 1e-5;
+  // vl += texelFetch2D(tex,posVl+ivec2(-2,0)+pos,0)*w;
+  // sum += w;
+
+	// tcDepth =  posD + ivec2(0) + pos * scaling;
+  // dsample = ld(texelFetch2D(depth,tcDepth,0).r);
+  // w = abs(dsample-frDepth) < dz ? 1.0 : 1e-5;
+  // vl += texelFetch2D(tex,posVl+ivec2(0)+pos,0)*w;
+  // sum += w;
+
+	// tcDepth =  posD + ivec2(0,-2) * scaling + pos * scaling;
+  // dsample = ld(texelFetch2D(depth,tcDepth,0).r);
+  // w = abs(dsample-frDepth) < dz ? 1.0 : 1e-5;
+  // vl += texelFetch2D(tex,posVl+ivec2(0,-2)+pos,0)*w;
+  // sum += w;
+
+  // return vl/sum;
 }
 
+vec4 BilateralUpscale_DH(sampler2D tex, sampler2D depth, vec2 coord, float referenceDepth, bool depthCheck){
+
+	const ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
+	ivec2 posDepth  = ivec2(coord*VL_RENDER_RESOLUTION)*scaling;
+	ivec2 posColor  = ivec2(coord*VL_RENDER_RESOLUTION);
+
+	// vec2 pos = mod(coord,2)*2 - 1;
+  	ivec2 pos = ivec2(coord*texelSize) + 1;
+  // ivec2 pos = (ivec2(gl_FragCoord.xy) % 2 )*2;
+
+	ivec2 getRadius[4] = ivec2[](
+    ivec2(-2,-2),
+	  ivec2(-2, 0),
+		ivec2( 0, 0),
+		ivec2( 0,-2)
+  );
+
+	// float diffThreshold = referenceDepth;
+  
+  float diffThreshold = zMults_DH.x;
+
+	vec4 RESULT = vec4(0.0);
+	float SUM = 0.0;
+
+	for (int i = 0; i < 4; i++) {
+		
+		ivec2 radius = getRadius[i];
+		
+		float offsetDepth = sqrt(texelFetch2D(depth, (posDepth + radius * scaling + pos * scaling),0).a/65000.0);
+		
+		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
+		
+		RESULT += texelFetch2D(tex, (posColor + radius + pos),0) * EDGES;
+		
+		SUM += EDGES;
+	}
+
+	return RESULT / SUM;
+}
 vec3 decode (vec2 encn){
     vec3 n = vec3(0.0);
     encn = encn * 2.0 - 1.0;
@@ -222,24 +300,24 @@ void main() {
   float frDepth = ld(z2);
 
 	float swappedDepth = z;
+
 	#ifdef DISTANT_HORIZONS
     float DH_depth0 = texture2D(dhDepthTex,texcoord).x;
 		float depthOpaque = z;
 		float depthOpaqueL = linearizeDepthFast(depthOpaque, near, farPlane);
 		
-		#ifdef DISTANT_HORIZONS
-		    float dhDepthOpaque = DH_depth0;
-		    float dhDepthOpaqueL = linearizeDepthFast(dhDepthOpaque, dhNearPlane, dhFarPlane);
-			if (depthOpaque >= 1.0 || (dhDepthOpaqueL < depthOpaqueL && dhDepthOpaque > 0.0)){
-		      depthOpaque = dhDepthOpaque;
-		      depthOpaqueL = dhDepthOpaqueL;
-		    }
-		#endif
+		float dhDepthOpaque = DH_depth0;
+		float dhDepthOpaqueL = linearizeDepthFast(dhDepthOpaque, dhNearPlane, dhFarPlane);
+	  if (depthOpaque >= 1.0 || (dhDepthOpaqueL < depthOpaqueL && dhDepthOpaque > 0.0)){
+		  depthOpaque = dhDepthOpaque;
+		  depthOpaqueL = dhDepthOpaqueL;
+		}
 
-			swappedDepth = depthOpaque;
-		#else
-			float DH_depth0 = 0.0;
-		#endif
+		swappedDepth = depthOpaque;
+
+	#else
+		float DH_depth0 = 0.0;
+	#endif
 
 	vec3 fragpos = toScreenSpace_DH(texcoord/RENDER_SCALE-vec2(TAA_Offset)*texelSize*0.5, z, DH_depth0);
   
@@ -274,7 +352,12 @@ void main() {
   float translucentAlpha = trpData;
 
   ////// --------------- get volumetrics
-  vec4 vl = BilateralUpscale(colortex0, depthtex1, gl_FragCoord.xy, frDepth);
+  #ifdef DISTANT_HORIZONS
+    vec4 vl = BilateralUpscale_DH(colortex0, colortex12, gl_FragCoord.xy, sqrt(texture2D(colortex12,texcoord).a/65000.0), z >= 1.0);
+  #else
+    vec4 vl = BilateralUpscale(colortex0, depthtex0, gl_FragCoord.xy, frDepth);
+  #endif
+
   float bloomyFogMult = 1.0;
 
   ////// --------------- distort texcoords as a refraction effect
@@ -410,6 +493,7 @@ void main() {
       vl.a = 1.0;
     }
   #endif
+// color.rgb = vec3(1) * sqrt(texture2D(colortex12,texcoord).a/65000.0);
 
   gl_FragData[0].r = vl.a * bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);

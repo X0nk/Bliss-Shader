@@ -137,9 +137,13 @@ void main() {
    	}
 
 	// only need to sample one spot for this
+	// averageSkyCol_Clouds = max(averageSkyCol_Clouds * (1.0/(luma(averageSkyCol_Clouds)*0.25+0.75)), minimumlight);
+	// averageSkyCol = max(averageSkyCol*PLANET_GROUND_BRIGHTNESS, minimumlight);
+	
+	// maximum control of color and luminance
 	vec3 minimumlight =  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.003 + nightVision);
-	averageSkyCol_Clouds = max(averageSkyCol_Clouds * (1.0/(luma(averageSkyCol_Clouds)*0.25+0.75)), minimumlight);
-	averageSkyCol = max(averageSkyCol*PLANET_GROUND_BRIGHTNESS, minimumlight);
+	averageSkyCol_Clouds = max(	normalize(averageSkyCol_Clouds) * min(luma(averageSkyCol_Clouds) * 3.0,3.0), minimumlight);
+	averageSkyCol = max( normalize(averageSkyCol) * min(luma(averageSkyCol) * 3.0,3.0) * PLANET_GROUND_BRIGHTNESS, minimumlight);
 
 ////////////////////////////////////////
 /// --- SUNLIGHT/MOONLIGHT STUFF --- ///

@@ -16,7 +16,7 @@ const int colortex11Format = RGBA16; 				// unchanged translucents albedo, alpha
 
 const int colortex12Format = RGBA16F;				// DISTANT HORIZONS + VANILLA MIXED DEPTHs
 
-const int colortex14Format = RGBA8;					// a = skylightmap for translucents.
+const int colortex14Format = RGBA8;					// rg = SSAO and SS-SSS. a = skylightmap for translucents.
 const int colortex15Format = RGBA8;					// flat normals and vanilla AO
 */
 
@@ -35,7 +35,7 @@ const bool colortex10Clear = true;
 const bool colortex11Clear = true;
 const bool colortex12Clear = false;
 const bool colortex13Clear = false;
-const bool colortex14Clear = true;
+const bool colortex14Clear = false;
 const bool colortex15Clear = false;
 
 

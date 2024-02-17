@@ -233,6 +233,7 @@ float ld(float dist) {
 /* RENDERTARGETS:2,7 */
 void main() {
 
+if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	{
     bool iswater = isWater > 0;
 
     vec3 normals = normals_and_materials.xyz;
@@ -263,10 +264,12 @@ void main() {
 
 	vec4 COLORTEST = gl_FragData[0];
 
+	#ifndef Vanilla_like_water
     if(iswater){
 	    Albedo = vec3(0.0);
 	    gl_FragData[0].a = 1.0/255.0;
     }
+    #endif
 
     // diffuse
     vec3 Direct_lighting = lightCol.rgb/80.0;
@@ -351,8 +354,9 @@ void main() {
     
     float material = 1.0;
     #ifdef DH_OVERDRAW_PREVENTION
-        float distancefade = min(max(1.0 - length(pos.xz)/far,0.0)*2.0,1.0);
+        float distancefade = min(max(1.0 - length(pos.xz)/max(far-16.0,0.0),0.0)*2.0,1.0);
         gl_FragData[0].a = mix(gl_FragData[0].a, 0.0, distancefade);
+        
         material = distancefade < 1.0 ?  1.0 : 0.0;
 
         if(texture2D(depthtex1, gl_FragCoord.xy*texelSize).x < 1.0){
@@ -360,10 +364,12 @@ void main() {
             material = 0.0;
         }
     #endif
-
-	#if DEBUG_VIEW == debug_DH_WATER_BLENDING
+    
+	
+    #if DEBUG_VIEW == debug_DH_WATER_BLENDING
         if(gl_FragCoord.x*texelSize.x > 0.53) gl_FragData[0] = vec4(0.0);
     #endif
-	
+
     gl_FragData[1] = vec4(Albedo, material);
+}
 }

@@ -95,11 +95,8 @@ uniform float noPuddleAreas;
 // float interleaved_gradientNoise(){
 // 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
 // }
-float interleaved_gradientNoise_temp(){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	vec2 coord = vec2(alpha.x * gl_FragCoord.x,alpha.y * gl_FragCoord.y)+ 1.0/1.6180339887 * frameCounter;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
+float interleaved_gradientNoise_temporal(){
+	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
 }
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy;
@@ -281,13 +278,15 @@ vec4 texture2D_POMSwitch(
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 
+varying vec3 pos;
 #ifdef HAND
 	/* RENDERTARGETS: 1,7,8,15,2 */
 #else
 	/* RENDERTARGETS: 1,7,8,15 */
 #endif
 void main() {
-
+	
+    #endif
 
 	bool ifPOM = false;
 
@@ -311,6 +310,14 @@ void main() {
 	vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
 	vec3 worldpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz + cameraPosition;
 
+    // #ifdef DH_OVERDRAW_PREVENTION
+    //     // overdraw prevention
+    //     if(clamp(1.0-length(pos.xyz)/max(far,0.0),0.0,1.0) <= 0.0 ){
+    //         discard;
+    //         return;
+    //     }
+	// #endif
+	
 	float torchlightmap = lmtexcoord.z;
 
 	#ifdef Hand_Held_lights

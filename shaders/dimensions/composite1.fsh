@@ -607,6 +607,46 @@ vec3 getViewPos() {
 }
 
 
+vec4 BilateralUpscale_DH(sampler2D tex, sampler2D depth, vec2 coord, float referenceDepth, bool depthCheck){
+
+	const ivec2 scaling = ivec2(1.0);
+	ivec2 posDepth  = ivec2(coord)*scaling;
+	ivec2 posColor  = ivec2(coord);
+
+	// vec2 pos = mod(coord,2)*2 - 1;
+  	ivec2 pos = ivec2(coord*texelSize) + 1;
+  // ivec2 pos = (ivec2(gl_FragCoord.xy) % 2 )*2;
+
+	ivec2 getRadius[4] = ivec2[](
+    	ivec2(-2,-2),
+		ivec2(-2, 0),
+		ivec2( 0, 0),
+		ivec2( 0,-2)
+  	);
+
+	// float diffThreshold = referenceDepth;
+  
+	float diffThreshold = 0.0002;
+
+	vec4 RESULT = vec4(0.0);
+	float SUM = 0.0;
+
+	for (int i = 0; i < 4; i++) {
+		
+		ivec2 radius = getRadius[i];
+		
+		float offsetDepth = sqrt(texelFetch2D(depth, (posDepth + radius * scaling + pos * scaling),0).a/65000.0);
+		
+		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
+		
+		RESULT += texelFetch2D(tex, (posColor + radius + pos),0) * EDGES;
+		
+		SUM += EDGES;
+	}
+
+	return RESULT / SUM;
+}
+
 void main() {
 
 		vec3 DEBUG = vec3(1.0);
@@ -768,8 +808,15 @@ void main() {
 
 
 			vec3 filteredShadow = vec3(1.412,1.0,0.0);
-			if (!hand) filteredShadow = texture2D(colortex3,texcoord).rgb;
+			
+			#ifdef DENOISE_SSS_AND_SSAO
+				if (!hand) filteredShadow = BilateralUpscale_SSAO(colortex3, depthtex0, gl_FragCoord.xy, ld(z0)).rgb;
+			#else
+				if (!hand) filteredShadow = texture2D(colortex3,texcoord).rgb;
+			#endif
+
 			float ShadowBlockerDepth = filteredShadow.y;
+
 			
 			Shadows = clamp(1.0 - filteredShadow.b,0.0,1.0);
 			shadowMap = Shadows;
@@ -873,6 +920,8 @@ void main() {
 				projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
 
 				float biasOffset = 0.0;
+				if(hand) biasOffset = -0.00035;
+
 				#ifdef BASIC_SHADOW_FILTER
 					float rdMul = filteredShadow.x*distortFactor*d0*k/shadowMapResolution;
 
@@ -967,7 +1016,15 @@ void main() {
 	/////////////////////////////////////////////////////////////////////////////////
 
 		#if indirect_effect == 1
-			vec2 SSAO_SSS = SSAO(viewPos, FlatNormals, hand, isLeaf, noise);
+			#ifdef DENOISE_SSS_AND_SSAO
+				#ifdef DISTANT_HORIZONS
+					vec2 SSAO_SSS = BilateralUpscale_DH(colortex14, colortex12, gl_FragCoord.xy, sqrt(texture2D(colortex12,texcoord).a/65000.0), z >= 1.0).xy;
+				#else
+					vec2 SSAO_SSS = BilateralUpscale_SSAO(colortex14, depthtex0, gl_FragCoord.xy, ld(z)).xy;
+				#endif
+			#else
+				vec2 SSAO_SSS = SSAO(viewPos, FlatNormals, hand, isLeaf, noise_2);
+			#endif
 		#endif
 
 		#if defined OVERWORLD_SHADER && (indirect_effect == 0 || indirect_effect == 1)
@@ -1053,7 +1110,8 @@ void main() {
 
 		#if indirect_effect == 1
 			vec3 AO = vec3( exp( (vanilla_AO*vanilla_AO) * -3) );
-			AO *= SSAO_SSS.x*SSAO_SSS.x;
+
+			AO *= SSAO_SSS.x*SSAO_SSS.x*SSAO_SSS.x;
 			SkySSS = SSAO_SSS.y;
 
 			Indirect_lighting *= AO;
@@ -1167,7 +1225,7 @@ void main() {
 
 			
 			vec3 lightningColor = (lightningEffect / 3) * (max(eyeBrightnessSmooth.y,0)/240.);
-			vec3 ambientColVol =  max((averageSkyCol_Clouds / 30.0) * custom_lightmap_T, vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision)) ;
+			vec3 ambientColVol =  max((averageSkyCol_Clouds / 30.0) * custom_lightmap_T , vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision)) ;
 
 			waterVolumetrics(gl_FragData[0].rgb, viewPos0, viewPos, estimatedDepth, estimatedSunDepth, Vdiff, noise_2, totEpsilon, scatterCoef, ambientColVol, lightColVol, dot(feetPlayerPos_normalized, WsunVec));		
 		}
@@ -1184,8 +1242,7 @@ void main() {
 		}
 	#endif
 	
-	
-	
+	// gl_FragData[0].rgb = vec3(1)  * (abs(ld(texture2D(depthtex0,texcoord + vec2(0.001,0)).r)	 - ld(z0))  < (1.0/(far * near))*0.1 ? 1.0 : 1e-5 );
 	
 	//////// DEBUG VIEW STUFF
 	#if DEBUG_VIEW == debug_SHADOWMAP

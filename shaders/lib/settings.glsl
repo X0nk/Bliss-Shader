@@ -492,7 +492,7 @@ uniform int moonPhase;
 #define TAA
 // #define SCREENSHOT_MODE
 // #define TAA_UPSCALING
-#define BLEND_FACTOR 0.05 // [0.01 0.02 0.03 0.04 0.05 0.06 0.08 0.1 0.12 0.14 0.16]
+#define BLEND_FACTOR 0.16 // [0.01 0.02 0.03 0.04 0.05 0.06 0.08 0.1 0.12 0.14 0.16 0.18 0.20 0.30 0.40 0.50 0.60 0.70 0.80 0.90 1.00]
 #define CLOSEST_VELOCITY
 //#define NO_CLIP
 
@@ -595,9 +595,9 @@ uniform int moonPhase;
 
 
 
-/////////////////////////////////////////////
-// ----- MISC/DEBUG RELATED SETTINGS ----- //
-/////////////////////////////////////////////
+///////////////////////////////
+// ----- MISC SETTINGS ----- //
+///////////////////////////////
 
 // #define Glass_Tint // multiply the background through glass by the color of the glass for a strong tint.
 // #define ambientLight_only // THIS IS A DEBUG VIEW. turn the sunlight off. DOES NOT increase performance, the shadows are still working in the background
@@ -628,6 +628,13 @@ uniform int moonPhase;
 
 #define TRANSLUCENT_ENTITIES
 
+#define DENOISE_SSS_AND_SSAO
+
+///////////////////////////////////////////
+// ----- DISTANT HORIZONS SETTINGS ----- //
+///////////////////////////////////////////
+
+/// distant horizons stuff
 #define DISTORT_SHADOWMAP
 // #define DISTANT_HORIZONS_SHADOWMAP
 #ifdef DISTANT_HORIZONS_SHADOWMAP
@@ -640,6 +647,15 @@ uniform int moonPhase;
 
 // #define DH_SHADOWPROJECTIONTWEAK
 
+#define DH_OVERDRAW_PREVENTION
+#define DH_KNOWN_ISSUES 0 // [0 1 2 3 4 5]
+
+
+////////////////////////////////
+// ----- DEBUG SETTINGS ----- //
+////////////////////////////////
+
+
 #define debug_OFF 0
 #define debug_SHADOWMAP 1
 #define debug_NORMALS 2
@@ -650,12 +666,13 @@ uniform int moonPhase;
 #define debug_DH_WATER_BLENDING 7
 #define DEBUG_VIEW debug_OFF // [debug_OFF debug_SHADOWMAP debug_NORMALS debug_SPECULAR debug_INDIRECT debug_DIRECT debug_VIEW_POSITION debug_DH_WATER_BLENDING]
 
+/////////////////////////////////
+// ----- RANDOM SETTINGS ----- //
+/////////////////////////////////
+
 // #define BLOOMY_PARTICLES
 // #define ORIGINAL_CHOCAPIC_SKY
 // #define CLOUDS_INFRONT_OF_WORLD
-
-#define DH_OVERDRAW_PREVENTION
-#define DH_KNOWN_ISSUES 0 // [0 1 2 3 4 5]
 
 // fix settings
 #if RESOURCEPACK_SKY == 0
