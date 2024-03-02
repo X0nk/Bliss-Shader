@@ -386,7 +386,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 			vec3 bump = normalize(getWaveNormal(posxz, false));
 
-			TangentNormal = bump.xy*0.5+0.5; // tangent space normals for refraction
+			TangentNormal = (bump.xy/5.0)*0.5+0.5; // tangent space normals for refraction
 
 			bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 			normal = normalize(bump * tbnMatrix);
@@ -538,7 +538,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#ifdef WATER_REFLECTIONS
 		vec2 SpecularTex = texture2D(specular, lmtexcoord.xy, Texture_MipMap_Bias).rg;
 		
-		SpecularTex = (iswater > 0.0 && iswater < 0.9) && SpecularTex.r > 0.0 && SpecularTex.g < 0.9 ? SpecularTex : vec2(1.0,0.1);
+		SpecularTex = (iswater > 0.0 && iswater < 0.9) && SpecularTex.r > 0.0 && SpecularTex.g < 0.9 ? SpecularTex : vec2(1.0,0.02);
 	
 		float roughness = max(pow(1.0-SpecularTex.r,2.0),0.05);
 		float f0 = SpecularTex.g;

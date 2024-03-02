@@ -318,7 +318,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	float normalDotEye = dot(normals, normalize(pos.xyz));
 	float fresnel =  pow(clamp(1.0 + normalDotEye, 0.0, 1.0),5.0);
 
-	fresnel = mix(0.1, 1.0, fresnel); 
+	fresnel = mix(0.02, 1.0, fresnel); 
 
     #ifdef SNELLS_WINDOW
 		if(isEyeInWater == 1) fresnel = pow(clamp(1.5 + normalDotEye,0.0,1.0), 25.0);

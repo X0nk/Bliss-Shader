@@ -48,6 +48,8 @@ const float PI48 = 150.796447372*WAVY_SPEED;
 float pi2wt = PI48*frameTimeCounter;
 
 attribute vec4 mc_Entity;
+attribute vec4 mc_midTexCoord;
+
 uniform int blockEntityId;
 uniform int entityId;
 flat varying float blockID;
@@ -81,7 +83,6 @@ flat varying int SIGN;
 
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
-attribute vec4 mc_midTexCoord;
 uniform vec3 cameraPosition;
 uniform vec2 texelSize;
 uniform int framemod8;

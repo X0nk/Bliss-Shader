@@ -44,16 +44,18 @@ uniform sampler2D noisetex; //noise
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 // uniform sampler2D depthtex2;
-#ifdef DISTANT_HORIZONS
+
+// #ifdef DISTANT_HORIZONS
 uniform sampler2D dhDepthTex;
 uniform sampler2D dhDepthTex1;
-#endif
+// #endif
+
 uniform sampler2D colortex0; //clouds
 uniform sampler2D colortex1; //albedo(rgb),material(alpha) RGBA16
 uniform sampler2D colortex2; //translucents(rgba)
 uniform sampler2D colortex3; //filtered shadowmap(VPS)
 // uniform sampler2D colortex4; //LUT(rgb), quarter res depth(alpha)
-// uniform sampler2D colortex5; //TAA buffer/previous frame
+uniform sampler2D colortex5; //TAA buffer/previous frame
 uniform sampler2D colortex6; //Noise
 uniform sampler2D colortex7; //water?
 uniform sampler2D colortex8; //Specular
