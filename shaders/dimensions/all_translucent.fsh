@@ -380,7 +380,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		if (iswater > 0.95){
 			vec3 posxz = feetPlayerPos + cameraPosition;
 		
-			float bumpmult = WATER_WAVE_STRENGTH;
+			float bumpmult = 1.0;
 
 			posxz.xyz = getParallaxDisplacement(posxz) ;
 

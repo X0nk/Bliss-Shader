@@ -372,7 +372,7 @@ void main() {
 
 ////// --------------- underwater fog
   if (isEyeInWater == 1){
-    float dirtAmount = Dirt_Amount;
+    float dirtAmount = Dirt_Amount + 0.01;
     vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
     vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
     vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;

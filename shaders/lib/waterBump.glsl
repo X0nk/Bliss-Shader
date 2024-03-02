@@ -59,13 +59,17 @@ vec3 getWaveNormal(vec3 posxz, bool isLOD){
 	// vary the normal's "smooth" factor as distance changes, to avoid noise from too much details.
 	float range = pow(clamp(1.0 - length(posxz - cameraPosition)/(32*4),0.0,1.0),2.0);
 	float deltaPos = mix(0.5, 0.1, range);
-	float normalMult = 10.0;
+	float normalMult = 10.0 * WATER_WAVE_STRENGTH;
 
 	if(isLOD){
 		normalMult = mix(5.0, normalMult, range);
 		deltaPos = mix(0.9, deltaPos, range);
 	}
 
+	#ifdef HYPER_DETAILED_WAVES
+		deltaPos = 0.025;
+	#endif
+	
 	vec2 coord = posxz.xz;// - posxz.y;
 
 	float h0 = getWaterHeightmap(coord);
