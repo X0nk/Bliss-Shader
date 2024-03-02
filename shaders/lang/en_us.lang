@@ -635,10 +635,8 @@ screen.DISTANT_HORIZONS_SETTINGS = §2Distant Horizons §fsettings
 option.DH_KNOWN_ISSUES =
 value.DH_KNOWN_ISSUES.0 = §c CLICK THIS TEXT TO LOOP THROUGH A LIST OF KNOWN ISSUES
 value.DH_KNOWN_ISSUES.1 = §a GTAO, RTAO, and SSGI break on LODs - DH support unimplemented
-value.DH_KNOWN_ISSUES.2 = §a LOD water has outlines of non-LOD water - depth test issue
-value.DH_KNOWN_ISSUES.3 = §a LOD chunks dont load when looking through glass - yeah
 
-option.DISTANT_HORIZONS_SHADOWMAP = §c(WORKING, BUT NEEDS TESTING)§r DH shadowmap support
-option.DISTANT_HORIZONS_SHADOWMAP.comment =  §cTHIS SETTING WILL DESTROY PERFORMANCE§r. set shadow distance to 32 chunks (or more). set shadow resolution to 4096 (or more)
+option.DISTANT_HORIZONS_SHADOWMAP = §c(DO NOT USE IF YOU DO NOT KNOW WHAT THIS IS)§r DH shadowmap support
+option.DISTANT_HORIZONS_SHADOWMAP.comment =  §cTHIS SETTING WILL DESTROY PERFORMANCE THIS WILL MAKE SHADOWS LOOK BLOCKY, FLICKERY, AND LOW DETAIL§r. set shadow distance to 32 chunks (or more). set shadow resolution to 4096 (or more)
 option.TOGGLE_VL_FOG = Toggle Volumetric Fog
 option.TOGGLE_VL_FOG.comment = one big button to just turn all the fog off.
