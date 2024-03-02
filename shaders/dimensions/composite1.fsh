@@ -851,6 +851,7 @@ void main() {
 		#else
 			float shadowMapFalloff = pow(1.0-pow(1.0-min(max(1.0 - length(vec3(feetPlayerPos.x,feetPlayerPos.y/1.5,feetPlayerPos.z)) / shadowDistance,0.0)*5.0,1.0),2.0),2.0);
 		#endif
+			float shadowMapFalloff2 = pow(1.0-pow(1.0-min(max(1.0 - length(vec3(feetPlayerPos.x,feetPlayerPos.y/1.5,feetPlayerPos.z)) / min(shadowDistance,far),0.0)*5.0,1.0),2.0),2.0);
 
 		float LM_shadowMapFallback = min(max(lightmap.y-0.8, 0.0) * 25,1.0);
 
@@ -1036,7 +1037,7 @@ void main() {
 				Shadows = shadowMap;
 			}
 
-			if(!iswater) Shadows = mix(LM_shadowMapFallback, Shadows, shadowMapFalloff);
+			if(!iswater) Shadows = mix(LM_shadowMapFallback, Shadows, shadowMapFalloff2);
 
 			#ifdef OLD_LIGHTLEAK_FIX
 				if (isEyeInWater == 0) Shadows *= clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
@@ -1289,12 +1290,12 @@ void main() {
 		gl_FragData[0].rgb = viewPos * 0.001;
 	#endif
 
-	// #if DEBUG_VIEW == debug_FILTERED_STUFF
-	// 	vec3 FilteredDebug = vec3(15.0) * exp(-1.0 * vec3(1.0,0.5,1.0) * filteredShadow.y);
-	// 	FilteredDebug += vec3(15.0) * exp(-7.0 * vec3(1.0,1.0,0.5) * pow(SSAO_SSS.x,2));
-	// 	FilteredDebug += vec3(15.0) * exp(-7.0 * vec3(0.5,1.0,1.0) * pow(SSAO_SSS.y,2));
-  	// 	gl_FragData[0].rgb =  FilteredDebug;
-	// #endif
+	#if DEBUG_VIEW == debug_FILTERED_STUFF
+		vec3 FilteredDebug = vec3(15.0) * exp(-1.0 * vec3(1.0,0.5,1.0) * filteredShadow.y);
+		FilteredDebug += vec3(15.0) * exp(-7.0 * vec3(1.0,1.0,0.5) * pow(SSAO_SSS.x,2));
+		FilteredDebug += vec3(15.0) * exp(-7.0 * vec3(0.5,1.0,1.0) * pow(SSAO_SSS.y,2));
+  		gl_FragData[0].rgb =  FilteredDebug;
+	#endif
 
 	#ifdef CLOUDS_INFRONT_OF_WORLD
 		gl_FragData[1] = texture2D(colortex2, texcoord);
