@@ -1,7 +1,6 @@
 #include "/lib/settings.glsl"
 
 flat varying vec3 zMults;
-flat varying vec3 zMults_DH;
 
 flat varying vec2 TAA_Offset;
 flat varying vec3 skyGroundColor;

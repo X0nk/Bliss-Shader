@@ -1,7 +1,9 @@
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 
-flat varying float Flashing;
+#ifdef END_SHADER
+	flat varying float Flashing;
+#endif
 
 flat varying vec3 WsunVec;
 flat varying vec3 averageSkyCol_Clouds;
@@ -9,13 +11,10 @@ flat varying vec4 lightCol;
 
 flat varying vec2 TAA_Offset;
 flat varying vec3 zMults;
-flat varying vec3 zMults_DH;
 uniform sampler2D colortex4;
 
 // uniform float far;
 uniform float near;
-uniform float dhFarPlane;
-uniform float dhNearPlane;
 
 uniform mat4 gbufferModelViewInverse;
 uniform vec3 sunPosition;
@@ -41,10 +40,11 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 void main() {
 	gl_Position = ftransform();
 
-	Flashing = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
+	#ifdef END_SHADER
+		Flashing = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
+	#endif
 
 	zMults = vec3(1.0/(far * near),far+near,far-near);
-	zMults_DH = vec3(1.0/(dhFarPlane * dhNearPlane),dhFarPlane+dhNearPlane,dhFarPlane-dhNearPlane);
 
 	lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
 	lightCol.a = float(sunElevation > 1e-5)*2.0 - 1.0;
@@ -52,7 +52,6 @@ void main() {
 	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 
 	WsunVec = lightCol.a*normalize(mat3(gbufferModelViewInverse) * sunPosition);
-	// WsunVec = normalize(LightDir);
 
 
 	#ifdef TAA

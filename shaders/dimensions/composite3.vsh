@@ -2,7 +2,6 @@
 
 varying vec2 texcoord;
 flat varying vec3 zMults;
-flat varying vec3 zMults_DH;
 flat varying vec3 WsunVec;
 
 uniform float far;
@@ -52,7 +51,6 @@ void main() {
 	WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
 
 	zMults = vec3(1.0/(far * near),far+near,far-near);
-	zMults_DH = vec3(1.0/(dhFarPlane * dhNearPlane),dhFarPlane+dhNearPlane,dhFarPlane-dhNearPlane);
 
 	gl_Position = ftransform();
 	texcoord = gl_MultiTexCoord0.xy;

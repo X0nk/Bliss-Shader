@@ -218,10 +218,10 @@ void main() {
 
 
 	#ifdef MC_NORMAL_MAP
-		tangent = vec4(normalize(gl_NormalMatrix *at_tangent.rgb),at_tangent.w);
+		tangent = vec4(normalize(gl_NormalMatrix * at_tangent.rgb), at_tangent.w);
 	#endif
 
-	normalMat = vec4(normalize(gl_NormalMatrix *gl_Normal), 1.0);
+	normalMat = vec4(normalize(gl_NormalMatrix * gl_Normal), 1.0);
 	FlatNormals = normalMat.xyz;
 
 	blockID = mc_Entity.x;

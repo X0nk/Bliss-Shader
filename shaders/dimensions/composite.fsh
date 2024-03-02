@@ -317,7 +317,8 @@ void main() {
 	// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
 
 	
-	#ifdef DENOISE_SSS_AND_SSAO
+	gl_FragData[1] = vec4(0.0,0.0,0.0,texture2D(colortex14,texcoord).a);
+	#if defined DENOISE_SSS_AND_SSAO && indirect_effect == 1
 		float depth = z;
 
 		#ifdef DISTANT_HORIZONS
@@ -344,11 +345,8 @@ void main() {
 		if(z >= 1.0){
 			FlatNormals = worldToView(normal);
 		}
-	
 
-		gl_FragData[1] = vec4(0.0,0.0,0.0,texture2D(colortex14,texcoord).a);
 		gl_FragData[1].xy = SSAO(viewPos, FlatNormals, hand, isLeaf, noise);
-
 	#endif
 
 #ifdef OVERWORLD_SHADER
