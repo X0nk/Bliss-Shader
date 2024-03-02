@@ -961,11 +961,11 @@ void main() {
 			float estimatedSunDepth = Vdiff; //assuming water plane
 			Absorbtion = mix(exp(-2.0 * totEpsilon * estimatedDepth), exp(-8.0 * totEpsilon), depthfalloff);
 
-			// DirectLightColor *= Absorbtion;
-			// AmbientLightColor *= Absorbtion;
+			DirectLightColor *= Absorbtion;
+			AmbientLightColor *= Absorbtion;
 
 			// apply caustics to the lighting, and make sure they dont look weird
-			// DirectLightColor *= mix(1.0, waterCaustics(feetPlayerPos + cameraPosition, WsunVec)*WATER_CAUSTICS_BRIGHTNESS + 0.25, clamp(estimatedDepth,0,1));
+			DirectLightColor *= mix(1.0, waterCaustics(feetPlayerPos + cameraPosition, WsunVec)*WATER_CAUSTICS_BRIGHTNESS + 0.25, clamp(estimatedDepth,0,1));
 		}
 	////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////	MAJOR LIGHTSOURCE STUFF 	////////////////////////
