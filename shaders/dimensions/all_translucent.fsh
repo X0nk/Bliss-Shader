@@ -386,7 +386,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 			vec3 bump = normalize(getWaveNormal(posxz, false));
 
-			TangentNormal = (bump.xy/5.0)*0.5+0.5; // tangent space normals for refraction
+			TangentNormal = (bump.xy/3.0)*0.5+0.5; // tangent space normals for refraction
 
 			bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 			normal = normalize(bump * tbnMatrix);
