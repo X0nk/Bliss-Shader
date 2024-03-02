@@ -566,20 +566,20 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 			fresnel = mix(f0, 1.0, fresnel); 
 
-			// vec3 Metals = f0 > 229.5/255.0 ? max(Albedo, fresnel) : vec3(1.0);
+			vec3 Metals = f0 > 229.5/255.0 ? mix(normalize(Albedo+1e-7) * (dot(Albedo,vec3(0.21, 0.72, 0.07)) * 0.7 + 0.3), vec3(1.0), fresnel * pow(1.0-roughness,25.0)) : vec3(1.0);
 			
 	
 			// Sun, Sky, and screen-space reflections
 			#ifdef OVERWORLD_SHADER
 				#ifdef WATER_SUN_SPECULAR
-					SunReflection = Direct_lighting * GGX(normal, -normalize(viewPos), WsunVec*mat3(gbufferModelViewInverse), roughness, vec3(f0)); 
+					SunReflection = Direct_lighting * GGX(normal, -normalize(viewPos), WsunVec*mat3(gbufferModelViewInverse), roughness, vec3(f0)) * Metals; 
 				#endif
 				#ifdef WATER_BACKGROUND_SPECULAR
- 					if(isEyeInWater == 0) SkyReflection = skyCloudsFromTex(mat3(gbufferModelViewInverse) * reflectedVector, colortex4).rgb / 30.0;
+ 					if(isEyeInWater == 0) SkyReflection = skyCloudsFromTex(mat3(gbufferModelViewInverse) * reflectedVector, colortex4).rgb / 30.0 *Metals;
 				#endif
 			#else
 				#ifdef WATER_BACKGROUND_SPECULAR 
- 					if(isEyeInWater == 0) SkyReflection = skyCloudsFromTexLOD2(mat3(gbufferModelViewInverse) * reflectedVector, colortex4, 0).rgb / 30.0;
+ 					if(isEyeInWater == 0) SkyReflection = skyCloudsFromTexLOD2(mat3(gbufferModelViewInverse) * reflectedVector, colortex4, 0).rgb / 30.0 * Metals;
 				#endif
 			#endif
 			#ifdef SCREENSPACE_REFLECTIONS
@@ -591,16 +591,16 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 						previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
 						if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0) {
 							Reflections.a = 1.0;
-							Reflections.rgb = texture2D(colortex5,previousPosition.xy).rgb;
+							Reflections.rgb = texture2D(colortex5,previousPosition.xy).rgb * Metals;
 						}
 					}
 				}
 			#endif
 
 			#ifdef OVERWORLD_SHADER
-			if(isEyeInWater == 1 && iswater > 0.9){
-			 	SkyReflection.rgb = exp(-8.0 * vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B)) * clamp(WsunVec.y*lightCol.a,0,1) ;
-			}
+				if(isEyeInWater == 1 && iswater > 0.9){
+				 	SkyReflection.rgb = exp(-8.0 * vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B)) * clamp(WsunVec.y*lightCol.a,0,1) ;
+				}
 			#endif
 			float visibilityFactor = clamp(exp2((pow(roughness,3.0) / f0) * -4),0,1);
 
