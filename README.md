@@ -1,31 +1,23 @@
 # Bliss
-i always loved chocapic's shaders, and how customizeable it was. But i wanted MORE.
+<img src="https://github.com/X0nk/Bliss-Shader/assets/122314734/873c788c-5a48-46c0-9fb5-eac57b4ffa27" width="100%" height="100%">
+I always loved chocapic's shaders, and how customizeable it was. But i wanted MORE.
 i eventually started tweaking the shader, adding settings, breaking stuff, and after a while wanted to impose my own visual style onto the shader.
 i wanted to emphasize a varying scene, where the lighting isn't always the same whenever or wherever you are.
 
-# Resourcepack Support (LabPBR and other stuff)
-+ Reflectance / F0
-+ Smoothness
-+ Subsurface Scattering
-+ Emissiveness
-+ Parallax Occlusion Mapping / POM
-+ Normal Mapping
-+ Refraction
-<img src="https://user-images.githubusercontent.com/122314734/212524271-d6e6b34a-a2e2-4990-b351-c7e33cfd8095.png" width="75%" height="75%">
-
-# Daily Weather 
-+ cloudy, slightly cloudy, or clear days
-<img src="https://user-images.githubusercontent.com/122314734/212525082-69257101-a45a-4b89-a49c-4f48328be247.png" width="75%" height="75%">
-
-# Biome Specific Atmospherics
-+ Some biomes are very foggy with a unique fog color
-<img src="https://user-images.githubusercontent.com/122314734/212524750-ae313931-d58f-4b0f-ac37-f14b74f7fc05.png" width="75%" height="75%">
-
-# i will add more stuff one day
-nobody knows when, but it's in the future.
-
-**SPECIAL THANKS:**
+### SPECIAL THANKS:
++ Chocapic13, for the whole thing
 + WoMspace, for doing a DOF overhaul
 + Emin, and Gri573, for teaching me how to stop alot of light leaking
-+ RRe36, for the ideas to steal
-+ Chocapic13, for the whole thing
++ RRe36 and Sixthsurge, for the great ideas to steal
+# IN-DEVELOPMENT VERSIONS AND RELEASE VERSIONS
+`In-development versions` are the very latest versions, and are released regularly to be tested by anyone. **Please report any issues you find.**
+
+`Release versions` are uploaded when the in-development version is stable enough, and has enough changes to warrant a release. These are the versions uploaded to Modrinth or Curseforge. The release versions are not the very latest version.
+### Download the latest `in-development` version:
+ - locate the `green "code" button` on this page. this button is NOT in the `releases` page.
+ - click the `green "code" button` and select `"download zip"`.
+ - once the zip file finishes downloading, install it like a normal shader. you do NOT need to unzip/extract/decompress.
+### Download the latest `release` version:
+ - locate the `"Releases"` tab on the right side of this page.
+ - find the release version you want to download. locate the files attactched to it, and download the file named similar to `"Bliss_(version)_chocapic13_shaders_edit.zip"`
+ - once the zip file finishes downloading, install it like a normal shader. you do NOT need to unzip/extract/decompress.
