@@ -849,8 +849,9 @@ void main() {
 		#ifdef DISTANT_HORIZONS_SHADOWMAP
 			float shadowMapFalloff = pow(1.0-pow(1.0-min(max(1.0 - length(vec3(feetPlayerPos.x,feetPlayerPos.y/1.5,feetPlayerPos.z)) / min(shadowDistance, dhFarPlane),0.0)*5.0,1.0),2.0),2.0);
 		#else
-			float shadowMapFalloff = pow(1.0-pow(1.0-min(max(1.0 - length(vec3(feetPlayerPos.x,feetPlayerPos.y/1.5,feetPlayerPos.z)) / min(shadowDistance, far),0.0)*5.0,1.0),2.0),2.0);
+			float shadowMapFalloff = pow(1.0-pow(1.0-min(max(1.0 - length(vec3(feetPlayerPos.x,feetPlayerPos.y/1.5,feetPlayerPos.z)) / shadowDistance,0.0)*5.0,1.0),2.0),2.0);
 		#endif
+
 		float LM_shadowMapFallback = min(max(lightmap.y-0.8, 0.0) * 25,1.0);
 
 		#ifdef OVERWORLD_SHADER
@@ -1047,6 +1048,8 @@ void main() {
 	////////////////////////////////////////////////////////////////////////////////
 
 		#if SSS_TYPE != 0
+
+
 			#ifdef DISTANT_HORIZONS
 				shadowMapFalloff = pow(1.0-pow(1.0-min(max(1.0 - length(vec3(feetPlayerPos.x,feetPlayerPos.y/1.5,feetPlayerPos.z)) / min(shadowDistance, max(far-32,0.0)),0.0)*5.0,1.0),2.0),2.0);
 			#endif
@@ -1079,8 +1082,8 @@ void main() {
 					
 				Direct_SSS = SubsurfaceScattering_sun(albedo, ShadowBlockerDepth, sunSSS_density, clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0));
 				
-				// Direct_SSS *= mix(LM_shadowMapFallback, 1.0, shadowMapFalloff);
-				// if (isEyeInWater == 0) Direct_SSS *= clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
+				Direct_SSS *= mix(LM_shadowMapFallback, 1.0, shadowMapFalloff);
+				if (isEyeInWater == 0) Direct_SSS *= clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
 			}	
 		#endif
 
@@ -1198,6 +1201,7 @@ void main() {
 
 		// RTAO and/or SSGI
 		#if indirect_effect == 3 || indirect_effect == 4
+			// Indirect_lighting = AmbientLightColor;
 			if (!hand) ApplySSRT(Indirect_lighting, viewPos, normal, vec3(bnoise, noise_2), lightmap.xy, AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass);
 		#endif
 
