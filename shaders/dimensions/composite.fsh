@@ -78,14 +78,7 @@ vec2 tapLocation2(int sampleNumber, int nb, float jitter){
 
     return vec2(cos_v, sin_v)*sqrt(alpha);
 }
-float interleaved_gradientNoise_temporal(){
-	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
-}
-float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
-}
+
 vec3 decode (vec2 encn){
     vec3 n = vec3(0.0);
     encn = encn * 2.0 - 1.0;
@@ -99,8 +92,27 @@ vec2 decodeVec2(float a){
     const float constant2 = 256. / 255.;
     return fract( a * constant1 ) * constant2 ;
 }
+
+
+
+float interleaved_gradientNoise_temporal(){
+	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
+}
+float interleaved_gradientNoise(){
+	vec2 coord = gl_FragCoord.xy;
+	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
+	return noise;
+}
+
+// float interleaved_gradientNoise(){
+// 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+ 1.0/1.6180339887 * frameCounter);
+// }
 float R2_dither(){
-	vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
+  	#ifdef TAA
+		vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
+	#else
+		vec2 coord = gl_FragCoord.xy;
+	#endif
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
@@ -339,7 +351,7 @@ void main() {
 
 	#endif
 
-
+#ifdef OVERWORLD_SHADER
 	float SpecularTex = texture2D(colortex8,texcoord).z;
 	float LabSSS = clamp((-64.0 + SpecularTex * 255.0) / 191.0 ,0.0,1.0);
 
@@ -368,7 +380,7 @@ void main() {
 
 		#ifdef Variable_Penumbra_Shadows
 
-			if (LabSSS > 0.0 || NdotL > 0.0001) {
+			if (LabSSS > -1) {
 
 				
 				vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
@@ -393,7 +405,7 @@ void main() {
 
 					float mult = maxshadowfilt;
 					float avgBlockerDepth = 0.0;
-					vec2 scales = vec2(0.0, 120.0 - Max_Filter_Depth);
+					vec2 scales = vec2(0.0, Max_Filter_Depth);
 					float blockerCount = 0.0;
 					float rdMul = distortFactor*(1.0+mult)*d0*k/shadowMapResolution;
 					float diffthreshM = diffthresh*mult*d0*k/20.;
@@ -412,7 +424,11 @@ void main() {
 						float b = smoothstep(weight*diffthresh/2.0, weight*diffthresh, projectedShadowPosition.z - d);
 
 						blockerCount += b;
-						avgDepth += max(projectedShadowPosition.z - d, 0.0)*1000.;
+						#ifdef DISTANT_HORIZONS_SHADOWMAP
+							avgDepth += max(projectedShadowPosition.z - d, 0.0)*10000.0;
+						#else
+							avgDepth += max(projectedShadowPosition.z - d, 0.0)*1000.0;
+						#endif
 						avgBlockerDepth += d * b;
 					}
 					
@@ -428,4 +444,5 @@ void main() {
 			}
 		#endif
 	}
+#endif
 }

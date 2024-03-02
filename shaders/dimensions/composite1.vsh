@@ -9,10 +9,14 @@ flat varying vec4 lightCol;
 
 flat varying vec2 TAA_Offset;
 flat varying vec3 zMults;
+flat varying vec3 zMults_DH;
 uniform sampler2D colortex4;
 
 // uniform float far;
 uniform float near;
+uniform float dhFarPlane;
+uniform float dhNearPlane;
+
 uniform mat4 gbufferModelViewInverse;
 uniform vec3 sunPosition;
 uniform float rainStrength;
@@ -39,7 +43,8 @@ void main() {
 
 	Flashing = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
 
-	zMults = vec3((far * near)*2.0,far+near,far-near);
+	zMults = vec3(1.0/(far * near),far+near,far-near);
+	zMults_DH = vec3(1.0/(dhFarPlane * dhNearPlane),dhFarPlane+dhNearPlane,dhFarPlane-dhNearPlane);
 
 	lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
 	lightCol.a = float(sunElevation > 1e-5)*2.0 - 1.0;
@@ -50,7 +55,11 @@ void main() {
 	// WsunVec = normalize(LightDir);
 
 
-	TAA_Offset = offsets[framemod8];
+	#ifdef TAA
+		TAA_Offset = offsets[framemod8];
+	#else
+		TAA_Offset = vec2(0.0);
+	#endif
 
 	#ifdef TAA_UPSCALING
 		gl_Position.xy = (gl_Position.xy*0.5+0.5)*RENDER_SCALE*2.0-1.0;

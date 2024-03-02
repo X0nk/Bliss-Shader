@@ -174,7 +174,7 @@ vec4 GetVolumetricFog(
 	#ifdef DISTANT_HORIZONS
 		float atmosphereMult = 1.0;
 	#else
-		float atmosphereMult = 2.0;	
+		float atmosphereMult = 1.5;	
 	#endif
 	
 	float expFactor = 11.0;

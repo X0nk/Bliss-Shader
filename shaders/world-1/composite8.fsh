@@ -2,4 +2,4 @@
 
 #define NETHER_SHADER
 
-#include "/dimensions/composite8.fsh"
+#include "/dimensions/composite7.fsh"

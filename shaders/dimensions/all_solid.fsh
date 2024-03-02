@@ -311,9 +311,9 @@ void main() {
 	vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
 	vec3 worldpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz + cameraPosition;
 
-    // #ifdef DH_OVERDRAW_PREVENTION
+    // #if defined DH_OVERDRAW_PREVENTION && defined DISTANT_HORIZONS
     //     // overdraw prevention
-    //     if(clamp(1.0-length(pos.xyz)/max(far,0.0),0.0,1.0) <= 0.0 ){
+    //     if(clamp(1.0-length(pos.xyz)/max(far - 16.0 * sqrt(interleaved_gradientNoise_temporal()),0.0),0.0,1.0) <= 0.0 ){
     //         discard;
     //         return;
     //     }

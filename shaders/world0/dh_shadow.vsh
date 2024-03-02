@@ -42,6 +42,7 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 
 
 
+varying float overdrawCull;
 // uniform int renderStage;
 
 void main() {
@@ -52,7 +53,13 @@ void main() {
 	texcoord.xy = gl_MultiTexCoord0.xy;
 
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-	
+	#ifdef DH_OVERDRAW_PREVENTION
+  		vec3 worldpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
+		overdrawCull = 1.0 - clamp(1.0 - length(worldpos) / max(far-16,0.0),0,1);
+	#else
+		overdrawCull = 1.0;
+	#endif
+
 	#ifdef DISTORT_SHADOWMAP
 		gl_Position = BiasShadowProjection(toClipSpace3(position));
 	#else

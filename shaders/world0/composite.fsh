@@ -2,4 +2,4 @@
 
 #define OVERWORLD_SHADER
 
-#include "/dimensions/composite.fsh"
+#include "/dimensions/fogBehindTranslucent_pass.fsh"

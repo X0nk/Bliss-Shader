@@ -45,7 +45,12 @@ vec3 toScreenSpace(vec3 p) {
 }
 
 float R2_dither(){
+	#ifdef TAA
 	vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
+	#else
+
+	vec2 coord = gl_FragCoord.xy;
+	#endif
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
@@ -67,11 +72,13 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(3,7.)/8.,
 							vec2(7.,-7.)/8.);
 float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(1.0-gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+  #ifdef TAA
+  	return fract(texelFetch2D(noisetex, ivec2(1.0-gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+  #else
+ 	return fract(texelFetch2D(noisetex, ivec2(1.0-gl_FragCoord.xy)%512, 0).a);
+  #endif
 }
-float blueNoise2(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
-}
+
 
 vec3 normVec (vec3 vec){
 	return vec*inversesqrt(dot(vec,vec));
@@ -100,7 +107,7 @@ void main() {
 
 		vec3 viewPos = toScreenSpace(vec3(halfResTC*texelSize,1.0));
 
-		vec4 VolumetricClouds = renderClouds(viewPos, vec2(R2_dither(),blueNoise2()), sunColor/80.0, averageSkyCol/30.0);
+		vec4 VolumetricClouds = renderClouds(viewPos, vec2(R2_dither(), blueNoise()), sunColor/80.0, averageSkyCol/30.0);
 
 		// gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);
 		gl_FragData[0] = VolumetricClouds;

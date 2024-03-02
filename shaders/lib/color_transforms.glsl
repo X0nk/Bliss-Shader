@@ -155,3 +155,20 @@ vec3 Tonemap_Uchimura(vec3 x) {
 	const float b = 0.0;  // pedestal 0.0
     return Tonemap_Uchimura_Modified(x, P, a, m, l, c, b);
 }
+
+
+vec3 Tonemap_Xonk(vec3 Color){
+    
+    Color = pow(Color,vec3(1.3));
+
+    return Color / (0.333 + Color);
+    // return pow(Color / (0.333 + Color), vec3(1.1));
+}
+
+vec3 Tonemap_Full_Reinhard(vec3 C){
+
+    float whitepoint = 10.0;
+    float lighten = 0.5;
+
+	return (C * (1.0 + C / (whitepoint*whitepoint))) / (lighten + C);
+}

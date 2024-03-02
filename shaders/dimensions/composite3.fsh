@@ -107,28 +107,25 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
     return (near * far) / (depth * (near - far) + far);
 }
 
-
-
-
-
 vec4 BilateralUpscale(sampler2D tex, sampler2D depth, vec2 coord, float referenceDepth){
-  
-	const ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
-	ivec2 posDepth  = ivec2(coord*VL_RENDER_RESOLUTION)*scaling;
+	ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
+	ivec2 posDepth  = ivec2(coord*VL_RENDER_RESOLUTION) * scaling;
 	ivec2 posColor  = ivec2(coord*VL_RENDER_RESOLUTION);
-
-	// vec2 pos = mod(coord,2)*2 - 1;
-  ivec2 pos = ivec2((coord*texelSize) + 1.0);
-  // ivec2 pos = (ivec2(gl_FragCoord.xy) % 2 )*2;
+ 	ivec2 pos = ivec2(gl_FragCoord.xy*texelSize + 1);
 
 	ivec2 getRadius[4] = ivec2[](
-    ivec2(-2,-2),
-	  ivec2(-2, 0),
+   	ivec2(-2,-2),
+	 	ivec2(-2, 0),
 		ivec2( 0, 0),
 		ivec2( 0,-2)
   );
 
-	float diffThreshold = zMults.x;
+	#ifdef DISTANT_HORIZONS
+		float diffThreshold = 0.01;
+	#else
+		float diffThreshold = zMults.x;
+	#endif
+
 
 	vec4 RESULT = vec4(0.0);
 	float SUM = 0.0;
@@ -136,96 +133,24 @@ vec4 BilateralUpscale(sampler2D tex, sampler2D depth, vec2 coord, float referenc
 	for (int i = 0; i < 4; i++) {
 		
 		ivec2 radius = getRadius[i];
-		
-		float offsetDepth = ld(texelFetch2D(depth, (posDepth + radius * scaling + pos * scaling),0).r);
-		
+
+		#ifdef DISTANT_HORIZONS
+			float offsetDepth = sqrt(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling,0).a/65000.0);
+		#else
+			float offsetDepth = ld(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling, 0).r);
+		#endif
+
 		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
 		
-		RESULT += texelFetch2D(tex, (posColor + radius + pos),0) * EDGES;
-		
+		RESULT += texelFetch2D(tex, posColor + radius + pos, 0) * EDGES;
+
 		SUM += EDGES;
 	}
-
+	// return vec4(1) * SUM;
 	return RESULT / SUM;
-  
-  
-  // coord = coord;
-  // vec4 vl = vec4(0.0);
-  // float sum = 0.0;
-  // mat3x3 weights;
-  // const ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
-  // ivec2 posD = ivec2(coord*VL_RENDER_RESOLUTION)*scaling;
-  // ivec2 posVl = ivec2(coord*VL_RENDER_RESOLUTION);
-  // float dz = zMults.x;
-  // ivec2 pos = (ivec2(gl_FragCoord.xy) % 2 )*2;
-	// //pos = ivec2(1,-1);
 
-  // ivec2 tcDepth =  posD + ivec2(-2,-2) * scaling + pos * scaling;
-  // float dsample = ld(texelFetch2D(depth,tcDepth,0).r);
-  // float w = abs(dsample-frDepth) < dz ? 1.0 : 1e-5;
-  // vl += texelFetch2D(tex,posVl+ivec2(-2)+pos,0)*w;
-  // sum += w;
-
-	// tcDepth =  posD + ivec2(-2,0) * scaling + pos * scaling;
-  // dsample = ld(texelFetch2D(depth,tcDepth,0).r);
-  // w = abs(dsample-frDepth) < dz ? 1.0 : 1e-5;
-  // vl += texelFetch2D(tex,posVl+ivec2(-2,0)+pos,0)*w;
-  // sum += w;
-
-	// tcDepth =  posD + ivec2(0) + pos * scaling;
-  // dsample = ld(texelFetch2D(depth,tcDepth,0).r);
-  // w = abs(dsample-frDepth) < dz ? 1.0 : 1e-5;
-  // vl += texelFetch2D(tex,posVl+ivec2(0)+pos,0)*w;
-  // sum += w;
-
-	// tcDepth =  posD + ivec2(0,-2) * scaling + pos * scaling;
-  // dsample = ld(texelFetch2D(depth,tcDepth,0).r);
-  // w = abs(dsample-frDepth) < dz ? 1.0 : 1e-5;
-  // vl += texelFetch2D(tex,posVl+ivec2(0,-2)+pos,0)*w;
-  // sum += w;
-
-  // return vl/sum;
 }
 
-vec4 BilateralUpscale_DH(sampler2D tex, sampler2D depth, vec2 coord, float referenceDepth, bool depthCheck){
-
-	const ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
-	ivec2 posDepth  = ivec2(coord*VL_RENDER_RESOLUTION)*scaling;
-	ivec2 posColor  = ivec2(coord*VL_RENDER_RESOLUTION);
-
-	// vec2 pos = mod(coord,2)*2 - 1;
-  	ivec2 pos = ivec2(coord*texelSize) + 1;
-  // ivec2 pos = (ivec2(gl_FragCoord.xy) % 2 )*2;
-
-	ivec2 getRadius[4] = ivec2[](
-    ivec2(-2,-2),
-	  ivec2(-2, 0),
-		ivec2( 0, 0),
-		ivec2( 0,-2)
-  );
-
-	// float diffThreshold = referenceDepth;
-  
-  float diffThreshold = zMults_DH.x;
-
-	vec4 RESULT = vec4(0.0);
-	float SUM = 0.0;
-
-	for (int i = 0; i < 4; i++) {
-		
-		ivec2 radius = getRadius[i];
-		
-		float offsetDepth = sqrt(texelFetch2D(depth, (posDepth + radius * scaling + pos * scaling),0).a/65000.0);
-		
-		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
-		
-		RESULT += texelFetch2D(tex, (posColor + radius + pos),0) * EDGES;
-		
-		SUM += EDGES;
-	}
-
-	return RESULT / SUM;
-}
 vec3 decode (vec2 encn){
     vec3 n = vec3(0.0);
     encn = encn * 2.0 - 1.0;
@@ -273,17 +198,18 @@ void applyContrast(inout vec3 color, float contrast){
   color = ((color - 0.5) * max(contrast, 0.0)) + 0.5;
 }
 
-void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, vec2 depths, bool isEntity){
+void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, float lineardistance, bool isEntity){
 
   vec2 UnalteredTexcoord = Texcoord;
   
   float refractionStrength = isEntity ? 0.5 : 1.0;
 
-  Texcoord = abs(Texcoord + (TangentNormals * clamp((ld(depths.x) - ld(depths.y)) * 0.5,0.0,0.15)) * RENDER_SCALE * refractionStrength );
+  // Texcoord = abs(Texcoord + (TangentNormals * clamp((ld(depths.x) - ld(depths.y)) * 0.5,0.0,0.15)) * RENDER_SCALE * refractionStrength );
+  Texcoord = abs(Texcoord + (TangentNormals * mix(0.01, 0.1, pow(clamp(1.0-lineardistance/(32*4),0.0,1.0),2))) * RENDER_SCALE * refractionStrength );
 
   float DistortedAlpha = decodeVec2(texture2D(colortex11,Texcoord).b).g;
   
-  if(DistortedAlpha <= 0.001) Texcoord = UnalteredTexcoord; // remove distortion on non-translucents
+  if(DistortedAlpha < 0.1) Texcoord = UnalteredTexcoord; // remove distortion on non-translucents
 }
 
 uniform float dhRenderDistance;
@@ -297,7 +223,7 @@ void main() {
 
   float z = texture2D(depthtex0,texcoord).x;
   float z2 = texture2D(depthtex1,texcoord).x;
-  float frDepth = ld(z2);
+  float frDepth = ld(z);
 
 	float swappedDepth = z;
 
@@ -351,11 +277,17 @@ void main() {
   bool isTranslucentEntity = abs(trpData-0.1) < 0.01;	
   float translucentAlpha = trpData;
 
+
+
   ////// --------------- get volumetrics
-  #ifdef DISTANT_HORIZONS
-    vec4 vl = BilateralUpscale_DH(colortex0, colortex12, gl_FragCoord.xy, sqrt(texture2D(colortex12,texcoord).a/65000.0), z >= 1.0);
+  #ifdef TOGGLE_VL_FOG
+    #ifdef DISTANT_HORIZONS
+      vec4 vl = BilateralUpscale(colortex0, colortex12, gl_FragCoord.xy, sqrt(texture2D(colortex12,texcoord).a/65000.0));
+    #else
+      vec4 vl = BilateralUpscale(colortex0, depthtex0, gl_FragCoord.xy, frDepth);
+    #endif
   #else
-    vec4 vl = BilateralUpscale(colortex0, depthtex0, gl_FragCoord.xy, frDepth);
+    vec4 vl = vec4(0,0,0,1);
   #endif
 
   float bloomyFogMult = 1.0;
@@ -363,7 +295,7 @@ void main() {
   ////// --------------- distort texcoords as a refraction effect
   vec2 refractedCoord = texcoord;
   #ifdef Refraction
-    ApplyDistortion(refractedCoord, tangentNormals, vec2(z2,z), isTranslucentEntity);
+    ApplyDistortion(refractedCoord, tangentNormals, linearDistance, isTranslucentEntity);
   #endif
   
   ////// --------------- MAIN COLOR BUFFER
@@ -405,7 +337,7 @@ void main() {
     #ifdef BorderFog
       color.rgb = mix(color.rgb, borderFogColor, fog);
     #endif
-  } 
+  }
 
 ////// --------------- VARIOUS FOG EFFECTS (behind volumetric fog)
 //////////// blindness, nightvision, liquid fogs and misc fogs
@@ -446,17 +378,30 @@ void main() {
     vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
     vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;
 
-    vec3 fogfade =  clamp( exp( (linearDistance / -4) * totEpsilon  ) ,0.0,1.0);
-    fogfade *= 1.0 - clamp( linearDistance / far,0.0,1.0);
+    vec3 absorbColor = exp(-totEpsilon*linearDistance);
+    vec3 maxAbsorb = exp(-8.0 * totEpsilon);
 
-    color.rgb *= fogfade;
-    bloomyFogMult *= 0.3;
+    #ifdef OVERWORLD_SHADER
+    
+      linearDistance = length(vec3(p3.x,max(-p3.y,0.0),p3.z));
+      float fogfade =  exp(-0.001*(linearDistance*linearDistance));
+      vec3 thresholdAbsorbedColor = mix(maxAbsorb, absorbColor, clamp(dot(absorbColor,vec3(0.33333)),0.0,1.0));
+      color.rgb = mix(vec3(1.0) * clamp(WsunVec.y,0,1) * pow(normalize(np3).y*0.3+0.7,1.5) * maxAbsorb, color.rgb * thresholdAbsorbedColor, clamp(fogfade,0.0,1.0));
+    
+    #else
+   
+      color.rgb *= absorbColor;
+      
+    #endif
+    
+    bloomyFogMult *= 0.4;
   }
 
 ////// --------------- BLEND FOG INTO SCENE
 //////////// apply VL fog over opaque and translucents
   color *= vl.a;
   color += vl.rgb;
+  bloomyFogMult *= vl.a;
   
 ////// --------------- VARIOUS FOG EFFECTS (in front of volumetric fog)
 //////////// blindness, nightvision, liquid fogs and misc fogs
@@ -495,10 +440,10 @@ void main() {
   #endif
 // color.rgb = vec3(1) * sqrt(texture2D(colortex12,texcoord).a/65000.0);
 
-  gl_FragData[0].r = vl.a * bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
+  gl_FragData[0].r = bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);
 
-// if(isTranslucentEntity) gl_FragData[1].rgb = vec3(255);
+  // gl_FragData[1].rgb = vec3(1) * sqrt(texelFetch2D(colortex12,ivec2(gl_FragCoord.xy),0).a/65000.0);
 
-  // gl_FragData[1].rgb = clamp(vec3(tangentNormals.xy,0), 0.0,68000.0);
+  // gl_FragData[1].rgb = vl.rgb;
 }

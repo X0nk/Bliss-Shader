@@ -3,11 +3,16 @@
 varying vec2 texcoord;
 flat varying vec3 zMults;
 flat varying vec3 zMults_DH;
+flat varying vec3 WsunVec;
+
 uniform float far;
 uniform float near;
 uniform float dhFarPlane;
 uniform float dhNearPlane;
 
+uniform mat4 gbufferModelViewInverse;
+uniform vec3 sunPosition;
+uniform float sunElevation;
 flat varying vec2 TAA_Offset;
 uniform int framemod8;
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
@@ -37,7 +42,14 @@ void main() {
 		skyGroundColor = texelFetch2D(colortex4,ivec2(1,37),0).rgb / 30.0;
 	#endif
 
-	TAA_Offset = offsets[framemod8];
+	#ifdef TAA
+		TAA_Offset = offsets[framemod8];
+	#else
+		TAA_Offset = vec2(0.0);
+	#endif
+
+	float lightCola = float(sunElevation > 1e-5)*2.0 - 1.0;
+	WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
 
 	zMults = vec3(1.0/(far * near),far+near,far-near);
 	zMults_DH = vec3(1.0/(dhFarPlane * dhNearPlane),dhFarPlane+dhNearPlane,dhFarPlane-dhNearPlane);

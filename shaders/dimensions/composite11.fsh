@@ -95,6 +95,22 @@ vec3 getViewPos() {
     return viewPos.xyz;
 }
 
+vec3 ACESFilm2(vec3 x){
+// float a = 2.51f;
+// float b = 0.03f;
+// float c = 2.43f;
+// float d = 0.59f;
+// float e = 0.14f;
+
+	float a = 2.51f; // brightests
+	float b = 0.53f; // lower midtones
+	float c = 2.43f; // upper midtones
+	float d = 0.59f; // upper midtones
+	float e = 0.54f; // lowest tones
+	return clamp((x*(a*x+b))/(x*(c*x+d)+e),0.0,1.0);
+}
+
+
 #define linear_to_srgb(x) (pow(x, vec3(1.0/2.2)))
 void main() {
   /* DRAWBUFFERS:7 */

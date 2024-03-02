@@ -158,25 +158,24 @@ vec3 rayTrace(vec3 dir, vec3 position,float dither, float fresnel, bool inwater)
     vec3 stepv = direction * mult / quality * vec3(RENDER_SCALE,1.0);
 
 
-	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) + stepv;
+	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) + stepv*dither;
 	float minZ = clipPosition.z;
 	float maxZ = spos.z+stepv.z*0.5;
 	
 	spos.xy += offsets[framemod8]*texelSize*0.5/RENDER_SCALE;
 
-	float dist = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
     for (int i = 0; i <= int(quality); i++) {
-
 
 		float sp = sqrt(texelFetch2D(colortex12,ivec2(spos.xy/texelSize/4),0).a/65000.0);
 		sp = DH_inv_ld(sp);
 
         if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ)) return vec3(spos.xy/RENDER_SCALE,sp);
 
-
         spos += stepv;
+
 		//small bias
-		minZ = maxZ-0.00035/DH_ld(spos.z);
+		minZ = maxZ-0.0000035/DH_ld(spos.z);
+
 		maxZ += stepv.z;
     }
 
@@ -243,16 +242,14 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
     
     if(iswater){
 	    vec3 posxz = playerPos+cameraPosition;
-	    posxz.xz -= posxz.y;
 
-	    vec3 waterHeightmap = normalize(getWaveHeight(posxz.xz,1.0));
+	    vec3 waterHeightmap = normalize(getWaveNormal(posxz, true));
     
 	    float bumpmult = WATER_WAVE_STRENGTH;
 	    waterHeightmap = waterHeightmap * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
         waterHeightmap = normalize(waterHeightmap);
-        vec2 TangentNormal = waterHeightmap.xy*0.5+0.5;
 
-
+        // vec2 TangentNormal = waterHeightmap.xy*0.5+0.5;
 	    // gl_FragData[2] = vec4(encodeVec2(TangentNormal), encodeVec2(vec2(1.0)), encodeVec2(vec2(1.0)), 1.0);
 
         if(normals.y > 0.0) normals = vec3(waterHeightmap.x,normals.y,waterHeightmap.y);
@@ -320,10 +317,11 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	float normalDotEye = dot(normals, normalize(pos.xyz));
 	float fresnel =  pow(clamp(1.0 + normalDotEye, 0.0, 1.0),5.0);
-	fresnel = mix(0.02, 1.0, fresnel); 
+
+	fresnel = mix(0.1, 1.0, fresnel); 
+
     #ifdef SNELLS_WINDOW
-		// snells window looking thing
-		if(isEyeInWater == 1 ) fresnel = pow(clamp(1.66 + normalDotEye,0.0,1.0), 25.0);
+		if(isEyeInWater == 1) fresnel = pow(clamp(1.5 + normalDotEye,0.0,1.0), 25.0);
 	#endif
 
     #ifdef WATER_REFLECTIONS

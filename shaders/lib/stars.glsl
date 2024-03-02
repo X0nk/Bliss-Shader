@@ -44,5 +44,6 @@ float stars(vec3 viewPos){
 	float elevation = clamp(viewPos.y,0.,1.);
 	vec2 uv = viewPos.xz/(1.5+elevation);
 
-	return StableStarField(uv*1000.,0.999)*0.5*0.3;
+	return exp((1.0-StableStarField(uv*1000.,0.999))  * -10) * 3;
+	// return StableStarField(uv*1000.,0.999)*0.5*0.3;
 }

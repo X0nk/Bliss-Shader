@@ -41,20 +41,32 @@ vec2 SpiralSample(
 ////////////////////////////////////////////////////////////////
 
 vec4 BilateralUpscale_SSAO(sampler2D tex, sampler2D depth, vec2 coord, float referenceDepth){
-	const ivec2 scaling = ivec2(1.0);
-	ivec2 posDepth  = ivec2(coord)*scaling;
+	ivec2 scaling = ivec2(1.0);
+	ivec2 posDepth  = ivec2(coord) * scaling;
 	ivec2 posColor  = ivec2(coord);
-
-  	ivec2 pos = ivec2(coord*texelSize);
+  	ivec2 pos = ivec2(gl_FragCoord.xy*texelSize + 1);
 
 	ivec2 getRadius[4] = ivec2[](
-    	ivec2(-2,-2),
+   	 	ivec2(-2,-2),
 	  	ivec2(-2, 0),
 		ivec2( 0, 0),
 		ivec2( 0,-2)
   	);
-
-	float diffThreshold = 0.005;
+	// ivec2 getRadius3x3[8] = ivec2[](
+   	// 	ivec2(-2,-2),
+	// 	ivec2(-2, 0),
+	// 	ivec2( 0, 0),
+	// 	ivec2( 0,-2),
+    // 	ivec2(-2,-1),
+	// 	ivec2(-1,-2),
+	// 	ivec2(0,-1),
+	// 	ivec2(-1,0)
+	// );
+	#ifdef DISTANT_HORIZONS
+		float diffThreshold = 0.0005 ;
+	#else
+		float diffThreshold = 0.005;
+	#endif
 
 	vec4 RESULT = vec4(0.0);
 	float SUM = 0.0;
@@ -62,18 +74,22 @@ vec4 BilateralUpscale_SSAO(sampler2D tex, sampler2D depth, vec2 coord, float ref
 	for (int i = 0; i < 4; i++) {
 		
 		ivec2 radius = getRadius[i];
-		
-		float offsetDepth = ld(texelFetch2D(depth, (posDepth + radius * scaling + pos * scaling),0).r);
-		
+		#ifdef DISTANT_HORIZONS
+			float offsetDepth = sqrt(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling,0).a/65000.0);
+		#else
+			float offsetDepth = ld(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling, 0).r);
+		#endif
+
 		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
 		
-		RESULT += texelFetch2D(tex, (posColor + radius + pos),0) * EDGES;
+		RESULT += texelFetch2D(tex, posColor + radius + pos, 0) * EDGES;
 		
 		SUM += EDGES;
 	}
 
-	return RESULT / SUM;
+	// return vec4(1,1,1,1) * SUM/4;
 
+	return RESULT / SUM;
 }
 
 vec2 SSAO(

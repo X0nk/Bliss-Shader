@@ -170,13 +170,13 @@ void main() {
 
 	#ifdef WAVY_PLANTS
   		bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
-  		if ((mc_Entity.x == 10001&&istopv) && length(position.xy) < 24.0) {
+  		if ((mc_Entity.x == 10001 || mc_Entity.x == 10009 && istopv) && length(position.xy) < 24.0) {
   		  vec3 worldpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
   		  worldpos.xyz += calcMovePlants(worldpos.xyz + cameraPosition)*gl_MultiTexCoord1.y;
   		  position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz ;
   		}
 
-  		if ((mc_Entity.x == 10003) && length(position.xy) < 24.0) {
+  		if (mc_Entity.x == 10003 && length(position.xy) < 24.0) {
   		  vec3 worldpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
   		  worldpos.xyz += calcMoveLeaves(worldpos.xyz + cameraPosition, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*gl_MultiTexCoord1.y;
   		  position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz ;

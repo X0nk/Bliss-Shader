@@ -126,6 +126,8 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 	// uniform sampler2D colortex12;
 	// const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
+	uniform sampler2DShadow shadowtex0;
+	uniform sampler2DShadow shadowtex1;
 	#define TEST
 	#define TIMEOFDAYFOG
 	#include "/lib/lightning_stuff.glsl"
@@ -281,9 +283,10 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 		suncol = vec3(0.0);
 	#endif
 
-	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024., vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), suncol*1.75, skyGroundCol/30.0);
+	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024., vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), suncol*2.0, skyGroundCol/30.0);
 	sky = sky*clouds.a + clouds.rgb / 5.0; 
 
+	sky = mix(dot(sky,vec3(0.333)) * vec3(0.5), sky,  pow(clamp(viewVector.y+1.0,0.0,1.0),5));
 	vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*1024.,  vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), lightSourceColor*1.75, skyGroundCol/30.0);
 
 	sky = sky * VL_Fog.a + VL_Fog.rgb / 5.0;

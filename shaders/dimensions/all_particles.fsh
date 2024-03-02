@@ -18,6 +18,8 @@ varying vec4 color;
 	flat varying vec4 lightCol;
 #endif
 
+uniform int isEyeInWater;
+
 uniform sampler2D texture;
 uniform sampler2D noisetex;
 uniform sampler2D colortex4;
@@ -135,6 +137,10 @@ void main() {
 	
 	vec3 Direct_lighting = vec3(0.0);
 	vec3 Indirect_lighting = vec3(0.0);
+	
+	vec3 MinimumLightColor = vec3(0.2,0.4,1.0);
+	if(isEyeInWater == 1) MinimumLightColor = vec3(10.0);
+
 	vec3 Torch_Color = vec3(TORCH_R,TORCH_G,TORCH_B);
 	
 	
@@ -172,7 +178,7 @@ void main() {
 			Direct_lighting *= phaseg(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), 0.65)*2 + 0.5;
 		#endif
 
-		vec3 AmbientLightColor = averageSkyCol_Clouds * 3.0;
+		vec3 AmbientLightColor = (averageSkyCol_Clouds / 30.0) * 3.0;
 
 	#endif
 
@@ -184,7 +190,7 @@ void main() {
 		vec3 AmbientLightColor = vec3(1.0);
 	#endif
 
-	Indirect_lighting = DoAmbientLightColor(AmbientLightColor, Torch_Color, clamp(lightmap.xy,0,1));
+	Indirect_lighting = DoAmbientLightColor(AmbientLightColor,MinimumLightColor, Torch_Color, clamp(lightmap.xy,0,1));
 
 	#ifdef LINES
 		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * toLinear(color.rgb);

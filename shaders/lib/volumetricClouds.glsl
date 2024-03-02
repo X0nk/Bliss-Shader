@@ -259,7 +259,6 @@ float phaseg(float x, float g){
 }
 
 
-// random magic number bullshit go!
 vec3 DoCloudLighting(
 	float density,
 	float densityFaded,
@@ -276,7 +275,7 @@ vec3 DoCloudLighting(
 	float powder = 1.0 - exp(-10.0 * densityFaded);
 	float lesspowder = powder*0.4+0.6;
 	
-	float indirectScatter = exp2( -15 *  sqrt((skyScatter*skyScatter*skyScatter) * densityFaded)) * lesspowder;
+	float indirectScatter = exp(-15 * sqrt((skyScatter*skyScatter*skyScatter) * densityFaded)) * lesspowder;
 
 	vec3 indirectLight = skyLightCol *  mix(1.0, indirectScatter, distantfog);
 
@@ -406,7 +405,7 @@ if(layer == 2){
 					directLight += HighAlt_shadow;
 				#endif
 
-				float skyScatter = clamp(((maxHeight - 20 - rayProgress.y) / 275.0)  * (0.5+cloudDensity),0.0,1.0);
+				float skyScatter = clamp(((maxHeight - 50 - rayProgress.y) / 275.0)  * (0.5+cloudDensity),0.0,1.0);
 				vec3 lighting = DoCloudLighting(muE, cumulus, skyLightCol * skylightOcclusion, skyScatter, directLight, sunScatter, sunMultiScatter, distantfog);
 
 

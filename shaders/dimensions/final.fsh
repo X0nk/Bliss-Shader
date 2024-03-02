@@ -6,6 +6,7 @@ uniform sampler2D colortex7;
 uniform vec2 texelSize;
 uniform float frameTimeCounter;
 
+uniform sampler2D shadow;
 uniform sampler2D shadowcolor0;
 uniform sampler2D shadowcolor1;
 uniform sampler2D shadowtex0;
@@ -121,6 +122,20 @@ void applyColorCurve(inout vec3 color, vec4 darks, vec4 brights){
   }
 #endif
 
+//float3 crosstalk_and_saturation(float3 color){
+//
+//  float crosstalk = 0.0;
+//  float saturation = 0.0
+//
+//  float luminance = dot(COLOR, vec3(0.21, 0.72, 0.07));
+//  
+//  float3 difference = color - luminance;
+//  
+//  color = color + difference*(-luminance*crosstalk + saturation);
+//  
+//  return color;
+//}
+
 uniform int hideGUI;
 void main() {
   #ifdef BICUBIC_UPSCALING
@@ -165,7 +180,6 @@ void main() {
   gl_FragColor.rgb = FINAL_COLOR;
 
 
-  // vec2 texrood = texcoord * vec2(2.0, 1.0) - vec2(1.0, 0.0);
-  // if(texcoord.x > 0.5) gl_FragColor.rgb = texture2D(shadowcolor0, texrood).rgb;
+  // if(texcoord.x > 0.5) gl_FragColor.rgb = texture2D(shadowcolor0, texcoord * vec2(2.0, 1.0) - vec2(1.0, 0.0)).rgb * vec3(1.0);
 
 }

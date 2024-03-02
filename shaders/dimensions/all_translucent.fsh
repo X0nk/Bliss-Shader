@@ -44,7 +44,6 @@ varying vec4 normalMat;
 varying vec3 binormal;
 varying vec3 flatnormal;
 
-varying vec3 viewVector;
 
 
 
@@ -77,7 +76,6 @@ uniform vec3 nsunColor;
 #include "/lib/projections.glsl"
 #include "/lib/sky_gradient.glsl"
 #include "/lib/waterBump.glsl"
-#include "/lib/stars.glsl"
 
 #ifdef OVERWORLD_SHADER
 	flat varying float Flashing;
@@ -132,19 +130,28 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 #define PW_DEPTH 1.0 //[0.5 1.0 1.5 2.0 2.5 3.0]
 #define PW_POINTS 1 //[2 4 6 8 16 32]
 
-vec3 getParallaxDisplacement(vec3 posxz, float iswater,float bumpmult,vec3 viewVec) {
-	float waveZ = mix(20.0,0.25,iswater);
-	float waveM = mix(0.0,4.0,iswater);
+varying vec3 viewVector;
+vec3 getParallaxDisplacement(vec3 posxz) {
 
 	vec3 parallaxPos = posxz;
-	vec2 vec = viewVector.xy * (1.0 / float(PW_POINTS)) * 22.0 * PW_DEPTH;
-	float waterHeight = getWaterHeightmap(posxz.xz, waveM, waveZ, iswater) ;
-	
+	vec2 vec = viewVector.xy * (1.0 / float(PW_POINTS)) * 22.0;
+	float waterHeight = getWaterHeightmap(posxz.xz);
 	parallaxPos.xz += waterHeight * vec;
 
 	return parallaxPos;
-
 }
+
+// vec3 getParallaxDisplacement(vec3 posxz,float bumpmult,vec3 viewVec) {
+
+// 	vec3 parallaxPos = posxz;
+// 	vec2 vec = viewVector.xy * (1.0 / float(PW_POINTS)) * 22.0 * PW_DEPTH;
+// 	float waterHeight = getWaterHeightmap(posxz.xz) ;
+	
+// 	parallaxPos.xz += waterHeight * vec;
+
+// 	return parallaxPos;
+
+// }
 
 vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
 	float bumpmult = 1;
@@ -258,8 +265,11 @@ vec3 rayTrace(vec3 dir, vec3 position,float dither, float fresnel, bool inwater)
 
         spos += stepv;
 		//small bias
-		minZ = maxZ-(0.0001/dist)/ld(spos.z);
-		if(inwater) minZ = maxZ-0.0004/ld(spos.z);
+		if(inwater) {
+			minZ = maxZ-0.000035/ld(spos.z);
+		}else{
+			minZ = maxZ-(0.0001/dist)/ld(spos.z);
+		}
 		maxZ += stepv.z;
     }
 
@@ -268,7 +278,6 @@ vec3 rayTrace(vec3 dir, vec3 position,float dither, float fresnel, bool inwater)
 
 vec3 GGX (vec3 n, vec3 v, vec3 l, float r, vec3 F0) {
   r = pow(r,2.5);
-//   r*=r;
 
   vec3 h = l + v;
   float hn = inversesqrt(dot(h, h));
@@ -278,13 +287,14 @@ vec3 GGX (vec3 n, vec3 v, vec3 l, float r, vec3 F0) {
   float dotNL = clamp(dot(n,l),0.,1.);
   float dotNHsq = dotNH*dotNH;
 
-  float denom = dotNHsq * r - dotNHsq + 1.;
+  float denom = dotNHsq * r - dotNHsq + 1.0;
   float D = r / (3.141592653589793 * denom * denom);
   vec3 F = 0.2 + (1. - F0) * exp2((-5.55473*dotLH-6.98316)*dotLH);
   float k2 = .25 * r;
 
   return dotNL * D * F / (dotLH*dotLH*(1.0-k2)+k2);
 }
+
 
 uniform float dhFarPlane;
 
@@ -368,14 +378,13 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	
 	#ifndef HAND
 		if (iswater > 0.95){
+			vec3 posxz = feetPlayerPos + cameraPosition;
+		
 			float bumpmult = WATER_WAVE_STRENGTH;
-			vec3 bump = vec3(0);
-			vec3 posxz = feetPlayerPos+cameraPosition;
 
-			posxz.xz -= posxz.y;
-			posxz.xyz = getParallaxDisplacement(posxz,iswater,bumpmult,normalize(tbnMatrix*viewPos)) ;
+			posxz.xyz = getParallaxDisplacement(posxz) ;
 
-			bump = normalize(getWaveHeight(posxz.xz,iswater));
+			vec3 bump = normalize(getWaveNormal(posxz, false));
 
 			TangentNormal = bump.xy*0.5+0.5; // tangent space normals for refraction
 
@@ -402,6 +411,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	vec3 Indirect_lighting = vec3(0.0);
+	vec3 MinimumLightColor = vec3(0.2,0.4,1.0);
+	if(isEyeInWater == 1) MinimumLightColor = vec3(10.0);
 	vec3 Direct_lighting = vec3(0.0);
 
 	#ifdef OVERWORLD_SHADER
@@ -464,25 +475,19 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			inShadowmapBounds = true;
 		}
 
-		// if(!inShadowmapBounds && !iswater) Shadows = min(max(lightmap.y-0.8, 0.0) * 25,1.0);
 		if(!inShadowmapBounds) Shadows = 1.0;
 
 		Shadows *= GetCloudShadow(feetPlayerPos);
 
 		Direct_lighting = (lightCol.rgb/80.0) * NdotL * Shadows;
 
-		vec3 AmbientLightColor = averageSkyCol_Clouds;
+		vec3 AmbientLightColor = averageSkyCol_Clouds/30.0;
 		
 		vec3 ambientcoefs = WS_normal / dot(abs(WS_normal), vec3(1));
 		float SkylightDir = ambientcoefs.y*1.5;
 		
 		float skylight = max(pow(viewToWorld(flatnormal).y*0.5+0.5,0.1) + SkylightDir, 0.25);
 		AmbientLightColor *= skylight;
-
-		// float skylight = max(pow(viewToWorld(flatnormal).y*0.5+0.5,0.1) + viewToWorld(normal).y, 0.25) * 1.35;
-		// Indirect_lighting = DoAmbientLighting(averageSkyCol_Clouds, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy, skylight);
-	
-	
 	#endif
 
 	#ifdef NETHER_SHADER
@@ -515,9 +520,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		AmbientLightColor *= clamp(1.5 + dot(WS_normal, normalize(feetPlayerPos))*0.5,0,2);
 	
 	#endif
-
-	Indirect_lighting = DoAmbientLightColor(AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
-	// Albedo = Albedo * exp2( (clamp(-dot(normal, normalize(viewPos)),0.0,1.0))  * -10.0);//pow(clamp(1.0 + dot(normal, normalize(viewPos)), 0.0, 1.0),5.0);
+	Indirect_lighting = DoAmbientLightColor(AmbientLightColor, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
 
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
 	
@@ -535,7 +538,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#ifdef WATER_REFLECTIONS
 		vec2 SpecularTex = texture2D(specular, lmtexcoord.xy, Texture_MipMap_Bias).rg;
 		
-		SpecularTex = (iswater > 0.0 && iswater < 0.9) && SpecularTex.r > 0.0 && SpecularTex.g < 0.9 ? SpecularTex : vec2(1.0,0.02);
+		SpecularTex = (iswater > 0.0 && iswater < 0.9) && SpecularTex.r > 0.0 && SpecularTex.g < 0.9 ? SpecularTex : vec2(1.0,0.1);
 	
 		float roughness = max(pow(1.0-SpecularTex.r,2.0),0.05);
 		float f0 = SpecularTex.g;
@@ -558,10 +561,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 			#ifdef SNELLS_WINDOW
 				// snells window looking thing
-				if(isEyeInWater == 1 ) fresnel = pow(clamp(1.66 + normalDotEye,0.0,1.0), 25.0);
+				if(isEyeInWater == 1) fresnel = pow(clamp(1.5 + normalDotEye,0.0,1.0), 25.0);
 			#endif
 
 			fresnel = mix(f0, 1.0, fresnel); 
+
+			// vec3 Metals = f0 > 229.5/255.0 ? max(Albedo, fresnel) : vec3(1.0);
 			
 	
 			// Sun, Sky, and screen-space reflections
@@ -570,13 +575,11 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 					SunReflection = Direct_lighting * GGX(normal, -normalize(viewPos), WsunVec*mat3(gbufferModelViewInverse), roughness, vec3(f0)); 
 				#endif
 				#ifdef WATER_BACKGROUND_SPECULAR
- 					SkyReflection = skyCloudsFromTex(mat3(gbufferModelViewInverse) * reflectedVector, colortex4).rgb / 30.0;
-					if(isEyeInWater == 1) SkyReflection = vec3(0.0);
+ 					if(isEyeInWater == 0) SkyReflection = skyCloudsFromTex(mat3(gbufferModelViewInverse) * reflectedVector, colortex4).rgb / 30.0;
 				#endif
 			#else
 				#ifdef WATER_BACKGROUND_SPECULAR 
- 					SkyReflection = skyCloudsFromTexLOD2(mat3(gbufferModelViewInverse) * reflectedVector, colortex4, 0).rgb / 30.0;
-					if(isEyeInWater == 1) SkyReflection = vec3(0.0);
+ 					if(isEyeInWater == 0) SkyReflection = skyCloudsFromTexLOD2(mat3(gbufferModelViewInverse) * reflectedVector, colortex4, 0).rgb / 30.0;
 				#endif
 			#endif
 			#ifdef SCREENSPACE_REFLECTIONS
@@ -594,6 +597,11 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 				}
 			#endif
 
+			#ifdef OVERWORLD_SHADER
+			if(isEyeInWater == 1 && iswater > 0.9){
+			 	SkyReflection.rgb = exp(-8.0 * vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B)) * clamp(WsunVec.y*lightCol.a,0,1) ;
+			}
+			#endif
 			float visibilityFactor = clamp(exp2((pow(roughness,3.0) / f0) * -4),0,1);
 
 			#ifdef ENTITIES
@@ -606,7 +614,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			Reflections_Final += SunReflection;
 
 			
-			gl_FragData[0].rgb = Reflections_Final;
+			gl_FragData[0].rgb = Reflections_Final ;
 			
 			#ifndef ENTITIES
 				//correct alpha channel with fresnel
@@ -638,6 +646,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		if(gl_FragCoord.x*texelSize.x < 0.47) gl_FragData[0] = vec4(0.0);
 	#endif
 
-	gl_FragData[3].a = max(lmtexcoord.w*blueNoise()*0.05 + lmtexcoord.w,0.0);
+	gl_FragData[3].a = lmtexcoord.w;
 }
 }

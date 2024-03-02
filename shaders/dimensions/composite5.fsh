@@ -13,9 +13,9 @@ const int colortex8Format = RGBA8;					// Specular Texture
 const int colortex9Format = RGBA8;					// rain in alpha
 const int colortex10Format = RGBA16;				// resourcepack Skies
 const int colortex11Format = RGBA16; 				// unchanged translucents albedo, alpha and tangent normals
-
 const int colortex12Format = RGBA16F;				// DISTANT HORIZONS + VANILLA MIXED DEPTHs
 
+const int colortex13Format = RGBA16F;				// low res VL (composite5->composite15)
 const int colortex14Format = RGBA8;					// rg = SSAO and SS-SSS. a = skylightmap for translucents.
 const int colortex15Format = RGBA8;					// flat normals and vanilla AO
 */

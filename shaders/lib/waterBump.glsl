@@ -1,81 +1,82 @@
-float getWaterHeightmap(vec2 posxz, float waveM, float waveZ, float iswater) { // water waves
-	vec2 movement = vec2(frameTimeCounter*0.05);
-	vec2 pos = posxz ;
-	float caustic = 1.0;
-	float weightSum = 0.0;
+float waterCaustics(vec3 worldPos, vec3 sunVec) {
+
+	vec3 projectedPos = worldPos - (sunVec/sunVec.y*worldPos.y);
+	vec2 pos = projectedPos.xz;
+
+	float heightSum = 0.0;
+	float movement = frameTimeCounter*0.02;
+	// movement = 0.0;
 
 	float radiance = 2.39996;
 	mat2 rotationMatrix  = mat2(vec2(cos(radiance),  -sin(radiance)),  vec2(sin(radiance),  cos(radiance)));
-
-	const vec2 wave_size[3] = vec2[](
+	
+	vec2 wave_size[3] = vec2[](
 		vec2(48.,12.),
 		vec2(12.,48.),
-		vec2(32.)
+		vec2(32.,32.)
 	);
 
-	float WavesLarge = clamp(	pow(1.0-pow(1.0-texture2D(noisetex, pos / 600.0 ).b, 5.0),5.0),0.1,1.0);
-// 	float WavesLarge = pow(abs(0.5-texture2D(noisetex, pos / 600.0 ).b),2);
+	float WavesLarge = max(texture2D(noisetex, pos / 600.0 ).b,0.1);
 
 	for (int i = 0; i < 3; i++){
-		pos = rotationMatrix * pos ;
-
-		float Waves = texture2D(noisetex, pos / wave_size[i] + (1.0-WavesLarge)*0.5 + movement).b;
-
-		
-		caustic += exp2(pow(Waves,3.0) * -5.0);
-		weightSum += exp2(-(3.0-caustic*pow(WavesLarge,2)));
+		pos = rotationMatrix * pos;
+		heightSum += pow(abs(abs(texture2D(noisetex, pos / wave_size[i] + WavesLarge*0.5 + movement).b * 2.0 - 1.0) * 2.0 - 1.0), 2.0) ;
 	}
-	return ((3.0-caustic) * weightSum / (30.0 * 3.0));
+
+	float FinalCaustics = exp((1.0 + 5.0 * pow(WavesLarge,0.5)) * (heightSum / 3.0 - 0.5));
+
+	return FinalCaustics;
 }
 
+float getWaterHeightmap(vec2 posxz) {
+	
+	vec2 pos = posxz;
+	float heightSum = 0.0;
+	float movement = frameTimeCounter*0.02;
+	// movement = 0.0;
+	
+	float radiance = 2.39996;
+	mat2 rotationMatrix  = mat2(vec2(cos(radiance),  -sin(radiance)),  vec2(sin(radiance),  cos(radiance)));
 
-// float getWaterHeightmap(vec2 posxz, float waveM, float waveZ, float iswater) { // water waves
-// 	vec2 movement = vec2(frameTimeCounter*0.025);
-// 	vec2 pos = posxz ;
-// 	float caustic = 1.0;
-// 	float weightSum = 0.0;
+	vec2 wave_size[3] = vec2[](
+		vec2(48.,12.),
+		vec2(12.,48.),
+		vec2(32.,32.)
+	);
 
-// 	float radiance = 2.39996;
-// 	mat2 rotationMatrix  = mat2(vec2(cos(radiance),  -sin(radiance)),  vec2(sin(radiance),  cos(radiance)));
+	float WavesLarge = max(texture2D(noisetex, pos / 600.0 ).b,0.1);
 
-// 	const vec2 wave_size[3] = vec2[](
-// 		vec2(60.,30.),
-// 		vec2(30.,60.),
-// 		vec2(45.)
-// 	);
+	for (int i = 0; i < 3; i++){
+		pos = rotationMatrix * pos;
+		heightSum += texture2D(noisetex, pos / wave_size[i] + WavesLarge*0.5 + movement).b;
+	}
 
-// 	float WavesLarge = pow(abs(0.5-texture2D(noisetex, pos / 600.0 ).b),2);
+	return (heightSum / 60.0) * WavesLarge;
+}
 
-// 	for (int i = 0; i < 3; i++){
-// 		pos = rotationMatrix * pos ;
+vec3 getWaveNormal(vec3 posxz, bool isLOD){
 
-// 		float Waves = 1.0-exp(pow(abs(0.5-texture2D(noisetex, pos / (wave_size[i]  ) + movement).b),1.3) * -10) ;
+	// vary the normal's "smooth" factor as distance changes, to avoid noise from too much details.
+	float range = pow(clamp(1.0 - length(posxz - cameraPosition)/(32*4),0.0,1.0),2.0);
+	float deltaPos = mix(0.5, 0.1, range);
+	float normalMult = 10.0;
 
-// 		caustic += Waves*0.1;
-// 		weightSum += exp2(-caustic*pow(WavesLarge,2));
-// 	}
-// 	return caustic * weightSum/ 30;
-// }
+	if(isLOD){
+		normalMult = mix(5.0, normalMult, range);
+		deltaPos = mix(0.9, deltaPos, range);
+	}
 
+	vec2 coord = posxz.xz;// - posxz.y;
 
-vec3 getWaveHeight(vec2 posxz, float iswater){
-
-		vec2 coord = posxz;
-
-		float deltaPos =  0.25;
-
-		float waveZ = mix(20.0,0.25,iswater);
-		float waveM = mix(0.0,4.0,iswater);
-
-		float h0 = getWaterHeightmap(coord, waveM, waveZ, iswater);
-		float h1 = getWaterHeightmap(coord + vec2(deltaPos,0.0), waveM, waveZ, iswater);
-		float h3 = getWaterHeightmap(coord + vec2(0.0,deltaPos), waveM, waveZ, iswater);
+	float h0 = getWaterHeightmap(coord);
+	float h1 = getWaterHeightmap(coord + vec2(deltaPos,0.0));
+	float h3 = getWaterHeightmap(coord + vec2(0.0,deltaPos));
 
 
-		float xDelta = ((h1-h0))/deltaPos*2.;
-		float yDelta = ((h3-h0))/deltaPos*2.;
+	float xDelta = ((h1-h0)/deltaPos)*normalMult;
+	float yDelta = ((h3-h0)/deltaPos)*normalMult;
 
-		vec3 wave = normalize(vec3(xDelta,yDelta,1.0-pow(abs(xDelta+yDelta),2.0)));
+	vec3 wave = normalize(vec3(xDelta,yDelta,1.0-pow(abs(xDelta+yDelta),2.0)));
 
-		return wave;
+	return wave ;
 }

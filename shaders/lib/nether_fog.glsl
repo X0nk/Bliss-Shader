@@ -41,6 +41,11 @@ vec4 GetVolumetricFog(
 	float dither,
 	float dither2
 ){
+	
+	#ifndef TOGGLE_VL_FOG
+		return vec4(0.0,0.0,0.0,1.0);
+	#endif
+	
 	int SAMPLES = 16;
 	vec3 vL = vec3(0.0);
 	float absorbance = 1.0;
