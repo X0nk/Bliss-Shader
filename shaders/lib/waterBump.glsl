@@ -4,7 +4,7 @@ float waterCaustics(vec3 worldPos, vec3 sunVec) {
 	vec2 pos = projectedPos.xz;
 
 	float heightSum = 0.0;
-	float movement = frameTimeCounter*0.02;
+	float movement = frameTimeCounter*0.035 * WATER_WAVE_SPEED;
 	// movement = 0.0;
 
 	float radiance = 2.39996;
@@ -32,7 +32,7 @@ float getWaterHeightmap(vec2 posxz) {
 	
 	vec2 pos = posxz;
 	float heightSum = 0.0;
-	float movement = frameTimeCounter*0.02;
+	float movement = frameTimeCounter*0.035 * WATER_WAVE_SPEED;
 	// movement = 0.0;
 	
 	float radiance = 2.39996;
