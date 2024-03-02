@@ -687,15 +687,22 @@ void BilateralUpscale_REUSE_Z(sampler2D tex1, sampler2D tex2, sampler2D depth, v
 		#endif
 
 		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
-		
-		shadow_RESULT += texelFetch2D(tex1, posColor + radius + pos, 0).rgb * EDGES;
-		ssao_RESULT += texelFetch2D(tex2, posColor + radius + pos, 0).rg * EDGES;
+		// #ifdef Variable_Penumbra_Shadows
+			shadow_RESULT += texelFetch2D(tex1, posColor + radius + pos, 0).rgb * EDGES;
+		// #endif
+
+		#if indirect_effect == 1
+			ssao_RESULT += texelFetch2D(tex2, posColor + radius + pos, 0).rg * EDGES;
+		#endif
 
 		SUM += EDGES;
 	}
-
-	filteredShadow = shadow_RESULT/SUM;
-	ambientEffects = ssao_RESULT/SUM;
+	// #ifdef Variable_Penumbra_Shadows
+		filteredShadow = shadow_RESULT/SUM;
+	// #endif
+	#if indirect_effect == 1
+		ambientEffects = ssao_RESULT/SUM;
+	#endif
 }
 
 void main() {

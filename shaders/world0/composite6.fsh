@@ -2,4 +2,4 @@
 
 #define OVERWORLD_SHADER
 
-#include "/dimensions/composite6.fsh"
+#include "/dimensions/composite5.fsh"
