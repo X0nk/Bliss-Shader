@@ -3,7 +3,7 @@ option.BLISS_SHADERS=Bliss
 	value.BLISS_SHADERS.1=作者: Xonk
 	value.BLISS_SHADERS.2=版本: GIT-HEAD
 
-# if you're here to translate, this is a joke, these don't do what they say. # Translator: I don't care
+# if you're here to translate, this is a joke, these don't do what they say
 profile.QUALITY=质量
 profile.PERFORMANCE=性能
 
@@ -62,6 +62,8 @@ screen.Direct_Light = 直接照明
         option.shadowDistanceRenderMul = 最大阴影边界
             value.shadowDistanceRenderMul.-1.0 = 无优化
             value.shadowDistanceRenderMul.1.0 = 优化
+        option.entityShadowDistanceMul = 实体阴影距离
+
     screen.Filtering = 阴影过滤设置
         option.SHADOW_FILTER_SAMPLE_COUNT = 阴影过滤采样数
         option.Min_Shadow_Filter_Radius = 最小阴影过滤半径
@@ -152,9 +154,9 @@ screen.Clouds = 云层设置
     option.VOLUMETRIC_CLOUDS = 体积云
     option.CLOUDS_QUALITY = 云层分辨率倍数
     option.CLOUDS_SHADOWS = 云影
-    option.Daily_Weather = 周期循环的天气
     option.Cloud_Speed = 云层速度
     option.Rain_coverage = 雨云覆盖率
+    option.Daily_Weather = 周期循环的天气
 
     option.CloudLayer0          = 小积云
     option.CloudLayer0_coverage = 覆盖率
@@ -171,6 +173,107 @@ screen.Clouds = 云层设置
     option.CloudLayer2_density  = 密度
     option.CloudLayer2_height   = 高度
 
+screen.DAILY_WEATHER = 周期循环的天气设置
+    screen.DAY0_WEATHER = 第 0 天的天气
+        option.DAY0_l0_coverage = 小积云覆盖率
+        option.DAY0_l0_density = 小积云密度
+        option.DAY0_l1_coverage = 大积云覆盖率
+        option.DAY0_l1_density = 大积云密度
+        option.DAY0_l2_coverage = 高层云覆盖率
+        option.DAY0_l2_density =  高层云密度
+        option.DAY0_ufog_density = 均匀雾气密度
+        option.DAY0_cfog_density = 云雾密度
+        
+    screen.DAY1_WEATHER = 第 1 天的天气
+        option.DAY1_l0_coverage = 小积云覆盖率
+        option.DAY1_l0_density = 小积云密度
+        option.DAY1_l1_coverage = 大积云覆盖率
+        option.DAY1_l1_density = 大积云密度
+        option.DAY1_l2_coverage = 高层云覆盖率
+        option.DAY1_l2_density =  高层云密度
+        option.DAY1_ufog_density = 均匀雾气密度
+        option.DAY1_cfog_density = 云雾密度
+        
+    screen.DAY2_WEATHER = 第 2 天的天气
+        option.DAY2_l0_coverage = 小积云覆盖率
+        option.DAY2_l0_density = 小积云密度
+        option.DAY2_l1_coverage = 大积云覆盖率
+        option.DAY2_l1_density = 大积云密度
+        option.DAY2_l2_coverage = 高层云覆盖率
+        option.DAY2_l2_density =  高层云密度
+        option.DAY2_ufog_density = 均匀雾气密度
+        option.DAY2_cfog_density = 云雾密度
+
+    screen.DAY3_WEATHER = 第 3 天的天气
+        option.DAY3_l0_coverage = 小积云覆盖率
+        option.DAY3_l0_density = 小积云密度
+        option.DAY3_l1_coverage = 大积云覆盖率
+        option.DAY3_l1_density = 大积云密度
+        option.DAY3_l2_coverage = 高层云覆盖率
+        option.DAY3_l2_density =  高层云密度
+        option.DAY3_ufog_density = 均匀雾气密度
+        option.DAY3_cfog_density = 云雾密度
+
+    screen.DAY4_WEATHER = 第 4 天的天气
+        option.DAY4_l0_coverage = 小积云覆盖率
+        option.DAY4_l0_density = 小积云密度
+        option.DAY4_l1_coverage = 大积云覆盖率
+        option.DAY4_l1_density = 大积云密度
+        option.DAY4_l2_coverage = 高层云覆盖率
+        option.DAY4_l2_density =  高层云密度
+        option.DAY4_ufog_density = 均匀雾气密度
+        option.DAY4_cfog_density = 云雾密度
+
+    screen.DAY5_WEATHER = 第 5 天的天气
+        option.DAY5_l0_coverage = 小积云覆盖率
+        option.DAY5_l0_density = 小积云密度
+        option.DAY5_l1_coverage = 大积云覆盖率
+        option.DAY5_l1_density = 大积云密度
+        option.DAY5_l2_coverage = 高层云覆盖率
+        option.DAY5_l2_density =  高层云密度
+        option.DAY5_ufog_density = 均匀雾气密度
+        option.DAY5_cfog_density = 云雾密度
+
+    screen.DAY6_WEATHER = 第 6 天的天气
+        option.DAY6_l0_coverage = 小积云覆盖率
+        option.DAY6_l0_density = 小积云密度
+        option.DAY6_l1_coverage = 大积云覆盖率
+        option.DAY6_l1_density = 大积云密度
+        option.DAY6_l2_coverage = 高层云覆盖率
+        option.DAY6_l2_density =  高层云密度
+        option.DAY6_ufog_density = 均匀雾气密度
+        option.DAY6_cfog_density = 云雾密度
+
+    screen.DAY7_WEATHER = 第 7 天的天气
+        option.DAY7_l0_coverage = 小积云覆盖率
+        option.DAY7_l0_density = 小积云密度
+        option.DAY7_l1_coverage = 大积云覆盖率
+        option.DAY7_l1_density = 大积云密度
+        option.DAY7_l2_coverage = 高层云覆盖率
+        option.DAY7_l2_density =  高层云密度
+        option.DAY7_ufog_density = 均匀雾气密度
+        option.DAY7_cfog_density = 云雾密度
+
+    screen.DAY8_WEATHER = 第 8 天的天气
+        option.DAY8_l0_coverage = 小积云覆盖率
+        option.DAY8_l0_density = 小积云密度
+        option.DAY8_l1_coverage = 大积云覆盖率
+        option.DAY8_l1_density = 大积云密度
+        option.DAY8_l2_coverage = 高层云覆盖率
+        option.DAY8_l2_density =  高层云密度
+        option.DAY8_ufog_density = 均匀雾气密度
+        option.DAY8_cfog_density = 云雾密度
+
+    screen.DAY9_WEATHER = 第 9 天的天气
+        option.DAY9_l0_coverage = 小积云覆盖率
+        option.DAY9_l0_density = 小积云密度
+        option.DAY9_l1_coverage = 大积云覆盖率
+        option.DAY9_l1_density = 大积云密度
+        option.DAY9_l2_coverage = 高层云覆盖率
+        option.DAY9_l2_density =  高层云密度
+        option.DAY9_ufog_density = 均匀雾气密度
+        option.DAY9_cfog_density = 云雾密度
+        
 
 screen.Climate = 气候
     option.Seasons = 四季颜色
@@ -494,7 +597,7 @@ screen.Post_Processing.comment = 配置所有后处理效果设置, 从抗锯齿
     screen.TAA_OPTIONS.comment = 配置和抗锯齿相关的设置.
         option.SCREENSHOT_MODE.comment = 开启帧数积累以获得少噪点高质量的图像. §b这啥?§r 将已发生的帧叠加到生成的下一帧上, 类似于长曝光图像.
         option.TAA.comment = 时间性抗锯齿 (TAA) 开关. 这可以去除大部分内容的锯齿状边缘, 软化图像, 并有助于去除许多效果产生的噪点. 但会导致拖影, 因为它使用过去的帧来获取世界额外信息. §a性能消耗水平:§r 低.
-        option.BLEND_FACTOR.comment = 配置历史帧使用比重. 更高的数值意味着依赖更少的历史帧, 所以可能会看起来很闪烁和嘈杂. 较低的数值意味着以来更多的历史帧, 所以可能会看起来很多脏点和拖影.
+        option.BLEND_FACTOR.comment = 配置历史帧使用比重. 更高的数值意味着依赖更少的历史帧, 所以可能会看起来很闪烁和多噪点. 较低的数值意味着以来更多的历史帧, 所以可能会看起来更少噪点但是更多拖影和显得有点脏.
         option.TAA_UPSCALING.comment = 时间性升分辨率. 升分辨率时, 可以从低分辨率的图像中保留大多数质量. 因此与常规升分辨率相比, 可以开启一个看起来很高的分辨率的同时也能有更好的性能.
         option.SCALE_FACTOR.comment = 配置以原有分辨率的多大一部分来开始升分辨率. 不推荐低于0.5, 只把它作为一个选项, 因为它很有趣. :P
 
@@ -526,7 +629,18 @@ option.CloudLayer2_height.comment   = 配置云层飘浮处的高度. §c不能�
 
 option.SKY_GROUND.comment = §b这啥?§r 天空的暗色下半部分, 若 Minecraft 有无限渲染距离, 则这是地面. §a性能消耗水平:§r 非常非常低. §c由于额外的函数计算, 禁用本选项会比启用消耗消耗更多性能.§r
 option.SNELLS_WINDOW.comment = §b这啥?§r 这是在水下看到的黑色反射圆圈. 这是对现实水下会发生的情况的模拟, 称为 "全内反射". §a性能消耗水平:§r 非常非常非常低.
+option.entityShadowDistanceMul.comment = §b这啥?§r 配置实体阴影的生效距离. 如果想保留实体阴影开启又想提高有巨量实体的区域的性能, 本选项会十分有用.
 
+screen.DISTANT_HORIZONS_SETTINGS = §2Distant Horizons §f设置
+
+option.DH_KNOWN_ISSUES =DH 支持已知问题
+value.DH_KNOWN_ISSUES.0 = §c 点击此处文本循环查看已知问题列表
+value.DH_KNOWN_ISSUES.1 = §a LOD 区域的 GTAO, RTAO, 和 SSGI 不生效 - 未能实现对 DH 的支持
+
+option.DISTANT_HORIZONS_SHADOWMAP = §c(如果不知道本选项作用, 请不要开启)§r DH 阴影图支持
+option.DISTANT_HORIZONS_SHADOWMAP.comment =  §c此选项会降低性能, 会使阴影看起来呈块状, 闪烁且会降低阴影细节§r. 将阴影距离设置为 32 区块 (或更多). 设置阴影分辨率为 4096 (或更大)
+option.TOGGLE_VL_FOG = 体积雾
+option.TOGGLE_VL_FOG.comment = 一个快速关闭所有雾气的开关.
 
 #Additional Options / 附加选项
 #Direct Light
@@ -555,7 +669,7 @@ option.SNELLS_WINDOW.comment = §b这啥?§r 这是在水下看到的黑色反�
 
 #World
         option.Vanilla_like_water=原版水体样式
-
+        option.WATER_WAVE_SPEED=水体摇晃速度
 
 #Ambient_light
     option.HANDHELD_LIGHT_RANGE=手持光源范围
@@ -641,6 +755,15 @@ option.CLOUD_SHADOW_STRENGTH=云影强度
         option.Lightning_G=闪电 - 绿色
         option.Lightning_B=闪电 - 蓝色
 
+    option.DEBUG_VIEW=调试视图
+        value.DEBUG_VIEW.debug_OFF=关闭
+            value.DEBUG_VIEW.debug_SHADOWMAP=阴影图
+            value.DEBUG_VIEW.debug_NORMALS=法线
+            value.DEBUG_VIEW.debug_SPECULAR=高光
+            value.DEBUG_VIEW.debug_INDIRECT=间接照明
+            value.DEBUG_VIEW.debug_DIRECT=直接照明
+            value.DEBUG_VIEW.debug_VIEW_POSITION=View Position
+            value.DEBUG_VIEW.debug_DH_WATER_BLENDING=DH 水体混合
     option.display_LUT=显示 LUT
     option.WhiteWorld=全白世界
     option.WhiteWorld.comment=用于调试的视图. 易于观察环境光遮蔽的效果. 易于观察模拟全局光照 (绿光) 的效果.
@@ -656,8 +779,16 @@ option.CLOUD_SHADOW_STRENGTH=云影强度
     option.BLOOMY_PARTICLES=泛光粒子
     option.ORIGINAL_CHOCAPIC_SKY=原始 Chocapic 天空
     option.BIOME_TINT_WATER=群系色调水体
+    option.CLOUDS_INFRONT_OF_WORLD=云层在世界前渲染
+    option.SELECT_BOX=选择框
+    option.DENOISE_SSS_AND_SSAO=对 SSS和 SSAOO 降噪
+    option.WATER_CAUSTICS_BRIGHTNESS=水体焦散线亮度
+    option.HYPER_DETAILED_WAVES=超细节水波
 
 
 #Climate
     screen.Seasons=季节
         suffix.Season_Length=MC日
+
+#DH settings
+    option.DH_OVERDRAW_PREVENTION=防止过度绘制

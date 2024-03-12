@@ -305,6 +305,7 @@ uniform float dhFarPlane;
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 
+uniform vec4 entityColor;
 /* RENDERTARGETS:2,7,11,14 */
 void main() {
 if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	{
@@ -521,6 +522,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	
 	#endif
 	Indirect_lighting = DoAmbientLightColor(AmbientLightColor, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
+	
+	#ifdef ENTITIES
+		Albedo.rgb = mix(Albedo.rgb, entityColor.rgb, clamp(entityColor.a*1.5,0,1));
+	#endif
 
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
 	

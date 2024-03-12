@@ -108,6 +108,7 @@ uniform ivec2 eyeBrightnessSmooth;
 
 uniform vec3 sunVec;
 flat varying vec3 WsunVec;
+// flat varying vec3 unsigned_WsunVec;
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
@@ -157,6 +158,7 @@ float DH_inv_ld (float lindepth){
 
 float linearizeDepthFast(const in float depth, const in float near, const in float far) {
     return (near * far) / (depth * (near - far) + far);
+	// return (2.0 * near) / (far + near - depth * (far - near));
 }
 float invertlinearDepthFast(const in float depth, const in float near, const in float far) {
 	return ((2.0*near/depth)-far-near)/(far-near);
@@ -805,7 +807,8 @@ void main() {
 
 	////// --------------- MASKS/BOOLEANS --------------- //////
 
-		bool iswater = texture2D(colortex7,texcoord).a > 0.99;
+		float translucent_alpha = texture2D(colortex7,texcoord).a;
+		bool iswater = translucent_alpha > 0.99;
 		bool lightningBolt = abs(dataUnpacked1.w-0.5) <0.01;
 		bool isLeaf = abs(dataUnpacked1.w-0.55) <0.01;
 		bool entities = abs(dataUnpacked1.w-0.45) < 0.01;	
@@ -1126,7 +1129,7 @@ void main() {
 			float SkylightDir = ambientcoefs.y*1.5;
 			if(isGrass) SkylightDir = 1.25;
 
-			float skylight = max(pow(viewToWorld(FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.25 + (1.0-lightmap.y) * 0.75) ;
+			float skylight = max(pow(viewToWorld(FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.2 + (1.0-lightmap.y)*0.8) ;
 		
 			#if indirect_effect == 1
 				skylight = min(skylight, (SSAO_SSS.x*SSAO_SSS.x*SSAO_SSS.x) * 2.5);
@@ -1177,14 +1180,13 @@ void main() {
 		#if indirect_effect == 0
 			AO = vec3( exp( (vanilla_AO*vanilla_AO) * -5) )  ;
 			Indirect_lighting *= AO;
-			// Direct_lighting *= AO;
 		#endif
 
 		#if indirect_effect == 1
 			AO = vec3( exp( (vanilla_AO*vanilla_AO) * -3) );
 
-			AO *= SSAO_SSS.x*SSAO_SSS.x*SSAO_SSS.x;//*SSAO_SSS.x*SSAO_SSS.x*SSAO_SSS.x;
-			// AO *= exp((1-SSAO_SSS.x) * -10);
+			AO *= SSAO_SSS.x*SSAO_SSS.x*SSAO_SSS.x;
+			// AO *= exp((1-SSAO_SSS.x) * -5);
 			
 			SkySSS = SSAO_SSS.y;
 
@@ -1193,7 +1195,7 @@ void main() {
 
 		// GTAO
 		#if indirect_effect == 2
-			AO = vec3( exp( (vanilla_AO*vanilla_AO) * -3) );
+			Indirect_lighting = AmbientLightColor/2.5;
 
 			vec2 r2 = fract(R2_samples((frameCounter%40000) + frameCounter*2) + bnoise);
 			if (!hand) AO = ambient_occlusion(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z), viewPos, worldToView(slopednormal), r2) * vec3(1.0);
@@ -1203,8 +1205,8 @@ void main() {
 
 		// RTAO and/or SSGI
 		#if indirect_effect == 3 || indirect_effect == 4
-			// Indirect_lighting = AmbientLightColor;
-			if (!hand) ApplySSRT(Indirect_lighting, viewPos, normal, vec3(bnoise, noise_2), lightmap.xy, AmbientLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass);
+			Indirect_lighting = AmbientLightColor;
+			if (!hand) ApplySSRT(Indirect_lighting, viewPos, normal, vec3(bnoise, noise_2), lightmap.xy, AmbientLightColor*2.5, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass);
 		#endif
 
 		#if defined END_SHADER
@@ -1259,14 +1261,15 @@ void main() {
 
 	}
 
-	#ifdef DISTANT_HORIZONS
-      vec4 vlBehingTranslucents = BilateralUpscale_DH(colortex13, colortex12, gl_FragCoord.xy, sqrt(texture2D(colortex12,texcoord).a/65000.0));
-    #else
-      vec4 vlBehingTranslucents = BilateralUpscale(colortex13, depthtex1, gl_FragCoord.xy, ld(z));
-    #endif
+	if(translucent_alpha > 0.0 ){
+		#ifdef DISTANT_HORIZONS
+    	  vec4 vlBehingTranslucents = BilateralUpscale_DH(colortex13, colortex12, gl_FragCoord.xy, sqrt(texture2D(colortex12,texcoord).a/65000.0));
+    	#else
+    	  vec4 vlBehingTranslucents = BilateralUpscale(colortex13, depthtex1, gl_FragCoord.xy, ld(z));
+    	#endif
 
-    gl_FragData[0].rgb = gl_FragData[0].rgb * vlBehingTranslucents.a + vlBehingTranslucents.rgb;
-
+    	gl_FragData[0].rgb = gl_FragData[0].rgb * vlBehingTranslucents.a + vlBehingTranslucents.rgb;
+	}
 
 	
 	//////// DEBUG VIEW STUFF

@@ -100,7 +100,6 @@ uniform vec3 cameraPosition;
 void main() {
     
     #ifdef DH_OVERDRAW_PREVENTION
-        // overdraw prevention
         if(clamp(1.0-length(pos.xyz)/max(far - 32.0 * sqrt(interleaved_gradientNoise_temporal()),0.0),0.0,1.0) > 0.0 ){
             discard;
             return;

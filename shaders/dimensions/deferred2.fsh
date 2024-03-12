@@ -9,7 +9,7 @@
 #endif
 
 flat varying vec3 sunColor;
-flat varying vec3 moonColor;
+// flat varying vec3 moonColor;
 flat varying vec3 averageSkyCol;
 
 flat varying float tempOffsets;
@@ -73,9 +73,9 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(7.,-7.)/8.);
 float blueNoise(){
   #ifdef TAA
-  	return fract(texelFetch2D(noisetex, ivec2(1.0-gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+  	return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
   #else
- 	return fract(texelFetch2D(noisetex, ivec2(1.0-gl_FragCoord.xy)%512, 0).a);
+ 	return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a);
   #endif
 }
 

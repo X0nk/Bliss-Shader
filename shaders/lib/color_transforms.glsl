@@ -151,7 +151,7 @@ vec3 Tonemap_Uchimura(vec3 x) {
 	const float a = 1.0;  // contrast 1.0
 	const float m = 0.12; // linear section start 0.22
 	const float l = 0.22;  // linear section length 0.4
-	const float c = 1.5; // black 1.33
+	const float c = 1.0; // black 1.33
 	const float b = 0.0;  // pedestal 0.0
     return Tonemap_Uchimura_Modified(x, P, a, m, l, c, b);
 }
@@ -169,6 +169,15 @@ vec3 Tonemap_Full_Reinhard(vec3 C){
 
     float whitepoint = 10.0;
     float lighten = 0.5;
+
+	return (C * (1.0 + C / (whitepoint*whitepoint))) / (lighten + C);
+}
+
+vec3 Full_Reinhard_Edit(vec3 C){
+
+    C = pow(C,vec3(1.2));
+    float whitepoint = 10.0;
+    float lighten = 0.333;
 
 	return (C * (1.0 + C / (whitepoint*whitepoint))) / (lighten + C);
 }

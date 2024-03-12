@@ -261,12 +261,13 @@ vec4 texture2D_POMSwitch(
 	sampler2D sampler, 
 	vec2 lightmapCoord,
 	vec4 dcdxdcdy, 
-	bool ifPOM
+	bool ifPOM,
+	float LOD
 ){
 	if(ifPOM){
 		return texture2DGradARB(sampler, lightmapCoord, dcdxdcdy.xy, dcdxdcdy.zw);
 	}else{
-		return texture2D(sampler, lightmapCoord, bias());
+		return texture2D(sampler, lightmapCoord, LOD);
 	}
 }
 
@@ -404,8 +405,8 @@ void main() {
 	//////////////////////////////// 				////////////////////////////////
 	////////////////////////////////	ALBEDO		////////////////////////////////
 	//////////////////////////////// 				//////////////////////////////// 
-	
-	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM) * color;
+	float textureLOD = bias();
+	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD) * color;
 
 	#if defined HAND
 		if (Albedo.a < 0.1) discard;
@@ -467,7 +468,7 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 
 	#if defined WORLD && defined MC_NORMAL_MAP
-		vec4 NormalTex = texture2D_POMSwitch(normals, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM).xyzw;
+		vec4 NormalTex = texture2D_POMSwitch(normals, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM,textureLOD).xyzw;
 		
 		#ifdef MATERIAL_AO
 			Albedo.rgb *= NormalTex.b*0.5+0.5;
@@ -495,7 +496,7 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 	
 	#ifdef WORLD
-		vec4 SpecularTex = texture2D_POMSwitch(specular, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM);
+		vec4 SpecularTex = texture2D_POMSwitch(specular, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM,textureLOD);
 
 		SpecularTex.r = max(SpecularTex.r, Puddle_shape);
 		SpecularTex.g = max(SpecularTex.g, Puddle_shape*0.02);
@@ -546,8 +547,7 @@ void main() {
 
 	// hit glow effect...
 	#ifdef ENTITIES
-		Albedo.rgb = mix(Albedo.rgb, entityColor.rgb, entityColor.a);
-		gl_FragData[2].a = mix(gl_FragData[2].a, 0.25, clamp(entityColor.a*5,0,1));
+		Albedo.rgb = mix(Albedo.rgb, entityColor.rgb, clamp(entityColor.a*1.5,0,1));
 	#endif
 
 	//////////////////////////////// 				////////////////////////////////

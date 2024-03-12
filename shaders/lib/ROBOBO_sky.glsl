@@ -156,7 +156,7 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 			scatteringAmbient += sky_coefficientsScattering * stepAirmass.xy * stepScatteringVisible * low_sun;
 		#endif
 		
-		transmittance *= stepTransmittance ;
+		transmittance *= stepTransmittance;
 	}
 	
 	vec3 scattering = scatteringSun * sunColorBase + scatteringAmbient * background + scatteringMoon*moonColorBase	;

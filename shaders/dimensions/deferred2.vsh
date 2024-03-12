@@ -4,7 +4,7 @@ flat varying vec3 dailyWeatherParams0;
 flat varying vec3 dailyWeatherParams1;
 flat varying vec3 averageSkyCol;
 flat varying vec3 sunColor;
-flat varying vec3 moonColor;
+// flat varying vec3 moonColor;
 
 
 flat varying float tempOffsets;
@@ -32,9 +32,13 @@ void main() {
 
 	averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
 	sunColor = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
-	moonColor = texelFetch2D(colortex4,ivec2(13,37),0).rgb;
+	// moonColor = texelFetch2D(colortex4,ivec2(13,37),0).rgb;
+	
+	// sunColor = texelFetch2D(colortex4,ivec2(8,37),0).rgb;
+	// moonColor = texelFetch2D(colortex4,ivec2(9,37),0).rgb;
+	
 
-	WsunVec = ( float(sunElevation > 1e-5)*2-1. )*normalize(mat3(gbufferModelViewInverse) * sunPosition);
+	WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition) * (float(sunElevation > 1e-5)*2.0-1.0);
 	// WsunVec = normalize(LightDir);
 
 	tempOffsets = HaltonSeq2(frameCounter%10000);

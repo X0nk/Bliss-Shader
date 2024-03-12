@@ -222,7 +222,11 @@ vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 
 	for(int i = 0; i < int(quality); i++){
 		spos += stepv;
-		float sp = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4),0).w/65000.0);
+		#ifdef UseQuarterResDepth
+			float sp = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4),0).w/65000.0);
+		#else
+			float sp = linZ(texelFetch2D(depthtex1,ivec2(spos.xy/ texelSize),0).r);
+		#endif
 		float currZ = linZ(spos.z);
 
 		if( sp < currZ) {
@@ -265,8 +269,11 @@ vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes){
   	for(int i = 0; i < iterations; i++){
 		if (spos.x < 0.0 || spos.y < 0.0 || spos.z < 0.0 || spos.x > 1.0 || spos.y > 1.0 || spos.z > 1.0) return vec3(1.1);
 		spos += stepv*noise;
-
-		float sp = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/ texelSize/4),0).w/65000.0);
+		#ifdef UseQuarterResDepth
+			float sp = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/ texelSize/4),0).w/65000.0);
+		#else
+			float sp = linZ(texelFetch2D(depthtex1,ivec2(spos.xy/ texelSize),0).r);
+		#endif
 		float currZ = linZ(spos.z);
 		
 		if( sp < currZ) {
@@ -301,7 +308,7 @@ void ApplySSRT(
 
 	// rgb = torch color * lightmap. a = sky lightmap.
 	vec4 Lighting = RT_AmbientLight(torchcolor, lightmaps);
-	skylightcolor = (skylightcolor/15.0) * Lighting.a;
+	skylightcolor = skylightcolor * Lighting.a;
 
 	for (int i = 0; i < nrays; i++){
 		int seed = (frameCounter%40000)*nrays+i;
@@ -318,11 +325,11 @@ void ApplySSRT(
 			#ifdef OVERWORLD_SHADER
 				if(isGrass) rayDir.y = clamp(rayDir.y +  0.5,-1,1);
 
-				rayDir.y = mix(-1.0,rayDir.y, lightmaps.y*lightmaps.y);
-
-				skycontribution = (skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb / 10.0) * Lighting.a + Lighting.rgb;
+				// rayDir.y = mix(-1.0, rayDir.y, lightmaps.y*lightmaps.y);
+				
+				skycontribution = ((skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb / 30.0) * 2.5) * Lighting.a + Lighting.rgb;
 			#else
-				skycontribution = (skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 10.0) * Lighting.a + Lighting.rgb;
+				skycontribution = ((skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0) * 2.5) * Lighting.a + Lighting.rgb;
 			#endif
 		#else
 
@@ -330,7 +337,7 @@ void ApplySSRT(
 				if(isGrass) rayDir.y = clamp(rayDir.y +  0.25,-1,1);
 			#endif
 
-			skycontribution = skylightcolor * (max(rayDir.y,pow(1.0-lightmaps.y,2))*0.9+0.1) + Lighting.rgb;
+			skycontribution = skylightcolor * (max(rayDir.y,pow(1.0-lightmaps.y,2))*0.95+0.05) + Lighting.rgb;
 
 			#if indirect_effect == 4
 				skycontribution2 = skylightcolor + Lighting.rgb;

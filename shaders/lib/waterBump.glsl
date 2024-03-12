@@ -65,6 +65,8 @@ vec3 getWaveNormal(vec3 posxz, bool isLOD){
 		normalMult = mix(5.0, normalMult, range);
 		deltaPos = mix(0.9, deltaPos, range);
 	}
+	// added detail for snells window
+	// if(isEyeInWater == 1) deltaPos = 0.025;
 
 	#ifdef HYPER_DETAILED_WAVES
 		deltaPos = 0.025;
