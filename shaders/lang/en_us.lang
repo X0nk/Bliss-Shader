@@ -430,12 +430,16 @@ option.DOF_QUALITY=Depth Of Field
     option.DOF_ANAMORPHIC_RATIO=Anamorphic Ratio
     value.MANUAL_FOCUS.-2=Autofocus
 	value.MANUAL_FOCUS.-1=Brightness Slider
-	value.FOCUS_LASER_COLOR.0=Red
-	value.FOCUS_LASER_COLOR.1=Green
-	value.FOCUS_LASER_COLOR.2=Blue
-	value.FOCUS_LASER_COLOR.3=Pink
-	value.FOCUS_LASER_COLOR.4=Yellow
-	value.FOCUS_LASER_COLOR.5=White
+
+	screen.JITTER_DOF=Jitter DOF Settings
+		option.JITTER_STRENGTH=Jitter Strength
+		option.FOCUS_LASER_COLOR=Focus
+		value.FOCUS_LASER_COLOR.0=Red
+		value.FOCUS_LASER_COLOR.1=Green
+		value.FOCUS_LASER_COLOR.2=Blue
+		value.FOCUS_LASER_COLOR.3=Pink
+		value.FOCUS_LASER_COLOR.4=Yellow
+		value.FOCUS_LASER_COLOR.5=White
 
 option.AEROCHROME_MODE=Aerochrome Mode
 option.AEROCHROME_PINKNESS=Aerochrome Red:Pink Ratio

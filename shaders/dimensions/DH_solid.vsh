@@ -11,6 +11,15 @@ flat varying float EMISSIVE;
 uniform vec2 texelSize;
 uniform int framemod8;
 
+#if DOF_QUALITY == 5
+uniform int hideGUI;
+uniform int frameCounter;
+uniform float aspectRatio;
+uniform float screenBrightness;
+uniform float far;
+#include "/lib/bokeh.glsl"
+#endif
+
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(-1.,3.)/8.,
 							vec2(5.0,1.)/8.,
@@ -74,4 +83,22 @@ void main() {
 	float MATERIALS = 0.65;
 
 	normals_and_materials = vec4(normalize(gl_NormalMatrix * gl_Normal), MATERIALS);
+
+	#if DOF_QUALITY == 5
+		vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);
+		jitter = rotate(radians(float(frameCounter))) * jitter;
+		jitter.y *= aspectRatio;
+		jitter.x *= DOF_ANAMORPHIC_RATIO;
+
+		#if MANUAL_FOCUS == -2
+		float focusMul = 0;
+		#elif MANUAL_FOCUS == -1
+		float focusMul = gl_Position.z + (far / 3.0) - mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
+		#else
+		float focusMul = gl_Position.z + (far / 3.0) - MANUAL_FOCUS;
+		#endif
+
+		vec2 totalOffset = (jitter * JITTER_STRENGTH) * focusMul * 1e-2;
+		gl_Position.xy += hideGUI >= 1 ? totalOffset : vec2(0);
+	#endif
 }

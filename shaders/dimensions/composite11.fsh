@@ -32,6 +32,7 @@ uniform float far;
 uniform float rainStrength;
 uniform float screenBrightness;
 uniform vec4 Moon_Weather_properties; // R = cloud coverage 		G = fog density
+uniform int hideGUI;
 
 uniform int framemod8;
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
@@ -67,6 +68,8 @@ float ld(float depth) {
 
 // uniform sampler2D depthtex0;
 uniform sampler2D dhDepthTex;
+uniform float dhNearPlane;
+uniform float dhFarPlane;
 
 // uniform mat4 gbufferProjectionInverse;
 uniform mat4 dhProjectionInverse;
@@ -110,6 +113,9 @@ vec3 ACESFilm2(vec3 x){
 	return clamp((x*(a*x+b))/(x*(c*x+d)+e),0.0,1.0);
 }
 
+float linearizeDepthFast(const in float depth, const in float near, const in float far) {
+    return (near * far) / (depth * (near - far) + far);
+}
 
 #define linear_to_srgb(x) (pow(x, vec3(1.0/2.2)))
 void main() {
@@ -117,7 +123,7 @@ void main() {
 	float vignette = (1.5-dot(texcoord-0.5,texcoord-0.5)*2.);
 	vec3 col = texture2D(colortex5,texcoord).rgb;
 
-	#if DOF_QUALITY >= 0 && DOF_QUALITY < 5
+	#if DOF_QUALITY >= 0
 		/*--------------------------------*/
 		float z = ld(texture2D(depthtex0, texcoord.st*RENDER_SCALE).r)*far;
 		#if MANUAL_FOCUS == -2
@@ -127,6 +133,7 @@ void main() {
 		#elif MANUAL_FOCUS > 0
 			float focus = MANUAL_FOCUS;
 		#endif
+		#if DOF_QUALITY < 5
 		float pcoc = min(abs(aperture * (focal/100.0 * (z - focus)) / (z * (focus - focal/100.0))),texelSize.x*15.0);
 		#ifdef FAR_BLUR_ONLY
 			pcoc *= float(z > focus);
@@ -144,6 +151,7 @@ void main() {
 			bcolor += texture2DLod(colortex5, texcoord.xy + bokeh_offsets[i]*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).rgb;
 		}
 		col = bcolor/BOKEH_SAMPLES;
+		#endif
 	#endif
 
 	vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
@@ -192,4 +200,40 @@ void main() {
 	#endif
 
 	gl_FragData[0].rgb = clamp(int8Dither(col,texcoord),0.0,1.0);
+
+	
+	#if DOF_QUALITY == 5
+		#if FOCUS_LASER_COLOR == 0 // Red
+		vec3 laserColor = vec3(25, 0, 0);
+		#elif FOCUS_LASER_COLOR == 1 // Green
+		vec3 laserColor = vec3(0, 25, 0);
+		#elif FOCUS_LASER_COLOR == 2 // Blue
+		vec3 laserColor = vec3(0, 0, 25);
+		#elif FOCUS_LASER_COLOR == 3 // Pink
+		vec3 laserColor = vec3(25, 10, 15);
+		#elif FOCUS_LASER_COLOR == 4 // Yellow
+		vec3 laserColor = vec3(25, 25, 0);
+		#elif FOCUS_LASER_COLOR == 5 // White
+		vec3 laserColor = vec3(25);
+		#endif
+		float depth = texture(depthtex0, texcoord).r;
+		
+		#ifdef DISTANT_HORIZONS
+		float _near = near;
+		float _far = far*4.0;
+
+		if (depth >= 1.0) {
+			depth = texture2D(dhDepthTex, texcoord).x;
+			_near = dhNearPlane;
+			_far = dhFarPlane;
+		}
+
+		depth = linearizeDepthFast(depth, _near, _far);
+		#else
+		depth = linearizeDepthFast(depth, near, far);
+		#endif
+
+		// focus = gl_FragCoord.x * 0.1;
+		if( hideGUI < 1) gl_FragData[0].rgb += laserColor * pow( clamp( 	 1.0-abs(focus-abs(depth))		,0,1),25) ;
+	#endif
 }
