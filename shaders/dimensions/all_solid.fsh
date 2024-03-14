@@ -425,9 +425,8 @@ void main() {
 
 		
 	#ifdef AEROCHROME_MODE
-		vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), AEROCHROME_PINKNESS);
-		float gray = dot(Albedo.rgb, vec3(0.2, 01.0, 0.07));
-		if(blockID == 10001 || blockID == 10003 || blockID == 10004 || blockID == 10006) {
+		float gray = dot(Albedo.rgb, vec3(0.2, 1.0, 0.07));
+		if(blockID == 10001 || blockID == 10003 || blockID == 10004 || blockID == 10006 || blockID == 10009) {
 		// IR Reflective (Pink-red)
 			Albedo.rgb = mix(vec3(gray), aerochrome_color, 0.7);
 		}

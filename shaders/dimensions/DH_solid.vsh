@@ -7,6 +7,7 @@ varying vec2 lightmapCoords;
 varying vec4 normals_and_materials;
 flat varying float SSSAMOUNT;
 flat varying float EMISSIVE;
+flat varying int dh_material_id;
 
 uniform vec2 texelSize;
 uniform int framemod8;
@@ -83,6 +84,7 @@ void main() {
 	float MATERIALS = 0.65;
 
 	normals_and_materials = vec4(normalize(gl_NormalMatrix * gl_Normal), MATERIALS);
+	dh_material_id = dhMaterialId;
 
 	#if DOF_QUALITY == 5
 		vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);
