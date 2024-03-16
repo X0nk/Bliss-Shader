@@ -133,7 +133,7 @@ vec4 texture2D_bicubic_offset(sampler2D tex, vec2 uv, float noise, float scale)
 }
 
 vec2 sphereToCarte(vec3 dir) {
-    float lonlat = saturate(atan(-dir.x, -dir.z));
+    float lonlat = clamp(atan(-dir.x, -dir.z), -pi, pi);
     return vec2(lonlat * (0.5/pi) +0.5,0.5*dir.y+0.5);
 }
 
