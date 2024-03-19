@@ -79,23 +79,11 @@ float upperCurve(float x) {
 	float y = 16 * (0.5 - x) * (x - 1.0) * 0.1;
 	return clamp(y, 0.0, 1.0);
 }
-void applyLuminanceCurve(inout vec3 color, float darks, float brights){
-
-  // color.r = color.r < 0.5 ? pow(2.0 * color.r, darks) / 2.0 : 1.0 - (pow(2.0 - 2.0 * color.r, brights) / 2.0);
-	// color.g = color.g < 0.5 ? pow(2.0 * color.g, darks) / 2.0 : 1.0 - (pow(2.0 - 2.0 * color.g, brights) / 2.0);
-	// color.b = color.b < 0.5 ? pow(2.0 * color.b, darks) / 2.0 : 1.0 - (pow(2.0 - 2.0 * color.b, brights) / 2.0);
-
-	color.r += darks * lowerCurve(color.r) + brights * upperCurve(color.r);
-	color.g += darks * lowerCurve(color.g) + brights * upperCurve(color.g);
-	color.b += darks * lowerCurve(color.b) + brights * upperCurve(color.b);
-}
-
-void applyColorCurve(inout vec3 color, vec4 darks, vec4 brights){
-
-	color.r += (darks.r + darks.a) * lowerCurve(color.r) + (brights.r + brights.a) * upperCurve(color.r);
-	color.g += (darks.g + darks.a) * lowerCurve(color.g) + (brights.g + brights.a) * upperCurve(color.g);
-	color.b += (darks.b + darks.a) * lowerCurve(color.b) + (brights.b + brights.a) * upperCurve(color.b);
-  
+vec3 toneCurve(vec3 color){
+	color.r += LOWER_CURVE * lowerCurve(color.r) + UPPER_CURVE * upperCurve(color.r);
+	color.g += LOWER_CURVE * lowerCurve(color.g) + UPPER_CURVE * upperCurve(color.g);
+	color.b += LOWER_CURVE * lowerCurve(color.b) + UPPER_CURVE * upperCurve(color.b);
+	return color;
 }
 
 vec3 colorGrading(vec3 color) {
@@ -184,8 +172,8 @@ void main() {
   
 	vec3 FINAL_COLOR = clamp(int8Dither(col,texcoord),0.0,1.0);
 
-  #ifdef COLOR_CURVE
-    applyColorCurve(FINAL_COLOR, vec4(R_LOWER_CURVE, G_LOWER_CURVE, B_LOWER_CURVE, LOWER_CURVE), vec4(R_UPPER_CURVE, G_UPPER_CURVE, B_UPPER_CURVE, UPPER_CURVE));
+  #ifdef TONE_CURVE
+	FINAL_COLOR = toneCurve(FINAL_COLOR);
   #endif
 
   #ifdef COLOR_GRADING_ENABLED

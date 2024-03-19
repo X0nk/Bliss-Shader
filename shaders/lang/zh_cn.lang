@@ -688,10 +688,6 @@ option.TOGGLE_VL_FOG.comment = 一个快速关闭所有雾气的开关.
         option.CROSSTALK=去饱和度
         option.CONTRAST=对比度
 
-        option.FinalR=最终图像 - 红色偏移程度
-        option.FinalG=最终图像 - 绿色偏移程度
-        option.FinalB=最终图像 - 蓝色偏移程度
-
         option.AUTO_EXPOSURE=自动曝光
         option.EXPOSURE_MULTIPLIER=曝光强度
         option.Exposure_Speed=曝光速度
@@ -714,25 +710,10 @@ option.TOGGLE_VL_FOG.comment = 一个快速关闭所有雾气的开关.
         option.Purkinje_B=柏金赫 - 蓝色
         option.Purkinje_Multiplier=柏金赫现象倍率
 
-    screen.Editing=后期编辑
-        option.Compositing_Sky=天空组成
-        option.Compositing_Sky.comment=调节天空颜色,以便在一些图像编辑软件中更容易合成天空. 实测会使部分云层以及太阳消失,且对性能负担较大.
-        option.CompSky_R=天空组成 - 红色
-        option.CompSky_G=天空组成 - 绿色
-        option.CompSky_B=天空组成 - 蓝色
-
         option.CONTRAST=对比度
-        option.COLOR_CURVE=颜色曲线
+        option.TONE_CURVE=颜色曲线
         option.UPPER_CURVE=上部曲线
         option.LOWER_CURVE=下部曲线
-
-        option.R_LOWER_CURVE=下部曲线 - 红色
-        option.G_LOWER_CURVE=下部曲线 - 绿色
-        option.B_LOWER_CURVE=下部曲线 - 蓝色
-
-        option.R_UPPER_CURVE=上部曲线 - 红色
-        option.G_UPPER_CURVE=上部曲线 - 绿色
-        option.B_UPPER_CURVE=上部曲线 - 蓝色
 
 #Clouds
 option.CLOUD_SHADOW_STRENGTH=云影强度
