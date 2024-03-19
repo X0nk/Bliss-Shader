@@ -98,6 +98,19 @@ void applyColorCurve(inout vec3 color, vec4 darks, vec4 brights){
   
 }
 
+vec3 colorGrading(vec3 color) {
+	float grade_luma = dot(color, vec3(1.0 / 3.0));
+   	float shadows_amount = saturate(-2.0 * grade_luma + 1.0);
+	float mids_amount = saturate(-abs(2.0 * grade_luma - 1.0) + 1.0);
+	float highlights_amount = saturate(2.0 * grade_luma - 1.0);
+
+	vec3 graded_shadows = color * SHADOWS_TARGET * SHADOWS_GRADE_MUL * 1.7320508076;
+	vec3 graded_mids = color * MIDS_TARGET * MIDS_GRADE_MUL * 1.7320508076;
+	vec3 graded_highlights = color * HIGHLIGHTS_TARGET * HIGHLIGHTS_GRADE_MUL * 1.7320508076;
+
+	return saturate(graded_shadows * shadows_amount + graded_mids * mids_amount + graded_highlights * highlights_amount);
+}
+
 #ifdef HURT_AND_DEATH_EFFECT
   uniform float hurt;
   uniform float dying;
@@ -173,6 +186,10 @@ void main() {
 
   #ifdef COLOR_CURVE
     applyColorCurve(FINAL_COLOR, vec4(R_LOWER_CURVE, G_LOWER_CURVE, B_LOWER_CURVE, LOWER_CURVE), vec4(R_UPPER_CURVE, G_UPPER_CURVE, B_UPPER_CURVE, UPPER_CURVE));
+  #endif
+
+  #ifdef COLOR_GRADING_ENABLED
+	FINAL_COLOR = colorGrading(FINAL_COLOR);
   #endif
 
 	applyContrast(FINAL_COLOR, CONTRAST); // for fun

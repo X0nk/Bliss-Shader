@@ -378,6 +378,20 @@ screen.Post_Processing = Post Processing
         option.BLEND_FACTOR = Blend Factor
         option.TAA_UPSCALING = Temporal Upscaling
         option.SCALE_FACTOR = Scale Factor
+	screen.COLOR_GRADING = Color Grading
+		option.COLOR_GRADING_ENABLED=Color Grading
+		option.SHADOWS_GRADE_R = Shadows §cRed
+		option.SHADOWS_GRADE_G = Shadows §aGreen
+		option.SHADOWS_GRADE_B = Shadows §9Blue
+		option.SHADOWS_GRADE_MUL = Shadows Brightness
+		option.MIDS_GRADE_R = Midtones §cRed
+		option.MIDS_GRADE_G = Midtones §aGreen
+		option.MIDS_GRADE_B = Midtones §9Blue
+		option.MIDS_GRADE_MUL = Midtones Brightness
+		option.HIGHLIGHTS_GRADE_R = Highlights §cRed
+		option.HIGHLIGHTS_GRADE_G = Highlights §aGreen
+		option.HIGHLIGHTS_GRADE_B = Highlights §9Blue
+		option.HIGHLIGHTS_GRADE_MUL = Highlights Brightness
 
 
 screen.LabPBR = Lab PBR
@@ -604,6 +618,8 @@ screen.Post_Processing.comment = Configure settings for all post processing effe
         option.BLEND_FACTOR.comment = Configure how much of frame history is used. high numbers means it relies less on frame history, so it may look flickery and noisy. low numbers rely more on frame history, so it may look less moisy, but more smudged with more trailing.
         option.TAA_UPSCALING.comment = Toggle temporal upscaling. This retains a good amount of quality from a lower resolution image when it upscales. so you can still have a high looking resolution compared to typical upsanpling and still have better performance.
         option.SCALE_FACTOR.comment = Configure from what fraction of your resolution to upscale from. Below 0.5 is not recommended at all i only have it as an option because it's funny :P
+	screen.COLOR_GRADING.comment = Advanced color grading options
+		option.COLOR_GRADING_ENABLED.comment = Enable color grading. The RGB sliders will not affect the brightness.
 
 option.RESOURCEPACK_SKY.comment = Toggle resourcepack sky support. Configure settings to use the whole resourcepack sky, or keep the shader's sun and moon. §aPERFORMANCE COST:§r very low
 option.SKY_GROUND = Atmosphere ground
