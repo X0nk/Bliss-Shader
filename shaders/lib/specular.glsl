@@ -186,7 +186,7 @@ void DoSpecularReflections(
 	vec3 Lightsource_Reflection = vec3(0.0);
 	vec4 SS_Reflections = vec4(0.0);
 
-	Lightmap = clamp((Lightmap-0.6)*5.0, 0.0,1.0);
+	Lightmap = clamp((Lightmap-0.8)*7.0, 0.0,1.0);
 	
 	Roughness = 1.0 - Roughness; Roughness *= Roughness;
 	F0 = F0 == 0.0 ? 0.02 : F0;

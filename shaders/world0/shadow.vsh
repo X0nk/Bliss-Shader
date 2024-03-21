@@ -123,8 +123,8 @@ void main() {
 	color = gl_Color;
 
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-	playerpos = vec4(0.0);
-	playerpos = gbufferModelViewInverse * (gl_ModelViewMatrix * gl_Vertex);
+	// playerpos = vec4(0.0);
+	// playerpos = gbufferModelViewInverse * (gl_ModelViewMatrix * gl_Vertex);
 	
 	// mat4 Custom_ViewMatrix = BuildShadowViewMatrix(LightDir);
 	// mat4 Custom_ProjectionMatrix = BuildShadowProjectionMatrix();
@@ -197,6 +197,8 @@ void main() {
 
  	
 	if(mc_Entity.x == 8 ) gl_Position.w = -1.0;
+	// color.a = 1.0;
+	// if(mc_Entity.x != 10002) color.a = 0.0;
 	
 	
 	// materials = 0.0;

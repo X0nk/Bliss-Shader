@@ -721,7 +721,16 @@ void BilateralUpscale_REUSE_Z(sampler2D tex1, sampler2D tex2, sampler2D depth, v
 		ambientEffects = ssao_RESULT/SUM;
 	#endif
 }
+vec3 ColorBoost(vec3 COLOR, float saturation){
 
+  	float luminance = luma(COLOR);
+
+	COLOR = normalize(COLOR+0.0001);
+
+  	vec3 difference = COLOR - luminance;
+
+  	return COLOR + difference*(-luminance + saturation);
+}
 void main() {
 
 		vec3 DEBUG = vec3(1.0);
@@ -964,37 +973,6 @@ void main() {
 
 		feetPlayerPos += gbufferModelViewInverse[3].xyz;
 	
-	////////////////////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////	UNDER WATER SHADING		////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////
- 		if ((isEyeInWater == 0 && iswater) || (isEyeInWater == 1 && !iswater)){
-			#ifdef DISTANT_HORIZONS
-				vec3 viewPos0 = toScreenSpace_DH(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5, z0, DH_depth0);
-			#else
-				vec3 viewPos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0));
-			#endif
-
-			float Vdiff = distance(viewPos, viewPos0)*2.0;
-			float estimatedDepth = Vdiff * abs(feetPlayerPos_normalized.y);	//assuming water plane
-
-			// make it such that the estimated depth flips to be correct when entering water.
-			if (isEyeInWater == 1){
-				estimatedDepth = 40.0 * pow(max(1.0-lightmap.y,0.0),2.0);
-				MinimumLightColor = vec3(10.0);
-			}
-
-			float depthfalloff = 1.0 - clamp(exp(-0.1*estimatedDepth),0.0,1.0);
-			
-
-			float estimatedSunDepth = Vdiff; //assuming water plane
-			Absorbtion = mix(exp(-2.0 * totEpsilon * estimatedDepth), exp(-8.0 * totEpsilon), depthfalloff);
-
-			DirectLightColor *= Absorbtion;
-			AmbientLightColor *= Absorbtion;
-
-			// apply caustics to the lighting, and make sure they dont look weird
-			DirectLightColor *= mix(1.0, waterCaustics(feetPlayerPos + cameraPosition, WsunVec)*WATER_CAUSTICS_BRIGHTNESS + 0.25, clamp(estimatedDepth,0,1));
-		}
 	////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////	MAJOR LIGHTSOURCE STUFF 	////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////
@@ -1036,6 +1014,7 @@ void main() {
 			if(shadowMapFalloff > 0.0){
 				shadowMap = vec3(0.0);
 				vec3 ShadowColor = vec3(0.0);
+				vec3 COLOR = vec3(1.0) ;
 
 				projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
 
@@ -1049,42 +1028,56 @@ void main() {
 						vec2 offsetS = tapLocation_simple(i, 7, 9, noise_2) * 0.5;
 
 						projectedShadowPosition += vec3(rdMul*offsetS, biasOffset);
-						
 
 						#ifdef TRANSLUCENT_COLORED_SHADOWS
 							float opaqueShadow = shadow2D(shadowtex0, projectedShadowPosition).x;
-							ShadowColor += vec3(opaqueShadow/SHADOW_FILTER_SAMPLE_COUNT);
+							shadowMap += opaqueShadow / SHADOW_FILTER_SAMPLE_COUNT;
 
-							if(shadow2D(shadowtex1, projectedShadowPosition).x > projectedShadowPosition.z){ 
-								vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
-								if(translucentShadow.a < 0.9) ShadowColor += (normalize(translucentShadow.rgb+0.0001) * clamp(1.0-opaqueShadow,0.0,1.0))  / SHADOW_FILTER_SAMPLE_COUNT;
-							}
+							vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
+							float shadowAlpha = clamp(1.0 - pow(translucentShadow.a,5.0),0.0,1.0);
+
+							#if SSS_TYPE != 0
+								if(LabSSS > 0.0) ShadowColor += (DirectLightColor * clamp(pow(1.0-shadowAlpha,5.0),0.0,1.0) + DirectLightColor *  translucentShadow.rgb * shadowAlpha * (1.0 - opaqueShadow)) / SHADOW_FILTER_SAMPLE_COUNT;
+								else ShadowColor = DirectLightColor;
+							#endif
+
+							if(shadow2D(shadowtex1, projectedShadowPosition).x > projectedShadowPosition.z) shadowMap += (translucentShadow.rgb * shadowAlpha * (1.0 - opaqueShadow)) / SHADOW_FILTER_SAMPLE_COUNT;
+
 						#else
-							ShadowColor += vec3(shadow2D(shadow, projectedShadowPosition).x/SHADOW_FILTER_SAMPLE_COUNT);
+							shadowMap += vec3(shadow2D(shadow, projectedShadowPosition).x / SHADOW_FILTER_SAMPLE_COUNT);
 						#endif
 					}
 
-					shadowMap = ShadowColor;
-					
-				#else
 					#ifdef TRANSLUCENT_COLORED_SHADOWS
-					
-							float OPAQUESHADOW = shadow2D(shadowtex0, projectedShadowPosition).x;
-							shadowMap += vec3(OPAQUESHADOW);
+						DirectLightColor = ShadowColor;
+					#endif
+				
+				#else
 
-							if(shadow2D(shadowtex1, projectedShadowPosition).x > projectedShadowPosition.z){	 
-								vec4 shadowLightColor = texture2D(shadowcolor0, projectedShadowPosition.xy);
-								if(shadowLightColor.a < 0.9)  shadowMap += normalize(shadowLightColor.rgb+0.0001) * (1.0-OPAQUESHADOW);
-							}
+					#ifdef TRANSLUCENT_COLORED_SHADOWS
+						float opaqueShadow = shadow2D(shadowtex0, projectedShadowPosition).x;
+						shadowMap += opaqueShadow;
+
+						vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
+						float shadowAlpha = clamp(1.0 - pow(translucentShadow.a,5.0),0.0,1.0);
+
+						#if SSS_TYPE != 0
+							if(LabSSS > 0.0) ShadowColor += DirectLightColor * (1.0 - shadowAlpha) + DirectLightColor *  translucentShadow.rgb * shadowAlpha * (1.0 - opaqueShadow);
+							else ShadowColor = DirectLightColor;
+						#endif
+
+						if(shadow2D(shadowtex1, projectedShadowPosition).x > projectedShadowPosition.z) shadowMap += translucentShadow.rgb * shadowAlpha * (1.0 - opaqueShadow);
+
 					#else
-						shadowMap += vec3(shadow2D(shadow, projectedShadowPosition).x);
+						shadowMap += shadow2D(shadow, projectedShadowPosition).x;
 					#endif
 				#endif
 
-				Shadows = shadowMap;
+				#ifdef TRANSLUCENT_COLORED_SHADOWS
+					DirectLightColor = ShadowColor;
+				#endif
 
-				// if(shadow2D(shadowtex0, projectedShadowPosition).x < projectedShadowPosition.z)	DirectLightColor *= shadow2D(shadowtex1, projectedShadowPosition).x *  waterCaustics(feetPlayerPos + cameraPosition, WsunVec)*WATER_CAUSTICS_BRIGHTNESS + 0.25;
-			
+				Shadows = shadowMap;
 			}
 
 			if(!iswater) Shadows = mix(vec3(LM_shadowMapFallback), Shadows, shadowMapFalloff2);
@@ -1094,6 +1087,38 @@ void main() {
 			#endif
 		// }
 	
+	////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////	UNDER WATER SHADING		////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////
+ 		if ((isEyeInWater == 0 && iswater) || (isEyeInWater == 1 && !iswater)){
+			#ifdef DISTANT_HORIZONS
+				vec3 viewPos0 = toScreenSpace_DH(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5, z0, DH_depth0);
+			#else
+				vec3 viewPos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0));
+			#endif
+
+			float Vdiff = distance(viewPos, viewPos0)*2.0;
+			float estimatedDepth = Vdiff * abs(feetPlayerPos_normalized.y);	//assuming water plane
+
+			// make it such that the estimated depth flips to be correct when entering water.
+			if (isEyeInWater == 1){
+				estimatedDepth = 40.0 * pow(max(1.0-lightmap.y,0.0),2.0);
+				MinimumLightColor = vec3(10.0);
+			}
+
+			float depthfalloff = 1.0 - clamp(exp(-0.1*estimatedDepth),0.0,1.0);
+			
+
+			float estimatedSunDepth = Vdiff; //assuming water plane
+			Absorbtion = mix(exp(-2.0 * totEpsilon * estimatedDepth), exp(-8.0 * totEpsilon), depthfalloff);
+
+			DirectLightColor *= Absorbtion;
+			AmbientLightColor *= Absorbtion;
+
+			// apply caustics to the lighting, and make sure they dont look weird
+			DirectLightColor *= mix(1.0, waterCaustics(feetPlayerPos + cameraPosition, WsunVec)*WATER_CAUSTICS_BRIGHTNESS + 0.25, clamp(estimatedDepth,0,1));
+		}
+
 	////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	SUN SSS		////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
@@ -1110,7 +1135,7 @@ void main() {
 			#endif
 
 			#if !defined Variable_Penumbra_Shadows
-				ShadowBlockerDepth = pow(1.0 - clamp(dot(Shadows,vec3(0.33333)),0,1),2.0);
+				ShadowBlockerDepth = pow(1.0 - clamp(Shadows.x,0,1),2.0);
 			#endif
 
 
@@ -1296,14 +1321,16 @@ void main() {
 
 		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * albedo;
 
-		#ifdef Specular_Reflections	
-			vec2 specularNoises = vec2(noise, R2_dither());
-			DoSpecularReflections(gl_FragData[0].rgb, viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, normal, SpecularTex.r, SpecularTex.g, albedo, DirectLightColor*Shadows*NdotL, lightmap.y, hand);
-		#endif
+		// gl_FragData[0].rgb = Direct_lighting;
 
-		Emission(gl_FragData[0].rgb, albedo, SpecularTex.a);
+		// #ifdef Specular_Reflections	
+		// 	vec2 specularNoises = vec2(noise, R2_dither());
+		// 	DoSpecularReflections(gl_FragData[0].rgb, viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, normal, SpecularTex.r, SpecularTex.g, albedo, DirectLightColor*Shadows*NdotL, lightmap.y, hand);
+		// #endif
+
+		// Emission(gl_FragData[0].rgb, albedo, SpecularTex.a);
 		
-		if(lightningBolt) gl_FragData[0].rgb = vec3(77.0, 153.0, 255.0);
+		// if(lightningBolt) gl_FragData[0].rgb = vec3(77.0, 153.0, 255.0);
 
 	}
 
@@ -1318,12 +1345,12 @@ void main() {
 	}
 
 	
-	//////// DEBUG VIEW STUFF
-	// #if DEBUG_VIEW == debug_SHADOWMAP
-	// 	vec3 OutsideShadowMap_and_DH_shadow = (shadowMapFalloff > 0.0 && z >= 1.0) ? vec3(0.25,1.0,0.25) : vec3(1.0,0.25,0.25);
-	// 	vec3 Normal_Shadowmap =  z < 1.0 ? vec3(0.25,0.25,1.0) : OutsideShadowMap_and_DH_shadow;
-	// 	gl_FragData[0].rgb = mix(vec3(0.1) * (normal.y * 0.1 +0.9), Normal_Shadowmap,  shadowMap) * 30.0;
-	// #endif
+	////// DEBUG VIEW STUFF
+	#if DEBUG_VIEW == debug_SHADOWMAP
+		vec3 OutsideShadowMap_and_DH_shadow = (shadowMapFalloff > 0.0 && z >= 1.0) ? vec3(0.25,1.0,0.25) : vec3(1.0,0.25,0.25);
+		vec3 Normal_Shadowmap =  z < 1.0 ? vec3(1.0,1.0,1.0) : OutsideShadowMap_and_DH_shadow;
+		gl_FragData[0].rgb = mix(vec3(0.1) * (normal.y * 0.1 +0.9), Normal_Shadowmap,  shadowMap) * 30.0;
+	#endif
 	#if DEBUG_VIEW == debug_NORMALS
 		gl_FragData[0].rgb = FlatNormals;
 	#endif
@@ -1340,9 +1367,9 @@ void main() {
 		gl_FragData[0].rgb = viewPos * 0.001;
 	#endif
 	#if DEBUG_VIEW == debug_FILTERED_STUFF
-		vec3 FilteredDebug = vec3(15.0) * exp(-1.0 * vec3(1.0,0.5,1.0) * filteredShadow.y);
-		FilteredDebug += vec3(15.0) * exp(-7.0 * vec3(1.0,1.0,0.5) * pow(SSAO_SSS.x,2));
-		FilteredDebug += vec3(15.0) * exp(-7.0 * vec3(0.5,1.0,1.0) * pow(SSAO_SSS.y,2));
+		vec3 FilteredDebug = vec3(15.0) * exp(-7.0 * vec3(1.0,0.5,1.0) * filteredShadow.y);
+		// FilteredDebug += vec3(15.0) * exp(-7.0 * vec3(1.0,1.0,0.5) * pow(SSAO_SSS.x,2));
+		// FilteredDebug += vec3(15.0) * exp(-7.0 * vec3(0.5,1.0,1.0) * pow(SSAO_SSS.y,2));
   		gl_FragData[0].rgb =  FilteredDebug;
 	#endif
 

@@ -211,7 +211,7 @@ vec4 GetVolumetricFog(
 			#endif
 
 		}
-		// float sh2 = sh;
+		vec3 sh2 = sh;
 
 		#ifdef VL_CLOUDS_SHADOWS
 			// if(clamp(progressW.y - CloudLayer1_height,0.0,1.0) < 1.0 && clamp(progressW.y-50,0.0,1.0) > 0.0) 

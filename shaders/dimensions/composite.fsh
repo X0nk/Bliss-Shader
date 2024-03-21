@@ -15,7 +15,16 @@ uniform sampler2D colortex6; // Noise
 uniform sampler2D colortex8; // Noise
 uniform sampler2D colortex14; // Noise
 uniform sampler2D colortex15; // Noise
+
 uniform sampler2D shadow;
+
+// #ifdef TRANSLUCENT_COLORED_SHADOWS
+	uniform sampler2D shadowcolor0;
+	uniform sampler2D shadowtex0;
+	uniform sampler2D shadowtex1;
+// #endif
+
+
 uniform sampler2D noisetex;
 uniform vec3 sunVec;
 uniform vec2 texelSize;
@@ -416,7 +425,7 @@ void main() {
 
 						float weight = 3.0 + (i+noise) *rdMul/SHADOW_FILTER_SAMPLE_COUNT*shadowMapResolution*distortFactor/2.7;
 						// float d = texelFetch2D( shadow, ivec2((projectedShadowPosition.xy+offsetS*rdMul)*shadowMapResolution),0).x;
-						float d = texelFetch2D( shadow, ivec2((projectedShadowPosition.xy+offsetS*rdMul)*shadowMapResolution),0).x;
+						float d = texelFetch2D(shadowtex1, ivec2((projectedShadowPosition.xy+offsetS*rdMul)*shadowMapResolution),0).x;
 
 
 						float b = smoothstep(weight*diffthresh/2.0, weight*diffthresh, projectedShadowPosition.z - d);

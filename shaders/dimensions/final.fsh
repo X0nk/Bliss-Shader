@@ -159,18 +159,18 @@ void main() {
 	vec3 FINAL_COLOR = clamp(int8Dither(col,texcoord),0.0,1.0);
 
   #ifdef TONE_CURVE
-	FINAL_COLOR = toneCurve(FINAL_COLOR);
+	  FINAL_COLOR = toneCurve(FINAL_COLOR);
   #endif
 
   #ifdef COLOR_GRADING_ENABLED
-	FINAL_COLOR = colorGrading(FINAL_COLOR);
+	  FINAL_COLOR = colorGrading(FINAL_COLOR);
   #endif
 
 	applyContrast(FINAL_COLOR, CONTRAST); // for fun
 
   gl_FragColor.rgb = FINAL_COLOR;
 
-
-  // if(texcoord.x > 0.5) gl_FragColor.rgb = texture2D(shadowcolor0, texcoord * vec2(2.0, 1.0) - vec2(1.0, 0.0)).rgb * vec3(1.0);
-
+  #if DEBUG_VIEW == debug_SHADOWMAP 
+    if(texcoord.x < 0.25 && texcoord.y < 0.5) gl_FragColor.rgb = texture2D(shadowcolor0, (texcoord * vec2(2.0, 1.0) * 2 - vec2(0.0, 0.0)) ).rgb * vec3(1.0);
+  #endif
 }
