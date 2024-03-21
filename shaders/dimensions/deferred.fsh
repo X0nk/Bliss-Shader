@@ -127,8 +127,15 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 	// uniform sampler2D colortex12;
 	// const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
-	uniform sampler2DShadow shadowtex0;
-	uniform sampler2DShadow shadowtex1;
+
+	// #undef TRANSLUCENT_COLORED_SHADOWS
+
+	#ifdef TRANSLUCENT_COLORED_SHADOWS
+		uniform sampler2D shadowcolor0;
+		uniform sampler2DShadow shadowtex0;
+		uniform sampler2DShadow shadowtex1;
+	#endif
+
 	#define TEST
 	#define TIMEOFDAYFOG
 	#include "/lib/lightning_stuff.glsl"

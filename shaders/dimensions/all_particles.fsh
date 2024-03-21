@@ -11,6 +11,12 @@ varying vec4 color;
 #ifdef OVERWORLD_SHADER
 	const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
+	
+	#ifdef TRANSLUCENT_COLORED_SHADOWS
+		uniform sampler2D shadowcolor0;
+		uniform sampler2DShadow shadowtex0;
+		uniform sampler2DShadow shadowtex1;
+	#endif
 
 	flat varying vec3 WsunVec;
 
@@ -147,7 +153,7 @@ void main() {
 	if(lightmap.x >= 0.9) Torch_Color *= LIT_PARTICLE_BRIGHTNESS;
 
 	#ifdef OVERWORLD_SHADER
-		float Shadows = 1.0;
+		vec3 Shadows = vec3(1.0);
 		
 		vec3 feetPlayerPos_shadow = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
 		vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos_shadow + shadowModelView[3].xyz;
@@ -163,10 +169,21 @@ void main() {
 
 		//do shadows only if on shadow map
 		if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution){
+			Shadows = vec3(0.0);
 
 			projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
 
-			Shadows = shadow2D(shadow, projectedShadowPosition).x;
+			#ifdef TRANSLUCENT_COLORED_SHADOWS
+				float opaqueShadow = shadow2D(shadowtex0, projectedShadowPosition).x;
+				Shadows += vec3(opaqueShadow);
+
+				if(shadow2D(shadowtex1, projectedShadowPosition).x > projectedShadowPosition.z){ 
+					vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
+					if(translucentShadow.a < 0.9) Shadows += normalize(translucentShadow.rgb+0.0001) * (1.0-opaqueShadow);
+				}
+			#else
+				Shadows = vec3(shadow2D(shadow, projectedShadowPosition).x);
+			#endif
 		}
 
 		float cloudShadow = GetCloudShadow(feetPlayerPos);

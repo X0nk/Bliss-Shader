@@ -308,7 +308,7 @@ void ApplySSRT(
 
 	// rgb = torch color * lightmap. a = sky lightmap.
 	vec4 Lighting = RT_AmbientLight(torchcolor, lightmaps);
-	skylightcolor = skylightcolor * Lighting.a;
+	skylightcolor = skylightcolor * ambient_brightness * Lighting.a;
 
 	for (int i = 0; i < nrays; i++){
 		int seed = (frameCounter%40000)*nrays+i;

@@ -7,6 +7,12 @@ varying vec4 color;
 #ifdef OVERWORLD_SHADER
 	const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
+	
+	#ifdef TRANSLUCENT_COLORED_SHADOWS
+		uniform sampler2D shadowcolor0;
+		uniform sampler2DShadow shadowtex0;
+		uniform sampler2DShadow shadowtex1;
+	#endif
 
 	uniform float lightSign;
 	flat varying vec3 WsunVec;
@@ -350,6 +356,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 
 	vec4 COLORTEST = vec4(Albedo, UnchangedAlpha);
+	if (iswater > 0.95) COLORTEST = vec4(0.0);
 	
 	#ifdef BIOME_TINT_WATER
 		if (iswater > 0.95) COLORTEST.rgb = color.rgb;
@@ -418,7 +425,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	#ifdef OVERWORLD_SHADER
 		float NdotL = clamp(dot(normal, normalize(WsunVec*mat3(gbufferModelViewInverse))),0.0,1.0); NdotL = clamp((-15 + NdotL*255.0) / 240.0  ,0.0,1.0);
-		float Shadows = 0.0;
+		vec3 Shadows = vec3(0.0);
 		bool inShadowmapBounds = false;
 
 		vec3 feetPlayerPos_shadow = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
@@ -444,7 +451,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		// sample shadows only if on shadow map
 		if(ShadowBounds){
 			if (NdotL > 0.0){
-				Shadows = 0.0;
+				Shadows = vec3(0.0);
 				projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
 
 				#ifndef HAND
@@ -458,25 +465,52 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 						int SampleCount = 7;
 						for(int i = 0; i < SampleCount; i++){
-							// vec2 offsetS = tapLocation(i,SampleCount,1.618,noise,0.0);
 							vec2 offsetS = tapLocation_simple(i, 7, 9, noise) * 0.5;
-
 							float weight = 1.0+(i+noise)*rdMul/9.0*shadowMapResolution;
-							float isShadow = shadow2D(shadow, projectedShadowPosition + vec3(rdMul*offsetS, -diffthresh*weight)).x / SampleCount;
-							Shadows += isShadow;
-						}
 
+							#ifdef TRANSLUCENT_COLORED_SHADOWS
+								vec3 shadowProjOffsets = projectedShadowPosition + vec3(rdMul*offsetS, -diffthresh*weight);
+							
+								float opaqueShadow = shadow2D(shadowtex0, shadowProjOffsets).x;
+								Shadows += vec3(opaqueShadow/SampleCount);
+
+								if(shadow2D(shadowtex1, shadowProjOffsets).x > shadowProjOffsets.z){ 
+									vec4 translucentShadow = texture2D(shadowcolor0, shadowProjOffsets.xy);
+									if(translucentShadow.a < 0.9) Shadows += (normalize(translucentShadow.rgb+0.0001) * clamp(1.0-opaqueShadow,0.0,1.0)) / SampleCount;
+								}
+
+							#else
+								Shadows += vec3(shadow2D(shadow, projectedShadowPosition + vec3(rdMul*offsetS, -diffthresh*weight)).x / SampleCount);
+							#endif
+	
+						}
 					#else
-						Shadows = shadow2D(shadow, projectedShadowPosition - vec3(0.0,0.0,0.0001)).x;
+					
+						#ifdef TRANSLUCENT_COLORED_SHADOWS
+							projectedShadowPosition -= vec3(0.0,0.0,0.0001);
+							Shadows = vec3(shadow2D(shadowtex0, projectedShadowPosition ).x);
+
+							if(shadow2D(shadowtex1, projectedShadowPosition).x > projectedShadowPosition.z){	 
+								vec4 shadowLightColor = texture2D(shadowcolor0, projectedShadowPosition.xy);
+								if(shadowLightColor.a < 0.9) Shadows += normalize(shadowLightColor.rgb+0.0001);
+							}
+						#else
+							Shadows = vec3(shadow2D(shadow, projectedShadowPosition - vec3(0.0,0.0,0.0001)).x);
+						#endif
+					
 					#endif
+					
+
+
+
 				#else
-					Shadows = shadow2D(shadow, projectedShadowPosition - vec3(0.0,0.0,0.0005)).x;
+					Shadows = vec3(shadow2D(shadow, projectedShadowPosition - vec3(0.0,0.0,0.0005)).x);
 				#endif
 			}
 			inShadowmapBounds = true;
 		}
 
-		if(!inShadowmapBounds) Shadows = 1.0;
+		if(!inShadowmapBounds) Shadows = vec3(1.0);
 
 		Shadows *= GetCloudShadow(feetPlayerPos);
 
@@ -529,9 +563,9 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
 	
-	#ifdef Glass_Tint
-		FinalColor *= min(pow(gl_FragData[0].a,2.0),1.0);
-	#endif
+	// #ifdef Glass_Tint
+	// 	FinalColor *= min(pow(gl_FragData[0].a,2.0),1.0);
+	// #endif
 
 	//////////////////////////////// 
 	//////////////////////////////// SPECULAR
@@ -548,8 +582,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		float roughness = max(pow(1.0-SpecularTex.r,2.0),0.05);
 		float f0 = SpecularTex.g;
 
-		// roughness = 0.0;
-		// f0 = 0.9;
+		// roughness = 0.1;
+		// f0 = 1.0;
 
 		if (iswater > 0.0 && gl_FragData[0].a < 0.9999999){
 			vec3 Reflections_Final = vec3(0.0);
@@ -571,20 +605,20 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 			fresnel = mix(f0, 1.0, fresnel); 
 
-			vec3 Metals = f0 > 229.5/255.0 ? mix(normalize(Albedo+1e-7) * (dot(Albedo,vec3(0.21, 0.72, 0.07)) * 0.7 + 0.3), vec3(1.0), fresnel * pow(1.0-roughness,25.0)) : vec3(1.0);
+			vec3 Metals = f0 > 229.5/255.0 ? normalize(Albedo+1e-7) * (dot(Albedo,vec3(0.21, 0.72, 0.07)) * 0.7 + 0.3) : vec3(1.0);
 			
 	
 			// Sun, Sky, and screen-space reflections
 			#ifdef OVERWORLD_SHADER
 				#ifdef WATER_SUN_SPECULAR
-					SunReflection = Direct_lighting * GGX(normal, -normalize(viewPos), WsunVec*mat3(gbufferModelViewInverse), roughness, vec3(f0)) * Metals; 
+					SunReflection = Direct_lighting * GGX(normal, -normalize(viewPos), WsunVec*mat3(gbufferModelViewInverse), roughness, vec3(f0)) ; 
 				#endif
 				#ifdef WATER_BACKGROUND_SPECULAR
- 					if(isEyeInWater == 0) SkyReflection = skyCloudsFromTex(mat3(gbufferModelViewInverse) * reflectedVector, colortex4).rgb / 30.0 *Metals;
+ 					if(isEyeInWater == 0) SkyReflection = skyCloudsFromTex(mat3(gbufferModelViewInverse) * reflectedVector, colortex4).rgb / 30.0 ;
 				#endif
 			#else
 				#ifdef WATER_BACKGROUND_SPECULAR 
- 					if(isEyeInWater == 0) SkyReflection = skyCloudsFromTexLOD2(mat3(gbufferModelViewInverse) * reflectedVector, colortex4, 0).rgb / 30.0 * Metals;
+ 					if(isEyeInWater == 0) SkyReflection = skyCloudsFromTexLOD2(mat3(gbufferModelViewInverse) * reflectedVector, colortex4, 0).rgb / 30.0 ;
 				#endif
 			#endif
 			#ifdef SCREENSPACE_REFLECTIONS
@@ -596,7 +630,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 						previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
 						if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0) {
 							Reflections.a = 1.0;
-							Reflections.rgb = texture2D(colortex5,previousPosition.xy).rgb * Metals;
+							Reflections.rgb = texture2D(colortex5,previousPosition.xy).rgb ;
 						}
 					}
 				}
@@ -613,10 +647,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 				Reflections_Final = FinalColor;
 			#else
 				Reflections_Final = mix(SkyReflection*indoors, Reflections.rgb, Reflections.a);
-				Reflections_Final = mix(FinalColor, Reflections_Final, fresnel);
+				Reflections_Final = mix(FinalColor, Reflections_Final * Metals, fresnel);
 			#endif
 			
-			Reflections_Final += SunReflection;
+			Reflections_Final += SunReflection * Metals;
 
 			
 			gl_FragData[0].rgb = Reflections_Final ;

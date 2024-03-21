@@ -65,7 +65,11 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 #ifdef OVERWORLD_SHADER
 	const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
-
+	#ifdef TRANSLUCENT_COLORED_SHADOWS
+		uniform sampler2D shadowcolor0;
+		uniform sampler2DShadow shadowtex0;
+		uniform sampler2DShadow shadowtex1;
+	#endif
 	flat varying vec3 refractedSunVec;
 	
 	#define TIMEOFDAYFOG
@@ -263,7 +267,7 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 		
 		progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
 		
-		float sh = 1.0;
+		vec3 sh = vec3(1.0);
 		#ifdef OVERWORLD_SHADER
 			vec3 spPos = start.xyz + dV*d;
 
@@ -276,7 +280,16 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 			vec3 pos = vec3(spPos.xy*distortFactor, spPos.z);
 			if (abs(pos.x) < 1.0-0.5/2048. && abs(pos.y) < 1.0-0.5/2048){
 				pos = pos*vec3(0.5,0.5,0.5/6.0)+0.5;
-				sh =  shadow2D( shadow, pos).x;
+				// sh =  shadow2D( shadow, pos).x;
+				#ifdef TRANSLUCENT_COLORED_SHADOWS
+					sh = vec3(shadow2D(shadowtex0, pos).x);
+
+					if(shadow2D(shadowtex1, pos).x > pos.z && sh.x < 1.0){
+						sh = normalize(texture2D(shadowcolor0, pos.xy).rgb+0.0001);
+					}
+				#else
+					sh = vec3(shadow2D(shadow, pos).x);
+				#endif
 			}
 
 			#ifdef VL_CLOUDS_SHADOWS
@@ -291,7 +304,7 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 			float sunCaustics = (waterCaustics(progressW, WsunVec)) * mix(0.25,10.0,bubble) + 0.75;
 
 			vec3 sunMul = exp(-1 * d * waterCoefs * 1.1);
-			vec3 Directlight = (lightSource * phase * sunMul * sunCaustics) * sh * lowlightlevel * pow(abs(WsunVec.y),1);
+			vec3 Directlight = ((lightSource* sh) * phase * sunMul * sunCaustics) * lowlightlevel * pow(abs(WsunVec.y),1);
 		#else
 			vec3 Directlight = vec3(0.0);
 		#endif

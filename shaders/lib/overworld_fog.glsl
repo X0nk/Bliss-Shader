@@ -147,7 +147,7 @@ vec4 GetVolumetricFog(
 	skyLightPhased = max(skyLightPhased + skyLightPhased*(normalize(wpos).y*0.9+0.1),0.0);
 	LightSourcePhased *= mie;	
 	
-	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
+	float lightleakfix = 1; //clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 
 	#ifdef RAYMARCH_CLOUDS_WITH_FOG
 		vec3 SkyLightColor = AmbientColor;
@@ -194,13 +194,24 @@ vec4 GetVolumetricFog(
 		#endif
 		vec3 pos = vec3(progress.xy*distortFactor, progress.z);
 
-		float sh = 1.0;
+		vec3 sh = vec3(1.0);
 	
 		if (abs(pos.x) < 1.0-0.5/2048. && abs(pos.y) < 1.0-0.5/2048){
 			pos = pos*vec3(0.5,0.5,0.5/6.0)+0.5;
-			sh = shadow2D(shadow, pos).x;
+			#ifdef TRANSLUCENT_COLORED_SHADOWS
+				sh = vec3(shadow2D(shadowtex0, pos).x);
+			
+				if(shadow2D(shadowtex1, pos).x > pos.z && sh.x < 1.0){
+				
+					vec4 translucentShadow = texture2D(shadowcolor0, pos.xy);
+					if(translucentShadow.a < 0.9) sh = normalize(translucentShadow.rgb+0.0001);
+				}
+			#else
+				sh = vec3(shadow2D(shadow, pos).x);
+			#endif
+
 		}
-		float sh2 = sh;
+		// float sh2 = sh;
 
 		#ifdef VL_CLOUDS_SHADOWS
 			// if(clamp(progressW.y - CloudLayer1_height,0.0,1.0) < 1.0 && clamp(progressW.y-50,0.0,1.0) > 0.0) 

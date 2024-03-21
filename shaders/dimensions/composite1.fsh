@@ -2,14 +2,28 @@
 #include "/lib/res_params.glsl"
 
 
+vec3 saturation(inout vec3 color, float saturation){
 
+
+ float luminance = dot(color, vec3(0.21, 0.72, 0.07));
+ 
+ vec3 difference = color - luminance;
+ 
+ return color = color + difference*saturation;
+}
 
 const bool colortex5MipmapEnabled = true;
 
 #ifdef OVERWORLD_SHADER
 	const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
-	
+
+	#ifdef TRANSLUCENT_COLORED_SHADOWS
+		uniform sampler2D shadowcolor0;
+		uniform sampler2DShadow shadowtex0;
+		uniform sampler2DShadow shadowtex1;
+	#endif
+
 	flat varying vec3 averageSkyCol_Clouds;
 	flat varying vec4 lightCol;
 
@@ -844,19 +858,20 @@ void main() {
 		vec3 Direct_lighting = vec3(0.0);
 		vec3 Direct_SSS = vec3(0.0);
 		float cloudShadow = 1.0;
-		float Shadows = 1.0;
+		vec3 Shadows = vec3(1.0);
 		float NdotL = 1.0;
 
 
 
-		float shadowMap = 1.0;
+		vec3 shadowMap = vec3(1.0);
 		#ifdef DISTANT_HORIZONS_SHADOWMAP
 			float shadowMapFalloff = pow(1.0-pow(1.0-min(max(1.0 - length(vec3(feetPlayerPos.x,feetPlayerPos.y/1.5,feetPlayerPos.z)) / min(shadowDistance, dhFarPlane),0.0)*5.0,1.0),2.0),2.0);
 		#else
 			float shadowMapFalloff = pow(1.0-pow(1.0-min(max(1.0 - length(vec3(feetPlayerPos.x,feetPlayerPos.y/1.5,feetPlayerPos.z)) / shadowDistance,0.0)*5.0,1.0),2.0),2.0);
 		#endif
 			float shadowMapFalloff2 = pow(1.0-pow(1.0-min(max(1.0 - length(vec3(feetPlayerPos.x,feetPlayerPos.y/1.5,feetPlayerPos.z)) / min(shadowDistance,far),0.0)*5.0,1.0),2.0),2.0);
-
+		// shadowMapFalloff = 0;
+		// shadowMapFalloff2 = 0;
 		float LM_shadowMapFallback = min(max(lightmap.y-0.8, 0.0) * 25,1.0);
 
 		#ifdef OVERWORLD_SHADER
@@ -895,8 +910,8 @@ void main() {
 	#endif
 
 	float ShadowBlockerDepth = filteredShadow.y;
-	Shadows = clamp(1.0 - filteredShadow.b,0.0,1.0);
-	shadowMap = Shadows;
+	Shadows = vec3(clamp(1.0 - filteredShadow.b,0.0,1.0));
+	shadowMap = vec3(Shadows);
 	
 	
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -948,7 +963,7 @@ void main() {
 	} else {
 
 		feetPlayerPos += gbufferModelViewInverse[3].xyz;
-		
+	
 	////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	UNDER WATER SHADING		////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -1019,7 +1034,8 @@ void main() {
 			if(shadowDistanceRenderMul < 0.0) shadowMapFalloff = abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0 ? 1.0 : 0.0;
 
 			if(shadowMapFalloff > 0.0){
-				shadowMap = 0.0;
+				shadowMap = vec3(0.0);
+				vec3 ShadowColor = vec3(0.0);
 
 				projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
 
@@ -1032,22 +1048,52 @@ void main() {
 					for(int i = 0; i < SHADOW_FILTER_SAMPLE_COUNT; i++){
 						vec2 offsetS = tapLocation_simple(i, 7, 9, noise_2) * 0.5;
 
-						shadowMap += shadow2D(shadow, projectedShadowPosition + vec3(rdMul*offsetS, biasOffset)	).x/SHADOW_FILTER_SAMPLE_COUNT;
+						projectedShadowPosition += vec3(rdMul*offsetS, biasOffset);
+						
+
+						#ifdef TRANSLUCENT_COLORED_SHADOWS
+							float opaqueShadow = shadow2D(shadowtex0, projectedShadowPosition).x;
+							ShadowColor += vec3(opaqueShadow/SHADOW_FILTER_SAMPLE_COUNT);
+
+							if(shadow2D(shadowtex1, projectedShadowPosition).x > projectedShadowPosition.z){ 
+								vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
+								if(translucentShadow.a < 0.9) ShadowColor += (normalize(translucentShadow.rgb+0.0001) * clamp(1.0-opaqueShadow,0.0,1.0))  / SHADOW_FILTER_SAMPLE_COUNT;
+							}
+						#else
+							ShadowColor += vec3(shadow2D(shadow, projectedShadowPosition).x/SHADOW_FILTER_SAMPLE_COUNT);
+						#endif
 					}
+
+					shadowMap = ShadowColor;
+					
 				#else
-					shadowMap = shadow2D(shadow, projectedShadowPosition + vec3(0.0,0.0, biasOffset)).x;
+					#ifdef TRANSLUCENT_COLORED_SHADOWS
+					
+							float OPAQUESHADOW = shadow2D(shadowtex0, projectedShadowPosition).x;
+							shadowMap += vec3(OPAQUESHADOW);
+
+							if(shadow2D(shadowtex1, projectedShadowPosition).x > projectedShadowPosition.z){	 
+								vec4 shadowLightColor = texture2D(shadowcolor0, projectedShadowPosition.xy);
+								if(shadowLightColor.a < 0.9)  shadowMap += normalize(shadowLightColor.rgb+0.0001) * (1.0-OPAQUESHADOW);
+							}
+					#else
+						shadowMap += vec3(shadow2D(shadow, projectedShadowPosition).x);
+					#endif
 				#endif
 
 				Shadows = shadowMap;
+
+				// if(shadow2D(shadowtex0, projectedShadowPosition).x < projectedShadowPosition.z)	DirectLightColor *= shadow2D(shadowtex1, projectedShadowPosition).x *  waterCaustics(feetPlayerPos + cameraPosition, WsunVec)*WATER_CAUSTICS_BRIGHTNESS + 0.25;
+			
 			}
 
-			if(!iswater) Shadows = mix(LM_shadowMapFallback, Shadows, shadowMapFalloff2);
+			if(!iswater) Shadows = mix(vec3(LM_shadowMapFallback), Shadows, shadowMapFalloff2);
 
 			#ifdef OLD_LIGHTLEAK_FIX
-				if (isEyeInWater == 0) Shadows *= clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
+				if (isEyeInWater == 0) Shadows *=  clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
 			#endif
 		// }
-
+	
 	////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	SUN SSS		////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
@@ -1064,7 +1110,7 @@ void main() {
 			#endif
 
 			#if !defined Variable_Penumbra_Shadows
-				ShadowBlockerDepth = pow(1.0 - Shadows,2.0);
+				ShadowBlockerDepth = pow(1.0 - clamp(dot(Shadows,vec3(0.33333)),0,1),2.0);
 			#endif
 
 
@@ -1273,11 +1319,11 @@ void main() {
 
 	
 	//////// DEBUG VIEW STUFF
-	#if DEBUG_VIEW == debug_SHADOWMAP
-		vec3 OutsideShadowMap_and_DH_shadow = (shadowMapFalloff > 0.0 && z >= 1.0) ? vec3(0.25,1.0,0.25) : vec3(1.0,0.25,0.25);
-		vec3 Normal_Shadowmap =  z < 1.0 ? vec3(0.25,0.25,1.0) : OutsideShadowMap_and_DH_shadow;
-		gl_FragData[0].rgb = mix(vec3(0.1) * (normal.y * 0.1 +0.9), Normal_Shadowmap,  shadowMap);
-	#endif
+	// #if DEBUG_VIEW == debug_SHADOWMAP
+	// 	vec3 OutsideShadowMap_and_DH_shadow = (shadowMapFalloff > 0.0 && z >= 1.0) ? vec3(0.25,1.0,0.25) : vec3(1.0,0.25,0.25);
+	// 	vec3 Normal_Shadowmap =  z < 1.0 ? vec3(0.25,0.25,1.0) : OutsideShadowMap_and_DH_shadow;
+	// 	gl_FragData[0].rgb = mix(vec3(0.1) * (normal.y * 0.1 +0.9), Normal_Shadowmap,  shadowMap) * 30.0;
+	// #endif
 	#if DEBUG_VIEW == debug_NORMALS
 		gl_FragData[0].rgb = FlatNormals;
 	#endif
@@ -1293,7 +1339,6 @@ void main() {
 	#if DEBUG_VIEW == debug_VIEW_POSITION
 		gl_FragData[0].rgb = viewPos * 0.001;
 	#endif
-
 	#if DEBUG_VIEW == debug_FILTERED_STUFF
 		vec3 FilteredDebug = vec3(15.0) * exp(-1.0 * vec3(1.0,0.5,1.0) * filteredShadow.y);
 		FilteredDebug += vec3(15.0) * exp(-7.0 * vec3(1.0,1.0,0.5) * pow(SSAO_SSS.x,2));

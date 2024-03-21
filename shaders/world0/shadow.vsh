@@ -39,6 +39,8 @@ uniform float shadowMaxProj;
 attribute vec4 mc_midTexCoord;
 varying vec4 color;
 
+varying float materials;
+
 attribute vec4 mc_Entity;
 uniform int blockEntityId;
 uniform int entityId;
@@ -114,12 +116,15 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 
 // uniform int renderStage;
 
+flat varying vec4 playerpos;
+// uniform mat4 gbufferModelViewInverse;
 void main() {
 	texcoord.xy = gl_MultiTexCoord0.xy;
 	color = gl_Color;
 
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-
+	playerpos = vec4(0.0);
+	playerpos = gbufferModelViewInverse * (gl_ModelViewMatrix * gl_Vertex);
 	
 	// mat4 Custom_ViewMatrix = BuildShadowViewMatrix(LightDir);
 	// mat4 Custom_ProjectionMatrix = BuildShadowProjectionMatrix();
@@ -190,7 +195,13 @@ void main() {
 	#endif
 
 
-	if(mc_Entity.x == 8 || mc_Entity.x == 9) gl_Position.w = -1.0;
+ 	
+	if(mc_Entity.x == 8 ) gl_Position.w = -1.0;
+	
+	
+	// materials = 0.0;
+	// if(mc_Entity.x == 8) materials = 1.0;
+
 
  	/// this is to ease the shadow acne on big fat entities like ghasts.
   	float bias = 6.0;
