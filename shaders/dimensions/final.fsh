@@ -123,20 +123,6 @@ vec3 colorGrading(vec3 color) {
   }
 #endif
 
-//float3 crosstalk_and_saturation(float3 color){
-//
-//  float crosstalk = 0.0;
-//  float saturation = 0.0
-//
-//  float luminance = dot(COLOR, vec3(0.21, 0.72, 0.07));
-//  
-//  float3 difference = color - luminance;
-//  
-//  color = color + difference*(-luminance*crosstalk + saturation);
-//  
-//  return color;
-//}
-
 uniform int hideGUI;
 void main() {
   #ifdef BICUBIC_UPSCALING

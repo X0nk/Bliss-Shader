@@ -327,9 +327,9 @@ void ApplySSRT(
 
 				// rayDir.y = mix(-1.0, rayDir.y, lightmaps.y*lightmaps.y);
 				
-				skycontribution = ((skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb / 30.0) * 2.5) * Lighting.a + Lighting.rgb;
+				skycontribution = ((skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb / 30.0) * 2.5  * ambient_brightness) * Lighting.a + Lighting.rgb;
 			#else
-				skycontribution = ((skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0) * 2.5) * Lighting.a + Lighting.rgb;
+				skycontribution = ((skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0) * 2.5  * ambient_brightness) * Lighting.a + Lighting.rgb;
 			#endif
 		#else
 
