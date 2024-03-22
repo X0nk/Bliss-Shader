@@ -44,7 +44,6 @@ float blueNoise(){
 
 
 void main() {
-	gl_FragData[0] = vec4(1);
 	gl_FragData[0] = texture2D(tex,texcoord.xy) * color;
 
 	

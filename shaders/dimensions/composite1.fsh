@@ -1014,7 +1014,6 @@ void main() {
 			if(shadowMapFalloff > 0.0){
 				shadowMap = vec3(0.0);
 				vec3 ShadowColor = vec3(0.0);
-				vec3 COLOR = vec3(1.0) ;
 
 				projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
 
@@ -1047,10 +1046,6 @@ void main() {
 							shadowMap += vec3(shadow2D(shadow, projectedShadowPosition).x / SHADOW_FILTER_SAMPLE_COUNT);
 						#endif
 					}
-
-					#ifdef TRANSLUCENT_COLORED_SHADOWS
-						DirectLightColor = ShadowColor;
-					#endif
 				
 				#else
 
@@ -1321,16 +1316,14 @@ void main() {
 
 		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * albedo;
 
-		// gl_FragData[0].rgb = Direct_lighting;
+		#ifdef Specular_Reflections	
+			vec2 specularNoises = vec2(noise, R2_dither());
+			DoSpecularReflections(gl_FragData[0].rgb, viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, normal, SpecularTex.r, SpecularTex.g, albedo, DirectLightColor*Shadows*NdotL, lightmap.y, hand);
+		#endif
 
-		// #ifdef Specular_Reflections	
-		// 	vec2 specularNoises = vec2(noise, R2_dither());
-		// 	DoSpecularReflections(gl_FragData[0].rgb, viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, normal, SpecularTex.r, SpecularTex.g, albedo, DirectLightColor*Shadows*NdotL, lightmap.y, hand);
-		// #endif
-
-		// Emission(gl_FragData[0].rgb, albedo, SpecularTex.a);
+		Emission(gl_FragData[0].rgb, albedo, SpecularTex.a);
 		
-		// if(lightningBolt) gl_FragData[0].rgb = vec3(77.0, 153.0, 255.0);
+		if(lightningBolt) gl_FragData[0].rgb = vec3(77.0, 153.0, 255.0);
 
 	}
 
