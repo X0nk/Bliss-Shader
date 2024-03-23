@@ -53,7 +53,7 @@ void main() {
 	#ifdef NETHER_SHADER
 		lightCol.rgb = vec3(0.0);
 		averageSkyCol = vec3(0.0);
-		averageSkyCol_Clouds = vec3(2.0, 1.0, 0.5) * 30.0;
+		averageSkyCol_Clouds = vec3(2.0, 1.0, 0.5) * 10.0;
 	#endif
 
 	#ifdef END_SHADER

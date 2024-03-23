@@ -200,7 +200,8 @@ void main() {
 	#endif
 
 	#ifdef NETHER_SHADER
-		vec3 AmbientLightColor = skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb / 15;
+		// vec3 AmbientLightColor = skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb / 15;
+		vec3 AmbientLightColor = vec3(0.1);
 	#endif
 
 	#ifdef END_SHADER

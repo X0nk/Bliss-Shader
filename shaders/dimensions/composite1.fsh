@@ -127,6 +127,12 @@ flat varying vec3 WsunVec;
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
+void convertHandDepth(inout float depth) {
+    float ndcDepth = depth * 2.0 - 1.0;
+    ndcDepth /= MC_HAND_DEPTH;
+    depth = ndcDepth * 0.5 + 0.5;
+}
+
 vec3 toScreenSpace(vec3 p) {
 	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
     vec3 feetPlayerPos = p * 2. - 1.;
@@ -773,12 +779,7 @@ void main() {
 			float DH_depth1 = 0.0;
 		#endif
 
-
-		#ifdef DISTANT_HORIZONS
-			vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5, z, DH_depth1);
-		#else
-			vec3 viewPos = toScreenSpace(vec3(texcoord/RENDER_SCALE - TAA_Offset*texelSize*0.5,z));
-		#endif
+	
 
 
 	////// --------------- UNPACK OPAQUE GBUFFERS --------------- //////
@@ -837,10 +838,17 @@ void main() {
 		// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
 
 
-		if(hand) viewPos *= 5.0;
-
+		if(hand) convertHandDepth(z);
+		
+		#ifdef DISTANT_HORIZONS
+			vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5, z, DH_depth1);
+		#else
+			vec3 viewPos = toScreenSpace(vec3(texcoord/RENDER_SCALE - TAA_Offset*texelSize*0.5,z));
+		#endif
+		
 		vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
 		vec3 feetPlayerPos_normalized = normVec(feetPlayerPos);
+
 	////// --------------- COLORS --------------- //////
 
 		float dirtAmount = Dirt_Amount + 0.01;
@@ -859,7 +867,7 @@ void main() {
 		#endif
 		vec3 Absorbtion = vec3(1.0);
 		vec3 AmbientLightColor = vec3(0.0);
-	vec3 MinimumLightColor = vec3(1.0);
+		vec3 MinimumLightColor = vec3(1.0);
 		vec3 Indirect_lighting = vec3(0.0);
 		vec3 Indirect_SSS = vec3(0.0);
 		
@@ -988,7 +996,8 @@ void main() {
 
 		vec3 shadowPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
 		
-		if(!entities || !hand) GriAndEminShadowFix(shadowPlayerPos, viewToWorld(FlatNormals), vanilla_AO, lightmap.y);
+		// if(!entities) if(!hand) 
+		GriAndEminShadowFix(shadowPlayerPos, viewToWorld(FlatNormals), vanilla_AO, lightmap.y);
 
 		vec3 projectedShadowPosition = mat3(shadowModelView) * shadowPlayerPos + shadowModelView[3].xyz;
 		projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
@@ -1118,7 +1127,7 @@ void main() {
 			#endif
 
 			#if defined DISTANT_HORIZONS_SHADOWMAP && defined Variable_Penumbra_Shadows
-				ShadowBlockerDepth = mix(pow(1.0 - Shadows,2.0), ShadowBlockerDepth, shadowMapFalloff);
+				ShadowBlockerDepth = mix(pow(1.0 - Shadows.x,2.0), ShadowBlockerDepth, shadowMapFalloff);
 			#endif
 
 			#if !defined Variable_Penumbra_Shadows
@@ -1198,14 +1207,16 @@ void main() {
 		#endif
 
 		#ifdef NETHER_SHADER
-			Indirect_lighting = skyCloudsFromTexLOD2(normal, colortex4, 6).rgb;
+			// Indirect_lighting = skyCloudsFromTexLOD2(normal, colortex4, 6).rgb;
 
-			vec3 up 	= skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb;
-			vec3 down 	= skyCloudsFromTexLOD2(vec3( 0,-1, 0), colortex4, 6).rgb;
+			// vec3 up 	= skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb;
+			// vec3 down 	= skyCloudsFromTexLOD2(vec3( 0,-1, 0), colortex4, 6).rgb;
 
-			up   *= pow( max( slopednormal.y, 0), 2);
-			down *= pow( max(-slopednormal.y, 0), 2);
-			Indirect_lighting += up + down;
+			// up   *= pow( max( slopednormal.y, 0), 2);
+			// down *= pow( max(-slopednormal.y, 0), 2);
+			// Indirect_lighting += up + down;
+
+			Indirect_lighting = vec3(0.1);
 		
 			Indirect_lighting *= Absorbtion;
 		#endif

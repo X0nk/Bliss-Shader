@@ -208,10 +208,16 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
     return (near * far) / (depth * (near - far) + far);
 }
 
+void convertHandDepth(inout float depth) {
+    float ndcDepth = depth * 2.0 - 1.0;
+    ndcDepth /= MC_HAND_DEPTH;
+    depth = ndcDepth * 0.5 + 0.5;
+}
+
 vec2 SSAO(
 	vec3 viewPos, vec3 normal, bool hand, bool leaves, float noise
 ){
-	if(hand) return vec2(1.0,0.0);
+	// if(hand) return vec2(1.0,0.0);
 	int samples = 7;
 	float occlusion = 0.0; 
 	float sss = 0.0;
@@ -286,7 +292,6 @@ float encodeVec2(vec2 a){
 float encodeVec2(float x,float y){
     return encodeVec2(vec2(x,y));
 }
-
 // #include "/lib/indirect_lighting_effects.glsl"
 
 #ifdef DENOISE_SSS_AND_SSAO
@@ -304,7 +309,6 @@ void main() {
 	float z = texture2D(depthtex1,texcoord).x;
 	float DH_depth1 = texture2D(dhDepthTex1,texcoord).x;
 	
-	vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE - TAA_Offset*texelSize*0.5, z, DH_depth1);
 
 
 
@@ -325,8 +329,13 @@ void main() {
 	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
 	// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
 
+
+	if(hand) convertHandDepth(z);
+
+	vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE - TAA_Offset*texelSize*0.5, z, DH_depth1);
 	
 	gl_FragData[1] = vec4(0.0,0.0,0.0,texture2D(colortex14,texcoord).a);
+
 	#if defined DENOISE_SSS_AND_SSAO && indirect_effect == 1
 		float depth = z;
 
@@ -374,10 +383,10 @@ void main() {
 	}
 
 	#ifndef Variable_Penumbra_Shadows
-		if (LabSSS > 0.0 && !hand && NdotL < 0.001)  minshadowfilt += 50;
+		if (LabSSS > 0.0 && NdotL < 0.001)  minshadowfilt += 50;
 	#endif
 
-	if (z < 1.0 && !hand){
+	if (z < 1.0){
 
 		gl_FragData[0] = vec4(minshadowfilt, 0.1, 0.0, 0.0);
 		gl_FragData[0].a = 0;
