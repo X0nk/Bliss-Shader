@@ -11,9 +11,6 @@ uniform int frameCounter;
 uniform float frameTimeCounter;
 uniform vec3 cameraPosition;
 varying vec4 color;
-varying float materials;
-
-flat varying vec4 playerpos;
 
 #include "/lib/waterBump.glsl"
 //////////////////////////////VOID MAIN//////////////////////////////

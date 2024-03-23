@@ -39,8 +39,6 @@ uniform float shadowMaxProj;
 attribute vec4 mc_midTexCoord;
 varying vec4 color;
 
-varying float materials;
-
 attribute vec4 mc_Entity;
 uniform int blockEntityId;
 uniform int entityId;
@@ -116,7 +114,6 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 
 // uniform int renderStage;
 
-flat varying vec4 playerpos;
 // uniform mat4 gbufferModelViewInverse;
 void main() {
 	texcoord.xy = gl_MultiTexCoord0.xy;
