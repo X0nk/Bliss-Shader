@@ -86,8 +86,10 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
 	float dist = 1.0 + clamp(position.z*position.z/50.0,0.0,2.0); // shrink sample size as distance increases
   	for (int i = 0; i <= int(quality); i++) {
 
-		vec2 testthing = hand ? spos.xy*texelSize : spos.xy/texelSize/4.0; // fix for ssr on hand
-		float sp = sqrt((texelFetch2D(colortex4,ivec2(testthing),0).a+0.1)/65000.0);
+		vec2 scaleUV = hand ? spos.xy*texelSize : spos.xy/texelSize/4.0; // fix for ssr on hand
+		float sp = sqrt(texelFetch2D(colortex4,ivec2(scaleUV),0).a/65000.0);
+
+
 		sp = invLinZ(sp);
 
 		if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ) ) return vec3(spos.xy/RENDER_SCALE,sp);

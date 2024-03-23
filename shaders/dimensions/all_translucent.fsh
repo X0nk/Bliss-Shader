@@ -62,6 +62,7 @@ uniform int isEyeInWater;
 uniform float rainStrength;
 uniform float skyIntensityNight;
 uniform float skyIntensity;
+uniform ivec2 eyeBrightnessSmooth;
 
 uniform int frameCounter;
 uniform float frameTimeCounter;
@@ -355,9 +356,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 
-
 	vec4 COLORTEST = vec4(Albedo, UnchangedAlpha);
-
 	
 	#ifdef BIOME_TINT_WATER
 		if (iswater > 0.95) COLORTEST.rgb = color.rgb;
@@ -420,7 +419,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	vec3 Indirect_lighting = vec3(0.0);
-	vec3 MinimumLightColor = vec3(0.2,0.4,1.0);
+	vec3 MinimumLightColor = vec3(1.0);
 	if(isEyeInWater == 1) MinimumLightColor = vec3(10.0);
 	vec3 Direct_lighting = vec3(0.0);
 

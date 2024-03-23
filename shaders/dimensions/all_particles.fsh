@@ -144,7 +144,7 @@ void main() {
 	vec3 Direct_lighting = vec3(0.0);
 	vec3 Indirect_lighting = vec3(0.0);
 	
-	vec3 MinimumLightColor = vec3(0.2,0.4,1.0);
+	vec3 MinimumLightColor = vec3(1.0);
 	if(isEyeInWater == 1) MinimumLightColor = vec3(10.0);
 
 	vec3 Torch_Color = vec3(TORCH_R,TORCH_G,TORCH_B);

@@ -566,29 +566,29 @@ void Emission(
 // uniform mat4 gbufferProjectionInverse;
 // uniform mat4 dhProjectionInverse;
 
-vec3 getViewPos() {
-    ivec2 uv = ivec2(gl_FragCoord.xy);
-    vec2 viewSize = vec2(viewWidth, viewHeight);
-    vec2 texcoord = gl_FragCoord.xy / viewSize;
+// vec3 getViewPos() {
+//     ivec2 uv = ivec2(gl_FragCoord.xy);
+//     vec2 viewSize = vec2(viewWidth, viewHeight);
+//     vec2 texcoord = gl_FragCoord.xy / viewSize;
 
-    vec4 viewPos = vec4(0.0);
+//     vec4 viewPos = vec4(0.0);
 	
-    float depth = texelFetch(depthtex0, uv, 0).r;
+//     float depth = texelFetch(depthtex0, uv, 0).r;
 
-    if (depth < 1.0) {
-        vec4 ndcPos = vec4(texcoord, depth, 1.0) * 2.0 - 1.0;
-        viewPos = gbufferProjectionInverse * ndcPos;
-        viewPos.xyz /= viewPos.w;
-    } else {
-        depth = texelFetch(dhDepthTex, ivec2(gl_FragCoord.xy), 0).r;
+//     if (depth < 1.0) {
+//         vec4 ndcPos = vec4(texcoord, depth, 1.0) * 2.0 - 1.0;
+//         viewPos = gbufferProjectionInverse * ndcPos;
+//         viewPos.xyz /= viewPos.w;
+//     } else {
+//         depth = texelFetch(dhDepthTex, ivec2(gl_FragCoord.xy), 0).r;
     
-        vec4 ndcPos = vec4(texcoord, depth, 1.0) * 2.0 - 1.0;
-        viewPos = dhProjectionInverse * ndcPos;
-        viewPos.xyz /= viewPos.w;
-    }
+//         vec4 ndcPos = vec4(texcoord, depth, 1.0) * 2.0 - 1.0;
+//         viewPos = dhProjectionInverse * ndcPos;
+//         viewPos.xyz /= viewPos.w;
+//     }
 
-    return viewPos.xyz;
-}
+//     return viewPos.xyz;
+// }
 
 vec4 BilateralUpscale(sampler2D tex, sampler2D depth, vec2 coord, float referenceDepth){
   
@@ -780,11 +780,7 @@ void main() {
 			vec3 viewPos = toScreenSpace(vec3(texcoord/RENDER_SCALE - TAA_Offset*texelSize*0.5,z));
 		#endif
 
-		vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
-		vec3 feetPlayerPos_normalized = normVec(feetPlayerPos);
 
-
-		vec3 playerPos = mat3(gbufferModelViewInverse) * getViewPos();
 	////// --------------- UNPACK OPAQUE GBUFFERS --------------- //////
 	
 		vec4 data = texture2D(colortex1,texcoord);
@@ -841,6 +837,10 @@ void main() {
 		// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
 
 
+		if(hand) viewPos *= 5.0;
+
+		vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
+		vec3 feetPlayerPos_normalized = normVec(feetPlayerPos);
 	////// --------------- COLORS --------------- //////
 
 		float dirtAmount = Dirt_Amount + 0.01;
@@ -859,7 +859,7 @@ void main() {
 		#endif
 		vec3 Absorbtion = vec3(1.0);
 		vec3 AmbientLightColor = vec3(0.0);
-		vec3 MinimumLightColor = vec3(0.2,0.4,1.0);
+	vec3 MinimumLightColor = vec3(1.0);
 		vec3 Indirect_lighting = vec3(0.0);
 		vec3 Indirect_SSS = vec3(0.0);
 		
@@ -985,102 +985,94 @@ void main() {
 	#ifdef OVERWORLD_SHADER
 
 		NdotL = clamp((-15 + dot(slopednormal, WsunVec)*255.0) / 240.0  ,0.0,1.0);
-		// float shadowNDOTL = NdotL;
-		// #ifndef Variable_Penumbra_Shadows
-		// 	shadowNDOTL += LabSSS;
-		// #endif
 
+		vec3 shadowPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
+		
+		if(!entities || !hand) GriAndEminShadowFix(shadowPlayerPos, viewToWorld(FlatNormals), vanilla_AO, lightmap.y);
 
-		// if(shadowNDOTL > 0.001){
+		vec3 projectedShadowPosition = mat3(shadowModelView) * shadowPlayerPos + shadowModelView[3].xyz;
+		projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
+		//apply distortion
+		#ifdef DISTORT_SHADOWMAP
+			float distortFactor = calcDistort(projectedShadowPosition.xy);
+			projectedShadowPosition.xy *= distortFactor;
+		#else
+			float distortFactor = 1.0;
+		#endif
 
-			vec3 shadowPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
-			
-			if(!hand || !entities) GriAndEminShadowFix(shadowPlayerPos, viewToWorld(FlatNormals), vanilla_AO, lightmap.y, entities);
+		if(shadowDistanceRenderMul < 0.0) shadowMapFalloff = abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0 ? 1.0 : 0.0;
 
-			vec3 projectedShadowPosition = mat3(shadowModelView) * shadowPlayerPos + shadowModelView[3].xyz;
-			projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
+		if(shadowMapFalloff > 0.0){
+			shadowMap = vec3(0.0);
+			vec3 ShadowColor = vec3(0.0);
 
-			//apply distortion
-			#ifdef DISTORT_SHADOWMAP
-				float distortFactor = calcDistort(projectedShadowPosition.xy);
-				projectedShadowPosition.xy *= distortFactor;
-			#else
-				float distortFactor = 1.0;
-			#endif
+			projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
 
-			if(shadowDistanceRenderMul < 0.0) shadowMapFalloff = abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0 ? 1.0 : 0.0;
+			float biasOffset = 0.0;
 
-			if(shadowMapFalloff > 0.0){
-				shadowMap = vec3(0.0);
-				vec3 ShadowColor = vec3(0.0);
+			#ifdef BASIC_SHADOW_FILTER
+				float rdMul = filteredShadow.x*distortFactor*d0*k/shadowMapResolution;
 
-				projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
+				for(int i = 0; i < SHADOW_FILTER_SAMPLE_COUNT; i++){
+					vec2 offsetS = tapLocation_simple(i, 7, 9, noise_2) * 0.5;
 
-				float biasOffset = 0.0;
-				if(hand) biasOffset = -0.00035;
-
-				#ifdef BASIC_SHADOW_FILTER
-					float rdMul = filteredShadow.x*distortFactor*d0*k/shadowMapResolution;
-
-					for(int i = 0; i < SHADOW_FILTER_SAMPLE_COUNT; i++){
-						vec2 offsetS = tapLocation_simple(i, 7, 9, noise_2) * 0.5;
-
-						projectedShadowPosition += vec3(rdMul*offsetS, biasOffset);
-
-						#ifdef TRANSLUCENT_COLORED_SHADOWS
-							float opaqueShadow = shadow2D(shadowtex0, projectedShadowPosition).x;
-							shadowMap += opaqueShadow / SHADOW_FILTER_SAMPLE_COUNT;
-
-							vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
-							float shadowAlpha = clamp(1.0 - pow(translucentShadow.a,5.0),0.0,1.0);
-
-							#if SSS_TYPE != 0
-								if(LabSSS > 0.0) ShadowColor += (DirectLightColor * clamp(pow(1.0-shadowAlpha,5.0),0.0,1.0) + DirectLightColor *  translucentShadow.rgb * shadowAlpha * (1.0 - opaqueShadow)) / SHADOW_FILTER_SAMPLE_COUNT;
-								else ShadowColor = DirectLightColor;
-							#endif
-
-							if(shadow2D(shadowtex1, projectedShadowPosition).x > projectedShadowPosition.z) shadowMap += (translucentShadow.rgb * shadowAlpha * (1.0 - opaqueShadow)) / SHADOW_FILTER_SAMPLE_COUNT;
-
-						#else
-							shadowMap += vec3(shadow2D(shadow, projectedShadowPosition).x / SHADOW_FILTER_SAMPLE_COUNT);
-						#endif
-					}
-				
-				#else
+					projectedShadowPosition += vec3(rdMul*offsetS, biasOffset);
 
 					#ifdef TRANSLUCENT_COLORED_SHADOWS
 						float opaqueShadow = shadow2D(shadowtex0, projectedShadowPosition).x;
-						shadowMap += opaqueShadow;
+						shadowMap += opaqueShadow / SHADOW_FILTER_SAMPLE_COUNT;
 
 						vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
 						float shadowAlpha = clamp(1.0 - pow(translucentShadow.a,5.0),0.0,1.0);
 
 						#if SSS_TYPE != 0
-							if(LabSSS > 0.0) ShadowColor += DirectLightColor * (1.0 - shadowAlpha) + DirectLightColor *  translucentShadow.rgb * shadowAlpha * (1.0 - opaqueShadow);
+							if(LabSSS > 0.0) ShadowColor += (DirectLightColor * clamp(pow(1.0-shadowAlpha,5.0),0.0,1.0) + DirectLightColor *  translucentShadow.rgb * shadowAlpha * (1.0 - opaqueShadow)) / SHADOW_FILTER_SAMPLE_COUNT;
 							else ShadowColor = DirectLightColor;
 						#endif
 
-						if(shadow2D(shadowtex1, projectedShadowPosition).x > projectedShadowPosition.z) shadowMap += translucentShadow.rgb * shadowAlpha * (1.0 - opaqueShadow);
+						if(shadow2D(shadowtex1, projectedShadowPosition).x > projectedShadowPosition.z) shadowMap += (translucentShadow.rgb * shadowAlpha * (1.0 - opaqueShadow)) / SHADOW_FILTER_SAMPLE_COUNT;
 
 					#else
-						shadowMap += shadow2D(shadow, projectedShadowPosition).x;
+						shadowMap += vec3(shadow2D(shadow, projectedShadowPosition).x / SHADOW_FILTER_SAMPLE_COUNT);
 					#endif
-				#endif
+				}
+			
+			#else
 
 				#ifdef TRANSLUCENT_COLORED_SHADOWS
-					DirectLightColor = ShadowColor;
+					float opaqueShadow = shadow2D(shadowtex0, projectedShadowPosition).x;
+					shadowMap += opaqueShadow;
+
+					vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
+					translucentShadow.rgb = normalize(translucentShadow.rgb + 0.0001);
+					float shadowAlpha = clamp(1.0 - pow(translucentShadow.a,5.0),0.0,1.0);
+
+					#if SSS_TYPE != 0
+						if(LabSSS > 0.0) ShadowColor += DirectLightColor * (1.0 - shadowAlpha) + DirectLightColor *  translucentShadow.rgb * shadowAlpha * (1.0 - opaqueShadow);
+						else ShadowColor = DirectLightColor;
+					#endif
+
+					if(shadow2D(shadowtex1, projectedShadowPosition).x > projectedShadowPosition.z) shadowMap += translucentShadow.rgb * shadowAlpha * (1.0 - opaqueShadow);
+
+				#else
+					shadowMap += shadow2D(shadow, projectedShadowPosition).x;
 				#endif
-
-				Shadows = shadowMap;
-			}
-
-			if(!iswater) Shadows = mix(vec3(LM_shadowMapFallback), Shadows, shadowMapFalloff2);
-
-			#ifdef OLD_LIGHTLEAK_FIX
-				if (isEyeInWater == 0) Shadows *=  clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
 			#endif
-		// }
+
+			#ifdef TRANSLUCENT_COLORED_SHADOWS
+				DirectLightColor = ShadowColor;
+			#endif
+
+			Shadows = shadowMap;
+		}
+
+		if(!iswater) Shadows = mix(vec3(LM_shadowMapFallback), Shadows, shadowMapFalloff2);
+
+		#ifdef OLD_LIGHTLEAK_FIX
+			if (isEyeInWater == 0) Shadows *=  clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
+		#endif
+
 	
 	////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	UNDER WATER SHADING		////////////////////////////////

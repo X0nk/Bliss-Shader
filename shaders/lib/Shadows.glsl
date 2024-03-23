@@ -5,8 +5,7 @@ void GriAndEminShadowFix(
 	inout vec3 WorldPos,
 	vec3 FlatNormal,
 	float VanillaAO,
-	float SkyLightmap,
-	bool Entities
+	float SkyLightmap
 ){
 
 	// float DistanceOffset = clamp(0.17 + length(WorldPos) / (shadowMapResolution*0.20), 0.0,1.0) ;
@@ -15,10 +14,10 @@ void GriAndEminShadowFix(
 	
 	vec3 finalBias = Bias;
 
-	// stop lightleaking
+	// stop lightleaking by zooming up, centered on blocks
 	vec2 scale = vec2(0.5); scale.y *= 0.5;
 	vec3 zoomShadow =  scale.y - scale.x * fract(WorldPos + cameraPosition + Bias*scale.y);
-	if(SkyLightmap < 0.1 && !Entities) finalBias = mix(Bias, zoomShadow, clamp(VanillaAO*5,0,1));
+	if(SkyLightmap < 0.1) finalBias = mix(Bias, zoomShadow, clamp(VanillaAO*5,0,1));
 
 	WorldPos += finalBias;
 }
