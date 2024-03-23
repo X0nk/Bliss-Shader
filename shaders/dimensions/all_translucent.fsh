@@ -526,10 +526,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	#ifdef NETHER_SHADER
-		// vec3 AmbientLightColor = skyCloudsFromTexLOD2(WS_normal, colortex4, 6).rgb ;
+		// vec3 AmbientLightColor = skyCloudsFromTexLOD2(WS_normal, colortex4, 6).rgb / 15.0;
 		
-		// vec3 up 	= skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb;
-		// vec3 down 	= skyCloudsFromTexLOD2(vec3( 0,-1, 0), colortex4, 6).rgb;
+		// vec3 up 	= skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb/ 30.0;
+		// vec3 down 	= skyCloudsFromTexLOD2(vec3( 0,-1, 0), colortex4, 6).rgb/ 30.0;
 
 		// up   *= pow( max( WS_normal.y, 0), 2);
 		// down *= pow( max(-WS_normal.y, 0), 2);

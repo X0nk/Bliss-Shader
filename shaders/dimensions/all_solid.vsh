@@ -202,8 +202,8 @@ void main() {
 
 
     /////// ----- RANDOM STUFF ----- ///////
-
-	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
+	// gl_TextureMatrix[0] for animated things like charged creepers
+	lmtexcoord.xy = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 
 	// #ifdef POM
 	vec2 midcoord = (gl_TextureMatrix[0] *  mc_midTexCoord).st;

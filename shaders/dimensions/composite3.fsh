@@ -328,7 +328,7 @@ void main() {
 
   if (TranslucentShader.a > 0.0){
 		#ifdef Glass_Tint
-      if(albedo.a > 0.01) color *= normalize(albedo.rgb+0.0001)*0.9+0.1;
+      if(!iswater) color *= normalize(albedo.rgb+0.0001)*0.9+0.1;
     #endif
 
     color = color*(1.0-TranslucentShader.a) + TranslucentShader.rgb; 

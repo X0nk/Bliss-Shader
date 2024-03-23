@@ -12,10 +12,12 @@ vec3 DoAmbientLightColor(
     vec3 IndirectLight = max(SkyColor * ambient_brightness * skyLM, MinimumLight); 
 
     // do torch lighting.
-    float TorchLM = 10.0 - ( 1.0 / (pow(exp(-0.5*inversesqrt(Lightmap.x)),5.0)+0.1));
-    TorchLM = pow(TorchLM/4,10) + pow(Lightmap.x,1.5)*0.5;
-    
+    // float TorchLM = 10.0 - ( 1.0 / (pow(exp(-0.5*inversesqrt(Lightmap.x)),5.0)+0.1));
+    // TorchLM = pow(TorchLM/4,10) + pow(Lightmap.x,1.5)*0.5;
+
+    float TorchLM = pow(Lightmap.x,10.0)*5.0 + pow(Lightmap.x,1.5);
 	vec3 TorchLight = TorchColor * TORCH_AMOUNT * TorchLM * (1.0 + LightLevelZero*dot(SkyColor * ambient_brightness,vec3(0.3333)));
+
     return IndirectLight + TorchLight;
 }
 

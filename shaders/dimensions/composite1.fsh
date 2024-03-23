@@ -1207,10 +1207,10 @@ void main() {
 		#endif
 
 		#ifdef NETHER_SHADER
-			// Indirect_lighting = skyCloudsFromTexLOD2(normal, colortex4, 6).rgb;
+			// Indirect_lighting = skyCloudsFromTexLOD2(normal, colortex4, 6).rgb / 15.0;
 
-			// vec3 up 	= skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb;
-			// vec3 down 	= skyCloudsFromTexLOD2(vec3( 0,-1, 0), colortex4, 6).rgb;
+			// vec3 up 	= skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb/ 30.0;
+			// vec3 down 	= skyCloudsFromTexLOD2(vec3( 0,-1, 0), colortex4, 6).rgb/ 30.0;
 
 			// up   *= pow( max( slopednormal.y, 0), 2);
 			// down *= pow( max(-slopednormal.y, 0), 2);
@@ -1340,7 +1340,6 @@ void main() {
     	gl_FragData[0].rgb = gl_FragData[0].rgb * vlBehingTranslucents.a + vlBehingTranslucents.rgb;
 	}
 
-	
 	////// DEBUG VIEW STUFF
 	#if DEBUG_VIEW == debug_SHADOWMAP
 		vec3 OutsideShadowMap_and_DH_shadow = (shadowMapFalloff > 0.0 && z >= 1.0) ? vec3(0.25,1.0,0.25) : vec3(1.0,0.25,0.25);

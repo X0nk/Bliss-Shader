@@ -265,6 +265,7 @@ vec3 DoCloudLighting(
 
 ){
 	float powder = 1.0 - exp(-5.0 * sqrt(density));
+	// float powder = 1.0 - exp(-15.0 * density);
 	
 	vec3 indirectLight = skyLightCol *  mix(1.0,  1.0 - exp(-1.0 * (1.0-sqrt(density))),  skyScatter*skyScatter*skyScatter * distantfog);
 
