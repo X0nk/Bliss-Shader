@@ -940,7 +940,17 @@ void main() {
 
 			
 			#if RESOURCEPACK_SKY == 1 || RESOURCEPACK_SKY == 0
-				vec3 orbitstar = vec3(feetPlayerPos_normalized.x,abs(feetPlayerPos_normalized.y),feetPlayerPos_normalized.z); orbitstar.x -= WsunVec.x*0.2;
+				vec3 orbitstar = vec3(feetPlayerPos_normalized.x,abs(feetPlayerPos_normalized.y),feetPlayerPos_normalized.z);
+
+				vec3 axis = vec3(0, sin(sunPathRotation*0.0174533), cos(sunPathRotation*0.0174533));
+				float s = -sqrt(1 - (WsunVec.x * WsunVec.x));
+				float c = WsunVec.x;
+				float oc = 1.0 - c;
+				
+				orbitstar *= mat3(c           , - axis.z * s            ,  axis.y * s,
+								  axis.z * s  , oc * axis.y * axis.y + c, oc * axis.y * axis.z,
+								  - axis.y * s, oc * axis.y * axis.z    , oc * axis.z * axis.z + c);
+				
 				Background += stars(orbitstar) * 10.0;
 			#endif
 
