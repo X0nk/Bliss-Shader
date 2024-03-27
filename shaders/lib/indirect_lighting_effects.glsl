@@ -237,9 +237,15 @@ vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 	}
   return vec3(1.1);
 }
-
-vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes){
-	float dist = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
+float convertHandDepth_3(in float depth, bool hand) {
+    if(!hand) return depth;
+	
+	float ndcDepth = depth * 2.0 - 1.0;
+    ndcDepth /= MC_HAND_DEPTH;
+    return ndcDepth * 0.5 + 0.5;
+}
+vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes, bool hand){
+	float dist = 1.0 + clamp(position.z*position.z,0,2); // shrink sample size as distance increases
 
 	float stepSize = stepsizes / dist;
 	int maxSteps = STEPS;
@@ -256,6 +262,7 @@ vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes){
 	float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z)*2000.0;
 
 	vec3 stepv = direction/len;
+
 
 	int iterations = min(int(min(len, mult*len)-2), maxSteps);
 	
@@ -278,7 +285,7 @@ vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes){
 		
 		if( sp < currZ) {
 			float dist = abs(sp-currZ)/currZ;
-			if (dist <= 0.1) return vec3(spos.xy, invLinZ(sp))/vec3(RENDER_SCALE,1.0);
+			if (dist <= mix(0.5, 0.1, clamp(position.z*position.z - 0.1,0,1))) return vec3(spos.xy, invLinZ(sp))/vec3(RENDER_SCALE,1.0);
 		}
 	}
 	return vec3(1.1);
@@ -294,7 +301,8 @@ void ApplySSRT(
 	vec3 skylightcolor, 
 	vec3 torchcolor, 
 
-	bool isGrass
+	bool isGrass,
+	bool hand
 ){
 	int nrays = RAY_COUNT;
 
@@ -318,7 +326,7 @@ void ApplySSRT(
 		#ifdef HQ_SSGI
 			vec3 rayHit = rayTrace_GI( mat3(gbufferModelView) * rayDir, viewPos, noise.z, 50.); // ssr rt
 		#else
-			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, viewPos, noise.z, 30.);  // choc sspt 
+			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, viewPos, noise.z, 30., hand);  // choc sspt 
 		#endif
 
 		#ifdef SKY_CONTRIBUTION_IN_SSRT

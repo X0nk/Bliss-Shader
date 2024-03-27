@@ -66,8 +66,5 @@ void applyGameplayEffects_FRAGMENT(inout vec3 color, in vec2 texcoord){
             // when damage is taken, flash the above effect. because it uses the stuff above, it seamlessly blends to them.
             color = mix(color, distortedScreen, (vignette*vignette) * sqrt(hurt));
         #endif
-
-
-        // if(isDead) color = vec3(0);
     #endif
 }
