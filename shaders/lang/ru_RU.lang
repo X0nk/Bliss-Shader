@@ -1,4 +1,4 @@
-By ShrikerChestTree v1.0.2
+By ShrikerChestTree v1.0.3
 
 {{{{{BLISS SHADERS}}}}}
 
@@ -1190,3 +1190,102 @@ screen.GAMEPLAY_EFFECTS = ЭФФЕКТЫ_ГЕЙМПЛЕЯ
 
    option.LOW_HEALTH_EFFECT = ЭФФЕКТ_НИЗКОГО_ЗДОРОВЬЯ
 
+/////the_orb/////
+
+   screen.the_orb = ожог
+
+-----THE_ORB-----
+
+   option.THE_ORB = ОЖОГ
+
+-----ORB_X-----
+
+   option.ORB_X = ОЖОГ_X
+
+-----ORB_Y-----
+
+   option.ORB_Y = ОЖОГ_Y
+
+-----ORB_Z-----
+
+   option.ORB_X = ОЖОГ_Z
+
+-----ORB_ColMult-----
+
+   option.ORB_ColMult = ОЖОГ_МножЦв
+
+-----ORB_R-----
+
+   option.ORB_R = ОЖОГ_К
+
+-----ORB_G-----
+
+   option.ORB_G = ОЖОГ_З
+
+-----ORB_B-----
+
+   option.ORB_B = ОЖОГ_С
+
+-----display_LUT-----
+
+   option.display_LUT = отображение_ТБ
+
+-----DEBUG_VIEW-----
+
+   option.DEBUG_VIEW = ВИД_ОТЛАДКИ
+
+-----WhiteWorld-----
+
+   option.WhiteWorld = БелыйМир
+
+-----SSS_view-----
+
+   option.SSS_view - посмотреть_ППР
+
+-----ambientLight_only-----
+
+   option.ambientLight_only = только_окружающийСвет
+
+-----LIGHTNING_FLASH-----
+
+   option.LIGHTNING_FLASH = ВСПЫШКА_МОЛНИИ
+
+-----LIT_PARTICLE_BRIGHTNESS-----
+
+   option.LIT_PARTICLE_BRIGHTNESS = ЯРКОСТЬ_ЧАСТИЦ_LIT
+
+-----PLANET_GROUND_BRIGHTNESS-----
+
+   option.PLANET_GROUND_BRIGHTNESS = ЯРКОСТЬ_ПОВЕРХНОСТИ_ПЛАНЕТЫ
+
+-----BLOOMY_PARTICLES-----
+
+   option.BLOOMY_PARTICLES = БЛЮМОВЫЕ_ЧАСТИЦЫ
+
+-----ORIGINAL_CHOCAPIC_SKY-----
+
+   option.ORIGINAL_CHOCAPIC_SKY = ОРИГИНАЛЬНОЕ_НЕБО_CHOCAPIC
+
+-----BIOME_TINT_WATER-----
+
+   option.BIOME_TINT_WATER = ОТТЕНОК_ВОДЫ_БИОМА
+
+-----CLOUDS_INFRONT_OF_WORLD-----
+
+   option.CLOUDS_INFRONT_OF_WORLD = ОБЛАКА_ВНУТРИ_МИРА
+
+-----SELECT_BOX-----
+
+   option.SELECT_BOX = ВЫБРАТЬ_ЯЩИК
+
+-----DENOISE_SSS_AND_SSAO-----
+
+   option.DENOISE_SSS_AND_SSAO = УМЕНЬШЕНИЕ_ППР_И_ПЭАО
+
+-----WATER_CAUSTICS_BRIGHTNESS-----
+
+   option.WATER_CAUSTICS_BRIGHTNESS = ЯРКОСТЬ_ВОДНОЙ_ТЕНИ
+
+-----HYPER_DETAILED_WAVES-----
+
+   option.HYPER_DETAILED_WAVES = ГИПЕР_ДЕТАЛЬНЫЕ_ВОЛНЫ
