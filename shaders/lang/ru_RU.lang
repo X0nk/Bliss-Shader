@@ -1,4 +1,4 @@
-By ShrikerChestTree v1.0.1
+By ShrikerChestTree v1.0.2
 
 {{{{{BLISS SHADERS}}}}}
 
@@ -1171,3 +1171,22 @@ option.DISTANT_HORIZONS_SHADOWMAP = §c(НЕ ИСПОЛЬЗУЙТЕ, ЕСЛИ В
 option.DISTANT_HORIZONS_SHADOWMAP.comment =  §cЭТА НАСТРОЙКА УНИЧТОЖИТ ПРОИЗВОДИТЕЛЬНОСТЬ, И ТЕНИ БУДУТ ВЫГЛЯДЕТЬ БЛОЧНЫМИ, МЕРЦАЮЩИМИ И С НИЗКОЙ ДЕТАЛИЗАЦИЕЙ§r. установите дистанцию между тенью в 32 чанка (или больше). установите разрешение тени на 4096 (или больше)
 option.TOGGLE_VL_FOG = Переключение Объёмного Тумана
 option.TOGGLE_VL_FOG.comment = одна большая кнопка, чтобы просто отключить весь туман.
+
+option.DH_OVERDRAW_PREVENTION = НИЧЬЁ_ПРЕДОТВРАЩЕНИЕ_DH
+
+/////GAMEPLAY_EFFECTS/////
+
+screen.GAMEPLAY_EFFECTS = ЭФФЕКТЫ_ГЕЙМПЛЕЯ
+
+-----MOTION_AMOUNT-----
+
+   option.MOTION_AMOUNT = КОЛИЧЕСТВО_ДВИЖЕНИЯ
+
+-----DAMAGE_TAKEN_EFFECT-----
+
+   option.DAMAGE_TAKEN_EFFECT = ЭФФЕКТ_ВЗЯТОГО_УРОНА
+
+-----LOW_HEALTH_EFFECT-----
+
+   option.LOW_HEALTH_EFFECT = ЭФФЕКТ_НИЗКОГО_ЗДОРОВЬЯ
+
