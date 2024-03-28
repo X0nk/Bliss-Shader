@@ -1,4 +1,4 @@
-By ShrikerChestTree v1.0.3
+By ShrikerChestTree v1.0.4
 
 {{{{{BLISS SHADERS}}}}}
 
@@ -22,7 +22,7 @@ screen.Sun_and_Moon_Colors = Цвет Солнца/Луны
 
 -----sunPathRotation-----
 
-option.sunPathRotation = Sun Angle
+option.sunPathRotation = Наклон Солнца
 
 -----sun illuminance-----
 
@@ -220,7 +220,7 @@ screen.Ambient_light = Окружающее Освещение
 
 -----Indirect Lighting-----
 
-    option.indirect_effect = Indirect Lighting
+    option.indirect_effect = Косвенное Освещение
         value.indirect_effect.0 = Ванильный ОО
             value.indirect_effect.1 = ПЭОО
             value.indirect_effect.2 = НРОО
@@ -382,7 +382,7 @@ screen.Clouds = Настройка Облаков
 
 -----Cloud Resolution Scaling-----
 
-    option.CLOUDS_QUALITY = Cloud Resolution Scaling
+    option.CLOUDS_QUALITY = Шкала Разрешения Облаков
 
 -----Cloud Shadows-----
 
@@ -567,7 +567,7 @@ screen.Climate = Настройка Климата
 
 -----Snow During Winter-----
 
-    option.Snowy_Winter = Snow During Winter
+    option.Snowy_Winter = Снег Зимой
 
 /////Summer Colors/////
 
@@ -1233,6 +1233,15 @@ screen.GAMEPLAY_EFFECTS = ЭФФЕКТЫ_ГЕЙМПЛЕЯ
 -----DEBUG_VIEW-----
 
    option.DEBUG_VIEW = ВИД_ОТЛАДКИ
+value.DEBUG_VIEW.debug_OFF = отладка_ВЫКЛ
+value.DEBUG_VIEW.debug_SHADOWMAP = отладка_КАРТАТЕНИ
+value.DEBUG_VIEW.debug_NORMALS = отладка_НОРМАЛИ
+value.DEBUG_VIEW.debug_SPECULAR = отладка_СПЕКУЛЯР
+value.DEBUG_VIEW.debug_INDIRECT = отладка_КОСВЕННЫЙ
+value.DEBUG_VIEW.debug_DIRECT = отладка_ПРЯМОЙ
+value.DEBUG_VIEW.debug_VIEW_POSITION = отладка_ВИД_ПОЗИЦИИ
+value.DEBUG_VIEW.debug_DH_WATER_BLENDING = отладка_СМЕШИВАНИЕ_ВОДЫ_DH
+value.DEBUG_VIEW.debug_FILTERED_STUFF = отладка_ФИЛЬТРОВАННЫЙ_МАТЕРИАЛ
 
 -----WhiteWorld-----
 
@@ -1289,3 +1298,155 @@ screen.GAMEPLAY_EFFECTS = ЭФФЕКТЫ_ГЕЙМПЛЕЯ
 -----HYPER_DETAILED_WAVES-----
 
    option.HYPER_DETAILED_WAVES = ГИПЕР_ДЕТАЛЬНЫЕ_ВОЛНЫ
+
+-----BASIC_SHADOW_FILTER-----
+
+   option.BASIC_SHADOW_FILTER = ОБЫЧНЫЙ_ФИЛЬТР_ТЕНИ
+
+-----TRANSLUCENT_COLORED_SHADOWS-----
+
+   option.TRANSLUCENT_COLORED_SHADOWS = ПОЛУПРОЗРАЧНЫЕ_ЦВЕТНЫЕ_ТЕНИ
+
+-----OLD_LIGHTLEAK_FIX-----
+
+   option.OLD_LIGHTLEAK_FIX = ИСПРАВЛЕНИЕ_СТАРОЙ_УТЕЧКИ_СВЕТА
+
+-----sunColorR-----
+
+   option.sunColorR = ЦветсолнцаК
+
+-----sunColorG-----
+
+   option.sunColorG = ЦветсолнцаЗ
+
+-----sunColorB-----
+
+   option.sunColorB = ЦветсолнцаС
+
+-----moonColorR-----
+
+   option.moonColorR = ЦветлуныК
+
+-----moonColorG-----
+
+   option.moonColorG = ЦветлуныЗ
+
+-----moonColorB-----
+
+   option.moonColorB = ЦветлуныС
+
+-----colortype-----
+
+   option.colortype = типцвета
+
+-----Sun_temp-----
+
+   option.Sun_temp = Темп_Солнца
+
+-----Moon_temp-----
+
+   option.Moon_temp = Темп_Луны
+
+-----HANDHELD_LIGHT_RANGE-----
+
+   option.HANDHELD_LIGHT_RANGE = ДИАПАЗОН_РУЧНОГО_ОСВЕЩЕНИЯ
+
+-----UseQuarterResDepth-----
+
+   option.UseQuarterResDepth = ИспЧетвертьРазГлубины
+
+-----AUTO_EXPOSURE-----
+
+   option.AUTO_EXPOSURE = АВТО_ЭКСПОЗИЦИЯ
+
+-----EXPOSURE_MULTIPLIER-----
+
+   option.EXPOSURE_MULTIPLIER = МНОЖИТЕЛЬ_ЭКСПОЗИЦИИ
+
+-----Exposure_Speed-----
+
+      option.Exposure_Speed = Скорость_Экспозиции
+
+-----Manual_exposure_value-----
+
+   option.Manual_exposure_value = Значение_экспозиции_вручную
+
+-----TONEMAP-----
+
+   option.TONEMAP = ТОНКАРТЫ
+
+-----USE_ACES_COLORSPACE_APPROXIMATION-----
+
+   option.USE_ACES_COLORSPACE_APPROXIMATION = ИСПОЛЬЗОВАТЬ_ПРИБЛИЖЕНИЕ_ЦВЕТОВОГО_ПРОСТРАНСТВА_ACES
+
+-----SATURATION-----
+
+   option.SATURATION = НАСЫЩЕНИЕ
+
+-----CROSSTALK-----
+
+   option.CROSSTALK = ПЕРЕКРЁСТНЫЕПОДРОБНОСТИ
+
+-----CONTRAST-----
+
+   option.CONTRAST = КОНТРАСТ
+
+-----focal-----
+
+   option.focal = фокусировка
+
+-----aperture-----
+
+   option.aperture = апертура
+
+-----DoF_Adaptation_Speed-----
+
+   option.DoF_Adaptation_Speed = Скорость_Адаптации_ГР
+
+-----FAR_BLUR_ONLY-----
+
+   option.FAR_BLUR_ONLY = ТОЛЬКО_ДАЛЁКОЕ_РАЗМЫТИЕ
+
+-----Purkinje_strength-----
+
+   option.Purkinje_strength = сила_Пуркинья
+
+-----Purkinje_R-----
+
+   option.Purkinje_R = Пуркинье_К
+
+-----Purkinje_G-----
+
+   option.Purkinje_G = Пуркинье_З
+
+-----Purkinje_B-----
+
+   option.Purkinje_B = Пуркинье_С
+
+-----Purkinje_Multiplier-----
+
+   option.Purkinje_Multiplier = Множитель_Пуркинья
+
+-----Vanilla_like_water-----
+
+   option.Vanilla_like_water = как_Ванильная_вода
+
+-----WATER_WAVE_SPEED-----
+
+   option.WATER_WAVE_SPEED = СКОРОСТЬ_ВОЛН_ВОДЫ
+
+-----FOG_START_HEIGHT-----
+
+   option.FOG_START_HEIGHT = НАЧАЛЬНАЯ_ВЫСОТА_ТУМАНА
+
+-----CAVE_FOG-----
+
+   option.CAVE_FOG = ПЕЩЕРНЫЙ_ТУМАН
+
+-----CLOUD_SHADOW_STRENGTH-----
+
+   option.CLOUD_SHADOW_STRENGTH = СИЛА_ТЕНИ_ОБЛАКА
+
+/////Seasons/////
+
+screen.Seasons = Сезоны
