@@ -1,4 +1,4 @@
-By ShrikerChestTree v0.9
+By ShrikerChestTree v1.0
 
 {{{{{BLISS SHADERS}}}}}
 
@@ -8,6 +8,7 @@ option.BLISS_SHADERS=Bliss
 	value.BLISS_SHADERS.2=Версия GIT-HEAD
 
 # если вы здесь, чтобы переводить, это шутка, они ничего не выполняют того, что говорят.
+# Okay) ( Хорошо) )
 profile.QUALITY=Качество
 profile.PERFORMANCE=Производительность
 
@@ -33,7 +34,7 @@ option.moon_illuminance = Яркость Луны
 
 -----Moonphase Based Moonlight-----
 
-option.MOONPHASE_BASED_MOONLIGHT = Уровни яркость лунных фаз
+option.MOONPHASE_BASED_MOONLIGHT = Уровни яркости лунных фаз
 
 -----RP Sky-----
 
@@ -66,13 +67,13 @@ screen.Direct_Light = Прямой Свет
 
     screen.Shadows = Тень
 
------Screenspace Contact Shadows-----
+-----Contact Shadows-----
 
         option.SCREENSPACE_CONTACT_SHADOWS = Контактная Тень
 
 -----Render Entity Shadows-----
 
-        option.RENDER_ENTITY_SHADOWS = Тень от Моба
+        option.RENDER_ENTITY_SHADOWS = Тень от Сущности
 
 -----Shadow Resolution-----
 
@@ -114,12 +115,12 @@ screen.Direct_Light = Прямой Свет
 -----Max Shadow Bounds-----
 
         option.shadowDistanceRenderMul = Максимальные Грани Тени
-            value.shadowDistanceRenderMul.-1.0 = Не-Оптимизированнно
+            value.shadowDistanceRenderMul.-1.0 = Не-Оптимизированно
             value.shadowDistanceRenderMul.1.0 = Оптимизированно
 
 -----Entity Shadow Distance-----
 
-        option.entityShadowDistanceMul = Дистанция Тени Моба
+        option.entityShadowDistanceMul = Дистанция Тени Сущности
 
 /////Shadow Filtering Settings/////
 
@@ -255,17 +256,8 @@ screen.Ambient_light = Окружающее Освещение
 -----Torch Color Multiplier-----
 
         option.TORCH_AMOUNT = Множитель Цвета Факела
-
------Red Amount-----
-
         option.TORCH_R = Количество Красного
-
------Green Amount-----
-
         option.TORCH_G = Количество Зелёного
-
------Blue Amount-----
-
         option.TORCH_B = Количество Синего
     
 #####Fog Settings#####
@@ -374,11 +366,11 @@ screen.Fog = Настройка Тумана
 
 -----End Storm Density-----
 
-        option.END_STORM_DENSTIY = Глубина Эндерского Шторма
+        option.END_STORM_DENSTIY = Глубина Шторма Энда
 
 -----Nether Smoke Density-----
 
-        option.NETHER_PLUME_DENSITY = Глубина Незерского Дыма
+        option.NETHER_PLUME_DENSITY = Глубина Дыма Незера
 
 #####Cloud Settings#####
 
@@ -688,11 +680,11 @@ screen.World = Мир
 
 -----Screen-Space Reflections-----
 
-        option.SCREENSPACE_REFLECTIONS = Отражение в Пространстве Экрана
+        option.SCREENSPACE_REFLECTIONS = В Пространстве-Экрана Отражение
 
 -----SSR Quality-----
 
-        option.SSR_STEPS = Качество ОПЭ
+        option.SSR_STEPS = Качество ПЭО
 
 -----Sun/Moon Reflections-----
 
@@ -721,315 +713,461 @@ screen.World = Мир
 -----Snell's Window-----
 
         option.SNELLS_WINDOW = Снеллсовое Окно
-        
-        screen.Water_fog_color = Water Fog Settings
-            option.Dirt_Scatter_R = Scatter Red (dirt)
-            option.Dirt_Scatter_G = Scatter Green (dirt)
-            option.Dirt_Scatter_B = Scatter Blue (dirt)
-            option.Dirt_Absorb_R = Absorb Red (dirt)
-            option.Dirt_Absorb_G = Absorb Green (dirt)
-            option.Dirt_Absorb_B = Absorb Blue (dirt)
-            option.Water_Absorb_R = Absorb Red (water)
-            option.Water_Absorb_G = Absorb Green (water)
-            option.Water_Absorb_B = Absorb Blue (water)
+
+/////Water Fog Settings/////
+
+        screen.Water_fog_color = Настройка Тумана Воды
+            option.Dirt_Scatter_R = Рассеиватель Красного (грязь)
+            option.Dirt_Scatter_G = Рассеиватель Зелёного (грязь)
+            option.Dirt_Scatter_B = Рассеиватель Синего (грязь)
+            option.Dirt_Absorb_R = Поглощатель Красного (грязь)
+            option.Dirt_Absorb_G = Поглощатель Зелёного (грязь)
+            option.Dirt_Absorb_B = Поглощатель Синего (грязь)
+            option.Water_Absorb_R = Поглощатель Красного (вода)
+            option.Water_Absorb_G = Поглощатель Зелёного (вода)
+            option.Water_Absorb_B = Поглощатель Синего (вода)
+
+#####Post Processing#####
+
+screen.Post_Processing = Пост Обработка
+
+/////Tone-Map/Color Settings/////
+
+    screen.Tonemapping = Настройка Тон-Карты/Цвета
+
+/////Exprouse Settings/////
+
+    screen.Exposure = Настройка Экспозиции
+
+/////Depth Of Field Settings/////
+
+    screen.DepthOfField = Настройка Глубины Резкости
+
+/////Purkinje Effect Settings/////
+
+    screen.Purkinje_effect = Настройка Пуркиньего Эффекта
+
+-----Sharpening amount-----
+
+    option.SHARPENING = Количество Резкости
+
+-----Bloom Multiplier-----
+
+    option.BLOOM_STRENGTH = Множитель Блюма (Разцветение)
+
+/////Anti-Aliasing Settings/////
+
+    screen.TAA_OPTIONS = Настройка Сглаживания
+
+-----Screenshot Mode-----
+
+        option.SCREENSHOT_MODE = Режим Скриншота
+
+-----TAA-----
+
+        option.TAA = ВС
+
+-----Blend Factor-----
+
+        option.BLEND_FACTOR = Фактор Смеси
+
+-----Temporal Upscaling-----
+
+        option.TAA_UPSCALING = Временное Масштабирование
+
+-----Scale Factor-----
+
+        option.SCALE_FACTOR = Шкала Фактора
+
+/////Color Grading/////
+
+	screen.COLOR_GRADING = Градиенты Цветов
+		option.TONE_CURVE = Тон Кривости
+		option.LOWER_CURVE = Низкая Кривость
+		option.UPPER_CURVE = Высокая Кривость
+
+-----Color Grading-----
+
+		option.COLOR_GRADING_ENABLED=Градиенты Цветов
+		option.SHADOWS_GRADE_R = Тени §cКрасного
+		option.SHADOWS_GRADE_G = Тени §aЗелёного
+		option.SHADOWS_GRADE_B = Тени §9Синего
+		option.SHADOWS_GRADE_MUL = Яркость Тени
+		option.MIDS_GRADE_R = Средтона §cКрасного
+		option.MIDS_GRADE_G = Средтона §aЗелёного
+		option.MIDS_GRADE_B = Средтона §9Синего
+		option.MIDS_GRADE_MUL = Яркость Средтон
+		option.HIGHLIGHTS_GRADE_R = Высокийсвет §cКрасного
+		option.HIGHLIGHTS_GRADE_G = Высокийсвет §aЗелёного
+		option.HIGHLIGHTS_GRADE_B = Высокийсвет §9Голубого
+		option.HIGHLIGHTS_GRADE_MUL = Яркость Высокогосвета
+
+#####Lab PBR#####
+
+screen.LabPBR = Lab ФОР
+
+/////Specular Reflections/////
+
+    screen.Reflections = Спекулярные Отражения
+
+-----Specular Reflections-----
+
+        option.Specular_Reflections = Спекулярные Отражения
+
+-----Screen-Space Reflections-----
+
+        option.Screen_Space_Reflections = В Пространстве-Экрана Отражение
+
+-----Detailed Roughness-----
+
+        option.Rough_reflections = Детальная Шереховатость
+
+-----Sky/Fog in Reflections-----
+
+        option.Sky_reflection = Небо/Туман в Отражении
+
+-----Dynamic SSR Quality-----
+
+        option.Dynamic_SSR_quality = Динамическое Качество ПЭО
+
+-----Reflection Threshold-----
+
+        option.Roughness_Threshold = Порог Отражения
+
+-----Sun Reflection Multiplier-----
+
+        option.Sun_specular_Strength = Множитель Отражения Солнца
+
+-----SSR Quality-----
+
+        option.reflection_quality = Качество ПЭО
+
+/////Emissives/////
+
+    screen.Emissives = Излучение
+
+-----Emission Multiplier-----
+
+        option.Emissive_Brightness = Множитель Излучения
+
+-----Emission Curve-----
+
+        option.Emissive_Curve = Излучение Кривости
+
+-----Mode-----
+
+        option.EMISSIVE_TYPE = Режим
+            value.EMISSIVE_TYPE.0 = Без Излучения
+            value.EMISSIVE_TYPE.1 = Только Жесткозакодированный
+            value.EMISSIVE_TYPE.2 = Жесткозакодированный + Lab Излучение
+            value.EMISSIVE_TYPE.3 = Только Lab Излучение
+
+/////Parallax Occlusion Mapping / POM/////
+
+screen.POM = Составление Окклюзии Параллакса / СОП
+
+-----Heightmap in Depth-----
+
+    option.HEIGTHMAP_DEPTH_OFFSET = Высотакарты в Глубину
+
+-----Parallax Occlusion Mapping-----
+
+    option.POM = Составление Окклюзии Параллакса
+
+-----Quality-----
+
+    option.MAX_ITERATIONS = Качество
+
+-----Depth-----
+
+    option.POM_DEPTH = Глубина
+
+-----Maximum Distance-----
+
+    option.MAX_DIST = Максимальная Дистанция
+
+-----Dynamic Quality-----
+
+    option.Adaptive_Step_length = Динамическое Качество
+
+-----Horrible Slope Normals-----
+
+    option.Horrible_slope_normals = Ужасный Склон Нормы
+
+/////Porosity / Puddles/////
+
+screen.Porosity = Пористость / Лужи
+
+-----Porosity-----
+
+    option.Porosity = Пористость
+
+-----Puddles-----
+
+    option.Puddles = Лужи
+
+-----Puddle Size Multiplier-----
+
+    option.Puddle_Size = Множитель Размера Луж
+
+-----Material Ambient Occlusion-----
+
+option.MATERIAL_AO = Материал Окружающей Окклюзии
+
+-----Depth Of Field-----
+
+option.DOF_QUALITY=Глубина Резкости
+    value.DOF_QUALITY.-1=Выкл
+    value.DOF_QUALITY.0=Шестигранный
+    value.DOF_QUALITY.1=Низкий
+    value.DOF_QUALITY.2=Средний
+    value.DOF_QUALITY.3=Высокий
+    value.DOF_QUALITY.4=Ультра
+    value.DOF_QUALITY.5=Дрожание
+
+-----Focus-----
+
+	option.MANUAL_FOCUS=Фокус
+
+-----Anamorphic Ratio-----
+
+    option.DOF_ANAMORPHIC_RATIO=Анаморфотное Соотношение
+    value.MANUAL_FOCUS.-2=Автофокус
+	value.MANUAL_FOCUS.-1=Ползунок Яркости
+
+/////Jitter DOF Settings/////
+
+	screen.JITTER_DOF=Настройка Дрожания ГР
+
+-----Jitter Strength-----
+
+		option.JITTER_STRENGTH=Сила Дрожания
+
+-----Focus-----
+
+		option.FOCUS_LASER_COLOR=Фокус
+		value.FOCUS_LASER_COLOR.0=Красный
+		value.FOCUS_LASER_COLOR.1=Зелёный
+		value.FOCUS_LASER_COLOR.2=Синий
+		value.FOCUS_LASER_COLOR.3=Розовый
+		value.FOCUS_LASER_COLOR.4=Жёлтый
+		value.FOCUS_LASER_COLOR.5=Белый
+
+-----Aerochrome Mode-----
+
+option.AEROCHROME_MODE=Режим Аэрохрома
+
+-----Aerochrome Red:Pink Ratio-----
+
+option.AEROCHROME_PINKNESS=Аэрохромное Соотношение Красного:Розового
+
+-----Aerochrome Wool-----
+
+option.AEROCHROME_WOOL_ENABLED=Аэрохромная Шерсть
+
+#####OTHER#####
+
+option.AEROCHROME_MODE.comment = Инфракрасный Фильм. Наберите в Google "Aerochrome", чтобы понять, что он делает.
+option.AEROCHROME_PINKNESS.comment = Высокий = Розовый. Низкий = Красный
+option.AEROCHROME_WOOL_ENABLED.comment = Технически шерстяные материалы должны быть затронуты, но это портит многие сборки. Включите, чтобы быть более технически корректным
 
 
-screen.Post_Processing = Post Processing
-    screen.Tonemapping = Tone-Map/Color Settings
-    screen.Exposure = Exposure Settings
-    screen.DepthOfField = Depth Of Field Settings
-    screen.Purkinje_effect = Purkinje Effect Settings
-    option.SHARPENING = Sharpening amount
-    option.BLOOM_STRENGTH = Bloom Multiplier
-    screen.TAA_OPTIONS = Anti-Aliasing Settings
-        option.SCREENSHOT_MODE = Screenshot Mode
-        option.TAA = TAA
-        option.BLEND_FACTOR = Blend Factor
-        option.TAA_UPSCALING = Temporal Upscaling
-        option.SCALE_FACTOR = Scale Factor
-	screen.COLOR_GRADING = Color Grading
-		option.TONE_CURVE = Tone Curve
-		option.LOWER_CURVE = Lower Curve
-		option.UPPER_CURVE = Upper Curve
-		option.COLOR_GRADING_ENABLED=Color Grading
-		option.SHADOWS_GRADE_R = Shadows §cRed
-		option.SHADOWS_GRADE_G = Shadows §aGreen
-		option.SHADOWS_GRADE_B = Shadows §9Blue
-		option.SHADOWS_GRADE_MUL = Shadows Brightness
-		option.MIDS_GRADE_R = Midtones §cRed
-		option.MIDS_GRADE_G = Midtones §aGreen
-		option.MIDS_GRADE_B = Midtones §9Blue
-		option.MIDS_GRADE_MUL = Midtones Brightness
-		option.HIGHLIGHTS_GRADE_R = Highlights §cRed
-		option.HIGHLIGHTS_GRADE_G = Highlights §aGreen
-		option.HIGHLIGHTS_GRADE_B = Highlights §9Blue
-		option.HIGHLIGHTS_GRADE_MUL = Highlights Brightness
-
-
-screen.LabPBR = Lab PBR
-    screen.Reflections = Specular Reflections
-        option.Specular_Reflections = Specular Reflections
-        option.Screen_Space_Reflections = Screen-Space Reflections
-        option.Rough_reflections = Detailed Roughness
-        option.Sky_reflection = Sky/Fog in Reflections
-        option.Dynamic_SSR_quality = Dynamic SSR Quality
-        option.Roughness_Threshold = Reflection Threshold
-        option.Sun_specular_Strength = Sun Reflection Multiplier
-        option.reflection_quality = SSR Quality
-
-    screen.Emissives = Emissives
-        option.Emissive_Brightness = Emission Multiplier
-        option.Emissive_Curve = Emission Curve
-        option.EMISSIVE_TYPE = Mode
-            value.EMISSIVE_TYPE.0 = No emission
-            value.EMISSIVE_TYPE.1 = Hardcoded only
-            value.EMISSIVE_TYPE.2 = Hardcoded + Lab Emission
-            value.EMISSIVE_TYPE.3 = Lab Emission only
-
-
-screen.POM = Parallax Occlusion Mapping / POM
-    option.HEIGTHMAP_DEPTH_OFFSET = Heightmap in Depth
-    option.POM = Parallax Occlusion Mapping
-    option.MAX_ITERATIONS = Quality
-    option.POM_DEPTH = Depth
-    option.MAX_DIST = Maximum Distance
-    option.Adaptive_Step_length = Dynamic Quality
-    option.Horrible_slope_normals = Horrible Slope Normals
-
-
-screen.Porosity = Porosity / Puddles
-    option.Porosity = Porosity
-    option.Puddles = Puddles
-    option.Puddle_Size = Puddle Size Multiplier
-
-option.MATERIAL_AO = Material Ambient Occlusion
-
-option.DOF_QUALITY=Depth Of Field
-    value.DOF_QUALITY.-1=Off
-    value.DOF_QUALITY.0=Hexagonal
-    value.DOF_QUALITY.1=Low
-    value.DOF_QUALITY.2=Medium
-    value.DOF_QUALITY.3=High
-    value.DOF_QUALITY.4=Ultra
-    value.DOF_QUALITY.5=Jitter
-	option.MANUAL_FOCUS=Focus
-    option.DOF_ANAMORPHIC_RATIO=Anamorphic Ratio
-    value.MANUAL_FOCUS.-2=Autofocus
-	value.MANUAL_FOCUS.-1=Brightness Slider
-
-	screen.JITTER_DOF=Jitter DOF Settings
-		option.JITTER_STRENGTH=Jitter Strength
-		option.FOCUS_LASER_COLOR=Focus
-		value.FOCUS_LASER_COLOR.0=Red
-		value.FOCUS_LASER_COLOR.1=Green
-		value.FOCUS_LASER_COLOR.2=Blue
-		value.FOCUS_LASER_COLOR.3=Pink
-		value.FOCUS_LASER_COLOR.4=Yellow
-		value.FOCUS_LASER_COLOR.5=White
-
-option.AEROCHROME_MODE=Aerochrome Mode
-option.AEROCHROME_PINKNESS=Aerochrome Red:Pink Ratio
-option.AEROCHROME_WOOL_ENABLED=Aerochrome Wool
-
-option.AEROCHROME_MODE.comment = Infrared Film. Google "Aerochrome" to get an idea of what it does.
-option.AEROCHROME_PINKNESS.comment = Higher = Pink. Lower = Red
-option.AEROCHROME_WOOL_ENABLED.comment = Technically wool things should be affected but it ruins a lot of builds. Enable to be more technically correct.
 
 
 
+screen.Misc_Settings.comment = Различные настройки для ОТЛАДКИ или других интересных вещей.
+screen.Sun_and_Moon_Colors.comment = Цвет солнца или луны.
+option.sunPathRotation.comment = Наклон солнца или луны
+option.sun_illuminance.comment = Яркость солнца
+option.moon_illuminance.comment = Яркость луны
 
+screen.Direct_Light.comment = Настройка, связанные с солнцем и тенью.
 
-screen.Misc_Settings.comment = Random settings for DEBUGGING or other fun stuff.
-screen.Sun_and_Moon_Colors.comment = Configure the color of the sun or moon.
-option.sunPathRotation.comment = Configure the angle of the sun or moon
-option.sun_illuminance.comment = Configure the brightness of the sun
-option.moon_illuminance.comment = Configure the brightness of the moon
+screen.Shadows.comment = Тень от солнца по своему вкусу.
+    option.SCREENSPACE_CONTACT_SHADOWS.comment = В пространстве-экрана контактная тень.  §bЧто это?§r Это небольшая тень на объектах, находящиеся вдали, и на мелких деталях вблизи. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к среднему; при высоких разрешениях она стоит дороже.
+    option.RENDER_ENTITY_SHADOWS.comment =  §bЧто это?§r Тень на всех типах сущности, таких как мобы, сундуки, баннеры или знаки. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к высокому; это очень дорого, когда рядом много сущностей.
+    option.shadowMapResolution.comment = Качество тени от солнца, отбрасываемых объектов в мире. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от среднего к очень высокому; Тень должна рендерить 3D мир второй раз с точки зрения солнца, поэтому производительность снижается вдвое.
+    option.shadowDistance.comment = Максимальная дистанция, на которое картатени может рендерить. Дистанция не линейно измеряется в чанках, если установлено значение не-оптимизированно.  §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от среднего к очень высокому; Если дистанция рендеринга чанка велико, тень будет стоить дороже.
+    option.shadowDistanceRenderMul.comment = Рендер тени только в сфере вокруг вас, ограниченной максимальной дистанцией в чанках. Не-оптимизированно не рендерит тени в сфере и не ограничевается на чанки; он может покрыть гораздо большую зону при тех же настройках дистанции. Дистанция не измеряется в чанках, если установлено значение не-оптимизированно.  §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к среднему. Оптимизированный быстрее, а неоптимизированный медленнее.
+    screen.Filtering.comment = Эффекты фильтра, применяемые к тени.
+        option.SHADOW_FILTER_SAMPLE_COUNT.comment = Качество обычного фильтра тени. Этот фильтр просто смягчает тень. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к среднему; Увеличение этого значения должно уменьшить шум на краях тени.
+        option.Min_Shadow_Filter_Radius.comment = Максимальная мягкость обычного фильтра тени.
+        option.Variable_Penumbra_Shadows.comment = Эффект смягчает тени всё больше и больше, чем дальше тень от того, кто её отбрасывает. Этот эффект используется для создания более качественной тени и Под-поверхностное рассеяние. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к высокому;
+        option.VPS_Search_Samples.comment = Качество фильтра переменных полутеневых тени. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к высокому; Увеличение этого значения должно уменьшить шум в под-поверхностное рассеяние и очень мягких тени.
+        option.Max_Shadow_Filter_Radius.comment = Максимальная мягкость тени, которую можно получить, когда они находятся далеко от того, что их отбрасывает.
+        option.Max_Filter_Depth.comment = Размер солнца. Если солнце большое, тени становятся более мягкими, ближе к тому, что их отбрасывает..
 
-screen.Direct_Light.comment = Configure settings related to the sun and shadows.
+screen.Ambient_light.comment = Настройку, связанных с освещением в затенённых местах
+    option.AO_Strength.comment = Сила окружающей окклюзии, создаваемой ПЭОО, НРОО, ТЛОО и ПЭГО. §bЧто это?§r окружающая окклюзия это небольшие мягкие тени в углах и т.п..
+    option.GI_Strength.comment = Сила глобального освещения, созданного ПЭГО. §bЧто это?§r глобальное освещение в данном сценарии это свет, отражающийся от поверхности и попадающий на другую область.
+    option.HQ_SSGI.comment = Переключение дальнего диапазона в пространстве-экрана глобального освещения. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень высоко
+    option.Hand_Held_lights.comment = Переключение ручных источниковсвета на сторону шейдера. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низко
+    option.SKY_CONTRIBUTION_IN_SSRT.comment = Позволяет ТЛОО или ПЭГО учитывать всё небо и туман для создания высокого качества освещения затенённых участков. Это может привести к увеличению шума. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r средний
 
-screen.Shadows.comment = Configure the shadows from the sun to your liking.
-    option.SCREENSPACE_CONTACT_SHADOWS.comment = Screen-space contact shadows.  §bWhat is this?§r These are small shadows for things that are far away, and on small details nearby. §aPERFORMANCE COST:§r low to medium; it is more expensive at higher resolutions.
-    option.RENDER_ENTITY_SHADOWS.comment =  §bWhat is this?§r Shadows on all types of entities, like mobs, chests, banners, or signs. §aPERFORMANCE COST:§r low to high; it is very expensive when there are many entities nearby.
-    option.shadowMapResolution.comment = The quality of shadows from the sun casted by things in the world. §aPERFORMANCE COST:§r medium to very high; Shadows must render the 3D world a second time from the perspective of the sun, this is why it cuts performance in half.
-    option.shadowDistance.comment = The maximum distance the shadowmap can render. The distance is not measured linearly in chunks when set to un-optimized.  §aPERFORMANCE COST:§r medium to very high; If the chunk render distance is high, the shadows will become more expensive.
-    option.shadowDistanceRenderMul.comment = Render the shadows only in a sphere around you, limited to a max distance in chunks. Un-optimized does not render the shadows in a sphere and is not locked to chunks; it can cover alot more area with the same distance settings. The distance is not measured in chunks when set to un-optimized.  §aPERFORMANCE COST:§r low to medium. Optimized is faster, and unoptimized is slower.
-    screen.Filtering.comment = Configure the filtering effects applied to the shadows.
-        option.SHADOW_FILTER_SAMPLE_COUNT.comment = The quality of the basic shadow filter. This filter just softens the shadows. §aPERFORMANCE COST:§r low to medium; Increasing this should reduce some noise at the edge of shadows.
-        option.Min_Shadow_Filter_Radius.comment = The maximum softness of the basic shadow filter.
-        option.Variable_Penumbra_Shadows.comment = This effect softens the shadows more and more the farther the shadow gets from what casted it. This effect is used to create higher quality shadows and Sub-surface scattering. §aPERFORMANCE COST:§r low to high;
-        option.VPS_Search_Samples.comment = The quality of the variable penumbra shadow filter. §aPERFORMANCE COST:§r low to high; Increasing this should reduce some noise in the sub-surface scattering and very soft shadows.
-        option.Max_Shadow_Filter_Radius.comment = The maximum softness the shadows can get when far away from what casted it.
-        option.Max_Filter_Depth.comment = Configure the size of the sun. If the sun is larger, shadows get softer closer to what casts them.
+    option.ambientOcclusionLevel.comment = Настривает силу окружающего окклюзии из ванильного майнкрафта. §bЧто это?§r Эта окружающая окклюзия есть в майнкрафт даже без включённых шейдеров.
+    option.ambient_brightness.comment = Яркость освещения в затенённых местах
+    option.MIN_LIGHT_AMOUNT.comment = Минимальное количество света, которое может попадать в затенённые места.
+    option.indirect_effect.comment = Переключение различных типов эффектов, чтобы сделать освещение в затенённых местах высокого качества. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r. Ванильный ОО: очень низко. ПЭОО: от низкого к среднему. НРОО: от среднего к высокому. ТЛОО или ПЭГО: от высокого к очень высокому
 
-screen.Ambient_light.comment = Configure settings related to the lighting in shaded places
-    option.AO_Strength.comment = Configure the strength of the ambient occlusion created by SSAO, GTAO, RTAO, and SSGI. §bWhat is this?§r ambient occlusion is the small soft shadows in corners and such.
-    option.GI_Strength.comment = Configure the strength of the global illumination created by SSGI. §bWhat is this?§r global illumination in this scenario specifically is the light bouncing off a surface and onto some other area.
-    option.HQ_SSGI.comment = Toggle long range screen-space global illumination. §aPERFORMANCE COST:§r very high
-    option.Hand_Held_lights.comment = Toggle shader-side hand held lightsources. §aPERFORMANCE COST:§r very low
-    option.SKY_CONTRIBUTION_IN_SSRT.comment = Allow the RTAO or SSGI to take the entire sky and fog into account to create high quality lighting for shaded areas. This may introduce more noise. §aPERFORMANCE COST:§r medium
+    screen.Ambient_Colors.comment = Цвет света в затенённых областях.
+    screen.Torch_Colors.comment = Цвет света от факелов или других размещённых источниковсвета.
 
-    option.ambientOcclusionLevel.comment = Configure the strength of the ambient occlusion from vanilla minecraft. §bWhat is this?§r This ambient occlusion is in minecraft even without shaders enabled.
-    option.ambient_brightness.comment = Configure the brightnes of lighting in shaded places
-    option.MIN_LIGHT_AMOUNT.comment = Configure the minimum amount of light that can be in shaded places.
-    option.indirect_effect.comment = Toggle different types of effects to make lighting in shaded places higher quality. §aPERFORMANCE COSTS:§r. Vanilla AO: very low. SSAO: low to medium. GTAO: medium to high. RTAO or SSGI: high to very high
+screen.LabPBR.comment = Несколько эффектов, которые используют информацию, предоставляемую любым ресурспаком, который следует формату LabФОР.
+    screen.Reflections.comment = Отражения, использующие информацию, предоставленную ресурспаком LabФОР.
+        option.Specular_Reflections.comment = Переключение всех отражений для пакетов Labфор. Это включает отражение солнца и позволяет включить другие настройки, приведённые ниже.. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+        option.Screen_Space_Reflections.comment = Переключение в пространстве-экрана отражения. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r средний
+        option.Rough_reflections.comment = Переключение на более подробную шероховатость для высокого качества отражения. Это приведёт к появлению большого количества видимого шума. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от среднего к высокому
+        option.Sky_reflection.comment = Переключение отражений неба и тумана. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к среднему.
+        option.Dynamic_SSR_quality.comment = Низкое качество в пространстве-экрана отражение в зависимости от того, насколько они заметны. это может повысить производительность, но низкое качество. 
+        option.Roughness_Threshold.comment = Если шероховатость достигает этого порога, все отражения, кроме солнца, не отображаются. он может улучшить производительность.
+        option.Sun_specular_Strength.comment = Яркость отражения солнца.
+        option.reflection_quality.comment = Качество в пространстве-экрана отражение.
 
-    screen.Ambient_Colors.comment = Configure the color of light in shaded areas.
-    screen.Torch_Colors.comment = Configure the color of light from torches or other placed lightsources.
+screen.Subsurface_Scattering.comment = §bЧто это?§r Под-поверхностное рассеяние это то, что происходит, когда вы подносите к руке яркий свет, и она начинает светиться. Солнце делает то же самое с растениями, одеждой, скином и другими объектами.
+    option.SSS_TYPE.comment = Как под-поверхностное рассеяние применяется к миру.  §bЖёсткозакодированный:§r Шейдер решает, что ему достанется. §bLabППР:§r Ресурспак решает, что ему достанется. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низко
+    option.MOB_SSS.comment = Переключение под-поверхностного рассеяния для мобов. игроки включены. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низко
+    option.MISC_BLOCK_SSS.comment = Переключение под-поверхностного рассеяния для случайных блоков, которые могут не поместиться. в основном для травы и песка. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низко
+    option.Ambient_SSS.comment = §bЧто это?§r под-поверхностное рассеяние от света, исходящего с неба, а не с солнца. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от очень низкого к среднему; если ПЭОО включена, то это стоит совсем недорого, но стоит дороже, если ПЭОО это Выкл
+    option.ambientsss_brightness.comment = Яркость под-поверхностное рассеяние от небесного света
 
-screen.LabPBR.comment = A handfull of effects that use information provided by any resourcepack that follows the LabPBR format.
-    screen.Reflections.comment = Configure the reflections that use information provided by a LabPBR resourcepack.
-        option.Specular_Reflections.comment = Toggle all reflections for Labpbr packs. This enables the sun reflection, and allows other settings to be enabled below. §aPERFORMANCE COST:§r low
-        option.Screen_Space_Reflections.comment = Toggle screen-space reflections. §aPERFORMANCE COST:§r medium
-        option.Rough_reflections.comment = Toggle more detailed roughness for higher quality reflection. This will cause a good amount of visible noise. §aPERFORMANCE COST:§r medium to high
-        option.Sky_reflection.comment = Toggle reflections of the sky and fog. §aPERFORMANCE COST:§r low to medium.
-        option.Dynamic_SSR_quality.comment = This lowers the quality of screen-space reflections based on how visible they are. it can improve performance but lower the quality. 
-        option.Roughness_Threshold.comment = If the roughness reaches this threshold, all reflections except the sun do not render. it can improve performance.
-        option.Sun_specular_Strength.comment = Configure how bright the sun's reflection is.
-        option.reflection_quality.comment = Configure the quality of the screen-space reflections.
+screen.Emissives.comment = §bЧто это?§r Излучение это то, насколько сильно что-то пропускает свет, или насколько сильно что-то светится.
+    option.Emissive_Brightness.comment = Насколько ярким должно быть излучение текстуры.
+    option.EMISSIVE_TYPE.comment = Как применять излучение текстур к миру.  §bЖёсткозакодированный:§r Шейдер решает, что ему достанется. §bLabППР:§r Ресурспак решает, что ему достанется. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низко
+    option.Emissive_Curve.comment = Определяет, как быстро излучение текстуры достигнет своей самой яркой точки. 1.0 это линейный.
 
-screen.Subsurface_Scattering.comment = §bWhat is this?§r Sub-surface scattering is what happens when you put a bright light on your hand, and it starts to glow. The sun actually does the same thing to plants, cloth, skin, and other things.
-    option.SSS_TYPE.comment = Configure how the sub-surface scattering is applied to the world.  §bHardcoded:§r The shader decides what gets it. §bLabSSS:§r The resourcepack decides what gets it. §aPERFORMANCE COST:§r very low
-    option.MOB_SSS.comment = Toggle sub-surface scattering for mobs. players are included. §aPERFORMANCE COST:§r very low
-    option.MISC_BLOCK_SSS.comment = Toggle sub-surface scattering for random blocks it may not fit. this is for grass and sand mostly. §aPERFORMANCE COST:§r very low
-    option.Ambient_SSS.comment = §bWhat is this?§r sub-surface scattering from light coming from the sky, instead of the sun. §aPERFORMANCE COST:§r very low to medium; if SSAO is enabled this costs very little, but costs more if SSAO is OFF
-    option.ambientsss_brightness.comment = Configure the brightness of sub-surface scattering from the sky's light
-
-screen.Emissives.comment = §bWhat is this?§r Emissiveness is just how much light something is letting off, or how much something is glowing.
-    option.Emissive_Brightness.comment = Configure how bright the texture emission should be.
-    option.EMISSIVE_TYPE.comment = Configure how texture emission is applied to the world.  §bHardcoded:§r The shader decides what gets it. §bLabSSS:§r The resourcepack decides what gets it. §aPERFORMANCE COST:§r very low
-    option.Emissive_Curve.comment = This determines how quickly the emissive texture reaches its brightest point. 1.0 is linear.
-
-screen.POM.comment = Configure settings related to parallax occlusion mapping that uses information provided by a resourcepack.
-    option.HEIGTHMAP_DEPTH_OFFSET.comment = §bWhat is this?§r This makes the resourcepack provided "heightmap" offset the depth that a lot of effects use. This allows for finer details nearby, and can work as a "budget POM". §aPERFORMANCE COST:§r low to medium - use this if POM is too hard to run.
-    option.POM.comment = §bWhat is this?§r This effect attempts to create 3D geometry where there previously was none, by using a special image from a resourcepack. This effect basically only pushes inwards, so some artifacts can exist when looking at steep angles. §aPERFORMANCE COST:§r medium to high
-    option.MAX_ITERATIONS.comment = Configure the quality of the parallax occlusion mapping effect. if you see individual layers when looking up close, inscreasing this makes more layers, so they will become harder to see. §aPERFORMANCE COST:§r high
-    option.POM_DEPTH.comment = How deep the parallax occlusion mapping effect can go into a surface. §aPERFORMANCE COST:§r very low
-    option.MAX_DIST.comment = The maximum distance from the camera that the parallax occlusion mapping effect can render. §aPERFORMANCE COST:§r high
-    option.Adaptive_Step_length.comment = This will increase visual quality without needing to increase the actual quality. This causes some artifacts if you look really close, or have a very busy heightmap with sharp varying heights. 
-    option.Horrible_slope_normals.comment = This is a poorly done implementation to give a surface to the sides of the parallax occlusion mapping. i do not recommend this. §aPERFORMANCE COST:§r low
+screen.POM.comment = Настройка, связанные с составлением окклюзии параллакса, которая использует информацию, предоставленную ресурспаком.
+    option.HEIGTHMAP_DEPTH_OFFSET.comment = §bЧто это?§r Благодаря этому ресурспак, предоставляемый "высокарты", компенсирует глубину, которую используют многие эффекты. Это позволяет прорабатывать мелкие детали вблизи и может работать как "бюджет СОП". §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к среднему - используйте это, если СОП слишком сложно запустить.
+    option.POM.comment = §bЧто это?§r Эффект позволяет создать 3D геометрию там, где её раньше не было, с помощью специального изображения из ресурспака. Этот эффект в основном распространяется только внутрь, поэтому при взгляде под крутым углом могут возникать некоторые артефакты. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от среднего к высокому
+    option.MAX_ITERATIONS.comment = Качество эффекта составления окклюзии параллакса. если вы видите отдельные слои при близком рассмотрении, то при увеличении этого показателя слоёв становится больше, поэтому их будет сложнее разглядеть. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r высокий
+    option.POM_DEPTH.comment = Насколько глубоко составление окклюзии параллакса может проникнуть в поверхность. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низко
+    option.MAX_DIST.comment = Максимальная дистанция от камеры, на которой возможен эффект составление окклюзии параллакса. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r высокий
+    option.Adaptive_Step_length.comment = Позволит повысить визуальное качество без необходимости увеличивать само качество. Это приводит к появлению некоторых артефактов, если вы смотрите очень близко или у вас очень насыщенная высотакарты с резкими перепадами высот. 
+    option.Horrible_slope_normals.comment = Это плохая реализация для придания поверхности сторонам составления окклюзии параллакса. я не рекомендую это. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
     
-screen.Porosity.comment = Configure settings related to wetness and puddles
-    option.Porosity.comment = §bWhat is this?§r Porosity is a description of how porous some material is, or essentially how much water can be held inside it. for examle, sponges are very porous; water is contained within and darkens it as a results. §aPERFORMANCE COST:§r low
-    option.Puddles.comment = Toggle puddles for when it rains. §aPERFORMANCE COST:§r low
-    option.Puddle_Size.comment = Configure the size of the puddles.
+screen.Porosity.comment = Настройка, связанных с влажностью и лужи
+    option.Porosity.comment = §bЧто это?§r Пористость это описание того, насколько пористым является тот или иной материал, или, по сути, сколько воды может в нём удержаться. например, губки очень пористые; вода содержится внутри и темнеет в результате. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+    option.Puddles.comment = Переключение лужи от дождя. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+    option.Puddle_Size.comment = Размер лужи.
 
-screen.Fog.comment = Configure settings related to the raymarched volumetric fog, or distance based fog.
-    option.VL_RENDER_RESOLUTION.comment = Configure the resolution of the volumetric fog. §aPERFORMANCE COST:§r high
-    option.VL_SAMPLES.comment = Configure the quality of the volumetric fog. §aPERFORMANCE COST:§r high
-    option.BLOOMY_FOG.comment = Configure the strength of bloom that is applied to fog. §bWhat is this?§r This effect makes the fog look soft, it helps hide a little noise too. can cause some visible flickering on detailed edges. §aPERFORMANCE COST:§r very low
-    option.Haze_amount.comment = Configure how dense the atmosphere around you is. §bWhat is this?§r This is the blue haze you see in the distance.
-    option.RainFog_amount.comment = Configure how dense the fog gets when it rains.
-    option.RAYMARCH_CLOUDS_WITH_FOG.comment = Toggle detailed fog when you go within or around a cloud. §aPERFORMANCE COST:§r medium to high
-    option.BorderFog.comment = §bWhat is this?§r Toggle a fog that attempts to hide the chunks loading in. But because the sky is all over the place, it is difficult to do well. §aPERFORMANCE COST:§r very very low
+screen.Fog.comment = Настройка, связанных с лучевоймаркировкой объёмного тумана или дистанции обычного тумана.
+    option.VL_RENDER_RESOLUTION.comment = Разрешение объёмного тумана. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r высокий
+    option.VL_SAMPLES.comment = Качество объёмного тумана. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r высокий
+    option.BLOOMY_FOG.comment = Силу блюма (разцветение), применяемого к туману. §bЧто это?§r Этот эффект придаёт туману мягкий вид, а также помогает скрыть небольшой шум. может вызвать заметное мерцание на детализированных краях. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низко
+    option.Haze_amount.comment = Плотность атмосферы вокруг вас. §bЧто это?§r Это синяя дымка, которую вы видите вдали.
+    option.RainFog_amount.comment = Плотность тумана во время дождя.
+    option.RAYMARCH_CLOUDS_WITH_FOG.comment = Переключение детального тумана, когда вы находитесь внутри или вокруг облака. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от среднего к высокому
+    option.BorderFog.comment = §bЧто это?§r Переключение тумана, который пытается скрыть загружаемые чанки. Но из-за того, что небо находится повсюду, это трудно сделать хорошо. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень очень низко
 
-    screen.TOD_fog.comment = Configure the density of fog that appears at specific times of the day.
-        option.TOD_Fog_mult.comment = Configure how much total fog there is that appears at specific times during the day. this does not effect the atmospheric haze. 
+    screen.TOD_fog.comment = Плотность тумана, который появляется в определённое время суток.
+        option.TOD_Fog_mult.comment = Общее содержание тумана, который появляется в определённое время в течение дня. это не влияет на атмосферную дымку. 
 
-    screen.Cave_Fog.comment = Configure settings for fog that appears when you are in very dark places such as caves.
-        option.Cave_Fog.comment = Toggle the fog that appears in dark places. It is impossible to accurately tell when you are in a cave with a shader, so this fog might appear in places that are not a cave. §aPERFORMANCE COST:§r low
-        option.CaveFogFallOff.comment = Configure how quickly the fog gradient reaches its brightest part.
+    screen.Cave_Fog.comment = Настройка тумана, который появляется, когда вы находитесь в очень тёмных местах, например в пещерах.
+        option.Cave_Fog.comment = Переключение тумана, который появляется в тёмных местах. С помощью шейдера невозможно точно установить, когда вы находитесь в пещере, поэтому туман может появляться в местах, которые пещерой не являются. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низко
+        option.CaveFogFallOff.comment = Как быстро градиент тумана достигает своей самой яркой части.
 
-screen.Clouds.comment = Configure settings related to the raymarched volumetric clouds.
-    option.VOLUMETRIC_CLOUDS.comment = Toggle the clouds. §aPERFORMANCE COST:§r medium to high
-    option.CLOUDS_QUALITY.comment = Configure the resolution of the volumetric clouds. §aPERFORMANCE COST:§r high
-    option.CLOUDS_SHADOWS.comment = Toggle shadows that are casted from the clouds onto the ground, and fog below them. §aPERFORMANCE COST:§r low to medium
-    option.Daily_Weather.comment = Toggle the daily weather. There are 8 weather profiles i have set, that the shader cycles through every day. You cannot change any cloud coverage settings when this is enabled. §aPERFORMANCE COST:§r low
-    option.Cloud_Speed.comment = Configure how fast the clouds move as the day goes by.
-    option.Rain_coverage.comment = Configure how much of the sky the clouds cover during rain.
+screen.Clouds.comment = Настройка, связанные с лучевоймаркировкой объёмных облаков.
+    option.VOLUMETRIC_CLOUDS.comment = Переключение облаков. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от среднего к высокому
+    option.CLOUDS_QUALITY.comment = Рразрешение объёмных облаков. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r высокий
+    option.CLOUDS_SHADOWS.comment = Переключение тени, отбрасываемые облаками на землю, и тумананами под ними. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к среднему
+    option.Daily_Weather.comment = Переключение ежедневной погоды. Я установил 8 профилей погоды, которые шейдер перебирает каждый день. Вы не можете изменить настройки облачного покрытия, если эта функция включена. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+    option.Cloud_Speed.comment = Как быстро перемещаются облака в течении дня.
+    option.Rain_coverage.comment = Какую часть неба закрывают облака во время дождя.
 
-screen.World.comment = Configure settings for various things that happen in the world, from waving plants to water related settings.
-    screen.Water.comment = Configure settings related to the water.
-        option.WATER_REFLECTIONS.comment = Toggle all reflections for translucent things. This allows other settings to be enabled below. §aPERFORMANCE COST:§r low-high
-        option.SCREENSPACE_REFLECTIONS.comment = Toggle screen-space reflections on translucent things. §aPERFORMANCE COST:§r medium
-        option.SSR_STEPS.comment = Configure the quality of the screen-space reflections on translucent things.  §aPERFORMANCE COST:§r medium to high
-        option.WATER_SUN_SPECULAR.comment = Toggle the sun and moon reflections on translucent things. §aPERFORMANCE COST:§r low
-        option.WATER_BACKGROUND_SPECULAR.comment = Toggle the sky and fog reflections on translucent things. §aPERFORMANCE COST:§r low to medium
-        option.Refraction.comment = Toggle refraction on translucent things. §bWhat is this?§r If you look at water, you can see the light refracting distorts what is in it. §aPERFORMANCE COST:§r low
-        option.Dirt_Amount.comment = Configure how much dirt is in water. This controls how much fog is within water.
-        option.Water_Top_Layer.comment = Configure the Y coordinate at which the ocean should be in the world.
+screen.World.comment = Настройка для различных вещей, происходящих в мире, от вьющихся растений до настроек, связанных с водой.
+    screen.Water.comment = Настройка, связанных с водой.
+        option.WATER_REFLECTIONS.comment = Переключение всех отражений для полупрозрачных объектов. Это позволяет включить другие настройки, приведённые ниже. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низко-высокий
+        option.SCREENSPACE_REFLECTIONS.comment = Переключение в пространстве-экрана отражение на полупрозрачных объектах. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r средний
+        option.SSR_STEPS.comment = Качество в пространстве-экрана отражение на полупрозрачных объектах.  §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от среднего к высокому
+        option.WATER_SUN_SPECULAR.comment = Переключение солнечного и лунного отражения на полупрозрачных объектах. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+        option.WATER_BACKGROUND_SPECULAR.comment = Переключение отражения неба и тумана на полупрозрачных объектах. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к высокому
+        option.Refraction.comment = Переключение преломления на полупрозрачных объектах. §bЧто это?§r Если вы посмотрите на воду, то увидите, как преломляющийся свет искажает то, что в ней находится. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+        option.Dirt_Amount.comment = Количество грязи в воде. Это позволяет контролировать количество тумана в воде.
+        option.Water_Top_Layer.comment = Координата Y, по которой океан должен находиться в мире.
         
-        screen.Water_fog_color.comment = Configure colors of the water fog. 
+        screen.Water_fog_color.comment = Цвет водяного тумана. 
 
-screen.Climate.comment = Configure settings related to the climate, like seasonal colors, daily weather, and biome specific fog.
-    screen.Seasons.comment = Seasonal colors that cycle through, summer, fall, winter, and spring.
-        option.Seasons.comment = Seasonal colors that cycle through, summer, fall, winter, and spring. §aPERFORMANCE COST:§r low
-        option.Season_Length.comment = Control how long a single season lasts, in minecraft days.
-        option.Snowy_Winter.comment = Toggle snow during winter. §aPERFORMANCE COST:§r low
-        screen.Summer_colors.comment = Configure the colors of vegetation during summer.
-        screen.Fall_colors.comment = Configure the colors of vegetation during fall.
-        screen.Winter_colors.comment = Configure the colors of vegetation during winter.
-        screen.Spring_colors.comment = Configure the colors of vegetation during spring.
+screen.Climate.comment = Настройка, связанная с климатом, например, сезонные цвета, погоду на каждый день и туман для конкретного биома.
+    screen.Seasons.comment = Сезонные цвета, которые проходят цикл лета, осени, зимы и весны.
+        option.Seasons.comment = Сезонные цвета, которые проходят цикл лета, осени, зимы и весны. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+        option.Season_Length.comment = Контролирует продолжительность одного сезона в днях майнкрафта.
+        option.Snowy_Winter.comment = Переключение снега зимой. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+        screen.Summer_colors.comment = Цвет растительности в летний период.
+        screen.Fall_colors.comment = Цвет растительности в осенний период.
+        screen.Winter_colors.comment = Цвет растительности в зимний период.
+        screen.Spring_colors.comment = Цвет растительности в весенний период.
     
-    option.PER_BIOME_ENVIRONMENT.comment = Toggle all special environments that only appear in some biomes. §aPERFORMANCE COST:§r low
+    option.PER_BIOME_ENVIRONMENT.comment = Переключение всех специальных окружений, которые появляются только в некоторых биомах. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
 
-        screen.SWAMP.comment = Configure the environment in this biome type.
-            option.SWAMP_ENV.comment = Toggle the environment only for this biome type. The other biome environments remain active even if this one is disabled.
+        screen.SWAMP.comment = Окружающее в этом типе биома.
+            option.SWAMP_ENV.comment = Переключение окружения только для этого типа биома. Другие биомы остаются активными, даже если этот отключён.
 
-        screen.JUNGLE.comment = Configure the environment in this biome type.
-            option.JUNGLE_ENV.comment = Toggle the environment only for this biome type. The other biome environments remain active even if this one is disabled.
+        screen.JUNGLE.comment = Окружающее в этом типе биома.
+            option.JUNGLE_ENV.comment = Переключение окружения только для этого типа биома. Другие биомы остаются активными, даже если этот отключён.
 
-        screen.DARKFOREST.comment = Configure the environment in this biome type.
-            option.DARKFOREST_ENV.comment = Toggle the environment only for this biome type. The other biome environments remain active even if this one is disabled.
+        screen.DARKFOREST.comment = Окружающее в этом типе биома.
+            option.DARKFOREST_ENV.comment = Переключение окружения только для этого типа биома. Другие биомы остаются активными, даже если этот отключён.
 
 
-screen.Waving_Stuff.comment = Configure settings related to waving things.
-    option.WAVY_PLANTS.comment = Toggle waving plants. §aPERFORMANCE COST:§r very low
-    option.WAVY_STRENGTH.comment = Configure the amount the plants wave.
-    option.WAVY_SPEED.comment = Configure the speed the plants wave.
+screen.Waving_Stuff.comment = Настройка, связанные с развевающимися объектами.
+    option.WAVY_PLANTS.comment = Переключение развевающихся растений. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низкий
+    option.WAVY_STRENGTH.comment = Количество развевания растений.
+    option.WAVY_SPEED.comment = Скорость развевания растений.
 
-screen.Post_Processing.comment = Configure settings for all post processing effects, from anti aliasing to tonemapping.
-    screen.Tonemapping.comment = Configure settings related to color and tonemapping.
-    screen.Exposure.comment = Configure settings related to the exposure.
-    screen.DepthOfField.comment = Configure settings related to depth of field.
-    screen.Purkinje_effect.comment = Configure settings related to the purkinje effect.
-    option.SHARPENING.comment = Configure the amount of contrast adapitive sharpening that is applied to the image. This can really bring out lost details from anti-aliasing or upscaling.
-    option.BLOOM_STRENGTH.comment = Configure the amount of bloom that is applied to the image. §bWhat is this?§r Bloom is the soft glow on everything, to describe that something is bright or not.
-    screen.TAA_OPTIONS.comment = Configure settings related to anti-aliasing.
-        option.SCREENSHOT_MODE.comment = Toggle frame accumulation to get a low noise and high quality image. §bWhat is this?§r It stacks frames that happend onto the next frame that is generated, so it is like a long exposure photo.
-        option.TAA.comment = Toggle temporal anti-aliasing. This removes all jagged edges on things, softens the image, and helps remove noise for many effects. This will cause ghosting or trailing because it uses past frames for extra information on the world. §aPERFORMANCE COST:§r low
-        option.BLEND_FACTOR.comment = Configure how much of frame history is used. high numbers means it relies less on frame history, so it may look flickery and noisy. low numbers rely more on frame history, so it may look less moisy, but more smudged with more trailing.
-        option.TAA_UPSCALING.comment = Toggle temporal upscaling. This retains a good amount of quality from a lower resolution image when it upscales. so you can still have a high looking resolution compared to typical upsanpling and still have better performance.
-        option.SCALE_FACTOR.comment = Configure from what fraction of your resolution to upscale from. Below 0.5 is not recommended at all i only have it as an option because it's funny :P
-	screen.COLOR_GRADING.comment = Advanced color grading options
-		option.TONE_CURVE.comment = Enable the tone curve. This is independent from color grading and is applied first.
-		option.COLOR_GRADING_ENABLED.comment = Enable color grading. The RGB sliders will not affect the brightness. This is applied after the tone curve
+screen.Post_Processing.comment = Настройка для всех эффектов пост обработки, от сглаживания до тона карты.
+    screen.Tonemapping.comment = Настройка связанных с цветом и тономкарты.
+    screen.Exposure.comment = Настройка связанных с экспозицией.
+    screen.DepthOfField.comment = Настройка связанных с глубиной резкости.
+    screen.Purkinje_effect.comment = Настройка связанных с Пуркиньевым эффектом.
+    option.SHARPENING.comment = Степени контрастного адаптивного повышения резкости, применяемого к изображению. Это может действительно улучшить детали, потерянные при сглаживании или масштабирования изображения.
+    option.BLOOM_STRENGTH.comment = Количество блюма (разцветение), применяемой к изображению. §bЧто это?§r Блюм (Разцветение) это мягкое свечение на всём, для описания того, что что-то ярко или нет.
+    screen.TAA_OPTIONS.comment = Настройка сглаживания.
+        option.SCREENSHOT_MODE.comment = Переключение частоты накопления кадров для получения изображения с низким уровнем шума и высоким качеством. §bЧто это?§r Он складывает частоту, которые произошли, на следующей частоте, который генерируется, так что это похоже на фотографию с длинной экспозицией.
+        option.TAA.comment = Переключение временного сглаживания. Это убирает все неровности на объектах, смягчает изображение и помогает удалить шум для многих эффектов. Это приведёт к появлению "призраков" или " следов", так как для получения дополнительной информации о мире используются прошлые частоты. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+        option.BLEND_FACTOR.comment = Какой объём истории частот будет использоваться. высокое число означает, что он меньше зависит от истории частот, поэтому он может выглядеть нечётким и шумным. низкие числа больше зависят от истории частот, поэтому они могут выглядеть менее мутными, но более размазанными, с большим количеством следов.
+        option.TAA_UPSCALING.comment = Переключение временного масштабирования. При этом сохраняется хорошее количество качества изображения с низким разрешением при его масштабировании. таким образом, вы можете получить высокое разрешение по сравнению с типичным масштабированием и при этом лучшую производительность.
+        option.SCALE_FACTOR.comment = С какой части вашего экрана будет осуществляться масштабирование. Ниже 0.5 вообще не рекомендуется, я просто поставил это как опцию, потому что это забавно :P
+	screen.COLOR_GRADING.comment = Дополнительная настройка градиента цвета
+		option.TONE_CURVE.comment = Включить тон кривости. Это не зависит от градиента цвета и применяется в первую очередь.
+		option.COLOR_GRADING_ENABLED.comment = Включить градиенты цвета. Ползунки КЗС не влияют на яркость. Она применяется после тон кривости
 
-option.RESOURCEPACK_SKY.comment = Toggle resourcepack sky support. Configure settings to use the whole resourcepack sky, or keep the shader's sun and moon. §aPERFORMANCE COST:§r very low
-option.SKY_GROUND = Atmosphere ground
+option.RESOURCEPACK_SKY.comment = Переключение поддержки неба ресурспака. Настройка, чтобы использовать всё небо ресурспака или сохранить солнце и луну в шейдере. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низкий
+option.SKY_GROUND = Основа Атмосферы
 
-option.MATERIAL_AO.comment = Toggle the use of ambient occlusion based on what the resourcepack provides. §aPERFORMANCE COST:§r very low
-option.WATER_WAVE_STRENGTH.comment = configure how strong the waves appear.
-option.MOONPHASE_BASED_MOONLIGHT.comment = §bWhat is this?§r every night, the moon has different lighting. This setting adjusts the moonlight brightness based on how much of the moon is glowing. §aPERFORMANCE COST:§r nearly nothing
+option.MATERIAL_AO.comment = Переключение использования окружающей окклюзии на основе того, что предоставляет ресурспак. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низкий
+option.WATER_WAVE_STRENGTH.comment = насколько сильными кажутся волны.
+option.MOONPHASE_BASED_MOONLIGHT.comment = §bЧто это?§r каждую ночь луна освещается по-разному. Эта настройка регулирует яркость светалуны в зависимости от того, какая часть луны светится. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r почти ничего
 
-option.END_STORM_DENSTIY.comment =  §bWhat is this?§r This is the dark cloudy fog in the end. Confingure the density of the end storm.
-option.NETHER_PLUME_DENSITY.comment =  §bWhat is this?§r This is the thick, glowing smoke towers in the nether. Confingure the density of the nether smoke.
+option.END_STORM_DENSTIY.comment =  §bЧто это?§r Это тёмный облачный туман в энде. Плотность шторма энда.
+option.NETHER_PLUME_DENSITY.comment =  §bЧто это?§r Это густые, светящиеся дымом башни в незере. Плотность дыма незера.
 
-option.CloudLayer0.comment          = Toggle the layer of clouds that are small. §aPERFORMANCE COST:§r medium
-option.CloudLayer0_coverage.comment = Configure how much of the sky these clouds cover.
-option.CloudLayer0_density.comment  = Configure how dense, or thick these clouds are.
-option.CloudLayer0_height.comment   = Configure the height at which these clouds fly at.
+option.CloudLayer0.comment          = Переключение слоёв облака, которые являются небольшими. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r средний
+option.CloudLayer0_coverage.comment = Какую часть неба покрывают облака.
+option.CloudLayer0_density.comment  = Плотность или толщина облаков.
+option.CloudLayer0_height.comment   = Высота, на которой будут летать эти облака.
 
-option.CloudLayer1.comment          = Toggle the layer of clouds that are large. §aPERFORMANCE COST:§r medium
-option.CloudLayer1_coverage.comment = Configure how much of the sky these clouds cover.
-option.CloudLayer1_density.comment  = Configure how dense, or thick these clouds are.
-option.CloudLayer1_height.comment   = Configure the height at which these clouds fly at. §cTHESE CANNOT BE LOWER THAN THE SMALL CLOUDS§r
+option.CloudLayer1.comment          = Переключение слоёв облака, которые являются большими. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r средний
+option.CloudLayer1_coverage.comment = Какую часть неба покрывают облака.
+option.CloudLayer1_density.comment  = Плотность или толщина облаков.
+option.CloudLayer1_height.comment   = Высота, на которой будут летать эти облака. §cОНИ НЕ МОГУТ БЫТЬ НИЖЕ, ЧЕМ МАЛЕНЬКИЕ ОБЛАКА§r
 
-option.CloudLayer2.comment          = Toggle the layer of clouds that are very high and thin. §aPERFORMANCE COST:§r low
-option.CloudLayer2_coverage.comment = Configure how much of the sky these clouds cover.
-option.CloudLayer2_density.comment  = Configure how dense, or thick these clouds are.
-option.CloudLayer2_height.comment   = Configure the height at which these clouds fly at. §cTHESE CANNOT BE LOWER THAN THE LARGE CLOUDS§r
+option.CloudLayer2.comment          = Переключение слоёв облака, которые являются очень высокими и тонкими. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+option.CloudLayer2_coverage.comment = Какую часть неба покрывают облака.
+option.CloudLayer2_density.comment  = Плотность или толщина облаков.
+option.CloudLayer2_height.comment   = Высота, на которой будут летать эти облака. §cОНИ НЕ МОГУТ БЫТЬ НИЖЕ, ЧЕМ БОЛЬШИЕ ОБЛАКА§r
 
-option.SKY_GROUND.comment = §bWhat is this?§r This is the dark bottom half of the sky that WOULD be the ground, if minecraft had infinite render distance. §aPERFORMANCE COST:§r very very low. §cdisabling this is very slightly slower than having it on due to extra math.§r
-option.SNELLS_WINDOW.comment = §bWhat is this?§r this is the dark reflective circle you see when under-water. This is an approximation of a thing that happens in reality known as "total internal reflection". §aPERFORMANCE COST:§r very very very small.
-option.entityShadowDistanceMul.comment = §bWhat is this?§r Configure how far shadows should work for entities. This is good if you want to keep entity shadows and improved performance in high entity areas.
+option.SKY_GROUND.comment = §bЧто это?§r Это тёмная нижняя половина неба, которая ДОЛЖНА была быть основанием, если бы в майнкрафт было бесконечная дистанция рендеринга. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень очень низко. §cотключение этой функции немного медленнее, чем её включение, из-за дополнительных вычислений.§r
+option.SNELLS_WINDOW.comment = §bЧто это?§r Это тёмный отражающий круг, который вы видите под-водой. Это приближение к тому, что происходит в реальности, известное как "полное внутреннее отражение". §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень очень очень низко.
+option.entityShadowDistanceMul.comment = §bЧто это?§r Как далеко должны работать тени для сущностей. Это хорошо, если вы хотите сохранить тени сущностей и улучшить производительность в областях с большим количеством сущностей.
 
-screen.DISTANT_HORIZONS_SETTINGS = §2Distant Horizons §fsettings
+/////Distant Horizons settings/////
 
-option.DH_KNOWN_ISSUES =
-value.DH_KNOWN_ISSUES.0 = §c CLICK THIS TEXT TO LOOP THROUGH A LIST OF KNOWN ISSUES
-value.DH_KNOWN_ISSUES.1 = §a GTAO, RTAO, and SSGI break on LODs - DH support unimplemented
+screen.DISTANT_HORIZONS_SETTINGS = §fНастройка §2Distant Horizons
 
-option.DISTANT_HORIZONS_SHADOWMAP = §c(DO NOT USE IF YOU DO NOT KNOW WHAT THIS IS)§r DH shadowmap support
-option.DISTANT_HORIZONS_SHADOWMAP.comment =  §cTHIS SETTING WILL DESTROY PERFORMANCE THIS WILL MAKE SHADOWS LOOK BLOCKY, FLICKERY, AND LOW DETAIL§r. set shadow distance to 32 chunks (or more). set shadow resolution to 4096 (or more)
-option.TOGGLE_VL_FOG = Toggle Volumetric Fog
-option.TOGGLE_VL_FOG.comment = one big button to just turn all the fog off.
+option.DH_KNOWN_ISSUES = ИЗВЕСТНЫЕ_ПРОБЛЕМЫ_DH
+value.DH_KNOWN_ISSUES.0 = §c НАЖМИТЕ НА ЭТОТ ТЕКСТ, ЧТОБЫ ПРОСМОТРЕТЬ СПИСОК ИЗВЕСТНЫХ ПРОБЛЕМ
+value.DH_KNOWN_ISSUES.1 = §a НРОО, ТЛОО, и ПЭГО ломаются на УДях - поддержка DH не внедрена
+
+option.DISTANT_HORIZONS_SHADOWMAP = §c(НЕ ИСПОЛЬЗУЙТЕ, ЕСЛИ ВЫ НЕ ЗНАЕТЕ, ЧТО ЭТО ТАКОЕ)§r поддержка картытени DH
+option.DISTANT_HORIZONS_SHADOWMAP.comment =  §cЭТА НАСТРОЙКА УНИЧТОЖИТ ПРОИЗВОДИТЕЛЬНОСТЬ, И ТЕНИ БУДУТ ВЫГЛЯДЕТЬ БЛОЧНЫМИ, МЕРЦАЮЩИМИ И С НИЗКОЙ ДЕТАЛИЗАЦИЕЙ§r. установите дистанцию между тенью в 32 чанка (или больше). установите разрешение тени на 4096 (или больше)
+option.TOGGLE_VL_FOG = Переключение Объёмного Тумана
+option.TOGGLE_VL_FOG.comment = одна большая кнопка, чтобы просто отключить весь туман.
