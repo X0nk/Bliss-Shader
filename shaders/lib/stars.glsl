@@ -41,8 +41,8 @@ float StableStarField( in vec2 vSamplePos, float fThreshhold )
 
 float stars(vec3 viewPos){
 
-	float elevation = clamp(viewPos.y,0.,1.);
-	vec2 uv = viewPos.xz/(1.5+elevation);
+	vec2 uv = abs(viewPos.x) > abs(viewPos.y) && abs(viewPos.x) > abs(viewPos.z) ? viewPos.yz : abs(viewPos.y) > abs(viewPos.z) ? viewPos.xz : viewPos.xy;
+	uv *= 0.5;
 
 	return exp((1.0-StableStarField(uv*1000.,0.999))  * -10) * 3;
 	// return StableStarField(uv*1000.,0.999)*0.5*0.3;
