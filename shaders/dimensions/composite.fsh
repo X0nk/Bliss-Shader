@@ -214,6 +214,13 @@ void convertHandDepth(inout float depth) {
     depth = ndcDepth * 0.5 + 0.5;
 }
 
+float convertHandDepth_2(in float depth, bool hand) {
+    if(!hand) return depth;
+	
+	float ndcDepth = depth * 2.0 - 1.0;
+    ndcDepth /= MC_HAND_DEPTH;
+    return ndcDepth * 0.5 + 0.5;
+}
 vec2 SSAO(
 	vec3 viewPos, vec3 normal, bool hand, bool leaves, float noise
 ){
@@ -225,7 +232,7 @@ vec2 SSAO(
 
 	float dist = 1.0 + clamp(viewPos.z*viewPos.z/50.0,0,5); // shrink sample size as distance increases
 	float mulfov2 = gbufferProjection[1][1]/(3 * dist);
-	float maxR2 = viewPos.z*viewPos.z*mulfov2*2.*5/50.0;
+	float maxR2 = viewPos.z*viewPos.z*mulfov2*2.0 * 5.0 / mix(4.0, 50.0, clamp(viewPos.z*viewPos.z - 0.1,0,1));
 
 	#ifdef Ambient_SSS
 		float maxR2_2 = viewPos.z*viewPos.z*mulfov2*2.*2./50.0;
@@ -234,7 +241,7 @@ vec2 SSAO(
 		if(leaves) maxR2_2 = mix(10, maxR2_2, dist3);
 	#endif
 
-	vec2 acc = -(TAA_Offset*(texelSize/2))*RENDER_SCALE ;
+	vec2 acc = -(TAA_Offset*(texelSize/2.0))*RENDER_SCALE ;
 
 
 	int n = 0;
@@ -251,7 +258,8 @@ vec2 SSAO(
 				float dhdepth = 0.0;
 			#endif
 
-			vec3 t0 = toScreenSpace_DH((offset*texelSize+acc+0.5*texelSize) * (1.0/RENDER_SCALE), texelFetch2D(depthtex1, offset,0).x, dhdepth);
+			vec3 t0 = toScreenSpace_DH((offset*texelSize+acc+0.5*texelSize) * (1.0/RENDER_SCALE), convertHandDepth_2(texelFetch2D(depthtex1, offset,0).x, hand), dhdepth);
+		
 			vec3 vec = (t0.xyz - viewPos);
 			float dsquared = dot(vec, vec);
 			

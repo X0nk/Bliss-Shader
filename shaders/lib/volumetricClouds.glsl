@@ -200,8 +200,7 @@ float cloudVol(int layer, in vec3 pos, in vec3 samplePos, in float cov, in int L
 	
 	// float curvature = 1-exp(-25*pow(clamp(1.0 - length(pos - cameraPosition)/(32*80),0.0,1.0),2));
 	// curvature = clamp(1.0 - length(pos - cameraPosition)/(32*128),0.0,1.0);
-	
-	
+
 	float otherlayer = max(pos.y - (CloudLayer0_height+99.5), 0.0) > 0 ? 0.0 : 1.0;
 	float upperPlane = otherlayer;
 

@@ -15,6 +15,8 @@ uniform sampler2D shadowtex1;
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
 #include "/lib/res_params.glsl"
+#include "/lib/gameplay_effects.glsl"
+
 
 vec4 SampleTextureCatmullRom(sampler2D tex, vec2 uv, vec2 texSize )
 {
@@ -99,29 +101,29 @@ vec3 colorGrading(vec3 color) {
 	return saturate(graded_shadows * shadows_amount + graded_mids * mids_amount + graded_highlights * highlights_amount);
 }
 
-#ifdef HURT_AND_DEATH_EFFECT
-  uniform float hurt;
-  uniform float dying;
-  uniform float dead;
+// #ifdef HURT_AND_DEATH_EFFECT
+//   uniform float hurt;
+//   uniform float dying;
+//   uniform float dead;
   
-  void PlayerDamagedEffect(inout vec3 outColor){
+//   void PlayerDamagedEffect(inout vec3 outColor){
   
-    if(dying > 0){
+//     if(dying > 0){
     
-    	float vignette2 = clamp(1.0 - exp(-(sin(frameTimeCounter*7)*15+50) * dot(texcoord-0.5,texcoord-0.5)),0.0,1.0);
+//     	float vignette2 = clamp(1.0 - exp(-(sin(frameTimeCounter*7)*15+50) * dot(texcoord-0.5,texcoord-0.5)),0.0,1.0);
   
-      outColor = mix(outColor, vec3(0.0), min(dying,1.0)*vignette2);
-      outColor = mix(outColor, vec3(0.0), dead);
+//       outColor = mix(outColor, vec3(0.0), min(dying,1.0)*vignette2);
+//       outColor = mix(outColor, vec3(0.0), dead);
   
-    }else{
+//     }else{
     
-    	float vignette = clamp(1.0 - exp(-5 * dot(texcoord-0.5,texcoord-0.5)),0.0,1.0);
+//     	float vignette = clamp(1.0 - exp(-5 * dot(texcoord-0.5,texcoord-0.5)),0.0,1.0);
   
-      outColor = mix(outColor, vec3(0.3,0.0,0.0), vignette*sqrt(hurt));
+//       outColor = mix(outColor, vec3(0.3,0.0,0.0), vignette*sqrt(hurt));
   
-    }
-  }
-#endif
+//     }
+//   }
+// #endif
 
 uniform int hideGUI;
 void main() {
@@ -152,10 +154,8 @@ void main() {
   vec3 diff = col-lum;
   col = col + diff*(-lum*CROSSTALK + SATURATION);
 
-  #ifdef HURT_AND_DEATH_EFFECT
-    PlayerDamagedEffect(col);
-  #endif
-  
+
+
 	vec3 FINAL_COLOR = clamp(int8Dither(col,texcoord),0.0,1.0);
 
   #ifdef TONE_CURVE
@@ -167,7 +167,10 @@ void main() {
   #endif
 
 	applyContrast(FINAL_COLOR, CONTRAST); // for fun
+  
+  applyGameplayEffects_FRAGMENT(FINAL_COLOR, texcoord); // for making the fun, more fun
 
+  
   gl_FragColor.rgb = FINAL_COLOR;
 
   #if DEBUG_VIEW == debug_SHADOWMAP 

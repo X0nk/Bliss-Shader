@@ -1264,18 +1264,21 @@ void main() {
 
 		// GTAO
 		#if indirect_effect == 2
-			Indirect_lighting = AmbientLightColor/2.5;
 
 			vec2 r2 = fract(R2_samples((frameCounter%40000) + frameCounter*2) + bnoise);
-			if (!hand) AO = ambient_occlusion(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z), viewPos, worldToView(slopednormal), r2) * vec3(1.0);
-			
+			if(!hand){ 
+				Indirect_lighting = AmbientLightColor/2.5;
+				AO = ambient_occlusion(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z), viewPos, worldToView(slopednormal), r2) * vec3(1.0);
+			}
 			Indirect_lighting *= AO;
 		#endif
 
 		// RTAO and/or SSGI
 		#if indirect_effect == 3 || indirect_effect == 4
-			Indirect_lighting = AmbientLightColor;
-			if (!hand) ApplySSRT(Indirect_lighting, viewPos, normal, vec3(bnoise, noise_2), lightmap.xy, AmbientLightColor*2.5, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass);
+			if(!hand){ 
+				Indirect_lighting = AmbientLightColor;
+				ApplySSRT(Indirect_lighting, viewPos, normal, vec3(bnoise, noise_2), lightmap.xy, AmbientLightColor*2.5, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass, hand);
+			}
 		#endif
 
 		#if defined END_SHADER
