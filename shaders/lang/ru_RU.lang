@@ -1,4 +1,4 @@
-By ShrikerChestTree v1.0
+By ShrikerChestTree v1.0.1
 
 {{{{{BLISS SHADERS}}}}}
 
@@ -1161,7 +1161,7 @@ option.entityShadowDistanceMul.comment = §bЧто это?§r Как далек�
 
 /////Distant Horizons settings/////
 
-screen.DISTANT_HORIZONS_SETTINGS = §fНастройка §2Distant Horizons
+screen.DISTANT_HORIZONS_SETTINGS = Настройка §2Distant Horizons
 
 option.DH_KNOWN_ISSUES = ИЗВЕСТНЫЕ_ПРОБЛЕМЫ_DH
 value.DH_KNOWN_ISSUES.0 = §c НАЖМИТЕ НА ЭТОТ ТЕКСТ, ЧТОБЫ ПРОСМОТРЕТЬ СПИСОК ИЗВЕСТНЫХ ПРОБЛЕМ
