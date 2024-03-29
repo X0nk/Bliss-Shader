@@ -41,7 +41,11 @@ float StableStarField( in vec2 vSamplePos, float fThreshhold )
 
 float stars(vec3 viewPos){
 
-	vec2 uv = abs(viewPos.x) > abs(viewPos.y) && abs(viewPos.x) > abs(viewPos.z) ? viewPos.yz : abs(viewPos.y) > abs(viewPos.z) ? viewPos.xz : viewPos.xy;
+	//6 "faces" in 3 axis
+	vec2 uv = abs(viewPos.x) > abs(viewPos.y) && abs(viewPos.x) > abs(viewPos.z) ? viewPos.yz : abs(viewPos.y) > abs(viewPos.z) ? viewPos.xz + vec2(1,0) : viewPos.xy + vec2(0,1);
+	//together with offsets make sure that every face is unique
+	uv = viewPos.x > 0 ? uv : uv + vec2(1,1);
+	//scale it down to stars are not too small and too dense
 	uv *= 0.5;
 
 	return exp((1.0-StableStarField(uv*1000.,0.999))  * -10) * 3;
