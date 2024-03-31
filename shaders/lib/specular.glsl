@@ -86,19 +86,17 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
 	float dist = 1.0 + clamp(position.z*position.z/50.0,0.0,2.0); // shrink sample size as distance increases
   	for (int i = 0; i <= int(quality); i++) {
 
-		vec2 scaleUV = hand ? spos.xy*texelSize : spos.xy/texelSize/4.0; // fix for ssr on hand
-		float sp = sqrt(texelFetch2D(colortex4,ivec2(scaleUV),0).a/65000.0);
-
-
-		sp = invLinZ(sp);
+		float sp = invLinZ(sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4.0),0).a/65000.0));
 
 		if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ) ) return vec3(spos.xy/RENDER_SCALE,sp);
+		
 		spos += stepv;
 		
 		//small bias
 		float biasamount = (0.0002 + 0.0015*pow(depthcancleoffset,5) ) / dist;
-		// float biasamount = 0.0002 / dist;
-		if(hand) biasamount = 0.01;
+
+		if(hand) biasamount = 0.00035;
+
 		minZ = maxZ-biasamount / ld(spos.z);
 		maxZ += stepv.z;
 
@@ -193,7 +191,7 @@ void DoSpecularReflections(
 	Roughness = 1.0 - Roughness; Roughness *= Roughness;
 	F0 = F0 == 0.0 ? 0.02 : F0;
 
-	// Roughness = 0.1;
+	// Roughness = 0.0;
 	// F0 = 0.9;
 
 	mat3 Basis = CoordBase(Normal);
@@ -201,7 +199,7 @@ void DoSpecularReflections(
 
 	#ifdef Rough_reflections
 		vec3 SamplePoints = SampleVNDFGGX(ViewDir, vec2(Roughness), Noise.x);
-		if(Hand) SamplePoints = normalize(vec3(0.0,0.0,1.0));
+		if(Hand) SamplePoints = vec3(0.0,0.0,1.0);
 	#else
 		vec3 SamplePoints = vec3(0.0,0.0,1.0);
 	#endif
@@ -214,7 +212,7 @@ void DoSpecularReflections(
 	float RayContribution = lerp(F0, 1.0, Fresnel); // ensure that when the angle is 0 that the correct F0 is used.
 	
 	#ifdef Rough_reflections
-		if(Hand) RayContribution = RayContribution * pow(1.0-Roughness,3.0);
+		if(Hand) RayContribution = RayContribution * pow(1.0-Roughness,F0 > 229.5/255.0 ? 1.0 : 3.0);
 	#else
 		RayContribution = RayContribution * pow(1.0-Roughness,3.0);
 	#endif

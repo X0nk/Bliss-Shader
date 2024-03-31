@@ -3,4 +3,4 @@
 #define DAMAGE_BLOCK_EFFECT
 #define NETHER_SHADER
 
-#include "/dimensions/all_translucent.fsh"
+#include "/dimensions/all_particles.fsh"

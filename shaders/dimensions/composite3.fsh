@@ -269,7 +269,7 @@ void main() {
   vec4 TranslucentShader = texture2D(colortex2, texcoord);
 
 	////// --------------- UNPACK MISC --------------- //////
-  float trpData = texture2D(colortex7,texcoord).a;
+  float trpData = texture2D(colortex7, texcoord).a;
 
 	////// --------------- MASKS/BOOLEANS --------------- //////
   bool iswater = trpData > 0.99;
@@ -325,11 +325,16 @@ void main() {
 
     color.rgb = mix(color.rgb, borderFogColor, fog);
   #endif
+	
+  
+  if (albedo.a > 0.0 || TranslucentShader.a > 0.0){
 
-  if (TranslucentShader.a > 0.0){
-		#ifdef Glass_Tint
-      if(!iswater) color *= normalize(albedo.rgb+0.0001)*0.9+0.1;
+    #ifdef Glass_Tint
+      if(!iswater && TranslucentShader.a > 0.0) color *= normalize(albedo.rgb+0.0001)*0.9+0.1;
     #endif
+
+    // block breaking effect.
+    if(!iswater && TranslucentShader.a <= 0.0) color *= albedo.rgb;
 
     color = color*(1.0-TranslucentShader.a) + TranslucentShader.rgb; 
 
@@ -438,6 +443,7 @@ void main() {
     }
   #endif
 // color.rgb = vec3(1) * sqrt(texture2D(colortex12,texcoord).a/65000.0);
+  
 
   gl_FragData[0].r = bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);

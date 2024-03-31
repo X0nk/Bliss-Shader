@@ -62,7 +62,7 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 void main() {
 	
 	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
-	vec2 lmcoord = gl_MultiTexCoord1.xy / 255.0; // is this even correct? lol'
+	vec2 lmcoord = gl_MultiTexCoord1.xy / 240.0; // is this even correct? lol'
 	lmtexcoord.zw = lmcoord;
 
 

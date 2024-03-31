@@ -89,13 +89,28 @@ float phaseg(float x, float g){
     return (gg * -0.25 + 0.25) * pow(-2.0 * (g * x) + (gg + 1.0), -1.5) / 3.14;
 }
 
+//encoding by jodie
+float encodeVec2(vec2 a){
+    const vec2 constant1 = vec2( 1., 256.) / 65535.;
+    vec2 temp = floor( a * 255. );
+	return temp.x*constant1.x+temp.y*constant1.y;
+}
+float encodeVec2(float x,float y){
+    return encodeVec2(vec2(x,y));
+}
+
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 
-/* DRAWBUFFERS:29 */
+#ifdef DAMAGE_BLOCK_EFFECT
+	/* RENDERTARGETS:11 */
+#else
+	/* DRAWBUFFERS:29 */
+#endif
 
 void main() {
 	
@@ -111,6 +126,9 @@ void main() {
 	vec3 feetPlayerPos_normalized = normalize(feetPlayerPos);
 
 	vec4 TEXTURE = texture2D(texture, lmtexcoord.xy)*color;
+	
+
+
 
 	vec3 Albedo = toLinear(TEXTURE.rgb);
 	
@@ -215,6 +233,11 @@ void main() {
 	#else
 		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * Albedo;
 	#endif
+	
+	#ifdef DAMAGE_BLOCK_EFFECT
+		
+		gl_FragData[0] = vec4(0.0, encodeVec2(TEXTURE.rg), encodeVec2(vec2(TEXTURE.b,0.0)), TEXTURE.a);
+	#endif 
 
 	// distance fade targeting the world border...
 	if(TEXTURE.a < 0.7 && TEXTURE.a > 0.2) gl_FragData[0] *= clamp(1.0 - length(feetPlayerPos) / 100.0 ,0.0,1.0);

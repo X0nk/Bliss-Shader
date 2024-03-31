@@ -75,6 +75,7 @@ uniform float rainStrength;
 uniform sampler2D noisetex;//depth
 uniform sampler2D depthtex0;
 
+
 uniform vec4 entityColor;
 
 // in vec3 velocity;
@@ -289,7 +290,6 @@ varying vec3 pos;
 
 void main() {
 	
-
 	bool ifPOM = false;
 
 	#ifdef POM
@@ -365,7 +365,7 @@ void main() {
 		float used_POM_DEPTH = 1.0;
 
  		if ( viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
-			// float noise = interleaved_gradientNoise_temp();
+			float noise = blueNoise();
 			#ifdef Adaptive_Step_length
 				vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * POM_DEPTH) * clamp(1.0-pow(depthmap,2),0.1,1.0);
 				used_POM_DEPTH = 1.0;
@@ -374,12 +374,12 @@ void main() {
 			#endif
 			vec3 coord = vec3(vtexcoord.st , 1.0);
 
-			coord += interval * used_POM_DEPTH;
+			coord += interval * noise * used_POM_DEPTH;
 
-			float sumVec = 0.5;
+			float sumVec = noise;
 			for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - POM_DEPTH + POM_DEPTH * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
 				coord = coord + interval  * used_POM_DEPTH; 
-				sumVec += 1.0 * used_POM_DEPTH; 
+				sumVec += used_POM_DEPTH; 
 			}
 	
 			if (coord.t < mincoord) {
@@ -407,6 +407,7 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 	float textureLOD = bias();
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD) * color;
+
 
 	#if defined HAND
 		if (Albedo.a < 0.1) discard;
@@ -488,6 +489,7 @@ void main() {
 		
 
 		normal = applyBump(tbnMatrix, NormalTex.xyz,  mix(1.0,1-Puddle_shape,rainfall)	);
+		// normal = applyBump(tbnMatrix, NormalTex.xyz,  0.0);
 	#endif
 	
 	//////////////////////////////// 				////////////////////////////////

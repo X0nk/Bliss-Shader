@@ -312,6 +312,20 @@ uniform float dhFarPlane;
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 
+float darkSpecularHighlight(vec3 playerPos, vec3 normal, float roughness, float f0){
+
+	roughness = max(pow(1.0 - roughness, 2.0),0.002);
+
+	float distanceFalloff = clamp( exp(-7.0 * (length(playerPos) / 16.0)) ,0.0,1.0);
+
+	float NdotP = clamp(1.0 + dot(normal, normalize(playerPos)),0.0,1.0);
+
+	float specularHighlight = exp( -(1.0 / roughness)  * NdotP ) * f0;
+
+	return specularHighlight * distanceFalloff;
+}
+
+
 uniform vec4 entityColor;
 /* RENDERTARGETS:2,7,11,14 */
 void main() {
@@ -586,7 +600,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		float f0 = SpecularTex.g;
 
 		// roughness = 0.1;
-		// f0 = 1.0;
+		// f0 = 0.1;
 
 		if (iswater > 0.0 && gl_FragData[0].a < 0.9999999){
 			vec3 Reflections_Final = vec3(0.0);
@@ -641,9 +655,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 			#ifdef OVERWORLD_SHADER
 				if(isEyeInWater == 1 && iswater > 0.9){
-				 	SkyReflection.rgb = exp(-8.0 * vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B)) * clamp(WsunVec.y*lightCol.a,0,1) ;
+				 	SkyReflection.rgb = exp(-8.0 * vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B)) * clamp(WsunVec.y*lightCol.a,0,1);
 				}
+
+				// if(iswater > 0.9) SkyReflection.rgb = mix(vec3(CaveFogColor_R, CaveFogColor_G, CaveFogColor_B)*0.1,  SkyReflection.rgb*indoors, clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0),0.0,1.0));
 			#endif
+			
 			float visibilityFactor = clamp(exp2((pow(roughness,3.0) / f0) * -4),0,1);
 
 			#ifdef ENTITIES
@@ -655,6 +672,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			
 			Reflections_Final += SunReflection * Metals;
 
+			// Reflections_Final += vec3(CaveFogColor_R, CaveFogColor_G, CaveFogColor_B)*0.1 * darkSpecularHighlight(feetPlayerPos, viewToWorld(normal), 0.9, 0.1);
 			
 			gl_FragData[0].rgb = Reflections_Final ;
 			

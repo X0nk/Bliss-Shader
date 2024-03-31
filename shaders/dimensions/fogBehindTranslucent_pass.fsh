@@ -197,7 +197,8 @@ vec4 waterVolumetrics_test( vec3 rayStart, vec3 rayEnd, float estEndDepth, float
 	#endif
 	vec3 absorbance = vec3(1.0);
 	vec3 vL = vec3(0.0);
-
+	
+	ambient = max(ambient* (normalize(wpos).y*0.3+0.7),0.0);
 
 	float expFactor = 11.0;
 	for (int i=0;i<spCount;i++) {
@@ -243,7 +244,7 @@ vec4 waterVolumetrics_test( vec3 rayStart, vec3 rayEnd, float estEndDepth, float
 		vec3 ambientMul = exp(-estEndDepth * d * waterCoefs );
 
 		vec3 Directlight = ((lightSource * sh) * phase * sunMul) ;
-		vec3 Indirectlight = max(ambient * ambientMul, vec3(0.01,0.2,0.4) * ambientMul * 0.1) ;
+		vec3 Indirectlight = max(ambient * ambientMul, vec3(0.01,0.2,0.4) * ambientMul * 0.05) ;
 
 		vec3 light = (Indirectlight + Directlight) * scatterCoef;
 
@@ -310,14 +311,14 @@ void main() {
 		
 		#ifdef OVERWORLD_SHADER
 			float lightmap = texture2D(colortex14,tc).a;
-			if(z >= 1.0 ) lightmap = 1.0;
+			if(z >= 1.0) lightmap = 1.0;
 		#else
 			float lightmap = 1.0;
 		#endif
-		float Vdiff = distance(viewPos1, viewPos0);
+		float Vdiff = distance(viewPos1, viewPos0) * 2.0;
 		float VdotU = playerPos.y;
 		float estimatedDepth = Vdiff * abs(VdotU) ;	//assuming water plane
-		float estimatedSunDepth = estimatedDepth/abs(WsunVec.y); //assuming water plane
+		float estimatedSunDepth = estimatedDepth / abs(WsunVec.y); //assuming water plane
 
 		vec4 VolumetricFog2 = vec4(0,0,0,1);
 		#ifdef OVERWORLD_SHADER
@@ -325,7 +326,7 @@ void main() {
 		#endif
 		
 		vec4 underwaterVlFog = vec4(0,0,0,1);
-		if(iswater)underwaterVlFog = waterVolumetrics_test(viewPos0, viewPos1, estimatedDepth, estimatedSunDepth, Vdiff, noise_1, totEpsilon, scatterCoef, indirectLightColor_dynamic * max(lightmap,0.0), directLightColor, dot(normalize(viewPos1), normalize(sunVec*lightCol.a)) );		
+		if(iswater) underwaterVlFog = waterVolumetrics_test(viewPos0, viewPos1, estimatedDepth, estimatedSunDepth, Vdiff, noise_1, totEpsilon, scatterCoef, indirectLightColor_dynamic * max(lightmap,0.0), directLightColor, dot(normalize(viewPos1), normalize(sunVec*lightCol.a)) );		
 
 		vec4 fogFinal = vec4(underwaterVlFog.rgb * VolumetricFog2.a + VolumetricFog2.rgb, VolumetricFog2.a * underwaterVlFog.a);
 

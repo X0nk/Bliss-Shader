@@ -57,7 +57,7 @@ uniform int hideGUI;
 uniform sampler2D noisetex; //noise
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
-// uniform sampler2D depthtex2;
+uniform sampler2D depthtex2;
 
 // #ifdef DISTANT_HORIZONS
 uniform sampler2D dhDepthTex;
@@ -131,6 +131,13 @@ void convertHandDepth(inout float depth) {
     float ndcDepth = depth * 2.0 - 1.0;
     ndcDepth /= MC_HAND_DEPTH;
     depth = ndcDepth * 0.5 + 0.5;
+}
+float convertHandDepth_2(in float depth, bool hand) {
+	if(!hand) return depth;
+
+    float ndcDepth = depth * 2.0 - 1.0;
+    ndcDepth /= MC_HAND_DEPTH;
+    return ndcDepth * 0.5 + 0.5;
 }
 
 vec3 toScreenSpace(vec3 p) {
@@ -228,7 +235,7 @@ vec2 decodeVec2(float a){
 
 vec2 tapLocation(int sampleNumber,int nb, float nbRot,float jitter,float distort)
 {
-		float alpha0 = sampleNumber/nb;
+	float alpha0 = sampleNumber/nb;
     float alpha = (sampleNumber+jitter)/nb;
     float angle = jitter*6.28 + alpha * 4.0 * 6.28;
 
@@ -427,9 +434,11 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 
 #endif
 
-vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, bool isSSS){
+vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, bool isSSS, bool hand){
+   
+	float handSwitch = hand ? 1.0 : 0.0;
+
     float steps = 16.0;
-	
 	float Shadow = 1.0; 
 	float SSS = 0.0;
 	
@@ -439,8 +448,8 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 		_near = dhNearPlane;
 		_far = dhFarPlane;
 	}
-
-    vec3 clipPosition = toClipSpace3_DH(viewPos, depthCheck);
+    
+	vec3 clipPosition = toClipSpace3_DH(viewPos, depthCheck);
 
 	//prevents the ray from going behind the camera
 	float rayLength = ((viewPos.z + lightDir.z * _far*sqrt(3.)) > -_near) ?
@@ -451,7 +460,7 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 	
 	float Stepmult = depthCheck ? (isSSS ? 0.5 : 6.0) : (isSSS ? 1.0 : 3.0);
 
-    vec3 rayDir = direction * Stepmult * vec3(RENDER_SCALE,1.0);
+    vec3 rayDir = direction * Stepmult  * vec3(RENDER_SCALE,1.0);
 	
 	vec3 screenPos = clipPosition * vec3(RENDER_SCALE,1.0) + rayDir*noise;
 	if(isSSS) screenPos -= rayDir*0.9;
@@ -460,7 +469,7 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 		
 		screenPos += rayDir;
 		
-		float samplePos = texture2D(depthtex1, screenPos.xy).x;
+		float samplePos = convertHandDepth_2(texture2D(depthtex1, screenPos.xy).x, hand);
 		
 		#ifdef DISTANT_HORIZONS
 			if(depthCheck) samplePos = texture2D(dhDepthTex1, screenPos.xy).x;
@@ -470,7 +479,7 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 			vec2 linearZ = vec2(linearizeDepthFast(screenPos.z, _near, _far), linearizeDepthFast(samplePos, _near, _far));
 			float calcthreshold = abs(linearZ.x - linearZ.y) / linearZ.x;
 
-			bool depthThreshold1 = calcthreshold < 0.015;
+			bool depthThreshold1 = calcthreshold < mix(0.015, 0.035,  handSwitch);
 			bool depthThreshold2 = calcthreshold < 0.05;
 
 			if (depthThreshold1) Shadow = 0.0;
@@ -737,6 +746,23 @@ vec3 ColorBoost(vec3 COLOR, float saturation){
 
   	return COLOR + difference*(-luminance + saturation);
 }
+
+float darkSpecularHighlight(vec3 playerPos, vec3 normal, float roughness, float f0){
+
+	roughness = max(pow(1.0 - roughness, 2.0),0.002);
+
+	float distanceFalloff = clamp( exp(-7.0 * (length(playerPos) / 16.0)) ,0.0,1.0);
+
+	float NdotP = clamp(1.0 + dot(normal, normalize(playerPos)),0.0,1.0);
+
+	float specularHighlight = exp( -(1.0 / roughness)  * NdotP ) * f0;
+
+	return specularHighlight * distanceFalloff;
+}
+
+
+
+
 void main() {
 
 		vec3 DEBUG = vec3(1.0);
@@ -834,11 +860,14 @@ void main() {
 		bool entities = abs(dataUnpacked1.w-0.45) < 0.01;	
 		// bool isBoss = abs(dataUnpacked1.w-0.60) < 0.01;
 		bool isGrass = abs(dataUnpacked1.w-0.60) < 0.01;
-		bool hand = abs(dataUnpacked1.w-0.75) < 0.01 && z0 < 1.0;
+		bool hand = abs(dataUnpacked1.w-0.75) < 0.01 && z < 1.0;
 		// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
 
 
-		if(hand) convertHandDepth(z);
+		if(hand){
+			convertHandDepth(z);
+			convertHandDepth(z0);
+		}
 		
 		#ifdef DISTANT_HORIZONS
 			vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5, z, DH_depth1);
@@ -997,7 +1026,7 @@ void main() {
 		vec3 shadowPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
 		
 		// if(!entities) if(!hand) 
-		GriAndEminShadowFix(shadowPlayerPos, viewToWorld(FlatNormals), vanilla_AO, lightmap.y);
+		if(!hand) GriAndEminShadowFix(shadowPlayerPos, viewToWorld(FlatNormals), vanilla_AO, lightmap.y);
 
 		vec3 projectedShadowPosition = mat3(shadowModelView) * shadowPlayerPos + shadowModelView[3].xyz;
 		projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
@@ -1093,7 +1122,7 @@ void main() {
 				vec3 viewPos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0));
 			#endif
 
-			float Vdiff = distance(viewPos, viewPos0)*2.0;
+			float Vdiff = distance(viewPos, viewPos0)*mix(5.0,2.0,clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0));
 			float estimatedDepth = Vdiff * abs(feetPlayerPos_normalized.y);	//assuming water plane
 
 			// make it such that the estimated depth flips to be correct when entering water.
@@ -1109,7 +1138,6 @@ void main() {
 			Absorbtion = mix(exp(-2.0 * totEpsilon * estimatedDepth), exp(-8.0 * totEpsilon), depthfalloff);
 
 			DirectLightColor *= Absorbtion;
-			AmbientLightColor *= Absorbtion;
 
 			// apply caustics to the lighting, and make sure they dont look weird
 			DirectLightColor *= mix(1.0, waterCaustics(feetPlayerPos + cameraPosition, WsunVec)*WATER_CAUSTICS_BRIGHTNESS + 0.25, clamp(estimatedDepth,0,1));
@@ -1136,14 +1164,15 @@ void main() {
 
 
 			float sunSSS_density = LabSSS;
+			
 			#ifndef RENDER_ENTITY_SHADOWS
 				if(entities) sunSSS_density = 0.0;
 			#endif
 
-			if (!hand){
+			// if (!hand){
 				#ifdef SCREENSPACE_CONTACT_SHADOWS
 					
-					vec2 SS_directLight = SSRT_Shadows(toScreenSpace_DH(texcoord/RENDER_SCALE, z, DH_depth1), isDHrange, normalize(WsunVec*mat3(gbufferModelViewInverse)), interleaved_gradientNoise(), sunSSS_density > 0.0);
+					vec2 SS_directLight = SSRT_Shadows(toScreenSpace_DH(texcoord/RENDER_SCALE, z, DH_depth1), isDHrange, normalize(WsunVec*mat3(gbufferModelViewInverse)), interleaved_gradientNoise(), sunSSS_density > 0.0, hand);
 					
 					Shadows = min(Shadows, SS_directLight.r);
 					ShadowBlockerDepth = mix(SS_directLight.g, ShadowBlockerDepth, shadowMapFalloff);
@@ -1156,7 +1185,7 @@ void main() {
 				
 				Direct_SSS *= mix(LM_shadowMapFallback, 1.0, shadowMapFalloff);
 				if (isEyeInWater == 0) Direct_SSS *= clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0); // light leak fix
-			}	
+			// }	
 		#endif
 
 		#ifdef CLOUDS_SHADOWS
@@ -1217,8 +1246,7 @@ void main() {
 			// Indirect_lighting += up + down;
 
 			Indirect_lighting = vec3(0.1);
-		
-			Indirect_lighting *= Absorbtion;
+	
 		#endif
 		
 		#ifdef END_SHADER
@@ -1226,11 +1254,11 @@ void main() {
 
 			Indirect_lighting *= clamp(1.5 + dot(normal, feetPlayerPos_normalized)*0.5,0,2);
 
-			Indirect_lighting *= Absorbtion;
 		#endif
 	
 		Indirect_lighting = DoAmbientLightColor(Indirect_lighting, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
 		
+			Indirect_lighting *= Absorbtion;
 		#ifdef OVERWORLD_SHADER
 			Indirect_lighting += LightningFlashLighting;
 		#endif
@@ -1326,12 +1354,16 @@ void main() {
 			vec2 specularNoises = vec2(noise, R2_dither());
 			DoSpecularReflections(gl_FragData[0].rgb, viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, normal, SpecularTex.r, SpecularTex.g, albedo, DirectLightColor*Shadows*NdotL, lightmap.y, hand);
 		#endif
-
+		
+		// gl_FragData[0].rgb += vec3(CaveFogColor_R, CaveFogColor_G, CaveFogColor_B)*0.1  * darkSpecularHighlight(feetPlayerPos, normal, SpecularTex.r, SpecularTex.g);
+		
 		Emission(gl_FragData[0].rgb, albedo, SpecularTex.a);
 		
 		if(lightningBolt) gl_FragData[0].rgb = vec3(77.0, 153.0, 255.0);
 
 	}
+	
+
 
 	if(translucent_alpha > 0.0 ){
 		#ifdef DISTANT_HORIZONS
@@ -1370,6 +1402,10 @@ void main() {
 		// FilteredDebug += vec3(15.0) * exp(-7.0 * vec3(0.5,1.0,1.0) * pow(SSAO_SSS.y,2));
   		gl_FragData[0].rgb =  FilteredDebug;
 	#endif
+
+
+
+
 
 	#ifdef CLOUDS_INFRONT_OF_WORLD
 		gl_FragData[1] = texture2D(colortex2, texcoord);
