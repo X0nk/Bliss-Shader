@@ -428,6 +428,9 @@ screen.POM = Parallax Occlusion Mapping / POM
     option.Horrible_slope_normals = Horrible Slope Normals
 
 
+screen.Stars = Star Settings
+    option.STAR_DENSITY = Starfield Density
+
 screen.Porosity = Porosity / Puddles
     option.Porosity = Porosity
     option.Puddles = Puddles
