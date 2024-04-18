@@ -101,7 +101,7 @@ uniform vec3 cameraPosition;
 void main() {
     
     #ifdef DH_OVERDRAW_PREVENTION
-        if(clamp(1.0-length(pos.xyz)/max(far - 32.0 * sqrt(interleaved_gradientNoise_temporal()),0.0),0.0,1.0) > 0.0 ){
+        if(clamp(1.0-length(pos.xyz)/max(far - 32.0,0.0),0.0,1.0) > 0.0 ){
             discard;
             return;
         }
@@ -128,15 +128,9 @@ void main() {
 		if(dh_material_id == DH_BLOCK_LEAVES || dh_material_id == DH_BLOCK_WATER) { // leaves and waterlogged blocks
 			float grey = dot(Albedo.rgb, vec3(0.2, 01.0, 0.07));
 			Albedo.rgb = mix(vec3(grey), aerochrome_color, 0.7);
-		} else if(dh_material_id == DH_BLOCK_DIRT) { // dirt and grass
-			// separate out green colors as mask
-			float green = saturate(pow(normalize(Albedo.rgb).g, 3.0));
-			// if(Albedo.r > 0.5) green += 0.15;
-			if(Albedo.b > 0.8) green += 0.15;
-			// calculate actual color
-			vec3 red = mix(Albedo.rgb, aerochrome_color, 1.0 - Albedo.g);
-			// apply color only to masked area
-			Albedo.rgb = green > 0.2 ? red : Albedo.rgb;
+			
+		} else if(dh_material_id == DH_BLOCK_GRASS) { // grass
+			Albedo.rgb = mix(Albedo.rgb, aerochrome_color, 1.0 - Albedo.g);
 		}
 	#endif
 
