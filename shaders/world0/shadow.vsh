@@ -1,5 +1,8 @@
 #version 120
 #include "/lib/settings.glsl"
+#ifdef IS_LPV_ENABLED
+	#extension GL_EXT_shader_image_load_store: enable
+#endif
 
 
 
@@ -45,6 +48,11 @@ uniform int entityId;
 
 #include "/lib/Shadow_Params.glsl"
 #include "/lib/bokeh.glsl"
+
+#ifdef IS_LPV_ENABLED
+	#include "/lib/lpv_common.glsl"
+	#include "/lib/lpv_write.glsl"
+#endif
 
 const float PI48 = 150.796447372*WAVY_SPEED;
 float pi2wt = PI48*frameTimeCounter;
@@ -170,18 +178,26 @@ void main() {
 	// 	}
 	// #endif
 
+	uint blockId = uint(mc_Entity.x + 0.5);
+
+	#if defined IS_LPV_ENABLED || defined WAVY_PLANTS
+		vec3 playerpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
+	#endif
+
+	#if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
+		SetVoxelBlock(playerpos, blockId);
+	#endif
+
 	#ifdef WAVY_PLANTS
   		bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
-  		if ((mc_Entity.x == 10001 || mc_Entity.x == 10009 && istopv) && length(position.xy) < 24.0) {
-  		  vec3 worldpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
-  		  worldpos.xyz += calcMovePlants(worldpos.xyz + cameraPosition)*gl_MultiTexCoord1.y;
-  		  position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz ;
+  		if ((blockId == 10001u || blockId == 10009u && istopv) && length(position.xy) < 24.0) {
+			playerpos += calcMovePlants(playerpos + cameraPosition)*gl_MultiTexCoord1.y;
+			position = mat3(shadowModelView) * playerpos + shadowModelView[3].xyz;
   		}
 
-  		if (mc_Entity.x == 10003 && length(position.xy) < 24.0) {
-  		  vec3 worldpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
-  		  worldpos.xyz += calcMoveLeaves(worldpos.xyz + cameraPosition, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*gl_MultiTexCoord1.y;
-  		  position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz ;
+  		if (blockId == 10003u && length(position.xy) < 24.0) {
+			playerpos += calcMoveLeaves(playerpos + cameraPosition, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*gl_MultiTexCoord1.y;
+			position = mat3(shadowModelView) * playerpos + shadowModelView[3].xyz;
   		}
 	#endif
 	
@@ -193,13 +209,13 @@ void main() {
 
 
  	
-	if(mc_Entity.x == 8 ) gl_Position.w = -1.0;
+	if (blockId == 8u) gl_Position.w = -1.0;
 	// color.a = 1.0;
-	// if(mc_Entity.x != 10002) color.a = 0.0;
+	// if(blockId != 10002) color.a = 0.0;
 	
 	
 	// materials = 0.0;
-	// if(mc_Entity.x == 8) materials = 1.0;
+	// if(blockId == 8) materials = 1.0;
 
 
  	/// this is to ease the shadow acne on big fat entities like ghasts.

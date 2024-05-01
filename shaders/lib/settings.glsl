@@ -669,6 +669,18 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 #define DH_KNOWN_ISSUES 0 // [0 1 2 3 4 5]
 
 
+///////////////////////////////////////////
+// ----- DISTANT HORIZONS SETTINGS ----- //
+///////////////////////////////////////////
+
+#define LPV_ENABLED
+#define LPV_SIZE 7 // [6 7 8]
+
+#if defined LPV_ENABLED && defined IRIS_FEATURE_CUSTOM_IMAGES
+	#define IS_LPV_ENABLED
+#endif
+
+
 ////////////////////////////////
 // ----- DEBUG SETTINGS ----- //
 ////////////////////////////////
