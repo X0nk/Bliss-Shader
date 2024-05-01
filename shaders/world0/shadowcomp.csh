@@ -24,15 +24,9 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 	#define EPSILON 1e-6
 
 
-	// varying vec2 texcoord;
-	// uniform sampler2D tex;
-	// uniform sampler2D noisetex;
 	uniform int frameCounter;
-	// uniform float frameTimeCounter;
 	uniform vec3 cameraPosition;
-	// varying vec4 color;
 
-	// #include "/lib/waterBump.glsl"
 	#include "/lib/hsv.glsl"
 	#include "/lib/blocks.glsl"
 	#include "/lib/lpv_common.glsl"
@@ -40,12 +34,7 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 	#include "/lib/voxel_common.glsl"
 	#include "/lib/voxel_read.glsl"
 
-	// uniform mat4 gbufferProjectionInverse;
 	// uniform mat4 gbufferModelViewInverse;
-	// uniform mat4 gbufferModelView;
-	// uniform mat4 shadowModelView;
-	// uniform mat4 shadowModelViewInverse;
-	// uniform mat4 shadowProjection;
 
 	int sumOf(ivec3 vec) {return vec.x + vec.y + vec.z;}
 
@@ -141,8 +130,6 @@ void main() {
         ivec3 imgCoord = ivec3(gl_GlobalInvocationID);
         if (any(greaterThanEqual(imgCoord, LpvSize3))) return;
 
-        // vec3 blockLocalPos = gridCell * LIGHT_BIN_SIZE + blockCell - VoxelBlockCenter + cameraOffset + 0.5;
-
         // vec3 viewDir = gbufferModelViewInverse[2].xyz;
         vec3 lpvCenter = vec3(0.0);//GetLpvCenter(cameraPosition, viewDir);
         vec3 blockLocalPos = imgCoord - lpvCenter + 0.5;
@@ -176,23 +163,20 @@ void main() {
 
         #if LIGHTING_MODE >= LIGHTING_MODE_FLOODFILL
             if (blockId > 0 && blockId != BLOCK_EMPTY) {
-                //uint lightType = LpvBlockMap[blockId].lightType;
+                vec3 lightColor = unpackUnorm4x8(blockData.LightColor).rgb;
+                vec2 lightRangeSize = unpackUnorm4x8(blockData.LightRangeSize).xy;
+                float lightRange = lightRangeSize.x * 255.0;
 
-                //if (lightType != LIGHT_NONE && lightType != LIGHT_IGNORED) {
-                    //StaticLightData lightInfo = StaticLightMap[lightType];
-                    vec3 lightColor = unpackUnorm4x8(blockData.LightColor).rgb;
-                    vec2 lightRangeSize = unpackUnorm4x8(blockData.LightRangeSize).xy;
-                    float lightRange = lightRangeSize.x * 255.0;
+                lightColor = RGBToLinear(lightColor);
 
-                    lightColor = RGBToLinear(lightColor);
+                // #ifdef LIGHTING_FLICKER
+                //    vec2 lightNoise = GetDynLightNoise(cameraPosition + blockLocalPos);
+                //    ApplyLightFlicker(lightColor, lightType, lightNoise);
+                // #endif
 
-                    // #ifdef LIGHTING_FLICKER
-                    //    vec2 lightNoise = GetDynLightNoise(cameraPosition + blockLocalPos);
-                    //    ApplyLightFlicker(lightColor, lightType, lightNoise);
-                    // #endif
-
+                if (lightRange > EPSILON) {
                     lightValue.rgb = Lpv_RgbToHsv(lightColor, lightRange);
-                //}
+                }
             }
         #endif
 
