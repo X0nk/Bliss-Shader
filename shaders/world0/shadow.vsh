@@ -50,8 +50,8 @@ uniform int entityId;
 #include "/lib/bokeh.glsl"
 
 #ifdef IS_LPV_ENABLED
-	#include "/lib/lpv_common.glsl"
-	#include "/lib/lpv_write.glsl"
+	#include "/lib/voxel_common.glsl"
+	#include "/lib/voxel_write.glsl"
 #endif
 
 const float PI48 = 150.796447372*WAVY_SPEED;
@@ -185,6 +185,7 @@ void main() {
 	#endif
 
 	#if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
+		// TODO: limit to blocks; entities later
 		SetVoxelBlock(playerpos, blockId);
 	#endif
 
