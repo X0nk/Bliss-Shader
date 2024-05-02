@@ -20,7 +20,7 @@ vec4 SampleLpvNearest(const in ivec3 lpvPos) {
 }
 
 vec4 SampleLpvLinear(const in vec3 lpvPos) {
-    vec3 pos = lpvPos;// - 0.5;
+    vec3 pos = lpvPos - 0.5;
     ivec3 lpvCoord = ivec3(floor(pos));
     vec3 lpvF = fract(pos);
 
@@ -98,7 +98,7 @@ vec4 SampleLpvLinear(const in vec3 lpvPos) {
 
 vec3 GetLpvBlockLight(const in vec4 lpvSample) {
     // return GetLpvBlockLight(lpvSample, 1.0);
-    return lpvSample.rgb;// * LPV_BLOCKLIGHT_SCALE);// * DynamicLightBrightness;
+    return 3.0 * lpvSample.rgb;// * LPV_BLOCKLIGHT_SCALE);// * DynamicLightBrightness;
 }
 
 float GetLpvSkyLight(const in vec4 lpvSample) {
