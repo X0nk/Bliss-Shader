@@ -121,43 +121,35 @@ void main() {
         if (any(greaterThanEqual(chunkPos, LpvSize3))) return;
 
         PopulateShared();
-
         barrier();
 
         ivec3 imgCoord = ivec3(gl_GlobalInvocationID);
         if (any(greaterThanEqual(imgCoord, LpvSize3))) return;
 
-        // vec3 viewDir = gbufferModelViewInverse[2].xyz;
-        //vec3 lpvCenter = vec3(0.0);//GetLpvCenter(cameraPosition, viewDir);
-        //vec3 blockLocalPos = imgCoord - lpvCenter + 0.5;
-
         vec4 lightValue = vec4(0.0);
         uint mixMask = 0xFFFF;
-        vec3 tint = vec3(1.0);
 
         uint blockId = voxelSharedData[getSharedCoord(ivec3(gl_LocalInvocationID) + 1)];
         float mixWeight = blockId == BLOCK_EMPTY ? 1.0 : 0.0;
+    	vec3 tintColor = vec3(1.0);
 
-        if (blockId > 0 && blockId != BLOCK_EMPTY)
+        if (blockId > 0u) {//&& blockId != BLOCK_EMPTY)
             ParseBlockLpvData(LpvBlockMap[blockId - LpvBlockMapOffset].MaskWeight, mixMask, mixWeight);
 
-        #ifdef LPV_GLASS_TINT
-            if (blockId >= BLOCK_HONEY && blockId <= BLOCK_TINTED_GLASS) {
-                tint = GetLightGlassTint(blockId);
-                mixWeight = 1.0;
-            }
-        #endif
-        
+        	uint tintData = LpvBlockMap[blockId - LpvBlockMapOffset].Tint;
+        	tintColor = unpackUnorm4x8(tintData).rgb;
+        }
+    
         if (mixWeight > EPSILON) {
             vec4 lightMixed = mixNeighbours(ivec3(gl_LocalInvocationID), mixMask);
-            lightMixed.rgb *= mixWeight * tint;
+            lightMixed.rgb *= RGBToLinear(tintColor) * mixWeight;
             lightValue += lightMixed;
         }
 
         lightValue.rgb = RgbToHsv(lightValue.rgb);
         lightValue.ba = log2(lightValue.ba + 1.0) / LpvBlockSkyRange;
 
-        if (blockId > 0 && blockId != BLOCK_EMPTY) {
+        if (blockId > 0u) {// && blockId != BLOCK_EMPTY) {
             vec4 lightColorRange = unpackUnorm4x8(LpvBlockMap[blockId - LpvBlockMapOffset].ColorRange);
             float lightRange = lightColorRange.a * 255.0;
 

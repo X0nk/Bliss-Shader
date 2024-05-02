@@ -1,6 +1,7 @@
-struct LpvBlockData {           // 8 x1280 =?
+struct LpvBlockData {           // 12 x1280 =?
     uint MaskWeight;            // 4
     uint ColorRange;            // 4
+    uint Tint;                  // 4
 };
 
 #ifdef RENDER_SETUP

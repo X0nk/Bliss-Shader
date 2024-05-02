@@ -25,6 +25,7 @@ void main() {
         float lightRange = 0.0;
         float mixWeight = 0.0;
         uint mixMask = 0xFFFF;
+        vec3 tintColor = vec3(1.0);
 
         switch (blockId) {
             case BLOCK_BEACON:
@@ -139,15 +140,90 @@ void main() {
                 break;
 
 
+            case BLOCK_HONEY:
+                tintColor = vec3(0.984, 0.733, 0.251);
+                mixWeight = 1.0;
+                break;
             case BLOCK_NETHER_PORTAL:
                 lightColor = vec3(0.502, 0.165, 0.831);
+                tintColor = vec3(0.502, 0.165, 0.831);
                 lightRange = 11.0;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_SLIME:
+                tintColor = vec3(0.408, 0.725, 0.329);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_BLACK:
+                tintColor = vec3(0.3);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_BLUE:
+                tintColor = vec3(0.1, 0.1, 0.98);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_BROWN:
+                tintColor = vec3(0.566, 0.388, 0.148);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_CYAN:
+                tintColor = vec3(0.082, 0.533, 0.763);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_GRAY:
+                tintColor = vec3(0.4, 0.4, 0.4);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_GREEN:
+                tintColor = vec3(0.125, 0.808, 0.081);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_LIGHT_BLUE:
+                tintColor = vec3(0.320, 0.685, 0.955);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_LIGHT_GRAY:
+                tintColor = vec3(0.7);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_LIME:
+                tintColor = vec3(0.633, 0.924, 0.124);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_MAGENTA:
+                tintColor = vec3(0.698, 0.298, 0.847);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_ORANGE:
+                tintColor = vec3(0.919, 0.586, 0.185);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_PINK:
+                tintColor = vec3(0.949, 0.274, 0.497);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_PURPLE:
+                tintColor = vec3(0.578, 0.170, 0.904);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_RED:
+                tintColor = vec3(0.999, 0.188, 0.188);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_WHITE:
+                tintColor = vec3(0.96, 0.96, 0.96);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_GLASS_YELLOW:
+                tintColor = vec3(0.965, 0.965, 0.123);
+                mixWeight = 1.0;
                 break;
         }
 
         LpvBlockData block;
         block.ColorRange = packUnorm4x8(vec4(lightColor, lightRange/255.0));
         block.MaskWeight = BuildBlockLpvData(mixMask, mixWeight);
+        block.Tint = packUnorm4x8(vec4(tintColor, 0.0));
         LpvBlockMap[blockId - LpvBlockMapOffset] = block;
     #endif
 }
