@@ -11,9 +11,13 @@ const ivec3 workGroups = ivec3(4, 5, 1);
 #ifdef IS_LPV_ENABLED
     #include "/lib/blocks.glsl"
     #include "/lib/lpv_blocks.glsl"
-#endif
 
-const vec3 LightColor_SeaPickle = vec3(0.283, 0.394, 0.212);
+    const vec3 LightColor_SeaPickle = vec3(0.283, 0.394, 0.212);
+    
+    uint BuildLpvMask(const in uint north, const in uint east, const in uint south, const in uint west, const in uint up, const in uint down) {
+        return east | (west << 1) | (down << 2) | (up << 3) | (south << 4) | (north << 5);
+    }
+#endif
 
 
 void main() {
@@ -216,6 +220,24 @@ void main() {
                 break;
             case BLOCK_GLASS_YELLOW:
                 tintColor = vec3(0.965, 0.965, 0.123);
+                mixWeight = 1.0;
+                break;
+
+
+            case BLOCK_DOOR_N:
+                mixMask = BuildLpvMask(0u, 1u, 1u, 1u, 1u, 1u);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_DOOR_E:
+                mixMask = BuildLpvMask(1u, 0u, 1u, 1u, 1u, 1u);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_DOOR_S:
+                mixMask = BuildLpvMask(1u, 1u, 0u, 1u, 1u, 1u);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_DOOR_W:
+                mixMask = BuildLpvMask(1u, 1u, 1u, 0u, 1u, 1u);
                 mixWeight = 1.0;
                 break;
         }
