@@ -34,8 +34,6 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 	#include "/lib/voxel_common.glsl"
 	#include "/lib/voxel_read.glsl"
 
-	// uniform mat4 gbufferModelViewInverse;
-
 	int sumOf(ivec3 vec) {return vec.x + vec.y + vec.z;}
 
 	vec3 RGBToLinear(const in vec3 color) {
@@ -77,7 +75,7 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 	    uint blockId = voxelSharedData[shared_index];
 	    
 	    if (blockId > 0 && blockId != BLOCK_EMPTY)
-	        ParseBlockLpvData(LpvBlockMap[blockId].MaskWeight, mixMask, mixWeight);
+	        ParseBlockLpvData(LpvBlockMap[blockId - LpvBlockMapOffset].MaskWeight, mixMask, mixWeight);
 
 	    return lpvSharedData[shared_index] * ((mixMask >> mask_index) & 1u);// * mixWeight;
 	}
@@ -141,7 +139,7 @@ void main() {
         float mixWeight = blockId == BLOCK_EMPTY ? 1.0 : 0.0;
 
         if (blockId > 0 && blockId != BLOCK_EMPTY)
-            ParseBlockLpvData(LpvBlockMap[blockId].MaskWeight, mixMask, mixWeight);
+            ParseBlockLpvData(LpvBlockMap[blockId - LpvBlockMapOffset].MaskWeight, mixMask, mixWeight);
 
         #ifdef LPV_GLASS_TINT
             if (blockId >= BLOCK_HONEY && blockId <= BLOCK_TINTED_GLASS) {
@@ -160,16 +158,11 @@ void main() {
         lightValue.ba = log2(lightValue.ba + 1.0) / LpvBlockSkyRange;
 
         if (blockId > 0 && blockId != BLOCK_EMPTY) {
-            vec4 lightColorRange = unpackUnorm4x8(LpvBlockMap[blockId].ColorRange);
-            vec3 lightColor = RGBToLinear(lightColorRange.rgb);
+            vec4 lightColorRange = unpackUnorm4x8(LpvBlockMap[blockId - LpvBlockMapOffset].ColorRange);
             float lightRange = lightColorRange.a * 255.0;
 
-            // #ifdef LIGHTING_FLICKER
-            //    vec2 lightNoise = GetDynLightNoise(cameraPosition + blockLocalPos);
-            //    ApplyLightFlicker(lightColor, lightType, lightNoise);
-            // #endif
-
             if (lightRange > EPSILON) {
+	            vec3 lightColor = RGBToLinear(lightColorRange.rgb);
                 lightValue.rgb = Lpv_RgbToHsv(lightColor, lightRange);
             }
         }

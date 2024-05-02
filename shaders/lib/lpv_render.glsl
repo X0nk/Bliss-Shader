@@ -3,8 +3,7 @@ vec4 SampleLpvNearest(const in ivec3 lpvPos) {
         ? imageLoad(imgLpv1, lpvPos)
         : imageLoad(imgLpv2, lpvPos);
 
-    //lpvSample.ba = exp2(lpvSample.ba * LpvBlockSkyRange) - 1.0;
-    lpvSample.b = (lpvSample.b*lpvSample.b) * LpvBlockSkyRange.x;
+    lpvSample.b = pow(lpvSample.b, 4) * LpvBlockSkyRange.x;
     lpvSample.rgb = HsvToRgb(lpvSample.rgb);
 
     return lpvSample;

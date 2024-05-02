@@ -1,5 +1,5 @@
 struct LpvBlockData {           // 8 x1280 =?
-    uint MaskWeight;               // 4
+    uint MaskWeight;            // 4
     uint ColorRange;            // 4
 };
 
@@ -11,6 +11,8 @@ struct LpvBlockData {           // 8 x1280 =?
 {
     LpvBlockData LpvBlockMap[];
 };
+
+const int LpvBlockMapOffset = 999;
 
 uint BuildBlockLpvData(uint mixMask, float mixWeight) {
     uint data = uint(saturate(mixWeight) * 255.0);
