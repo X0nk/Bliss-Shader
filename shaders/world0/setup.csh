@@ -13,7 +13,7 @@ const ivec3 workGroups = ivec3(4, 5, 1);
     #include "/lib/lpv_blocks.glsl"
 
     const vec3 LightColor_SeaPickle = vec3(0.283, 0.394, 0.212);
-    
+
     uint BuildLpvMask(const in uint north, const in uint east, const in uint south, const in uint west, const in uint up, const in uint down) {
         return east | (west << 1) | (down << 2) | (up << 3) | (south << 4) | (north << 5);
     }
@@ -237,6 +237,32 @@ void main() {
                 mixWeight = 1.0;
                 break;
             case BLOCK_DOOR_W:
+                mixMask = BuildLpvMask(1u, 1u, 1u, 0u, 1u, 1u);
+                mixWeight = 1.0;
+                break;
+
+
+            case BLOCK_TRAPDOOR_BOTTOM:
+                mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_TRAPDOOR_TOP:
+                mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 0u, 1u);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_TRAPDOOR_N:
+                mixMask = BuildLpvMask(0u, 1u, 1u, 1u, 1u, 1u);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_TRAPDOOR_E:
+                mixMask = BuildLpvMask(1u, 0u, 1u, 1u, 1u, 1u);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_TRAPDOOR_S:
+                mixMask = BuildLpvMask(1u, 1u, 0u, 1u, 1u, 1u);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_TRAPDOOR_W:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 0u, 1u, 1u);
                 mixWeight = 1.0;
                 break;
