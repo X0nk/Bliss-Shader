@@ -1268,8 +1268,8 @@ void main() {
 		#endif
 	
 		#ifdef IS_LPV_ENABLED
-			vec3 lpvPos = GetLpvPosition(feetPlayerPos) + 0.5*viewToWorld(FlatNormals);
-			// vec3 lpvPos = GetLpvPosition(feetPlayerPos) - 0.5*FlatNormals + slopednormal;
+			// vec3 lpvPos = GetLpvPosition(feetPlayerPos) + 0.5*viewToWorld(FlatNormals);
+			vec3 lpvPos = GetLpvPosition(feetPlayerPos) - 0.5*viewToWorld(FlatNormals) + slopednormal;
 		#else
 			const vec3 lpvPos = vec3(0.0);
 		#endif

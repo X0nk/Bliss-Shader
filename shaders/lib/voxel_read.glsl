@@ -1,12 +1,6 @@
 uint GetVoxelBlock(const in ivec3 voxelPos) {
-	// TODO: exit early if outside bounds
+	if (clamp(voxelPos, ivec3(0), ivec3(VoxelSize3-1u)) != voxelPos)
+		return BLOCK_EMPTY;
 	
 	return imageLoad(imgVoxelMask, voxelPos).r;
 }
-
-// uint GetVoxelBlock(const in vec3 playerPos) {
-// 	ivec3 voxelPos = GetVoxelIndex(playerPos);
-
-// 	// TODO: exit early if outside bounds
-// 	return imageLoad(imgVoxelMask, voxelPos).r;
-// }
