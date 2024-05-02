@@ -131,8 +131,8 @@ void main() {
         if (any(greaterThanEqual(imgCoord, LpvSize3))) return;
 
         // vec3 viewDir = gbufferModelViewInverse[2].xyz;
-        vec3 lpvCenter = vec3(0.0);//GetLpvCenter(cameraPosition, viewDir);
-        vec3 blockLocalPos = imgCoord - lpvCenter + 0.5;
+        //vec3 lpvCenter = vec3(0.0);//GetLpvCenter(cameraPosition, viewDir);
+        //vec3 blockLocalPos = imgCoord - lpvCenter + 0.5;
 
         vec4 lightValue = vec4(0.0);
         uint mixMask = 0xFFFF;
@@ -161,24 +161,22 @@ void main() {
         lightValue.rgb = RgbToHsv(lightValue.rgb);
         lightValue.ba = log2(lightValue.ba + 1.0) / LpvBlockSkyRange;
 
-        #if LIGHTING_MODE >= LIGHTING_MODE_FLOODFILL
-            if (blockId > 0 && blockId != BLOCK_EMPTY) {
-                vec3 lightColor = unpackUnorm4x8(blockData.LightColor).rgb;
-                vec2 lightRangeSize = unpackUnorm4x8(blockData.LightRangeSize).xy;
-                float lightRange = lightRangeSize.x * 255.0;
+        if (blockId > 0 && blockId != BLOCK_EMPTY) {
+            vec3 lightColor = unpackUnorm4x8(blockData.LightColor).rgb;
+            vec2 lightRangeSize = unpackUnorm4x8(blockData.LightRangeSize).xy;
+            float lightRange = lightRangeSize.x * 255.0;
 
-                lightColor = RGBToLinear(lightColor);
+            lightColor = RGBToLinear(lightColor);
 
-                // #ifdef LIGHTING_FLICKER
-                //    vec2 lightNoise = GetDynLightNoise(cameraPosition + blockLocalPos);
-                //    ApplyLightFlicker(lightColor, lightType, lightNoise);
-                // #endif
+            // #ifdef LIGHTING_FLICKER
+            //    vec2 lightNoise = GetDynLightNoise(cameraPosition + blockLocalPos);
+            //    ApplyLightFlicker(lightColor, lightType, lightNoise);
+            // #endif
 
-                if (lightRange > EPSILON) {
-                    lightValue.rgb = Lpv_RgbToHsv(lightColor, lightRange);
-                }
+            if (lightRange > EPSILON) {
+                lightValue.rgb = Lpv_RgbToHsv(lightColor, lightRange);
             }
-        #endif
+        }
 
         if (frameCounter % 2 == 0)
             imageStore(imgLpv1, imgCoord, lightValue);

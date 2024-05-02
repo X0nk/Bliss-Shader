@@ -1,4 +1,5 @@
 vec3 DoAmbientLightColor(
+    vec3 lpvPos,
     vec3 SkyColor,
     vec3 MinimumColor,
     vec3 TorchColor, 
@@ -12,11 +13,16 @@ vec3 DoAmbientLightColor(
     vec3 IndirectLight = max(SkyColor * ambient_brightness * skyLM, MinimumLight); 
 
     // do torch lighting.
-    // float TorchLM = 10.0 - ( 1.0 / (pow(exp(-0.5*inversesqrt(Lightmap.x)),5.0)+0.1));
-    // TorchLM = pow(TorchLM/4,10) + pow(Lightmap.x,1.5)*0.5;
+    #if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
+        vec4 lpvSample = SampleLpv(lpvPos);
+        vec3 TorchLight = GetLpvBlockLight(lpvSample);
+    #else
+        // float TorchLM = 10.0 - ( 1.0 / (pow(exp(-0.5*inversesqrt(Lightmap.x)),5.0)+0.1));
+        // TorchLM = pow(TorchLM/4,10) + pow(Lightmap.x,1.5)*0.5;
 
-    float TorchLM = pow(Lightmap.x,10.0)*5.0 + pow(Lightmap.x,1.5);
-	vec3 TorchLight = TorchColor * TORCH_AMOUNT * TorchLM * (1.0 + LightLevelZero*dot(SkyColor * ambient_brightness,vec3(0.3333)));
+        float TorchLM = pow(Lightmap.x,10.0)*5.0 + pow(Lightmap.x,1.5);
+    	vec3 TorchLight = TorchColor * TORCH_AMOUNT * TorchLM * (1.0 + LightLevelZero*dot(SkyColor * ambient_brightness,vec3(0.3333)));
+    #endif
 
     return IndirectLight + TorchLight;
 }

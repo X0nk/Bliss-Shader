@@ -12,4 +12,9 @@ const uvec3 LpvSize3 = uvec3(LpvSize);
 //     layout(r16ui) uniform readonly uimage2D imgVoxelMask;
 // #endif
 
-#define LIGHT_NONE 0
+// #define LIGHT_NONE 0
+
+vec3 GetLpvPosition(const in vec3 playerPos) {
+	vec3 cameraOffset = fract(cameraPosition);
+	return playerPos + cameraOffset + LpvSize3/2u + 0.5;
+}

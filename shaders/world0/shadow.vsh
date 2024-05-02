@@ -50,6 +50,9 @@ uniform int entityId;
 #include "/lib/bokeh.glsl"
 
 #ifdef IS_LPV_ENABLED
+	attribute vec3 at_midBlock;
+	uniform int renderStage;
+
 	#include "/lib/voxel_common.glsl"
 	#include "/lib/voxel_write.glsl"
 #endif
@@ -185,8 +188,18 @@ void main() {
 	#endif
 
 	#if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
-		// TODO: limit to blocks; entities later
-		SetVoxelBlock(playerpos, blockId);
+		if (
+			renderStage == MC_RENDER_STAGE_TERRAIN_SOLID ||
+			renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT ||
+			renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT_MIPPED ||
+			renderStage == MC_RENDER_STAGE_TERRAIN_TRANSLUCENT
+		) {
+			uint voxelId = blockId;
+			if (voxelId == 0u) voxelId = 1u;
+
+			vec3 origin = playerpos + at_midBlock/64.0;
+			SetVoxelBlock(origin, voxelId);
+		}
 	#endif
 
 	#ifdef WAVY_PLANTS
