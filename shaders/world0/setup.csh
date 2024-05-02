@@ -275,6 +275,14 @@ void main() {
                 mixWeight = 0.8;
                 break;
 
+            case BLOCK_SLAB_TOP:
+                mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 0u, 1u);
+                mixWeight = 0.5;
+                break;
+            case BLOCK_SLAB_BOTTOM:
+                mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);
+                mixWeight = 0.5;
+                break;
 
             case BLOCK_TRAPDOOR_BOTTOM:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);
