@@ -14,7 +14,7 @@ vec3 DoAmbientLightColor(
 
     // do torch lighting.
     #if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
-        vec4 lpvSample = SampleLpv(lpvPos);
+        vec4 lpvSample = SampleLpvLinear(lpvPos);
         vec3 TorchLight = GetLpvBlockLight(lpvSample);
     #else
         // float TorchLM = 10.0 - ( 1.0 / (pow(exp(-0.5*inversesqrt(Lightmap.x)),5.0)+0.1));

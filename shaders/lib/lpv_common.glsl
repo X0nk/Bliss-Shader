@@ -4,6 +4,8 @@ layout(rgba8) uniform image3D imgLpv2;
 const uint LpvSize = uint(exp2(LPV_SIZE));
 const uvec3 LpvSize3 = uvec3(LpvSize);
 
+const vec2 LpvBlockSkyRange = vec2(1.0, 24.0);
+
 // #if defined RENDER_SHADOWCOMP || defined RENDER_GBUFFER
 //     layout(r16ui) uniform uimage2D imgVoxelMask;
 // #elif defined RENDER_BEGIN || defined RENDER_GEOMETRY || defined RENDER_VERTEX
@@ -16,5 +18,5 @@ const uvec3 LpvSize3 = uvec3(LpvSize);
 
 vec3 GetLpvPosition(const in vec3 playerPos) {
 	vec3 cameraOffset = fract(cameraPosition);
-	return playerPos + cameraOffset + LpvSize3/2u + 0.5;
+	return playerPos + cameraOffset + LpvSize3/2u;
 }
