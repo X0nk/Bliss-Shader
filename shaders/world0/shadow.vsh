@@ -226,7 +226,7 @@ void main() {
  	
 	if (blockId == 8u) gl_Position.w = -1.0;
 	// color.a = 1.0;
-	// if(blockId != 10002) color.a = 0.0;
+	// if((blockID < 1200 || blockID >= 1300)) color.a = 0.0;
 	
 	
 	// materials = 0.0;

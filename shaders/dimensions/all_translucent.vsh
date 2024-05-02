@@ -104,7 +104,7 @@ void main() {
     	gl_Position.z -= 1e-4;
   	}
 
-	if (mc_Entity.x == 10002) mat = 0.2;
+	if (mc_Entity.x >= 1200 && mc_Entity.x < 1300) mat = 0.2;
 	if (mc_Entity.x == 72) mat = 0.5;
 
 	#if defined ENTITIES || defined BLOCKENTITIES

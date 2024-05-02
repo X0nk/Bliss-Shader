@@ -442,7 +442,7 @@ void main() {
 				Albedo.rgb = mix(Albedo.rgb, aerochrome_color, 0.3);
 			}
 		#endif
-		else if(blockID == 8 || blockID == 10002)
+		else if(blockID == 8 || (blockID >= 1200 && blockID < 1300))
 		{
 		// IR Absorbsive? Dark.
 			Albedo.rgb = mix(Albedo.rgb, vec3(0.01, 0.08, 0.15), 0.5);
