@@ -12,6 +12,7 @@ const ivec3 workGroups = ivec3(4, 5, 1);
     #include "/lib/blocks.glsl"
     #include "/lib/lpv_blocks.glsl"
 
+    const vec3 LightColor_Candles = vec3(1.0, 0.4, 0.1);
     const vec3 LightColor_SeaPickle = vec3(0.283, 0.394, 0.212);
 
     uint BuildLpvMask(const in uint north, const in uint east, const in uint south, const in uint west, const in uint up, const in uint down) {
@@ -36,9 +37,30 @@ void main() {
                 lightColor = vec3(1.0);
                 lightRange = 15.0;
                 break;
+            case BLOCK_CANDLES_LIT_1:
+                lightColor = LightColor_Candles;
+                lightRange = 3.0;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_CANDLES_LIT_2:
+                lightColor = LightColor_Candles;
+                lightRange = 6.0;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_CANDLES_LIT_3:
+                lightColor = LightColor_Candles;
+                lightRange = 9.0;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_CANDLES_LIT_4:
+                lightColor = LightColor_Candles;
+                lightRange = 12.0;
+                mixWeight = 1.0;
+                break;
             case BLOCK_CAVE_VINE_BERRIES:
                 lightColor = vec3(0.717, 0.541, 0.188);
                 lightRange = 14.0;
+                mixWeight = 1.0;
                 break;
             case BLOCK_CONDUIT:
                 lightColor = vec3(1.0);
@@ -55,6 +77,7 @@ void main() {
             case BLOCK_FIRE:
                 lightColor = vec3(0.864, 0.598, 0.348);
                 lightRange = 15.0;
+                mixWeight = 1.0;
                 break;
             case BLOCK_FROGLIGHT_OCHRE:
                 lightColor = vec3(0.768, 0.648, 0.108);
@@ -79,6 +102,7 @@ void main() {
             case BLOCK_LANTERN:
                 lightColor = vec3(1.0, 0.7, 0.1);
                 lightRange = 15.0;
+                mixWeight = 0.8;
                 break;
             case BLOCK_LAVA:
                 lightColor = vec3(0.804, 0.424, 0.149);
@@ -107,18 +131,22 @@ void main() {
             case BLOCK_SEA_PICKLE_WET_1:
                 lightColor = LightColor_SeaPickle;
                 lightRange = 6.0;
+                mixWeight = 1.0;
                 break;
             case BLOCK_SEA_PICKLE_WET_2:
                 lightColor = LightColor_SeaPickle;
                 lightRange = 9.0;
+                mixWeight = 1.0;
                 break;
             case BLOCK_SEA_PICKLE_WET_3:
                 lightColor = LightColor_SeaPickle;
                 lightRange = 12.0;
+                mixWeight = 1.0;
                 break;
             case BLOCK_SEA_PICKLE_WET_4:
                 lightColor = LightColor_SeaPickle;
                 lightRange = 15.0;
+                mixWeight = 1.0;
                 break;
             case BLOCK_SEA_LANTERN:
                 lightColor = vec3(0.553, 0.748, 0.859);
@@ -133,14 +161,20 @@ void main() {
                 lightRange = 13.0;
                 break;
             case BLOCK_SOUL_FIRE:
+                lightColor = vec3(0.1, 0.6, 1.0);
+                lightRange = 10.0;
+                mixWeight = 1.0;
+                break;
             case BLOCK_SOUL_LANTERN:
             case BLOCK_SOUL_TORCH:
                 lightColor = vec3(0.1, 0.6, 1.0);
                 lightRange = 10.0;
+                mixWeight = 0.8;
                 break;
             case BLOCK_TORCH:
                 lightColor = vec3(1.0, 0.6, 0.1);
                 lightRange = 14.0;
+                mixWeight = 0.8;
                 break;
 
 
@@ -226,45 +260,45 @@ void main() {
 
             case BLOCK_DOOR_N:
                 mixMask = BuildLpvMask(0u, 1u, 1u, 1u, 1u, 1u);
-                mixWeight = 1.0;
+                mixWeight = 0.8;
                 break;
             case BLOCK_DOOR_E:
                 mixMask = BuildLpvMask(1u, 0u, 1u, 1u, 1u, 1u);
-                mixWeight = 1.0;
+                mixWeight = 0.8;
                 break;
             case BLOCK_DOOR_S:
                 mixMask = BuildLpvMask(1u, 1u, 0u, 1u, 1u, 1u);
-                mixWeight = 1.0;
+                mixWeight = 0.8;
                 break;
             case BLOCK_DOOR_W:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 0u, 1u, 1u);
-                mixWeight = 1.0;
+                mixWeight = 0.8;
                 break;
 
 
             case BLOCK_TRAPDOOR_BOTTOM:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);
-                mixWeight = 1.0;
+                mixWeight = 0.8;
                 break;
             case BLOCK_TRAPDOOR_TOP:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 0u, 1u);
-                mixWeight = 1.0;
+                mixWeight = 0.8;
                 break;
             case BLOCK_TRAPDOOR_N:
                 mixMask = BuildLpvMask(0u, 1u, 1u, 1u, 1u, 1u);
-                mixWeight = 1.0;
+                mixWeight = 0.8;
                 break;
             case BLOCK_TRAPDOOR_E:
                 mixMask = BuildLpvMask(1u, 0u, 1u, 1u, 1u, 1u);
-                mixWeight = 1.0;
+                mixWeight = 0.8;
                 break;
             case BLOCK_TRAPDOOR_S:
                 mixMask = BuildLpvMask(1u, 1u, 0u, 1u, 1u, 1u);
-                mixWeight = 1.0;
+                mixWeight = 0.8;
                 break;
             case BLOCK_TRAPDOOR_W:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 0u, 1u, 1u);
-                mixWeight = 1.0;
+                mixWeight = 0.8;
                 break;
         }
 
