@@ -9,22 +9,18 @@
 
 vec4 SampleLpvNearest(const in ivec3 lpvPos) {
     vec4 lpvSample = (frameCounter % 2) == 0
-    // #ifndef RENDER_GBUFFER
         ? imageLoad(imgLpv1, lpvPos)
         : imageLoad(imgLpv2, lpvPos);
-    // #else
-    //     ? imageLoad(imgLpv2, lpvPos, 0)
-    //     : imageLoad(imgLpv1, lpvPos, 0);
-    // #endif
 
-    lpvSample.ba = exp2(lpvSample.ba * LpvBlockSkyRange) - 1.0;
+    //lpvSample.ba = exp2(lpvSample.ba * LpvBlockSkyRange) - 1.0;
+    lpvSample.b = (lpvSample.b*lpvSample.b) * LpvBlockSkyRange.x;
     lpvSample.rgb = HsvToRgb(lpvSample.rgb);
 
     return lpvSample;
 }
 
 vec4 SampleLpvLinear(const in vec3 lpvPos) {
-    vec3 pos = lpvPos - 0.5;
+    vec3 pos = lpvPos;// - 0.5;
     ivec3 lpvCoord = ivec3(floor(pos));
     vec3 lpvF = fract(pos);
 
@@ -102,7 +98,7 @@ vec4 SampleLpvLinear(const in vec3 lpvPos) {
 
 vec3 GetLpvBlockLight(const in vec4 lpvSample) {
     // return GetLpvBlockLight(lpvSample, 1.0);
-    return 8.0 * lpvSample.rgb;// * LPV_BLOCKLIGHT_SCALE);// * DynamicLightBrightness;
+    return lpvSample.rgb;// * LPV_BLOCKLIGHT_SCALE);// * DynamicLightBrightness;
 }
 
 float GetLpvSkyLight(const in vec4 lpvSample) {

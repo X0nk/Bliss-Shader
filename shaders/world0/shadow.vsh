@@ -197,8 +197,9 @@ void main() {
 			uint voxelId = blockId;
 			if (voxelId == 0u) voxelId = 1u;
 
-			vec3 origin = playerpos + at_midBlock/64.0;
-			SetVoxelBlock(origin, voxelId);
+			vec3 originPos = playerpos + at_midBlock/64.0;
+
+			SetVoxelBlock(originPos, voxelId);
 		}
 	#endif
 

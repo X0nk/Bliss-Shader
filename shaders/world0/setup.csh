@@ -48,10 +48,8 @@ void main() {
         }
 
         LpvBlockData block;
-        block.data = BuildBlockLpvData(mixMask, mixWeight);
-        block.LightColor = packUnorm4x8(vec4(lightColor, 0.0));
-        block.LightRangeSize = packUnorm4x8(vec4(lightRange/255.0, 0.0, 0.0, 0.0));
-
+        block.MaskWeight = BuildBlockLpvData(mixMask, mixWeight);
+        block.ColorRange = packUnorm4x8(vec4(lightColor, lightRange/255.0));
         LpvBlockMap[blockId] = block;
     #endif
 }

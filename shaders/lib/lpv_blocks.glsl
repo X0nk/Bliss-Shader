@@ -1,8 +1,6 @@
-struct LpvBlockData {           // 12 x1280 =?
-    uint data;                  // 4
-    uint LightColor;            // 4
-    uint LightRangeSize;        // 4
-    // uint LightMetadata;
+struct LpvBlockData {           // 8 x1280 =?
+    uint MaskWeight;               // 4
+    uint ColorRange;            // 4
 };
 
 #ifdef RENDER_SETUP
@@ -24,6 +22,5 @@ uint BuildBlockLpvData(uint mixMask, float mixWeight) {
 
 void ParseBlockLpvData(const in uint data, out uint mixMask, out float mixWeight) {
     mixWeight = (data & 0xFF) / 255.0;
-
     mixMask = (data >> 8) & 0xFF;
 }

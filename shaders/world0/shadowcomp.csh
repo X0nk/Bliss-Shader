@@ -25,6 +25,7 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
 	uniform int frameCounter;
 	uniform vec3 cameraPosition;
+	uniform vec3 previousCameraPosition;
 
 	#include "/lib/hsv.glsl"
 	#include "/lib/blocks.glsl"
@@ -76,7 +77,7 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 	    uint blockId = voxelSharedData[shared_index];
 	    
 	    if (blockId > 0 && blockId != BLOCK_EMPTY)
-	        ParseBlockLpvData(LpvBlockMap[blockId].data, mixMask, mixWeight);
+	        ParseBlockLpvData(LpvBlockMap[blockId].MaskWeight, mixMask, mixWeight);
 
 	    return lpvSharedData[shared_index] * ((mixMask >> mask_index) & 1u);// * mixWeight;
 	}
@@ -96,17 +97,16 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 	void PopulateSharedIndex(const in ivec3 imgCoordOffset, const in ivec3 workGroupOffset, const in uint i) {
 	    ivec3 pos = workGroupOffset + ivec3(i / lpvFlatten) % 10;
 
-	    ivec3 lpvPos = imgCoordOffset + pos;
-	    lpvSharedData[i] = GetLpvValue(lpvPos);
-	    voxelSharedData[i] = GetVoxelBlock(lpvPos);
+	    //ivec3 lpvPos = imgCoordOffset + pos;
+	    lpvSharedData[i] = GetLpvValue(imgCoordOffset + pos);
+	    voxelSharedData[i] = GetVoxelBlock(pos);
 	}
 
 	void PopulateShared() {
 	    uint i = uint(gl_LocalInvocationIndex) * 2u;
 	    if (i >= 1000u) return;
 
-	    // ivec3 voxelOffset = GetLPVVoxelOffset();
-	    ivec3 imgCoordOffset = ivec3(0);//GetLPVFrameOffset();
+	    ivec3 imgCoordOffset = ivec3(floor(cameraPosition) - floor(previousCameraPosition));
 	    ivec3 workGroupOffset = ivec3(gl_WorkGroupID * gl_WorkGroupSize) - 1;
 
 	    PopulateSharedIndex(imgCoordOffset, workGroupOffset, i);
@@ -140,9 +140,8 @@ void main() {
         uint blockId = voxelSharedData[getSharedCoord(ivec3(gl_LocalInvocationID) + 1)];
         float mixWeight = blockId == BLOCK_EMPTY ? 1.0 : 0.0;
 
-        LpvBlockData blockData = LpvBlockMap[blockId];
         if (blockId > 0 && blockId != BLOCK_EMPTY)
-            ParseBlockLpvData(blockData.data, mixMask, mixWeight);
+            ParseBlockLpvData(LpvBlockMap[blockId].MaskWeight, mixMask, mixWeight);
 
         #ifdef LPV_GLASS_TINT
             if (blockId >= BLOCK_HONEY && blockId <= BLOCK_TINTED_GLASS) {
@@ -161,11 +160,9 @@ void main() {
         lightValue.ba = log2(lightValue.ba + 1.0) / LpvBlockSkyRange;
 
         if (blockId > 0 && blockId != BLOCK_EMPTY) {
-            vec3 lightColor = unpackUnorm4x8(blockData.LightColor).rgb;
-            vec2 lightRangeSize = unpackUnorm4x8(blockData.LightRangeSize).xy;
-            float lightRange = lightRangeSize.x * 255.0;
-
-            lightColor = RGBToLinear(lightColor);
+            vec4 lightColorRange = unpackUnorm4x8(LpvBlockMap[blockId].ColorRange);
+            vec3 lightColor = RGBToLinear(lightColorRange.rgb);
+            float lightRange = lightColorRange.a * 255.0;
 
             // #ifdef LIGHTING_FLICKER
             //    vec2 lightNoise = GetDynLightNoise(cameraPosition + blockLocalPos);

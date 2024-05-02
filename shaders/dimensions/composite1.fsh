@@ -1269,10 +1269,10 @@ void main() {
 	
 		#ifdef IS_LPV_ENABLED
 			vec3 lpvPos = GetLpvPosition(feetPlayerPos) + 0.5*viewToWorld(FlatNormals);
+			// vec3 lpvPos = GetLpvPosition(feetPlayerPos) - 0.5*FlatNormals + slopednormal;
 		#else
 			const vec3 lpvPos = vec3(0.0);
 		#endif
-		// vec3 lpvPos = GetLpvPosition(feetPlayerPos) - 0.5*FlatNormals + slopednormal;
 
 		Indirect_lighting = DoAmbientLightColor(lpvPos, Indirect_lighting, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
 		
@@ -1284,6 +1284,7 @@ void main() {
 		#ifdef SSS_view
 			Indirect_lighting = vec3(3.0);
 		#endif
+		
 	/////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////	EFFECTS FOR INDIRECT	/////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////////////
