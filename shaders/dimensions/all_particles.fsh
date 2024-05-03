@@ -1,4 +1,9 @@
 #include "/lib/settings.glsl"
+
+#ifdef IS_LPV_ENABLED
+	#extension GL_EXT_shader_image_load_store: enable
+#endif
+
 #include "/lib/res_params.glsl"
 
 varying vec4 lmtexcoord;
@@ -54,6 +59,14 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 #ifdef OVERWORLD_SHADER
 	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
+#endif
+
+#ifdef IS_LPV_ENABLED
+	uniform int frameCounter;
+
+	#include "/lib/hsv.glsl"
+	#include "/lib/lpv_common.glsl"
+	#include "/lib/lpv_render.glsl"
 #endif
 
 #include "/lib/diffuse_lighting.glsl"
@@ -226,7 +239,7 @@ void main() {
 		vec3 AmbientLightColor = vec3(1.0);
 	#endif
 
-	Indirect_lighting = DoAmbientLightColor(AmbientLightColor,MinimumLightColor, Torch_Color, clamp(lightmap.xy,0,1));
+	Indirect_lighting = DoAmbientLightColor(feetPlayerPos, AmbientLightColor,MinimumLightColor, Torch_Color, clamp(lightmap.xy,0,1));
 
 	#ifdef LINES
 		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * toLinear(color.rgb);

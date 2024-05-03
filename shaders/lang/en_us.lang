@@ -72,6 +72,14 @@ screen.Direct_Light = Direct Light
         option.Max_Shadow_Filter_Radius = Maximum Shadow Filter Radius
         option.Max_Filter_Depth = Sun Size Factor
 
+    screen.LPV = FloodFill
+        option.LPV_ENABLED = Enabled
+        option.LPV_SIZE = Size
+            value.LPV_SIZE.6 = Small [64]
+            value.LPV_SIZE.7 = Medium [128]
+            value.LPV_SIZE.8 = Large [256]
+        option.LPV_NORMAL_OFFSET = Normal-Offset
+
 
 screen.Subsurface_Scattering = Sub-Surface Scattering
     option.LabSSS_Curve = LabSSS Curve

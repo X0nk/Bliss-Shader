@@ -1,4 +1,5 @@
 vec3 DoAmbientLightColor(
+    vec3 lpvPos,
     vec3 SkyColor,
     vec3 MinimumColor,
     vec3 TorchColor, 
@@ -16,7 +17,16 @@ vec3 DoAmbientLightColor(
     // TorchLM = pow(TorchLM/4,10) + pow(Lightmap.x,1.5)*0.5;
 
     float TorchLM = pow(Lightmap.x,10.0)*5.0 + pow(Lightmap.x,1.5);
-	vec3 TorchLight = TorchColor * TORCH_AMOUNT * TorchLM * (1.0 + LightLevelZero*dot(SkyColor * ambient_brightness,vec3(0.3333)));
+    vec3 TorchLight = TorchColor * TORCH_AMOUNT * TorchLM * (1.0 + LightLevelZero*dot(SkyColor * ambient_brightness,vec3(0.3333)));
+
+    #if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
+        vec4 lpvSample = SampleLpvLinear(lpvPos);
+        vec3 LpvTorchLight = GetLpvBlockLight(lpvSample);
+
+        // TODO: needs work, just binary transition for now
+        float LpvFadeF = clamp(lpvPos, vec3(0.0), LpvSize3 - 1.0) == lpvPos ? 1.0 : 0.0;
+        TorchLight = mix(TorchLight, LpvTorchLight, LpvFadeF);
+    #endif
 
     return IndirectLight + TorchLight;
 }

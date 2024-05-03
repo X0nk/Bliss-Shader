@@ -1,4 +1,9 @@
 #include "/lib/settings.glsl"
+
+#ifdef IS_LPV_ENABLED
+	#extension GL_EXT_shader_image_load_store: enable
+#endif
+
 #include "/lib/res_params.glsl"
 
 varying vec4 lmtexcoord;
@@ -95,6 +100,12 @@ uniform vec3 nsunColor;
 
 #ifdef END_SHADER
 	#include "/lib/end_fog.glsl"
+#endif
+
+#ifdef IS_LPV_ENABLED
+	#include "/lib/hsv.glsl"
+	#include "/lib/lpv_common.glsl"
+	#include "/lib/lpv_render.glsl"
 #endif
 
 #include "/lib/diffuse_lighting.glsl"
@@ -572,7 +583,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		AmbientLightColor *= clamp(1.5 + dot(WS_normal, normalize(feetPlayerPos))*0.5,0,2);
 	
 	#endif
-	Indirect_lighting = DoAmbientLightColor(AmbientLightColor, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
+	Indirect_lighting = DoAmbientLightColor(feetPlayerPos, AmbientLightColor, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
 	
 	#ifdef ENTITIES
 		Albedo.rgb = mix(Albedo.rgb, entityColor.rgb, clamp(entityColor.a*1.5,0,1));

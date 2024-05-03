@@ -1,4 +1,9 @@
 #include "/lib/settings.glsl"
+
+#ifdef IS_LPV_ENABLED
+	#extension GL_EXT_shader_image_load_store: enable
+#endif
+
 #include "/lib/res_params.glsl"
 
 
@@ -160,6 +165,12 @@ vec3 toScreenSpace(vec3 p) {
 
 #ifdef OVERWORLD_SHADER
 	#include "/lib/volumetricClouds.glsl"
+#endif
+
+#ifdef IS_LPV_ENABLED
+	#include "/lib/hsv.glsl"
+	#include "/lib/lpv_common.glsl"
+	#include "/lib/lpv_render.glsl"
 #endif
 
 #include "/lib/diffuse_lighting.glsl"
@@ -1256,7 +1267,19 @@ void main() {
 
 		#endif
 	
-		Indirect_lighting = DoAmbientLightColor(Indirect_lighting, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
+		#ifdef IS_LPV_ENABLED
+			vec3 lpvPos = GetLpvPosition(feetPlayerPos);
+
+			#ifdef LPV_NORMAL_OFFSET
+				lpvPos += -0.5*viewToWorld(FlatNormals) + slopednormal;
+			#else
+				lpvPos += 0.5*viewToWorld(FlatNormals);
+			#endif
+		#else
+			const vec3 lpvPos = vec3(0.0);
+		#endif
+
+		Indirect_lighting = DoAmbientLightColor(lpvPos, Indirect_lighting, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy);
 		
 			Indirect_lighting *= Absorbtion;
 		#ifdef OVERWORLD_SHADER
@@ -1266,6 +1289,7 @@ void main() {
 		#ifdef SSS_view
 			Indirect_lighting = vec3(3.0);
 		#endif
+		
 	/////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////	EFFECTS FOR INDIRECT	/////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////////////
