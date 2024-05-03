@@ -238,9 +238,9 @@ void main() {
 
 	#ifdef WORLD
 		// disallow POM to work on signs.
-		if(blockEntityId == 2200) SIGN = 1;
+		if(blockEntityId == BLOCK_NO_POM) SIGN = 1;
 
-		if(blockEntityId == 2100) PORTAL = 1;
+		if(blockEntityId == BLOCK_END_PORTAL) PORTAL = 1;
 	#endif
 	
 	NameTags = 0;

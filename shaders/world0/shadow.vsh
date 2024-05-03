@@ -140,7 +140,7 @@ void main() {
 
 	// position = gl_Vertex.xyz;
 
-	// if((renderStage == 10 || renderStage == 12) && mc_Entity.x != 3000) {
+	// if((renderStage == 10 || renderStage == 12) && mc_Entity.x != BLOCK_REDSTONE_WIRE) {
 	// 	position = (shadowModelViewInverse * vec4(gl_Vertex.xyz,1.0)).xyz;
 	// } 
 	
