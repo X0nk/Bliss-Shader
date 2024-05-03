@@ -6,6 +6,7 @@ const ivec3 workGroups = ivec3(4, 5, 1);
     #include "/lib/blocks.glsl"
     #include "/lib/lpv_blocks.glsl"
 
+    const vec3 LightColor_Amethyst = vec3(0.464, 0.227, 0.788);
     const vec3 LightColor_Candles = vec3(1.0, 0.4, 0.1);
     const vec3 LightColor_SeaPickle = vec3(0.283, 0.394, 0.212);
 
@@ -27,6 +28,21 @@ void main() {
         vec3 tintColor = vec3(1.0);
 
         switch (blockId) {
+            case BLOCK_AMETHYST_BUD_LARGE:
+                lightColor = LightColor_Amethyst;
+                lightRange = 4.0;
+                mixWeight = 0.6;
+                break;
+            case BLOCK_AMETHYST_BUD_MEDIUM:
+                lightColor = LightColor_Amethyst;
+                lightRange = 2.0;
+                mixWeight = 0.8;
+                break;
+            case BLOCK_AMETHYST_CLUSTER:
+                lightColor = LightColor_Amethyst;
+                lightRange = 5.0;
+                mixWeight = 0.4;
+                break;
             case BLOCK_BEACON:
                 lightColor = vec3(1.0);
                 lightRange = 15.0;
@@ -52,13 +68,17 @@ void main() {
                 mixWeight = 1.0;
                 break;
             case BLOCK_CAVE_VINE_BERRIES:
-                lightColor = vec3(0.717, 0.541, 0.188);
+                lightColor = vec3(0.651, 0.369, 0.157);
                 lightRange = 14.0;
                 mixWeight = 1.0;
                 break;
             case BLOCK_CONDUIT:
                 lightColor = vec3(1.0);
                 lightRange = 15.0;
+                break;
+            case BLOCK_CRYING_OBSIDIAN:
+                lightColor = vec3(0.390, 0.065, 0.646);
+                lightRange = 10.0;
                 break;
             case BLOCK_END_GATEWAY:
                 lightColor = vec3(1.0);
@@ -85,21 +105,25 @@ void main() {
                 lightColor = vec3(0.463, 0.763, 0.409);
                 lightRange = 15.0;
                 break;
+            case BLOCK_GLOW_LICHEN:
+                lightColor = vec3(0.092, 0.217, 0.126);
+                lightRange = 7.0;
+                break;
             case BLOCK_GLOWSTONE:
                 lightColor = vec3(0.747, 0.594, 0.326);
                 lightRange = 15.0;
                 break;
             case BLOCK_JACK_O_LANTERN:
-                lightColor = vec3(1.0, 0.7, 0.1);
+                lightColor = vec3(0.864, 0.598, 0.348);
                 lightRange = 15.0;
                 break;
             case BLOCK_LANTERN:
-                lightColor = vec3(1.0, 0.7, 0.1);
+                lightColor = vec3(0.839, 0.541, 0.2);
                 lightRange = 15.0;
                 mixWeight = 0.8;
                 break;
             case BLOCK_LAVA:
-                lightColor = vec3(0.804, 0.424, 0.149);
+                lightColor = vec3(0.659, 0.302, 0.106);
                 lightRange = 15.0;
                 break;
             case BLOCK_MAGMA:
@@ -303,6 +327,8 @@ void main() {
                 mixWeight = 0.8;
                 break;
         }
+
+        if (lightRange > 0.0) lightRange += 1.0;
 
         LpvBlockData block;
         block.ColorRange = packUnorm4x8(vec4(lightColor, lightRange/255.0));
