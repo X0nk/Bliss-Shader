@@ -296,6 +296,14 @@ void main() {
 
         // LPV shapes
 
+            case BLOCK_CARPET:
+                mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);
+                mixWeight = 0.9;
+                break;
+            case BLOCK_CHAIN:
+                mixWeight = 1.0;
+                break;
+
             case BLOCK_DOOR_N:
                 mixMask = BuildLpvMask(0u, 1u, 1u, 1u, 1u, 1u);
                 mixWeight = 0.8;
@@ -314,10 +322,14 @@ void main() {
                 break;
 
             case BLOCK_FENCE:
+            case BLOCK_FENCE_GATE:
                 mixWeight = 0.7;
                 break;
             case BLOCK_IRON_BARS:
                 mixWeight = 0.6;
+                break;
+            case BLOCK_LADDER:
+                mixWeight = 0.7;
                 break;
             case BLOCK_PRESSURE_PLATE:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);

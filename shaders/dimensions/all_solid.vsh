@@ -293,11 +293,23 @@ void main() {
 
     /////// ----- SSS ON BLOCKS ----- ///////
 	// strong
-	if(mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_AIR_WAVING || mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_GRASS_TALL_UPPER || mc_Entity.x == BLOCK_GRASS_TALL_LOWER || mc_Entity.x == BLOCK_SSS_STRONG || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL) SSSAMOUNT = 1.0;
-	
+	if (
+		mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_AIR_WAVING ||
+		mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_GRASS_TALL_UPPER || mc_Entity.x == BLOCK_GRASS_TALL_LOWER ||
+		mc_Entity.x == BLOCK_SSS_STRONG || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL
+	) {
+		SSSAMOUNT = 1.0;
+	}
+
 	// medium
-	if(mc_Entity.x == BLOCK_SSS_WEAK || mc_Entity.x == BLOCK_SSS_WEAK_2) SSSAMOUNT = 0.75;
-	
+	if (
+		mc_Entity.x == BLOCK_SSS_WEAK || mc_Entity.x == BLOCK_SSS_WEAK_2 ||
+		mc_Entity.x == BLOCK_AMETHYST_BUD_MEDIUM || mc_Entity.x == BLOCK_AMETHYST_BUD_LARGE || mc_Entity.x == BLOCK_AMETHYST_CLUSTER ||
+		mc_Entity.x == BLOCK_VINE
+	) {
+		SSSAMOUNT = 0.75;
+	}
+
 	// low
 	#ifdef MISC_BLOCK_SSS
 		if(mc_Entity.x == BLOCK_SSS_WEIRD || mc_Entity.x == BLOCK_GRASS) SSSAMOUNT = 0.5; // weird SSS on blocks like grass and stuff
