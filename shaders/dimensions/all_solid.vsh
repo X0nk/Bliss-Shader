@@ -230,7 +230,7 @@ void main() {
 	blockID = mc_Entity.x;
 	// velocity = at_velocity;
 
-	if(mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL) normalMat.a = 0.60;
+	if(mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL || mc_Entity.x == BLOCK_GRASS_SHORT) normalMat.a = 0.60;
 
 
 	PORTAL = 0;
@@ -238,7 +238,7 @@ void main() {
 
 	#ifdef WORLD
 		// disallow POM to work on signs.
-		if(blockEntityId == BLOCK_NO_POM) SIGN = 1;
+		if(blockEntityId == BLOCK_SIGN) SIGN = 1;
 
 		if(blockEntityId == BLOCK_END_PORTAL) PORTAL = 1;
 	#endif
@@ -268,7 +268,7 @@ void main() {
 	// if(NameTags > 0) EMISSIVE = 0.9;
 
 	// normal block lightsources		
-	if(mc_Entity.x >= 1000 && mc_Entity.x < 1200) EMISSIVE = 0.5;
+	if(mc_Entity.x >= 100 && mc_Entity.x < 200) EMISSIVE = 0.5;
 	
 	// special cases light lightning and beacon beams...	
 	#ifdef ENTITIES
@@ -293,7 +293,7 @@ void main() {
 
     /////// ----- SSS ON BLOCKS ----- ///////
 	// strong
-	if(mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_AIR_WAVING || mc_Entity.x == BLOCK_SSS_STRONG || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL) SSSAMOUNT = 1.0;
+	if(mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_AIR_WAVING || mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_GRASS_TALL_UPPER || mc_Entity.x == BLOCK_GRASS_TALL_LOWER || mc_Entity.x == BLOCK_SSS_STRONG || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL) SSSAMOUNT = 1.0;
 	
 	// medium
 	if(mc_Entity.x == BLOCK_SSS_WEAK || mc_Entity.x == BLOCK_SSS_WEAK_2) SSSAMOUNT = 0.75;
@@ -331,7 +331,7 @@ void main() {
 	#ifdef WAVY_PLANTS
 		bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
 
-		if ((mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL) && istopv && abs(position.z) < 64.0) {
+		if ((mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL || mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_GRASS_TALL_UPPER) && istopv && abs(position.z) < 64.0) {
     		vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
 			worldpos.xyz += calcMovePlants(worldpos.xyz)*lmtexcoord.w - cameraPosition;
     		position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;

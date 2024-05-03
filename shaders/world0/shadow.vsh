@@ -206,7 +206,7 @@ void main() {
 
 	#ifdef WAVY_PLANTS
   		bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
-  		if ((blockId == BLOCK_GROUND_WAVING || blockId == BLOCK_GROUND_WAVING_VERTICAL && istopv) && length(position.xy) < 24.0) {
+  		if ((blockId == BLOCK_GROUND_WAVING || blockId == BLOCK_GROUND_WAVING_VERTICAL || blockId == BLOCK_GRASS_SHORT || blockId == BLOCK_GRASS_TALL_UPPER && istopv) && length(position.xy) < 24.0) {
 			playerpos += calcMovePlants(playerpos + cameraPosition)*gl_MultiTexCoord1.y;
 			position = mat3(shadowModelView) * playerpos + shadowModelView[3].xyz;
   		}
@@ -227,7 +227,7 @@ void main() {
  	
 	if (blockId == BLOCK_WATER) gl_Position.w = -1.0;
 	// color.a = 1.0;
-	// if((blockID < 1200 || blockID >= 1300)) color.a = 0.0;
+	// if((blockID < 200 || blockID >= 300)) color.a = 0.0;
 	
 	
 	// materials = 0.0;

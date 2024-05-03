@@ -18,7 +18,7 @@ const ivec3 workGroups = ivec3(4, 5, 1);
 
 void main() {
     #ifdef IS_LPV_ENABLED
-        uint blockId = uint(gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * 32 + LpvBlockMapOffset);
+        uint blockId = uint(gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * 32);
         //if (blockId >= 1280) return;
 
         vec3 lightColor = vec3(0.0);
@@ -28,6 +28,23 @@ void main() {
         vec3 tintColor = vec3(1.0);
 
         switch (blockId) {
+            case BLOCK_WATER:
+                mixWeight = 0.8;
+                break;
+
+            case BLOCK_GRASS_SHORT:
+            case BLOCK_GRASS_TALL_UPPER:
+            case BLOCK_GRASS_TALL_LOWER:
+                mixWeight = 0.85;
+                break;
+
+            case BLOCK_GROUND_WAVING:
+            case BLOCK_GROUND_WAVING_VERTICAL:
+            case BLOCK_AIR_WAVING:
+                mixWeight = 0.9;
+                break;
+
+
             case BLOCK_AMETHYST_BUD_LARGE:
                 lightColor = LightColor_Amethyst;
                 lightRange = 4.0;
@@ -275,6 +292,7 @@ void main() {
                 mixWeight = 1.0;
                 break;
 
+        // Door
 
             case BLOCK_DOOR_N:
                 mixMask = BuildLpvMask(0u, 1u, 1u, 1u, 1u, 1u);
@@ -292,6 +310,15 @@ void main() {
                 mixMask = BuildLpvMask(1u, 1u, 1u, 0u, 1u, 1u);
                 mixWeight = 0.8;
                 break;
+
+        // Pressure Plate
+
+            case BLOCK_PRESSURE_PLATE:
+                mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);
+                mixWeight = 0.9;
+                break;
+
+        // Slab
 
             case BLOCK_SLAB_TOP:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 0u, 1u);
@@ -326,6 +353,12 @@ void main() {
                 mixMask = BuildLpvMask(1u, 1u, 1u, 0u, 1u, 1u);
                 mixWeight = 0.8;
                 break;
+
+        // Misc
+
+            case BLOCK_SIGN:
+                mixWeight = 0.9;
+                break;
         }
 
         if (lightRange > 0.0) lightRange += 1.0;
@@ -334,6 +367,6 @@ void main() {
         block.ColorRange = packUnorm4x8(vec4(lightColor, lightRange/255.0));
         block.MaskWeight = BuildBlockLpvData(mixMask, mixWeight);
         block.Tint = packUnorm4x8(vec4(tintColor, 0.0));
-        LpvBlockMap[blockId - LpvBlockMapOffset] = block;
+        LpvBlockMap[blockId] = block;
     #endif
 }
