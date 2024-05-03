@@ -1,3 +1,5 @@
+#define BLOCK_EMPTY 0
+
 #define BLOCK_WATER 8
 
 #define BLOCK_BEACON 1001

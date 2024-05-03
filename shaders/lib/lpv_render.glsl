@@ -1,9 +1,16 @@
+// LPV falloff curve
+const float LpvBlockPower = 4.0;
+
+// LPV block brightness scale
+const float LpvBlockBrightness = 3.0;
+
+
 vec4 SampleLpvNearest(const in ivec3 lpvPos) {
     vec4 lpvSample = (frameCounter % 2) == 0
         ? imageLoad(imgLpv1, lpvPos)
         : imageLoad(imgLpv2, lpvPos);
 
-    lpvSample.b = pow(lpvSample.b, 4) * LpvBlockSkyRange.x;
+    lpvSample.b = pow(lpvSample.b, LpvBlockPower) * LpvBlockSkyRange.x;
     lpvSample.rgb = HsvToRgb(lpvSample.rgb);
 
     return lpvSample;
@@ -37,7 +44,7 @@ vec4 SampleLpvLinear(const in vec3 lpvPos) {
 }
 
 vec3 GetLpvBlockLight(const in vec4 lpvSample) {
-    return 3.0 * lpvSample.rgb;
+    return LpvBlockBrightness * lpvSample.rgb;
 }
 
 float GetLpvSkyLight(const in vec4 lpvSample) {
