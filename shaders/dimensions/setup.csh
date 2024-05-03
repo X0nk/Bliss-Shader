@@ -44,6 +44,7 @@ void main() {
                 mixWeight = 0.9;
                 break;
 
+        // lightsources
 
             case BLOCK_AMETHYST_BUD_LARGE:
                 lightColor = LightColor_Amethyst;
@@ -212,6 +213,7 @@ void main() {
                 mixWeight = 0.8;
                 break;
 
+        // reflective translucents / glass
 
             case BLOCK_HONEY:
                 tintColor = vec3(0.984, 0.733, 0.251);
@@ -292,7 +294,7 @@ void main() {
                 mixWeight = 1.0;
                 break;
 
-        // Door
+        // LPV shapes
 
             case BLOCK_DOOR_N:
                 mixMask = BuildLpvMask(0u, 1u, 1u, 1u, 1u, 1u);
@@ -311,14 +313,16 @@ void main() {
                 mixWeight = 0.8;
                 break;
 
-        // Pressure Plate
-
+            case BLOCK_FENCE:
+                mixWeight = 0.7;
+                break;
+            case BLOCK_IRON_BARS:
+                mixWeight = 0.6;
+                break;
             case BLOCK_PRESSURE_PLATE:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);
                 mixWeight = 0.9;
                 break;
-
-        // Slab
 
             case BLOCK_SLAB_TOP:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 0u, 1u);
