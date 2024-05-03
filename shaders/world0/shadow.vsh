@@ -48,6 +48,7 @@ uniform int entityId;
 
 #include "/lib/Shadow_Params.glsl"
 #include "/lib/bokeh.glsl"
+#include "/lib/blocks.glsl"
 
 #ifdef IS_LPV_ENABLED
 	attribute vec3 at_midBlock;
@@ -181,7 +182,7 @@ void main() {
 	// 	}
 	// #endif
 
-	uint blockId = uint(mc_Entity.x + 0.5);
+	int blockId = int(mc_Entity.x + 0.5);
 
 	#if defined IS_LPV_ENABLED || defined WAVY_PLANTS
 		vec3 playerpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
@@ -194,7 +195,7 @@ void main() {
 			renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT_MIPPED ||
 			renderStage == MC_RENDER_STAGE_TERRAIN_TRANSLUCENT
 		) {
-			uint voxelId = blockId;
+			uint voxelId = uint(blockId);
 			if (voxelId == 0u) voxelId = 1u;
 
 			vec3 originPos = playerpos + at_midBlock/64.0;
@@ -205,12 +206,12 @@ void main() {
 
 	#ifdef WAVY_PLANTS
   		bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
-  		if ((blockId == 10001u || blockId == 10009u && istopv) && length(position.xy) < 24.0) {
+  		if ((blockId == BLOCK_GROUND_WAVING || blockId == BLOCK_GROUND_WAVING_VERTICAL && istopv) && length(position.xy) < 24.0) {
 			playerpos += calcMovePlants(playerpos + cameraPosition)*gl_MultiTexCoord1.y;
 			position = mat3(shadowModelView) * playerpos + shadowModelView[3].xyz;
   		}
 
-  		if (blockId == 10003u && length(position.xy) < 24.0) {
+  		if (blockId == BLOCK_AIR_WAVING && length(position.xy) < 24.0) {
 			playerpos += calcMoveLeaves(playerpos + cameraPosition, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*gl_MultiTexCoord1.y;
 			position = mat3(shadowModelView) * playerpos + shadowModelView[3].xyz;
   		}
@@ -224,7 +225,7 @@ void main() {
 
 
  	
-	if (blockId == 8u) gl_Position.w = -1.0;
+	if (blockId == BLOCK_WATER) gl_Position.w = -1.0;
 	// color.a = 1.0;
 	// if((blockID < 1200 || blockID >= 1300)) color.a = 0.0;
 	

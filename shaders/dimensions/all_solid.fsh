@@ -427,22 +427,22 @@ void main() {
 		
 	#ifdef AEROCHROME_MODE
 		float gray = dot(Albedo.rgb, vec3(0.2, 1.0, 0.07));
-		if(blockID == 10001 || blockID == 10003 || blockID == 10004 || blockID == 10006 || blockID == 10009) {
+		if(blockID == BLOCK_GROUND_WAVING || blockID == BLOCK_AIR_WAVING || blockID == BLOCK_SSS_STRONG || blockID == BLOCK_SSS_WEAK || blockID == BLOCK_GROUND_WAVING_VERTICAL) {
 		// IR Reflective (Pink-red)
 			Albedo.rgb = mix(vec3(gray), aerochrome_color, 0.7);
 		}
-		else if(blockID == 10008) {
+		else if(blockID == BLOCK_GRASS) {
 		// Special handling for grass block
 			float strength = 1.0 - color.b;
 			Albedo.rgb = mix(Albedo.rgb, aerochrome_color, strength);
 		}
 		#ifdef AEROCHROME_WOOL_ENABLED
-			else if(blockID == 200) {
+			else if(blockID == BLOCK_SSS_WEAK_2) {
 			// Wool
 				Albedo.rgb = mix(Albedo.rgb, aerochrome_color, 0.3);
 			}
 		#endif
-		else if(blockID == 8 || (blockID >= 1200 && blockID < 1300))
+		else if(blockID == BLOCK_WATER || (blockID >= 1200 && blockID < 1300))
 		{
 		// IR Absorbsive? Dark.
 			Albedo.rgb = mix(Albedo.rgb, vec3(0.01, 0.08, 0.15), 0.5);

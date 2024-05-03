@@ -32,7 +32,7 @@
 			SpringCol *= glcolor;
 
 	    	// do leaf colors different because thats cool and i like it
-	    	if(mc_Entity.x == 10003){
+	    	if(mc_Entity.x == BLOCK_AIR_WAVING){
 	    		SummerCol = vec3(Summer_Leaf_R, Summer_Leaf_G, Summer_Leaf_B);
 	    	    AutumnCol = vec3(Fall_Leaf_R, Fall_Leaf_G, Fall_Leaf_B);
 	    		WinterCol = vec3(Winter_Leaf_R, Winter_Leaf_G, Winter_Leaf_B);
