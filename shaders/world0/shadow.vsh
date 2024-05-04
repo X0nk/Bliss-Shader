@@ -1,7 +1,8 @@
 #version 120
 #include "/lib/settings.glsl"
 #ifdef IS_LPV_ENABLED
-	#extension GL_EXT_shader_image_load_store: enable
+	#extension GL_ARB_explicit_attrib_location: enable
+	#extension GL_ARB_shader_image_load_store: enable
 #endif
 
 #define RENDER_SHADOW
@@ -260,7 +261,7 @@ void main() {
  	
 	if (blockId == BLOCK_WATER) gl_Position.w = -1.0;
 	// color.a = 1.0;
-	// if((blockID < 200 || blockID >= 300)) color.a = 0.0;
+	// if((blockID < 300 || blockID >= 400)) color.a = 0.0;
 	
 	
 	// materials = 0.0;

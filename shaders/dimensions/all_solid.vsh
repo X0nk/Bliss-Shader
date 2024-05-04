@@ -270,7 +270,7 @@ void main() {
 	// if(NameTags > 0) EMISSIVE = 0.9;
 
 	// normal block lightsources		
-	if(mc_Entity.x >= 100 && mc_Entity.x < 200) EMISSIVE = 0.5;
+	if(mc_Entity.x >= 100 && mc_Entity.x < 300) EMISSIVE = 0.5;
 	
 	// special cases light lightning and beacon beams...	
 	#ifdef ENTITIES
