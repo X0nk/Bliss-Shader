@@ -9,6 +9,7 @@ const ivec3 workGroups = ivec3(4, 5, 1);
     const vec3 LightColor_Amethyst = vec3(0.464, 0.227, 0.788);
     const vec3 LightColor_Candles = vec3(1.0, 0.4, 0.1);
     const vec3 LightColor_CopperBulb = vec3(1.0);
+    const vec3 LightColor_LightBlock = vec3(1.0);
     const vec3 LightColor_RedstoneTorch = vec3(0.939, 0.305, 0.164);
     const vec3 LightColor_SeaPickle = vec3(0.283, 0.394, 0.212);
 
@@ -183,6 +184,83 @@ void main() {
                 lightColor = vec3(0.659, 0.302, 0.106);
                 lightRange = 15.0;
                 break;
+
+            case BLOCK_LIGHT_1:
+                lightColor = LightColor_LightBlock;
+                lightRange = 1;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_LIGHT_2:
+                lightColor = LightColor_LightBlock;
+                lightRange = 2;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_LIGHT_3:
+                lightColor = LightColor_LightBlock;
+                lightRange = 3;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_LIGHT_4:
+                lightColor = LightColor_LightBlock;
+                lightRange = 4;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_LIGHT_5:
+                lightColor = LightColor_LightBlock;
+                lightRange = 5;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_LIGHT_6:
+                lightColor = LightColor_LightBlock;
+                lightRange = 6;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_LIGHT_7:
+                lightColor = LightColor_LightBlock;
+                lightRange = 7;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_LIGHT_8:
+                lightColor = LightColor_LightBlock;
+                lightRange = 8;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_LIGHT_9:
+                lightColor = LightColor_LightBlock;
+                lightRange = 9;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_LIGHT_10:
+                lightColor = LightColor_LightBlock;
+                lightRange = 10;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_LIGHT_11:
+                lightColor = LightColor_LightBlock;
+                lightRange = 11;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_LIGHT_12:
+                lightColor = LightColor_LightBlock;
+                lightRange = 12;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_LIGHT_13:
+                lightColor = LightColor_LightBlock;
+                lightRange = 13;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_LIGHT_14:
+                lightColor = LightColor_LightBlock;
+                lightRange = 14;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_LIGHT_15:
+                lightColor = LightColor_LightBlock;
+                lightRange = 15;
+                mixWeight = 1.0;
+                break;
+
             case BLOCK_MAGMA:
                 lightColor = vec3(0.747, 0.323, 0.110);
                 lightRange = 3.0;
