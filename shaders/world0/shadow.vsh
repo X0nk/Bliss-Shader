@@ -1,8 +1,8 @@
 #version 120
 #include "/lib/settings.glsl"
 #ifdef IS_LPV_ENABLED
-	#extension GL_ARB_explicit_attrib_location: enable
-	#extension GL_ARB_shader_image_load_store: enable
+	#extension GL_EXT_explicit_attrib_location: enable
+	#extension GL_EXT_shader_image_load_store: enable
 #endif
 
 #define RENDER_SHADOW
