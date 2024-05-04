@@ -3,6 +3,8 @@
 #include "/lib/res_params.glsl"
 #include "/lib/bokeh.glsl"
 #include "/lib/blocks.glsl"
+#include "/lib/entities.glsl"
+#include "/lib/items.glsl"
 
 /*
 !! DO NOT REMOVE !!
@@ -248,7 +250,7 @@ void main() {
 
 #ifdef ENTITIES
 	// disallow POM to work on item frames.
-	if(entityId == 2300) SIGN = 1;
+	if(entityId == ENTITY_ITEM_FRAME) SIGN = 1;
 
 
 	// try and single out nametag text and then discard nametag background
@@ -256,7 +258,7 @@ void main() {
 	// if(gl_Color.a < 1.0) NameTags = 1;
 	// if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
 	
-	if(entityId == 1100 || entityId == 1200 || entityId == 2468) normalMat.a = 0.45;
+	if(entityId == ENTITY_SSS_MEDIUM || entityId == ENTITY_SSS_WEAK || entityId == ENTITY_PLAYER || entityId == 2468) normalMat.a = 0.45;
 	
 #endif
 
@@ -272,7 +274,7 @@ void main() {
 	
 	// special cases light lightning and beacon beams...	
 	#ifdef ENTITIES
-		if(entityId == 12345){
+		if(entityId == ENTITY_LIGHTNING){
 			LIGHTNING = 1;
 			normalMat.a = 0.50;
 		}
@@ -284,7 +286,7 @@ void main() {
 	HELD_ITEM_BRIGHTNESS = 0.0;
 
 	#ifdef Hand_Held_lights
-		if(heldItemId == 100 || heldItemId2 == 100) HELD_ITEM_BRIGHTNESS = 0.9;
+		if(heldItemId == ITEM_LIGHT_SOURCES || heldItemId2 == ITEM_LIGHT_SOURCES) HELD_ITEM_BRIGHTNESS = 0.9;
 	#endif
 
 
@@ -319,12 +321,12 @@ void main() {
 		#ifdef MOB_SSS
 		    /////// ----- SSS ON MOBS----- ///////
 			// strong
-			if(entityId == 1100) SSSAMOUNT = 0.75;
+			if(entityId == ENTITY_SSS_MEDIUM) SSSAMOUNT = 0.75;
 	
 			// medium
 	
 			// low
-			if(entityId == 1200) SSSAMOUNT = 0.3;
+			if(entityId == ENTITY_SSS_WEAK || entityId == ENTITY_PLAYER) SSSAMOUNT = 0.3;
 		#endif
 	#endif
 

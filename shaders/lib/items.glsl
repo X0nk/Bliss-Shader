@@ -1,0 +1,1 @@
+#define ITEM_LIGHT_SOURCES 1000

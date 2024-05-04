@@ -49,6 +49,7 @@ uniform int entityId;
 #include "/lib/Shadow_Params.glsl"
 #include "/lib/bokeh.glsl"
 #include "/lib/blocks.glsl"
+#include "/lib/entities.glsl"
 
 #ifdef IS_LPV_ENABLED
 	attribute vec3 at_midBlock;
@@ -209,7 +210,10 @@ void main() {
 			) {
 				uint voxelId = uint(BLOCK_EMPTY);
 
-				if (currentRenderedItemId > 0) voxelId = uint(currentRenderedItemId);
+				if (currentRenderedItemId > 0) {
+					if (entityId != ENTITY_ITEM_FRAME)
+						voxelId = uint(currentRenderedItemId);
+				}
 				else {
 					// TODO: set from entityId
 				}
@@ -258,7 +262,7 @@ void main() {
 
  	/// this is to ease the shadow acne on big fat entities like ghasts.
   	float bias = 6.0;
-	if(entityId == 1100){
+	if(entityId == ENTITY_SSS_MEDIUM){
 		// increase bias on parts facing the sun
 		vec3 FlatNormals = normalize(gl_NormalMatrix * gl_Normal);
 		vec3 WsunVec = (float(sunElevation > 1e-5)*2-1.)*normalize(mat3(shadowModelViewInverse) * sunPosition);
