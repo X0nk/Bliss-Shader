@@ -86,6 +86,10 @@ uniform sampler2D colortex13;
 uniform sampler2D colortex14;
 uniform sampler2D colortex15; // flat normals(rgb), vanillaAO(alpha)
 
+#ifdef IS_LPV_ENABLED
+	uniform sampler3D texLpv1;
+	uniform sampler3D texLpv2;
+#endif
 
 
 uniform mat4 shadowModelView;

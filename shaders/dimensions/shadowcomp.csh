@@ -1,3 +1,5 @@
+#define RENDER_SHADOWCOMP
+
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
 #if   LPV_SIZE == 8
@@ -27,6 +29,7 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 	#include "/lib/blocks.glsl"
 	#include "/lib/lpv_common.glsl"
 	#include "/lib/lpv_blocks.glsl"
+	#include "/lib/lpv_buffer.glsl"
 	#include "/lib/voxel_common.glsl"
 
 	int sumOf(ivec3 vec) {return vec.x + vec.y + vec.z;}

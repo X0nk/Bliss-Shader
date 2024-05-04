@@ -4,6 +4,7 @@
 	#extension GL_EXT_shader_image_load_store: enable
 #endif
 
+#define RENDER_SHADOW
 
 
 /*
@@ -221,6 +222,7 @@ void main() {
 							break;
 
 						// TODO: blaze, magma_cube
+					}
 				}
 
 				if (voxelId > 0u)

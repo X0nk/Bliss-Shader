@@ -7,8 +7,8 @@ const float LpvBlockBrightness = 2.0;
 
 vec4 SampleLpvNearest(const in ivec3 lpvPos) {
     vec4 lpvSample = (frameCounter % 2) == 0
-        ? imageLoad(imgLpv1, lpvPos)
-        : imageLoad(imgLpv2, lpvPos);
+        ? texelFetch(texLpv1, lpvPos, 0)
+        : texelFetch(texLpv2, lpvPos, 0);
 
     lpvSample.b = pow(lpvSample.b, LpvBlockPower) * LpvBlockSkyRange.x;
     lpvSample.rgb = HsvToRgb(lpvSample.rgb);
