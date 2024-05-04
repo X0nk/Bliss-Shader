@@ -427,7 +427,11 @@ void main() {
 		
 	#ifdef AEROCHROME_MODE
 		float gray = dot(Albedo.rgb, vec3(0.2, 1.0, 0.07));
-		if(blockID == BLOCK_GROUND_WAVING || blockID == BLOCK_AIR_WAVING || blockID == BLOCK_SSS_STRONG || blockID == BLOCK_SSS_WEAK || blockID == BLOCK_GROUND_WAVING_VERTICAL) {
+		if (
+			blockID == BLOCK_AMETHYST_BUD_MEDIUM || blockID == BLOCK_AMETHYST_BUD_LARGE || blockID == BLOCK_AMETHYST_CLUSTER ||
+			blockID == BLOCK_SSS_STRONG || blockID == BLOCK_SSS_WEAK ||
+			blockID >= 10 && blockId < 80
+		) {
 		// IR Reflective (Pink-red)
 			Albedo.rgb = mix(vec3(gray), aerochrome_color, 0.7);
 		}
@@ -442,7 +446,7 @@ void main() {
 				Albedo.rgb = mix(Albedo.rgb, aerochrome_color, 0.3);
 			}
 		#endif
-		else if(blockID == BLOCK_WATER || (blockID >= 1200 && blockID < 1300))
+		else if(blockID == BLOCK_WATER || (blockID >= 300 && blockID < 400))
 		{
 		// IR Absorbsive? Dark.
 			Albedo.rgb = mix(Albedo.rgb, vec3(0.01, 0.08, 0.15), 0.5);

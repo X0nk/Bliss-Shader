@@ -1,6 +1,7 @@
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/bokeh.glsl"
+#include "/lib/items.glsl"
 
 uniform float frameTimeCounter;
 #include "/lib/Shadow_Params.glsl"
@@ -93,7 +94,7 @@ void main() {
 	HELD_ITEM_BRIGHTNESS = 0.0;
 
 	#ifdef Hand_Held_lights
-		if(heldItemId == 100 || heldItemId2 == 100) HELD_ITEM_BRIGHTNESS = 0.9;
+		if(heldItemId == ITEM_LIGHT_SOURCES || heldItemId2 == ITEM_LIGHT_SOURCES) HELD_ITEM_BRIGHTNESS = 0.9;
 	#endif
 	
 	float mat = 0.0;
@@ -104,7 +105,7 @@ void main() {
     	gl_Position.z -= 1e-4;
   	}
 
-	if (mc_Entity.x >= 1200 && mc_Entity.x < 1300) mat = 0.2;
+	if (mc_Entity.x >= 200 && mc_Entity.x < 300) mat = 0.2;
 	if (mc_Entity.x == 72) mat = 0.5;
 
 	#if defined ENTITIES || defined BLOCKENTITIES

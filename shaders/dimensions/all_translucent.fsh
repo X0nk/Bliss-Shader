@@ -50,6 +50,11 @@ uniform sampler2D texture;
 uniform sampler2D specular;
 uniform sampler2D normals;
 
+#ifdef IS_LPV_ENABLED
+	uniform sampler3D texLpv1;
+	uniform sampler3D texLpv2;
+#endif
+
 varying vec4 tangent;
 varying vec4 normalMat;
 varying vec3 binormal;

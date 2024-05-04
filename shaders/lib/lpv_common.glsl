@@ -1,6 +1,3 @@
-layout(rgba8) uniform image3D imgLpv1;
-layout(rgba8) uniform image3D imgLpv2;
-
 // How far light propagates (block, sky)
 const vec2 LpvBlockSkyRange = vec2(15.0, 24.0);
 

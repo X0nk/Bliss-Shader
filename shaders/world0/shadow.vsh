@@ -1,9 +1,11 @@
 #version 120
 #include "/lib/settings.glsl"
 #ifdef IS_LPV_ENABLED
-	#extension GL_EXT_shader_image_load_store: enable
+	#extension GL_ARB_explicit_attrib_location: enable
+	#extension GL_ARB_shader_image_load_store: enable
 #endif
 
+#define RENDER_SHADOW
 
 
 /*
@@ -49,9 +51,11 @@ uniform int entityId;
 #include "/lib/Shadow_Params.glsl"
 #include "/lib/bokeh.glsl"
 #include "/lib/blocks.glsl"
+#include "/lib/entities.glsl"
 
 #ifdef IS_LPV_ENABLED
 	attribute vec3 at_midBlock;
+    uniform int currentRenderedItemId;
 	uniform int renderStage;
 
 	#include "/lib/voxel_common.glsl"
@@ -190,10 +194,8 @@ void main() {
 
 	#if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
 		if (
-			renderStage == MC_RENDER_STAGE_TERRAIN_SOLID ||
-			renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT ||
-			renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT_MIPPED ||
-			renderStage == MC_RENDER_STAGE_TERRAIN_TRANSLUCENT
+			renderStage == MC_RENDER_STAGE_TERRAIN_SOLID || renderStage == MC_RENDER_STAGE_TERRAIN_TRANSLUCENT ||
+			renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT || renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT_MIPPED
 		) {
 			uint voxelId = uint(blockId);
 			if (voxelId == 0u) voxelId = 1u;
@@ -202,11 +204,43 @@ void main() {
 
 			SetVoxelBlock(originPos, voxelId);
 		}
+
+		#ifdef LPV_ENTITY_LIGHTS
+			if (
+				(currentRenderedItemId > 0 || entityId > 0) &&
+				(renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES || renderStage == MC_RENDER_STAGE_ENTITIES)
+			) {
+				uint voxelId = uint(BLOCK_EMPTY);
+
+				if (currentRenderedItemId > 0) {
+					if (entityId != ENTITY_ITEM_FRAME)
+						voxelId = uint(currentRenderedItemId);
+				}
+				else {
+					switch (entityId) {
+						case ENTITY_SPECTRAL_ARROW:
+							voxelId = uint(BLOCK_TORCH);
+							break;
+
+						// TODO: blaze, magma_cube
+					}
+				}
+
+				if (voxelId > 0u)
+					SetVoxelBlock(playerpos, voxelId);
+			}
+		#endif
 	#endif
 
 	#ifdef WAVY_PLANTS
   		bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
-  		if ((blockId == BLOCK_GROUND_WAVING || blockId == BLOCK_GROUND_WAVING_VERTICAL && istopv) && length(position.xy) < 24.0) {
+  		if (
+  			(
+  				blockId == BLOCK_GROUND_WAVING || blockId == BLOCK_GROUND_WAVING_VERTICAL ||
+  				blockId == BLOCK_GRASS_SHORT || (blockId == BLOCK_GRASS_TALL_UPPER && istopv) ||
+  				blockId == BLOCK_SAPLING
+			) && length(position.xy) < 24.0
+		) {
 			playerpos += calcMovePlants(playerpos + cameraPosition)*gl_MultiTexCoord1.y;
 			position = mat3(shadowModelView) * playerpos + shadowModelView[3].xyz;
   		}
@@ -227,7 +261,7 @@ void main() {
  	
 	if (blockId == BLOCK_WATER) gl_Position.w = -1.0;
 	// color.a = 1.0;
-	// if((blockID < 1200 || blockID >= 1300)) color.a = 0.0;
+	// if((blockID < 300 || blockID >= 400)) color.a = 0.0;
 	
 	
 	// materials = 0.0;
@@ -236,7 +270,7 @@ void main() {
 
  	/// this is to ease the shadow acne on big fat entities like ghasts.
   	float bias = 6.0;
-	if(entityId == 1100){
+	if(entityId == ENTITY_SSS_MEDIUM){
 		// increase bias on parts facing the sun
 		vec3 FlatNormals = normalize(gl_NormalMatrix * gl_Normal);
 		vec3 WsunVec = (float(sunElevation > 1e-5)*2-1.)*normalize(mat3(shadowModelViewInverse) * sunPosition);

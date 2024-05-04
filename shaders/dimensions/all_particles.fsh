@@ -35,6 +35,11 @@ uniform sampler2D texture;
 uniform sampler2D noisetex;
 uniform sampler2D colortex4;
 
+#ifdef IS_LPV_ENABLED
+	uniform sampler3D texLpv1;
+	uniform sampler3D texLpv2;
+#endif
+
 
 uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferModelViewInverse;

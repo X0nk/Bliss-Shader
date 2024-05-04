@@ -1,3 +1,5 @@
+#define RENDER_SHADOWCOMP
+
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
 #if   LPV_SIZE == 8
@@ -27,6 +29,7 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 	#include "/lib/blocks.glsl"
 	#include "/lib/lpv_common.glsl"
 	#include "/lib/lpv_blocks.glsl"
+	#include "/lib/lpv_buffer.glsl"
 	#include "/lib/voxel_common.glsl"
 
 	int sumOf(ivec3 vec) {return vec.x + vec.y + vec.z;}
@@ -62,7 +65,7 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 	    uint blockId = voxelSharedData[shared_index];
 	    
 	    if (blockId > 0 && blockId != BLOCK_EMPTY)
-	        ParseBlockLpvData(LpvBlockMap[blockId - LpvBlockMapOffset].MaskWeight, mixMask, mixWeight);
+	        ParseBlockLpvData(LpvBlockMap[blockId].MaskWeight, mixMask, mixWeight);
 
 	    return lpvSharedData[shared_index] * ((mixMask >> mask_index) & 1u);// * mixWeight;
 	}
@@ -124,9 +127,9 @@ void main() {
 
         if (blockId > 0u) {
 	        mixWeight = 0.0;
-            ParseBlockLpvData(LpvBlockMap[blockId - LpvBlockMapOffset].MaskWeight, mixMask, mixWeight);
+            ParseBlockLpvData(LpvBlockMap[blockId].MaskWeight, mixMask, mixWeight);
 
-        	uint tintData = LpvBlockMap[blockId - LpvBlockMapOffset].Tint;
+        	uint tintData = LpvBlockMap[blockId].Tint;
         	tintColor = unpackUnorm4x8(tintData).rgb;
         }
     
@@ -140,7 +143,7 @@ void main() {
         lightValue.ba = log2(lightValue.ba + 1.0) / LpvBlockSkyRange;
 
         if (blockId > 0u) {
-            vec4 lightColorRange = unpackUnorm4x8(LpvBlockMap[blockId - LpvBlockMapOffset].ColorRange);
+            vec4 lightColorRange = unpackUnorm4x8(LpvBlockMap[blockId].ColorRange);
             float lightRange = lightColorRange.a * 255.0;
 
             if (lightRange > EPSILON) {

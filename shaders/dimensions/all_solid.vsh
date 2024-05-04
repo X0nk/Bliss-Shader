@@ -3,6 +3,8 @@
 #include "/lib/res_params.glsl"
 #include "/lib/bokeh.glsl"
 #include "/lib/blocks.glsl"
+#include "/lib/entities.glsl"
+#include "/lib/items.glsl"
 
 /*
 !! DO NOT REMOVE !!
@@ -230,7 +232,7 @@ void main() {
 	blockID = mc_Entity.x;
 	// velocity = at_velocity;
 
-	if(mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL) normalMat.a = 0.60;
+	if(mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL || mc_Entity.x == BLOCK_GRASS_SHORT) normalMat.a = 0.60;
 
 
 	PORTAL = 0;
@@ -238,7 +240,7 @@ void main() {
 
 	#ifdef WORLD
 		// disallow POM to work on signs.
-		if(blockEntityId == BLOCK_NO_POM) SIGN = 1;
+		if(blockEntityId == BLOCK_SIGN) SIGN = 1;
 
 		if(blockEntityId == BLOCK_END_PORTAL) PORTAL = 1;
 	#endif
@@ -248,7 +250,7 @@ void main() {
 
 #ifdef ENTITIES
 	// disallow POM to work on item frames.
-	if(entityId == 2300) SIGN = 1;
+	if(entityId == ENTITY_ITEM_FRAME) SIGN = 1;
 
 
 	// try and single out nametag text and then discard nametag background
@@ -256,7 +258,7 @@ void main() {
 	// if(gl_Color.a < 1.0) NameTags = 1;
 	// if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
 	
-	if(entityId == 1100 || entityId == 1200 || entityId == 2468) normalMat.a = 0.45;
+	if(entityId == ENTITY_SSS_MEDIUM || entityId == ENTITY_SSS_WEAK || entityId == ENTITY_PLAYER || entityId == 2468) normalMat.a = 0.45;
 	
 #endif
 
@@ -268,11 +270,11 @@ void main() {
 	// if(NameTags > 0) EMISSIVE = 0.9;
 
 	// normal block lightsources		
-	if(mc_Entity.x >= 1000 && mc_Entity.x < 1200) EMISSIVE = 0.5;
+	if(mc_Entity.x >= 100 && mc_Entity.x < 300) EMISSIVE = 0.5;
 	
 	// special cases light lightning and beacon beams...	
 	#ifdef ENTITIES
-		if(entityId == 12345){
+		if(entityId == ENTITY_LIGHTNING){
 			LIGHTNING = 1;
 			normalMat.a = 0.50;
 		}
@@ -284,7 +286,7 @@ void main() {
 	HELD_ITEM_BRIGHTNESS = 0.0;
 
 	#ifdef Hand_Held_lights
-		if(heldItemId == 100 || heldItemId2 == 100) HELD_ITEM_BRIGHTNESS = 0.9;
+		if(heldItemId == ITEM_LIGHT_SOURCES || heldItemId2 == ITEM_LIGHT_SOURCES) HELD_ITEM_BRIGHTNESS = 0.9;
 	#endif
 
 
@@ -293,11 +295,23 @@ void main() {
 
     /////// ----- SSS ON BLOCKS ----- ///////
 	// strong
-	if(mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_AIR_WAVING || mc_Entity.x == BLOCK_SSS_STRONG || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL) SSSAMOUNT = 1.0;
-	
+	if (
+		mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL || mc_Entity.x == BLOCK_AIR_WAVING ||
+		mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_GRASS_TALL_UPPER || mc_Entity.x == BLOCK_GRASS_TALL_LOWER ||
+		mc_Entity.x == BLOCK_SSS_STRONG || mc_Entity.x == BLOCK_SAPLING
+	) {
+		SSSAMOUNT = 1.0;
+	}
+
 	// medium
-	if(mc_Entity.x == BLOCK_SSS_WEAK || mc_Entity.x == BLOCK_SSS_WEAK_2) SSSAMOUNT = 0.75;
-	
+	if (
+		mc_Entity.x == BLOCK_SSS_WEAK || mc_Entity.x == BLOCK_SSS_WEAK_2 ||
+		mc_Entity.x == BLOCK_AMETHYST_BUD_MEDIUM || mc_Entity.x == BLOCK_AMETHYST_BUD_LARGE || mc_Entity.x == BLOCK_AMETHYST_CLUSTER ||
+		mc_Entity.x == BLOCK_BAMBOO || mc_Entity.x == BLOCK_SAPLING || mc_Entity.x == BLOCK_VINE
+	) {
+		SSSAMOUNT = 0.75;
+	}
+
 	// low
 	#ifdef MISC_BLOCK_SSS
 		if(mc_Entity.x == BLOCK_SSS_WEIRD || mc_Entity.x == BLOCK_GRASS) SSSAMOUNT = 0.5; // weird SSS on blocks like grass and stuff
@@ -307,12 +321,12 @@ void main() {
 		#ifdef MOB_SSS
 		    /////// ----- SSS ON MOBS----- ///////
 			// strong
-			if(entityId == 1100) SSSAMOUNT = 0.75;
+			if(entityId == ENTITY_SSS_MEDIUM) SSSAMOUNT = 0.75;
 	
 			// medium
 	
 			// low
-			if(entityId == 1200) SSSAMOUNT = 0.3;
+			if(entityId == ENTITY_SSS_WEAK || entityId == ENTITY_PLAYER) SSSAMOUNT = 0.3;
 		#endif
 	#endif
 
@@ -331,7 +345,13 @@ void main() {
 	#ifdef WAVY_PLANTS
 		bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
 
-		if ((mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL) && istopv && abs(position.z) < 64.0) {
+		if (
+			(
+				mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL ||
+				mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_GRASS_TALL_UPPER ||
+				mc_Entity.x == BLOCK_SAPLING
+			) && istopv && abs(position.z) < 64.0
+		) {
     		vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
 			worldpos.xyz += calcMovePlants(worldpos.xyz)*lmtexcoord.w - cameraPosition;
     		position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
