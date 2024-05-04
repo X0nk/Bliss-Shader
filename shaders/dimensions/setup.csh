@@ -73,6 +73,11 @@ void main() {
                 lightColor = vec3(1.0);
                 lightRange = 15.0;
                 break;
+            case BLOCK_BREWING_STAND:
+                lightColor = vec3(0.636, 0.509, 0.179);
+                lightRange = 1.0;
+                mixWeight = 0.8;
+                break;
             case BLOCK_CANDLES_LIT_1:
                 lightColor = LightColor_Candles;
                 lightRange = 3.0;
@@ -394,6 +399,7 @@ void main() {
                 break;
         }
 
+        // hack to increase light (if set)
         if (lightRange > 0.0) lightRange += 1.0;
 
         LpvBlockData block;

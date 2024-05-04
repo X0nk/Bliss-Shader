@@ -52,6 +52,7 @@ uniform int entityId;
 
 #ifdef IS_LPV_ENABLED
 	attribute vec3 at_midBlock;
+    uniform int currentRenderedItemId;
 	uniform int renderStage;
 
 	#include "/lib/voxel_common.glsl"
@@ -190,10 +191,8 @@ void main() {
 
 	#if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
 		if (
-			renderStage == MC_RENDER_STAGE_TERRAIN_SOLID ||
-			renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT ||
-			renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT_MIPPED ||
-			renderStage == MC_RENDER_STAGE_TERRAIN_TRANSLUCENT
+			renderStage == MC_RENDER_STAGE_TERRAIN_SOLID || renderStage == MC_RENDER_STAGE_TERRAIN_TRANSLUCENT ||
+			renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT || renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT_MIPPED
 		) {
 			uint voxelId = uint(blockId);
 			if (voxelId == 0u) voxelId = 1u;
@@ -202,6 +201,23 @@ void main() {
 
 			SetVoxelBlock(originPos, voxelId);
 		}
+
+		#ifdef LPV_ENTITY_LIGHTS
+			if (
+				(currentRenderedItemId > 0 || entityId > 0) &&
+				(renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES || renderStage == MC_RENDER_STAGE_ENTITIES)
+			) {
+				uint voxelId = uint(BLOCK_EMPTY);
+
+				if (currentRenderedItemId > 0) voxelId = uint(currentRenderedItemId);
+				else {
+					// TODO: set from entityId
+				}
+
+				if (voxelId > 0u)
+					SetVoxelBlock(playerpos, voxelId);
+			}
+		#endif
 	#endif
 
 	#ifdef WAVY_PLANTS

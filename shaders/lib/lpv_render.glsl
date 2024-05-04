@@ -1,5 +1,5 @@
 // LPV falloff curve
-const float LpvBlockPower = 5.0;
+const float LpvBlockPower = 4.0;
 
 // LPV block brightness scale
 const float LpvBlockBrightness = 2.0;
