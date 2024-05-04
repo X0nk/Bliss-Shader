@@ -32,6 +32,10 @@ void main() {
                 mixWeight = 0.8;
                 break;
 
+            case BLOCK_BAMBOO:
+                mixWeight = 0.8;
+                break;
+
             case BLOCK_GRASS_SHORT:
             case BLOCK_GRASS_TALL_UPPER:
             case BLOCK_GRASS_TALL_LOWER:
@@ -41,6 +45,10 @@ void main() {
             case BLOCK_GROUND_WAVING:
             case BLOCK_GROUND_WAVING_VERTICAL:
             case BLOCK_AIR_WAVING:
+                mixWeight = 0.9;
+                break;
+
+            case BLOCK_SAPLING:
                 mixWeight = 0.9;
                 break;
 
@@ -296,6 +304,9 @@ void main() {
 
         // LPV shapes
 
+            case BLOCK_BUTTON:
+                mixWeight = 0.9;
+                break;
             case BLOCK_CARPET:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);
                 mixWeight = 0.9;
@@ -325,11 +336,17 @@ void main() {
             case BLOCK_FENCE_GATE:
                 mixWeight = 0.7;
                 break;
+            case BLOCK_FLOWER_POT:
+                mixWeight = 0.7;
+                break;
             case BLOCK_IRON_BARS:
                 mixWeight = 0.6;
                 break;
             case BLOCK_LADDER:
                 mixWeight = 0.7;
+                break;
+            case BLOCK_LEVER:
+                mixWeight = 0.8;
                 break;
             case BLOCK_PRESSURE_PLATE:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);

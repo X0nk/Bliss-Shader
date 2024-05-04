@@ -294,9 +294,9 @@ void main() {
     /////// ----- SSS ON BLOCKS ----- ///////
 	// strong
 	if (
-		mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_AIR_WAVING ||
+		mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL || mc_Entity.x == BLOCK_AIR_WAVING ||
 		mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_GRASS_TALL_UPPER || mc_Entity.x == BLOCK_GRASS_TALL_LOWER ||
-		mc_Entity.x == BLOCK_SSS_STRONG || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL
+		mc_Entity.x == BLOCK_SSS_STRONG || mc_Entity.x == BLOCK_SAPLING
 	) {
 		SSSAMOUNT = 1.0;
 	}
@@ -305,7 +305,7 @@ void main() {
 	if (
 		mc_Entity.x == BLOCK_SSS_WEAK || mc_Entity.x == BLOCK_SSS_WEAK_2 ||
 		mc_Entity.x == BLOCK_AMETHYST_BUD_MEDIUM || mc_Entity.x == BLOCK_AMETHYST_BUD_LARGE || mc_Entity.x == BLOCK_AMETHYST_CLUSTER ||
-		mc_Entity.x == BLOCK_VINE
+		mc_Entity.x == BLOCK_BAMBOO || mc_Entity.x == BLOCK_SAPLING || mc_Entity.x == BLOCK_VINE
 	) {
 		SSSAMOUNT = 0.75;
 	}
@@ -343,7 +343,13 @@ void main() {
 	#ifdef WAVY_PLANTS
 		bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
 
-		if ((mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL || mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_GRASS_TALL_UPPER) && istopv && abs(position.z) < 64.0) {
+		if (
+			(
+				mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL ||
+				mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_GRASS_TALL_UPPER ||
+				mc_Entity.x == BLOCK_SAPLING
+			) && istopv && abs(position.z) < 64.0
+		) {
     		vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
 			worldpos.xyz += calcMovePlants(worldpos.xyz)*lmtexcoord.w - cameraPosition;
     		position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;

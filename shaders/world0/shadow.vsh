@@ -206,7 +206,13 @@ void main() {
 
 	#ifdef WAVY_PLANTS
   		bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
-  		if ((blockId == BLOCK_GROUND_WAVING || blockId == BLOCK_GROUND_WAVING_VERTICAL || blockId == BLOCK_GRASS_SHORT || blockId == BLOCK_GRASS_TALL_UPPER && istopv) && length(position.xy) < 24.0) {
+  		if (
+  			(
+  				blockId == BLOCK_GROUND_WAVING || blockId == BLOCK_GROUND_WAVING_VERTICAL ||
+  				blockId == BLOCK_GRASS_SHORT || (blockId == BLOCK_GRASS_TALL_UPPER && istopv) ||
+  				blockId == BLOCK_SAPLING
+			) && length(position.xy) < 24.0
+		) {
 			playerpos += calcMovePlants(playerpos + cameraPosition)*gl_MultiTexCoord1.y;
 			position = mat3(shadowModelView) * playerpos + shadowModelView[3].xyz;
   		}
