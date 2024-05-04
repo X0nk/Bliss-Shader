@@ -216,6 +216,8 @@ void main() {
 				}
 				else {
 					// TODO: set from entityId
+					if (entityId == ENTITY_SPECTRAL_ARROW)
+						voxelId = uint(BLOCK_TORCH);
 				}
 
 				if (voxelId > 0u)

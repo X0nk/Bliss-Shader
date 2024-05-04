@@ -8,6 +8,8 @@ const ivec3 workGroups = ivec3(4, 5, 1);
 
     const vec3 LightColor_Amethyst = vec3(0.464, 0.227, 0.788);
     const vec3 LightColor_Candles = vec3(1.0, 0.4, 0.1);
+    const vec3 LightColor_CopperBulb = vec3(1.0);
+    const vec3 LightColor_RedstoneTorch = vec3(0.939, 0.305, 0.164);
     const vec3 LightColor_SeaPickle = vec3(0.283, 0.394, 0.212);
 
     uint BuildLpvMask(const in uint north, const in uint east, const in uint south, const in uint west, const in uint up, const in uint down) {
@@ -103,6 +105,30 @@ void main() {
                 lightRange = 14.0;
                 mixWeight = 1.0;
                 break;
+
+        #ifdef LPV_REDSTONE
+            case BLOCK_COMPARATOR_LIT:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 4.0;
+                break;
+        #endif
+
+            case BLOCK_COPPER_BULB_LIT:
+                lightColor = LightColor_CopperBulb;
+                lightRange = 15.0;
+                break;
+            case BLOCK_COPPER_BULB_EXPOSED_LIT:
+                lightColor = LightColor_CopperBulb;
+                lightRange = 12.0;
+                break;
+            case BLOCK_COPPER_BULB_OXIDIZED_LIT:
+                lightColor = LightColor_CopperBulb;
+                lightRange = 4.0;
+                break;
+            case BLOCK_COPPER_BULB_WEATHERED_LIT:
+                lightColor = LightColor_CopperBulb;
+                lightRange = 8.0;
+                break;
             case BLOCK_CONDUIT:
                 lightColor = vec3(1.0);
                 lightRange = 15.0;
@@ -166,9 +192,78 @@ void main() {
                 lightRange = 15.0;
                 break;
             case BLOCK_REDSTONE_TORCH_LIT:
-                lightColor = vec3(0.939, 0.305, 0.164);
+                lightColor = LightColor_RedstoneTorch;
                 lightRange = 7.0;
                 break;
+
+        #ifdef LPV_REDSTONE
+            case BLOCK_REDSTONE_WIRE_1:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 0.5;
+                break;
+            case BLOCK_REDSTONE_WIRE_2:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 1.0;
+                break;
+            case BLOCK_REDSTONE_WIRE_3:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 1.5;
+                break;
+            case BLOCK_REDSTONE_WIRE_4:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 2.0;
+                break;
+            case BLOCK_REDSTONE_WIRE_5:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 2.5;
+                break;
+            case BLOCK_REDSTONE_WIRE_6:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 3.0;
+                break;
+            case BLOCK_REDSTONE_WIRE_7:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 3.5;
+                break;
+            case BLOCK_REDSTONE_WIRE_8:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 4.0;
+                break;
+            case BLOCK_REDSTONE_WIRE_9:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 4.5;
+                break;
+            case BLOCK_REDSTONE_WIRE_10:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 5.0;
+                break;
+            case BLOCK_REDSTONE_WIRE_11:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 5.5;
+                break;
+            case BLOCK_REDSTONE_WIRE_12:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 6.0;
+                break;
+            case BLOCK_REDSTONE_WIRE_13:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 6.5;
+                break;
+            case BLOCK_REDSTONE_WIRE_14:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 7.0;
+                break;
+            case BLOCK_REDSTONE_WIRE_15:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 7.5;
+                break;
+
+            case BLOCK_REPEATER_LIT:
+                lightColor = LightColor_RedstoneTorch;
+                lightRange = 4.0;
+                break;
+        #endif
+
             case BLOCK_RESPAWN_ANCHOR_4:
                 lightColor = vec3(1.0, 0.2, 1.0);
                 lightRange = 15.0;
