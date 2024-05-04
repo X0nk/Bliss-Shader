@@ -1,4 +1,4 @@
-struct LpvBlockData {           // 12 x1280 =?
+struct LpvBlockData {           // 12 x2000 =?
     uint MaskWeight;            // 4
     uint ColorRange;            // 4
     uint Tint;                  // 4

@@ -1,6 +1,6 @@
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
-const ivec3 workGroups = ivec3(4, 5, 1);
+const ivec3 workGroups = ivec3(6, 6, 1);
 
 #ifdef IS_LPV_ENABLED
     #include "/lib/blocks.glsl"
@@ -22,7 +22,7 @@ const ivec3 workGroups = ivec3(4, 5, 1);
 void main() {
     #ifdef IS_LPV_ENABLED
         uint blockId = uint(gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * 32);
-        //if (blockId >= 1280) return;
+        if (blockId >= 2000) return;
 
         vec3 lightColor = vec3(0.0);
         float lightRange = 0.0;
@@ -107,7 +107,7 @@ void main() {
                 mixWeight = 1.0;
                 break;
 
-        #ifdef LPV_REDSTONE
+        #ifdef LPV_REDSTONE_LIGHTS
             case BLOCK_COMPARATOR_LIT:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 4.0;
@@ -274,7 +274,7 @@ void main() {
                 lightRange = 7.0;
                 break;
 
-        #ifdef LPV_REDSTONE
+        #ifdef LPV_REDSTONE_LIGHTS
             case BLOCK_REDSTONE_WIRE_1:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 0.5;

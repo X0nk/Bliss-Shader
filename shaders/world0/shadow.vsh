@@ -215,9 +215,12 @@ void main() {
 						voxelId = uint(currentRenderedItemId);
 				}
 				else {
-					// TODO: set from entityId
-					if (entityId == ENTITY_SPECTRAL_ARROW)
-						voxelId = uint(BLOCK_TORCH);
+					switch (entityId) {
+						case ENTITY_SPECTRAL_ARROW:
+							voxelId = uint(BLOCK_TORCH);
+							break;
+
+						// TODO: blaze, magma_cube
 				}
 
 				if (voxelId > 0u)
