@@ -213,9 +213,12 @@ void main() {
 				uint voxelId = 0u;
 
 				if (currentRenderedItemId > 0) {
-					// TODO: once hand-light is added, switch to this condition
-					// if (entityId != ENTITY_ITEM_FRAME && entityId != ENTITY_PLAYER)
-					if (entityId != ENTITY_ITEM_FRAME)
+					if (entityId == ENTITY_PLAYER) {
+						// TODO: remove once hand-light is added
+						if (currentRenderedItemId < 1000)
+							voxelId = uint(currentRenderedItemId);
+					}
+					else if (entityId != ENTITY_ITEM_FRAME)
 						voxelId = uint(currentRenderedItemId);
 				}
 				else {
