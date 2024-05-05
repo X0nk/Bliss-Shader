@@ -366,7 +366,7 @@ void main() {
         BiomeFogColor(cavefogCol);
       #endif
 
-      color.rgb = mix(color.rgb,  cavefogCol,  cavefog * lightleakfix);
+      color.rgb = mix(color.rgb,  cavefogCol,  cavefog * (1.0-lightleakfix));
     }
 #endif
 
