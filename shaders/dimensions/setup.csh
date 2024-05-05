@@ -543,6 +543,10 @@ void main() {
                 lightColor = vec3(0.463, 0.763, 0.409);
                 lightRange = 15.0;
                 break;
+            case BLOCK_FURNACE_LIT:
+                lightColor = vec3(0.8, 0.7, 0.1);
+                lightRange = 13.0;
+                break;
             case BLOCK_GLOW_LICHEN:
                 lightColor = vec3(0.092, 0.217, 0.126);
                 lightRange = 7.0;
@@ -757,10 +761,6 @@ void main() {
             case BLOCK_SHROOMLIGHT:
                 lightColor = vec3(0.848, 0.469, 0.205);
                 lightRange = 15.0;
-                break;
-            case BLOCK_SMOKER_LIT:
-                lightColor = vec3(0.8, 0.7, 0.1);
-                lightRange = 13.0;
                 break;
             case BLOCK_SOUL_FIRE:
                 lightColor = vec3(0.1, 0.6, 1.0);
