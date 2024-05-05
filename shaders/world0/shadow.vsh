@@ -144,7 +144,7 @@ void main() {
 
 	// position = gl_Vertex.xyz;
 
-	// if((renderStage == 10 || renderStage == 12) && mc_Entity.x != BLOCK_REDSTONE_WIRE) {
+	// if((renderStage == 10 || renderStage == 12) && mc_Entity.x != 3000) {
 	// 	position = (shadowModelViewInverse * vec4(gl_Vertex.xyz,1.0)).xyz;
 	// } 
 	
@@ -204,7 +204,7 @@ void main() {
 
 			SetVoxelBlock(originPos, voxelId);
 		}
-
+		
 		#ifdef LPV_ENTITY_LIGHTS
 			if (
 				(currentRenderedItemId > 0 || entityId > 0) &&
@@ -252,30 +252,15 @@ void main() {
 	#endif
 	
 	#ifdef DISTORT_SHADOWMAP
+		if(entityId == 1100) position.xyz = position.xyz - normalize(gl_NormalMatrix * gl_Normal) * 0.25;
+
 		gl_Position = BiasShadowProjection(toClipSpace3(position));
 	#else
 		gl_Position = toClipSpace3(position);
 	#endif
-
-
  	
+
 	if (blockId == BLOCK_WATER) gl_Position.w = -1.0;
-	// color.a = 1.0;
-	// if((blockID < 300 || blockID >= 400)) color.a = 0.0;
-	
-	
-	// materials = 0.0;
-	// if(blockId == 8) materials = 1.0;
 
-
- 	/// this is to ease the shadow acne on big fat entities like ghasts.
-  	float bias = 6.0;
-	if(entityId == ENTITY_SSS_MEDIUM){
-		// increase bias on parts facing the sun
-		vec3 FlatNormals = normalize(gl_NormalMatrix * gl_Normal);
-		vec3 WsunVec = (float(sunElevation > 1e-5)*2-1.)*normalize(mat3(shadowModelViewInverse) * sunPosition);
-  		
-		bias = 6.0 + (1-clamp(dot(WsunVec,FlatNormals),0,1))*0.3;
-	}
-  	gl_Position.z /= bias;
+  	gl_Position.z /= 6.0;
 }

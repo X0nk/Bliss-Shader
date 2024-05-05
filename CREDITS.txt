@@ -4,7 +4,7 @@ Credit to the creator of the entire shader that Bliss is an edit of:
 
 
 
-Credit to the creators of various code, code contributions, or code snippets:
+Credit to the creators of code contributions, various code uses,  or code snippets:
 
 	EminGt / https://github.com/EminGT
 	Gri573 / https://github.com/gri573

@@ -185,25 +185,17 @@ float luma(vec3 color) {
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 
-
-varying vec3 pos;
 void main() {
 
 	gl_Position = ftransform();
 
-
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-
-    pos = position;
 
     /////// ----- COLOR STUFF ----- ///////
 	color = gl_Color;
 
 	VanillaAO = 1.0 - clamp(color.a,0,1);
 	if (color.a < 0.3) color.a = 1.0; // fix vanilla ao on some custom block models.
-
-
-
 
     /////// ----- RANDOM STUFF ----- ///////
 	// gl_TextureMatrix[0] for animated things like charged creepers
@@ -217,7 +209,8 @@ void main() {
 	vtexcoord.xy    = sign(texcoordminusmid)*0.5+0.5;
 	// #endif
 
-	vec2 lmcoord = gl_MultiTexCoord1.xy / 255.0; // is this even correct? lol'
+
+	vec2 lmcoord = gl_MultiTexCoord1.xy / 240.0; 
 	lmtexcoord.zw = lmcoord;
 
 
@@ -239,7 +232,6 @@ void main() {
 	SIGN = 0;
 
 	#ifdef WORLD
-		// disallow POM to work on signs.
 		if(blockEntityId == BLOCK_SIGN) SIGN = 1;
 
 		if(blockEntityId == BLOCK_END_PORTAL) PORTAL = 1;
@@ -257,7 +249,6 @@ void main() {
 	// if( dot(gl_Color.rgb, vec3(1.0/3.0)) < 1.0) NameTags = 1;
 	// if(gl_Color.a < 1.0) NameTags = 1;
 	// if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
-	
 	if(entityId == ENTITY_SSS_MEDIUM || entityId == ENTITY_SSS_WEAK || entityId == ENTITY_PLAYER || entityId == 2468) normalMat.a = 0.45;
 	
 #endif
@@ -265,8 +256,8 @@ void main() {
 	if(mc_Entity.x == BLOCK_AIR_WAVING) normalMat.a = 0.55;
 
     /////// ----- EMISSIVE STUFF ----- ///////
-				EMISSIVE = 0.0;
-				LIGHTNING = 0;
+		EMISSIVE = 0.0;
+		LIGHTNING = 0;
 	// if(NameTags > 0) EMISSIVE = 0.9;
 
 	// normal block lightsources		
@@ -281,18 +272,16 @@ void main() {
 	#endif
 
     /////// ----- SSS STUFF ----- ///////
-			SSSAMOUNT = 0.0;
+		SSSAMOUNT = 0.0;
 
 	HELD_ITEM_BRIGHTNESS = 0.0;
 
 	#ifdef Hand_Held_lights
-		if(heldItemId == ITEM_LIGHT_SOURCES || heldItemId2 == ITEM_LIGHT_SOURCES) HELD_ITEM_BRIGHTNESS = 0.9;
+if(heldItemId == ITEM_LIGHT_SOURCES || heldItemId2 == ITEM_LIGHT_SOURCES) HELD_ITEM_BRIGHTNESS = 0.9;
 	#endif
 
 
 #ifdef WORLD
-	
-
     /////// ----- SSS ON BLOCKS ----- ///////
 	// strong
 	if (
@@ -311,7 +300,6 @@ void main() {
 	) {
 		SSSAMOUNT = 0.75;
 	}
-
 	// low
 	#ifdef MISC_BLOCK_SSS
 		if(mc_Entity.x == BLOCK_SSS_WEIRD || mc_Entity.x == BLOCK_GRASS) SSSAMOUNT = 0.5; // weird SSS on blocks like grass and stuff
@@ -352,7 +340,7 @@ void main() {
 				mc_Entity.x == BLOCK_SAPLING
 			) && istopv && abs(position.z) < 64.0
 		) {
-    		vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
+			vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
 			worldpos.xyz += calcMovePlants(worldpos.xyz)*lmtexcoord.w - cameraPosition;
     		position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 		}
@@ -363,9 +351,7 @@ void main() {
    			position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 		}
 	#endif
-
 	gl_Position = toClipSpace3(position);
-
 #endif
 
 	#if defined Seasons && defined WORLD && !defined ENTITIES && !defined BLOCKENTITIES && !defined HAND

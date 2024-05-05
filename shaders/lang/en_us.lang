@@ -26,10 +26,13 @@ screen.Waving_Stuff = Waving Stuff
 
 screen.Direct_Light = Direct Light
     screen.Shadows = Shadows
-        option.SCREENSPACE_CONTACT_SHADOWS = Contact Shadows
+        option.TRANSLUCENT_COLORED_SHADOWS = Colored Shadows
+        option.SCREENSPACE_CONTACT_SHADOWS = Screen-space Shadows
         option.RENDER_ENTITY_SHADOWS = Shadows for Entities
         option.shadowMapResolution = Shadow Resolution
         option.shadowDistance = Shadow Distance
+            value.shadowDistance.32.0 = 2 Chunks
+            value.shadowDistance.48.0 = 3 Chunks
             value.shadowDistance.64.0 = 4 Chunks
             value.shadowDistance.80.0 = 5 Chunks
             value.shadowDistance.96.0 = 6 Chunks
@@ -51,18 +54,34 @@ screen.Direct_Light = Direct Light
             value.shadowDistance.352.0 = 22 Chunks
             value.shadowDistance.368.0 = 23 Chunks
             value.shadowDistance.384.0 = 24 Chunks
-            value.shadowDistance.400.0 = 25 Chunks
-            value.shadowDistance.416.0 = 26 Chunks
-            value.shadowDistance.432.0 = 27 Chunks
-            value.shadowDistance.448.0 = 28 Chunks
-            value.shadowDistance.464.0 = 29 Chunks
-            value.shadowDistance.480.0 = 30 Chunks
-            value.shadowDistance.496.0 = 31 Chunks
             value.shadowDistance.512.0 = 32 Chunks
-        option.shadowDistanceRenderMul = Max Shadow Bounds
-            value.shadowDistanceRenderMul.-1.0 = Un-Optimized
-            value.shadowDistanceRenderMul.1.0 = Optimized
+            value.shadowDistance.768.0 = 48 Chunks
+            value.shadowDistance.1024.0 = 64 Chunks
+            value.shadowDistance.1536.0 = 96 Chunks
+            value.shadowDistance.2048.0 = 128 Chunks
+            value.shadowDistance.4096.0 = 256 Chunks
+            value.shadowDistance.8192.0 = 512 Chunks
+
+        option.OPTIMIZED_SHADOW_DISTANCE = Max Shadow Bounds
+            value.OPTIMIZED_SHADOW_DISTANCE.-1.0 = Un-Optimized
+            value.OPTIMIZED_SHADOW_DISTANCE.1.0 = Optimized
         option.entityShadowDistanceMul = Entity Shadow Distance
+            value.entityShadowDistanceMul.0.01 = 1% of Shadow Distance
+            value.entityShadowDistanceMul.0.02 = 2% of Shadow Distance
+            value.entityShadowDistanceMul.0.03 = 3% of Shadow Distance
+            value.entityShadowDistanceMul.0.04 = 4% of Shadow Distance
+            value.entityShadowDistanceMul.0.05 = 5% of Shadow Distance
+            value.entityShadowDistanceMul.0.10 = 10% of Shadow Distance
+            value.entityShadowDistanceMul.0.15 = 15% of Shadow Distance
+            value.entityShadowDistanceMul.0.20 = 20% of Shadow Distance
+            value.entityShadowDistanceMul.0.25 = 25% of Shadow Distance
+            value.entityShadowDistanceMul.0.30 = 30% of Shadow Distance
+            value.entityShadowDistanceMul.0.35 = 35% of Shadow Distance
+            value.entityShadowDistanceMul.0.40 = 40% of Shadow Distance
+            value.entityShadowDistanceMul.0.45 = 45% of Shadow Distance
+            value.entityShadowDistanceMul.0.50 = 50% of Shadow Distance
+            value.entityShadowDistanceMul.0.75 = 75% of Shadow Distance
+            value.entityShadowDistanceMul.1.00 = 100% of Shadow Distance
 
     screen.Filtering = Shadow Filtering Settings
         option.SHADOW_FILTER_SAMPLE_COUNT = Basic Shadow Filter Samples
@@ -71,7 +90,7 @@ screen.Direct_Light = Direct Light
         option.VPS_Search_Samples = VPS Filter Samples
         option.Max_Shadow_Filter_Radius = Maximum Shadow Filter Radius
         option.Max_Filter_Depth = Sun Size Factor
-
+        
     screen.LPV = FloodFill
         option.LPV_ENABLED = Enabled
         option.LPV_SIZE = Size
@@ -82,7 +101,6 @@ screen.Direct_Light = Direct Light
         option.LPV_ENTITY_LIGHTS = Entity Lights
         option.LPV_REDSTONE_LIGHTS = Redstone Lights
         option.LPV_COLORED_CANDLES = Colored Candles
-
 
 screen.Subsurface_Scattering = Sub-Surface Scattering
     option.LabSSS_Curve = LabSSS Curve
@@ -490,11 +508,11 @@ option.moon_illuminance.comment = Configure the brightness of the moon
 screen.Direct_Light.comment = Configure settings related to the sun and shadows.
 
 screen.Shadows.comment = Configure the shadows from the sun to your liking.
-    option.SCREENSPACE_CONTACT_SHADOWS.comment = Screen-space contact shadows.  §bWhat is this?§r These are small shadows for things that are far away, and on small details nearby. §aPERFORMANCE COST:§r low to medium; it is more expensive at higher resolutions.
+    option.SCREENSPACE_CONTACT_SHADOWS.comment = §bWhat is this?§r These are shadows for things that are far away, and on small details nearby. §aPERFORMANCE COST:§r low to medium; it is more expensive at higher resolutions.
     option.RENDER_ENTITY_SHADOWS.comment =  §bWhat is this?§r Shadows on all types of entities, like mobs, chests, banners, or signs. §aPERFORMANCE COST:§r low to high; it is very expensive when there are many entities nearby.
     option.shadowMapResolution.comment = The quality of shadows from the sun casted by things in the world. §aPERFORMANCE COST:§r medium to very high; Shadows must render the 3D world a second time from the perspective of the sun, this is why it cuts performance in half.
     option.shadowDistance.comment = The maximum distance the shadowmap can render. The distance is not measured linearly in chunks when set to un-optimized.  §aPERFORMANCE COST:§r medium to very high; If the chunk render distance is high, the shadows will become more expensive.
-    option.shadowDistanceRenderMul.comment = Render the shadows only in a sphere around you, limited to a max distance in chunks. Un-optimized does not render the shadows in a sphere and is not locked to chunks; it can cover alot more area with the same distance settings. The distance is not measured in chunks when set to un-optimized.  §aPERFORMANCE COST:§r low to medium. Optimized is faster, and unoptimized is slower.
+    option.OPTIMIZED_SHADOW_DISTANCE.comment = Render the shadows only in a sphere around you, limited to a max distance in chunks. Un-optimized does not render the shadows in a sphere and is not locked to chunks; it can cover alot more area with the same distance settings. The distance is not measured in chunks when set to un-optimized.  §aPERFORMANCE COST:§r low to medium. Optimized is faster, and unoptimized is slower.
     screen.Filtering.comment = Configure the filtering effects applied to the shadows.
         option.SHADOW_FILTER_SAMPLE_COUNT.comment = The quality of the basic shadow filter. This filter just softens the shadows. §aPERFORMANCE COST:§r low to medium; Increasing this should reduce some noise at the edge of shadows.
         option.Min_Shadow_Filter_Radius.comment = The maximum softness of the basic shadow filter.
@@ -675,3 +693,5 @@ option.DISTANT_HORIZONS_SHADOWMAP = §c(DO NOT USE IF YOU DO NOT KNOW WHAT THIS 
 option.DISTANT_HORIZONS_SHADOWMAP.comment =  §cTHIS SETTING WILL DESTROY PERFORMANCE THIS WILL MAKE SHADOWS LOOK BLOCKY, FLICKERY, AND LOW DETAIL§r. set shadow distance to 32 chunks (or more). set shadow resolution to 4096 (or more)
 option.TOGGLE_VL_FOG = Toggle Volumetric Fog
 option.TOGGLE_VL_FOG.comment = one big button to just turn all the fog off.
+
+option.TRANSLUCENT_COLORED_SHADOWS.comment = §bWhat is this?§r This effect allows translucent things like stained glass to color the sunlight as it passes through the it. §aPERFORMANCE COST:§r medium
