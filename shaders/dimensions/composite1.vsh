@@ -6,9 +6,11 @@
 #endif
 
 flat varying vec3 WsunVec;
-// flat varying vec3 unsigned_WsunVec;
+flat varying vec3 unsigned_WsunVec;
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec4 lightCol;
+
+flat varying float exposure;
 
 flat varying vec2 TAA_Offset;
 flat varying vec3 zMults;
@@ -53,8 +55,9 @@ void main() {
 	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 
 	WsunVec = lightCol.a*normalize(mat3(gbufferModelViewInverse) * sunPosition);
-	// unsigned_WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
+	unsigned_WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
 
+	exposure = texelFetch2D(colortex4,ivec2(10,37),0).r;
 
 	#ifdef TAA
 		TAA_Offset = offsets[framemod8];

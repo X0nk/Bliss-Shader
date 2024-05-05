@@ -1,5 +1,6 @@
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
+#include "/lib/items.glsl"
 
 /*
 !! DO NOT REMOVE !!
@@ -10,6 +11,9 @@ Read the terms of modification and sharing before changing something below pleas
 
 varying vec4 lmtexcoord;
 varying vec4 color;
+uniform sampler2D colortex4;
+
+flat varying float exposure;
 
 #ifdef LINES
 	flat varying int SELECTION_BOX;
@@ -19,10 +23,8 @@ varying vec4 color;
 	flat varying vec3 averageSkyCol_Clouds;
 	flat varying vec4 lightCol;
 	flat varying vec3 WsunVec;
-	uniform sampler2D colortex4;
 #endif
 	
-
 
 uniform vec3 sunPosition;
 uniform float sunElevation;
@@ -52,7 +54,22 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 vec4 toClipSpace3(vec3 viewSpacePosition) {
     return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
-}			
+}		
+
+
+
+
+#ifdef DAMAGE_BLOCK_EFFECT
+	varying vec4 vtexcoordam; // .st for add, .pq for mul
+	varying vec4 vtexcoord;
+
+	attribute vec4 mc_midTexCoord;
+	varying vec4 tangent;
+	attribute vec4 at_tangent;
+	varying vec4 normalMat;
+	flat varying vec3 WsunVec2;
+#endif
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -61,15 +78,30 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 
 void main() {
 	
+#ifdef DAMAGE_BLOCK_EFFECT
+	WsunVec2 = (float(sunElevation > 1e-5)*2.0 - 1.0)*normalize(mat3(gbufferModelViewInverse) * sunPosition);
+#endif
 	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
 	vec2 lmcoord = gl_MultiTexCoord1.xy / 240.0; // is this even correct? lol'
 	lmtexcoord.zw = lmcoord;
+
+	#ifdef DAMAGE_BLOCK_EFFECT
+		vec2 midcoord = (gl_TextureMatrix[0] *  mc_midTexCoord).st;
+		vec2 texcoordminusmid = lmtexcoord.xy-midcoord;
+		vtexcoordam.pq  = abs(texcoordminusmid)*2;
+		vtexcoordam.st  = min(lmtexcoord.xy,midcoord-texcoordminusmid);
+		vtexcoord.xy    = sign(texcoordminusmid)*0.5+0.5;
+
+		tangent = vec4(normalize(gl_NormalMatrix * at_tangent.rgb), at_tangent.w);
+		
+		normalMat = vec4(normalize(gl_NormalMatrix * gl_Normal), 1.0);
+	#endif
 
 
 	HELD_ITEM_BRIGHTNESS = 0.0;
 
 	#ifdef Hand_Held_lights
-		if(heldItemId == 100 || heldItemId2 == 100) HELD_ITEM_BRIGHTNESS = 0.9;
+		if(heldItemId == ITEM_LIGHT_SOURCES || heldItemId2 == ITEM_LIGHT_SOURCES) HELD_ITEM_BRIGHTNESS = 0.9;
 	#endif
 
 
@@ -94,6 +126,8 @@ void main() {
 
 
 	color = gl_Color;
+	
+	exposure = texelFetch2D(colortex4,ivec2(10,37),0).r;
 	// color.rgb = worldpos;
 	
 	#ifdef LINES
@@ -110,6 +144,7 @@ void main() {
 		WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
 	#endif
 	
+
 	#ifndef WEATHER
 	#ifdef TAA_UPSCALING
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;

@@ -191,7 +191,7 @@ void DoSpecularReflections(
 	Roughness = 1.0 - Roughness; Roughness *= Roughness;
 	F0 = F0 == 0.0 ? 0.02 : F0;
 
-	// Roughness = 0.0;
+	// Roughness = 0.1;
 	// F0 = 0.9;
 
 	mat3 Basis = CoordBase(Normal);
@@ -220,8 +220,9 @@ void DoSpecularReflections(
     bool hasReflections = Roughness_Threshold == 1.0 ? true : F0 * (1.0 - Roughness * Roughness_Threshold) > 0.01;
 
 	// mulitply all reflections by the albedo if it is a metal.
-	vec3 Metals = F0 > 229.5/255.0 ? lerp(normalize(Albedo+1e-7) * (dot(Albedo,vec3(0.21, 0.72, 0.07)) * 0.7 + 0.3), vec3(1.0), Fresnel * pow(1.0-Roughness,25.0)) : vec3(1.0);
-	// vec3 Metals = F0 > 229.5/255.0 ? max(Albedo, Fresnel) : vec3(1.0);
+	// vec3 Metals = F0 > 229.5/255.0 ? lerp(normalize(Albedo+1e-7) * (dot(Albedo,vec3(0.21, 0.72, 0.07)) * 0.7 + 0.3), vec3(1.0), Fresnel * pow(1.0-Roughness,25.0)) : vec3(1.0);
+	vec3 Metals = F0 > 229.5/255.0 ? normalize(Albedo+1e-7) * (dot(Albedo,vec3(0.21, 0.72, 0.07)) * 0.7 + 0.3) : vec3(1.0);
+	// vec3 Metals = F0 > 229.5/255.0 ? Albedo : vec3(1.0);
 
 	// --------------- BACKGROUND REFLECTIONS
 	// apply background reflections to the final color. make sure it does not exist based on the lightmap
@@ -271,11 +272,13 @@ void DoSpecularReflections(
 		}
 	#endif
 
+	// Final_Reflection = mix(mix(Output,Background_Reflection,Lightmap), SS_Reflections.rgb, SS_Reflections.a) * RayContribution;
+
 	// --------------- LIGHTSOURCE REFLECTIONS
 	// slap the main lightsource reflections to the final color.
 	#ifdef LIGHTSOURCE_REFLECTION
 		Lightsource_Reflection = Diffuse * GGX(Normal, -WorldPos, LightPos, Roughness, F0) * Metals;
-		Final_Reflection += Lightsource_Reflection * Sun_specular_Strength;
+		Final_Reflection += Lightsource_Reflection * Sun_specular_Strength ;
 	#endif
 
 	Output = Final_Reflection;

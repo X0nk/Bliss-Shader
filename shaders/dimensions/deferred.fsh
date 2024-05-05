@@ -383,6 +383,7 @@ vec3 temp = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy),0).rgb;
 vec3 curr = gl_FragData[0].rgb*150.;
 
 if(accumuteSpeed < 1.0) mixhistory = 1.0;
+
 gl_FragData[0].rgb = clamp(mix(temp, curr, mixhistory),0.0,65000.);
 
 

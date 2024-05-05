@@ -3,6 +3,8 @@
 varying vec2 texcoord;
 
 uniform sampler2D colortex7;
+uniform sampler2D colortex14;
+uniform sampler2D depthtex0;
 uniform vec2 texelSize;
 uniform float frameTimeCounter;
 
@@ -17,6 +19,7 @@ uniform sampler2D shadowtex1;
 #include "/lib/res_params.glsl"
 #include "/lib/gameplay_effects.glsl"
 
+uniform int hideGUI;
 
 vec4 SampleTextureCatmullRom(sampler2D tex, vec2 uv, vec2 texSize )
 {
@@ -90,7 +93,7 @@ vec3 toneCurve(vec3 color){
 
 vec3 colorGrading(vec3 color) {
 	float grade_luma = dot(color, vec3(1.0 / 3.0));
-   	float shadows_amount = saturate(-6.0 * grade_luma + 2.75);
+  float shadows_amount = saturate(-6.0 * grade_luma + 2.75);
 	float mids_amount = saturate(-abs(6.0 * grade_luma - 3.0) + 1.25);
 	float highlights_amount = saturate(6.0 * grade_luma - 3.25);
 
@@ -101,31 +104,13 @@ vec3 colorGrading(vec3 color) {
 	return saturate(graded_shadows * shadows_amount + graded_mids * mids_amount + graded_highlights * highlights_amount);
 }
 
-// #ifdef HURT_AND_DEATH_EFFECT
-//   uniform float hurt;
-//   uniform float dying;
-//   uniform float dead;
-  
-//   void PlayerDamagedEffect(inout vec3 outColor){
-  
-//     if(dying > 0){
-    
-//     	float vignette2 = clamp(1.0 - exp(-(sin(frameTimeCounter*7)*15+50) * dot(texcoord-0.5,texcoord-0.5)),0.0,1.0);
-  
-//       outColor = mix(outColor, vec3(0.0), min(dying,1.0)*vignette2);
-//       outColor = mix(outColor, vec3(0.0), dead);
-  
-//     }else{
-    
-//     	float vignette = clamp(1.0 - exp(-5 * dot(texcoord-0.5,texcoord-0.5)),0.0,1.0);
-  
-//       outColor = mix(outColor, vec3(0.3,0.0,0.0), vignette*sqrt(hurt));
-  
-//     }
-//   }
-// #endif
+float interleaved_gradientNoise(){
+	vec2 coord = gl_FragCoord.xy;
+	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
+	return noise;
+}
 
-uniform int hideGUI;
+
 void main() {
   #ifdef BICUBIC_UPSCALING
     vec3 col = SampleTextureCatmullRom(colortex7,texcoord,1.0/texelSize).rgb;
@@ -168,12 +153,19 @@ void main() {
 
 	applyContrast(FINAL_COLOR, CONTRAST); // for fun
   
-  applyGameplayEffects_FRAGMENT(FINAL_COLOR, texcoord); // for making the fun, more fun
-
+  applyGameplayEffects_FRAGMENT(FINAL_COLOR, texcoord, interleaved_gradientNoise()); // for making the fun, more fun
   
+
+
+
+
+	// float reprojectedBuffer = texture2D(colortex14, texcoord).a;
+
+  // gl_FragColor.rgb = vec3(1.0) * reprojectedBuffer;
+
   gl_FragColor.rgb = FINAL_COLOR;
 
   #if DEBUG_VIEW == debug_SHADOWMAP 
-    if(texcoord.x < 0.25 && texcoord.y < 0.5) gl_FragColor.rgb = texture2D(shadowcolor0, (texcoord * vec2(2.0, 1.0) * 2 - vec2(0.0, 0.0)) ).rgb * vec3(1.0);
+    if(texcoord.x < 0.25 && texcoord.y < 0.5) gl_FragColor.rgb = texture2D(shadowcolor0, (texcoord * vec2(2.0, 1.0) * 2 - vec2(0.0, 0.0)) ).rgb;
   #endif
 }

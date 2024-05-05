@@ -1,3 +1,5 @@
+#include "/lib/settings.glsl"
+
 uniform sampler2D colortex3;
 uniform sampler2D colortex6;
 
@@ -79,24 +81,33 @@ vec4 texture2D_bicubic(sampler2D tex, vec2 uv)
 void main() {
 /* DRAWBUFFERS:3 */
 vec2 resScale = vec2(1920.,1080.)/max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
-vec2 texcoord = ((gl_FragCoord.xy)*2.+0.5)*texelSize;
-vec3 bloom = texture2D_bicubic(colortex3,texcoord/2.0).rgb;	//1/4 res
+vec2 texcoord = ((gl_FragCoord.xy)*2.0 + 0.5)*texelSize;
 
-bloom += texture2D_bicubic(colortex6,texcoord/4.).rgb; //1/8 res
+#ifdef OLD_BLOOM
+    vec3 bloom = texture2D_bicubic(colortex3,texcoord/2.).rgb;	//1/4 res
+    bloom += texture2D_bicubic(colortex6,texcoord/4.).rgb; //1/8 res
+    bloom += texture2D_bicubic(colortex6,texcoord/8.+vec2(0.25*resScale.x+2.5*texelSize.x,.0)).rgb;  //1/16 res
+    bloom += texture2D_bicubic(colortex6,texcoord/16.+vec2(0.375*resScale.x+4.5*texelSize.x,.0)).rgb; //1/32 res
+    bloom += texture2D_bicubic(colortex6,texcoord/32.+vec2(0.4375*resScale.x+6.5*texelSize.x,.0)).rgb; //1/64 res
+    bloom += texture2D_bicubic(colortex6,texcoord/64.+vec2(0.46875*resScale.x+8.5*texelSize.x,.0)).rgb; //1/128 res
+    bloom += texture2D_bicubic(colortex6,texcoord/128.+vec2(0.484375*resScale.x+10.5*texelSize.x,.0)).rgb; //1/256 res
 
-bloom += texture2D_bicubic(colortex6,texcoord/8.+vec2(0.25*resScale.x+2.5*texelSize.x,.0)).rgb;  //1/16 res
+    gl_FragData[0].rgb = bloom * 2.0;
+#else
 
-bloom += texture2D_bicubic(colortex6,texcoord/16.+vec2(0.375*resScale.x+4.5*texelSize.x,.0)).rgb; //1/32 res
+	float weights[7] = float[](     1.0,    1.0/2.0,    1.0/3.0,    1.0/5.5,    1.0/8.0,    1.0/10.0,   1.0/12.0    );
+	// float weights[7] = float[](     0.7,    pow(0.5,2), pow(0.5,3),  pow(0.5,4),   pow(0.5,5),    pow(0.5,6), pow(0.5,7)	);
 
-bloom += texture2D_bicubic(colortex6,texcoord/32.+vec2(0.4375*resScale.x+6.5*texelSize.x,.0)).rgb*1.0; //1/64 res
+    vec3 bloom = texture2D_bicubic(colortex3,texcoord/2.).rgb * weights[0];	//1/4 res
+    bloom += texture2D_bicubic(colortex6,texcoord/4.).rgb * weights[1]; //1/8 res
+    bloom += texture2D_bicubic(colortex6,texcoord/8.+vec2(0.25*resScale.x+2.5*texelSize.x,.0)).rgb * weights[2];  //1/16 res
+    bloom += texture2D_bicubic(colortex6,texcoord/16.+vec2(0.375*resScale.x+4.5*texelSize.x,.0)).rgb * weights[3]; //1/32 res
+    bloom += texture2D_bicubic(colortex6,texcoord/32.+vec2(0.4375*resScale.x+6.5*texelSize.x,.0)).rgb * weights[4]; //1/64 res
+    bloom += texture2D_bicubic(colortex6,texcoord/64.+vec2(0.46875*resScale.x+8.5*texelSize.x,.0)).rgb * weights[5]; //1/128 res
+    bloom += texture2D_bicubic(colortex6,texcoord/128.+vec2(0.484375*resScale.x+10.5*texelSize.x,.0)).rgb * weights[6]; //1/256 res
 
-bloom += texture2D_bicubic(colortex6,texcoord/64.+vec2(0.46875*resScale.x+8.5*texelSize.x,.0)).rgb*1.0; //1/128 res
-
-bloom += texture2D_bicubic(colortex6,texcoord/128.+vec2(0.484375*resScale.x+10.5*texelSize.x,.0)).rgb*1.0; //1/256 res
-
-//bloom = texture2D_bicubic(colortex6,texcoord).rgb*6.; //1/8 res
-
-gl_FragData[0].rgb = bloom*2.;
+    gl_FragData[0].rgb = bloom * 3.0;
+#endif
 
 gl_FragData[0].rgb = clamp(gl_FragData[0].rgb,0.0,65000.);
 }

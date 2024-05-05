@@ -1,5 +1,5 @@
 const float k = 1.8;
-const float d0 = 0.04;
+const float d0 = 0.04 + max(64.0 - shadowDistance, 0.0)/64.0  * 0.26;
 const float d1 = 0.61;
 float a = exp(d0);
 float b = (exp(d1)-a)*150./128.0;

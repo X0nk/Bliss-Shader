@@ -11,6 +11,11 @@ Read the terms of modification and sharing before changing something below pleas
 varying vec4 color;
 varying vec2 texcoord;
 
+varying vec4 tangent;
+varying vec4 normalMat;
+attribute vec4 at_tangent;
+
+
 uniform vec2 texelSize;
 uniform int framemod8;
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
@@ -40,13 +45,9 @@ flat varying float exposure;
 void main() {
 	color = gl_Color;
 
-	#ifdef ENCHANT_GLINT
-		texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).st;
-	#else
-		texcoord = (gl_MultiTexCoord0).xy;
-	#endif
+	texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).st;
 
-	#if defined ENCHANT_GLINT || defined SPIDER_EYES
+	#if defined ENCHANT_GLINT || defined SPIDER_EYES || defined BEACON_BEAM
 		exposure = texelFetch2D(colortex4,ivec2(10,37),0).r;
 
 		vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
@@ -60,6 +61,11 @@ void main() {
 		if(gl_Color.a < 1.0) gl_Position = vec4(10,10,10,0);
 	#endif
 
+	#ifdef ENCHANT_GLINT
+		tangent = vec4(normalize(gl_NormalMatrix * at_tangent.rgb), at_tangent.w);
+
+		normalMat = vec4(normalize(gl_NormalMatrix * gl_Normal), 1.0);
+	#endif
 
 	#ifdef TAA_UPSCALING
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;

@@ -57,14 +57,17 @@ float getWaterHeightmap(vec2 posxz) {
 vec3 getWaveNormal(vec3 posxz, bool isLOD){
 
 	// vary the normal's "smooth" factor as distance changes, to avoid noise from too much details.
-	float range = pow(clamp(1.0 - length(posxz - cameraPosition)/(32*4),0.0,1.0),2.0);
-	float deltaPos = mix(0.5, 0.1, range);
-	float normalMult = 10.0 * WATER_WAVE_STRENGTH;
+	// float range = pow(clamp(1.0 - length(posxz - cameraPosition)/(32*4),0.0,1.0),2.0);
+	// float deltaPos = mix(0.5, 0.1, range);
+	
+	float range = min(length(posxz - cameraPosition) / (16*14.0), 3.0);
+	float deltaPos = range + 0.15;
 
-	if(isLOD){
-		normalMult = mix(5.0, normalMult, range);
-		deltaPos = mix(0.9, deltaPos, range);
-	}
+	// float normalMult = 1.0 * WATER_WAVE_STRENGTH;
+
+	// if(isLOD){
+	// 	deltaPos = mix(0.9, deltaPos, range);
+	// }
 	// added detail for snells window
 	// if(isEyeInWater == 1) deltaPos = 0.025;
 
@@ -72,17 +75,17 @@ vec3 getWaveNormal(vec3 posxz, bool isLOD){
 		deltaPos = 0.025;
 	#endif
 	
-	vec2 coord = posxz.xz;// - posxz.y;
+	vec2 coord = posxz.xz;
 
 	float h0 = getWaterHeightmap(coord);
 	float h1 = getWaterHeightmap(coord + vec2(deltaPos,0.0));
 	float h3 = getWaterHeightmap(coord + vec2(0.0,deltaPos));
 
 
-	float xDelta = ((h1-h0)/deltaPos)*normalMult;
-	float yDelta = ((h3-h0)/deltaPos)*normalMult;
+	float xDelta = (h1-h0)/deltaPos;
+	float yDelta = (h3-h0)/deltaPos;
 
-	vec3 wave = normalize(vec3(xDelta,yDelta,1.0-pow(abs(xDelta+yDelta),2.0)));
+	vec3 wave = normalize(vec3(xDelta, yDelta,	1.0-pow(abs(xDelta+yDelta),2.0)));
 
-	return wave ;
+	return wave;
 }

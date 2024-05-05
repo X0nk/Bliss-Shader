@@ -8,9 +8,11 @@ flat varying vec3 skyGroundColor;
 uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
+
+#ifdef DISTANT_HORIZONS
 uniform sampler2D dhDepthTex;
 uniform sampler2D dhDepthTex1;
-
+#endif
 
 uniform sampler2D colortex0;
 uniform sampler2D colortex1;
@@ -197,23 +199,24 @@ void applyContrast(inout vec3 color, float contrast){
   color = ((color - 0.5) * max(contrast, 0.0)) + 0.5;
 }
 
-void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, float lineardistance, bool isEntity){
+void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, float lineardistance, bool isTranslucentEntity){
 
   vec2 UnalteredTexcoord = Texcoord;
   
-  float refractionStrength = isEntity ? 0.5 : 1.0;
+  float refractionStrength = isTranslucentEntity ? 0.25 : 1.0 ;
 
   // Texcoord = abs(Texcoord + (TangentNormals * clamp((ld(depths.x) - ld(depths.y)) * 0.5,0.0,0.15)) * RENDER_SCALE * refractionStrength );
   Texcoord = abs(Texcoord + (TangentNormals * mix(0.01, 0.1, pow(clamp(1.0-lineardistance/(32*4),0.0,1.0),2))) * RENDER_SCALE * refractionStrength );
 
   float DistortedAlpha = decodeVec2(texture2D(colortex11,Texcoord).b).g;
+  // float DistortedAlpha = decodeVec2(texelFetch2D(colortex11,ivec2(Texcoord/texelSize),0).b).g;
+  // float DistortedAlpha = texelFetch2D(colortex2,ivec2(Texcoord/texelSize),0).a;
   
-  if(DistortedAlpha < 0.1) Texcoord = UnalteredTexcoord; // remove distortion on non-translucents
+  Texcoord = mix(Texcoord, UnalteredTexcoord,  min(max(0.1-DistortedAlpha,0.0) * 1000.0,1.0)); // remove distortion on non-translucents
 }
 
-uniform float dhRenderDistance;
+uniform int dhRenderDistance;
 uniform float eyeAltitude;
-
 void main() {
   /* DRAWBUFFERS:73 */
 
@@ -257,25 +260,27 @@ void main() {
 	float lightleakfixfast = clamp(eyeBrightness.y/240.,0.0,1.0);
 
 	////// --------------- UNPACK TRANSLUCENT GBUFFERS --------------- //////
-	vec3 data = texture2D(colortex11,texcoord).rgb;
+	vec4 data = texture2D(colortex11,texcoord).rgba;
 	vec4 unpack0 =  vec4(decodeVec2(data.r),decodeVec2(data.g)) ;
 	vec4 unpack1 = vec4(decodeVec2(data.b),0,0) ;
 	
 	vec4 albedo = vec4(unpack0.ba,unpack1.rg);
 	vec2 tangentNormals = unpack0.xy*2.0-1.0;
-
   if(albedo.a < 0.01) tangentNormals = vec2(0.0);
 
   vec4 TranslucentShader = texture2D(colortex2, texcoord);
 
 	////// --------------- UNPACK MISC --------------- //////
-  float trpData = texture2D(colortex7, texcoord).a;
+	// 1.0 = water mask
+	// 0.9 = entity mask
+	// 0.8 = reflective entities
+	// 0.7 = reflective blocks
+  float translucentMasks = texture2D(colortex7, texcoord).a;
 
-	////// --------------- MASKS/BOOLEANS --------------- //////
-  bool iswater = trpData > 0.99;
-  bool isTranslucentEntity = abs(trpData-0.1) < 0.01;	
-  float translucentAlpha = trpData;
-
+	bool isWater = translucentMasks > 0.99;
+	bool isReflectiveEntity = abs(translucentMasks - 0.8) < 0.01;
+	bool isReflective = abs(translucentMasks - 0.7) < 0.01 || isWater || isReflectiveEntity;
+	bool isEntity = abs(translucentMasks - 0.9) < 0.01 || isReflectiveEntity;
 
 
   ////// --------------- get volumetrics
@@ -293,26 +298,29 @@ void main() {
 
   ////// --------------- distort texcoords as a refraction effect
   vec2 refractedCoord = texcoord;
+
   #ifdef Refraction
-    ApplyDistortion(refractedCoord, tangentNormals, linearDistance, isTranslucentEntity);
+    ApplyDistortion(refractedCoord, tangentNormals, linearDistance, isEntity);
   #endif
   
   ////// --------------- MAIN COLOR BUFFER
   vec3 color = texture2D(colortex3, refractedCoord).rgb;
 
+  // apply block breaking effect.
+  if(albedo.a > 0.01 && !isWater && TranslucentShader.a <= 0.0) color = mix(color*6.0, color, luma(albedo.rgb)) * albedo.rgb;
 
   ////// --------------- BLEND TRANSLUCENT GBUFFERS 
   //////////// and do border fog on opaque and translucents
 
   #if defined BorderFog
-
     #ifdef DISTANT_HORIZONS
-      float fog = 1.0 - pow(1.0-pow(1.0-min(max(1.0 - linearDistance_cylinder / dhFarPlane,0.0)*3.0,1.0),2.0),2.0);
+    	float fog = smoothstep(1.0, 0.0, min(max(1.0 - linearDistance_cylinder / dhRenderDistance,0.0)*3.0,1.0)   );
     #else
-    	float fog =  1.0 - pow(1.0-pow(1.0-min(max(1.0 - linearDistance_cylinder / far,0.0)*5.0,1.0),2.0),2.0);
+    	float fog = smoothstep(1.0, 0.0, min(max(1.0 - linearDistance_cylinder / far,0.0)*3.0,1.0)   );
     #endif
 
     fog *= exp(-10.0 * pow(clamp(np3.y,0.0,1.0)*4.0,2.0));
+
     if(swappedDepth >= 1.0 || isEyeInWater != 0) fog = 0.0;
     
     if(lightleakfixfast < 1.0) fog *= lightleakfix;
@@ -320,27 +328,24 @@ void main() {
     #ifdef SKY_GROUND
       vec3 borderFogColor = skyGroundColor;
     #else
-     vec3 borderFogColor = skyFromTex(np3, colortex4)/30.0;
+      vec3 borderFogColor = skyFromTex(np3, colortex4)/30.0;
     #endif
 
     color.rgb = mix(color.rgb, borderFogColor, fog);
+  #else
+    float fog = 0.0;
   #endif
 	
-  
-  if (albedo.a > 0.0 || TranslucentShader.a > 0.0){
-
+  if (TranslucentShader.a > 0.0){
     #ifdef Glass_Tint
-      if(!iswater && TranslucentShader.a > 0.0) color *= normalize(albedo.rgb+0.0001)*0.9+0.1;
+      if(!isWater) color *= mix(normalize(albedo.rgb+0.0001)*0.9+0.1, vec3(1.0), max(fog, min(max(0.1-albedo.a,0.0) * 1000.0,1.0))) ;
     #endif
-
-    // block breaking effect.
-    if(!iswater && TranslucentShader.a <= 0.0) color *= albedo.rgb;
-
-    color = color*(1.0-TranslucentShader.a) + TranslucentShader.rgb; 
 
     #ifdef BorderFog
-      color.rgb = mix(color.rgb, borderFogColor, fog);
+      TranslucentShader = mix(TranslucentShader, vec4(0.0), fog);
     #endif
+
+    color = color*(1.0-TranslucentShader.a) + TranslucentShader.rgb*10.0; 
   }
 
 ////// --------------- VARIOUS FOG EFFECTS (behind volumetric fog)
@@ -361,7 +366,7 @@ void main() {
         BiomeFogColor(cavefogCol);
       #endif
 
-      color.rgb = mix(color.rgb,  cavefogCol,  cavefog * (1-lightleakfix));
+      color.rgb = mix(color.rgb,  cavefogCol,  cavefog * lightleakfix);
     }
 #endif
 
@@ -442,13 +447,13 @@ void main() {
       vl.a = 1.0;
     }
   #endif
-// color.rgb = vec3(1) * sqrt(texture2D(colortex12,texcoord).a/65000.0);
   
 
   gl_FragData[0].r = bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);
+  
+  	// gl_FragData[1].rgb =  vec3(1.0) * ld(    (data.a > 0.0 ? data.a : texture2D(depthtex0, texcoord).x   )              )   ;
+  // gl_FragData[1].rgb = gl_FragData[1].rgb * (1.0-TranslucentShader.a) + TranslucentShader.rgb*10.0;
+  // gl_FragData[1].rgb = 1-(texcoord.x > 0.5 ? vec3(TranslucentShader.a) : vec3(data.a));
 
-  // gl_FragData[1].rgb = vec3(1) * sqrt(texelFetch2D(colortex12,ivec2(gl_FragCoord.xy),0).a/65000.0);
-
-  // gl_FragData[1].rgb = vl.rgb;
 }

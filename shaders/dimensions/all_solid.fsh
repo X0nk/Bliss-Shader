@@ -280,12 +280,10 @@ vec4 texture2D_POMSwitch(
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 
-varying vec3 pos;
-
-#ifdef HAND
-	/* RENDERTARGETS: 1,7,8,15,2 */
+#if defined HAND || defined ENTITIES
+	/* RENDERTARGETS:1,7,8,15,2 */
 #else
-	/* RENDERTARGETS: 1,7,8,15 */
+	/* RENDERTARGETS:1,7,8,15 */
 #endif
 
 void main() {
@@ -312,19 +310,9 @@ void main() {
 	vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
 	vec3 worldpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz + cameraPosition;
 
-    // #if defined DH_OVERDRAW_PREVENTION && defined DISTANT_HORIZONS
-    //     // overdraw prevention
-    //     if(clamp(1.0-length(pos.xyz)/max(far - 16.0 * sqrt(interleaved_gradientNoise_temporal()),0.0),0.0,1.0) <= 0.0 ){
-    //         discard;
-    //         return;
-    //     }
-	// #endif
-	
 	float torchlightmap = lmtexcoord.z;
 
 	#ifdef Hand_Held_lights
-
-
 		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(fragpos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
 
 		#ifdef HAND
@@ -365,7 +353,7 @@ void main() {
 		float used_POM_DEPTH = 1.0;
 
  		if ( viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
-			float noise = blueNoise();
+			// float noise = blueNoise();
 			#ifdef Adaptive_Step_length
 				vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * POM_DEPTH) * clamp(1.0-pow(depthmap,2),0.1,1.0);
 				used_POM_DEPTH = 1.0;
@@ -374,9 +362,9 @@ void main() {
 			#endif
 			vec3 coord = vec3(vtexcoord.st , 1.0);
 
-			coord += interval * noise * used_POM_DEPTH;
+			coord += interval  * used_POM_DEPTH;
 
-			float sumVec = noise;
+			float sumVec = 0.5;
 			for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - POM_DEPTH + POM_DEPTH * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
 				coord = coord + interval  * used_POM_DEPTH; 
 				sumVec += used_POM_DEPTH; 
@@ -392,13 +380,11 @@ void main() {
 			adjustedTexCoord = mix(fract(coord.st)*vtexcoordam.pq+vtexcoordam.st, adjustedTexCoord, max(dist-MIX_OCCLUSION_DISTANCE,0.0)/(MAX_OCCLUSION_DISTANCE-MIX_OCCLUSION_DISTANCE));
 
 			vec3 truePos = fragpos + sumVec*inverseMatrix(tbnMatrix)*interval;
-			// #ifdef Depth_Write_POM
-				gl_FragDepth = toClipSpace3(truePos).z;
-			// #endif
+
+			gl_FragDepth = toClipSpace3(truePos).z;
 		}
 	}
 #endif
-
 	if(!ifPOM) adjustedTexCoord = lmtexcoord.xy;
 	
 
@@ -407,7 +393,6 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 	float textureLOD = bias();
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD) * color;
-
 
 	#if defined HAND
 		if (Albedo.a < 0.1) discard;
@@ -427,22 +412,26 @@ void main() {
 		
 	#ifdef AEROCHROME_MODE
 		float gray = dot(Albedo.rgb, vec3(0.2, 1.0, 0.07));
-		if(blockID == 10001 || blockID == 10003 || blockID == 10004 || blockID == 10006 || blockID == 10009) {
-		// IR Reflective (Pink-red)
+		if (
+			blockID == BLOCK_AMETHYST_BUD_MEDIUM || blockID == BLOCK_AMETHYST_BUD_LARGE || blockID == BLOCK_AMETHYST_CLUSTER ||
+			blockID == BLOCK_SSS_STRONG || blockID == BLOCK_SSS_WEAK ||
+			blockID >= 10 && blockId < 80
+		) {
+			// IR Reflective (Pink-red)
 			Albedo.rgb = mix(vec3(gray), aerochrome_color, 0.7);
 		}
-		else if(blockID == 10008) {
+		else if(blockID == BLOCK_GRASS) {
 		// Special handling for grass block
 			float strength = 1.0 - color.b;
 			Albedo.rgb = mix(Albedo.rgb, aerochrome_color, strength);
 		}
 		#ifdef AEROCHROME_WOOL_ENABLED
-			else if(blockID == 200) {
+			else if(blockID == BLOCK_SSS_WEAK_2) {
 			// Wool
 				Albedo.rgb = mix(Albedo.rgb, aerochrome_color, 0.3);
 			}
 		#endif
-		else if(blockID == 8 || blockID == 10002)
+		else if(blockID == BLOCK_WATER || (blockID >= 300 && blockID < 400))
 		{
 		// IR Absorbsive? Dark.
 			Albedo.rgb = mix(Albedo.rgb, vec3(0.01, 0.08, 0.15), 0.5);
@@ -458,10 +447,14 @@ void main() {
 		if (Albedo.a > 0.1){
 			Albedo.a = 0.75;
 			gl_FragData[4].a = 0.0;
-		} else Albedo.a = 1.0;
-
+		} else {
+			Albedo.a = 1.0;
+		}
 	#endif
 
+	#ifdef ENTITIES
+		gl_FragData[4].a = 0.0;
+	#endif
 
 	//////////////////////////////// 				////////////////////////////////
 	////////////////////////////////	NORMAL		////////////////////////////////
@@ -479,15 +472,14 @@ void main() {
 		NormalTex.xy = NormalTex.xy * 2.0-1.0;
 		NormalTex.z = sqrt(max(1.0 - dot(NormalTex.xy, NormalTex.xy), 0.0));
 
-		#if defined HEIGTHMAP_DEPTH_OFFSET && !defined HAND
-			gl_FragDepth = gl_FragCoord.z;
-			vec3 truePos = fragpos;
-			truePos.z -= Heightmap * POM_DEPTH * (1.0 + ld(truePos.z));
+		// #if defined HEIGTHMAP_DEPTH_OFFSET && !defined HAND
+		// 	gl_FragDepth = gl_FragCoord.z;
+		// 	vec3 truePos = fragpos;
+		// 	truePos.z -= Heightmap * POM_DEPTH * (1.0 + ld(truePos.z));
 	
-			gl_FragDepth = toClipSpace3(truePos).z;
-		#endif
+		// 	gl_FragDepth = toClipSpace3(truePos).z;
+		// #endif
 		
-
 		normal = applyBump(tbnMatrix, NormalTex.xyz,  mix(1.0,1-Puddle_shape,rainfall)	);
 		// normal = applyBump(tbnMatrix, NormalTex.xyz,  0.0);
 	#endif
@@ -568,10 +560,6 @@ void main() {
 		// apply noise to lightmaps to reduce banding.
 		vec2 PackLightmaps = vec2(torchlightmap, lmtexcoord.w);
 		
-		#if !defined ENTITIES && !defined HAND
-			// PackLightmaps = clamp(PackLightmaps*blueNoise()*0.05 + PackLightmaps,0.0,1.0);
-		#endif
-
 		vec4 data1 = clamp( encode(viewToWorld(normal), PackLightmaps), 0.0, 1.0);
 		// gl_FragData[0] = vec4(.0);
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));

@@ -7,8 +7,11 @@ flat varying vec3 averageSkyCol_Clouds;
 uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
+
+#ifdef DISTANT_HORIZONS
 uniform sampler2D dhDepthTex;
 uniform sampler2D dhDepthTex1;
+#endif
 
 uniform sampler2D colortex2;
 uniform sampler2D colortex3;
@@ -366,7 +369,11 @@ void main() {
 	#endif
 	
 	float z = texture2D(depthtex1,tc).x;
-	float DH_z = texture2D(dhDepthTex1,tc).x;
+	#ifdef DISTANT_HORIZONS
+		float DH_z = texture2D(dhDepthTex1,tc).x;
+	#else
+		float DH_z = 0.0;
+	#endif
 	
 	vec3 viewPos1 = toScreenSpace_DH(tc/RENDER_SCALE, z, DH_z);
 	vec3 viewPos0 = toScreenSpace_DH(tc/RENDER_SCALE, z0, DH_z0);
@@ -418,4 +425,6 @@ void main() {
 		gl_FragData[0] = clamp(vec4(vl,1.0),0.000001,65000.);
 
 	}
+
+	// gl_FragData[0] = clamp(vec4(vl,1.0),0.000001,65000.);
 }

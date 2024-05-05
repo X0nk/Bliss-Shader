@@ -67,57 +67,39 @@ float ld(float depth) {
 // uniform float viewHeight;
 
 // uniform sampler2D depthtex0;
+
+#ifdef DISTANT_HORIZONS
 uniform sampler2D dhDepthTex;
+#endif
 uniform float dhNearPlane;
 uniform float dhFarPlane;
-
-// uniform mat4 gbufferProjectionInverse;
-uniform mat4 dhProjectionInverse;
-
-vec3 getViewPos() {
-    ivec2 uv = ivec2(gl_FragCoord.xy);
-    vec2 viewSize = vec2(viewWidth, viewHeight);
-    vec2 texcoord = gl_FragCoord.xy / viewSize;
-
-    vec4 viewPos = vec4(0.0);
-    
-    float depth = texelFetch(depthtex0, uv, 0).r;
-
-    if (depth < 1.0) {
-        vec4 ndcPos = vec4(texcoord, depth, 1.0) * 2.0 - 1.0;
-        viewPos = gbufferProjectionInverse * ndcPos;
-        viewPos.xyz /= viewPos.w;
-    } else {
-        depth = texelFetch(dhDepthTex, ivec2(gl_FragCoord.xy), 0).r;
-    
-        vec4 ndcPos = vec4(texcoord, depth, 1.0) * 2.0 - 1.0;
-        viewPos = dhProjectionInverse * ndcPos;
-        viewPos.xyz /= viewPos.w;
-    }
-
-    return viewPos.xyz;
-}
-
-vec3 ACESFilm2(vec3 x){
-// float a = 2.51f;
-// float b = 0.03f;
-// float c = 2.43f;
-// float d = 0.59f;
-// float e = 0.14f;
-
-	float a = 2.51f; // brightests
-	float b = 0.53f; // lower midtones
-	float c = 2.43f; // upper midtones
-	float d = 0.59f; // upper midtones
-	float e = 0.54f; // lowest tones
-	return clamp((x*(a*x+b))/(x*(c*x+d)+e),0.0,1.0);
-}
 
 float linearizeDepthFast(const in float depth, const in float near, const in float far) {
     return (near * far) / (depth * (near - far) + far);
 }
 
+
+
+
+
+
+
+float bloomWeight(){
+	
+	float weights[7] = float[](     1.0,    1.0/2.0,    1.0/3.0,    1.0/5.5,    1.0/8.0,    1.0/10.0,   1.0/12.0    );
+	// float weights[7] = float[](     0.7,    pow(0.5,2), pow(0.5,3),  pow(0.5,4),   pow(0.5,5),    pow(0.5,6), pow(0.5,7)	);
+
+	float result = 0.0;
+
+	for ( int i = 0; i < 7; i++) {
+		result += weights[i];
+	}
+
+	return result;
+}
+
 #define linear_to_srgb(x) (pow(x, vec3(1.0/2.2)))
+
 void main() {
   /* DRAWBUFFERS:7 */
 	float vignette = (1.5-dot(texcoord-0.5,texcoord-0.5)*2.);
@@ -157,15 +139,15 @@ void main() {
 	vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
 
 
+	#ifdef OLD_BLOOM
+		vec3 bloom = texture2D(colortex3,texcoord/clampedRes*vec2(1920.,1080.)*BLOOM_QUALITY).rgb / 2.0 / 7.0;
+		float lightScat = clamp((BLOOM_STRENGTH+3) * 0.05 * pow(exposure.a, 0.2)  ,0.0,1.0) * vignette;
+	#else
+		vec3 bloom = texture2D(colortex3,texcoord/clampedRes*vec2(1920.,1080.)*BLOOM_QUALITY).rgb / 3.0 / bloomWeight();
+		float lightScat = clamp(BLOOM_STRENGTH * 0.5 * pow(exposure.a, 0.2)  ,0.0,1.0) * vignette;
+	#endif
 
-	vec3 bloom = (texture2D(colortex3,texcoord/clampedRes*vec2(1920.,1080.)*BLOOM_QUALITY).rgb)/2./7.0;
-
-	// vec3 bloom = texture2D(colortex3, texcoord/clampedRes*vec2(1920.,1080.)*BLOOM_QUALITY).rgb / 2.0 / 7.0;
-
-	float lightScat = clamp(BLOOM_STRENGTH  * 0.05 * pow(exposure.a, 0.2)  ,0.0,1.0)*vignette;
-
- 	float VL_abs = texture2D(colortex7,texcoord*RENDER_SCALE).r;
-
+ 	float VL_abs = texture2D(colortex7, texcoord*RENDER_SCALE).r;
 
 	#ifdef AUTO_EXPOSURE
 		float purkinje = clamp(exposure.a*exposure.a,0.0,1.0) * clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*Purkinje_strength,0,1);
@@ -174,8 +156,10 @@ void main() {
 	#endif	
 
   	VL_abs = clamp((1.0-VL_abs)*BLOOMY_FOG*0.75*(1.0+rainStrength) * (1.0-purkinje*0.3),0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
-
+	
 	col = (mix(col, bloom, VL_abs) + bloom * lightScat) * exposure.rgb;
+
+	// if(hideGUI > 0) col = bloom  * lightScat* exposure.rgb;
 	
   	float lum = dot(col, vec3(0.15,0.3,0.55));
 	float lum2 = dot(col, vec3(0.85,0.7,0.45));
@@ -183,12 +167,6 @@ void main() {
 	float rodCurve = clamp(mix(1.0, rodLum/(2.5+rodLum), purkinje),0.0,1.0);
 
 	col = mix(lum * vec3(Purkinje_R, Purkinje_G, Purkinje_B) * Purkinje_Multiplier, col, rodCurve);
-
-
-
-  	// gl_FragColor = vec4(getViewPos() * 0.001,1.0);
-	// gl_FragColor.rgb = linear_to_srgb(gl_FragColor.rgb);
-
 
 	#ifndef USE_ACES_COLORSPACE_APPROXIMATION
 		col = LinearTosRGB(TONEMAP(col));

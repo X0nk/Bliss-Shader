@@ -3,4 +3,4 @@
 #define LINES
 #define END_SHADER
 
-#include "/dimensions/all_solid.vsh"
+#include "/dimensions/all_particles.vsh"

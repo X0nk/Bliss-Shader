@@ -32,6 +32,7 @@
 #define WATER_BACKGROUND_SPECULAR
 #define WATER_SUN_SPECULAR
 #define SCREENSPACE_REFLECTIONS	
+// #define WATER_HQ_SMOOTHNESS	
 
 #define SNELLS_WINDOW
 
@@ -121,11 +122,13 @@ const float ambientOcclusionLevel = 1.0; // this controls vanilla minecrafts amb
 
 const float	sunPathRotation	= -35;	//[-90 -89 -88 -87 -86 -85 -84 -83 -82 -81 -80 -79 -78 -77 -76 -75 -74 -73 -72 -71 -70 -69 -68 -67 -66 -65 -64 -63 -62 -61 -60 -59 -58 -57 -56 -55 -54 -53 -52 -51 -50 -49 -48 -47 -46 -45 -44 -43 -42 -41 -40 -39 -38 -37 -36 -35 -34 -33 -32 -31 -30 -29 -28 -27 -26 -25 -24 -23 -22 -21 -20 -19 -18 -17 -16 -15 -14 -13 -12 -11 -10 -9 -8 -7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 ]
 
-const int shadowMapResolution = 2048; // [512 768 1024 1536 2048 3172 4096 8192 16384]
-const float shadowDistance = 128.0; // [64.0 80.0 96.0 112.0 128.0 144.0 160.0 176.0 192.0 208.0 224.0 240.0 256.0 272.0 288.0 304.0 320.0 336.0 352.0 384.0 400.0 416.0 432.0 448.0 464.0 480.0 496.0 512.0 800.0 1000.0 2000.0 3000.0]
+const int shadowMapResolution = 2048; // [512 768 1024 1536 2048 3172 4096 8192]
+const float shadowDistance = 128.0; // [32.0 48.0 64.0 80.0 96.0 112.0 128.0 144.0 160.0 176.0 192.0 208.0 224.0 240.0 256.0 272.0 288.0 304.0 320.0 336.0 352.0 368.0 384.0 512.0 768.0 1024.0 1536.0 2048.0 4096.0 8192.0]
 
-const float shadowDistanceRenderMul = 1.0; // [-1.0 1.0]
-const float entityShadowDistanceMul = 1.0; // [0.05 0.10 1.50 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.0]
+#define OPTIMIZED_SHADOW_DISTANCE -1.0 // [-1.0 1.0]
+
+const float shadowDistanceRenderMul = OPTIMIZED_SHADOW_DISTANCE;
+const float entityShadowDistanceMul = 0.25; // [0.01 0.02 0.03 0.04 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.75 1.00]
 
 
 #define RENDER_ENTITY_SHADOWS
@@ -142,9 +145,9 @@ const float entityShadowDistanceMul = 1.0; // [0.05 0.10 1.50 0.20 0.25 0.30 0.3
 #define SHADOW_DISABLE_ALPHA_MIPMAPS
 #define Stochastic_Transparent_Shadows
 
+#define Glass_Tint
 #define TRANSLUCENT_COLORED_SHADOWS
 #ifdef TRANSLUCENT_COLORED_SHADOWS
-	#define Glass_Tint
 	#undef Stochastic_Transparent_Shadows
 #endif
 
@@ -178,7 +181,7 @@ const float entityShadowDistanceMul = 1.0; // [0.05 0.10 1.50 0.20 0.25 0.30 0.3
 #define RainFog_amount  3 // [0 1 2 3 4 5 6 7 8 9  10 15 20 25]
 
 #define BLOOMY_FOG 1.5 // [0.0 0.25 0.5 0.75 1.0 1.25 1.5 1.75 2.0 3.0 4.0 6.0 10.0 15.0 20.0]
-#define BLOOM_STRENGTH  4.0 // [0.0 0.25 0.5 0.75 1.0 1.25 1.5 1.75 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 15.0 20.0 25.0 50.0 75.0 100.0]
+#define BLOOM_STRENGTH  1.0 // [0.0 0.25 0.5 0.75 1.0 1.25 1.5 1.75 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 15.0 20.0 25.0 50.0 75.0 100.0]
 
 #define CAVE_FOG
 #ifdef CAVE_FOG
@@ -253,8 +256,8 @@ const float entityShadowDistanceMul = 1.0; // [0.05 0.10 1.50 0.20 0.25 0.30 0.3
 	#define LIGHTSOURCE_REFLECTION
 #endif
 
-#define EMISSIVE_TYPE 0 // [0 1 2 3]
-#define Emissive_Brightness 10.0 // [1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 15.0 20.0 25.0 30.0 35.0 40.0 45.0 50.0 100.]
+#define EMISSIVE_TYPE 1 // [0 1 2 3]
+#define Emissive_Brightness 1.0 // [1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 15.0 20.0 25.0 30.0 35.0 40.0 45.0 50.0 100.]
 #define Emissive_Curve 2.0 // [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
 
 
@@ -271,12 +274,14 @@ const float entityShadowDistanceMul = 1.0; // [0.05 0.10 1.50 0.20 0.25 0.30 0.3
 	#undef HEIGTHMAP_DEPTH_OFFSET
 #endif
 
-#define SSS_TYPE 2 // [0 1 2 3]
+#define SSS_TYPE 1 // [0 1 2 3]
 #define LabSSS_Curve 1.0 // [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 ]
 // #define MOB_SSS
 // #define MISC_BLOCK_SSS
 #define Ambient_SSS
 #define ambientsss_brightness 1.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0]
+#define sss_absorbance_multiplier 1.0   // [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0]
+#define sss_density_multiplier 1.0 		// [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0]
 
 
 // #define Porosity
@@ -524,7 +529,7 @@ uniform int moonPhase;
 // ----- COLOR/POST PROCESSING RELATED SETTINGS ----- //
 ////////////////////////////////////////////////////////
 
-#define TONEMAP ToneMap_Hejl2015 // [ToneMap_Hejl2015 Tonemap_Xonk Tonemap_Uchimura HableTonemap Full_Reinhard_Edit Tonemap_Full_Reinhard reinhard Tonemap_Lottes ACESFilm]
+#define TONEMAP ToneMap_AgX // [ToneMap_AgX ToneMap_Hejl2015 Tonemap_Xonk Tonemap_Uchimura HableTonemap Full_Reinhard_Edit Tonemap_Full_Reinhard reinhard Tonemap_Lottes ACESFilm]
 //#define USE_ACES_COLORSPACE_APPROXIMATION
 
 #define CONTRAST_ADAPTATIVE_SHARPENING
@@ -642,7 +647,9 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 
 #define RESOURCEPACK_SKY 0 // [0 1 2]
 
-#define TRANSLUCENT_ENTITIES
+#ifdef IS_IRIS
+	#define TRANSLUCENT_ENTITIES
+#endif
 
 #define WATER_CAUSTICS_BRIGHTNESS 1.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0]
 #define DENOISE_SSS_AND_SSAO
@@ -660,13 +667,30 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 	
 	const float shadowNearPlane = -1.0;
 	const float shadowFarPlane = -1.0;
-
 #endif
 
 // #define DH_SHADOWPROJECTIONTWEAK
 
 #define DH_OVERDRAW_PREVENTION
 #define DH_KNOWN_ISSUES 0 // [0 1 2 3 4 5]
+
+
+///////////////////////////////////////////
+// ----- FLOODFILL [LPV] SETTINGS ----- //
+///////////////////////////////////////////
+
+//#define LPV_ENABLED
+#define LPV_SIZE 7 // [6 7 8]
+#define LPV_NORMAL_OFFSET
+#define LPV_ENTITY_LIGHTS
+#define LPV_REDSTONE_LIGHTS
+//#define LPV_COLORED_CANDLES
+
+#ifdef LPV_ENABLED
+	#ifdef IRIS_FEATURE_CUSTOM_IMAGES
+		#define IS_LPV_ENABLED
+	#endif
+#endif
 
 
 ////////////////////////////////
@@ -683,17 +707,24 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 #define debug_VIEW_POSITION 6
 #define debug_DH_WATER_BLENDING 7
 #define debug_FILTERED_STUFF 8
-#define DEBUG_VIEW debug_OFF // [debug_OFF debug_SHADOWMAP debug_NORMALS debug_SPECULAR debug_INDIRECT debug_DIRECT debug_VIEW_POSITION debug_DH_WATER_BLENDING debug_FILTERED_STUFF]
+#define debug_TEMPORAL_REPROJECTION 9
+#define DEBUG_VIEW debug_OFF // [debug_OFF debug_SHADOWMAP debug_NORMALS debug_SPECULAR debug_INDIRECT debug_DIRECT debug_VIEW_POSITION debug_DH_WATER_BLENDING debug_FILTERED_STUFF debug_TEMPORAL_REPROJECTION]
 
 /////////////////////////////////
 // ----- RANDOM SETTINGS ----- //
 /////////////////////////////////
 
+// #define OLD_BLOOM
 // #define BLOOMY_PARTICLES
 // #define ORIGINAL_CHOCAPIC_SKY
 // #define CLOUDS_INFRONT_OF_WORLD
 
+
 // fix settings
+#ifdef TRANSLUCENT_ENTITIES
+#endif
+#ifdef RENDER_ENTITY_SHADOWS
+#endif
 #if RESOURCEPACK_SKY == 0
 #endif
 #ifdef VANILLA_SUN_AND_MOON

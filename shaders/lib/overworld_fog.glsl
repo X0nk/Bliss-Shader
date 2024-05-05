@@ -198,11 +198,11 @@ vec4 GetVolumetricFog(
 	
 		if (abs(pos.x) < 1.0-0.5/2048. && abs(pos.y) < 1.0-0.5/2048){
 			pos = pos*vec3(0.5,0.5,0.5/6.0)+0.5;
+
 			#ifdef TRANSLUCENT_COLORED_SHADOWS
 				sh = vec3(shadow2D(shadowtex0, pos).x);
 			
 				if(shadow2D(shadowtex1, pos).x > pos.z && sh.x < 1.0){
-				
 					vec4 translucentShadow = texture2D(shadowcolor0, pos.xy);
 					if(translucentShadow.a < 0.9) sh = normalize(translucentShadow.rgb+0.0001);
 				}

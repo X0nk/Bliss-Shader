@@ -8,8 +8,19 @@ void GriAndEminShadowFix(
 	float SkyLightmap
 ){
 
+	float minvalue = 0.007;
+
+	#ifdef DISTANT_HORIZONS_SHADOWMAP
+		minvalue = 0.035;
+	#endif
+
 	// float DistanceOffset = clamp(0.17 + length(WorldPos) / (shadowMapResolution*0.20), 0.0,1.0) ;
-	float DistanceOffset = clamp(0.17 + length(WorldPos) / (shadowMapResolution*0.20), 0.0,1.0) ;
+	// float DistanceOffset = clamp(0.17 + length(WorldPos) / (shadowMapResolution*0.20), 0.0,1.0) ;
+	float shadowResScale = (2048.0/shadowMapResolution) / 4.0;
+	float DistanceOffset = (length(WorldPos)+4.0) * (minvalue + shadowResScale*0.015);
+	
+	
+	
 	vec3 Bias = FlatNormal * DistanceOffset; // adjust the bias thingy's strength as it gets farther away.
 	
 	vec3 finalBias = Bias;

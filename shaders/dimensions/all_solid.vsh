@@ -2,6 +2,9 @@
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/bokeh.glsl"
+#include "/lib/blocks.glsl"
+#include "/lib/entities.glsl"
+#include "/lib/items.glsl"
 
 /*
 !! DO NOT REMOVE !!
@@ -182,25 +185,17 @@ float luma(vec3 color) {
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 
-
-varying vec3 pos;
 void main() {
 
 	gl_Position = ftransform();
 
-
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-
-    pos = position;
 
     /////// ----- COLOR STUFF ----- ///////
 	color = gl_Color;
 
 	VanillaAO = 1.0 - clamp(color.a,0,1);
 	if (color.a < 0.3) color.a = 1.0; // fix vanilla ao on some custom block models.
-
-
-
 
     /////// ----- RANDOM STUFF ----- ///////
 	// gl_TextureMatrix[0] for animated things like charged creepers
@@ -214,7 +209,8 @@ void main() {
 	vtexcoord.xy    = sign(texcoordminusmid)*0.5+0.5;
 	// #endif
 
-	vec2 lmcoord = gl_MultiTexCoord1.xy / 255.0; // is this even correct? lol'
+
+	vec2 lmcoord = gl_MultiTexCoord1.xy / 240.0; 
 	lmtexcoord.zw = lmcoord;
 
 
@@ -229,17 +225,16 @@ void main() {
 	blockID = mc_Entity.x;
 	// velocity = at_velocity;
 
-	if(mc_Entity.x == 10009) normalMat.a = 0.60;
+	if(mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL || mc_Entity.x == BLOCK_GRASS_SHORT) normalMat.a = 0.60;
 
 
 	PORTAL = 0;
 	SIGN = 0;
 
 	#ifdef WORLD
-		// disallow POM to work on signs.
-		if(blockEntityId == 2200) SIGN = 1;
+		if(blockEntityId == BLOCK_SIGN) SIGN = 1;
 
-		if(blockEntityId == 2100) PORTAL = 1;
+		if(blockEntityId == BLOCK_END_PORTAL) PORTAL = 1;
 	#endif
 	
 	NameTags = 0;
@@ -247,71 +242,79 @@ void main() {
 
 #ifdef ENTITIES
 	// disallow POM to work on item frames.
-	if(entityId == 2300) SIGN = 1;
+	if(entityId == ENTITY_ITEM_FRAME) SIGN = 1;
 
 
 	// try and single out nametag text and then discard nametag background
 	// if( dot(gl_Color.rgb, vec3(1.0/3.0)) < 1.0) NameTags = 1;
 	// if(gl_Color.a < 1.0) NameTags = 1;
 	// if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
-	
-	if(entityId == 1100 || entityId == 1200 || entityId == 2468) normalMat.a = 0.45;
+	if(entityId == ENTITY_SSS_MEDIUM || entityId == ENTITY_SSS_WEAK || entityId == ENTITY_PLAYER || entityId == 2468) normalMat.a = 0.45;
 	
 #endif
 
-	if(mc_Entity.x == 10003) normalMat.a = 0.55;
+	if(mc_Entity.x == BLOCK_AIR_WAVING) normalMat.a = 0.55;
 
     /////// ----- EMISSIVE STUFF ----- ///////
-				EMISSIVE = 0.0;
-				LIGHTNING = 0;
+		EMISSIVE = 0.0;
+		LIGHTNING = 0;
 	// if(NameTags > 0) EMISSIVE = 0.9;
 
 	// normal block lightsources		
-	if(mc_Entity.x == 10005) EMISSIVE = 0.5;
+	if(mc_Entity.x >= 100 && mc_Entity.x < 300) EMISSIVE = 0.5;
 	
 	// special cases light lightning and beacon beams...	
 	#ifdef ENTITIES
-		if(entityId == 12345){
+		if(entityId == ENTITY_LIGHTNING){
 			LIGHTNING = 1;
 			normalMat.a = 0.50;
 		}
 	#endif
 
     /////// ----- SSS STUFF ----- ///////
-			SSSAMOUNT = 0.0;
+		SSSAMOUNT = 0.0;
 
 	HELD_ITEM_BRIGHTNESS = 0.0;
 
 	#ifdef Hand_Held_lights
-		if(heldItemId == 100 || heldItemId2 == 100) HELD_ITEM_BRIGHTNESS = 0.9;
+if(heldItemId == ITEM_LIGHT_SOURCES || heldItemId2 == ITEM_LIGHT_SOURCES) HELD_ITEM_BRIGHTNESS = 0.9;
 	#endif
 
 
 #ifdef WORLD
-	
-
     /////// ----- SSS ON BLOCKS ----- ///////
 	// strong
-	if(mc_Entity.x == 10001 || mc_Entity.x == 10003 || mc_Entity.x == 10004 || mc_Entity.x == 10009) SSSAMOUNT = 1.0;
-	
+	if (
+		mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL || mc_Entity.x == BLOCK_AIR_WAVING ||
+		mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_GRASS_TALL_UPPER || mc_Entity.x == BLOCK_GRASS_TALL_LOWER ||
+		mc_Entity.x == BLOCK_SSS_STRONG || mc_Entity.x == BLOCK_SAPLING
+	) {
+		SSSAMOUNT = 1.0;
+	}
+
 	// medium
-	if(mc_Entity.x == 10006 || mc_Entity.x == 200) SSSAMOUNT = 0.75;
-	
+	if (
+		mc_Entity.x == BLOCK_SSS_WEAK || mc_Entity.x == BLOCK_SSS_WEAK_2 ||
+		mc_Entity.x == BLOCK_AMETHYST_BUD_MEDIUM || mc_Entity.x == BLOCK_AMETHYST_BUD_LARGE || mc_Entity.x == BLOCK_AMETHYST_CLUSTER ||
+		mc_Entity.x == BLOCK_BAMBOO || mc_Entity.x == BLOCK_SAPLING || mc_Entity.x == BLOCK_VINE
+	) {
+		SSSAMOUNT = 0.75;
+	}
 	// low
 	#ifdef MISC_BLOCK_SSS
-		if(mc_Entity.x == 10007 || mc_Entity.x == 10008) SSSAMOUNT = 0.5; // weird SSS on blocks like grass and stuff
+		if(mc_Entity.x == BLOCK_SSS_WEIRD || mc_Entity.x == BLOCK_GRASS) SSSAMOUNT = 0.5; // weird SSS on blocks like grass and stuff
 	#endif
 
 	#ifdef ENTITIES
 		#ifdef MOB_SSS
 		    /////// ----- SSS ON MOBS----- ///////
 			// strong
-			if(entityId == 1100) SSSAMOUNT = 0.75;
+			if(entityId == ENTITY_SSS_MEDIUM) SSSAMOUNT = 0.75;
 	
 			// medium
 	
 			// low
-			if(entityId == 1200) SSSAMOUNT = 0.3;
+			if(entityId == ENTITY_SSS_WEAK || entityId == ENTITY_PLAYER) SSSAMOUNT = 0.3;
 		#endif
 	#endif
 
@@ -320,7 +323,7 @@ void main() {
 		// strong
 
 		// medium
-		if(blockEntityId == 10010) SSSAMOUNT = 0.4;
+		if(blockEntityId == BLOCK_SSS_WEAK_3) SSSAMOUNT = 0.4;
 
 		// low
 
@@ -330,21 +333,25 @@ void main() {
 	#ifdef WAVY_PLANTS
 		bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
 
-		if ((mc_Entity.x == 10001 || mc_Entity.x == 10009) && istopv && abs(position.z) < 64.0) {
-    		vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
+		if (
+			(
+				mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL ||
+				mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_GRASS_TALL_UPPER ||
+				mc_Entity.x == BLOCK_SAPLING
+			) && istopv && abs(position.z) < 64.0
+		) {
+			vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
 			worldpos.xyz += calcMovePlants(worldpos.xyz)*lmtexcoord.w - cameraPosition;
     		position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 		}
 		
-		if (mc_Entity.x == 10003 && abs(position.z) < 64.0) {
+		if (mc_Entity.x == BLOCK_AIR_WAVING && abs(position.z) < 64.0) {
    			vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
 			worldpos.xyz += calcMoveLeaves(worldpos.xyz, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*lmtexcoord.w  - cameraPosition;
    			position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 		}
 	#endif
-
 	gl_Position = toClipSpace3(position);
-
 #endif
 
 	#if defined Seasons && defined WORLD && !defined ENTITIES && !defined BLOCKENTITIES && !defined HAND

@@ -3,12 +3,15 @@
 flat varying vec4 lightCol;
 flat varying vec3 averageSkyCol;
 flat varying vec3 averageSkyCol_Clouds;
+flat varying float exposure;
 
 uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
+#ifdef DISTANT_HORIZONS
 uniform sampler2D dhDepthTex;
 uniform sampler2D dhDepthTex1;
+#endif
 
 uniform sampler2D colortex2;
 uniform sampler2D colortex3;
@@ -198,7 +201,7 @@ vec4 waterVolumetrics_test( vec3 rayStart, vec3 rayEnd, float estEndDepth, float
 	vec3 absorbance = vec3(1.0);
 	vec3 vL = vec3(0.0);
 	
-	ambient = max(ambient* (normalize(wpos).y*0.3+0.7),0.0);
+	ambient = max(ambient * (normalize(wpos).y*0.3+0.7),0.0);
 
 	float expFactor = 11.0;
 	for (int i=0;i<spCount;i++) {
@@ -244,7 +247,7 @@ vec4 waterVolumetrics_test( vec3 rayStart, vec3 rayEnd, float estEndDepth, float
 		vec3 ambientMul = exp(-estEndDepth * d * waterCoefs );
 
 		vec3 Directlight = ((lightSource * sh) * phase * sunMul) ;
-		vec3 Indirectlight = max(ambient * ambientMul, vec3(0.01,0.2,0.4) * ambientMul * 0.05) ;
+		vec3 Indirectlight = max(ambient * ambientMul, vec3(0.01,0.2,0.4) * ambientMul * 0.03) ;
 
 		vec3 light = (Indirectlight + Directlight) * scatterCoef;
 
@@ -253,6 +256,11 @@ vec4 waterVolumetrics_test( vec3 rayStart, vec3 rayEnd, float estEndDepth, float
 	}
 	// inColor += vL;
     return vec4( vL, dot(newabsorbance,vec3(0.335)));
+}
+vec2 decodeVec2(float a){
+    const vec2 constant1 = 65535. / vec2( 256., 65536.);
+    const float constant2 = 256. / 255.;
+    return fract( a * constant1 ) * constant2 ;
 }
 
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -282,8 +290,12 @@ void main() {
 	#endif
 	
 	float z = texture2D(depthtex1,tc).x;
-	float DH_z = texture2D(dhDepthTex1,tc).x;
 
+	#ifdef DISTANT_HORIZONS
+	float DH_z = texture2D(dhDepthTex1,tc).x;
+	#else
+		float DH_z = 0.0;
+	#endif
 	
 	vec3 viewPos1 = toScreenSpace_DH(tc/RENDER_SCALE, z, DH_z);
 	vec3 viewPos0 = toScreenSpace_DH(tc/RENDER_SCALE, z0, DH_z0);
@@ -291,7 +303,8 @@ void main() {
 	vec3 playerPos = normalize(mat3(gbufferModelViewInverse) *  viewPos1);
 	// vec3 lightningColor = (lightningEffect / 3) * (max(eyeBrightnessSmooth.y,0)/240.);
 	
-	float dirtAmount = Dirt_Amount + 0.05;
+	float dirtAmount = Dirt_Amount + 0.1;
+    // float dirtAmount = Dirt_Amount + 0.01;
 	vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
 	vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
 	vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;
@@ -305,16 +318,22 @@ void main() {
 	///////////////// BEHIND OF TRANSLUCENTS /////////////////
 	//////////////////////////////////////////////////////////
 
-	// gl_FragData[0] = vec4(0,0,0,1);
 
 	if(texture2D(colortex2, tc).a > 0.0 || iswater){
 		
 		#ifdef OVERWORLD_SHADER
-			float lightmap = texture2D(colortex14,tc).a;
-			if(z >= 1.0) lightmap = 1.0;
+			vec2 lightmap = decodeVec2(texture2D(colortex14, tc).a);
+			if(z >= 1.0) lightmap.y = 0.99;
 		#else
-			float lightmap = 1.0;
+			vec2 lightmap = decodeVec2(texture2D(colortex14, tc).a);
+			lightmap.y = 1.0;
 		#endif
+   		
+	 	indirectLightColor_dynamic = indirectLightColor_dynamic * ambient_brightness * pow(1.0-pow(1.0-lightmap.y,0.5),3.0)	;
+		
+		float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) ;
+		// indirectLightColor_dynamic += vec3(TORCH_R,TORCH_G,TORCH_B)	* TorchBrightness_autoAdjust * pow(1.0-sqrt(1.0-clamp(lightmap.x,0.0,1.0)),2.0) * 2.0;
+
 		float Vdiff = distance(viewPos1, viewPos0) * 2.0;
 		float VdotU = playerPos.y;
 		float estimatedDepth = Vdiff * abs(VdotU) ;	//assuming water plane
@@ -326,7 +345,7 @@ void main() {
 		#endif
 		
 		vec4 underwaterVlFog = vec4(0,0,0,1);
-		if(iswater) underwaterVlFog = waterVolumetrics_test(viewPos0, viewPos1, estimatedDepth, estimatedSunDepth, Vdiff, noise_1, totEpsilon, scatterCoef, indirectLightColor_dynamic * max(lightmap,0.0), directLightColor, dot(normalize(viewPos1), normalize(sunVec*lightCol.a)) );		
+		if(iswater) underwaterVlFog = waterVolumetrics_test(viewPos0, viewPos1, estimatedDepth, estimatedSunDepth, Vdiff, noise_1, totEpsilon, scatterCoef, indirectLightColor_dynamic, directLightColor, dot(normalize(viewPos1), normalize(sunVec*lightCol.a)) );		
 
 		vec4 fogFinal = vec4(underwaterVlFog.rgb * VolumetricFog2.a + VolumetricFog2.rgb, VolumetricFog2.a * underwaterVlFog.a);
 

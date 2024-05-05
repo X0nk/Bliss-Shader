@@ -11,9 +11,10 @@ uniform sampler2D noisetex;
 const bool shadowHardwareFiltering = true;
 uniform sampler2DShadow shadow;
 
+#ifdef DISTANT_HORIZONS
 uniform sampler2D dhDepthTex;
-// uniform sampler2D dhDepthTex0;
 uniform sampler2D dhDepthTex1;
+#endif
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 
@@ -110,10 +111,8 @@ uniform int isEyeInWater;
 uniform float rainStrength;
 #include "/lib/volumetricClouds.glsl"
 
-
-vec3 GGX (vec3 n, vec3 v, vec3 l, float r, vec3 F0) {
-  r = pow(r,2.5);
-//   r*=r;
+float GGX(vec3 n, vec3 v, vec3 l, float r, float f0) {
+  r = max(pow(r,2.5), 0.0001);
 
   vec3 h = l + v;
   float hn = inversesqrt(dot(h, h));
@@ -125,11 +124,13 @@ vec3 GGX (vec3 n, vec3 v, vec3 l, float r, vec3 F0) {
 
   float denom = dotNHsq * r - dotNHsq + 1.;
   float D = r / (3.141592653589793 * denom * denom);
-  vec3 F = 0.2 + (1. - F0) * exp2((-5.55473*dotLH-6.98316)*dotLH);
+
+  float F = f0 + (1. - f0) * exp2((-5.55473*dotLH-6.98316)*dotLH);
   float k2 = .25 * r;
 
   return dotNL * D * F / (dotLH*dotLH*(1.0-k2)+k2);
 }
+
 uniform int framemod8;
 
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
@@ -226,143 +227,190 @@ uniform float near;
 float ld(float dist) {
     return (2.0 * near) / (far + near - dist * (far - near));
 }
+vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
+	float bumpmult = puddle_values;
+	bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
+	// 
+	return normalize(bump*tbnMatrix);
+}
 
-
+varying vec4 tangent;
 
 /* RENDERTARGETS:2,7 */
 void main() {
-
 if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	{
+   
     bool iswater = isWater > 0;
+   
+    float material = 0.7;
+    if(iswater) material = 1.0;
 
     vec3 normals = normals_and_materials.xyz;
-
-    vec3 playerPos = mat3(gbufferModelViewInverse) * pos.xyz;
+    vec3 viewPos = pos.xyz;
+    vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
     float transition = exp(-25* pow(clamp(1.0 - length(playerPos)/(far-8),0.0,1.0),2));
-    
+
+    #ifdef DH_OVERDRAW_PREVENTION
+        if(length(playerPos) < max(far-16*4,16) ){ discard; return;}
+    #endif
+
+
     if(iswater){
 	    vec3 posxz = playerPos+cameraPosition;
 
-	    vec3 waterHeightmap = normalize(getWaveNormal(posxz, true));
-    
-	    float bumpmult = WATER_WAVE_STRENGTH;
-	    waterHeightmap = waterHeightmap * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
-        waterHeightmap = normalize(waterHeightmap);
+		vec3 bump = normalize(getWaveNormal(posxz, true));
 
-        // vec2 TangentNormal = waterHeightmap.xy*0.5+0.5;
-	    // gl_FragData[2] = vec4(encodeVec2(TangentNormal), encodeVec2(vec2(1.0)), encodeVec2(vec2(1.0)), 1.0);
+		float bumpmult = 10.0 * WATER_WAVE_STRENGTH;
+		bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 
-        if(normals.y > 0.0) normals = vec3(waterHeightmap.x,normals.y,waterHeightmap.y);
+        normals.xz = bump.xy;
     }
     
     normals = worldToView(normals);
-	vec3 Albedo = toLinear(gcolor.rgb);
-    gl_FragData[0] = vec4(Albedo, gcolor.a);
 
-	vec4 COLORTEST = gl_FragData[0];
+    gl_FragData[0] = gcolor;
+    // float UnchangedAlpha = gl_FragData[0].a;
 
-	#ifndef Vanilla_like_water
-    if(iswater){
-	    Albedo = vec3(0.0);
-	    gl_FragData[0].a = 1.0/255.0;
-    }
+	#ifdef WhiteWorld
+		gl_FragData[0].rgb = vec3(0.5);
+		gl_FragData[0].a = 1.0;
+	#endif
+    
+	vec3 Albedo = toLinear(gl_FragData[0].rgb);
+
+	#ifndef WhiteWorld
+	    #ifndef Vanilla_like_water
+	    	if (iswater){
+	    		Albedo = vec3(0.0);
+	    		gl_FragData[0].a = 1.0/255.0;
+	    	}
+        #endif
     #endif
 
     // diffuse
-    vec3 Direct_lighting = lightCol.rgb/80.0;
+	vec3 Indirect_lighting = vec3(0.0);
+	// vec3 MinimumLightColor = vec3(1.0);
+	// if(isEyeInWater == 1) MinimumLightColor = vec3(10.0);
+	vec3 Direct_lighting = vec3(0.0);
 
-    float NdotL = max(dot(normals, WsunVec2), 0.0f);
-    Direct_lighting *= NdotL;
-    
-    #ifdef CLOUDS_SHADOWS
-     Direct_lighting *= GetCloudShadow(playerPos);
-    #endif
+    #ifdef OVERWORLD_SHADER
+		vec3 DirectLightColor = lightCol.rgb/80.0;
 
-    #ifdef DISTANT_HORIZONS_SHADOWMAP
+    	float NdotL = clamp(dot(normals, normalize(WsunVec2)),0.0,1.0); 
+        NdotL = clamp((-15 + NdotL*255.0) / 240.0  ,0.0,1.0);
+
         float Shadows = 1.0;
-        
-	    vec3 feetPlayerPos_shadow = mat3(gbufferModelViewInverse) * pos.xyz + gbufferModelViewInverse[3].xyz;
 
-	    vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos_shadow  + shadowModelView[3].xyz;
-	    projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
+        #ifdef DISTANT_HORIZONS_SHADOWMAP
+    	    vec3 feetPlayerPos_shadow = mat3(gbufferModelViewInverse) * pos.xyz + gbufferModelViewInverse[3].xyz;
 
-	    //apply distortion
-	    #ifdef DISTORT_SHADOWMAP
-	        float distortFactor = calcDistort(projectedShadowPosition.xy);
-	    	projectedShadowPosition.xy *= distortFactor;
-	    #else
-	    	float distortFactor = 1.0;
-	    #endif
+    	    vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos_shadow  + shadowModelView[3].xyz;
+    	    projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
-	    float smallbias = -0.0035;
+    	    //apply distortion
+    	    #ifdef DISTORT_SHADOWMAP
+    	        float distortFactor = calcDistort(projectedShadowPosition.xy);
+    	    	projectedShadowPosition.xy *= distortFactor;
+    	    #else
+    	    	float distortFactor = 1.0;
+    	    #endif
 
-	    bool ShadowBounds = abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0;
-    
-	    if(ShadowBounds){
-	    	Shadows = 0.0;
-	    	projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
+    	    float smallbias = -0.0035;
 
-	    	Shadows = shadow2D(shadow, projectedShadowPosition + vec3(0.0,0.0, smallbias)).x;
-	    }
-        
-        Direct_lighting *= Shadows;
-    #endif
+    	    bool ShadowBounds = abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0;
 
+    	    if(ShadowBounds){
+    	    	Shadows = 0.0;
+    	    	projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
 
-	vec3 Indirect_lighting = averageSkyCol_Clouds/30.0;
-    
-    gl_FragData[0].rgb =  (Indirect_lighting + Direct_lighting) * Albedo;
-    // specular
-    vec3 reflectedVector = reflect(normalize(pos.xyz), normals);
-
-	float normalDotEye = dot(normals, normalize(pos.xyz));
-	float fresnel =  pow(clamp(1.0 + normalDotEye, 0.0, 1.0),5.0);
-
-	fresnel = mix(0.02, 1.0, fresnel); 
-
-    #ifdef SNELLS_WINDOW
-		if(isEyeInWater == 1) fresnel = pow(clamp(1.5 + normalDotEye,0.0,1.0), 25.0);
-	#endif
-
-    #ifdef WATER_REFLECTIONS
-    
-        vec4 ssReflections = vec4(0);
-        #ifdef SCREENSPACE_REFLECTIONS
-        vec3 rtPos = rayTrace(reflectedVector, pos.xyz, interleaved_gradientNoise(), fresnel, false);
-
-        if (rtPos.z < 1.){
-        	vec3 previousPosition = mat3(gbufferModelViewInverse) * DH_toScreenSpace(rtPos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
-        	previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
-        	previousPosition.xy = projMAD(dhPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
-        	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0) {
-        		ssReflections.a = 1.0;
-        		ssReflections.rgb = texture2D(colortex5, previousPosition.xy).rgb;
-        	}
-        }
+    	    	Shadows = shadow2D(shadow, projectedShadowPosition + vec3(0.0,0.0, smallbias)).x;
+    	    }
+        #endif
+        #ifdef CLOUDS_SHADOWS
+    		Shadows *= pow(GetCloudShadow(playerPos),3);
         #endif
 
-        vec3 skyReflection = skyCloudsFromTex(mat3(gbufferModelViewInverse) * reflectedVector, colortex4).rgb / 30.0 ;
-        skyReflection = mix(skyReflection, ssReflections.rgb, ssReflections.a);
+    	Direct_lighting = DirectLightColor * NdotL * Shadows;
 
-        vec3 sunReflection = Direct_lighting * GGX(normals, -normalize(pos.xyz), WsunVec2, 0.05, vec3(0.02)) * (1-ssReflections.a) ;
+    	vec3 AmbientLightColor = averageSkyCol_Clouds/30.0;
 
-        gl_FragData[0].rgb = mix(gl_FragData[0].rgb, skyReflection, fresnel) + sunReflection ;
-	    gl_FragData[0].a = mix(gl_FragData[0].a, 1.0, fresnel);
-    #endif
+    	vec3 ambientcoefs = normals_and_materials.xyz / dot(abs(normals_and_materials.xyz), vec3(1.0));
+    	float SkylightDir = ambientcoefs.y*1.5;
     
-    float material = 1.0;
-    #ifdef DH_OVERDRAW_PREVENTION
-        float distancefade = min(max(1.0 - length(pos.xz)/max(far-16.0,0.0),0.0)*2.0,1.0);
-        gl_FragData[0].a = mix(gl_FragData[0].a, 0.0, distancefade);
-        
-        material = distancefade < 1.0 ?  1.0 : 0.0;
+    	float skylight = max(pow(viewToWorld(normals_and_materials.xyz).y*0.5+0.5,0.1) + SkylightDir, 0.2);
+    	AmbientLightColor *= skylight;
+    #endif
 
-        if(texture2D(depthtex1, gl_FragCoord.xy*texelSize).x < 1.0){
+    Indirect_lighting = AmbientLightColor;
+
+	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
+
+    // specular
+    #ifdef WATER_REFLECTIONS
+		vec3 Reflections_Final = vec3(0.0);
+		vec4 Reflections = vec4(0.0);
+		vec3 BackgroundReflection = FinalColor; 
+		vec3 SunReflection = vec3(0.0);
+		
+        float roughness = 0.035;
+		float f0 = 0.02;
+		// float f0 = 0.9;
+
+        vec3 reflectedVector = reflect(normalize(viewPos), normals);
+	    float normalDotEye = dot(normals, normalize(viewPos));
+
+	    float fresnel =  pow(clamp(1.0 + normalDotEye, 0.0, 1.0),5.0);
+
+	    fresnel = mix(f0, 1.0, fresnel);
+
+        #ifdef SNELLS_WINDOW
+	    	if(isEyeInWater == 1) fresnel = pow(clamp(1.5 + normalDotEye,0.0,1.0), 25.0);
+	    #endif
+
+
+        #ifdef SCREENSPACE_REFLECTIONS
+            vec3 rtPos = rayTrace(reflectedVector, viewPos, interleaved_gradientNoise(), fresnel, false);
+            if (rtPos.z < 1.){
+            	vec3 previousPosition = mat3(gbufferModelViewInverse) * DH_toScreenSpace(rtPos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
+            	previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
+            	previousPosition.xy = projMAD(dhPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
+            	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0) {
+            		Reflections.a = 1.0;
+            		Reflections.rgb = texture2D(colortex5, previousPosition.xy).rgb;
+            	}
+            }
+        #endif
+		#ifdef WATER_BACKGROUND_SPECULAR
+            BackgroundReflection = skyCloudsFromTex(mat3(gbufferModelViewInverse) * reflectedVector, colortex4).rgb / 30.0;
+        #endif
+        #ifdef WATER_SUN_SPECULAR
+            SunReflection = Direct_lighting * GGX(normalize(normals), -normalize(viewPos), normalize(WsunVec2), roughness, f0) * (1.0 - Reflections.a);
+        #endif
+		Reflections_Final = mix(BackgroundReflection, Reflections.rgb, Reflections.a) * fresnel;
+		Reflections_Final += SunReflection;
+
+		//correct alpha channel with fresnel
+		float alpha0 = gl_FragData[0].a;
+
+		gl_FragData[0].a = -gl_FragData[0].a * fresnel + gl_FragData[0].a + fresnel;
+
+		// prevent reflections from being darkened by buffer blending
+		gl_FragData[0].rgb = clamp(FinalColor / gl_FragData[0].a*alpha0*(1.0-fresnel) * 0.1		+	Reflections_Final / gl_FragData[0].a * 0.1,0.0,65100.0);
+
+		if (gl_FragData[0].r > 65000.) gl_FragData[0].rgba = vec4(0.0);
+	#else
+		gl_FragData[0].rgb = FinalColor*0.1;
+	#endif
+    
+    #ifdef DH_OVERDRAW_PREVENTION
+        float distancefade = min(max(1.0 - length(playerPos)/max(far-16*4,16),0.0)*5,1.0);
+
+        if(texture2D(depthtex1, gl_FragCoord.xy*texelSize).x < 1.0 ||  distancefade > 0.0){
             gl_FragData[0].a = 0.0;
             material = 0.0;
         }
+
     #endif
-    
 	
     #if DEBUG_VIEW == debug_DH_WATER_BLENDING
         if(gl_FragCoord.x*texelSize.x > 0.53) gl_FragData[0] = vec4(0.0);

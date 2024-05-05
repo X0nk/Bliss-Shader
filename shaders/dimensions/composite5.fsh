@@ -16,7 +16,7 @@ const int colortex11Format = RGBA16; 				// unchanged translucents albedo, alpha
 const int colortex12Format = RGBA16F;				// DISTANT HORIZONS + VANILLA MIXED DEPTHs
 
 const int colortex13Format = RGBA16F;				// low res VL (composite5->composite15)
-const int colortex14Format = RGBA8;					// rg = SSAO and SS-SSS. a = skylightmap for translucents.
+const int colortex14Format = RGBA16;					// rg = SSAO and SS-SSS. a = skylightmap for translucents.
 const int colortex15Format = RGBA8;					// flat normals and vanilla AO
 */
 
@@ -59,6 +59,7 @@ uniform sampler2D colortex5;
 uniform sampler2D colortex6;
 uniform sampler2D colortex10;
 uniform sampler2D colortex12;
+uniform sampler2D colortex14;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 
@@ -249,13 +250,20 @@ vec3 closestToCamera5taps_DH(vec2 texcoord, sampler2D depth, sampler2D dhDepth, 
 }
 
 
+#ifdef DISTANT_HORIZONS
 uniform sampler2D dhDepthTex;
+#endif
+uniform float near;
 uniform float far;
 uniform float dhFarPlane;
 uniform float dhNearPlane;
 
 #include "/lib/DistantHorizons_projections.glsl"
 
+
+float ld(float dist) {
+    return (2.0 * near) / (far + near - dist * (far - near));
+}
 float DH_ld(float dist) {
     return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
 }
@@ -332,7 +340,7 @@ vec4 TAA_hq(bool hand){
 	//use velocity from the nearest texel from camera in a 3x3 box in order to improve edge quality in motion
 	#ifdef CLOSEST_VELOCITY
 		#ifdef DISTANT_HORIZONS
-			vec3 closestToCamera = closestToCamera5taps_DH(adjTC,	depthtex0, dhDepthTex, depthCheck, hand);
+			vec3 closestToCamera = closestToCamera5taps_DH(adjTC, depthtex0, dhDepthTex, depthCheck, hand);
 		#else
 			vec3 closestToCamera = closestToCamera5taps(adjTC,depthtex0, hand);
 		#endif
@@ -384,16 +392,20 @@ vec4 TAA_hq(bool hand){
 	#endif
 
 	#ifndef SCREENSHOT_MODE
+
 		vec3 albedoPrev = max(FastCatmulRom(colortex5, previousPosition.xy,vec4(texelSize, 1.0/texelSize), 0.75).xyz, 0.0);
 		vec3 finalcAcc = clamp(albedoPrev, cMin, cMax);
 
 		//Increases blending factor when far from AABB and in motion, reduces ghosting
 		float isclamped = distance(albedoPrev,finalcAcc)/luma(albedoPrev) * 0.5;
-
 		float movementRejection = (0.12+isclamped)*clamp(length(velocity/texelSize),0.0,1.0);
 
-		if(hand) movementRejection *= 5.0;
+		
+		float depthDiff = texture2D(colortex14, previousPosition.xy).a;
+		// movementRejection = mix( 0.0, 1.0, depthDiff);
 
+		if(hand) movementRejection *= 5.0;
+		
 		//Blend current pixel with clamped history, apply fast tonemap beforehand to reduce flickering
 		vec4 supersampled = vec4(invTonemap(mix(tonemap(finalcAcc), tonemap(albedoCurrent0), clamp(BLEND_FACTOR + movementRejection, 0.0,1.0))), 1.0);
 
@@ -422,14 +434,15 @@ void main() {
 
 	gl_FragData[0].a = 1.0;
 
-
 	#ifdef TAA
-
-
 		float dataUnpacked = decodeVec2(texture2D(colortex1,texcoord).w).y; 
 		bool hand = abs(dataUnpacked-0.75) < 0.01 && texture2D(depthtex1,texcoord).x < 1.0;
 		
 		vec4 color = TAA_hq(hand);
+
+		#if DEBUG_VIEW == debug_TEMPORAL_REPROJECTION
+			color.rgb = texture2D(colortex3, texcoord).rgb;
+		#endif
 
 		#ifdef SCREENSHOT_MODE
 			gl_FragData[0] = clamp(color, 0.0, 65000.0);

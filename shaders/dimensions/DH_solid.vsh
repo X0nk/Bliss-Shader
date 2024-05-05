@@ -68,7 +68,7 @@ void main() {
 		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
 	#endif
 	
-	lightmapCoords = gl_MultiTexCoord1.xy * 0.975; // is this even correct? lol'
+	lightmapCoords = gl_MultiTexCoord1.xy; // is this even correct? lol'
     
     gcolor = gl_Color;
     pos = gl_ModelViewMatrix * gl_Vertex;

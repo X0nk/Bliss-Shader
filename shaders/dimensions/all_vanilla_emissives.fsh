@@ -1,9 +1,18 @@
+#include "/lib/settings.glsl"
+
 varying vec4 color;
 varying vec2 texcoord;
 
 uniform sampler2D texture;
+uniform sampler2D normals;
+uniform sampler2D noisetex;
 
 flat varying float exposure;
+
+varying vec4 tangent;
+varying vec4 normalMat;
+attribute vec4 at_tangent;
+uniform float frameTimeCounter;
 
 //faster and actually more precise than pow 2.2
 vec3 toLinear(vec3 sRGB){
@@ -28,42 +37,51 @@ float encodeVec2(float x,float y){
     return encodeVec2(vec2(x,y));
 }
 
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-#if defined SPIDER_EYES || defined BEACON_BEAM || defined GLOWING
-    /* DRAWBUFFERS:1 */
-#endif
+uniform mat4 gbufferModelViewInverse;
 
-#ifdef ENCHANT_GLINT
-	/* DRAWBUFFERS:2 */
-#endif
+vec3 viewToWorld(vec3 viewPos) {
+    vec4 pos;
+    pos.xyz = viewPos;
+    pos.w = 0.0;
+    pos = gbufferModelViewInverse * pos;
+    return pos.xyz;
+}
+
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+
+/* DRAWBUFFERS:2 */
 
 void main() {
 
 	vec4 Albedo = texture2D(texture, texcoord);
+	Albedo.rgb = toLinear(Albedo.rgb);
 
     #if defined SPIDER_EYES || defined BEACON_BEAM || defined GLOWING 
-        vec4 data1 = vec4(1.0); float materialMask = 1.0;
 
-        #if defined SPIDER_EYES || defined GLOWING
-            if(Albedo.a < 0.1) discard;
-            Albedo.rgb *= color.a;
-        #endif
+        if(Albedo.a < 0.102) { discard; return; }
+
+        float minimumBrightness = 0.5;
 
         #ifdef BEACON_BEAM
-            Albedo.rgb = Albedo.rgb * color.rgb;
-            materialMask = 0.75;
+            minimumBrightness = 10.0;
         #endif
 
-	    gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w, materialMask));
+	    float autoBrightnessAdjust = mix(minimumBrightness, 100.0, clamp(exp(-10.0*exposure),0.0,1.0));
+
+        vec3 emissiveColor =  Albedo.rgb * color.a * autoBrightnessAdjust;
+        
+	    gl_FragData[0] = vec4(emissiveColor*0.1, Albedo.a * sqrt(color.a));
     #endif
 
     #ifdef ENCHANT_GLINT
-        vec3 GlintColor = toLinear(Albedo.rgb * color.rgb) / clamp(exposure,0.01,1.0);
+	    float autoBrightnessAdjust = mix(0.1, 100.0, clamp(exp(-10.0*exposure),0.0,1.0));
 
-	    gl_FragData[0] = vec4(GlintColor , Albedo.a * 0.1);
+        vec3 GlintColor = Albedo.rgb * autoBrightnessAdjust * Emissive_Brightness;
+
+	    gl_FragData[0] = vec4(GlintColor*0.1, dot(Albedo.rgb,vec3(0.333)) * Albedo.a  );
     #endif
 }

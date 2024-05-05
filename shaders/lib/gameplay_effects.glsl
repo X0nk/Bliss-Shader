@@ -28,7 +28,7 @@ uniform float hurt;
 // uniform bool isSpectator;
 
 
-void applyGameplayEffects_FRAGMENT(inout vec3 color, in vec2 texcoord){
+void applyGameplayEffects_FRAGMENT(inout vec3 color, in vec2 texcoord, float noise){
     
     #if defined LOW_HEALTH_EFFECT || defined DAMAGE_TAKEN_EFFECT
         // detect when health is zero
@@ -46,7 +46,7 @@ void applyGameplayEffects_FRAGMENT(inout vec3 color, in vec2 texcoord){
         float heartBeat = (pow(sin(frameTimeCounter * beatingRate)*0.5+0.5,2.0)*0.2 + 0.1);
 
         // scale UV to be more and more lower frequency towards the edges of the screen, to create a tunnel vision effect,
-        vec2 zoomUV = 0.5 + (texcoord - 0.5) * (1.0 - vignette * (isDead ? 0.7 : heartBeat * MOTION_AMOUNT));
+        vec2 zoomUV = 0.5 + (texcoord - 0.5) * (1.0 - vignette * (isDead ? noise*0.7 : noise * heartBeat * MOTION_AMOUNT));
         vec3 distortedScreen = vec3(1.0, 0.0, 0.0) * dot(texture2D(colortex7, zoomUV).rgb, vec3(0.21, 0.72, 0.07));
        
         #ifdef LOW_HEALTH_EFFECT

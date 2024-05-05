@@ -361,7 +361,8 @@ void ApplySSRT(
 				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
 				
 				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0){
-					radiance += (texture2D(colortex5,previousPosition.xy).rgb + skycontribution) * GI_Strength;
+					radiance += texture2D(colortex5, previousPosition.xy).rgb * GI_Strength + skycontribution;
+		
 				} else{
 					radiance += skycontribution;
 				}
@@ -388,4 +389,6 @@ void ApplySSRT(
 	#else
 		lighting = max(radiance/nrays - occlusion/nrays, 0.0);
 	#endif
+
+	if(hand) lighting = skylightcolor/1.5;
 }

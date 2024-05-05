@@ -16,7 +16,10 @@ flat varying float tempOffsets;
 // uniform float far;
 uniform float near;
 uniform sampler2D depthtex0;
+
+#ifdef DISTANT_HORIZONS
 uniform sampler2D dhDepthTex;
+#endif
 // uniform sampler2D colortex4;
 uniform sampler2D noisetex;
 
@@ -111,8 +114,6 @@ void main() {
 
 		// gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);
 		gl_FragData[0] = VolumetricClouds;
-
-
 	#else
 		gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);
 	#endif

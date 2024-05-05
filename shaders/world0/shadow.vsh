@@ -1,6 +1,11 @@
 #version 120
 #include "/lib/settings.glsl"
+#ifdef IS_LPV_ENABLED
+	#extension GL_ARB_explicit_attrib_location: enable
+	#extension GL_ARB_shader_image_load_store: enable
+#endif
 
+#define RENDER_SHADOW
 
 
 /*
@@ -45,6 +50,17 @@ uniform int entityId;
 
 #include "/lib/Shadow_Params.glsl"
 #include "/lib/bokeh.glsl"
+#include "/lib/blocks.glsl"
+#include "/lib/entities.glsl"
+
+#ifdef IS_LPV_ENABLED
+	attribute vec3 at_midBlock;
+    uniform int currentRenderedItemId;
+	uniform int renderStage;
+
+	#include "/lib/voxel_common.glsl"
+	#include "/lib/voxel_write.glsl"
+#endif
 
 const float PI48 = 150.796447372*WAVY_SPEED;
 float pi2wt = PI48*frameTimeCounter;
@@ -170,46 +186,81 @@ void main() {
 	// 	}
 	// #endif
 
+	int blockId = int(mc_Entity.x + 0.5);
+
+	#if defined IS_LPV_ENABLED || defined WAVY_PLANTS
+		vec3 playerpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
+	#endif
+
+	#if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
+		if (
+			renderStage == MC_RENDER_STAGE_TERRAIN_SOLID || renderStage == MC_RENDER_STAGE_TERRAIN_TRANSLUCENT ||
+			renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT || renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT_MIPPED
+		) {
+			uint voxelId = uint(blockId);
+			if (voxelId == 0u) voxelId = 1u;
+
+			vec3 originPos = playerpos + at_midBlock/64.0;
+
+			SetVoxelBlock(originPos, voxelId);
+		}
+		
+		#ifdef LPV_ENTITY_LIGHTS
+			if (
+				(currentRenderedItemId > 0 || entityId > 0) &&
+				(renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES || renderStage == MC_RENDER_STAGE_ENTITIES)
+			) {
+				uint voxelId = uint(BLOCK_EMPTY);
+
+				if (currentRenderedItemId > 0) {
+					if (entityId != ENTITY_ITEM_FRAME)
+						voxelId = uint(currentRenderedItemId);
+				}
+				else {
+					switch (entityId) {
+						case ENTITY_SPECTRAL_ARROW:
+							voxelId = uint(BLOCK_TORCH);
+							break;
+
+						// TODO: blaze, magma_cube
+					}
+				}
+
+				if (voxelId > 0u)
+					SetVoxelBlock(playerpos, voxelId);
+			}
+		#endif
+	#endif
+
 	#ifdef WAVY_PLANTS
   		bool istopv = gl_MultiTexCoord0.t < mc_midTexCoord.t;
-  		if ((mc_Entity.x == 10001 || mc_Entity.x == 10009 && istopv) && length(position.xy) < 24.0) {
-  		  vec3 worldpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
-  		  worldpos.xyz += calcMovePlants(worldpos.xyz + cameraPosition)*gl_MultiTexCoord1.y;
-  		  position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz ;
+  		if (
+  			(
+  				blockId == BLOCK_GROUND_WAVING || blockId == BLOCK_GROUND_WAVING_VERTICAL ||
+  				blockId == BLOCK_GRASS_SHORT || (blockId == BLOCK_GRASS_TALL_UPPER && istopv) ||
+  				blockId == BLOCK_SAPLING
+			) && length(position.xy) < 24.0
+		) {
+			playerpos += calcMovePlants(playerpos + cameraPosition)*gl_MultiTexCoord1.y;
+			position = mat3(shadowModelView) * playerpos + shadowModelView[3].xyz;
   		}
 
-  		if (mc_Entity.x == 10003 && length(position.xy) < 24.0) {
-  		  vec3 worldpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
-  		  worldpos.xyz += calcMoveLeaves(worldpos.xyz + cameraPosition, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*gl_MultiTexCoord1.y;
-  		  position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz ;
+  		if (blockId == BLOCK_AIR_WAVING && length(position.xy) < 24.0) {
+			playerpos += calcMoveLeaves(playerpos + cameraPosition, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*gl_MultiTexCoord1.y;
+			position = mat3(shadowModelView) * playerpos + shadowModelView[3].xyz;
   		}
 	#endif
 	
 	#ifdef DISTORT_SHADOWMAP
+		if(entityId == 1100) position.xyz = position.xyz - normalize(gl_NormalMatrix * gl_Normal) * 0.25;
+
 		gl_Position = BiasShadowProjection(toClipSpace3(position));
 	#else
 		gl_Position = toClipSpace3(position);
 	#endif
-
-
  	
-	if(mc_Entity.x == 8 ) gl_Position.w = -1.0;
-	// color.a = 1.0;
-	// if(mc_Entity.x != 10002) color.a = 0.0;
-	
-	
-	// materials = 0.0;
-	// if(mc_Entity.x == 8) materials = 1.0;
 
+	if (blockId == BLOCK_WATER) gl_Position.w = -1.0;
 
- 	/// this is to ease the shadow acne on big fat entities like ghasts.
-  	float bias = 6.0;
-	if(entityId == 1100){
-		// increase bias on parts facing the sun
-		vec3 FlatNormals = normalize(gl_NormalMatrix * gl_Normal);
-		vec3 WsunVec = (float(sunElevation > 1e-5)*2-1.)*normalize(mat3(shadowModelViewInverse) * sunPosition);
-  		
-		bias = 6.0 + (1-clamp(dot(WsunVec,FlatNormals),0,1))*0.3;
-	}
-  	gl_Position.z /= bias;
+  	gl_Position.z /= 6.0;
 }
