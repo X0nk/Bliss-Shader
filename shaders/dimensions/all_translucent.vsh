@@ -16,9 +16,6 @@ Read the terms of modification and sharing before changing something below pleas
 varying vec4 lmtexcoord;
 varying vec4 color;
 
-uniform sampler2D colortex4;
-flat varying float exposure;
-
 #ifdef OVERWORLD_SHADER
 	flat varying vec3 averageSkyCol_Clouds;
 	flat varying vec4 lightCol;
@@ -38,6 +35,7 @@ flat varying int glass;
 attribute vec4 at_tangent;
 attribute vec4 mc_Entity;
 
+uniform sampler2D colortex4;
 
 uniform vec3 sunPosition;
 uniform float sunElevation;
@@ -75,6 +73,7 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
     return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
 }
 
+varying vec4 pos;
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -83,15 +82,14 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 
 void main() {
 
-	// lmtexcoord.xy = (gl_MultiTexCoord0).xy;
-	lmtexcoord.xy = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
-	vec2 lmcoord = gl_MultiTexCoord1.xy / 240.0;
+	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
+	vec2 lmcoord = gl_MultiTexCoord1.xy / 240.0; // is this even correct? lol
 	lmtexcoord.zw = lmcoord;
 
  	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-
  	gl_Position = toClipSpace3(position);
 
+    pos = vec4(position,1);
 
 	HELD_ITEM_BRIGHTNESS = 0.0;
 
@@ -99,28 +97,21 @@ void main() {
 		if(heldItemId == ITEM_LIGHT_SOURCES || heldItemId2 == ITEM_LIGHT_SOURCES) HELD_ITEM_BRIGHTNESS = 0.9;
 	#endif
 	
-
-
-	// 1.0 = water mask
-	// 0.9 = entity mask
-	// 0.8 = reflective entities
-	// 0.7 = reflective blocks
 	float mat = 0.0;
-
-	// water mask
+	
 	if(mc_Entity.x == 8.0) {
     	mat = 1.0;
+
     	gl_Position.z -= 1e-4;
   	}
 
-	// translucent entities
+	if (mc_Entity.x >= 200 && mc_Entity.x < 300) mat = 0.2;
+	if (mc_Entity.x == 72) mat = 0.5;
+
 	#if defined ENTITIES || defined BLOCKENTITIES
-		mat = 0.9;
-		if (entityId == 1403) mat = 0.8;
+		mat = 0.1;
 	#endif
 
-	// translucent blocks
-	if (mc_Entity.x >= 301 && mc_Entity.x <= 321) mat = 0.7;
 	
 	tangent = vec4(normalize(gl_NormalMatrix *at_tangent.rgb),at_tangent.w);
 
@@ -141,7 +132,6 @@ void main() {
 
 
 	color = vec4(gl_Color.rgb, 1.0);
-	exposure = texelFetch2D(colortex4,ivec2(10,37),0).r;
 
 	#ifdef OVERWORLD_SHADER
 		lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
@@ -152,6 +142,8 @@ void main() {
 		WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
 		// WsunVec = normalize(LightDir);
 	#endif
+
+
 
 	#ifdef TAA_UPSCALING
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
