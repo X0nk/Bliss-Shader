@@ -18,6 +18,8 @@ Read the terms of modification and sharing before changing something below pleas
 	attribute vec4 mc_Entity;
 	attribute vec3 at_midBlock;
 	attribute vec3 vaPosition;
+
+	uniform mat4 shadowModelViewInverse;
 	
 	uniform int renderStage;
 	uniform vec3 chunkOffset;
@@ -35,11 +37,13 @@ Read the terms of modification and sharing before changing something below pleas
 
 void main() {
 	#if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
+		vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
+		vec3 playerpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
+
 		if (
 			renderStage == MC_RENDER_STAGE_TERRAIN_SOLID || renderStage == MC_RENDER_STAGE_TERRAIN_TRANSLUCENT ||
 			renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT || renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT_MIPPED
 		) {
-			vec3 playerpos = gl_Vertex.xyz;
 			vec3 originPos = playerpos + at_midBlock/64.0;
 
 			uint voxelId = uint(mc_Entity.x + 0.5);
@@ -48,36 +52,35 @@ void main() {
 			SetVoxelBlock(originPos, voxelId);
 		}
 		
-		// #ifdef LPV_ENTITY_LIGHTS
-		// 	if (
-		// 		(currentRenderedItemId > 0 || entityId > 0) &&
-		// 		(renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES || renderStage == MC_RENDER_STAGE_ENTITIES)
-		// 	) {
-		// 		uint voxelId = 0u;
+		#ifdef LPV_ENTITY_LIGHTS
+			if (
+				(currentRenderedItemId > 0 || entityId > 0) &&
+				(renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES || renderStage == MC_RENDER_STAGE_ENTITIES)
+			) {
+				uint voxelId = 0u;
 
-		// 		if (currentRenderedItemId > 0) {
-		// 			if (entityId == ENTITY_PLAYER) {
-		// 				// TODO: remove once hand-light is added
-		// 				if (currentRenderedItemId < 1000)
-		// 					voxelId = uint(currentRenderedItemId);
-		// 			}
-		// 			else if (entityId != ENTITY_ITEM_FRAME)
-		// 				voxelId = uint(currentRenderedItemId);
-		// 		}
-		// 		else {
-		// 			switch (entityId) {
-		// 				case ENTITY_SPECTRAL_ARROW:
-		// 					voxelId = uint(BLOCK_TORCH);
-		// 					break;
+				if (currentRenderedItemId > 0) {
+					if (entityId == ENTITY_PLAYER) {
+						if (currentRenderedItemId < 1000)
+							voxelId = uint(currentRenderedItemId);
+					}
+					else if (entityId != ENTITY_ITEM_FRAME)
+						voxelId = uint(currentRenderedItemId);
+				}
+				else {
+					switch (entityId) {
+						case ENTITY_SPECTRAL_ARROW:
+							voxelId = uint(BLOCK_TORCH);
+							break;
 
-		// 				// TODO: blaze, magma_cube
-		// 			}
-		// 		}
+						// TODO: blaze, magma_cube
+					}
+				}
 
-		// 		if (voxelId > 0u)
-		// 			SetVoxelBlock(playerpos, voxelId);
-		// 	}
-		// #endif
+				if (voxelId > 0u)
+					SetVoxelBlock(playerpos, voxelId);
+			}
+		#endif
 	#endif
 
 	gl_Position = vec4(-1.0);
