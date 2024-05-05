@@ -1175,13 +1175,14 @@ void main() {
 		#endif
 	
 		#ifdef IS_LPV_ENABLED
-			vec3 lpvPos = GetLpvPosition(feetPlayerPos);
+			vec3 normalOffset = 0.5*viewToWorld(FlatNormals);
 
-			#ifdef LPV_NORMAL_OFFSET
-				lpvPos += -0.5*viewToWorld(FlatNormals) + slopednormal;
-			#else
-				lpvPos += 0.5*viewToWorld(FlatNormals);
+			#if LPV_NORMAL_STRENGTH > 0
+				vec3 texNormalOffset = -normalOffset + slopednormal;
+				normalOffset = mix(normalOffset, texNormalOffset, (LPV_NORMAL_STRENGTH*0.01));
 			#endif
+
+			vec3 lpvPos = GetLpvPosition(feetPlayerPos) + normalOffset;
 		#else
 			const vec3 lpvPos = vec3(0.0);
 		#endif

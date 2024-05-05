@@ -619,13 +619,14 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	#ifdef IS_LPV_ENABLED
-		vec3 lpvPos = GetLpvPosition(feetPlayerPos);
+		vec3 normalOffset = 0.5*worldSpaceNormal;
 
-		#ifdef LPV_NORMAL_OFFSET
-			lpvPos += -0.5*worldSpaceNormal + viewToWorld(normal);
-		#else
-			lpvPos += 0.5*worldSpaceNormal;
+		#if LPV_NORMAL_STRENGTH > 0
+			vec3 texNormalOffset = -normalOffset + viewToWorld(normal);
+			normalOffset = mix(normalOffset, texNormalOffset, (LPV_NORMAL_STRENGTH*0.01));
 		#endif
+
+		vec3 lpvPos = GetLpvPosition(feetPlayerPos) + normalOffset;
 	#else
 		const vec3 lpvPos = vec3(0.0);
 	#endif

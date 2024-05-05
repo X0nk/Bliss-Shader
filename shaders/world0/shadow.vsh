@@ -210,9 +210,11 @@ void main() {
 				(currentRenderedItemId > 0 || entityId > 0) &&
 				(renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES || renderStage == MC_RENDER_STAGE_ENTITIES)
 			) {
-				uint voxelId = uint(BLOCK_EMPTY);
+				uint voxelId = 0u;
 
 				if (currentRenderedItemId > 0) {
+					// TODO: once hand-light is added, switch to this condition
+					// if (entityId != ENTITY_ITEM_FRAME && entityId != ENTITY_PLAYER)
 					if (entityId != ENTITY_ITEM_FRAME)
 						voxelId = uint(currentRenderedItemId);
 				}
