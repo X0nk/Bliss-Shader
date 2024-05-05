@@ -183,6 +183,34 @@ vec3 Full_Reinhard_Edit(vec3 C){
 }
 
 
+// from https://iolite-engine.com/blog_posts/minimal_agx_implementation
+// MIT License
+//
+// Copyright (c) 2024 Missing Deadlines (Benjamin Wrensch)
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+// All values used to derive this implementation are sourced from Troy’s initial AgX implementation/OCIO config file available here:
+//   https://github.com/sobotka/AgX
+
+// AND
+
 /// from https://github.com/donmccurdy/three.js/blob/dev/src/renderers/shaders/ShaderChunk/tonemapping_pars_fragment.glsl.js
 // AgX Tone Mapping implementation based on Filament, which in turn is based
 // on Blender's implementation using rec 2020 primaries
@@ -192,7 +220,6 @@ vec3 Full_Reinhard_Edit(vec3 C){
 // https://iolite-engine.com/blog_posts/minimal_agx_implementation
 // Mean error^2: 3.6705141e-06
 vec3 agxDefaultContrastApprox( vec3 x ) {
-
 	vec3 x2 = x * x;
 	vec3 x4 = x2 * x2;
 
@@ -203,7 +230,6 @@ vec3 agxDefaultContrastApprox( vec3 x ) {
 		+ 0.4298 * x2
 		+ 0.1191 * x
 		- 0.00232;
-
 }
 
 vec3 agxLook(vec3 val) {
@@ -220,16 +246,13 @@ vec3 agxLook(vec3 val) {
   val = pow(val * slope + offset, power);
   return luma + sat * (val - luma);
 }
-
 vec3 ToneMap_AgX( vec3 color ) {
-
 	// AgX constants
 	const mat3 AgXInsetMatrix = mat3(
 		vec3( 0.856627153315983, 0.137318972929847, 0.11189821299995 ),
 		vec3( 0.0951212405381588, 0.761241990602591, 0.0767994186031903 ),
 		vec3( 0.0482516061458583, 0.101439036467562, 0.811302368396859 )
 	);
-
 	// explicit AgXOutsetMatrix generated from Filaments AgXOutsetMatrixInv
 	const mat3 AgXOutsetMatrix = mat3(
 		vec3( 1.1271005818144368, - 0.1413297634984383, - 0.14132976349843826 ),
@@ -243,16 +266,12 @@ vec3 ToneMap_AgX( vec3 color ) {
 	const float AgxMinEv = - 12.47393;  // log2( pow( 2, LOG2_MIN ) * MIDDLE_GRAY )
 	const float AgxMaxEv = 4.026069;    // log2( pow( 2, LOG2_MAX ) * MIDDLE_GRAY )
 
-	// color = LINEAR_SRGB_TO_LINEAR_REC2020 * color;
-
 	color = AgXInsetMatrix * color;
 
 	// Log2 encoding
 	color = max( color, 1e-10 ); // avoid 0 or negative numbers for log2
 	color = log2( color );
 	color = ( color - AgxMinEv ) / ( AgxMaxEv - AgxMinEv );
-
-	color = clamp( color, 0.0, 1.0 );
 
 	// Apply sigmoid
 	color = agxDefaultContrastApprox( color );
@@ -263,13 +282,51 @@ vec3 ToneMap_AgX( vec3 color ) {
 	color = AgXOutsetMatrix * color;
 
 	// Linearize
-	color = pow( max( vec3( 0.0 ), color ), vec3( 2.2 ) );
-
-	// color = LINEAR_REC2020_TO_LINEAR_SRGB * color;
+    color = pow(color, vec3(2.2));
 
 	// Gamut mapping. Simple clamp for now.
 	color = clamp( color, 0.0, 1.0 );
 
 	return color;
+}
+vec3 ToneMap_AgX_minimal( vec3 color ) {
+	// AgX constants from Benjamin Wrensch ( I HATE THE BRIGHTS GOING TO WHITE )
+    const mat3 AgXInsetMatrix = mat3(
+        0.842479062253094, 0.0423282422610123, 0.0423756549057051,
+        0.0784335999999992,  0.878468636469772,  0.0784336,
+        0.0792237451477643, 0.0791661274605434, 0.879142973793104);
 
+    const mat3 AgXOutsetMatrix = mat3(
+        1.19687900512017, -0.0528968517574562, -0.0529716355144438,
+        -0.0980208811401368, 1.15190312990417, -0.0980434501171241,
+        -0.0990297440797205, -0.0989611768448433, 1.15107367264116);
+
+	// LOG2_MIN      = -10.0
+	// LOG2_MAX      =  +6.5
+	// MIDDLE_GRAY   =  0.18
+	const float AgxMinEv = - 12.47393;  // log2( pow( 2, LOG2_MIN ) * MIDDLE_GRAY )
+	const float AgxMaxEv = 4.026069;    // log2( pow( 2, LOG2_MAX ) * MIDDLE_GRAY )
+
+	color = AgXInsetMatrix * color;
+
+	// Log2 encoding
+	color = max( color, 1e-10 ); // avoid 0 or negative numbers for log2
+	color = log2( color );
+	color = ( color - AgxMinEv ) / ( AgxMaxEv - AgxMinEv );
+
+	// Apply sigmoid
+	color = agxDefaultContrastApprox( color );
+
+	// Apply AgX look
+	color = agxLook(color);
+
+	color = AgXOutsetMatrix * color;
+
+	// Linearize
+    color = pow(color, vec3(2.2));
+
+	// Gamut mapping. Simple clamp for now.
+	color = clamp( color, 0.0, 1.0 );
+
+	return color;
 }
