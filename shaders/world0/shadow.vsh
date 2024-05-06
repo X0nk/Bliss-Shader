@@ -213,21 +213,16 @@ void main() {
 				uint voxelId = 0u;
 
 				if (currentRenderedItemId > 0) {
-					if (entityId == ENTITY_PLAYER) {
-						// TODO: remove once hand-light is added
-						if (currentRenderedItemId < 1000)
-							voxelId = uint(currentRenderedItemId);
-					}
-					else if (entityId != ENTITY_ITEM_FRAME)
+					if (entityId != ENTITY_ITEM_FRAME && entityId != ENTITY_PLAYER)
 						voxelId = uint(currentRenderedItemId);
 				}
 				else {
 					switch (entityId) {
+						case ENTITY_BLAZE:
+						case ENTITY_MAGMA_CUBE:
 						case ENTITY_SPECTRAL_ARROW:
 							voxelId = uint(BLOCK_TORCH);
 							break;
-
-						// TODO: blaze, magma_cube
 					}
 				}
 

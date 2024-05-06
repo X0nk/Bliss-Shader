@@ -37,8 +37,12 @@ Read the terms of modification and sharing before changing something below pleas
 
 void main() {
 	#if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
-		vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-		vec3 playerpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
+		#ifdef LPV_NOSHADOW_HACK
+			vec3 playerpos = gl_Vertex.xyz;
+		#else
+			vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
+			vec3 playerpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
+		#endif
 
 		if (
 			renderStage == MC_RENDER_STAGE_TERRAIN_SOLID || renderStage == MC_RENDER_STAGE_TERRAIN_TRANSLUCENT ||
@@ -60,20 +64,16 @@ void main() {
 				uint voxelId = 0u;
 
 				if (currentRenderedItemId > 0) {
-					if (entityId == ENTITY_PLAYER) {
-						if (currentRenderedItemId < 1000)
-							voxelId = uint(currentRenderedItemId);
-					}
-					else if (entityId != ENTITY_ITEM_FRAME)
+					if (entityId != ENTITY_ITEM_FRAME && entityId != ENTITY_PLAYER)
 						voxelId = uint(currentRenderedItemId);
 				}
 				else {
 					switch (entityId) {
+						case ENTITY_BLAZE:
+						case ENTITY_MAGMA_CUBE:
 						case ENTITY_SPECTRAL_ARROW:
 							voxelId = uint(BLOCK_TORCH);
 							break;
-
-						// TODO: blaze, magma_cube
 					}
 				}
 

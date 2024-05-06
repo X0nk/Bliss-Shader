@@ -131,9 +131,6 @@ void main() {
 
         	uint tintData = LpvBlockMap[blockId].Tint;
         	tintColor = unpackUnorm4x8(tintData).rgb;
-        }
-
-        if (blockId > 0u) {
             vec4 lightColorRange = unpackUnorm4x8(LpvBlockMap[blockId].ColorRange);
             float lightRange = lightColorRange.a * 255.0;
 

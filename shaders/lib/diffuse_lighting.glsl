@@ -1,3 +1,14 @@
+#ifdef IS_LPV_ENABLED
+    vec3 GetHandLight(const in int itemId) {
+        if (itemId < 1000) {
+            // TODO: block lights
+        }
+        else {
+            // TODO: item lights
+        }
+    }
+#endif
+
 vec3 DoAmbientLightColor(
     vec3 lpvPos,
     vec3 SkyColor,
@@ -24,9 +35,6 @@ vec3 DoAmbientLightColor(
         vec4 lpvSample = SampleLpvLinear(lpvPos);
         vec3 LpvTorchLight = GetLpvBlockLight(lpvSample);
 
-        // TODO: needs work, just binary transition for now
-        // float LpvFadeF = clamp(lpvPos, vec3(0.0), LpvSize3 - 1.0) == lpvPos ? 1.0 : 0.0;
-
         // i gotchu
         float fadeLength = 10.0; // in blocks
         vec3 cubicRadius = clamp(           min(((LpvSize3-1.0) - lpvPos)/fadeLength,      lpvPos/fadeLength)          ,0.0,1.0);
@@ -34,7 +42,13 @@ vec3 DoAmbientLightColor(
 
         LpvFadeF = 1.0 - pow(1.0-pow(LpvFadeF,1.5),3.0); // make it nice and soft :)
         
-        TorchLight = mix(TorchLight,LpvTorchLight/5.0,   LpvFadeF) ;
+        TorchLight = mix(TorchLight,LpvTorchLight/5.0,   LpvFadeF);
+
+        if (heldItemId > 0)
+            TorchLight += GetHandLight(heldItemId);
+
+        if (heldItemId2 > 0)
+            TorchLight += GetHandLight(heldItemId2);
     #endif
 
     return IndirectLight + TorchLight * TorchBrightness_autoAdjust;

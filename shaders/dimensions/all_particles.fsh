@@ -67,6 +67,8 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 #endif
 
 #ifdef IS_LPV_ENABLED
+	uniform int heldItemId;
+	uniform int heldItemId2;
 	uniform int frameCounter;
 
 	#include "/lib/hsv.glsl"
