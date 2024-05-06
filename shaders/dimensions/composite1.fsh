@@ -1,7 +1,8 @@
 #include "/lib/settings.glsl"
 
 #ifdef IS_LPV_ENABLED
-	#extension GL_EXT_shader_image_load_store: enable
+	#extension GL_ARB_shader_image_load_store: enable
+	#extension GL_ARB_shading_language_packing: enable
 #endif
 
 #include "/lib/res_params.glsl"
@@ -76,6 +77,7 @@ uniform sampler2D colortex14;
 uniform sampler2D colortex15; // flat normals(rgb), vanillaAO(alpha)
 
 #ifdef IS_LPV_ENABLED
+	uniform usampler1D texBlockData;
 	uniform sampler3D texLpv1;
 	uniform sampler3D texLpv2;
 #endif
@@ -166,9 +168,12 @@ vec3 toScreenSpace(vec3 p) {
 	#include "/lib/volumetricClouds.glsl"
 #endif
 
+#include "/lib/util.glsl"
+
 #ifdef IS_LPV_ENABLED
 	#include "/lib/hsv.glsl"
 	#include "/lib/lpv_common.glsl"
+	// #include "/lib/lpv_blocks.glsl"
 	#include "/lib/lpv_render.glsl"
 #endif
 
@@ -238,10 +243,10 @@ vec3 fp10Dither(vec3 color,float dither){
 
 
 
-float facos(float sx){
-    float x = clamp(abs( sx ),0.,1.);
-    return sqrt( 1. - x ) * ( -0.16882 * x + 1.56734 );
-}
+// float facos(float sx){
+//     float x = clamp(abs( sx ),0.,1.);
+//     return sqrt( 1. - x ) * ( -0.16882 * x + 1.56734 );
+// }
 
 vec2 tapLocation(int sampleNumber,int nb, float nbRot,float jitter,float distort)
 {
@@ -1192,7 +1197,7 @@ void main() {
 			const vec3 lpvPos = vec3(0.0);
 		#endif
 
-		Indirect_lighting = DoAmbientLightColor(lpvPos, Indirect_lighting, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B) , lightmap.xy, exposure);
+		Indirect_lighting = DoAmbientLightColor(feetPlayerPos, lpvPos, Indirect_lighting, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B) , lightmap.xy, exposure);
 		
 		#ifdef OVERWORLD_SHADER
 			Indirect_lighting += LightningFlashLighting;

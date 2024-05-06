@@ -1,15 +1,26 @@
 #ifdef IS_LPV_ENABLED
-    vec3 GetHandLight(const in int itemId) {
-        if (itemId < 1000) {
-            // TODO: block lights
+    vec3 GetHandLight(const in int itemId, const in vec3 playerPos) {
+        vec3 lightFinal = vec3(0.0);
+        vec3 lightColor = vec3(0.0);
+        float lightRange = 0.0;
+
+        uvec2 blockData = texelFetch(texBlockData, itemId, 0).rg;
+        vec4 lightColorRange = unpackUnorm4x8(blockData.r);
+        lightColor = srgbToLinear(lightColorRange.rgb);
+        lightRange = lightColorRange.a * 255.0;
+
+        if (lightRange > 0.0) {
+            float lightDist = length(playerPos);
+            float falloff = pow(1.0 - lightDist / lightRange, 3.0);
+            lightFinal = lightColor * max(falloff, 0.0);
         }
-        else {
-            // TODO: item lights
-        }
+
+        return lightFinal;
     }
 #endif
 
 vec3 DoAmbientLightColor(
+    vec3 playerPos,
     vec3 lpvPos,
     vec3 SkyColor,
     vec3 MinimumColor,
@@ -45,10 +56,10 @@ vec3 DoAmbientLightColor(
         TorchLight = mix(TorchLight,LpvTorchLight/5.0,   LpvFadeF);
 
         if (heldItemId > 0)
-            TorchLight += GetHandLight(heldItemId);
+            TorchLight += GetHandLight(heldItemId, playerPos);
 
         if (heldItemId2 > 0)
-            TorchLight += GetHandLight(heldItemId2);
+            TorchLight += GetHandLight(heldItemId2, playerPos);
     #endif
 
     return IndirectLight + TorchLight * TorchBrightness_autoAdjust;
