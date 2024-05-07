@@ -3,9 +3,9 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 const ivec3 workGroups = ivec3(6, 6, 1);
 
 #ifdef IS_LPV_ENABLED
-    #include "/lib/blocks.glsl"
     #include "/lib/items.glsl"
-    // #include "/lib/entities.glsl"
+    #include "/lib/blocks.glsl"
+    #include "/lib/entities.glsl"
     #include "/lib/lpv_blocks.glsl"
 
     const vec3 LightColor_Amethyst = vec3(0.464, 0.227, 0.788);
@@ -42,7 +42,7 @@ const ivec3 workGroups = ivec3(6, 6, 1);
 
 void main() {
     #ifdef IS_LPV_ENABLED
-        int blockId = int(gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * 32);
+        int blockId = int(gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * 48);
         if (blockId >= 2048) return;
 
         vec3 lightColor = vec3(0.0);
@@ -993,6 +993,34 @@ void main() {
 
         if (blockId == BLOCK_SIGN) {
             mixWeight = 0.9;
+        }
+
+        // Entities
+
+        if (blockId == ENTITY_BLAZE) {
+            lightColor = vec3(1.000, 0.592, 0.000);
+            lightRange = 8.0;
+        }
+
+        if (blockId == ENTITY_END_CRYSTAL) {
+            lightColor = vec3(1.000, 0.000, 1.000);
+            lightRange = 8.0;
+        }
+
+        if (blockId == ENTITY_MAGMA_CUBE) {
+            lightColor = vec3(0.747, 0.323, 0.110);
+            lightRange = 9.0;
+        }
+
+        if (blockId == ENTITY_TNT) {
+            lightColor = vec3(1.0);
+            lightRange = 8.0;
+        }
+
+        if (blockId == ENTITY_SPECTRAL_ARROW) {
+            lightColor = vec3(0.0, 1.0, 0.0);
+            lightRange = 8.0;
+            mixWeight = 1.0;
         }
 
 

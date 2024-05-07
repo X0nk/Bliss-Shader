@@ -687,7 +687,7 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 #define LPV_REDSTONE_LIGHTS
 //#define LPV_COLORED_CANDLES
 
-#define LPV_NOSHADOW_HACK
+// #define LPV_NOSHADOW_HACK
 
 #ifdef LPV_ENABLED
 	#ifdef IRIS_FEATURE_CUSTOM_IMAGES

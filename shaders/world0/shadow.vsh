@@ -221,7 +221,7 @@ void main() {
 						case ENTITY_BLAZE:
 						case ENTITY_MAGMA_CUBE:
 						case ENTITY_SPECTRAL_ARROW:
-							voxelId = uint(BLOCK_TORCH);
+							voxelId = uint(entityId);
 							break;
 					}
 				}
