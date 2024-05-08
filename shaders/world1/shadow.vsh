@@ -70,8 +70,11 @@ void main() {
 				else {
 					switch (entityId) {
 						case ENTITY_BLAZE:
+						case ENTITY_END_CRYSTAL:
+						// case ENTITY_FIREBALL_SMALL:
 						case ENTITY_MAGMA_CUBE:
 						case ENTITY_SPECTRAL_ARROW:
+						case ENTITY_TNT:
 							voxelId = uint(entityId);
 							break;
 					}

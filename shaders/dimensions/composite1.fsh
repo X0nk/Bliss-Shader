@@ -173,7 +173,6 @@ vec3 toScreenSpace(vec3 p) {
 #ifdef IS_LPV_ENABLED
 	#include "/lib/hsv.glsl"
 	#include "/lib/lpv_common.glsl"
-	// #include "/lib/lpv_blocks.glsl"
 	#include "/lib/lpv_render.glsl"
 #endif
 

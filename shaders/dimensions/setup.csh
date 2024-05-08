@@ -1007,6 +1007,11 @@ void main() {
             lightRange = 8.0;
         }
 
+        if (blockId == ENTITY_FIREBALL_SMALL) {
+            lightColor = vec3(0.000, 1.000, 0.000);
+            lightRange = 8.0;
+        }
+
         if (blockId == ENTITY_MAGMA_CUBE) {
             lightColor = vec3(0.747, 0.323, 0.110);
             lightRange = 9.0;
@@ -1032,7 +1037,6 @@ void main() {
 
         uint lightColorRange = packUnorm4x8(vec4(lightColor, lightRange/255.0));
         uint tintColorMask = packUnorm4x8(vec4(tintColor, 0.0));
-
         tintColorMask |= mixMask << 24;
 
         imageStore(imgBlockData, blockId, uvec4(lightColorRange, tintColorMask, 0u, 0u));
