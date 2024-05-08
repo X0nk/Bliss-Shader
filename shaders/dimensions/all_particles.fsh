@@ -2,6 +2,7 @@
 
 #ifdef IS_LPV_ENABLED
 	#extension GL_EXT_shader_image_load_store: enable
+	#extension GL_ARB_shading_language_packing: enable
 #endif
 
 #include "/lib/res_params.glsl"
@@ -35,7 +36,9 @@ uniform int isEyeInWater;
 uniform sampler2D texture;
 uniform sampler2D noisetex;
 uniform sampler2D colortex4;
+
 #ifdef IS_LPV_ENABLED
+	uniform usampler1D texBlockData;
 	uniform sampler3D texLpv1;
 	uniform sampler3D texLpv2;
 #endif
@@ -61,12 +64,16 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 	uniform float nightVision;
 #endif
 
+#include "/lib/util.glsl"
+
 #ifdef OVERWORLD_SHADER
 	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
 #endif
 
 #ifdef IS_LPV_ENABLED
+	uniform int heldItemId;
+	uniform int heldItemId2;
 	uniform int frameCounter;
 
 	#include "/lib/hsv.glsl"
@@ -415,7 +422,7 @@ void main() {
 			const vec3 lpvPos = vec3(0.0);
 		#endif
 
-		Indirect_lighting = DoAmbientLightColor(lpvPos, AmbientLightColor, MinimumLightColor, Torch_Color, clamp(lightmap.xy,0,1), exposure);
+		Indirect_lighting = DoAmbientLightColor(feetPlayerPos, lpvPos, AmbientLightColor, MinimumLightColor, Torch_Color, clamp(lightmap.xy,0,1), exposure);
 
 		#ifdef LINES
 			gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * toLinear(color.rgb);

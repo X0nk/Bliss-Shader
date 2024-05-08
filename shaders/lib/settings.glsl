@@ -681,10 +681,14 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 
 //#define LPV_ENABLED
 #define LPV_SIZE 7 // [6 7 8]
+#define LPV_NORMAL_STRENGTH 50 // [0 10 20 30 40 50 60 70 80 90 100]
 #define LPV_NORMAL_OFFSET
 #define LPV_ENTITY_LIGHTS
 #define LPV_REDSTONE_LIGHTS
 //#define LPV_COLORED_CANDLES
+
+// Fix for making nether/end work until next Iris release to fix shadow matrices
+#define LPV_NOSHADOW_HACK
 
 #ifdef LPV_ENABLED
 	#ifdef IRIS_FEATURE_CUSTOM_IMAGES

@@ -1,28 +1,12 @@
-struct LpvBlockData {           // 12 x2000 =?
-    uint MaskWeight;            // 4
-    uint ColorRange;            // 4
-    uint Tint;                  // 4
-};
+/*
+    lightColor  3*8=24
+    lightRange  8=8
+    tintColor   3*8=24
+    lightMask   6=8
+*/
 
 #ifdef RENDER_SETUP
-    layout(binding = 0) writeonly buffer lpvBlockData
+    layout(rg32ui) uniform writeonly uimage1D imgBlockData;
 #else
-    layout(binding = 0) readonly buffer lpvBlockData
+    layout(rg32ui) uniform readonly uimage1D imgBlockData;
 #endif
-{
-    LpvBlockData LpvBlockMap[];
-};
-
-
-uint BuildBlockLpvData(uint mixMask, float mixWeight) {
-    uint data = uint(saturate(mixWeight) * 255.0);
-
-    data = data | (mixMask << 8);
-
-    return data;
-}
-
-void ParseBlockLpvData(const in uint data, out uint mixMask, out float mixWeight) {
-    mixWeight = (data & 0xFF) / 255.0;
-    mixMask = (data >> 8) & 0xFF;
-}

@@ -2,6 +2,7 @@
 
 #ifdef IS_LPV_ENABLED
 	#extension GL_EXT_shader_image_load_store: enable
+	#extension GL_ARB_shading_language_packing: enable
 #endif
 
 #include "/lib/res_params.glsl"
@@ -49,6 +50,7 @@ uniform sampler2D specular;
 uniform sampler2D normals;
 
 #ifdef IS_LPV_ENABLED
+	uniform usampler1D texBlockData;
 	uniform sampler3D texLpv1;
 	uniform sampler3D texLpv2;
 #endif
@@ -92,6 +94,7 @@ uniform vec3 nsunColor;
 #include "/lib/projections.glsl"
 #include "/lib/sky_gradient.glsl"
 #include "/lib/waterBump.glsl"
+#include "/lib/util.glsl"
 
 #ifdef OVERWORLD_SHADER
 	flat varying float Flashing;
@@ -107,6 +110,9 @@ uniform vec3 nsunColor;
 #endif
 
 #ifdef IS_LPV_ENABLED
+	uniform int heldItemId;
+	uniform int heldItemId2;
+
 	#include "/lib/hsv.glsl"
 	#include "/lib/lpv_common.glsl"
 	#include "/lib/lpv_render.glsl"
@@ -619,18 +625,19 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	#ifdef IS_LPV_ENABLED
-		vec3 lpvPos = GetLpvPosition(feetPlayerPos);
+		vec3 normalOffset = 0.5*worldSpaceNormal;
 
-		#ifdef LPV_NORMAL_OFFSET
-			lpvPos += -0.5*worldSpaceNormal + viewToWorld(normal);
-		#else
-			lpvPos += 0.5*worldSpaceNormal;
+		#if LPV_NORMAL_STRENGTH > 0
+			vec3 texNormalOffset = -normalOffset + viewToWorld(normal);
+			normalOffset = mix(normalOffset, texNormalOffset, (LPV_NORMAL_STRENGTH*0.01));
 		#endif
+
+		vec3 lpvPos = GetLpvPosition(feetPlayerPos) + normalOffset;
 	#else
 		const vec3 lpvPos = vec3(0.0);
 	#endif
 
-	Indirect_lighting = DoAmbientLightColor(lpvPos, AmbientLightColor, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy, exposure);
+	Indirect_lighting = DoAmbientLightColor(feetPlayerPos, lpvPos, AmbientLightColor, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy, exposure);
 	
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
 

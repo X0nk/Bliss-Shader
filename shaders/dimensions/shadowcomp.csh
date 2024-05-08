@@ -17,9 +17,6 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 	const vec2 LpvBlockSkyFalloff = vec2(0.96, 0.96);
 	const ivec3 lpvFlatten = ivec3(1, 10, 100);
 
-	#define EPSILON 1e-6
-
-
 	uniform int frameCounter;
 	uniform vec3 cameraPosition;
 	uniform vec3 previousCameraPosition;
@@ -61,13 +58,15 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 	    int shared_index = getSharedIndex(pos + 1);
 
 	    float mixWeight = 1.0;
-	    uint mixMask = 0xFFFF;
+	    uint mask = 0xFFFF;
 	    uint blockId = voxelSharedData[shared_index];
 	    
-	    if (blockId > 0 && blockId != BLOCK_EMPTY)
-	        ParseBlockLpvData(LpvBlockMap[blockId].MaskWeight, mixMask, mixWeight);
+	    if (blockId > 0 && blockId != BLOCK_EMPTY) {
+	    	uvec2 blockData = imageLoad(imgBlockData, int(blockId)).rg;
+	    	mask = (blockData.g >> 24) & 0xFFFF;
+	    }
 
-	    return lpvSharedData[shared_index] * ((mixMask >> mask_index) & 1u);// * mixWeight;
+	    return lpvSharedData[shared_index] * ((mask >> mask_index) & 1u);
 	}
 
 	vec4 mixNeighbours(const in ivec3 fragCoord, const in uint mask) {
@@ -122,35 +121,35 @@ void main() {
         uint blockId = voxelSharedData[getSharedIndex(ivec3(gl_LocalInvocationID) + 1)];
         vec4 lightValue = vec4(0.0);
     	vec3 tintColor = vec3(1.0);
-        float mixWeight = 1.0;
         uint mixMask = 0xFFFF;
 
         if (blockId > 0u) {
-	        mixWeight = 0.0;
-            ParseBlockLpvData(LpvBlockMap[blockId].MaskWeight, mixMask, mixWeight);
+	        tintColor = vec3(0.0);
 
-        	uint tintData = LpvBlockMap[blockId].Tint;
-        	tintColor = unpackUnorm4x8(tintData).rgb;
+	    	uvec2 blockData = imageLoad(imgBlockData, int(blockId)).rg;
+            vec4 lightColorRange = unpackUnorm4x8(blockData.r);
+            vec4 tintColorMask = unpackUnorm4x8(blockData.g);
+        	tintColor = srgbToLinear(tintColorMask.rgb);
+        	mixMask = (blockData.g >> 24) & 0xFFFF;
+
+            vec3 lightColor = srgbToLinear(lightColorRange.rgb);
+            float lightRange = lightColorRange.a * 255.0;
+
+            if (lightRange > 0.0) {
+                lightValue.rgb = Lpv_RgbToHsv(lightColor, lightRange);
+			    lightValue.ba = exp2(lightValue.ba * LpvBlockSkyRange) - 1.0;
+			    lightValue.rgb = HsvToRgb(lightValue.rgb);
+            }
         }
     
-        if (mixWeight > EPSILON) {
+        if (any(greaterThan(tintColor, vec3(0.0)))) {
             vec4 lightMixed = mixNeighbours(ivec3(gl_LocalInvocationID), mixMask);
-            lightMixed.rgb *= srgbToLinear(tintColor) * mixWeight;
+            lightMixed.rgb *= tintColor;
             lightValue += lightMixed;
         }
 
         lightValue.rgb = RgbToHsv(lightValue.rgb);
         lightValue.ba = log2(lightValue.ba + 1.0) / LpvBlockSkyRange;
-
-        if (blockId > 0u) {
-            vec4 lightColorRange = unpackUnorm4x8(LpvBlockMap[blockId].ColorRange);
-            float lightRange = lightColorRange.a * 255.0;
-
-            if (lightRange > EPSILON) {
-	            vec3 lightColor = srgbToLinear(lightColorRange.rgb);
-                lightValue.rgb = Lpv_RgbToHsv(lightColor, lightRange);
-            }
-        }
 
         if (frameCounter % 2 == 0)
             imageStore(imgLpv1, imgCoord, lightValue);

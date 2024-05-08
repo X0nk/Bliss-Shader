@@ -210,19 +210,22 @@ void main() {
 				(currentRenderedItemId > 0 || entityId > 0) &&
 				(renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES || renderStage == MC_RENDER_STAGE_ENTITIES)
 			) {
-				uint voxelId = uint(BLOCK_EMPTY);
+				uint voxelId = 0u;
 
 				if (currentRenderedItemId > 0) {
-					if (entityId != ENTITY_ITEM_FRAME)
+					if (entityId != ENTITY_ITEM_FRAME && entityId != ENTITY_PLAYER)
 						voxelId = uint(currentRenderedItemId);
 				}
 				else {
 					switch (entityId) {
+						case ENTITY_BLAZE:
+						case ENTITY_END_CRYSTAL:
+						// case ENTITY_FIREBALL_SMALL:
+						case ENTITY_MAGMA_CUBE:
 						case ENTITY_SPECTRAL_ARROW:
-							voxelId = uint(BLOCK_TORCH);
+						case ENTITY_TNT:
+							voxelId = uint(entityId);
 							break;
-
-						// TODO: blaze, magma_cube
 					}
 				}
 
