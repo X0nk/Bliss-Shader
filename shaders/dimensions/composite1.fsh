@@ -1297,7 +1297,7 @@ void main() {
 			float SSS_shadow = ShadowAlpha * Shadows;
 			
 			#ifdef DISTANT_HORIZONS_SHADOWMAP
-				shadowMapFalloff2 = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / min(shadowDistance, far-16),0.0)*5.0,1.0));
+				shadowMapFalloff2 = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / min(shadowDistance, far-32),0.0)*5.0,1.0));
 			#endif
 
 			#ifndef RENDER_ENTITY_SHADOWS
