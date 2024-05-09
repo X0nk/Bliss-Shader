@@ -296,8 +296,12 @@ void ApplySSRT(
 	vec3 viewPos,
 	vec3 normal,
 	vec3 noise,
-
+	
+	vec3 playerPos,
+    vec3 lpvPos,
+    float Exposure,
 	vec2 lightmaps, 
+
 	vec3 skylightcolor, 
 	vec3 torchcolor, 
 
@@ -315,7 +319,7 @@ void ApplySSRT(
 	vec3 skycontribution2 = vec3(0.0);
 
 	// rgb = torch color * lightmap. a = sky lightmap.
-	vec4 Lighting = RT_AmbientLight(torchcolor, lightmaps);
+	vec4 Lighting = RT_AmbientLight(playerPos, lpvPos, Exposure, lightmaps, torchcolor);
 	skylightcolor = skylightcolor * ambient_brightness * Lighting.a;
 
 	for (int i = 0; i < nrays; i++){

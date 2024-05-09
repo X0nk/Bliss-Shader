@@ -29,6 +29,7 @@ screen.Direct_Light = Direct Light
         option.TRANSLUCENT_COLORED_SHADOWS = Colored Shadows
         option.SCREENSPACE_CONTACT_SHADOWS = Screen-space Shadows
         option.RENDER_ENTITY_SHADOWS = Shadows for Entities
+        option.RENDER_PLAYER_SHADOWS = Shadows for the Player
         option.shadowMapResolution = Shadow Resolution
         option.shadowDistance = Shadow Distance
             value.shadowDistance.32.0 = 2 Chunks
@@ -696,4 +697,4 @@ option.DISTANT_HORIZONS_SHADOWMAP.comment =  §cTHIS SETTING WILL DESTROY PERFOR
 option.TOGGLE_VL_FOG = Toggle Volumetric Fog
 option.TOGGLE_VL_FOG.comment = one big button to just turn all the fog off.
 
-option.TRANSLUCENT_COLORED_SHADOWS.comment = §bWhat is this?§r This effect allows translucent things like stained glass to color the sunlight as it passes through the it. §aPERFORMANCE COST:§r medium
+option.TRANSLUCENT_COLORED_SHADOWS.comment = §bWhat is this?§r This effect allows translucent things like stained glass to color the sunlight as it passes through it. §aPERFORMANCE COST:§r medium

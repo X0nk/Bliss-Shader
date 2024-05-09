@@ -753,7 +753,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		float roughness = pow(1.0-specularValues.r,2.0);
 		float f0 = isReflective ? max(specularValues.g, 0.02) : specularValues.g;
 
-
 		#ifdef HAND
 			f0 = max(specularValues.g, 0.02);
 		#endif
@@ -766,8 +765,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		vec3 Metals = f0 > 229.5/255.0 ? normalize(Albedo+1e-7) * (dot(Albedo,vec3(0.21, 0.72, 0.07)) * 0.7 + 0.3) : vec3(1.0);
 		
 		// make sure zero alpha is not forced to be full alpha by fresnel on items with funny normal padding	
-		// if(UnchangedAlpha <= 0.0 && !isReflective) f0 = 0.0;
-		
+		if(UnchangedAlpha <= 0.0 && !isReflective) f0 = 0.0;
 		
 		if (f0 > 0.0){
 

@@ -954,15 +954,6 @@ void main() {
 		float NdotL = 1.0;
 		float lightLeakFix = clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0);
 
-
-		// #ifdef DISTANT_HORIZONS_SHADOWMAP
-		// 	float shadowMapFalloff = pow(1.0-pow(1.0-min(max(1.0 - length(vec3(feetPlayerPos.x,feetPlayerPos.y/1.5,feetPlayerPos.z)) / min(shadowDistance, dhFarPlane),0.0)*5.0,1.0),2.0),2.0);
-		// #else
-		// 	float shadowMapFalloff = pow(1.0-pow(1.0-min(max(1.0 - length(vec3(feetPlayerPos.x,feetPlayerPos.y/1.5,feetPlayerPos.z)) / shadowDistance,0.0)*5.0,1.0),2.0),2.0);
-		// #endif
-		// float shadowMapFalloff2 = pow(1.0-pow(1.0-min(max(1.0 - length(vec3(feetPlayerPos.x,feetPlayerPos.y/1.5,feetPlayerPos.z)) / min(shadowDistance,far),0.0)*5.0,1.0),2.0),2.0);
-
-
 		#ifdef OVERWORLD_SHADER
 			DirectLightColor = lightCol.rgb / 80.0;
 			AmbientLightColor = averageSkyCol_Clouds / 30.0;
@@ -1270,7 +1261,7 @@ void main() {
 		// RTAO and/or SSGI
 		#if indirect_effect == 3 || indirect_effect == 4
 			Indirect_lighting = AmbientLightColor;
-			ApplySSRT(Indirect_lighting, viewPos, normal, vec3(bnoise, noise_2), lightmap.xy, AmbientLightColor*2.5, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass, hand);
+			ApplySSRT(Indirect_lighting, viewPos, normal, vec3(bnoise, noise_2), 		feetPlayerPos, lpvPos, exposure, lightmap.xy, AmbientLightColor*2.5, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass, hand);
 		#endif
 
 		#if defined END_SHADER
@@ -1291,7 +1282,6 @@ void main() {
 				Indirect_SSS *= AO;
 
 				// apply to ambient light.
-				// if(texcoord.x>0.5) 
 				Indirect_lighting = max(Indirect_lighting, Indirect_SSS * ambientColor * ambientsss_brightness);
 
 				// #ifdef OVERWORLD_SHADER
@@ -1305,9 +1295,10 @@ void main() {
 
 			float sunSSS_density = LabSSS;
 			float SSS_shadow = ShadowAlpha * Shadows;
-			// #ifdef DISTANT_HORIZONS_SHADOWMAP
-			// 	shadowMapFalloff2 = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / min(shadowDistance,far),0.0)*5.0,1.0));
-			// #endif
+			
+			#ifdef DISTANT_HORIZONS_SHADOWMAP
+				shadowMapFalloff2 = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / min(shadowDistance, far-16),0.0)*5.0,1.0));
+			#endif
 
 			#ifndef RENDER_ENTITY_SHADOWS
 				if(entities) sunSSS_density = 0.0;

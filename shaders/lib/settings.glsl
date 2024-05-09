@@ -132,6 +132,8 @@ const float entityShadowDistanceMul = 0.25; // [0.01 0.02 0.03 0.04 0.05 0.10 0.
 
 
 #define RENDER_ENTITY_SHADOWS
+#define RENDER_PLAYER_SHADOWS
+
 
 #define SCREENSPACE_CONTACT_SHADOWS
 #define Variable_Penumbra_Shadows
@@ -746,4 +748,6 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 #if DH_KNOWN_ISSUES == 0
 #endif
 #ifdef PARTICLE_RENDERING_FIX
+#endif
+#ifdef RENDER_PLAYER_SHADOWS
 #endif
