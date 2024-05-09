@@ -1,4 +1,10 @@
 #include "/lib/settings.glsl"
+// #if defined END_SHADER || defined NETHER_SHADER
+	#undef IS_LPV_ENABLED
+// #endif
+#ifndef OVERWORLD_SHADER
+	uniform float nightVision;
+#endif
 
 flat varying vec4 lightCol;
 flat varying vec3 averageSkyCol;
@@ -76,6 +82,7 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 		uniform sampler2DShadow shadowtex0;
 		uniform sampler2DShadow shadowtex1;
 	#endif
+
 	flat varying vec3 refractedSunVec;
 	
 
@@ -93,6 +100,8 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 	uniform sampler2D colortex4;
 	#include "/lib/end_fog.glsl"
 #endif
+
+#include "/lib/diffuse_lighting.glsl"
 
 #define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
 
@@ -247,7 +256,7 @@ vec4 waterVolumetrics_test( vec3 rayStart, vec3 rayEnd, float estEndDepth, float
 		vec3 ambientMul = exp(-estEndDepth * d * waterCoefs );
 
 		vec3 Directlight = ((lightSource * sh) * phase * sunMul) ;
-		vec3 Indirectlight = max(ambient * ambientMul, vec3(0.01,0.2,0.4) * ambientMul * 0.03) ;
+		vec3 Indirectlight = max(ambient * ambientMul, vec3(0.01,0.2,0.4) * ambientMul * MIN_LIGHT_AMOUNT * 0.03) ;
 
 		vec3 light = (Indirectlight + Directlight) * scatterCoef;
 
@@ -292,7 +301,7 @@ void main() {
 	float z = texture2D(depthtex1,tc).x;
 
 	#ifdef DISTANT_HORIZONS
-	float DH_z = texture2D(dhDepthTex1,tc).x;
+		float DH_z = texture2D(dhDepthTex1,tc).x;
 	#else
 		float DH_z = 0.0;
 	#endif
@@ -323,21 +332,27 @@ void main() {
 		
 		#ifdef OVERWORLD_SHADER
 			vec2 lightmap = decodeVec2(texture2D(colortex14, tc).a);
-			if(z >= 1.0) lightmap.y = 0.99;
+			
+			#ifdef DISTANT_HORIZONS
+				if(z >= 1.0) lightmap.y = 0.99;
+			#endif
 		#else
 			vec2 lightmap = decodeVec2(texture2D(colortex14, tc).a);
 			lightmap.y = 1.0;
 		#endif
-   		
-	 	indirectLightColor_dynamic = indirectLightColor_dynamic * ambient_brightness * pow(1.0-pow(1.0-lightmap.y,0.5),3.0)	;
-		
-		float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) ;
-		// indirectLightColor_dynamic += vec3(TORCH_R,TORCH_G,TORCH_B)	* TorchBrightness_autoAdjust * pow(1.0-sqrt(1.0-clamp(lightmap.x,0.0,1.0)),2.0) * 2.0;
+
+
 
 		float Vdiff = distance(viewPos1, viewPos0) * 2.0;
 		float VdotU = playerPos.y;
 		float estimatedDepth = Vdiff * abs(VdotU) ;	//assuming water plane
 		float estimatedSunDepth = estimatedDepth / abs(WsunVec.y); //assuming water plane
+
+
+
+	 	indirectLightColor_dynamic *= ambient_brightness * pow(1.0-pow(1.0-lightmap.y,0.5),3.0)	;
+		float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) ;
+		indirectLightColor_dynamic += vec3(TORCH_R,TORCH_G,TORCH_B)	* TorchBrightness_autoAdjust * pow(1.0-sqrt(1.0-clamp(lightmap.x,0.0,1.0)),2.0) * 2.0;
 
 		vec4 VolumetricFog2 = vec4(0,0,0,1);
 		#ifdef OVERWORLD_SHADER

@@ -26,10 +26,13 @@ screen.Waving_Stuff = 摇晃相关
 
 screen.Direct_Light = 直接照明
     screen.Shadows = 阴影
-        option.SCREENSPACE_CONTACT_SHADOWS = 屏幕空间接触阴影
+        option.TRANSLUCENT_COLORED_SHADOWS = 半透明彩色阴影
+        option.SCREENSPACE_CONTACT_SHADOWS = 屏幕空间阴影
         option.RENDER_ENTITY_SHADOWS = 实体阴影
         option.shadowMapResolution = 阴影分辨率
         option.shadowDistance = 阴影距离
+            value.shadowDistance.32.0 = 2 区块
+            value.shadowDistance.48.0 = 3 区块
             value.shadowDistance.64.0 = 4 区块
             value.shadowDistance.80.0 = 5 区块
             value.shadowDistance.96.0 = 6 区块
@@ -51,18 +54,34 @@ screen.Direct_Light = 直接照明
             value.shadowDistance.352.0 = 22 区块
             value.shadowDistance.368.0 = 23 区块
             value.shadowDistance.384.0 = 24 区块
-            value.shadowDistance.400.0 = 25 区块
-            value.shadowDistance.416.0 = 26 区块
-            value.shadowDistance.432.0 = 27 区块
-            value.shadowDistance.448.0 = 28 区块
-            value.shadowDistance.464.0 = 29 区块
-            value.shadowDistance.480.0 = 30 区块
-            value.shadowDistance.496.0 = 31 区块
             value.shadowDistance.512.0 = 32 区块
+            value.shadowDistance.768.0 = 48 区块
+            value.shadowDistance.1024.0 = 64 区块
+            value.shadowDistance.1536.0 = 96 区块
+            value.shadowDistance.2048.0 = 128 区块
+            value.shadowDistance.4096.0 = 256 区块
+            value.shadowDistance.8192.0 = 512 区块
+
         option.OPTIMIZED_SHADOW_DISTANCE = 最大阴影边界
             value.OPTIMIZED_SHADOW_DISTANCE.-1.0 = 无优化
             value.OPTIMIZED_SHADOW_DISTANCE.1.0 = 优化
         option.entityShadowDistanceMul = 实体阴影距离
+            value.entityShadowDistanceMul.0.01 = 阴影距离的 1%
+            value.entityShadowDistanceMul.0.02 = 阴影距离的 2%
+            value.entityShadowDistanceMul.0.03 = 阴影距离的 3%
+            value.entityShadowDistanceMul.0.04 = 阴影距离的 4%
+            value.entityShadowDistanceMul.0.05 = 阴影距离的 5%
+            value.entityShadowDistanceMul.0.10 = 阴影距离的 10%
+            value.entityShadowDistanceMul.0.15 = 阴影距离的 15%
+            value.entityShadowDistanceMul.0.20 = 阴影距离的 20%
+            value.entityShadowDistanceMul.0.25 = 阴影距离的 25%
+            value.entityShadowDistanceMul.0.30 = 阴影距离的 30%
+            value.entityShadowDistanceMul.0.35 = 阴影距离的 35%
+            value.entityShadowDistanceMul.0.40 = 阴影距离的 40%
+            value.entityShadowDistanceMul.0.45 = 阴影距离的 45%
+            value.entityShadowDistanceMul.0.50 = 阴影距离的 50%
+            value.entityShadowDistanceMul.0.75 = 阴影距离的 75%
+            value.entityShadowDistanceMul.1.00 = 阴影距离的 100%
 
     screen.Filtering = 阴影过滤设置
         option.SHADOW_FILTER_SAMPLE_COUNT = 阴影过滤采样数
@@ -72,6 +91,16 @@ screen.Direct_Light = 直接照明
         option.Max_Shadow_Filter_Radius = 最大阴影过滤半径
         option.Max_Filter_Depth = 最大过滤深度
 
+    screen.LPV = FloodFill
+        option.LPV_ENABLED = FloodFill
+        option.LPV_SIZE = LPV 规模
+            value.LPV_SIZE.6 = 小 [64]
+            value.LPV_SIZE.7 = 中 [128]
+            value.LPV_SIZE.8 = 大 [256]
+        option.LPV_NORMAL_OFFSET = 法线偏移 (Normal-Offset)
+        option.LPV_ENTITY_LIGHTS = 实体光源
+        option.LPV_REDSTONE_LIGHTS = 红石光源
+        option.LPV_COLORED_CANDLES = 彩色蜡烛
 
 screen.Subsurface_Scattering = 次表面散射 (SSS)
     option.LabSSS_Curve = LabSSS 曲线
@@ -129,12 +158,12 @@ screen.Fog = 雾气设置
     screen.TOD_fog = 全天雾气
         option.TOD_Fog_mult = 雾气密度倍率
         option.Morning_Uniform_Fog = 清晨 - 雾气密度
-        option.Morning_Cloudy_Fog = 清晨 - 云雾密度
         option.Noon_Uniform_Fog = 正午 - 雾气密度
-        option.Noon_Cloudy_Fog = 正午 - 云雾密度
         option.Evening_Uniform_Fog = 傍晚 - 雾气密度
-        option.Evening_Cloudy_Fog = 傍晚 - 云雾密度
         option.Night_Uniform_Fog = 夜晚 - 雾气密度
+        option.Morning_Cloudy_Fog = 清晨 - 云雾密度
+        option.Noon_Cloudy_Fog = 正午 - 云雾密度
+        option.Evening_Cloudy_Fog = 傍晚 - 云雾密度
         option.Night_Cloudy_Fog =夜 晚 - 云雾密度
 
         option.PER_BIOME_ENVIRONMENT = 群系特色环境
@@ -378,6 +407,23 @@ screen.Post_Processing = 后期处理
         option.BLEND_FACTOR = 混合比重
         option.TAA_UPSCALING = TAA 升采样
         option.SCALE_FACTOR = 放大倍率
+	screen.COLOR_GRADING = 颜色分级
+		option.TONE_CURVE = 色调曲线
+		option.LOWER_CURVE = 下部曲线
+		option.UPPER_CURVE = 上部曲线
+		option.COLOR_GRADING_ENABLED = 颜色分级
+		option.SHADOWS_GRADE_R = 暗部 - §c红色
+		option.SHADOWS_GRADE_G = 暗部 - §a绿色
+		option.SHADOWS_GRADE_B = 暗部 - §9蓝色
+		option.SHADOWS_GRADE_MUL = 暗部 - 亮度
+		option.MIDS_GRADE_R = 中性色 - §c红色
+		option.MIDS_GRADE_G = 中性色 - §a绿色
+		option.MIDS_GRADE_B = 中性色 - §9蓝色
+		option.MIDS_GRADE_MUL = 中性色 - 亮度
+		option.HIGHLIGHTS_GRADE_R = 亮部 - §c红色
+		option.HIGHLIGHTS_GRADE_G = 亮部 - §a绿色
+		option.HIGHLIGHTS_GRADE_B = 亮部 - §9蓝色
+		option.HIGHLIGHTS_GRADE_MUL = 亮部 - 亮度
 
 
 screen.LabPBR = Lab PBR
@@ -430,12 +476,16 @@ option.DOF_QUALITY=景深 (DOF)
     option.DOF_ANAMORPHIC_RATIO=景深变形比
     value.MANUAL_FOCUS.-2=自动对焦
 	value.MANUAL_FOCUS.-1=亮度滑块
-	value.FOCUS_LASER_COLOR.0=红
-	value.FOCUS_LASER_COLOR.1=绿
-	value.FOCUS_LASER_COLOR.2=蓝
-	value.FOCUS_LASER_COLOR.3=粉
-	value.FOCUS_LASER_COLOR.4=黄
-	value.FOCUS_LASER_COLOR.5=白
+
+	screen.JITTER_DOF=抖动景深设置
+		option.JITTER_STRENGTH=抖动强度
+		option.FOCUS_LASER_COLOR=聚焦点
+        value.FOCUS_LASER_COLOR.0=红
+        value.FOCUS_LASER_COLOR.1=绿
+        value.FOCUS_LASER_COLOR.2=蓝
+        value.FOCUS_LASER_COLOR.3=粉
+        value.FOCUS_LASER_COLOR.4=黄
+        value.FOCUS_LASER_COLOR.5=白
 
 option.AEROCHROME_MODE=Aerochrome 模式
 option.AEROCHROME_PINKNESS=Aerochrome 模式 红色: 粉色 比例
@@ -458,7 +508,7 @@ option.moon_illuminance.comment = 配置月亮的亮度.
 screen.Direct_Light.comment = 配置和阳光或阴影相关的设置.
 
 screen.Shadows.comment = 根据喜好配置阳光的阴影.
-    option.SCREENSPACE_CONTACT_SHADOWS.comment = 屏幕空间接触阴影.  §b这啥?§r 这是给远处事物的小部分阴影区域补充, 以及对近处小部分阴影区域添加细节. §a性能消耗水平:§r 低偏中; 在更高分辨率下会消耗更多性能.
+    option.SCREENSPACE_CONTACT_SHADOWS.comment = §b这啥?§r 这是给远处事物的小部分阴影区域补充, 以及对近处小部分阴影区域添加细节. §a性能消耗水平:§r 低偏中; 在更高分辨率下会消耗更多性能.
     option.RENDER_ENTITY_SHADOWS.comment =  §b这啥?§r 所有类型实体的阴影, 例如怪物, 箱子, 旗帜, 或者告示牌. §a性能消耗水平:§r 低偏中; 在近处有特别多实体的时候消耗的性能会非常的恐怖.
     option.shadowMapResolution.comment = 在太阳照射下从世界上的事物投射出来阴影的质量. §a性能消耗水平:§r 中或更高; 阴影需要从太阳的角度进行第二次 3D 世界的渲染, 这就是为什么它会使性能减半.
     option.shadowDistance.comment = 阴影可渲染的最大距离 (这不是线性距离). 推荐保持默认, 因为接触阴影能解决远处阴影的渲染需求. §a性能消耗水平:§r 中或更高; 如果渲染距离非常大, 阴影的性能开销会很恐怖.
@@ -600,6 +650,9 @@ screen.Post_Processing.comment = 配置所有后处理效果设置, 从抗锯齿
         option.BLEND_FACTOR.comment = 配置历史帧使用比重. 更高的数值意味着依赖更少的历史帧, 所以可能会看起来很闪烁和多噪点. 较低的数值意味着以来更多的历史帧, 所以可能会看起来更少噪点但是更多拖影和显得有点脏.
         option.TAA_UPSCALING.comment = 时间性升分辨率. 升分辨率时, 可以从低分辨率的图像中保留大多数质量. 因此与常规升分辨率相比, 可以开启一个看起来很高的分辨率的同时也能有更好的性能.
         option.SCALE_FACTOR.comment = 配置以原有分辨率的多大一部分来开始升分辨率. 不推荐低于0.5, 只把它作为一个选项, 因为它很有趣. :P
+	screen.COLOR_GRADING.comment = 高级调色选项.
+		option.TONE_CURVE.comment = 启用色调曲线. 独立于颜色分级且首先应用.
+		option.COLOR_GRADING_ENABLED.comment = 启用颜色分级. RGB 滑块不会影响亮度. 在色调曲线之后应用.
 
 option.RESOURCEPACK_SKY.comment = 开关资源包天空支持. 配置设置来使用完整的资源包天空, 或保持光影的日月. §a性能消耗水平:§r 非常低.
 option.SKY_GROUND = 地天
@@ -607,7 +660,6 @@ option.SKY_GROUND = 地天
 option.MATERIAL_AO.comment = 开关基于资源包提供的内容应用环境光遮蔽的功能. §a性能消耗水平:§r 非常低.
 option.WATER_WAVE_STRENGTH.comment = 配置出现的水波强度.
 option.MOONPHASE_BASED_MOONLIGHT.comment = §b这啥?§r 每晚月亮有不同的照度. 此选项根据月相来调整发出的月光亮度. §a性能消耗水平:§r 近乎于无.
-
 
 option.END_STORM_DENSTIY.comment =  §b这啥?§r 这是末地的一层暗色云雾. 配置末地风暴的密度.
 option.NETHER_PLUME_DENSITY.comment =  §b这啥?§r 这是下界中那些浓密的发光烟柱. 配置下界烟柱的密度.
@@ -641,6 +693,8 @@ option.DISTANT_HORIZONS_SHADOWMAP = §c(如果不知道本选项作用, 请不�
 option.DISTANT_HORIZONS_SHADOWMAP.comment =  §c此选项会降低性能, 会使阴影看起来呈块状, 闪烁且会降低阴影细节§r. 将阴影距离设置为 32 区块 (或更多). 设置阴影分辨率为 4096 (或更大)
 option.TOGGLE_VL_FOG = 体积雾
 option.TOGGLE_VL_FOG.comment = 一个快速关闭所有雾气的开关.
+
+option.TRANSLUCENT_COLORED_SHADOWS.comment = §b这啥?§r 本选项的效果可以使像染色玻璃这样的半透明方块对穿过的光线染色. §a性能消耗水平:§r 中.
 
 #Additional Options / 附加选项
 #Direct Light
@@ -693,11 +747,6 @@ option.TOGGLE_VL_FOG.comment = 一个快速关闭所有雾气的开关.
         option.Exposure_Speed=曝光速度
         option.Manual_exposure_value=手动曝光值
 
-        screen.JITTER_DOF=抖动景深
-            option.JITTER_STRENGTH=抖动强度
-            option.FOCUS_LASER_COLOR=聚焦激光颜色
-            option.FOCUS_LASER_COLOR.comment=红, 绿, 蓝, 粉, 黄, 白.
-
         option.AUTOFOCUS=自动对焦
         option.focal=焦距
         option.aperture=光圈
@@ -710,13 +759,22 @@ option.TOGGLE_VL_FOG.comment = 一个快速关闭所有雾气的开关.
         option.Purkinje_B=柏金赫 - 蓝色
         option.Purkinje_Multiplier=柏金赫现象倍率
 
-        option.CONTRAST=对比度
-        option.TONE_CURVE=颜色曲线
-        option.UPPER_CURVE=上部曲线
-        option.LOWER_CURVE=下部曲线
+    screen.GAMEPLAY_EFFECTS=游玩效果设置
+        option.MOTION_AMOUNT=Motion Amount
+        option.DAMAGE_TAKEN_EFFECT=受伤效果
+        option.LOW_HEALTH_EFFECT=低生命值效果
 
 #Clouds
 option.CLOUD_SHADOW_STRENGTH=云影强度
+
+
+#LabPBR
+
+        option.sss_density_multiplier=次表面散射强度倍率
+        option.sss_absorbance_multiplier=次表面散射吸光倍率
+
+
+#Climate Settings
 
 
 #Misc Settings
@@ -765,6 +823,7 @@ option.CLOUD_SHADOW_STRENGTH=云影强度
     option.DENOISE_SSS_AND_SSAO=对 SSS和 SSAOO 降噪
     option.WATER_CAUSTICS_BRIGHTNESS=水体焦散线亮度
     option.HYPER_DETAILED_WAVES=超细节水波
+    option.OLD_BLOOM=旧版泛光
 
 
 #Climate

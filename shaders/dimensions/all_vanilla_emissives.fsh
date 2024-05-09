@@ -58,7 +58,7 @@ vec3 viewToWorld(vec3 viewPos) {
 void main() {
 
 	vec4 Albedo = texture2D(texture, texcoord);
-	Albedo.rgb = toLinear(Albedo.rgb);
+	Albedo.rgb = toLinear(Albedo.rgb * color.rgb);
 
     #if defined SPIDER_EYES || defined BEACON_BEAM || defined GLOWING 
 
@@ -72,7 +72,12 @@ void main() {
 
 	    float autoBrightnessAdjust = mix(minimumBrightness, 100.0, clamp(exp(-10.0*exposure),0.0,1.0));
 
-        vec3 emissiveColor =  Albedo.rgb * color.a * autoBrightnessAdjust;
+        #ifdef DISABLE_VANILLA_EMISSIVES
+            vec3 emissiveColor = vec3(0.0);
+            Albedo.a = 0.0;
+        #else
+            vec3 emissiveColor =  Albedo.rgb * color.a * autoBrightnessAdjust;
+        #endif
         
 	    gl_FragData[0] = vec4(emissiveColor*0.1, Albedo.a * sqrt(color.a));
     #endif
@@ -80,7 +85,16 @@ void main() {
     #ifdef ENCHANT_GLINT
 	    float autoBrightnessAdjust = mix(0.1, 100.0, clamp(exp(-10.0*exposure),0.0,1.0));
 
-        vec3 GlintColor = Albedo.rgb * autoBrightnessAdjust * Emissive_Brightness;
+        Albedo.rgb = clamp(Albedo.rgb ,0.0,1.0); // for safety
+
+        #ifdef DISABLE_ENCHANT_GLINT
+            vec3 GlintColor = vec3(0.0);
+            Albedo.a = 0.0;
+        #else
+            vec3 GlintColor = Albedo.rgb * autoBrightnessAdjust * Emissive_Brightness;
+        #endif
+
+
 
 	    gl_FragData[0] = vec4(GlintColor*0.1, dot(Albedo.rgb,vec3(0.333)) * Albedo.a  );
     #endif

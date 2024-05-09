@@ -126,15 +126,12 @@ float interleaved_gradientNoise(){
 	return noise;
 }
 
-// float interleaved_gradientNoise(){
-// 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+ 1.0/1.6180339887 * frameCounter);
-// }
 float R2_dither(){
-  	// #ifdef TAA
+  	#ifdef TAA
 		vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
-	// #else
-	// 	vec2 coord = gl_FragCoord.xy;
-	// #endif
+	#else
+		vec2 coord = gl_FragCoord.xy;
+	#endif
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
@@ -144,11 +141,18 @@ float blueNoise(){
 vec4 blueNoise(vec2 coord){
   return texelFetch2D(colortex6, ivec2(coord )%512  , 0);
 }
-
 vec2 R2_samples(int n){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha * n);
 }
+
+
+
+
+
+
+
+
 vec3 viewToWorld(vec3 viewPos) {
     vec4 pos;
     pos.xyz = viewPos;
@@ -161,18 +165,6 @@ vec3 viewToWorld(vec3 viewPos) {
 
 
 const float PI = 3.141592653589793238462643383279502884197169;
-vec2 tapLocation_simple(
-	int samples, int totalSamples, float rotation, float rng
-){
-    float alpha = float(samples + rng) * (1.0 / float(totalSamples));
-    float angle = alpha * (rotation * PI);
-
-	float sin_v = sin(angle);
-	float cos_v = cos(angle);
-
-    return vec2(cos_v, sin_v) * sqrt(alpha);
-}
-
 vec2 SpiralSample(
 	int samples, int totalSamples, float rotation, float Xi
 ){
@@ -188,24 +180,29 @@ vec2 SpiralSample(
 
     return vec2(x, y);
 }
+vec2 CleanSample(
+	int samples, float totalSamples, float noise
+){
 
-vec3 cosineHemisphereSample(vec2 Xi){
-    float theta = 2.0 * 3.14159265359 * Xi.y;
+	// this will be used to make 1 full rotation of the spiral. the mulitplication is so it does nearly a single rotation, instead of going past where it started
+	float variance = noise * 0.897;
 
-    float r = sqrt(Xi.x);
-    float x = r * cos(theta);
-    float y = r * sin(theta);
+	// for every sample input, it will have variance applied to it.
+	float variedSamples = float(samples) + variance;
+	
+	// for every sample, the sample position must change its distance from the origin.
+	// otherwise, you will just have a circle.
+    float spiralShape = variedSamples / (totalSamples + variance);
 
-    return vec3(x, y, sqrt(clamp(1.0 - Xi.x,0.,1.)));
+	float shape = 2.26;
+    float theta = variedSamples * (PI * shape);
+
+	float x =  cos(theta) * spiralShape;
+	float y =  sin(theta) * spiralShape;
+
+    return vec2(x, y);
 }
 
-vec3 rodSample(vec2 Xi)
-{
-	float r = sqrt(Xi.x);
-    float phi = 2 * 3.14159265359 * Xi.y;
-
-    return normalize(vec3(cos(phi) * r, sin(phi) * r, sqrt(clamp(1.0 - Xi.x,0.,1.)))).xzy;
-}
 
 
 #include "/lib/DistantHorizons_projections.glsl"
@@ -248,20 +245,25 @@ vec2 SSAO(
 	float maxR2 = viewPos.z*viewPos.z*mulfov2*2.0 * 5.0 / mix(4.0, 50.0, clamp(viewPos.z*viewPos.z - 0.1,0,1));
 
 	#ifdef Ambient_SSS
-		float maxR2_2 = viewPos.z*viewPos.z*mulfov2*2.*2./50.0;
+		float maxR2_2 = viewPos.z;//*viewPos.z*mulfov2*2.*2./4.0;
 
 		float dist3 = clamp(1-exp( viewPos.z*viewPos.z / -50),0,1);
-		if(leaves) maxR2_2 = mix(10, maxR2_2, dist3);
+		// if(leaves) maxR2_2 = 0.1;
+		// if(leaves) maxR2_2 = mix(10, maxR2_2, dist3);
 	#endif
 
 	vec2 acc = -(TAA_Offset*(texelSize/2.0))*RENDER_SCALE ;
 	
-	vec2 BLUENOISE = blueNoise(gl_FragCoord.xy).rg;
+	// vec2 BLUENOISE = blueNoise(gl_FragCoord.xy).rg;
 
 	int n = 0;
+
+	float leaf = leaves ? -0.5 : 0.0;
+
 	for (int i = 0; i < samples; i++) {
 		
-		vec2 sampleOffset = SpiralSample(i, 7, 8, noise) * mulfov2 * clamp(0.05 + i*0.095, 0.0,0.3)  ;
+		// vec2 sampleOffset = (SpiralSample(i, 7, 8 , noise)) * mulfov2  * clamp(0.05 + i*0.095, 0.0,0.3)  ;
+		vec2 sampleOffset = CleanSample(i, samples - 1, noise) * mulfov2 * 0.3 ;
 
 		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio)*RENDER_SCALE);
 
@@ -278,16 +280,14 @@ vec2 SSAO(
 			float dsquared = dot(vec, vec);
 			
 			if (dsquared > 1e-5){
-				if (dsquared < maxR2){
+				
+				if( dsquared < maxR2){
 					float NdotV = clamp(dot(vec*inversesqrt(dsquared), normalize(normal)),0.,1.);
 					occlusion += NdotV * clamp(1.0-dsquared/maxR2,0.0,1.0);
 				}
 
 				#ifdef Ambient_SSS
-					if(dsquared > maxR2_2){
-						float NdotV = 1.0 - clamp(dot(vec*dsquared, normalize(normal)),0.,1.);
-						sss += max((NdotV - (1.0-NdotV)) * clamp(1.0-maxR2_2/dsquared,0.0,1.0) ,0.0);
-					}
+					sss += clamp(leaf - dot(vec, normalize(normal)),0.0,1.0);
 				#endif
 
 				n += 1;
@@ -372,12 +372,13 @@ void main() {
 	vec2 texcoord = gl_FragCoord.xy*texelSize;
 
 	float z = texture2D(depthtex1,texcoord).x;
+
 	#ifdef DISTANT_HORIZONS
-	float DH_depth1 = texture2D(dhDepthTex1,texcoord).x;
-	float swappedDepth = z >= 1.0 ? DH_depth1 : z;
+		float DH_depth1 = texture2D(dhDepthTex1,texcoord).x;
+		float swappedDepth = z >= 1.0 ? DH_depth1 : z;
 	#else
-	float DH_depth1 = 1.0;
-	float swappedDepth = z;
+		float DH_depth1 = 1.0;
+		float swappedDepth = z;
 	#endif
 	
 
@@ -390,7 +391,7 @@ void main() {
 	vec2 lightmap = dataUnpacked1.yz;
 
 
-	gl_FragData[1] = vec4(0.0,0.0,0.0, texture2D(colortex14,texcoord).a );
+	gl_FragData[1] = vec4(0.0,0.0,0.0, texture2D(colortex14,floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize).a);
 
 
 	// bool lightningBolt = abs(dataUnpacked1.w-0.5) <0.01;
@@ -502,10 +503,11 @@ void main() {
 					float diffthreshM = diffthresh*mult*d0*k/20.;
 					float avgDepth = 0.0;
 
-					vec2 BLUENOISE = blueNoise(gl_FragCoord.xy).rg;
 					for(int i = 0; i < VPS_Search_Samples; i++){
 
 						vec2 offsetS = SpiralSample(i, 7, 8, noise) * 0.5;
+						// vec2 offsetS = CleanSample(i, VPS_Search_Samples - 1, noise) * 0.5;
+						
 						float weight = 3.0 + (i+noise) *rdMul/SHADOW_FILTER_SAMPLE_COUNT*shadowMapResolution*distortFactor/2.7;
 						
 						float d = texelFetch2D(shadow, ivec2((projectedShadowPosition.xy+offsetS*rdMul)*shadowMapResolution),0).x;

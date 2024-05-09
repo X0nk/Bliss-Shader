@@ -1,5 +1,9 @@
 #include "/lib/settings.glsl"
 
+// #if defined END_SHADER || defined NETHER_SHADER
+// 	#undef IS_LPV_ENABLED
+// #endif
+
 #ifdef IS_LPV_ENABLED
 	#extension GL_EXT_shader_image_load_store: enable
 	#extension GL_ARB_shading_language_packing: enable
@@ -387,7 +391,7 @@ void main() {
 		vec3 MinimumLightColor = vec3(1.0);
 
 		if(isEyeInWater == 1) MinimumLightColor = vec3(10.0);
-		if(lightmap.x >= 0.9) Torch_Color *= LIT_PARTICLE_BRIGHTNESS;
+		// if(lightmap.x >= 0.9) Torch_Color *= LIT_PARTICLE_BRIGHTNESS;
 
 		#ifdef OVERWORLD_SHADER
 			directLightColor =  lightCol.rgb/80.0;

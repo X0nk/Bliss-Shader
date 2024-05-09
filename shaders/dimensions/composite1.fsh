@@ -1,5 +1,9 @@
 #include "/lib/settings.glsl"
 
+// #if defined END_SHADER || defined NETHER_SHADER
+// 	#undef IS_LPV_ENABLED
+// #endifs
+
 #ifdef IS_LPV_ENABLED
 	#extension GL_ARB_shader_image_load_store: enable
 	#extension GL_ARB_shading_language_packing: enable
@@ -321,6 +325,28 @@ vec2 tapLocation_simple(
     return vec2(cos_v, sin_v) * sqrt(alpha);
 }
 
+vec2 CleanSample(
+	int samples, float totalSamples, float noise
+){
+
+	// this will be used to make 1 full rotation of the spiral. the mulitplication is so it does nearly a single rotation, instead of going past where it started
+	float variance = noise * 0.897;
+
+	// for every sample input, it will have variance applied to it.
+	float variedSamples = float(samples) + variance;
+	
+	// for every sample, the sample position must change its distance from the origin.
+	// otherwise, you will just have a circle.
+    float spiralShape = pow(variedSamples / (totalSamples + variance),0.5);
+
+	float shape = 2.26; // this is very important. 2.26 is very specific
+    float theta = variedSamples * (PI * shape);
+
+	float x =  cos(theta) * spiralShape;
+	float y =  sin(theta) * spiralShape;
+
+    return vec2(x, y);
+}
 vec3 viewToWorld(vec3 viewPos) {
     vec4 pos;
     pos.xyz = viewPos;
@@ -671,7 +697,8 @@ float ComputeShadowMap(in vec3 projectedShadowPosition, float distortFactor, flo
 		float rdMul = shadowBlockerDepth*distortFactor*d0*k/shadowMapResolution;
 		
 		for(int i = 0; i < samples; i++){
-			vec2 offsetS = tapLocation_simple(i, 7, 9, noise) * 0.5;
+			// vec2 offsetS = tapLocation_simple(i, 7, 9, noise) * 0.5;
+			vec2 offsetS = CleanSample(i, samples - 1, noise) * 0.3;
 			projectedShadowPosition.xy += rdMul*offsetS;
 	#else
 		int samples = 1;
@@ -731,22 +758,21 @@ vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, floa
 	
 	Scattering *= sss_density_multiplier;
 
-	float density = 0.0001 + Density*1.5;
-
-	density = 1.0;
+	float density = 0.0001 + Density*2.0;
+	
 	float scatterDepth = max(1.0 - Scattering/density,0.0);
 	scatterDepth = exp((1.0-scatterDepth) * -7.0);
 
 	// this is for SSS when there is no shadow blocker depth
 	#if defined BASIC_SHADOW_FILTER && defined Variable_Penumbra_Shadows
-		scatterDepth = max(scatterDepth, shadows * min(2.0-sss_density_multiplier,1.0));
+		scatterDepth = max(scatterDepth, pow(shadows, 0.5 + (1.0-Density) * 2.0)  );
 	#else
 		scatterDepth = exp(-7.0 * pow(1.0-shadows,3.0))*min(2.0-sss_density_multiplier,1.0);
 	#endif
 
 
 	// PBR at its finest :clueless:
-	vec3 absorbColor = exp(max(luma(albedo) - albedo, 0.0) * -(20.0 - 19*scatterDepth) * sss_absorbance_multiplier);
+	vec3 absorbColor = exp(max(luma(albedo) - albedo*vec3(1.0,1.1,1.2), 0.0) * -(20.0 - 19*scatterDepth) * sss_absorbance_multiplier);
 	
 	vec3 scatter = scatterDepth * absorbColor * pow(Density, LabSSS_Curve);
 
@@ -757,13 +783,14 @@ vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, floa
 
 vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 	
-	float labcurve = clamp(1.0 - exp(Density * -10.0),0.0,1.0);
-	float density = sqrt(Density) * 4.0 + 1.0;
-	float scatterDepth = exp(pow(Scattering, 5) * -5.0);
+	Scattering *= sss_density_multiplier;
+	
+	float scatterDepth = 1.0 - pow(Scattering, 0.5 + Density * 2.5);
 
-	vec3 absorbColor = exp(max(luma(albedo)-albedo, 0.0) * -(20.0 - 19.0*scatterDepth) * sss_absorbance_multiplier);
-
-	vec3 scatter = scatterDepth * absorbColor * labcurve;
+	// PBR at its finest :clueless:
+	vec3 absorbColor = exp(max(luma(albedo) - albedo*vec3(1.0,1.1,1.2), 0.0)  * -(15.0 - 10.0*scatterDepth)  * sss_absorbance_multiplier);
+	
+	vec3 scatter = scatterDepth * absorbColor * pow(Density, LabSSS_Curve);
 
 	return scatter;
 }
@@ -1222,7 +1249,7 @@ void main() {
 			SkySSS = SSAO_SSS.y;
 
 			float vanillaAO_curve = pow(1.0 - vanilla_AO*vanilla_AO,5.0);
-			float SSAO_curve = pow(SSAO_SSS.x,6);
+			float SSAO_curve = pow(SSAO_SSS.x,6.0);
 
 			// use the min of vanilla ao so they dont overdarken eachother
 			AO = vec3( min(vanillaAO_curve, SSAO_curve) );
@@ -1257,7 +1284,7 @@ void main() {
 	/////////////////////////////	SKY SSS		/////////////////////////////
 		#if defined Ambient_SSS && defined OVERWORLD_SHADER && indirect_effect == 1
 			if (!hand){
-				vec3 ambientColor = (AmbientLightColor*2.5) * ambient_brightness * 0.7; // x2.5 to match the brightness of upfacing skylight
+				vec3 ambientColor = (AmbientLightColor*2.5) * ambient_brightness; // x2.5 to match the brightness of upfacing skylight
 
 				Indirect_SSS = SubsurfaceScattering_sky(albedo, SkySSS, LabSSS);
 				Indirect_SSS *= lightmap.y*lightmap.y*lightmap.y;
@@ -1265,7 +1292,7 @@ void main() {
 
 				// apply to ambient light.
 				// if(texcoord.x>0.5) 
-				Indirect_lighting = max(Indirect_lighting, ambientColor * Indirect_SSS * ambientsss_brightness);
+				Indirect_lighting = max(Indirect_lighting, Indirect_SSS * ambientColor * ambientsss_brightness);
 
 				// #ifdef OVERWORLD_SHADER
 				// 	if(LabSSS > 0.0) Indirect_lighting += (1.0-SkySSS) * LightningPhase * lightningEffect *  pow(lightmap.y,10);
@@ -1298,7 +1325,7 @@ void main() {
 			#endif
 
 			Direct_SSS = SubsurfaceScattering_sun(albedo, ShadowBlockerDepth, sunSSS_density, clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), SSS_shadow);
-			// Direct_SSS *= mix(LM_shadowMapFallback, 1.0, shadowMapFalloff2);
+			Direct_SSS *= mix(LM_shadowMapFallback, 1.0, shadowMapFalloff2);
 			if (isEyeInWater == 0) Direct_SSS *= lightLeakFix;
 
 			#ifndef SCREENSPACE_CONTACT_SHADOWS
@@ -1362,7 +1389,7 @@ void main() {
 	// #endif
 	#if DEBUG_VIEW == debug_NORMALS
 		if(swappedDepth >= 1.0) Direct_lighting = vec3(1.0);
-		gl_FragData[0].rgb = worldToView(normal);
+		gl_FragData[0].rgb = normalize(worldToView(normal));
 	#endif
 	#if DEBUG_VIEW == debug_SPECULAR
 		if(swappedDepth >= 1.0) Direct_lighting = vec3(1.0);
@@ -1374,41 +1401,22 @@ void main() {
 	#endif
 	#if DEBUG_VIEW == debug_DIRECT
 		if(swappedDepth >= 1.0) Direct_lighting = vec3(15.0);
-		gl_FragData[0].rgb = Direct_lighting;
+		gl_FragData[0].rgb = Direct_lighting + 0.5;
 	#endif
 	#if DEBUG_VIEW == debug_VIEW_POSITION
 		gl_FragData[0].rgb = viewPos * 0.001;
 	#endif
 	#if DEBUG_VIEW == debug_FILTERED_STUFF
-		vec3 FilteredDebug = vec3(15.0) * exp(-7.0 * vec3(1.0,0.5,1.0) * filteredShadow.y);
-		FilteredDebug += vec3(15.0) * exp(-7.0 * vec3(1.0,1.0,0.5) * pow(SSAO_SSS.x,2));
-		FilteredDebug += vec3(15.0) * exp(-7.0 * vec3(0.5,1.0,1.0) * pow(SSAO_SSS.y,2));
-  		gl_FragData[0].rgb =  FilteredDebug;
-	#endif
-
-	#if DEBUG_VIEW == debug_TEMPORAL_REPROJECTION
-		vec3 color = vec3(1.0);
-
-		// vec4 reprojectedBuffer0 = texture2D(colortex12, texcoord);
-		vec4 reprojectedBuffer = texture2D(colortex14, texcoord);
-	
-		vec3 Indirect = vec3(1.0) * pow(reprojectedBuffer.x,6.0) + vec3(0,25,0) * ( 1.0 - reprojectedBuffer.y );
-		// vec3 Direct =  vec3(15.0) * exp(-3*reprojectedBuffer1.y);
-
-		color += Indirect;
-		// color += Direct;
-		// color *= albedo;
-		
-		// color *= dot(vec3(reprojectedBuffer.a)*2-1, worldToView(normal));
-		
-		color *= reprojectedBuffer.a;
-
-		if(swappedDepth >= 1.0) color = vec3(1.0);
-		gl_FragData[0].rgb = color;
+	 	if(hideGUI == 1)  gl_FragData[0].rgb = vec3(1)	* (1.0 - SSAO_SSS.y);
+	 	if(hideGUI == 0)  gl_FragData[0].rgb = vec3(1)	* (1.0 - SSAO_SSS.x);
+	 	// if(hideGUI == 0)  gl_FragData[0].rgb = vec3(1)	* filteredShadow.z;//exp(-7*(1-clamp(1.0 - filteredShadow.x,0.0,1.0)));
 	#endif
 	
+
 	// float shadew = clamp(1.0 - filteredShadow.y/1,0.0,1.0);
-	// gl_FragData[0].rgb = vec3(1)	* exp( (1-shadew) * -7);
+	// // if(hideGUI == 1) 
+
+	
 
 	#ifdef CLOUDS_INFRONT_OF_WORLD
 		gl_FragData[1] = texture2D(colortex2, texcoord);

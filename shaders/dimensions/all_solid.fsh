@@ -280,10 +280,10 @@ vec4 texture2D_POMSwitch(
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 
-#if defined HAND || defined ENTITIES
-	/* RENDERTARGETS:1,7,8,15,2 */
+#if defined HAND || defined ENTITIES || defined BLOCKENTITIES
+	/* RENDERTARGETS:1,8,15,2 */
 #else
-	/* RENDERTARGETS:1,7,8,15 */
+	/* RENDERTARGETS:1,8,15 */
 #endif
 
 void main() {
@@ -446,14 +446,14 @@ void main() {
 	#ifdef HAND
 		if (Albedo.a > 0.1){
 			Albedo.a = 0.75;
-			gl_FragData[4].a = 0.0;
+			gl_FragData[3].a = 0.0;
 		} else {
 			Albedo.a = 1.0;
 		}
 	#endif
 
-	#ifdef ENTITIES
-		gl_FragData[4].a = 0.0;
+	#if defined PARTICLE_RENDERING_FIX && (defined ENTITIES || defined BLOCKENTITIES)
+		gl_FragData[3].a = 0.0;
 	#endif
 
 	//////////////////////////////// 				////////////////////////////////
@@ -494,40 +494,40 @@ void main() {
 		SpecularTex.r = max(SpecularTex.r, Puddle_shape);
 		SpecularTex.g = max(SpecularTex.g, Puddle_shape*0.02);
 
-		gl_FragData[2].rg = SpecularTex.rg;
+		gl_FragData[1].rg = SpecularTex.rg;
 
 		#if EMISSIVE_TYPE == 0
-			gl_FragData[2].a = 0.0;
+			gl_FragData[1].a = 0.0;
 		#endif
 
 		#if EMISSIVE_TYPE == 1
-			gl_FragData[2].a = EMISSIVE;
+			gl_FragData[1].a = EMISSIVE;
 		#endif
 
 		#if EMISSIVE_TYPE == 2
-			gl_FragData[2].a = SpecularTex.a;
+			gl_FragData[1].a = SpecularTex.a;
 			if(SpecularTex.a <= 0.0) gl_FragData[2].a = EMISSIVE;
 		#endif
 
 		#if EMISSIVE_TYPE == 3		
-			gl_FragData[2].a = SpecularTex.a;
+			gl_FragData[1].a = SpecularTex.a;
 		#endif
 
 		#if SSS_TYPE == 0
-			gl_FragData[2].b = 0.0;
+			gl_FragData[1].b = 0.0;
 		#endif
 
 		#if SSS_TYPE == 1
-			gl_FragData[2].b = SSSAMOUNT;
+			gl_FragData[1].b = SSSAMOUNT;
 		#endif
 
 		#if SSS_TYPE == 2
-			gl_FragData[2].b = SpecularTex.b;
-			if(SpecularTex.b < 65.0/255.0) gl_FragData[2].b = SSSAMOUNT;
+			gl_FragData[1].b = SpecularTex.b;
+			if(SpecularTex.b < 65.0/255.0) gl_FragData[1].b = SSSAMOUNT;
 		#endif
 
 		#if SSS_TYPE == 3		
-			gl_FragData[2].b = SpecularTex.b;
+			gl_FragData[1].b = SpecularTex.b;
 		#endif
 		
 		// #ifndef ENTITIES
@@ -565,9 +565,7 @@ void main() {
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
 
 
-		gl_FragData[3] = vec4(FlatNormals * 0.5 + 0.5, VanillaAO);	
-		
+		gl_FragData[2] = vec4(FlatNormals * 0.5 + 0.5, VanillaAO);	
 	#endif
 	
-	gl_FragData[1].a = 0.0;
 }

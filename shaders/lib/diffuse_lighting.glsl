@@ -50,7 +50,7 @@ vec3 DoAmbientLightColor(
 
         // i gotchu
         float fadeLength = 10.0; // in blocks
-        vec3 cubicRadius = clamp(           min(((LpvSize3-1.0) - lpvPos)/fadeLength,      lpvPos/fadeLength)          ,0.0,1.0);
+        vec3 cubicRadius = clamp( min(((LpvSize3-1.0) - lpvPos)/fadeLength,      lpvPos/fadeLength) ,0.0,1.0);
         float LpvFadeF = cubicRadius.x*cubicRadius.y*cubicRadius.z;
 
         LpvFadeF = 1.0 - pow(1.0-pow(LpvFadeF,1.5),3.0); // make it nice and soft :)

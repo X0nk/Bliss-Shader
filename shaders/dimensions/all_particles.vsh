@@ -82,7 +82,7 @@ void main() {
 	WsunVec2 = (float(sunElevation > 1e-5)*2.0 - 1.0)*normalize(mat3(gbufferModelViewInverse) * sunPosition);
 #endif
 	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
-	vec2 lmcoord = gl_MultiTexCoord1.xy / 240.0; // is this even correct? lol'
+	vec2 lmcoord = gl_MultiTexCoord1.xy / 240.0;
 	lmtexcoord.zw = lmcoord;
 
 	#ifdef DAMAGE_BLOCK_EFFECT

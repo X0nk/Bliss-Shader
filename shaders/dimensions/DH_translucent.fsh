@@ -84,6 +84,13 @@ vec3 DH_toScreenSpace(vec3 p) {
 vec3 DH_toClipSpace3(vec3 viewSpacePosition) {
     return projMAD(dhProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 }
+uniform float near;
+float invLinZ (float lindepth){
+	return -((2.0*near/lindepth)-far-near)/(far-near);
+}
+float ld(float dist) {
+    return (2.0 * near) / (far + near - dist * (far - near));
+}
 
 // float DH_ld(float dist) {
 //     return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
@@ -142,12 +149,26 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(3,7.)/8.,
 							vec2(7.,-7.)/8.);
 
+
+// float DH_ld(float dist) {
+//     return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+// }
+// float DH_invLinZ (float lindepth){
+// 	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
+// }
+
+// float linearizeDepthFast(const in float depth, const in float near, const in float far) {
+//     return (near * far) / (depth * (near - far) + far);
+// }
+
+// uniform float far;
+
 vec3 rayTrace(vec3 dir, vec3 position,float dither, float fresnel, bool inwater){
 
     float quality = mix(15,SSR_STEPS,fresnel);
     vec3 clipPosition = DH_toClipSpace3(position);
 	float rayLength = ((position.z + dir.z * dhFarPlane*sqrt(3.)) > -dhNearPlane) ?
-       (-dhNearPlane -position.z) / dir.z : dhFarPlane*sqrt(3.);
+       (-dhNearPlane - position.z) / dir.z : dhFarPlane*sqrt(3.);
     vec3 direction = normalize(DH_toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
     direction.xy = normalize(direction.xy);
 
@@ -167,8 +188,8 @@ vec3 rayTrace(vec3 dir, vec3 position,float dither, float fresnel, bool inwater)
 
     for (int i = 0; i <= int(quality); i++) {
 
-		float sp = sqrt(texelFetch2D(colortex12,ivec2(spos.xy/texelSize/4),0).a/65000.0);
-		sp = DH_inv_ld(sp);
+		// float sp = DH_inv_ld(sqrt(texelFetch2D(colortex12,ivec2(spos.xy/texelSize/4),0).a/65000.0));
+		float sp = DH_inv_ld(sqrt(texelFetch2D(colortex12,ivec2(spos.xy/texelSize/4),0).a/64000.0));
 
         if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ)) return vec3(spos.xy/RENDER_SCALE,sp);
 
@@ -220,12 +241,6 @@ float encodeVec2(vec2 a){
 }
 float encodeVec2(float x,float y){
     return encodeVec2(vec2(x,y));
-}
-uniform float near;
-// uniform float far;
-
-float ld(float dist) {
-    return (2.0 * near) / (far + near - dist * (far - near));
 }
 vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
 	float bumpmult = puddle_values;
@@ -340,6 +355,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
     	float skylight = max(pow(viewToWorld(normals_and_materials.xyz).y*0.5+0.5,0.1) + SkylightDir, 0.2);
     	AmbientLightColor *= skylight;
     #endif
+	
+    #ifndef OVERWORLD_SHADER
+		vec3 AmbientLightColor = vec3(0.5);
+	#endif
 
     Indirect_lighting = AmbientLightColor;
 
@@ -354,7 +373,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		
         float roughness = 0.035;
 		float f0 = 0.02;
-		// float f0 = 0.9;
+		// f0 = 0.9;
 
         vec3 reflectedVector = reflect(normalize(viewPos), normals);
 	    float normalDotEye = dot(normals, normalize(viewPos));
@@ -366,7 +385,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
         #ifdef SNELLS_WINDOW
 	    	if(isEyeInWater == 1) fresnel = pow(clamp(1.5 + normalDotEye,0.0,1.0), 25.0);
 	    #endif
-
 
         #ifdef SCREENSPACE_REFLECTIONS
             vec3 rtPos = rayTrace(reflectedVector, viewPos, interleaved_gradientNoise(), fresnel, false);
@@ -380,11 +398,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
             	}
             }
         #endif
+		
 		#ifdef WATER_BACKGROUND_SPECULAR
             BackgroundReflection = skyCloudsFromTex(mat3(gbufferModelViewInverse) * reflectedVector, colortex4).rgb / 30.0;
         #endif
         #ifdef WATER_SUN_SPECULAR
-            SunReflection = Direct_lighting * GGX(normalize(normals), -normalize(viewPos), normalize(WsunVec2), roughness, f0) * (1.0 - Reflections.a);
+            SunReflection = Direct_lighting * GGX(normalize(normals), -normalize(viewPos), normalize(WsunVec2), roughness, f0);
         #endif
 		Reflections_Final = mix(BackgroundReflection, Reflections.rgb, Reflections.a) * fresnel;
 		Reflections_Final += SunReflection;
@@ -409,7 +428,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
             gl_FragData[0].a = 0.0;
             material = 0.0;
         }
-
     #endif
 	
     #if DEBUG_VIEW == debug_DH_WATER_BLENDING

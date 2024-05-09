@@ -125,7 +125,7 @@ const float	sunPathRotation	= -35;	//[-90 -89 -88 -87 -86 -85 -84 -83 -82 -81 -8
 const int shadowMapResolution = 2048; // [512 768 1024 1536 2048 3172 4096 8192]
 const float shadowDistance = 128.0; // [32.0 48.0 64.0 80.0 96.0 112.0 128.0 144.0 160.0 176.0 192.0 208.0 224.0 240.0 256.0 272.0 288.0 304.0 320.0 336.0 352.0 368.0 384.0 512.0 768.0 1024.0 1536.0 2048.0 4096.0 8192.0]
 
-#define OPTIMIZED_SHADOW_DISTANCE -1.0 // [-1.0 1.0]
+#define OPTIMIZED_SHADOW_DISTANCE 1.0 // [-1.0 1.0]
 
 const float shadowDistanceRenderMul = OPTIMIZED_SHADOW_DISTANCE;
 const float entityShadowDistanceMul = 0.25; // [0.01 0.02 0.03 0.04 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.75 1.00]
@@ -655,6 +655,12 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 #define DENOISE_SSS_AND_SSAO
 
 // #define HYPER_DETAILED_WAVES
+
+// #define DISABLE_ENCHANT_GLINT
+// #define DISABLE_VANILLA_EMISSIVES
+#define PARTICLE_RENDERING_FIX
+
+
 ///////////////////////////////////////////
 // ----- DISTANT HORIZONS SETTINGS ----- //
 ///////////////////////////////////////////
@@ -738,4 +744,6 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 #if BLISS_SHADERS == 0
 #endif
 #if DH_KNOWN_ISSUES == 0
+#endif
+#ifdef PARTICLE_RENDERING_FIX
 #endif

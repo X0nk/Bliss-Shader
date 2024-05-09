@@ -103,9 +103,7 @@ vec3 normVec (vec3 vec){
 
 void main() {
 /* DRAWBUFFERS:0 */
-
-#ifdef OVERWORLD_SHADER
-	#ifdef VOLUMETRIC_CLOUDS
+	#if defined OVERWORLD_SHADER && defined VOLUMETRIC_CLOUDS 
 		vec2 halfResTC = vec2(floor(gl_FragCoord.xy)/CLOUDS_QUALITY/RENDER_SCALE+0.5+offsets[framemod8]*CLOUDS_QUALITY*RENDER_SCALE*0.5);
 
 		vec3 viewPos = toScreenSpace(vec3(halfResTC*texelSize,1.0));
@@ -117,7 +115,4 @@ void main() {
 	#else
 		gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);
 	#endif
-#else
-	gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);
-#endif 
 }

@@ -42,40 +42,16 @@ void main() {
 
 	float newTex = texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy*4), 0).x;
 	
-	
 	#ifdef DISTANT_HORIZONS
     	float QuarterResDepth = texelFetch2D(dhDepthTex, ivec2(gl_FragCoord.xy*4), 0).x;
-		if(newTex >= 1.0) newTex = sqrt(QuarterResDepth);// + 0.0001;
+		if(newTex >= 1.0) newTex = sqrt(QuarterResDepth);
 
-   		gl_FragData[1].a = DH_ld(QuarterResDepth)*DH_ld(QuarterResDepth)*65000.0;
+   		gl_FragData[1].a = (DH_ld(QuarterResDepth)*DH_ld(QuarterResDepth))*65000.0;
 	#endif
 	
  	if (newTex < 1.0)
 	   gl_FragData[0] = vec4(oldTex, linZ(newTex)*linZ(newTex)*65000.0);
  	else
     gl_FragData[0] = vec4(oldTex, 2.0);
-
-
-
-	// float depth = texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy*4), 0).x;
-
-	// #ifdef DISTANT_HORIZONS
-	//     float _near = near;
-	//     float _far = far*4.0;
-	//     if (depth >= 1.0) {
-	//         depth = texelFetch2D(dhDepthTex1, ivec2(gl_FragCoord.xy*4), 0).x;
-	//         _near = dhNearPlane;
-	//         _far = dhFarPlane;
-	//     }
-
-	//     depth = linearizeDepthFast(depth, _near, _far);
-	//     depth = depth / dhFarPlane;
-	// #endif
-
-	// if(depth < 1.0)
-    // 	gl_FragData[1] = vec4(vec3(0.0), depth * depth * 65000.0);
-	// else
-	// 	gl_FragData[1] = vec4(vec3(0.0), 65000.0);
-
 
 }

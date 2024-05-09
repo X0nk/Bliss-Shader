@@ -269,9 +269,8 @@ vec3 ToneMap_AgX( vec3 color ) {
 	color = AgXInsetMatrix * color;
 
 	// Log2 encoding
-	color = max( color, 1e-10 ); // avoid 0 or negative numbers for log2
-	color = log2( color );
-	color = ( color - AgxMinEv ) / ( AgxMaxEv - AgxMinEv );
+    color = clamp(log2(color), AgxMinEv, AgxMaxEv);
+    color = (color - AgxMinEv) / (AgxMaxEv - AgxMinEv);
 
 	// Apply sigmoid
 	color = agxDefaultContrastApprox( color );
@@ -282,7 +281,7 @@ vec3 ToneMap_AgX( vec3 color ) {
 	color = AgXOutsetMatrix * color;
 
 	// Linearize
-    color = pow(color, vec3(2.2));
+	color = pow( max( vec3( 0.0 ), color ), vec3( 2.2 ) );
 
 	// Gamut mapping. Simple clamp for now.
 	color = clamp( color, 0.0, 1.0 );
@@ -310,9 +309,8 @@ vec3 ToneMap_AgX_minimal( vec3 color ) {
 	color = AgXInsetMatrix * color;
 
 	// Log2 encoding
-	color = max( color, 1e-10 ); // avoid 0 or negative numbers for log2
-	color = log2( color );
-	color = ( color - AgxMinEv ) / ( AgxMaxEv - AgxMinEv );
+    color = clamp(log2(color), AgxMinEv, AgxMaxEv);
+    color = (color - AgxMinEv) / (AgxMaxEv - AgxMinEv);
 
 	// Apply sigmoid
 	color = agxDefaultContrastApprox( color );

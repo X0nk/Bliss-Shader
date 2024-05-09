@@ -4,13 +4,18 @@ const float LpvBlockPower = 4.0;
 // LPV block brightness scale
 const float LpvBlockBrightness = 2.0;
 
+float lpvCurve(float values){
+    // return pow(values, LpvBlockPower) ;
+    return pow(1.0-sqrt(1.0-values),2.0);
+    // return values;
+}
 
 vec4 SampleLpvNearest(const in ivec3 lpvPos) {
     vec4 lpvSample = (frameCounter % 2) == 0
         ? texelFetch(texLpv1, lpvPos, 0)
         : texelFetch(texLpv2, lpvPos, 0);
 
-    lpvSample.b = pow(lpvSample.b, LpvBlockPower) * LpvBlockSkyRange.x;
+    lpvSample.b = lpvCurve(lpvSample.b) * LpvBlockSkyRange.x;
     lpvSample.rgb = HsvToRgb(lpvSample.rgb);
 
     return lpvSample;

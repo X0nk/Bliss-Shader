@@ -1,5 +1,9 @@
 #include "/lib/settings.glsl"
 
+// #if defined END_SHADER || defined NETHER_SHADER
+// 	#undef IS_LPV_ENABLED
+// #endif
+
 #ifdef IS_LPV_ENABLED
 	#extension GL_EXT_shader_image_load_store: enable
 	#extension GL_ARB_shading_language_packing: enable
@@ -43,6 +47,7 @@ uniform sampler2D colortex7;
 uniform sampler2D colortex12;
 uniform sampler2D colortex14;
 uniform sampler2D colortex5;
+uniform sampler2D colortex3;
 uniform sampler2D colortex6;
 
 uniform sampler2D texture;
@@ -121,6 +126,9 @@ uniform vec3 nsunColor;
 #include "/lib/diffuse_lighting.glsl"
 float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+}
+vec4 blueNoise(vec2 coord){
+  return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
 }
 float interleaved_gradientNoise_temporal(){
 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
@@ -239,9 +247,12 @@ float ld(float dist) {
     return (2.0 * near) / (far + near - dist * (far - near));
 }
 
-vec3 rayTrace(vec3 dir, vec3 position,float dither, float fresnel, bool inwater){
+vec3 rayTrace(vec3 dir, vec3 position,float dither, float fresnel, bool inwater, inout float reflectLength){
 
     float quality = mix(15,SSR_STEPS,fresnel);
+	
+    // quality = SSR_STEPS;
+
     vec3 clipPosition = toClipSpace3(position);
 	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ?
        (-near -position.z) / dir.z : far*sqrt(3.);
@@ -274,14 +285,19 @@ vec3 rayTrace(vec3 dir, vec3 position,float dither, float fresnel, bool inwater)
         if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ)) return vec3(spos.xy/RENDER_SCALE,sp);
 
 
+
+
         spos += stepv;
 		//small bias
 		if(inwater) {
-			minZ = maxZ-0.000035/ld(spos.z);
+			minZ = maxZ-0.00035/ld(spos.z);
 		}else{
-			minZ = maxZ-(0.0001/dist)/ld(spos.z);
+			minZ = maxZ-0.0001/max(ld(spos.z), (0.0 + position.z*position.z*0.001));
 		}
 		maxZ += stepv.z;
+
+		
+		reflectLength += 1.0 / quality; // for shit
     }
 
     return vec3(1.1);
@@ -405,6 +421,75 @@ void convertHandDepth(inout float depth) {
     ndcDepth /= MC_HAND_DEPTH;
     depth = ndcDepth * 0.5 + 0.5;
 }
+void Emission(
+	inout vec3 Lighting,
+	vec3 Albedo,
+	float Emission,
+	float exposure
+){
+	float autoBrightnessAdjust = mix(5.0, 100.0, clamp(exp(-10.0*exposure),0.0,1.0));
+	if( Emission < 254.5/255.0) Lighting = mix(Lighting, Albedo * Emissive_Brightness * autoBrightnessAdjust * 0.1, pow(Emission, Emissive_Curve)); // old method.... idk why
+}
+
+/*
+uniform float viewWidth;
+uniform float viewHeight;
+void frisvad(in vec3 n, out vec3 f, out vec3 r){
+    if(n.z < -0.9) {
+        f = vec3(0.,-1,0);
+        r = vec3(-1, 0, 0);
+    } else {
+    	float a = 1./(1.+n.z);
+    	float b = -n.x*n.y*a;
+    	f = vec3(1. - n.x*n.x*a, b, -n.x) ;
+    	r = vec3(b, 1. - n.y*n.y*a , -n.y);
+    }
+}
+mat3 CoordBase(vec3 n){
+	vec3 x,y;
+    frisvad(n,x,y);
+    return mat3(x,y,n);
+}
+vec2 R2_samples(int n){
+	vec2 alpha = vec2(0.75487765, 0.56984026);
+	return fract(alpha * n);
+}
+float fma(float a,float b,float c){
+ return a * b + c;
+}
+//// thank you Zombye | the paper: https://ggx-research.github.io/publication/2023/06/09/publication-ggx.html
+vec3 SampleVNDFGGX(
+    vec3 viewerDirection, // Direction pointing towards the viewer, oriented such that +Z corresponds to the surface normal
+    vec2 alpha, // Roughness parameter along X and Y of the distribution
+    float xy // Pair of uniformly distributed numbers in [0, 1)
+) {
+	// alpha *= alpha;
+    // Transform viewer direction to the hemisphere configuration
+    viewerDirection = normalize(vec3(alpha * viewerDirection.xy, viewerDirection.z));
+
+    // Sample a reflection direction off the hemisphere
+    const float tau = 6.2831853; // 2 * pi
+    float phi = tau * xy;
+
+    float cosTheta = fma(1.0 - xy, 1.0 + viewerDirection.z, -viewerDirection.z) ;
+    float sinTheta = sqrt(clamp(1.0 - cosTheta * cosTheta, 0.0, 1.0));
+
+	// xonk note, i dont know what im doing but this kinda does what i want so whatever
+	float attemptTailClamp  = clamp(sinTheta,max(cosTheta-0.25,0), cosTheta);
+	float attemptTailClamp2 = clamp(cosTheta,max(sinTheta-0.25,0), sinTheta);
+
+    vec3 reflected = vec3(vec2(cos(phi), sin(phi)) * attemptTailClamp2, attemptTailClamp);
+    // vec3 reflected = vec3(vec2(cos(phi), sin(phi)) * sinTheta, cosTheta);
+
+    // Evaluate halfway direction
+    // This gives the normal on the hemisphere
+    vec3 halfway = reflected + viewerDirection;
+
+    // Transform the halfway direction back to hemiellispoid configuation
+    // This gives the final sampled normal
+    return normalize(vec3(alpha * halfway.xy, halfway.z));
+}
+*/
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -533,6 +618,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	gl_FragData[2] = vec4(encodeVec2(TangentNormal), encodeVec2(GLASS_TINT_COLORS.rg), encodeVec2(GLASS_TINT_COLORS.ba), 1.0);
 
 ////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////// SPECULARS /////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+	vec3 SpecularTex = texture2D(specular, lmtexcoord.xy, Texture_MipMap_Bias).rga;
+
+////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// DIFFUSE LIGHTING //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -575,16 +666,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		Direct_lighting = DirectLightColor * NdotL * Shadows;
 
 		vec3 AmbientLightColor = averageSkyCol_Clouds/30.0;
-		
-
-
-			// vec3 ambientcoefs = slopednormal / dot(abs(slopednormal), vec3(1.0));
-
-			// float SkylightDir = ambientcoefs.y*1.5;
-			// if(isGrass) SkylightDir = 1.25;
-
-			// float skylight = max(pow(viewToWorld(FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.2 + (1.0-lightmap.y)*0.8) ;
-
 
 		vec3 ambientcoefs = worldSpaceNormal / dot(abs(worldSpaceNormal), vec3(1.0));
 		float SkylightDir = ambientcoefs.y*1.5;
@@ -658,7 +739,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	#ifdef WATER_REFLECTIONS
-		vec2 SpecularTex = texture2D(specular, lmtexcoord.xy, Texture_MipMap_Bias).rg;
+		// vec2 SpecularTex = texture2D(specular, lmtexcoord.xy, Texture_MipMap_Bias).rg;
 		
 		// if nothing is chosen, no smoothness and no reflectance
 		vec2 specularValues = vec2(1.0, 0.0); 
@@ -667,7 +748,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		if(isReflective) specularValues = vec2(1.0, 0.02);
 
 		// detect if the specular texture is used, if it is, overwrite hardcoded values
-		if(SpecularTex.r > 0.0 && SpecularTex.g <= 1.0) specularValues = SpecularTex;
+		if(SpecularTex.r > 0.0 && SpecularTex.g <= 1.0) specularValues = SpecularTex.rg;
 		
 		float roughness = pow(1.0-specularValues.r,2.0);
 		float f0 = isReflective ? max(specularValues.g, 0.02) : specularValues.g;
@@ -677,14 +758,15 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			f0 = max(specularValues.g, 0.02);
 		#endif
 		
-		// specularValues = SpecularTex;
+		// f0 = SpecularTex.g;
+		// roughness = pow(1.0-specularValues.r,2.0);
 		// f0 = 0.9; 
 		// roughness = 0.0;
 		
 		vec3 Metals = f0 > 229.5/255.0 ? normalize(Albedo+1e-7) * (dot(Albedo,vec3(0.21, 0.72, 0.07)) * 0.7 + 0.3) : vec3(1.0);
 		
 		// make sure zero alpha is not forced to be full alpha by fresnel on items with funny normal padding	
-		if(UnchangedAlpha <= 0.0 && !isReflective) f0 = 0.0;
+		// if(UnchangedAlpha <= 0.0 && !isReflective) f0 = 0.0;
 		
 		
 		if (f0 > 0.0){
@@ -701,6 +783,17 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			float normalDotEye = dot(normal, normalize(viewPos));
 
 			float fresnel =  pow(clamp(1.0 + normalDotEye, 0.0, 1.0),5.0);
+
+			/*
+				int seed = (frameCounter%40000) + frameCounter*2;
+				float noise = fract(R2_samples(seed).y + (1-blueNoise()));
+				mat3 Basis = CoordBase(viewToWorld(normal));
+				vec3 ViewDir = -normalize(feetPlayerPos)*Basis;
+				vec3 SamplePoints = SampleVNDFGGX(ViewDir, vec2(roughness), noise);
+				vec3 Ln = reflect(-ViewDir, SamplePoints);
+				vec3 L = Basis * Ln;
+				fresnel = pow(clamp(1.0 + dot(-Ln, SamplePoints),0.0,1.0), 5.0);
+			*/
 
 			#ifdef SNELLS_WINDOW
 				// snells window looking thing
@@ -724,15 +817,17 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
  					if(isEyeInWater == 0) BackgroundReflection = skyCloudsFromTexLOD2(mat3(gbufferModelViewInverse) * reflectedVector, colortex4, 0).rgb / 30.0 * Metals;
 				#endif
 			#endif
+
 			#ifdef SCREENSPACE_REFLECTIONS
-				vec3 rtPos = rayTrace(reflectedVector, viewPos.xyz, interleaved_gradientNoise_temporal(), fresnel, isEyeInWater == 1);
-				if (rtPos.z < 1.){
+				float reflectLength = 0.0;
+				vec3 rtPos = rayTrace(reflectedVector, viewPos.xyz, interleaved_gradientNoise_temporal(), fresnel, isEyeInWater == 1,reflectLength);
+				if (rtPos.z < 1.0){
 					vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rtPos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
 					previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
 					previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
 					if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0) {
 						Reflections.a = 1.0; 
-						Reflections.rgb = texture2D(colortex5,previousPosition.xy).rgb * Metals;
+						Reflections.rgb = texture2D(colortex5, previousPosition.xy).rgb * Metals;
 					}
 				}
 			#endif
@@ -759,6 +854,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#else
 		gl_FragData[0].rgb = FinalColor*0.1;
 	#endif
+
+	#if EMISSIVE_TYPE == 2 || EMISSIVE_TYPE == 3
+		Emission(gl_FragData[0].rgb, Albedo, SpecularTex.b, exposure);
+	#endif
 	
 	#if defined DISTANT_HORIZONS && defined DH_OVERDRAW_PREVENTION && !defined HAND
 		bool WATER = texture2D(colortex7, gl_FragCoord.xy*texelSize).a > 0.0 && length(feetPlayerPos) > far-16*4 && texture2D(depthtex1, gl_FragCoord.xy*texelSize).x >= 1.0;
@@ -774,7 +873,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		if(gl_FragCoord.x*texelSize.x < 0.47) gl_FragData[0] = vec4(0.0);
 	#endif
 	#if DEBUG_VIEW == debug_NORMALS
-		gl_FragData[0].rgb = normal.xyz * 0.1 * vec3(0,0,1);
+		gl_FragData[0].rgb = normalize(normal.xyz) * 0.1;
 	#endif
 	#if DEBUG_VIEW == debug_INDIRECT
 		gl_FragData[0].rgb = Indirect_lighting* 0.1;
@@ -784,5 +883,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	gl_FragData[3].a = encodeVec2(lightmap);
+
 }
 }
