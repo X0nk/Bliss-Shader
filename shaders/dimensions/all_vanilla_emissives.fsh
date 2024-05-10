@@ -62,7 +62,7 @@ void main() {
 
     #if defined SPIDER_EYES || defined BEACON_BEAM || defined GLOWING 
 
-        if(Albedo.a < 0.102 || dot(Albedo.rgb, vec3(0.33333)) < 0.01) { discard; return; }
+        if(Albedo.a < 0.102 || dot(Albedo.rgb, vec3(0.33333)) < 1.0/255.0) { discard; return; }
 
         float minimumBrightness = 0.5;
 
