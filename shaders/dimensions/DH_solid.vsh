@@ -46,6 +46,7 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 */  
 
 #define SEASONS_VSH
+#define DH_SEASONS
 #include "/lib/climate_settings.glsl"
 
 void main() {

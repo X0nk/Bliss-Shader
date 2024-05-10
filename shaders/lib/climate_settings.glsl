@@ -27,7 +27,9 @@
 	    	vec3 WinterCol = vec3(Winter_R, Winter_G, Winter_B) ;
 	    	vec3 SpringCol = vec3(Spring_R, Spring_G, Spring_B);
 			
+
 			// decide if you want to replace biome colors or tint them.
+			
 			SummerCol *= glcolor;
 			AutumnCol *= glcolor;
 			WinterCol *= glcolor;
@@ -65,10 +67,14 @@
 	    	vec3 SpringToSummer = mix(WinterToSpring, SummerCol, SpringTime);
 
 			// make it so that you only have access to parts of the texture that use the tint index
-			bool IsTintIndex = floor(dot(glcolor,vec3(0.5))) < 1.0 && isPlants;  
+			bool IsTintIndex = floor(dot(glcolor,vec3(0.5))) < 1.0;  
 
 	    	// multiply final color by the final lerped color, because it contains all the other colors.
-	    	if(IsTintIndex) FinalColor = SpringToSummer;
+	    	#ifdef DH_SEASONS
+				if(isPlants || isLeaves) FinalColor = SpringToSummer;
+			#else
+				if(IsTintIndex) FinalColor = SpringToSummer;
+			#endif
 
 			// #ifdef Snowy_Winter
 			// 	// this is to make snow only exist in winter
