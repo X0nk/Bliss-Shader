@@ -505,8 +505,8 @@ void main() {
 
 					for(int i = 0; i < VPS_Search_Samples; i++){
 
-						vec2 offsetS = SpiralSample(i, 7, 8, noise) * 0.5;
-						// vec2 offsetS = CleanSample(i, VPS_Search_Samples - 1, noise) * 0.5;
+						// vec2 offsetS = SpiralSample(i, 7, 8, noise) * 0.5;
+						vec2 offsetS = CleanSample(i, VPS_Search_Samples - 1, noise) * 0.5;
 						
 						float weight = 3.0 + (i+noise) *rdMul/SHADOW_FILTER_SAMPLE_COUNT*shadowMapResolution*distortFactor/2.7;
 						

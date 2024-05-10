@@ -67,14 +67,14 @@
 	    	vec3 SpringToSummer = mix(WinterToSpring, SummerCol, SpringTime);
 
 			// make it so that you only have access to parts of the texture that use the tint index
-			bool IsTintIndex = floor(dot(glcolor,vec3(0.5))) < 1.0;  
+			#ifdef DH_SEASONS
+				bool IsTintIndex = isPlants || isLeaves;
+			#else
+				bool IsTintIndex = floor(dot(glcolor,vec3(0.5))) < 1.0;  
+			#endif
 
 	    	// multiply final color by the final lerped color, because it contains all the other colors.
-	    	#ifdef DH_SEASONS
-				if(isPlants || isLeaves) FinalColor = SpringToSummer;
-			#else
-				if(IsTintIndex) FinalColor = SpringToSummer;
-			#endif
+			if(IsTintIndex) FinalColor = SpringToSummer;
 
 			// #ifdef Snowy_Winter
 			// 	// this is to make snow only exist in winter

@@ -207,6 +207,28 @@ vec2 tapLocation_simple(
     return vec2(cos_v, sin_v) * sqrt(alpha);
 }
 
+vec2 CleanSample(
+	int samples, float totalSamples, float noise
+){
+
+	// this will be used to make 1 full rotation of the spiral. the mulitplication is so it does nearly a single rotation, instead of going past where it started
+	float variance = noise * 0.897;
+
+	// for every sample input, it will have variance applied to it.
+	float variedSamples = float(samples) + variance;
+	
+	// for every sample, the sample position must change its distance from the origin.
+	// otherwise, you will just have a circle.
+    float spiralShape = pow(variedSamples / (totalSamples + variance),0.5);
+
+	float shape = 2.26; // this is very important. 2.26 is very specific
+    float theta = variedSamples * (PI * shape);
+
+	float x =  cos(theta) * spiralShape;
+	float y =  sin(theta) * spiralShape;
+
+    return vec2(x, y);
+}
 
 vec3 viewToWorld(vec3 viewPos) {
     vec4 pos;
@@ -370,7 +392,8 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 		float rdMul = 14.0*distortFactor*d0*k/shadowMapResolution;
 
 		for(int i = 0; i < samples; i++){
-			vec2 offsetS = tapLocation_simple(i, 7, 9, noise) *0.5;
+			// vec2 offsetS = tapLocation_simple(i, 7, 9, noise) * 0.5;
+			vec2 offsetS = CleanSample(i, samples - 1, noise) * 0.3;
 			projectedShadowPosition.xy += rdMul*offsetS;
 	#else
 		int samples = 1;
