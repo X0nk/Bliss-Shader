@@ -45,6 +45,8 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 }
 */  
 
+#define SEASONS_VSH
+#include "/lib/climate_settings.glsl"
 
 void main() {
     gl_Position = ftransform();
@@ -85,6 +87,12 @@ void main() {
 
 	normals_and_materials = vec4(normalize(gl_NormalMatrix * gl_Normal), MATERIALS);
 	dh_material_id = dhMaterialId;
+
+
+	#if defined Seasons && defined OVERWORLD_SHADER
+		float blank = 0.0;
+		YearCycleColor(gcolor.rgb, gl_Color.rgb, blank, dhMaterialId == DH_BLOCK_LEAVES);
+	#endif
 
 	#if DOF_QUALITY == 5
 		vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);

@@ -17,7 +17,9 @@
 	    void YearCycleColor (
 	        inout vec3 FinalColor,
 	        vec3 glcolor,
-			inout float SnowySeason
+			inout float SnowySeason,
+
+			bool isLeaves
 	    ){
 	    	// colors for things that arent leaves and using the tint index.
 	    	vec3 SummerCol = vec3(Summer_R, Summer_G, Summer_B);
@@ -32,7 +34,7 @@
 			SpringCol *= glcolor;
 
 	    	// do leaf colors different because thats cool and i like it
-	    	if(mc_Entity.x == BLOCK_AIR_WAVING){
+	    	if(isLeaves){
 	    		SummerCol = vec3(Summer_Leaf_R, Summer_Leaf_G, Summer_Leaf_B);
 	    	    AutumnCol = vec3(Fall_Leaf_R, Fall_Leaf_G, Fall_Leaf_B);
 	    		WinterCol = vec3(Winter_Leaf_R, Winter_Leaf_G, Winter_Leaf_B);

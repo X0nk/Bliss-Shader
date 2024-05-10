@@ -356,7 +356,7 @@ if(heldItemId == ITEM_LIGHT_SOURCES || heldItemId2 == ITEM_LIGHT_SOURCES) HELD_I
 
 	#if defined Seasons && defined WORLD && !defined ENTITIES && !defined BLOCKENTITIES && !defined HAND
 		float blank = 0.0;
-		YearCycleColor(color.rgb, gl_Color.rgb, blank);
+		YearCycleColor(color.rgb, gl_Color.rgb, blank, mc_Entity.x == BLOCK_AIR_WAVING);
 	#endif
 
 	#ifdef TAA_UPSCALING
