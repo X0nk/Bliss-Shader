@@ -90,8 +90,7 @@ void main() {
 
 
 	#if defined Seasons && defined OVERWORLD_SHADER
-		float blank = 0.0;
-		YearCycleColor(gcolor.rgb, gl_Color.rgb, blank, dhMaterialId == DH_BLOCK_LEAVES);
+		YearCycleColor(gcolor.rgb, gl_Color.rgb, dhMaterialId == DH_BLOCK_LEAVES, dh_material_id == DH_BLOCK_GRASS);
 	#endif
 
 	#if DOF_QUALITY == 5
