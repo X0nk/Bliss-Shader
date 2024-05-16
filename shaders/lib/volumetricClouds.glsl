@@ -251,7 +251,6 @@ float phaseg(float x, float g){
     return (gg * -0.25 + 0.25) * pow(-2.0 * (g * x) + (gg + 1.0), -1.5) / 3.14;
 }
 
-
 vec3 DoCloudLighting(
 	float density,
 	float densityFaded,
@@ -263,38 +262,16 @@ vec3 DoCloudLighting(
 	vec3 sunScatter,
 	vec3 sunMultiScatter,
 	float distantfog
-
 ){
 	float powder = 1.0 - exp(-5.0 * sqrt(density));
-	// float powder = 1.0 - exp(-15.0 * density);
 	
-	vec3 indirectLight = skyLightCol *  mix(1.0,  1.0 - exp(-1.0 * (1.0-sqrt(density))),  skyScatter*skyScatter*skyScatter * distantfog);
+	vec3 indirectLight = skyLightCol * mix(1.0,  1.0 - exp(-1.0 * (1.0-sqrt(density))),  skyScatter*skyScatter*skyScatter * distantfog);
 
 	vec3 directLight = sunMultiScatter * exp(-3.0 * sunShadows) * powder + sunScatter * exp(-10.0 * sunShadows);
 
 	// return indirectLight;
 	// return directLight;
 	return indirectLight + directLight;
-}
-vec3 rodSample_CLOUD(vec2 Xi)
-{
-	float r = sqrt(1.0f - Xi.x*Xi.y);
-    float phi = 2 * 3.14159265359 * Xi.y;
-
-    return normalize(vec3(cos(phi) * r, sin(phi) * r, Xi.x)).xzy;
-}
-vec2 R2_samples_CLOUD(int n){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha * n);
-}
-vec3 cosineHemisphereSample_CLOUD(vec2 Xi){
-    float theta = 2.0 * 3.14159265359 * Xi.y;
-
-    float r = sqrt(Xi.x);
-    float x = r * cos(theta);
-    float y = r * sin(theta);
-
-    return vec3(x, y, sqrt(clamp(1.0 - Xi.x,0.,1.)));
 }
 
 vec4 renderLayer(
@@ -317,14 +294,32 @@ vec4 renderLayer(
 	in vec3 sunMultiScatter,
 	in vec3 indirectScatter,
 	in float distantfog,
-	bool notVisible
+	bool notVisible,
+	vec3 FragPosition
 ){
 	vec3 COLOR = vec3(0.0);
 	float TOTAL_EXTINCTION = 1.0;
 
+	bool IntersecTerrain = false;
+
+	#ifdef CLOUDS_INTERSECT_TERRAIN
+		// thank you emin for this world intersection thing
+		#if defined DISTANT_HORIZONS
+			float maxdist = dhRenderDistance + 16 * 64;
+		#else
+			float maxdist = far + 16*5;
+		#endif
+
+   		float lViewPosM = length(FragPosition) < maxdist ? length(FragPosition) - 1.0 : 100000000.0;
+	#endif
 
 if(layer == 2){
-	if(notVisible) return vec4(COLOR, TOTAL_EXTINCTION);
+	
+	#ifdef CLOUDS_INTERSECT_TERRAIN
+		IntersecTerrain = length(rayProgress - cameraPosition) > lViewPosM;
+	#endif
+
+	if(notVisible || IntersecTerrain) return vec4(COLOR, TOTAL_EXTINCTION);
 	
 	float signFlip = mix(-1.0, 1.0, clamp(cameraPosition.y - minHeight,0.0,1.0));
 	
@@ -361,9 +356,12 @@ if(layer == 2){
 	#endif
 
 	for(int i = 0; i < QUALITY; i++) {
-		
+
+		#ifdef CLOUDS_INTERSECT_TERRAIN
+			IntersecTerrain = length(rayProgress - cameraPosition) > lViewPosM;
+		#endif
 		/// avoid overdraw
-		if(notVisible) break;
+		if(notVisible || IntersecTerrain) break;
 		
 		// do not sample anything unless within a clouds bounding box
 		if(clamp(rayProgress.y - maxHeight,0.0,1.0) < 1.0 && clamp(rayProgress.y - minHeight,0.0,1.0) > 0.0){
@@ -404,6 +402,7 @@ if(layer == 2){
 			}
 		}
 		rayProgress += dV_view;
+
 	}
 	return vec4(COLOR, TOTAL_EXTINCTION);
 }
@@ -537,7 +536,7 @@ vec4 renderClouds(
 	#endif
 
 	#ifdef CloudLayer0
-		vec4 layer0 = renderLayer(0, layer0_start, dV_view, mult, Dither.x, maxIT_clouds, MinHeight, MaxHeight, dV_Sun, LAYER0_DENSITY, SkyColor, directScattering, directMultiScattering, sunIndirectScattering, distantfog, false);
+		vec4 layer0 = renderLayer(0, layer0_start, dV_view, mult, Dither.x, maxIT_clouds, MinHeight, MaxHeight, dV_Sun, LAYER0_DENSITY, SkyColor, directScattering, directMultiScattering* 2.0, sunIndirectScattering, distantfog, false, FragPosition);
 		total_extinction *= layer0.a;
 
 		// stop overdraw.
@@ -549,7 +548,7 @@ vec4 renderClouds(
 	#endif
 
 	#ifdef CloudLayer1
-		vec4 layer1 = renderLayer(1, layer1_start, dV_view, mult, Dither.x, maxIT_clouds, MinHeight1, MaxHeight1, dV_Sun, LAYER1_DENSITY, SkyColor, directScattering, directMultiScattering,sunIndirectScattering, distantfog, notVisible);
+		vec4 layer1 = renderLayer(1, layer1_start, dV_view, mult, Dither.x, maxIT_clouds, MinHeight1, MaxHeight1, dV_Sun, LAYER1_DENSITY, SkyColor, directScattering, directMultiScattering* 2.0, sunIndirectScattering, distantfog, notVisible, FragPosition);
 		total_extinction *= layer1.a;
 
 		// stop overdraw.
@@ -557,7 +556,7 @@ vec4 renderClouds(
 	#endif
 
 	#ifdef CloudLayer2
-		vec4 layer2 = renderLayer(2, layer2_start, dV_view_Alto, mult_alto, Dither.x, maxIT_clouds, Height2, Height2, dV_Sun, LAYER2_DENSITY, SkyColor, directScattering, directMultiScattering,sunIndirectScattering, distantfog, altoNotVisible);
+		vec4 layer2 = renderLayer(2, layer2_start, dV_view_Alto, mult_alto, Dither.x, maxIT_clouds, Height2, Height2, dV_Sun, LAYER2_DENSITY, SkyColor, directScattering, directMultiScattering,sunIndirectScattering, distantfog, altoNotVisible, FragPosition);
 		total_extinction *= layer2.a;
 	#endif
 	

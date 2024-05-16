@@ -116,7 +116,7 @@ void main() {
 	// translucent entities
 	#if defined ENTITIES || defined BLOCKENTITIES
 		mat = 0.9;
-		if (entityId == 1403) mat = 0.8;
+		if (entityId == 1803) mat = 0.8;
 	#endif
 
 	// translucent blocks

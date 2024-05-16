@@ -170,6 +170,7 @@ vec3 toScreenSpace(vec3 p) {
 
 #ifdef OVERWORLD_SHADER
 	#include "/lib/volumetricClouds.glsl"
+	// #define CLOUDS_INTERSECT_TERRAIN
 #endif
 
 #include "/lib/util.glsl"
@@ -359,120 +360,6 @@ vec3 worldToView(vec3 worldPos) {
     pos = gbufferModelView * pos;
     return pos.xyz;
 }
-
-void waterVolumetrics_notoverworld(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estEndDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient){
-		inColor *= exp(-rayLength * waterCoefs);	//No need to take the integrated value
-		int spCount = rayMarchSampleCount;
-		vec3 start = toShadowSpaceProjected(rayStart);
-		vec3 end = toShadowSpaceProjected(rayEnd);
-		vec3 dV = (end-start);
-		//limit ray length at 32 blocks for performance and reducing integration error
-		//you can't see above this anyway
-		float maxZ = min(rayLength,12.0)/(1e-8+rayLength);
-		dV *= maxZ;
-		vec3 dVWorld = -mat3(gbufferModelViewInverse) * (rayEnd - rayStart) * maxZ;
-		rayLength *= maxZ;
-		estEndDepth *= maxZ;
-		estSunDepth *= maxZ;
-		vec3 absorbance = vec3(1.0);
-		vec3 vL = vec3(0.0);
-
-
-		float expFactor = 11.0;
-		vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition;
-		for (int i=0;i<spCount;i++) {
-			float d = (pow(expFactor, float(i+dither)/float(spCount))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
-			float dd = pow(expFactor, float(i+dither)/float(spCount)) * log(expFactor) / float(spCount)/(expFactor-1.0);
-			vec3 spPos = start.xyz + dV*d;
-			progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
-
-			vec3 ambientMul = exp(-max(estEndDepth * d,0.0) * waterCoefs);
-
-			vec3 light =  (ambientMul*ambient) * scatterCoef;
-
-			vL += (light - light * exp(-waterCoefs * dd * rayLength)) / waterCoefs *absorbance;
-			absorbance *= exp(-dd * rayLength * waterCoefs);
-		}
-		inColor += vL;
-}
-
-#ifdef OVERWORLD_SHADER
-
-
-float fogPhase(float lightPoint){
-	float linear = 1.0 - clamp(lightPoint*0.5+0.5,0.0,1.0);
-	float linear2 = 1.0 - clamp(lightPoint,0.0,1.0);
-
-	float exponential = exp2(pow(linear,0.3) * -15.0 ) * 1.5;
-	exponential += sqrt(exp2(sqrt(linear) * -12.5));
-
-	return exponential;
-}
-
-void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estEndDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient, vec3 lightSource, float VdotL){
-	int spCount = rayMarchSampleCount;
-
-	vec3 start = toShadowSpaceProjected(rayStart);
-	vec3 end = toShadowSpaceProjected(rayEnd);
-	vec3 dV = (end-start);
-
-	//limit ray length at 32 blocks for performance and reducing integration error
-	//you can't see above this anyway
-	float maxZ = min(rayLength,12.0)/(1e-8+rayLength);
-	dV *= maxZ;
-	rayLength *= maxZ;
-	estEndDepth *= maxZ;
-	estSunDepth *= maxZ;
-	
-	vec3 wpos = mat3(gbufferModelViewInverse) * rayStart  + gbufferModelViewInverse[3].xyz;
-	vec3 dVWorld = (wpos - gbufferModelViewInverse[3].xyz);
-
-	inColor *= exp(-rayLength * waterCoefs);	// No need to take the integrated value
-	float phase = fogPhase(VdotL) * 5.0;
-	vec3 absorbance = vec3(1.0);
-	vec3 vL = vec3(0.0);
-
-	float expFactor = 11.0;
-	for (int i=0;i<spCount;i++) {
-		float d = (pow(expFactor, float(i+dither)/float(spCount))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
-		float dd = pow(expFactor, float(i+dither)/float(spCount)) * log(expFactor) / float(spCount)/(expFactor-1.0);
-		vec3 spPos = start.xyz + dV*d;
-
-		vec3 progressW = start.xyz+cameraPosition+dVWorld;
-
-		//project into biased shadowmap space
-		#ifdef DISTORT_SHADOWMAP
-			float distortFactor = calcDistort(spPos.xy);
-		#else
-			float distortFactor = 1.0;
-		#endif
-
-		vec3 pos = vec3(spPos.xy*distortFactor, spPos.z);
-		float sh = 1.0;
-		if (abs(pos.x) < 1.0-0.5/2048. && abs(pos.y) < 1.0-0.5/2048){
-			pos = pos*vec3(0.5,0.5,0.5/6.0)+0.5;
-			sh =  shadow2D( shadow, pos).x;
-		}
-
-		#ifdef VL_CLOUDS_SHADOWS
-			sh *= GetCloudShadow_VLFOG(progressW,WsunVec);
-		#endif
-
-		vec3 sunMul = exp(-estSunDepth * d * waterCoefs * 1.1);
-		vec3 ambientMul = exp(-estEndDepth * d * waterCoefs );
-
-		vec3 Directlight = (lightSource * phase * sunMul) * sh;
-		vec3 Indirectlight = ambient * ambientMul;
-
-		vec3 light = (Indirectlight + Directlight) * scatterCoef;
-
-		vL += (light - light * exp(-waterCoefs * dd * rayLength)) / waterCoefs * absorbance;
-		absorbance *= exp(-waterCoefs * dd * rayLength);
-	}
-	inColor += vL;
-}
-
-#endif
 
 vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, bool isSSS, bool hand){
    
@@ -930,16 +817,7 @@ void main() {
 		vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
 		vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
 		vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;
-		vec3 scatterCoef = dirtAmount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / 3.14;
 
-		#ifdef BIOME_TINT_WATER
-			// yoink the biome tint written in this buffer for water only.
-			if(isWater){
-				vec2 translucentdata = texture2D(colortex11,texcoord).gb;
-				vec3 wateralbedo = vec3(decodeVec2(translucentdata.x),decodeVec2(translucentdata.y).x);
-				scatterCoef = dirtAmount * wateralbedo / 3.14;
-			}
-		#endif
 		vec3 Absorbtion = vec3(1.0);
 		vec3 AmbientLightColor = vec3(0.0);
 		vec3 MinimumLightColor = vec3(1.0);
@@ -971,11 +849,6 @@ void main() {
 			bool inShadowmapBounds = false;
 		#endif
 
-	#ifdef CLOUDS_INFRONT_OF_WORLD
-		float heightRelativeToClouds = clamp(cameraPosition.y - LAYER0_minHEIGHT,0.0,1.0);
-		vec4 Clouds = texture2D_bicubic_offset(colortex0, texcoord*CLOUDS_QUALITY, noise, RENDER_SCALE.x);
-	#endif
-	
 	////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////	    FILTER STUFF      //////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -1036,13 +909,9 @@ void main() {
 			vec3 Sky = skyFromTex(feetPlayerPos_normalized, colortex4)/30.0;
 			Background += Sky;
 
-			#ifdef VOLUMETRIC_CLOUDS
-				#ifdef CLOUDS_INFRONT_OF_WORLD
-					if(heightRelativeToClouds < 1.0) Background = Background * Clouds.a + Clouds.rgb;
-				#else
-					vec4 Clouds = texture2D_bicubic_offset(colortex0, texcoord*CLOUDS_QUALITY, noise, RENDER_SCALE.x);
-					Background = Background * Clouds.a + Clouds.rgb;
-				#endif
+			#if defined VOLUMETRIC_CLOUDS && !defined CLOUDS_INTERSECT_TERRAIN
+				vec4 Clouds = texture2D_bicubic_offset(colortex0, texcoord*CLOUDS_QUALITY, noise, RENDER_SCALE.x);
+				Background = Background * Clouds.a + Clouds.rgb;
 			#endif
 
 			gl_FragData[0].rgb = clamp(fp10Dither(Background, triangularize(noise_2)), 0.0, 65000.);
@@ -1296,8 +1165,8 @@ void main() {
 			float sunSSS_density = LabSSS;
 			float SSS_shadow = ShadowAlpha * Shadows;
 			
-			#ifdef DISTANT_HORIZONS_SHADOWMAP
-				shadowMapFalloff2 = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / min(shadowDistance, far-32),0.0)*5.0,1.0));
+			#ifdef DISTANT_HORIZONS
+				shadowMapFalloff2 = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / min(shadowDistance, max(far-32.0,32.0)),0.0)*5.0,1.0));
 			#endif
 
 			#ifndef RENDER_ENTITY_SHADOWS
@@ -1370,6 +1239,15 @@ void main() {
     	gl_FragData[0].rgb = gl_FragData[0].rgb * vlBehingTranslucents.a + vlBehingTranslucents.rgb;
 	}
 
+	#if defined VOLUMETRIC_CLOUDS && defined CLOUDS_INTERSECT_TERRAIN
+		vec4 Clouds = texture2D_bicubic_offset(colortex0, texcoord*CLOUDS_QUALITY, noise, RENDER_SCALE.x);
+		// vec4 Clouds = BilateralUpscale_REUSE_Z_clouds(colortex0, colortex12, DH_mixedLinearZ, gl_FragCoord.xy*CLOUDS_QUALITY, texcoord*CLOUDS_QUALITY);
+
+		gl_FragData[1] = texture2D(colortex2, texcoord);
+		gl_FragData[0].rgb = gl_FragData[0].rgb * Clouds.a + Clouds.rgb;
+		gl_FragData[1].a = gl_FragData[1].a	* pow(Clouds.a,5.0);
+	#endif
+
 	// gl_FragData[0].rgb = vec3(1.0) * clamp(1.0 - filteredShadow.y/1,0,1);
 	// if(hideGUI > 0) gl_FragData[0].rgb = vec3(1.0) * Shadows;
 	////// DEBUG VIEW STUFF
@@ -1403,24 +1281,5 @@ void main() {
 	 	// if(hideGUI == 0)  gl_FragData[0].rgb = vec3(1)	* filteredShadow.z;//exp(-7*(1-clamp(1.0 - filteredShadow.x,0.0,1.0)));
 	#endif
 	
-
-	// float shadew = clamp(1.0 - filteredShadow.y/1,0.0,1.0);
-	// // if(hideGUI == 1) 
-
-	
-
-	#ifdef CLOUDS_INFRONT_OF_WORLD
-		gl_FragData[1] = texture2D(colortex2, texcoord);
-		if(heightRelativeToClouds > 0.0 && !hand){
-			gl_FragData[0].rgb = gl_FragData[0].rgb * Clouds.a + Clouds.rgb;
-			gl_FragData[1].a = gl_FragData[1].a*Clouds.a*Clouds.a*Clouds.a;
-		}
-
-/* DRAWBUFFERS:32 */
-
-	#else
-
-/* DRAWBUFFERS:3 */
-
-	#endif
+	/* DRAWBUFFERS:3 */
 }

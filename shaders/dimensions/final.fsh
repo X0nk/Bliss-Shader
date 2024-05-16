@@ -155,14 +155,6 @@ void main() {
   
   applyGameplayEffects_FRAGMENT(FINAL_COLOR, texcoord, interleaved_gradientNoise()); // for making the fun, more fun
   
-
-
-
-
-	// float reprojectedBuffer = texture2D(colortex14, texcoord).a;
-
-  // gl_FragColor.rgb = vec3(1.0) * reprojectedBuffer;
-
   gl_FragColor.rgb = FINAL_COLOR;
 
   #if DEBUG_VIEW == debug_SHADOWMAP 

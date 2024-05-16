@@ -217,6 +217,7 @@ void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, float lineardista
 
 uniform int dhRenderDistance;
 uniform float eyeAltitude;
+
 void main() {
   /* DRAWBUFFERS:73 */
 

@@ -19,7 +19,10 @@ uniform sampler2D depthtex0;
 
 #ifdef DISTANT_HORIZONS
 uniform sampler2D dhDepthTex;
+uniform sampler2D dhDepthTex1;
 #endif
+
+
 // uniform sampler2D colortex4;
 uniform sampler2D noisetex;
 
@@ -37,7 +40,11 @@ uniform mat4 gbufferModelViewInverse;
 uniform vec3 cameraPosition;
 
 uniform mat4 gbufferModelView;
+uniform mat4 gbufferProjection;
 // flat varying vec2 TAA_Offset;
+
+#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
+#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
 
 vec3 toScreenSpace(vec3 p) {
@@ -46,6 +53,9 @@ vec3 toScreenSpace(vec3 p) {
     vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
     return fragposition.xyz / fragposition.w;
 }
+
+
+#include "/lib/DistantHorizons_projections.glsl"
 
 float R2_dither(){
 	#ifdef TAA
@@ -86,12 +96,24 @@ float blueNoise(){
 vec3 normVec (vec3 vec){
 	return vec*inversesqrt(dot(vec,vec));
 }
+uniform float far;
+
+
+float ld(float dist) {
+    return (2.0 * near) / (far + near - dist * (far - near));
+}
+
+uniform int dhRenderDistance;
 
 #include "/lib/lightning_stuff.glsl"
-
 #include "/lib/sky_gradient.glsl"
+
+// #define CLOUDS_INTERSECT_TERRAIN
 #include "/lib/volumetricClouds.glsl"
 #include "/lib/res_params.glsl"
+
+
+
 
 
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -105,12 +127,22 @@ void main() {
 /* DRAWBUFFERS:0 */
 	#if defined OVERWORLD_SHADER && defined VOLUMETRIC_CLOUDS 
 		vec2 halfResTC = vec2(floor(gl_FragCoord.xy)/CLOUDS_QUALITY/RENDER_SCALE+0.5+offsets[framemod8]*CLOUDS_QUALITY*RENDER_SCALE*0.5);
+		
+		float depth =  texture2D(depthtex0, halfResTC*texelSize).x;
+		
 
-		vec3 viewPos = toScreenSpace(vec3(halfResTC*texelSize,1.0));
+		// vec3 viewPos = toScreenSpace(vec3(halfResTC*texelSize, depth));
+		
+		#ifdef DISTANT_HORIZONS
+		float DH_depth =  texture2D(dhDepthTex, halfResTC*texelSize).x;
+			vec3 viewPos = toScreenSpace_DH(halfResTC*texelSize, depth, DH_depth);
+		#else
+			vec3 viewPos = toScreenSpace(vec3(halfResTC*texelSize, depth));
+		#endif
+
 
 		vec4 VolumetricClouds = renderClouds(viewPos, vec2(R2_dither(), blueNoise()), sunColor/80.0, averageSkyCol/30.0);
 
-		// gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);
 		gl_FragData[0] = VolumetricClouds;
 	#else
 		gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);

@@ -8,9 +8,10 @@ flat varying vec2 TAA_Offset;
 
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
+
 #ifdef DISTANT_HORIZONS
-uniform sampler2D dhDepthTex;
-uniform sampler2D dhDepthTex1;
+	uniform sampler2D dhDepthTex;
+	uniform sampler2D dhDepthTex1;
 #endif
 
 uniform sampler2D colortex1;
@@ -23,11 +24,11 @@ uniform sampler2D colortex15; // Noise
 
 uniform sampler2D shadow;
 
-// #ifdef TRANSLUCENT_COLORED_SHADOWS
+#ifdef TRANSLUCENT_COLORED_SHADOWS
 	uniform sampler2D shadowcolor0;
 	uniform sampler2D shadowtex0;
 	uniform sampler2D shadowtex1;
-// #endif
+#endif
 
 
 uniform sampler2D noisetex;

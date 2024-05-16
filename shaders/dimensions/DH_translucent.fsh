@@ -385,7 +385,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
         #ifdef SNELLS_WINDOW
 	    	if(isEyeInWater == 1) fresnel = pow(clamp(1.5 + normalDotEye,0.0,1.0), 25.0);
 	    #endif
-
         #ifdef SCREENSPACE_REFLECTIONS
             vec3 rtPos = rayTrace(reflectedVector, viewPos, interleaved_gradientNoise(), fresnel, false);
             if (rtPos.z < 1.){
@@ -398,13 +397,13 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
             	}
             }
         #endif
-		
 		#ifdef WATER_BACKGROUND_SPECULAR
             BackgroundReflection = skyCloudsFromTex(mat3(gbufferModelViewInverse) * reflectedVector, colortex4).rgb / 30.0;
         #endif
         #ifdef WATER_SUN_SPECULAR
-            SunReflection = Direct_lighting * GGX(normalize(normals), -normalize(viewPos), normalize(WsunVec2), roughness, f0);
+            SunReflection = Direct_lighting * GGX(normalize(normals), -normalize(viewPos), normalize(WsunVec2), roughness, f0) * (1.0-Reflections.a);
         #endif
+
 		Reflections_Final = mix(BackgroundReflection, Reflections.rgb, Reflections.a) * fresnel;
 		Reflections_Final += SunReflection;
 

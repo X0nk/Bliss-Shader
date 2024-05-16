@@ -24,6 +24,7 @@ uniform sampler2D colortex3;
 // uniform sampler2D colortex4;
 uniform sampler2D colortex6;
 uniform sampler2D colortex7;
+uniform sampler2D colortex11;
 uniform sampler2D colortex14;
 
 flat varying vec3 WsunVec;
@@ -319,6 +320,15 @@ void main() {
 	vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;
 	vec3 scatterCoef = dirtAmount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / 3.14;
 
+		#ifdef BIOME_TINT_WATER
+			// yoink the biome tint written in this buffer for water only.
+			if(iswater){
+				vec2 translucentdata = texture2D(colortex11,tc).gb;
+				vec3 wateralbedo = normalize(vec3(decodeVec2(translucentdata.x),decodeVec2(translucentdata.y).x)+0.00001) * 0.5 + 0.5;
+				scatterCoef = dirtAmount * wateralbedo / 3.14;
+			}
+		#endif
+
 	vec3 directLightColor = lightCol.rgb/80.0;
 	vec3 indirectLightColor = averageSkyCol/30.0;
 	vec3 indirectLightColor_dynamic = averageSkyCol_Clouds/30.0;
@@ -350,9 +360,9 @@ void main() {
 
 
 
-	 	indirectLightColor_dynamic *= ambient_brightness * pow(1.0-pow(1.0-lightmap.y,0.5),3.0)	;
-		float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) ;
-		indirectLightColor_dynamic += vec3(TORCH_R,TORCH_G,TORCH_B)	* TorchBrightness_autoAdjust * pow(1.0-sqrt(1.0-clamp(lightmap.x,0.0,1.0)),2.0) * 2.0;
+	 	// indirectLightColor_dynamic *= ambient_brightness * pow(1.0-pow(1.0-lightmap.y,0.5),3.0)	;
+		// float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) ;
+		// indirectLightColor_dynamic += vec3(TORCH_R,TORCH_G,TORCH_B)	* TorchBrightness_autoAdjust * pow(1.0-sqrt(1.0-clamp(lightmap.x,0.0,1.0)),2.0) * 2.0;
 
 		vec4 VolumetricFog2 = vec4(0,0,0,1);
 		#ifdef OVERWORLD_SHADER

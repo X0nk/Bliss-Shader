@@ -752,10 +752,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#ifdef DAMAGE_BLOCK_EFFECT
 		#undef WATER_REFLECTIONS
 	#endif
-	
-	// #ifdef ENTITIES
-	// 	#undef WATER_BACKGROUND_SPECULAR
-	// #endif
 
 	#ifndef OVERWORLD_SHADER
 		#undef WATER_SUN_SPECULAR
@@ -889,7 +885,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#ifndef HAND
 		gl_FragData[1] = vec4(Albedo, MATERIALS);
 	#endif
-	
 	#if DEBUG_VIEW == debug_DH_WATER_BLENDING
 		if(gl_FragCoord.x*texelSize.x < 0.47) gl_FragData[0] = vec4(0.0);
 	#endif
