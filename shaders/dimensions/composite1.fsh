@@ -9,8 +9,12 @@
 	#extension GL_ARB_shading_language_packing: enable
 #endif
 
+#include "/lib/util.glsl"
 #include "/lib/res_params.glsl"
 
+
+#define diagonal3_old(m) vec3((m)[0].x, (m)[1].y, m[2].z)
+#define  projMAD_old(m, v) (diagonal3_old(m) * (v) + (m)[3].xyz)
 
 const bool colortex5MipmapEnabled = true;
 
@@ -134,8 +138,6 @@ flat varying float exposure;
 	uniform int heldItemId2;
 #endif
 
-#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
 void convertHandDepth(inout float depth) {
     float ndcDepth = depth * 2.0 - 1.0;
@@ -173,7 +175,6 @@ vec3 toScreenSpace(vec3 p) {
 	// #define CLOUDS_INTERSECT_TERRAIN
 #endif
 
-#include "/lib/util.glsl"
 
 #ifdef IS_LPV_ENABLED
 	#include "/lib/hsv.glsl"
@@ -295,7 +296,7 @@ vec3 toShadowSpaceProjected(vec3 feetPlayerPos){
 
     feetPlayerPos = mat3(gbufferModelViewInverse) * feetPlayerPos + gbufferModelViewInverse[3].xyz;
     feetPlayerPos = mat3(shadowModelView) * feetPlayerPos + shadowModelView[3].xyz;
-    feetPlayerPos = diagonal3(DH_shadowProjection) * feetPlayerPos + DH_shadowProjection[3].xyz;
+    feetPlayerPos = diagonal3_old(DH_shadowProjection) * feetPlayerPos + DH_shadowProjection[3].xyz;
 
     return feetPlayerPos;
 }
@@ -944,9 +945,9 @@ void main() {
 		if(!hand) GriAndEminShadowFix(shadowPlayerPos, viewToWorld(FlatNormals), vanilla_AO, lightmap.y);
 		
 		vec3 projectedShadowPosition = mat3(shadowModelView) * shadowPlayerPos + shadowModelView[3].xyz;
-		projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
+		projectedShadowPosition = diagonal3_old(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
-		#if OPTIMIZED_SHADOW_DISTANCE > 0.0
+		#if OPTIMIZED_SHADOW_DISTANCE > 0
 			float shadowMapFalloff = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / (shadowDistance+16),0.0)*5.0,1.0));
 			float shadowMapFalloff2 = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / shadowDistance,0.0)*5.0,1.0));
 		#else

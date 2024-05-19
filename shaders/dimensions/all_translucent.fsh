@@ -40,8 +40,9 @@ const bool colortex4MipmapEnabled = true;
 uniform sampler2D noisetex;
 uniform sampler2D depthtex1;
 uniform sampler2D depthtex0;
+
 #ifdef DISTANT_HORIZONS
-uniform sampler2D dhDepthTex1;
+	uniform sampler2D dhDepthTex1;
 #endif
 uniform sampler2D colortex7;
 uniform sampler2D colortex12;
@@ -94,12 +95,13 @@ uniform float sunIntensity;
 uniform vec3 sunColor;
 uniform vec3 nsunColor;
 
+#include "/lib/util.glsl"
 #include "/lib/Shadow_Params.glsl"
 #include "/lib/color_transforms.glsl"
 #include "/lib/projections.glsl"
 #include "/lib/sky_gradient.glsl"
 #include "/lib/waterBump.glsl"
-#include "/lib/util.glsl"
+
 
 #ifdef OVERWORLD_SHADER
 	flat varying float Flashing;
@@ -124,6 +126,7 @@ uniform vec3 nsunColor;
 #endif
 
 #include "/lib/diffuse_lighting.glsl"
+
 float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
@@ -180,31 +183,6 @@ vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
 	bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 	// 
 	return normalize(bump*tbnMatrix);
-}
-
-// vec2 tapLocation(int sampleNumber,int nb, float nbRot,float jitter,float distort)
-// {
-//     float alpha = (sampleNumber+jitter)/nb;
-//     float angle = jitter*6.28 + alpha * nbRot * 6.28;
-
-//     float sin_v, cos_v;
-
-// 	sin_v = sin(angle);
-// 	cos_v = cos(angle);
-
-//     return vec2(cos_v, sin_v)*sqrt(alpha);
-// }
-vec2 tapLocation_simple(
-	int samples, int totalSamples, float rotation, float rng
-){
-	const float PI = 3.141592653589793238462643383279502884197169;
-    float alpha = float(samples + rng) * (1.0 / float(totalSamples));
-    float angle = alpha * (rotation * PI);
-
-	float sin_v = sin(angle);
-	float cos_v = cos(angle);
-
-    return vec2(cos_v, sin_v) * sqrt(alpha);
 }
 
 vec2 CleanSample(
@@ -392,7 +370,6 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 		float rdMul = 14.0*distortFactor*d0*k/shadowMapResolution;
 
 		for(int i = 0; i < samples; i++){
-			// vec2 offsetS = tapLocation_simple(i, 7, 9, noise) * 0.5;
 			vec2 offsetS = CleanSample(i, samples - 1, noise) * 0.3;
 			projectedShadowPosition.xy += rdMul*offsetS;
 	#else
@@ -898,7 +875,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0].rgb = Direct_lighting * 0.1;
 	#endif
 
-	gl_FragData[3].a = encodeVec2(lightmap);
+	gl_FragData[3].a = clamp(lightmap.y,0.0,1.0);
 
 }
 }

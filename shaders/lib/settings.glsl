@@ -125,9 +125,14 @@ const float	sunPathRotation	= -35;	//[-90 -89 -88 -87 -86 -85 -84 -83 -82 -81 -8
 const int shadowMapResolution = 2048; // [512 768 1024 1536 2048 3172 4096 8192]
 const float shadowDistance = 128.0; // [32.0 48.0 64.0 80.0 96.0 112.0 128.0 144.0 160.0 176.0 192.0 208.0 224.0 240.0 256.0 272.0 288.0 304.0 320.0 336.0 352.0 368.0 384.0 512.0 768.0 1024.0 1536.0 2048.0 4096.0 8192.0]
 
-#define OPTIMIZED_SHADOW_DISTANCE 1.0 // [-1.0 1.0]
 
-const float shadowDistanceRenderMul = OPTIMIZED_SHADOW_DISTANCE;
+#ifdef IS_IRIS
+	#define OPTIMIZED_SHADOW_DISTANCE 1 // [-1 1]
+	const float shadowDistanceRenderMul = OPTIMIZED_SHADOW_DISTANCE;
+#else
+	#define OPTIMIZED_SHADOW_DISTANCE 1 // [-1 1]
+	const float shadowDistanceRenderMul = float(OPTIMIZED_SHADOW_DISTANCE);
+#endif
 const float entityShadowDistanceMul = 0.25; // [0.01 0.02 0.03 0.04 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.75 1.00]
 
 
@@ -591,8 +596,20 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 ///////////////////////////////////////////////////////
 
 #define MOTION_AMOUNT 0.25 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
+
+#ifdef IS_IRIS
 #define DAMAGE_TAKEN_EFFECT
 #define LOW_HEALTH_EFFECT
+#endif
+
+#define WATER_ON_CAMERA_EFFECT
+
+#ifdef LOW_HEALTH_EFFECT
+#endif
+#ifdef DAMAGE_TAKEN_EFFECT
+#endif
+#ifdef WATER_ON_CAMERA_EFFECT
+#endif
 
 
 

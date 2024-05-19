@@ -11,7 +11,6 @@ flat varying float exposure;
 
 varying vec4 tangent;
 varying vec4 normalMat;
-attribute vec4 at_tangent;
 uniform float frameTimeCounter;
 
 //faster and actually more precise than pow 2.2

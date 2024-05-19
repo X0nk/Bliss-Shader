@@ -1,4 +1,5 @@
 #include "/lib/settings.glsl"
+#include "/lib/util.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/color_transforms.glsl"
 #include "/lib/projections.glsl"
@@ -63,8 +64,6 @@ flat varying vec3 WsunVec;
 flat varying vec3 WsunVec2;
 
 
-#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
 // uniform mat4 dhPreviousProjection;
 // uniform mat4 dhProjectionInverse;

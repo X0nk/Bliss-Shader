@@ -76,8 +76,7 @@ uniform int hideGUI;
 
 
 
-#define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
-
+#include "/lib/util.glsl"
 #include "/lib/projections.glsl"
 
 
@@ -327,6 +326,10 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 
 
 
+#ifdef DAMAGE_TAKEN_EFFECT
+	uniform float CriticalDamageTaken;
+#endif
+
 vec4 TAA_hq(bool hand){
 
 	#ifdef TAA_UPSCALING
@@ -401,13 +404,17 @@ vec4 TAA_hq(bool hand){
 		float movementRejection = (0.12+isclamped)*clamp(length(velocity/texelSize),0.0,1.0);
 
 		
-		float depthDiff = texture2D(colortex14, previousPosition.xy).a;
+		// float depthDiff = texture2D(colortex14, previousPosition.xy).a;
 		// movementRejection = mix( 0.0, 1.0, depthDiff);
 
 		if(hand) movementRejection *= 5.0;
 		
 		//Blend current pixel with clamped history, apply fast tonemap beforehand to reduce flickering
 		vec4 supersampled = vec4(invTonemap(mix(tonemap(finalcAcc), tonemap(albedoCurrent0), clamp(BLEND_FACTOR + movementRejection, 0.0,1.0))), 1.0);
+
+        #ifdef DAMAGE_TAKEN_EFFECT
+			if(CriticalDamageTaken > 0.01) supersampled.rgb = mix(supersampled.rgb, texture2D(colortex5, adjTC).rgb,  sqrt(CriticalDamageTaken)*0.8);
+		#endif
 
 		//De-tonemap
 		return supersampled;

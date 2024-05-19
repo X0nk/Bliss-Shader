@@ -341,7 +341,9 @@ void main() {
 	if(texture2D(colortex2, tc).a > 0.0 || iswater){
 		
 		#ifdef OVERWORLD_SHADER
-			vec2 lightmap = decodeVec2(texture2D(colortex14, tc).a);
+			// vec2 lightmap = decodeVec2(texture2D(colortex14, tc).a);
+			
+			vec2 lightmap = vec2(0.0,texture2D(colortex14, tc).a);
 			
 			#ifdef DISTANT_HORIZONS
 				if(z >= 1.0) lightmap.y = 0.99;
@@ -360,8 +362,8 @@ void main() {
 
 
 
-	 	// indirectLightColor_dynamic *= ambient_brightness * pow(1.0-pow(1.0-lightmap.y,0.5),3.0)	;
-		// float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) ;
+	 	indirectLightColor_dynamic *= ambient_brightness * pow(1.0-pow(1.0-lightmap.y,0.5),3.0)	;
+		float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) ;
 		// indirectLightColor_dynamic += vec3(TORCH_R,TORCH_G,TORCH_B)	* TorchBrightness_autoAdjust * pow(1.0-sqrt(1.0-clamp(lightmap.x,0.0,1.0)),2.0) * 2.0;
 
 		vec4 VolumetricFog2 = vec4(0,0,0,1);

@@ -7,12 +7,19 @@ uniform sampler2D colortex14;
 uniform sampler2D depthtex0;
 uniform vec2 texelSize;
 uniform float frameTimeCounter;
+uniform float viewHeight;
+uniform float viewWidth;
+uniform float aspectRatio;
 
 uniform sampler2D shadow;
 uniform sampler2D shadowcolor0;
 uniform sampler2D shadowcolor1;
 uniform sampler2D shadowtex0;
 uniform sampler2D shadowtex1;
+uniform sampler2D noisetex;
+
+uniform vec3 previousCameraPosition;
+uniform vec3 cameraPosition;
 
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
@@ -153,7 +160,10 @@ void main() {
 
 	applyContrast(FINAL_COLOR, CONTRAST); // for fun
   
-  applyGameplayEffects_FRAGMENT(FINAL_COLOR, texcoord, interleaved_gradientNoise()); // for making the fun, more fun
+  #if defined LOW_HEALTH_EFFECT || defined DAMAGE_TAKEN_EFFECT || defined WATER_ON_CAMERA_EFFECT  
+    // for making the fun, more fun
+    applyGameplayEffects(FINAL_COLOR, texcoord, interleaved_gradientNoise());
+  #endif
   
   gl_FragColor.rgb = FINAL_COLOR;
 

@@ -92,7 +92,7 @@ vec3 toLinear(vec3 sRGB){
 	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
 }
 
-#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
+// #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 
 vec3 toScreenSpace(vec3 p) {
 	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
