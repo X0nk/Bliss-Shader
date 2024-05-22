@@ -122,7 +122,7 @@ float interleaved_gradientNoise(){
 
 void doCameraGridLines(inout vec3 color, vec2 UV){
 
-  float lineThicknessY = 0.0025;
+  float lineThicknessY = 0.001;
   float lineThicknessX = lineThicknessY/aspectRatio;
   
   float horizontalLines = abs(UV.x-0.33);

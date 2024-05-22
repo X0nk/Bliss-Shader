@@ -15,7 +15,7 @@ uniform sampler2D dhDepthTex1;
 
 uniform sampler2D colortex2;
 uniform sampler2D colortex3;
-uniform sampler2D colortex4;
+// uniform sampler2D colortex4;
 uniform sampler2D colortex6;
 uniform sampler2D colortex7;
 
@@ -79,14 +79,15 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 	#include "/lib/lightning_stuff.glsl"
 
 	
-	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
 	#include "/lib/overworld_fog.glsl"
 #endif
 #ifdef NETHER_SHADER
+uniform sampler2D colortex4;
 	#include "/lib/nether_fog.glsl"
 #endif
 #ifdef END_SHADER
+uniform sampler2D colortex4;
 	#include "/lib/end_fog.glsl"
 #endif
 
