@@ -1,12 +1,6 @@
 #include "/lib/settings.glsl"
 //Computes volumetric clouds at variable resolution (default 1/4 res)
 
-#define USE_WEATHER_PARAMS
-
-#ifdef Daily_Weather
-	flat varying vec3 dailyWeatherParams0;
-	flat varying vec3 dailyWeatherParams1;
-#endif
 
 flat varying vec3 sunColor;
 // flat varying vec3 moonColor;
@@ -107,10 +101,13 @@ uniform int dhRenderDistance;
 
 #include "/lib/lightning_stuff.glsl"
 #include "/lib/sky_gradient.glsl"
+#include "/lib/res_params.glsl"
 
 // #define CLOUDS_INTERSECT_TERRAIN
+
 #include "/lib/volumetricClouds.glsl"
-#include "/lib/res_params.glsl"
+
+
 
 
 

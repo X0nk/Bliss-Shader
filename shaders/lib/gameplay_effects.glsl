@@ -11,6 +11,7 @@
 #endif
 
 uniform float exitWater;
+// uniform float exitPowderSnow;
 uniform int isEyeInWater;
 
 // uniform float currentPlayerHunger;
@@ -65,10 +66,10 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
             scale.xy = (isEyeInWater == 1 ? vec2(0.3) : vec2(0.5, 0.25 + (exitWater*exitWater)*0.25 ) ) * vec2(aspectRatio,1.0);
             scale.z = isEyeInWater == 1 ? 0.0 : exitWater;
 
-            float waterDrops = texture2D(noisetex, (texcoord - vec2(0.0, scale.z)) * scale.xy).r;
 
+            float waterDrops = texture2D(noisetex, (texcoord - vec2(0.0, scale.z)) * scale.xy).r ;
             if(isEyeInWater == 1) waterDrops = waterDrops*waterDrops * 0.3;
-            if(isEyeInWater == 0) waterDrops = sqrt(min(max(waterDrops - (1.0-sqrt(exitWater))*0.7,0.0) * (1.0 + exitWater),1.0)) * 0.3;
+            if(isEyeInWater == 0 && exitWater > 0.0) waterDrops = sqrt(min(max(waterDrops - (1.0-sqrt(exitWater))*0.7,0.0) * (1.0 + exitWater),1.0)) * 0.3;
 
             // apply distortion effects for exiting water and under water
             distortmask = max(distortmask, waterDrops);
@@ -79,6 +80,14 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
     // all of the distortion will be based around zooming the UV in the center
     vec2 zoomUV = 0.5 + (texcoord - 0.5) * (1.0 - distortmask);
     vec3 distortedColor = texture2D(colortex7, zoomUV).rgb;
+
+    #ifdef TONE_CURVE
+    	distortedColor = toneCurve(distortedColor);
+    #endif
+    #ifdef COLOR_GRADING_ENABLED
+    	distortedColor = colorGrading(distortedColor);
+    #endif
+    applyContrast(distortedColor, CONTRAST);
 
     #ifdef WATER_ON_CAMERA_EFFECT
         // apply the distorted water color to the scene, but revert back to before when it ends
@@ -105,4 +114,5 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
 
         if(isDead) color = distortedColorLuma * 0.3;
     #endif
+
 }

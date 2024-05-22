@@ -119,66 +119,6 @@
 	    	return SpringToSummer;
 	    }
 ///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-////////////////////////////// DAILY WEATHER //////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-
-#ifdef WEATHERCLOUDS
-
-	uniform float Cumulus_Cov;
-
-	float DailyWeather_Cumulus(
-		float Coverage
-	){
-
-		#ifdef Daily_Weather
-			Coverage += mix(Cumulus_Cov, Rain_coverage, rainStrength);
-		#else
-			Coverage += mix(CloudLayer0_coverage, Rain_coverage, rainStrength);
-		#endif
-
-		return Coverage;
-	}
-
-	uniform float Alto_Cov;
-	uniform float Alto_Den;
-
-	void DailyWeather_Alto(
-		inout float Coverage,
-		inout float Density
-	){
-		#ifdef Daily_Weather
-			Coverage = Alto_Cov;
-			Density  = Alto_Den;
-		#else
-			Coverage = CloudLayer2_coverage;
-			Density  = CloudLayer2_density;
-		#endif
-	}
-
-#endif
-
-#ifdef Daily_Weather
-	uniform float Uniform_Den;
-	uniform float Cloudy_Den;
-
-	void DailyWeather_FogDensity(
-		inout vec4 UniformDensity,
-		inout vec4 CloudyDensity
-	){
-
-		// set fog Profiles for each of the 8 days in the cycle.
-		// U = uniform fog  ||  C = cloudy fog
-		// vec4( morning, noon, evening, night )
-
-		UniformDensity.rgb += vec3(Uniform_Den);
-		CloudyDensity.rgb  += vec3(Cloudy_Den);
-	}
-#endif
-
-///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// BIOME SPECIFICS /////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -273,10 +213,10 @@
 #ifdef TIMEOFDAYFOG
 	// uniform int worldTime;
 	void TimeOfDayFog(
-		inout float Uniform, inout float Cloudy, float maxDistance
+		inout float Uniform, inout float Cloudy, float maxDistance, float DailyWeather_UniformFogDensity, float DailyWeather_CloudyFogDensity
 	) {
 	
-	    float Time = worldTime%24000; 
+	    float Time = worldTime%24000;
 
 		// set schedules for fog to appear at specific ranges of time in the day.
 		float Morning = clamp((Time-22000)/2000,0,1) + clamp((2000-Time)/2000,0,1);
@@ -288,9 +228,11 @@
 		vec4 UniformDensity = TOD_Fog_mult * vec4(Morning_Uniform_Fog, Noon_Uniform_Fog, Evening_Uniform_Fog, Night_Uniform_Fog);
 		vec4 CloudyDensity =  TOD_Fog_mult * vec4(Morning_Cloudy_Fog, Noon_Cloudy_Fog, Evening_Cloudy_Fog, Night_Cloudy_Fog);
 
-
 		#ifdef Daily_Weather
-			DailyWeather_FogDensity(UniformDensity, CloudyDensity); // let daily weather influence fog densities.
+			// let daily weather influence fog densities.
+			UniformDensity = max(UniformDensity, DailyWeather_UniformFogDensity * 50.0);
+			CloudyDensity = max(CloudyDensity, DailyWeather_CloudyFogDensity * 50.0);
+			// DailyWeather_FogDensity(UniformDensity, CloudyDensity); 
 		#endif
 
 		#ifdef PER_BIOME_ENVIRONMENT

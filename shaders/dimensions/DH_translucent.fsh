@@ -21,6 +21,7 @@ uniform sampler2D depthtex1;
 
 uniform sampler2D colortex12;
 // uniform sampler2D colortex7;
+uniform sampler2D colortex4;
 uniform sampler2D colortex5;
 
 
@@ -113,9 +114,12 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 
 
 uniform int isEyeInWater;
-
 uniform float rainStrength;
-#include "/lib/volumetricClouds.glsl"
+
+#ifdef OVERWORLD_SHADER
+	#define CLOUDSHADOWSONLY
+	#include "/lib/volumetricClouds.glsl"
+#endif
 
 float GGX(vec3 n, vec3 v, vec3 l, float r, float f0) {
   r = max(pow(r,2.5), 0.0001);

@@ -407,7 +407,9 @@ uniform int moonPhase;
 #define HQ_CLOUDS
 
 // #define Daily_Weather
+// #define CHOOSE_RANDOM_WEATHER_PROFILE
 
+#ifdef Daily_Weather
 // DAY 0 WEATHER PARAMETERS
 #define DAY0_l0_coverage  0.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 #define DAY0_l1_coverage  0.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
@@ -498,7 +500,7 @@ uniform int moonPhase;
 #define DAY9_l1_density   0.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 #define DAY9_l2_density   0.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 #define DAY9_cfog_density 0.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
-
+#endif
 
 
 //////////////////////////////////////
@@ -590,6 +592,7 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 
 //#define BICUBIC_UPSCALING
 
+// #define CAMERA_GRIDLINES
 
 ///////////////////////////////////////////////////////
 // ----- GAMEPLAY POST EFFECT RELATED SETTINGS ----- //
@@ -603,6 +606,7 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 #endif
 
 #define WATER_ON_CAMERA_EFFECT
+#define POWDERSNOW_FROST_CAMERA_EFFECT
 
 #ifdef LOW_HEALTH_EFFECT
 #endif

@@ -31,7 +31,6 @@ const bool colortex5MipmapEnabled = true;
 	flat varying vec3 averageSkyCol_Clouds;
 	flat varying vec4 lightCol;
 
-
 	#if Sun_specular_Strength != 0
 		#define LIGHTSOURCE_REFLECTION
 	#endif
@@ -41,7 +40,6 @@ const bool colortex5MipmapEnabled = true;
 
 #ifdef NETHER_SHADER
 	uniform float nightVision;
-	uniform sampler2D colortex4;
 	const bool colortex4MipmapEnabled = true;
 	uniform vec3 lightningEffect;
 	// #define LIGHTSOURCE_REFLECTION
@@ -49,7 +47,6 @@ const bool colortex5MipmapEnabled = true;
 
 #ifdef END_SHADER
 	uniform float nightVision;
-	uniform sampler2D colortex4;
 	uniform vec3 lightningEffect;
 	
 	flat varying float Flashing;
@@ -71,7 +68,7 @@ uniform sampler2D colortex0; //clouds
 uniform sampler2D colortex1; //albedo(rgb),material(alpha) RGBA16
 uniform sampler2D colortex2; //translucents(rgba)
 uniform sampler2D colortex3; //filtered shadowmap(VPS)
-// uniform sampler2D colortex4; //LUT(rgb), quarter res depth(alpha)
+uniform sampler2D colortex4; //LUT(rgb), quarter res depth(alpha)
 uniform sampler2D colortex5; //TAA buffer/previous frame
 uniform sampler2D colortex6; //Noise
 uniform sampler2D colortex7; //water?
@@ -171,6 +168,8 @@ vec3 toScreenSpace(vec3 p) {
 #include "/lib/stars.glsl"
 
 #ifdef OVERWORLD_SHADER
+	
+	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
 	// #define CLOUDS_INTERSECT_TERRAIN
 #endif

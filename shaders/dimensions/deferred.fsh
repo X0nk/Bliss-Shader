@@ -2,12 +2,7 @@
 
 #define ReflectedFog
 
-#define USE_WEATHER_PARAMS
 
-#ifdef Daily_Weather
-	flat varying vec4 dailyWeatherParams0;
-	flat varying vec4 dailyWeatherParams1;
-#endif
 
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec3 averageSkyCol;
@@ -139,6 +134,7 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 	#define TEST
 	#define TIMEOFDAYFOG
 	#include "/lib/lightning_stuff.glsl"
+	
 	#include "/lib/volumetricClouds.glsl"
 	#include "/lib/overworld_fog.glsl"
 	
@@ -192,12 +188,13 @@ if (gl_FragCoord.x > pixelPos6.x && gl_FragCoord.x < pixelPos6.x + 1 && gl_FragC
 
 	#ifdef Daily_Weather
 		ivec2 pixelPos = ivec2(0,0);
-		if (gl_FragCoord.x > 1 && gl_FragCoord.x < 3 && gl_FragCoord.y > 1 && gl_FragCoord.y < 2){
+		if (gl_FragCoord.x > 1 && gl_FragCoord.x < 4 && gl_FragCoord.y > 1 && gl_FragCoord.y < 2){
 			
 			mixhistory = 0.01;
-	
-			if(gl_FragCoord.x < 2) gl_FragData[0] = dailyWeatherParams0;
-			if(gl_FragCoord.x > 2) gl_FragData[0] = dailyWeatherParams1;
+			
+			if(gl_FragCoord.x < 2) gl_FragData[0] = vec4(dailyWeatherParams0.rgb,1.0);
+			if(gl_FragCoord.x > 2) gl_FragData[0] = vec4(dailyWeatherParams1.rgb,1.0);
+			if(gl_FragCoord.x > 3) gl_FragData[0] = vec4(dailyWeatherParams0.a, dailyWeatherParams1.a, 0.0, 1.0);
 	
 		}
 	#endif

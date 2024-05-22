@@ -6,6 +6,13 @@ flat varying vec4 lightCol;
 flat varying vec3 averageSkyCol;
 flat varying vec3 averageSkyCol_Clouds;
 
+#if defined Daily_Weather
+	flat varying vec4 dailyWeatherParams0;
+	flat varying vec4 dailyWeatherParams1;
+#endif
+
+
+
 flat varying vec3 WsunVec;
 flat varying vec3 refractedSunVec;
 
@@ -47,6 +54,15 @@ void main() {
 		lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
 		averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
 		averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+	
+		#if defined Daily_Weather
+			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0, 0.0);
+			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0, 0.0);
+			
+			dailyWeatherParams0.a = texelFetch2D(colortex4,ivec2(3,1),0).x/150.0;
+			dailyWeatherParams1.a = texelFetch2D(colortex4,ivec2(3,1),0).y/150.0;
+		#endif
+	
 	#endif
 
 	#ifdef NETHER_SHADER

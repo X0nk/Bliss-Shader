@@ -71,6 +71,7 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 #include "/lib/util.glsl"
 
 #ifdef OVERWORLD_SHADER
+	
 	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
 #endif
@@ -371,7 +372,7 @@ void main() {
 	#endif
 
 	#ifdef WEATHER
-		gl_FragData[1].a = TEXTURE.a; // for bloomy rain and stuff
+		gl_FragData[1] = vec4(0.0,0.0,0.0,TEXTURE.a); // for bloomy rain and stuff
 	#endif
 
 	#ifndef WEATHER
@@ -410,9 +411,11 @@ void main() {
 
 			Shadows = mix(LM_shadowMapFallback, Shadows, shadowMapFalloff2);
 
-			float cloudShadow = GetCloudShadow(feetPlayerPos);
+			#ifdef CLOUDS_SHADOWS	
+				Shadows *= GetCloudShadow(feetPlayerPos);
+			#endif
 
-			Direct_lighting = directLightColor * Shadows * cloudShadow;
+			Direct_lighting = directLightColor * Shadows;
 
 			#ifndef LINES
 				Direct_lighting *= phaseg(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), 0.65)*2 + 0.5;

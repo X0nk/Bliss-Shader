@@ -94,6 +94,14 @@ void getWeatherParams(
 	weatherParams1 = vec4(layer0_density, layer1_density, layer2_density, cloudyFog_density);
 }
 
+float hash11(float p)
+{
+    p = fract(p * .1031);
+    p *= p + 33.33;
+    p *= p + p;
+    return fract(p);
+}
+
 void main() {
 
 	gl_Position = ftransform()*0.5+0.5;
@@ -168,18 +176,47 @@ void main() {
 //////////////////////////////////
 
 #ifdef Daily_Weather
-	int dayCounter = int(mod(worldDay, 10));
+	// this is horrid and i hate it
+	// store 8 values that control cloud parameters.
+	// as the day counter changes, switch to a different set of stored values.
+	
+	#ifdef CHOOSE_RANDOM_WEATHER_PROFILE
+		int dayCounter = clamp(int(hash11(float(mod(worldDay, 1000))) * 11.0), 0,10);
+	#else
+		int dayCounter = int(mod(worldDay, 10));
+	#endif
+	
 
-	if(dayCounter == 0) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY0_l0_coverage, DAY0_l1_coverage, DAY0_l2_coverage, DAY0_ufog_density, DAY0_l0_density, DAY0_l1_density, DAY0_l2_density, DAY0_cfog_density);
-	if(dayCounter == 1) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY1_l0_coverage, DAY1_l1_coverage, DAY1_l2_coverage, DAY1_ufog_density, DAY1_l0_density, DAY1_l1_density, DAY1_l2_density, DAY1_cfog_density);
-	if(dayCounter == 2) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY2_l0_coverage, DAY2_l1_coverage, DAY2_l2_coverage, DAY2_ufog_density, DAY2_l0_density, DAY2_l1_density, DAY2_l2_density, DAY2_cfog_density);
-	if(dayCounter == 3) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY3_l0_coverage, DAY3_l1_coverage, DAY3_l2_coverage, DAY3_ufog_density, DAY3_l0_density, DAY3_l1_density, DAY3_l2_density, DAY3_cfog_density);
-	if(dayCounter == 4) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY4_l0_coverage, DAY4_l1_coverage, DAY4_l2_coverage, DAY4_ufog_density, DAY4_l0_density, DAY4_l1_density, DAY4_l2_density, DAY4_cfog_density);
-	if(dayCounter == 5) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY5_l0_coverage, DAY5_l1_coverage, DAY5_l2_coverage, DAY5_ufog_density, DAY5_l0_density, DAY5_l1_density, DAY5_l2_density, DAY5_cfog_density);
-	if(dayCounter == 6) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY6_l0_coverage, DAY6_l1_coverage, DAY6_l2_coverage, DAY6_ufog_density, DAY6_l0_density, DAY6_l1_density, DAY6_l2_density, DAY6_cfog_density);
-	if(dayCounter == 7) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY7_l0_coverage, DAY7_l1_coverage, DAY7_l2_coverage, DAY7_ufog_density, DAY7_l0_density, DAY7_l1_density, DAY7_l2_density, DAY7_cfog_density);
-	if(dayCounter == 8) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY8_l0_coverage, DAY8_l1_coverage, DAY8_l2_coverage, DAY8_ufog_density, DAY8_l0_density, DAY8_l1_density, DAY8_l2_density, DAY8_cfog_density);
-	if(dayCounter == 9) getWeatherParams(dailyWeatherParams0, dailyWeatherParams1, DAY9_l0_coverage, DAY9_l1_coverage, DAY9_l2_coverage, DAY9_ufog_density, DAY9_l0_density, DAY9_l1_density, DAY9_l2_density, DAY9_cfog_density);
+	vec4 weatherParameters_A[10] = vec4[](
+		vec4( DAY0_l0_coverage, DAY0_l1_coverage, DAY0_l2_coverage, DAY0_ufog_density),
+		vec4( DAY1_l0_coverage, DAY1_l1_coverage, DAY1_l2_coverage, DAY1_ufog_density),
+		vec4( DAY2_l0_coverage, DAY2_l1_coverage, DAY2_l2_coverage, DAY2_ufog_density),
+		vec4( DAY3_l0_coverage, DAY3_l1_coverage, DAY3_l2_coverage, DAY3_ufog_density),
+		vec4( DAY4_l0_coverage, DAY4_l1_coverage, DAY4_l2_coverage, DAY4_ufog_density),
+		
+		vec4( DAY5_l0_coverage, DAY5_l1_coverage, DAY5_l2_coverage, DAY5_ufog_density),
+		vec4( DAY6_l0_coverage, DAY6_l1_coverage, DAY6_l2_coverage, DAY6_ufog_density),
+		vec4( DAY7_l0_coverage, DAY7_l1_coverage, DAY7_l2_coverage, DAY7_ufog_density),
+		vec4( DAY8_l0_coverage, DAY8_l1_coverage, DAY8_l2_coverage, DAY8_ufog_density),
+		vec4( DAY9_l0_coverage, DAY9_l1_coverage, DAY9_l2_coverage, DAY9_ufog_density)
+	);
+
+	vec4 weatherParameters_B[10] = vec4[](
+		vec4(DAY0_l0_density, DAY0_l1_density, DAY0_l2_density, DAY0_cfog_density),
+		vec4(DAY1_l0_density, DAY1_l1_density, DAY1_l2_density, DAY1_cfog_density),
+		vec4(DAY2_l0_density, DAY2_l1_density, DAY2_l2_density, DAY2_cfog_density),
+		vec4(DAY3_l0_density, DAY3_l1_density, DAY3_l2_density, DAY3_cfog_density),
+		vec4(DAY4_l0_density, DAY4_l1_density, DAY4_l2_density, DAY4_cfog_density),
+
+		vec4(DAY5_l0_density, DAY5_l1_density, DAY5_l2_density, DAY5_cfog_density),
+		vec4(DAY6_l0_density, DAY6_l1_density, DAY6_l2_density, DAY6_cfog_density),
+		vec4(DAY7_l0_density, DAY7_l1_density, DAY7_l2_density, DAY7_cfog_density),
+		vec4(DAY8_l0_density, DAY8_l1_density, DAY8_l2_density, DAY8_cfog_density),
+		vec4(DAY9_l0_density, DAY9_l1_density, DAY9_l2_density, DAY9_cfog_density)
+	);
+
+	dailyWeatherParams0 = weatherParameters_A[dayCounter];
+	dailyWeatherParams1 = weatherParameters_B[dayCounter];
 #endif
 
 //////////////////////////////

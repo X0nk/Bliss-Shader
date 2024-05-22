@@ -23,6 +23,11 @@ flat varying float exposure;
 	flat varying vec3 averageSkyCol_Clouds;
 	flat varying vec4 lightCol;
 	flat varying vec3 WsunVec;
+
+	#if defined Daily_Weather
+		flat varying vec4 dailyWeatherParams0;
+		flat varying vec4 dailyWeatherParams1;
+	#endif
 #endif
 
 varying vec4 normalMat;
@@ -151,6 +156,12 @@ void main() {
 	
 		WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
 		// WsunVec = normalize(LightDir);
+	
+		#if defined Daily_Weather
+			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0, 0.0);
+			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0, 0.0);
+		#endif
+
 	#endif
 
 	#ifdef TAA_UPSCALING

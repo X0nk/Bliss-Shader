@@ -15,7 +15,7 @@ uniform sampler2D dhDepthTex1;
 
 uniform sampler2D colortex2;
 uniform sampler2D colortex3;
-// uniform sampler2D colortex4;
+uniform sampler2D colortex4;
 uniform sampler2D colortex6;
 uniform sampler2D colortex7;
 
@@ -77,15 +77,16 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 	
 	#define TIMEOFDAYFOG
 	#include "/lib/lightning_stuff.glsl"
+
+	
+	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
 	#include "/lib/overworld_fog.glsl"
 #endif
 #ifdef NETHER_SHADER
-	uniform sampler2D colortex4;
 	#include "/lib/nether_fog.glsl"
 #endif
 #ifdef END_SHADER
-	uniform sampler2D colortex4;
 	#include "/lib/end_fog.glsl"
 #endif
 
@@ -296,7 +297,7 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 			}
 
 			#ifdef VL_CLOUDS_SHADOWS
-				sh *= GetCloudShadow_VLFOG(progressW,WsunVec);
+				sh *= GetCloudShadow_VLFOG(progressW, WsunVec);
 			#endif
 
 
@@ -369,6 +370,7 @@ void main() {
 	#endif
 	
 	float z = texture2D(depthtex1,tc).x;
+
 	#ifdef DISTANT_HORIZONS
 		float DH_z = texture2D(dhDepthTex1,tc).x;
 	#else
@@ -393,23 +395,15 @@ void main() {
 	vec3 indirectLightColor = averageSkyCol/30.0;
 	vec3 indirectLightColor_dynamic = averageSkyCol_Clouds/30.0;
 
-		////////////////////////////////////////////////////////////
-		///////////////// IN FRONT OF TRANSLUCENTS /////////////////
-		////////////////////////////////////////////////////////////
+	#ifdef OVERWORLD_SHADER
+		vec4 VolumetricFog = GetVolumetricFog(viewPos0, vec2(noise_1,noise_2), directLightColor, indirectLightColor);
+	#endif
+	
+	#if defined NETHER_SHADER || defined END_SHADER
+		vec4 VolumetricFog = GetVolumetricFog(viewPos0, noise_1, noise_2);
+	#endif
 
-		#ifdef OVERWORLD_SHADER
-			vec4 VolumetricFog = GetVolumetricFog(viewPos0, vec2(noise_1,noise_2), directLightColor, indirectLightColor);
-		#endif
-		
-		#if defined NETHER_SHADER || defined END_SHADER
-			vec4 VolumetricFog = GetVolumetricFog(viewPos0, noise_1, noise_2);
-		#endif
-
-		gl_FragData[0] = clamp(VolumetricFog, 0.0, 65000.0);
-
-		//////////////////////////////////////////////////////////
-		///////////////// BEHIND OF TRANSLUCENTS /////////////////
-		//////////////////////////////////////////////////////////
+	gl_FragData[0] = clamp(VolumetricFog, 0.0, 65000.0);
 
 	if (isEyeInWater == 1){
 
@@ -426,5 +420,4 @@ void main() {
 
 	}
 
-	// gl_FragData[0] = clamp(vec4(vl,1.0),0.000001,65000.);
 }

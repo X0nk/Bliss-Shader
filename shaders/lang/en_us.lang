@@ -206,7 +206,8 @@ screen.Clouds = Cloud Settings
     option.CloudLayer2_height   = Height
 
 screen.DAILY_WEATHER = Daily Weather Settings
-    screen.DAY0_WEATHER = Day 0 Weather
+option.CHOOSE_RANDOM_WEATHER_PROFILE = Random Weather Profile
+    screen.DAY0_WEATHER = Day 0 Weather Profile
         option.DAY0_l0_coverage = Small Cumulus coverage
         option.DAY0_l0_density = Small Cumulus Density
         option.DAY0_l1_coverage = Large Cumulus Coverage
@@ -216,7 +217,7 @@ screen.DAILY_WEATHER = Daily Weather Settings
         option.DAY0_ufog_density = Uniform Fog Density
         option.DAY0_cfog_density = Cloudy Fog Density
         
-    screen.DAY1_WEATHER = Day 1 Weather
+    screen.DAY1_WEATHER = Day 1 Weather Profile
         option.DAY1_l0_coverage = Small Cumulus coverage
         option.DAY1_l0_density = Small Cumulus Density
         option.DAY1_l1_coverage = Large Cumulus Coverage
@@ -226,7 +227,7 @@ screen.DAILY_WEATHER = Daily Weather Settings
         option.DAY1_ufog_density = Uniform Fog Density
         option.DAY1_cfog_density = Cloudy Fog Density
         
-    screen.DAY2_WEATHER = Day 2 Weather
+    screen.DAY2_WEATHER = Day 2 Weather Profile
         option.DAY2_l0_coverage = Small Cumulus coverage
         option.DAY2_l0_density = Small Cumulus Density
         option.DAY2_l1_coverage = Large Cumulus Coverage
@@ -236,7 +237,7 @@ screen.DAILY_WEATHER = Daily Weather Settings
         option.DAY2_ufog_density = Uniform Fog Density
         option.DAY2_cfog_density = Cloudy Fog Density
 
-    screen.DAY3_WEATHER = Day 3 Weather
+    screen.DAY3_WEATHER = Day 3 Weather Profile
         option.DAY3_l0_coverage = Small Cumulus coverage
         option.DAY3_l0_density = Small Cumulus Density
         option.DAY3_l1_coverage = Large Cumulus Coverage
@@ -246,7 +247,7 @@ screen.DAILY_WEATHER = Daily Weather Settings
         option.DAY3_ufog_density = Uniform Fog Density
         option.DAY3_cfog_density = Cloudy Fog Density
 
-    screen.DAY4_WEATHER = Day 4 Weather
+    screen.DAY4_WEATHER = Day 4 Weather Profile
         option.DAY4_l0_coverage = Small Cumulus coverage
         option.DAY4_l0_density = Small Cumulus Density
         option.DAY4_l1_coverage = Large Cumulus Coverage
@@ -256,7 +257,7 @@ screen.DAILY_WEATHER = Daily Weather Settings
         option.DAY4_ufog_density = Uniform Fog Density
         option.DAY4_cfog_density = Cloudy Fog Density
 
-    screen.DAY5_WEATHER = Day 5 Weather
+    screen.DAY5_WEATHER = Day 5 Weather Profile
         option.DAY5_l0_coverage = Small Cumulus coverage
         option.DAY5_l0_density = Small Cumulus Density
         option.DAY5_l1_coverage = Large Cumulus Coverage
@@ -266,7 +267,7 @@ screen.DAILY_WEATHER = Daily Weather Settings
         option.DAY5_ufog_density = Uniform Fog Density
         option.DAY5_cfog_density = Cloudy Fog Density
 
-    screen.DAY6_WEATHER = Day 6 Weather
+    screen.DAY6_WEATHER = Day 6 Weather Profile
         option.DAY6_l0_coverage = Small Cumulus coverage
         option.DAY6_l0_density = Small Cumulus Density
         option.DAY6_l1_coverage = Large Cumulus Coverage
@@ -276,7 +277,7 @@ screen.DAILY_WEATHER = Daily Weather Settings
         option.DAY6_ufog_density = Uniform Fog Density
         option.DAY6_cfog_density = Cloudy Fog Density
 
-    screen.DAY7_WEATHER = Day 7 Weather
+    screen.DAY7_WEATHER = Day 7 Weather Profile
         option.DAY7_l0_coverage = Small Cumulus coverage
         option.DAY7_l0_density = Small Cumulus Density
         option.DAY7_l1_coverage = Large Cumulus Coverage
@@ -286,7 +287,7 @@ screen.DAILY_WEATHER = Daily Weather Settings
         option.DAY7_ufog_density = Uniform Fog Density
         option.DAY7_cfog_density = Cloudy Fog Density
 
-    screen.DAY8_WEATHER = Day 8 Weather
+    screen.DAY8_WEATHER = Day 8 Weather Profile
         option.DAY8_l0_coverage = Small Cumulus coverage
         option.DAY8_l0_density = Small Cumulus Density
         option.DAY8_l1_coverage = Large Cumulus Coverage
@@ -296,7 +297,7 @@ screen.DAILY_WEATHER = Daily Weather Settings
         option.DAY8_ufog_density = Uniform Fog Density
         option.DAY8_cfog_density = Cloudy Fog Density
 
-    screen.DAY9_WEATHER = Day 9 Weather
+    screen.DAY9_WEATHER = Day 9 Weather Profile
         option.DAY9_l0_coverage = Small Cumulus coverage
         option.DAY9_l0_density = Small Cumulus Density
         option.DAY9_l1_coverage = Large Cumulus Coverage
@@ -596,7 +597,8 @@ screen.Clouds.comment = Configure settings related to the raymarched volumetric 
     option.VOLUMETRIC_CLOUDS.comment = Toggle the clouds. §aPERFORMANCE COST:§r medium to high
     option.CLOUDS_QUALITY.comment = Configure the resolution of the volumetric clouds. §aPERFORMANCE COST:§r high
     option.CLOUDS_SHADOWS.comment = Toggle shadows that are casted from the clouds onto the ground, and fog below them. §aPERFORMANCE COST:§r low to medium
-    option.Daily_Weather.comment = Toggle the daily weather. There are 8 weather profiles i have set, that the shader cycles through every day. You cannot change any cloud coverage settings when this is enabled. §aPERFORMANCE COST:§r low
+    option.Daily_Weather.comment = Toggle the weather that changes every day. §bWhat is this?§r There are 10 weather profiles that the shader cycles through every day. You cannot change any cloud coverage settings when this is enabled. §aPERFORMANCE COST:§r low
+    option.CHOOSE_RANDOM_WEATHER_PROFILE.comment = §bWhat is this?§r Configure the shader to randomly choose the weather from one of the days below. When this is turned off, the shader will choose the day in order.
     option.Cloud_Speed.comment = Configure how fast the clouds move as the day goes by.
     option.Rain_coverage.comment = Configure how much of the sky the clouds cover during rain.
 

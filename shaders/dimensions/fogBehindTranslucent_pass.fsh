@@ -21,7 +21,7 @@ uniform sampler2D dhDepthTex1;
 
 uniform sampler2D colortex2;
 uniform sampler2D colortex3;
-// uniform sampler2D colortex4;
+uniform sampler2D colortex4;
 uniform sampler2D colortex6;
 uniform sampler2D colortex7;
 uniform sampler2D colortex11;
@@ -89,16 +89,16 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 
 	#define TIMEOFDAYFOG
 	#include "/lib/lightning_stuff.glsl"
+
+	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
 	#include "/lib/overworld_fog.glsl"
 
 #endif
 #ifdef NETHER_SHADER
-	uniform sampler2D colortex4;
 	#include "/lib/nether_fog.glsl"
 #endif
 #ifdef END_SHADER
-	uniform sampler2D colortex4;
 	#include "/lib/end_fog.glsl"
 #endif
 
@@ -353,17 +353,13 @@ void main() {
 			lightmap.y = 1.0;
 		#endif
 
-
-
 		float Vdiff = distance(viewPos1, viewPos0) * 2.0;
 		float VdotU = playerPos.y;
 		float estimatedDepth = Vdiff * abs(VdotU) ;	//assuming water plane
 		float estimatedSunDepth = estimatedDepth / abs(WsunVec.y); //assuming water plane
 
-
-
 	 	indirectLightColor_dynamic *= ambient_brightness * pow(1.0-pow(1.0-lightmap.y,0.5),3.0)	;
-		float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) ;
+		// float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) ;
 		// indirectLightColor_dynamic += vec3(TORCH_R,TORCH_G,TORCH_B)	* TorchBrightness_autoAdjust * pow(1.0-sqrt(1.0-clamp(lightmap.x,0.0,1.0)),2.0) * 2.0;
 
 		vec4 VolumetricFog2 = vec4(0,0,0,1);

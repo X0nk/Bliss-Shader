@@ -1,36 +1,27 @@
 #ifdef HQ_CLOUDS
 	int maxIT_clouds = minRayMarchSteps;
 	int maxIT = maxRayMarchSteps;
-#else
-	int maxIT_clouds = minRayMarchStepsLQ;
-	int maxIT = maxRayMarchStepsLQ;
-#endif
 
-#ifdef HQ_CLOUDS
 	const int cloudLoD = cloud_LevelOfDetail;
 	const int cloudShadowLoD = cloud_ShadowLevelOfDetail;
 #else
+	int maxIT_clouds = minRayMarchStepsLQ;
+	int maxIT = maxRayMarchStepsLQ;
+
 	const int cloudLoD = cloud_LevelOfDetailLQ;
 	const int cloudShadowLoD = cloud_ShadowLevelOfDetailLQ;
 #endif
-
-// uniform float viewHeight;
-// uniform float viewWidth;
 
 uniform int worldTime;
 #define WEATHERCLOUDS
 #include "/lib/climate_settings.glsl"
 
-#ifdef Daily_Weather
-#ifndef USE_WEATHER_PARAMS 
-	vec3 dailyWeatherParams0 = vec3(CloudLayer0_coverage, CloudLayer1_coverage, CloudLayer2_coverage);
-	vec3 dailyWeatherParams1 = vec3(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density);
-#endif
+#if defined Daily_Weather
+	flat varying vec4 dailyWeatherParams0;
+	flat varying vec4 dailyWeatherParams1;
 #else
-
-	vec3 dailyWeatherParams0 = vec3(CloudLayer0_coverage, CloudLayer1_coverage, CloudLayer2_coverage);
-	vec3 dailyWeatherParams1 = vec3(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density);
-
+	vec4 dailyWeatherParams0 = vec4(CloudLayer0_coverage, CloudLayer1_coverage, CloudLayer2_coverage, 0.0);
+	vec4 dailyWeatherParams1 = vec4(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density, 0.0);
 #endif
 
 float LAYER0_minHEIGHT = CloudLayer0_height; 
@@ -50,10 +41,9 @@ float LAYER1_DENSITY = dailyWeatherParams1.y;
 float LAYER2_DENSITY = dailyWeatherParams1.z;
 
 float rainCloudwetness = rainStrength;
-// float cloud_movement = frameTimeCounter * Cloud_Speed ;
-// float cloud_movement = abs((12000 - worldTime) * Cloud_Speed ) * 0.05;
-// float cloud_movement = (worldTime / 24.0) * Cloud_Speed;
+
 uniform int worldDay;
+
 float cloud_movement = (worldTime  + mod(worldDay,100)*24000.0) / 24.0 * Cloud_Speed;
 
 //3D noise from 2d texture
@@ -75,7 +65,6 @@ float densityAtPos(in vec3 pos){
 float GetAltostratusDensity(vec3 pos){
 
 	float Coverage; float Density;
-	// DailyWeather_Alto(Coverage, Density);
 
 	float large = texture2D(noisetex, (pos.xz + cloud_movement)/100000. ).b;
 	float small = texture2D(noisetex, (pos.xz - cloud_movement)/10000. - vec2(-large,1-large)/5).b;
@@ -610,7 +599,6 @@ vec4 renderClouds(
 
 float GetCloudShadow(vec3 feetPlayerPos){
 #ifdef CLOUDS_SHADOWS
-
 	vec3 playerPos = feetPlayerPos + cameraPosition;
 
 	float shadow = 0.0;
@@ -618,15 +606,15 @@ float GetCloudShadow(vec3 feetPlayerPos){
 	// assume a flat layer of cloud, and stretch the sampled density along the sunvector, starting from some vertical layer in the cloud.
 	#ifdef CloudLayer0
 		vec3 lowShadowStart = playerPos + (WsunVec / max(abs(WsunVec.y),0.0)) * max((CloudLayer0_height + 30) - playerPos.y,0.0) ;
-		shadow += GetCumulusDensity(0, lowShadowStart, 0, CloudLayer0_height, CloudLayer0_height+100)*LAYER0_DENSITY;
+		shadow += GetCumulusDensity(0, lowShadowStart, 0, CloudLayer0_height, CloudLayer0_height+100)*dailyWeatherParams1.x;
 	#endif
 	#ifdef CloudLayer1
 		vec3 higherShadowStart = playerPos + (WsunVec / max(abs(WsunVec.y),0.0)) * max((CloudLayer1_height + 50) - playerPos.y,0.0) ;
-		shadow += GetCumulusDensity(1, higherShadowStart, 0, CloudLayer1_height, CloudLayer1_height+100)*LAYER1_DENSITY;
+		shadow += GetCumulusDensity(1, higherShadowStart, 0, CloudLayer1_height, CloudLayer1_height+100)*dailyWeatherParams1.y;
 	#endif
 	#ifdef CloudLayer2 
 		vec3 highShadowStart = playerPos + (WsunVec / max(abs(WsunVec.y),0.0)) * max(CloudLayer2_height - playerPos.y,0.0);
-		shadow += GetAltostratusDensity(highShadowStart) * LAYER2_DENSITY;
+		shadow += GetAltostratusDensity(highShadowStart) * dailyWeatherParams1.z;
 	#endif
 
 	shadow = clamp(shadow,0.0,1.0);
@@ -648,15 +636,15 @@ float GetCloudShadow_VLFOG(vec3 WorldPos, vec3 WorldSpace_sunVec){
 
 	#ifdef CloudLayer0
 		vec3 lowShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.0)) * max((CloudLayer0_height + 30) - WorldPos.y,0.0)  ;
-		shadow += max(GetCumulusDensity(0, lowShadowStart, 0, CloudLayer0_height,CloudLayer0_height+100),0.0)*LAYER0_DENSITY;
+		shadow += max(GetCumulusDensity(0, lowShadowStart, 0, CloudLayer0_height, CloudLayer0_height+100),0.0)*dailyWeatherParams1.x;
 	#endif
 	#ifdef CloudLayer1
 		vec3 higherShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.0)) * max((CloudLayer1_height + 30) - WorldPos.y,0.0)  ;
-		shadow += max(GetCumulusDensity(1,higherShadowStart, 0, CloudLayer1_height,CloudLayer1_height+100) ,0.0)*LAYER1_DENSITY;
+		shadow += max(GetCumulusDensity(1,higherShadowStart, 0, CloudLayer1_height,CloudLayer1_height+100) ,0.0)*dailyWeatherParams1.y;
 	#endif
 	#ifdef CloudLayer2 
 		vec3 highShadowStart = WorldPos + (WorldSpace_sunVec / max(abs(WorldSpace_sunVec.y),0.0)) * max(CloudLayer2_height - WorldPos.y,0.0);
-		shadow += GetAltostratusDensity(highShadowStart)*LAYER2_DENSITY * 0.5;
+		shadow += GetAltostratusDensity(highShadowStart)*dailyWeatherParams1.z * 0.5;
 	#endif
 
 	shadow = clamp(shadow,0.0,1.0);

@@ -30,9 +30,7 @@ uniform sampler2D colortex13;
 uniform sampler2D colortex15;
 uniform vec2 texelSize;
 
-#if defined NETHER_SHADER || defined END_SHADER
-  uniform sampler2D colortex4;
-#endif
+uniform sampler2D colortex4;
 
 flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
 flat varying vec3 WsunVec;
@@ -70,11 +68,12 @@ uniform float darknessLightFactor;
 #ifdef OVERWORLD_SHADER
   #include "/lib/sky_gradient.glsl"
   #include "/lib/lightning_stuff.glsl"
-  #include "/lib/volumetricClouds.glsl"
-#endif
-#ifndef OVERWORLD_SHADER
   #include "/lib/climate_settings.glsl"
+  
+	// #define CLOUDSHADOWSONLY
+  // #include "/lib/volumetricClouds.glsl"
 #endif
+
 
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)

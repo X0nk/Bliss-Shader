@@ -24,7 +24,6 @@ uniform vec3 cameraPosition;
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
 #include "/lib/res_params.glsl"
-#include "/lib/gameplay_effects.glsl"
 
 uniform int hideGUI;
 
@@ -118,6 +117,28 @@ float interleaved_gradientNoise(){
 }
 
 
+#include "/lib/gameplay_effects.glsl"
+
+
+void doCameraGridLines(inout vec3 color, vec2 UV){
+
+  float lineThicknessY = 0.0025;
+  float lineThicknessX = lineThicknessY/aspectRatio;
+  
+  float horizontalLines = abs(UV.x-0.33);
+  horizontalLines = min(abs(UV.x-0.66), horizontalLines);
+
+  float verticalLines = abs(UV.y-0.33);
+  verticalLines = min(abs(UV.y-0.66), verticalLines);
+
+  float gridLines = horizontalLines < lineThicknessX || verticalLines < lineThicknessY ? 1.0 : 0.0;
+
+  if(hideGUI > 0.0) gridLines = 0.0;
+  color = mix(color, vec3(1.0),  gridLines);
+}
+
+
+
 void main() {
   #ifdef BICUBIC_UPSCALING
     vec3 col = SampleTextureCatmullRom(colortex7,texcoord,1.0/texelSize).rgb;
@@ -165,6 +186,10 @@ void main() {
     applyGameplayEffects(FINAL_COLOR, texcoord, interleaved_gradientNoise());
   #endif
   
+  #ifdef CAMERA_GRIDLINES
+    doCameraGridLines(FINAL_COLOR, texcoord);
+  #endif
+
   gl_FragColor.rgb = FINAL_COLOR;
 
   #if DEBUG_VIEW == debug_SHADOWMAP 

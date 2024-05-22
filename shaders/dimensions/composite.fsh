@@ -295,7 +295,7 @@ vec2 SSAO(
 			}
 		}
 	}
-	return max(1.0 - vec2(occlusion, sss)/n, 0.0);
+	return max(1.0 - vec2(occlusion*AO_Strength, sss)/n, 0.0);
 }
 
 vec4 encode (vec3 n, vec2 lightmaps){

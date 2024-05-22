@@ -1,6 +1,5 @@
-
-
 uniform float noPuddleAreas;
+
 float densityAtPosFog(in vec3 pos){
 	pos /= 18.;
 	pos.xz *= 0.5;
@@ -40,7 +39,7 @@ float cloudVol(in vec3 pos, float maxDistance ){
 	  	if(sandStorm > 0 || snowStorm > 0) CloudyFog = mix(CloudyFog, max(densityAtPosFog((samplePos2  - vec3(frameTimeCounter,0,frameTimeCounter)*10) * 100.0 ) - 0.2,0.0) * heightlimit, sandStorm+snowStorm);
 	#endif
 
-	TimeOfDayFog(UniformFog, CloudyFog, maxDistance);
+	TimeOfDayFog(UniformFog, CloudyFog, maxDistance, dailyWeatherParams0.a, dailyWeatherParams1.a);
 
 	float noise = densityAtPosFog(samplePos * 12.0);
     float erosion = 1.0-densityAtPosFog(samplePos2 * (125 - (1-pow(1-noise,5))*25));

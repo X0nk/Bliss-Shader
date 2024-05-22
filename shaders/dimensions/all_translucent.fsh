@@ -49,6 +49,7 @@ uniform sampler2D colortex12;
 uniform sampler2D colortex14;
 uniform sampler2D colortex5;
 uniform sampler2D colortex3;
+uniform sampler2D colortex4;
 uniform sampler2D colortex6;
 
 uniform sampler2D texture;
@@ -106,9 +107,10 @@ uniform vec3 nsunColor;
 #ifdef OVERWORLD_SHADER
 	flat varying float Flashing;
 	#include "/lib/lightning_stuff.glsl"
+	
+	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
 #else
-	uniform sampler2D colortex4;
 	uniform float nightVision;
 #endif
 
