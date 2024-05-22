@@ -320,7 +320,8 @@ void ApplySSRT(
 
 	// rgb = torch color * lightmap. a = sky lightmap.
 	vec4 Lighting = RT_AmbientLight(playerPos, lpvPos, Exposure, lightmaps, torchcolor);
-	skylightcolor = skylightcolor * ambient_brightness * Lighting.a;
+	// skylightcolor = skylightcolor * ambient_brightness * Lighting.a;
+    skylightcolor = max(skylightcolor * ambient_brightness * Lighting.a,  vec3(1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision)); 
 
 	for (int i = 0; i < nrays; i++){
 		int seed = (frameCounter%40000)*nrays+i;
@@ -339,9 +340,9 @@ void ApplySSRT(
 
 				// rayDir.y = mix(-1.0, rayDir.y, lightmaps.y*lightmaps.y);
 				
-				skycontribution = ((skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb / 30.0) * 2.5  * ambient_brightness) * Lighting.a + Lighting.rgb;
+				skycontribution = ((skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb / 30.0) * 2.5  * ambient_brightness) * Lighting.a + skylightcolor*(1-Lighting.a)  + Lighting.rgb;
 			#else
-				skycontribution = ((skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0) * 2.5  * ambient_brightness) * Lighting.a + Lighting.rgb;
+				skycontribution = ((skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0) * 2.5  * ambient_brightness) * Lighting.a + skylightcolor*(1-Lighting.a)  + Lighting.rgb;
 			#endif
 		#else
 
