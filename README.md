@@ -5,8 +5,9 @@ i eventually started tweaking the shader, adding settings, breaking stuff, and a
 i wanted to emphasize a varying scene, where the lighting isn't always the same whenever or wherever you are.
 
 ### SPECIAL THANKS:
-+ Chocapic13, for the whole thing
-+ WoMspace, for doing a DOF overhaul
++ Chocapic13, for the base shader
++ WoMspace, for spending alot of time creating a DOF overhaul
++ Null, for doing a huge amount of work creating the voxel floodfill colored lighting
 + Emin, and Gri573, for teaching me how to stop alot of light leaking
 + RRe36 and Sixthsurge, for the great ideas to steal
 ### [Want to support me? donate on my patreon](https://www.patreon.com/Xonkmoney)

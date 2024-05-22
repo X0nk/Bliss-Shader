@@ -737,8 +737,7 @@ void main() {
 
 		vec3 albedo = toLinear(vec3(dataUnpacked0.xz,dataUnpacked1.x));
 		vec3 normal = decode(dataUnpacked0.yw);
-		vec2 lightmap = dataUnpacked1.yz;//min(max(dataUnpacked1.yz - 0.05,0.0)*1.06,1.0);// small offset to hide flickering from precision error in the encoding/decoding on values close to 1.0 or 0.0
-		
+		vec2 lightmap = min(max(dataUnpacked1.yz - 0.05,0.0)*1.06,1.0);// small offset to hide flickering from precision error in the encoding/decoding on values close to 1.0 or 0.0
 
 		#if defined END_SHADER || defined NETHER_SHADER
 			lightmap.y = 1.0;

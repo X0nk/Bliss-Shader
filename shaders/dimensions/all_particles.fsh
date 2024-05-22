@@ -394,7 +394,7 @@ void main() {
 		vec3 MinimumLightColor = vec3(1.0);
 
 		if(isEyeInWater == 1) MinimumLightColor = vec3(10.0);
-		// if(lightmap.x >= 0.9) Torch_Color *= LIT_PARTICLE_BRIGHTNESS;
+		if(lightmap.x >= 0.9) Torch_Color *= LIT_PARTICLE_BRIGHTNESS;
 
 		#ifdef OVERWORLD_SHADER
 			directLightColor =  lightCol.rgb/80.0;
