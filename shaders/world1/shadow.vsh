@@ -72,6 +72,7 @@ void main() {
 						case ENTITY_BLAZE:
 						case ENTITY_END_CRYSTAL:
 						// case ENTITY_FIREBALL_SMALL:
+						case ENTITY_GLOW_SQUID:
 						case ENTITY_MAGMA_CUBE:
 						case ENTITY_SPECTRAL_ARROW:
 						case ENTITY_TNT:

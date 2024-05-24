@@ -212,7 +212,7 @@ void main() {
 			) {
 				uint voxelId = 0u;
 
-				if (currentRenderedItemId > 0) {
+				if (currentRenderedItemId > 0 && currentRenderedItemId < 1000) {
 					if (entityId != ENTITY_ITEM_FRAME && entityId != ENTITY_PLAYER)
 						voxelId = uint(currentRenderedItemId);
 				}
@@ -221,6 +221,7 @@ void main() {
 						case ENTITY_BLAZE:
 						case ENTITY_END_CRYSTAL:
 						// case ENTITY_FIREBALL_SMALL:
+						case ENTITY_GLOW_SQUID:
 						case ENTITY_MAGMA_CUBE:
 						case ENTITY_SPECTRAL_ARROW:
 						case ENTITY_TNT:
