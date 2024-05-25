@@ -979,6 +979,27 @@ void main() {
                 break;
         }
 
+        // WALL
+        if (blockId >= BLOCK_WALL_MIN && blockId <= BLOCK_WALL_MAX) {
+            mixWeight = 0.25;
+
+            if (blockId == BLOCK_WALL_POST_TALL_ALL || blockId == BLOCK_WALL_TALL_ALL
+                  || blockId == BLOCK_WALL_POST_TALL_N_W_S
+                  || blockId == BLOCK_WALL_POST_TALL_N_E_S
+                  || blockId == BLOCK_WALL_POST_TALL_W_N_E
+                  || blockId == BLOCK_WALL_POST_TALL_W_S_E) {
+                mixMask = BuildLpvMask(0u, 0u, 0u, 0u, 1u, 1u);
+                mixWeight = 0.125;
+            }
+            else if (blockId == BLOCK_WALL_POST_TALL_N_S || blockId == BLOCK_WALL_TALL_N_S) {
+                mixMask = BuildLpvMask(1u, 0u, 1u, 0u, 1u, 1u);
+            }
+            else if (blockId == BLOCK_WALL_POST_TALL_W_E || blockId == BLOCK_WALL_TALL_W_E) {
+                mixMask = BuildLpvMask(0u, 1u, 0u, 1u, 1u, 1u);
+            }
+            // TODO: more walls
+        }
+
         // Misc
 
         if (blockId == BLOCK_SIGN) {
