@@ -606,97 +606,87 @@ void main() {
             lightRange = 8.0;
         }
 
-        switch (blockId) {
-            case BLOCK_LIGHT_1:
-                lightColor = LightColor_LightBlock;
-                lightRange = 1;
-                mixWeight = 1.0;
-                break;
-            case BLOCK_LIGHT_2:
-                lightColor = LightColor_LightBlock;
-                lightRange = 2;
-                mixWeight = 1.0;
-                break;
-            case BLOCK_LIGHT_3:
-                lightColor = LightColor_LightBlock;
-                lightRange = 3;
-                mixWeight = 1.0;
-                break;
-            case BLOCK_LIGHT_4:
-                lightColor = LightColor_LightBlock;
-                lightRange = 4;
-                mixWeight = 1.0;
-                break;
-            case BLOCK_LIGHT_5:
-                lightColor = LightColor_LightBlock;
-                lightRange = 5;
-                mixWeight = 1.0;
-                break;
-            case BLOCK_LIGHT_6:
-                lightColor = LightColor_LightBlock;
-                lightRange = 6;
-                mixWeight = 1.0;
-                break;
-            case BLOCK_LIGHT_7:
-                lightColor = LightColor_LightBlock;
-                lightRange = 7;
-                mixWeight = 1.0;
-                break;
-            case BLOCK_LIGHT_8:
-                lightColor = LightColor_LightBlock;
-                lightRange = 8;
-                mixWeight = 1.0;
-                break;
-            case BLOCK_LIGHT_9:
-                lightColor = LightColor_LightBlock;
-                lightRange = 9;
-                mixWeight = 1.0;
-                break;
-            case BLOCK_LIGHT_10:
-                lightColor = LightColor_LightBlock;
-                lightRange = 10;
-                mixWeight = 1.0;
-                break;
-            case BLOCK_LIGHT_11:
-                lightColor = LightColor_LightBlock;
-                lightRange = 11;
-                mixWeight = 1.0;
-                break;
-            case BLOCK_LIGHT_12:
-                lightColor = LightColor_LightBlock;
-                lightRange = 12;
-                mixWeight = 1.0;
-                break;
-            case BLOCK_LIGHT_13:
-                lightColor = LightColor_LightBlock;
-                lightRange = 13;
-                mixWeight = 1.0;
-                break;
-            case BLOCK_LIGHT_14:
-                lightColor = LightColor_LightBlock;
-                lightRange = 14;
-                mixWeight = 1.0;
-                break;
-            case BLOCK_LIGHT_15:
-                lightColor = LightColor_LightBlock;
-                lightRange = 15;
-                mixWeight = 1.0;
-                break;
+        if (blockId >= BLOCK_LIGHT_1 && blockId <= BLOCK_LIGHT_15) {
+            lightColor = LightColor_LightBlock;
+            mixWeight = 1.0;
+
+            switch (blockId) {
+                case BLOCK_LIGHT_1:
+                    lightRange = 1;
+                    break;
+                case BLOCK_LIGHT_2:
+                    lightRange = 2;
+                    break;
+                case BLOCK_LIGHT_3:
+                    lightRange = 3;
+                    break;
+                case BLOCK_LIGHT_4:
+                    lightRange = 4;
+                    break;
+                case BLOCK_LIGHT_5:
+                    lightRange = 5;
+                    break;
+                case BLOCK_LIGHT_6:
+                    lightRange = 6;
+                    break;
+                case BLOCK_LIGHT_7:
+                    lightRange = 7;
+                    break;
+                case BLOCK_LIGHT_8:
+                    lightRange = 8;
+                    break;
+                case BLOCK_LIGHT_9:
+                    lightRange = 9;
+                    break;
+                case BLOCK_LIGHT_10:
+                    lightRange = 10;
+                    break;
+                case BLOCK_LIGHT_11:
+                    lightRange = 11;
+                    break;
+                case BLOCK_LIGHT_12:
+                    lightRange = 12;
+                    break;
+                case BLOCK_LIGHT_13:
+                    lightRange = 13;
+                    break;
+                case BLOCK_LIGHT_14:
+                    lightRange = 14;
+                    break;
+                case BLOCK_LIGHT_15:
+                    lightRange = 15;
+                    break;
+            }
         }
 
         if (blockId == BLOCK_MAGMA || blockId == ITEM_MAGMA) {
             lightColor = vec3(0.747, 0.323, 0.110);
             lightRange = 3.0;
+            mixWeight = 0.0;
+        }
+
+        if (blockId == BLOCK_RAIL_POWERED_ON) {
+            lightColor = LightColor_RedstoneTorch;
+            lightRange = 7.0;
+            mixWeight = 0.9;
         }
 
         if (blockId == BLOCK_REDSTONE_LAMP_LIT) {
             lightColor = vec3(0.953, 0.796, 0.496);
             lightRange = 15.0;
+            mixWeight = 0.0;
+        }
+
+        if (blockId == BLOCK_REDSTONE_ORE_LIT || blockId == BLOCK_DEEPSLATE_REDSTONE_ORE_LIT) {
+            lightColor = LightColor_RedstoneTorch;
+            lightRange = 7.0;
+            mixWeight = 0.0;
         }
 
         if (blockId == BLOCK_REDSTONE_TORCH_LIT || blockId == ITEM_REDSTONE_TORCH) {
             lightColor = LightColor_RedstoneTorch;
             lightRange = 7.0;
+            mixWeight = 0.9;
         }
 
         switch (blockId) {
@@ -989,6 +979,27 @@ void main() {
                 break;
         }
 
+        // WALL
+        if (blockId >= BLOCK_WALL_MIN && blockId <= BLOCK_WALL_MAX) {
+            mixWeight = 0.25;
+
+            if (blockId == BLOCK_WALL_POST_TALL_ALL || blockId == BLOCK_WALL_TALL_ALL
+                  || blockId == BLOCK_WALL_POST_TALL_N_W_S
+                  || blockId == BLOCK_WALL_POST_TALL_N_E_S
+                  || blockId == BLOCK_WALL_POST_TALL_W_N_E
+                  || blockId == BLOCK_WALL_POST_TALL_W_S_E) {
+                mixMask = BuildLpvMask(0u, 0u, 0u, 0u, 1u, 1u);
+                mixWeight = 0.125;
+            }
+            else if (blockId == BLOCK_WALL_POST_TALL_N_S || blockId == BLOCK_WALL_TALL_N_S) {
+                mixMask = BuildLpvMask(1u, 0u, 1u, 0u, 1u, 1u);
+            }
+            else if (blockId == BLOCK_WALL_POST_TALL_W_E || blockId == BLOCK_WALL_TALL_W_E) {
+                mixMask = BuildLpvMask(0u, 1u, 0u, 1u, 1u, 1u);
+            }
+            // TODO: more walls
+        }
+
         // Misc
 
         if (blockId == BLOCK_SIGN) {
@@ -1010,6 +1021,13 @@ void main() {
         if (blockId == ENTITY_FIREBALL_SMALL) {
             lightColor = vec3(0.000, 1.000, 0.000);
             lightRange = 8.0;
+            mixWeight = 1.0;
+        }
+
+        if (blockId == ENTITY_GLOW_SQUID) {
+            lightColor = vec3(0.180, 0.675, 0.761);
+            lightRange = 6.0;
+            mixWeight = 0.5;
         }
 
         if (blockId == ENTITY_MAGMA_CUBE) {

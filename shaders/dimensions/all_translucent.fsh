@@ -711,8 +711,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		vec3 normalOffset = 0.5*worldSpaceNormal;
 
 		#if LPV_NORMAL_STRENGTH > 0
-			vec3 texNormalOffset = -normalOffset + viewToWorld(normal);
-			normalOffset = mix(normalOffset, texNormalOffset, (LPV_NORMAL_STRENGTH*0.01));
+			if (any(greaterThan(abs(normal), vec3(1.0e-6)))) {
+				vec3 texNormalOffset = -normalOffset + viewToWorld(normal);
+				normalOffset = mix(normalOffset, texNormalOffset, (LPV_NORMAL_STRENGTH*0.01));
+			}
 		#endif
 
 		vec3 lpvPos = GetLpvPosition(feetPlayerPos) + normalOffset;
