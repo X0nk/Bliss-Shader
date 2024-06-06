@@ -446,14 +446,13 @@ void main() {
 	#ifdef HAND
 		if (Albedo.a > 0.1){
 			Albedo.a = 0.75;
-			gl_FragData[3].a = 0.0;
 		} else {
 			Albedo.a = 1.0;
 		}
 	#endif
 
-	#if defined PARTICLE_RENDERING_FIX && (defined ENTITIES || defined BLOCKENTITIES)
-		gl_FragData[3].a = 0.0;
+	#if defined HAND || defined ENTITIES || defined BLOCKENTITIES
+		gl_FragData[3] = vec4(0.0);
 	#endif
 
 	
