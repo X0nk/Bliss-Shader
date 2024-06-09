@@ -98,6 +98,8 @@ screen.Direct_Light = Direct Light
             value.LPV_SIZE.6 = Small [64]
             value.LPV_SIZE.7 = Medium [128]
             value.LPV_SIZE.8 = Large [256]
+        option.LPV_SATURATION = Saturation
+            suffix.LPV_SATURATION=%
         option.LPV_NORMAL_STRENGTH = Normal Strength
             suffix.LPV_NORMAL_STRENGTH = %
             value.LPV_NORMAL_STRENGTH.0 = OFF
@@ -539,6 +541,13 @@ screen.Ambient_light.comment = Configure settings related to the lighting in sha
 
     screen.Ambient_Colors.comment = Configure the color of light in shaded areas.
     screen.Torch_Colors.comment = Configure the color of light from torches or other placed lightsources.
+
+    option.LPV_SIZE.comment = Configures the size (in blocks) of the volume for colored lighting.
+    option.LPV_SATURATION.comment = Configures the intensity of colored lighting.
+    option.LPV_NORMAL_STRENGTH.comment = Configure the amount surface normals will affect lighting direction.
+    option.LPV_ENTITY_LIGHTS.comment = Allows entities to contribute to colored lighting.
+    option.LPV_REDSTONE_LIGHTS.comment = Allows redstone blocks to contribute to colored lighting.
+    option.LPV_COLORED_CANDLES.comment = Allows colored candles to emit matching colored lighting.
 
 screen.LabPBR.comment = A handfull of effects that use information provided by any resourcepack that follows the LabPBR format.
     screen.Reflections.comment = Configure the reflections that use information provided by a LabPBR resourcepack.

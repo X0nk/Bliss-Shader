@@ -37,6 +37,19 @@ const ivec3 workGroups = ivec3(6, 6, 1);
     uint BuildLpvMask(const in uint north, const in uint east, const in uint south, const in uint west, const in uint up, const in uint down) {
         return east | (west << 1) | (down << 2) | (up << 3) | (south << 4) | (north << 5);
     }
+
+    mat4 GetSaturationMatrix(const in float saturation) {
+        const vec3 luminance = vec3(0.3086, 0.6094, 0.0820);
+        
+        vec3 lumSat = luminance * (1.0 - saturation);
+        vec2 satZero = vec2(saturation, 0.0);
+        
+        return mat4(
+            vec4(lumSat.r + satZero.xyy, 0.0),
+            vec4(lumSat.g + satZero.yxy, 0.0),
+            vec4(lumSat.b + satZero.yyx, 0.0),
+            vec4(0.0, 0.0, 0.0, 1.0));
+    }
 #endif
 
 
@@ -1052,6 +1065,11 @@ void main() {
 
         // lazy fix for migrating from mixWeight to tintColor
         tintColor *= mixWeight;
+
+        // apply saturation changes
+        const float saturationF = LPV_SATURATION / 100.0;
+        mat4 matSaturation = GetSaturationMatrix(saturationF);
+        lightColor = (matSaturation * vec4(lightColor, 1.0)).rgb;
 
         uint lightColorRange = packUnorm4x8(vec4(lightColor, lightRange/255.0));
         uint tintColorMask = packUnorm4x8(vec4(tintColor, 0.0));
