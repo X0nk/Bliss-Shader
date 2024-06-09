@@ -1063,13 +1063,14 @@ void main() {
         // hack to increase light (if set)
         if (lightRange > 0.0) lightRange += 1.0;
 
-        // lazy fix for migrating from mixWeight to tintColor
-        tintColor *= mixWeight;
-
-        // apply saturation changes
+        // apply saturation changes to light and tint colors
         const float saturationF = LPV_SATURATION / 100.0;
         mat4 matSaturation = GetSaturationMatrix(saturationF);
         lightColor = (matSaturation * vec4(lightColor, 1.0)).rgb;
+        tintColor = (matSaturation * vec4(tintColor, 1.0)).rgb;
+
+        // lazy fix for migrating from mixWeight to tintColor
+        tintColor *= mixWeight;
 
         uint lightColorRange = packUnorm4x8(vec4(lightColor, lightRange/255.0));
         uint tintColorMask = packUnorm4x8(vec4(tintColor, 0.0));
