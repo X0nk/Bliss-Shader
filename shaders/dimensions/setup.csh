@@ -1054,7 +1054,7 @@ void main() {
         }
 
         if (blockId == ENTITY_SPECTRAL_ARROW) {
-            lightColor = vec3(0.0, 1.0, 0.0);
+            lightColor = vec3(0.839, 0.541, 0.2);
             lightRange = 8.0;
             mixWeight = 1.0;
         }
