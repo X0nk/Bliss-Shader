@@ -106,6 +106,7 @@ screen.Direct_Light = Direct Light
         option.LPV_ENTITY_LIGHTS = Entity Lights
         option.LPV_REDSTONE_LIGHTS = Redstone Lights
         option.LPV_COLORED_CANDLES = Colored Candles
+        option.LPV_NOSHADOW_HACK = Iris <= 1.7.0 Fix
 
 screen.Subsurface_Scattering = Sub-Surface Scattering
     option.LabSSS_Curve = LabSSS Curve
@@ -547,6 +548,7 @@ screen.Ambient_light.comment = Configure settings related to the lighting in sha
     option.LPV_ENTITY_LIGHTS.comment = Allows entities to contribute to colored lighting.
     option.LPV_REDSTONE_LIGHTS.comment = Allows redstone blocks to contribute to colored lighting.
     option.LPV_COLORED_CANDLES.comment = Allows colored candles to emit matching colored lighting.
+    option.LPV_NOSHADOW_HACK.comment = Fix for Iris 1.7.0 and lower! Allows floodfill to work in Nether & End, but disables entity & dropped item lights.
 
 screen.Resource_Pack_Support.comment = A handfull of effects that use information provided by a resourcepack.
     screen.Reflections.comment = Configure the reflections that use information provided by a LabPBR resourcepack.
