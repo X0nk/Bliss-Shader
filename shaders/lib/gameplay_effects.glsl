@@ -57,7 +57,7 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
         damageDistortion = mix(damageDistortion, vignette * (0.5 + noise), CriticalDamageTaken) * MOTION_AMOUNT;
         
         // apply death distortion effect
-        distortmask = isDead ? noise*0.7 : damageDistortion;
+        distortmask = isDead ? vignette * (0.7 + noise*0.3) : damageDistortion;
     #endif
     //////////////////////// WATER DISTORTION /////////////////////
     #if defined WATER_ON_CAMERA_EFFECT
@@ -81,14 +81,6 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
     vec2 zoomUV = 0.5 + (texcoord - 0.5) * (1.0 - distortmask);
     vec3 distortedColor = texture2D(colortex7, zoomUV).rgb;
 
-    #ifdef TONE_CURVE
-    	distortedColor = toneCurve(distortedColor);
-    #endif
-    #ifdef COLOR_GRADING_ENABLED
-    	distortedColor = colorGrading(distortedColor);
-    #endif
-    applyContrast(distortedColor, CONTRAST);
-
     #ifdef WATER_ON_CAMERA_EFFECT
         // apply the distorted water color to the scene, but revert back to before when it ends
         if(exitWater > 0.01) color = distortedColor;
@@ -108,11 +100,10 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
         #endif
 
         #ifdef DAMAGE_TAKEN_EFFECT
-            color = mix(color, distortedColorLuma, vignette * sqrt(MinorDamageTaken));
+            color = mix(color, distortedColorLuma, vignette * sqrt(min(MinorDamageTaken,1.0)));
             color = mix(color, distortedColorLuma, sqrt(CriticalDamageTaken));
         #endif
 
-        if(isDead) color = distortedColorLuma * 0.3;
+        if(isDead) color = distortedColorLuma * 0.35;
     #endif
-
 }

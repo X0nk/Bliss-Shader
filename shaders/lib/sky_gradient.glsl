@@ -109,7 +109,7 @@ vec4 texture2D_bicubic_offset(sampler2D tex, vec2 uv, float noise, float scale)
 	#endif
 	
 	vec4 texelSize = vec4(texelSize,1.0/texelSize);
-	uv = uv*texelSize.zw;
+	uv = (uv + texelSize.xy)*texelSize.zw;
 	
 	vec2 iuv = floor( uv + circleOffsets );
 	vec2 fuv = fract( uv + circleOffsets );

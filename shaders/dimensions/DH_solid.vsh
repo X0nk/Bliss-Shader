@@ -80,8 +80,10 @@ void main() {
 	if(dhMaterialId == DH_BLOCK_ILLUMINATED || gl_MultiTexCoord1.x >= 0.95) EMISSIVE = 0.5;
 
 	SSSAMOUNT = 0.0;
-	if (dhMaterialId == DH_BLOCK_LEAVES) SSSAMOUNT = 1.0;
-	if (dhMaterialId == DH_BLOCK_SNOW) SSSAMOUNT = 0.5;
+	#if defined DH_SUBSURFACE_SCATTERING
+		if (dhMaterialId == DH_BLOCK_LEAVES) SSSAMOUNT = 1.0;
+		if (dhMaterialId == DH_BLOCK_SNOW) SSSAMOUNT = 0.5;
+	#endif
 
 	// a mask for DH terrain in general.
 	float MATERIALS = 0.65;

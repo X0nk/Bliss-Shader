@@ -105,7 +105,7 @@ void main() {
 	HELD_ITEM_BRIGHTNESS = 0.0;
 
 	#ifdef Hand_Held_lights
-		if(heldItemId == ITEM_LIGHT_SOURCES || heldItemId2 == ITEM_LIGHT_SOURCES) HELD_ITEM_BRIGHTNESS = 0.9;
+		if(heldItemId > 999 || heldItemId2 > 999) HELD_ITEM_BRIGHTNESS = 0.9;
 	#endif
 
 
@@ -147,8 +147,8 @@ void main() {
 	
 		WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
 		#if defined Daily_Weather
-			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0, 0.0);
-			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0, 0.0);
+			dailyWeatherParams0 = vec4((texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0) / 2.0, 0.0);
+			dailyWeatherParams1 = vec4((texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0) / 2.0, 0.0);
 		#endif
 	#endif
 	

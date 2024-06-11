@@ -228,7 +228,7 @@ vec3 toClipSpace3(vec3 viewSpacePosition) {
     return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 }
 
-	flat varying vec3 WsunVec2;
+flat varying vec3 WsunVec2;
 const float mincoord = 1.0/4096.0;
 const float maxcoord = 1.0-mincoord;
 
@@ -245,6 +245,7 @@ const float maxcoord = 1.0-mincoord;
 		return texture2DGradARB(texture,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
 	}
 #endif
+
 uniform float near;
 // uniform float far;
 float ld(float dist) {
@@ -368,7 +369,7 @@ void main() {
 	#endif
 
 	#ifdef Hand_Held_lights
-		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(viewPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
+		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(feetPlayerPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
 	#endif
 
 	#ifdef WEATHER
@@ -422,7 +423,12 @@ void main() {
 			#endif
 
 			AmbientLightColor = averageSkyCol_Clouds / 30.0;
-			AmbientLightColor *= 2.5;
+			#ifdef IS_IRIS
+				AmbientLightColor *= 2.5;
+			#else
+				AmbientLightColor *= 0.5;
+			#endif
+
 		#endif
 
 		#ifdef IS_LPV_ENABLED

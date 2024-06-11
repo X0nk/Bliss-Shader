@@ -259,7 +259,7 @@ screen.Post_Processing = Pós-processamento
         option.SCALE_FACTOR = Determinante de Tamanho
 
 
-screen.LabPBR = LabPBR 
+screen.Resource_Pack_Support = Resource_Pack_Support 
     screen.Reflections = Reflexos Especulares
         option.Specular_Reflections = Reflexos Especulares
         option.Screen_Space_Reflections = Reflexos no Espaço da Tela / SSR
@@ -370,7 +370,7 @@ screen.Ambient_light.comment = Ajustes relacionados a luz em lugares sombreados
     screen.Ambient_Colors.comment = Ajuste a cor da luz em lugares sombreados.
     screen.Torch_Colors.comment = Ajuste a cor da luz da tocha ou outras fontes de luz.
 
-screen.LabPBR.comment = Um punhado de efeitos que usam informações de um pacote de textura que usa o formato LabPBR.
+screen.Resource_Pack_Support.comment = Um punhado de efeitos que usam informações de um pacote de textura que usa o formato LabPBR.
     screen.Reflections.comment = Ajuste os reflexos que utilizam informações de um pacote de textura LabPBR.
         option.Specular_Reflections.comment = Habilita todos os reflexos para pacotes LabPBR. Isso permite o reflexo do sol, além de várias outras configurações abaixo. §aCUSTO DE PERFORMANCE:§r Baixo
         option.Screen_Space_Reflections.comment = Habilita reflexos no espaço de tela. §aCUSTO DE PERFORMANCE:§r Médio

@@ -426,7 +426,7 @@ screen.Post_Processing = 后期处理
 		option.HIGHLIGHTS_GRADE_MUL = 亮部 - 亮度
 
 
-screen.LabPBR = Lab PBR
+screen.LabResource_Pack_SupportPBR = Lab PBR
     screen.Reflections = 高光反射
         option.Specular_Reflections = 高光反射
         option.Screen_Space_Reflections = 屏幕空间反射 (SSR)
@@ -448,7 +448,6 @@ screen.LabPBR = Lab PBR
 
 
 screen.POM = 视差遮蔽映射 (POM)
-    option.HEIGTHMAP_DEPTH_OFFSET = 基于高度图的深度偏移
     option.POM = 视差 (POM)
     option.MAX_ITERATIONS = 视差质量
     option.POM_DEPTH = 视差深度
@@ -536,7 +535,7 @@ screen.Ambient_light.comment = 配置和遮蔽处的照明相关的设置.
     screen.Ambient_Colors.comment = 配置阴影区域的照明颜色.
     screen.Torch_Colors.comment = 配置火把或其它可放置光源的颜色.
 
-screen.LabPBR.comment = 由遵循 LabPBR 格式的资源包提供部分信息的小部分效果.
+screen.Resource_Pack_Support.comment = 由遵循 LabPBR 格式的资源包提供部分信息的小部分效果.
     screen.Reflections.comment = 配置由 LabPBR 格式的资源包所提供信息的反射.
         option.Specular_Reflections.comment = LabPBR 资源包所有反射的开关. 本选项同时启用太阳反射, 同时允许以下其它设置启用. §a性能消耗水平:§r 低.
         option.Screen_Space_Reflections.comment = 屏幕空间反射开关. §a性能消耗水平:§r 中.
@@ -560,7 +559,6 @@ screen.Emissives.comment = §b这啥?§r 自发光亮度是指某方块发光量
     option.Emissive_Curve.comment = 调整自发光纹理达到最高亮度的容易程度/速度. 1.0 是线性.
 
 screen.POM.comment = 配置由资源包提供信息的视差遮蔽映射的相关设置.
-    option.HEIGTHMAP_DEPTH_OFFSET.comment = §b这啥?§r 使用资源包提供的 “高度图” 的偏移抵消许多效果所需的深度. 允许近处有更多细节, 同时作为 “POM 的性能预算” 而生效. §a性能消耗水平:§r 低偏中 - 如果设备负担不起了 POM 的性能消耗, 可使用本选项.
     option.POM.comment = §b这啥?§r 通过使用资源包中的特殊图像, 在实际没有的区域渲染出 3D 几何图形. 这种效果基本上只向内凹, 所以大角度观察时, 会存在一些伪影. §a性能消耗水平:§r 中偏高.
     option.MAX_ITERATIONS.comment = 配置视差效果的质量. 如果近距离仅看到了部分层, 则需要提高本项数值, 不然很难看到. §a性能消耗水平:§r 高.
     option.POM_DEPTH.comment = 视差效果表面凹陷程度. §a性能消耗水平:§r 非常低.
@@ -747,7 +745,6 @@ option.TRANSLUCENT_COLORED_SHADOWS.comment = §b这啥?§r 本选项的效果可
         option.Exposure_Speed=曝光速度
         option.Manual_exposure_value=手动曝光值
 
-        option.AUTOFOCUS=自动对焦
         option.focal=焦距
         option.aperture=光圈
         option.DoF_Adaptation_Speed=景深虚化自适应速度

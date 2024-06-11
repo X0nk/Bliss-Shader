@@ -128,7 +128,7 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 	transmittance = vec3(1.0);
 
 	float high_sun = clamp(pow(sunVector.y+0.6,5),0.0,1.0) * 3.0; // make sunrise less blue, and allow sunset to be bluer
-	float low_sun = clamp(((1.0-abs(sunVector.y))*3.) - high_sun,1.0,2.0) ;
+	float low_sun = clamp(((1.0-abs(sunVector.y))*3.) - high_sun,1.0,1.8) ;
 
 
 	for (int i = 0; i < iSteps; ++i, position += increment) {

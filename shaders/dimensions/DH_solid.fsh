@@ -101,7 +101,13 @@ uniform vec3 cameraPosition;
 void main() {
     
     #ifdef DH_OVERDRAW_PREVENTION
-        if(clamp(1.0-length(pos.xyz)/max(far - 32.0,32.0),0.0,1.0) > 0.0 ){
+    	#if OVERDRAW_MAX_DISTANCE == 0
+			float maxOverdrawDistance = far;
+		#else
+			float maxOverdrawDistance = OVERDRAW_MAX_DISTANCE;
+		#endif
+
+        if(clamp(1.0-length(pos.xyz)/clamp(far - 32.0,32.0,maxOverdrawDistance),0.0,1.0) > 0.0 ){
             discard;
             return;
         }

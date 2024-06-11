@@ -38,6 +38,7 @@ uniform int isEyeInWater;
 uniform float rainStrength;
 uniform ivec2 eyeBrightnessSmooth;
 uniform float eyeAltitude;
+uniform float caveDetection;
 
 #define DHVLFOG
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
@@ -397,7 +398,7 @@ void main() {
 	vec3 indirectLightColor_dynamic = averageSkyCol_Clouds/30.0;
 
 	#ifdef OVERWORLD_SHADER
-		vec4 VolumetricFog = GetVolumetricFog(viewPos0, vec2(noise_1,noise_2), directLightColor, indirectLightColor);
+		vec4 VolumetricFog = GetVolumetricFog(viewPos0, vec2(noise_1,noise_2), directLightColor, indirectLightColor, averageSkyCol_Clouds/30.0);
 	#endif
 	
 	#if defined NETHER_SHADER || defined END_SHADER

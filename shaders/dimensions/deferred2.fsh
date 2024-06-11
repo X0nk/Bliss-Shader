@@ -23,6 +23,7 @@ uniform sampler2D noisetex;
 uniform sampler2D colortex12;
 
 flat varying vec3 WsunVec;
+uniform float sunElevation;
 uniform vec3 sunVec;
 uniform vec2 texelSize;
 uniform float frameTimeCounter;
@@ -124,17 +125,20 @@ void main() {
 /* DRAWBUFFERS:0 */
 	#if defined OVERWORLD_SHADER && defined VOLUMETRIC_CLOUDS 
 		vec2 halfResTC = vec2(floor(gl_FragCoord.xy)/CLOUDS_QUALITY/RENDER_SCALE+0.5+offsets[framemod8]*CLOUDS_QUALITY*RENDER_SCALE*0.5);
-		
-		float depth =  texture2D(depthtex0, halfResTC*texelSize).x;
-		
 
-		// vec3 viewPos = toScreenSpace(vec3(halfResTC*texelSize, depth));
+		vec2 halfResTC2 = vec2(floor(gl_FragCoord.xy)/CLOUDS_QUALITY+0.5+offsets[framemod8]*CLOUDS_QUALITY*0.5);
 		
-		#ifdef DISTANT_HORIZONS
-		float DH_depth =  texture2D(dhDepthTex, halfResTC*texelSize).x;
-			vec3 viewPos = toScreenSpace_DH(halfResTC*texelSize, depth, DH_depth);
+		#ifdef CLOUDS_INTERSECT_TERRAIN
+			float depth = texture2D(depthtex0, halfResTC2*texelSize).x;
+
+			#ifdef DISTANT_HORIZONS
+				float DH_depth =  texture2D(dhDepthTex, halfResTC2*texelSize).x;
+				vec3 viewPos = toScreenSpace_DH(halfResTC*texelSize, depth, DH_depth);
+			#else
+				vec3 viewPos = toScreenSpace(vec3(halfResTC*texelSize, depth));
+			#endif
 		#else
-			vec3 viewPos = toScreenSpace(vec3(halfResTC*texelSize, depth));
+			vec3 viewPos = toScreenSpace(vec3(halfResTC*texelSize, 1.0));
 		#endif
 
 

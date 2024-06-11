@@ -339,10 +339,9 @@ void ApplySSRT(
 				if(isGrass) rayDir.y = clamp(rayDir.y +  0.5,-1,1);
 
 				// rayDir.y = mix(-1.0, rayDir.y, lightmaps.y*lightmaps.y);
-				
-				skycontribution = ((skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb / 30.0) * 2.5  * ambient_brightness) * Lighting.a + skylightcolor*(1-Lighting.a)  + Lighting.rgb;
+				skycontribution = pow(skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb/30, vec3(0.7)) *2.5 * ambient_brightness * Lighting.a  + Lighting.rgb;
 			#else
-				skycontribution = ((skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0) * 2.5  * ambient_brightness) * Lighting.a + skylightcolor*(1-Lighting.a)  + Lighting.rgb;
+				skycontribution = (pow(skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0,vec3(0.7)) * 2.5  * ambient_brightness) * Lighting.a + skylightcolor*(1-Lighting.a)  + Lighting.rgb;
 			#endif
 		#else
 

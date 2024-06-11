@@ -3,7 +3,11 @@
 flat varying vec3 zMults;
 
 flat varying vec2 TAA_Offset;
-flat varying vec3 skyGroundColor;
+flat varying vec3 WsunVec;
+
+#ifdef OVERWORLD_SHADER
+  flat varying vec3 skyGroundColor;
+#endif
 
 uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
@@ -32,8 +36,6 @@ uniform vec2 texelSize;
 
 uniform sampler2D colortex4;
 
-flat varying vec4 lightCol; //main light source color (rgb),used light source(1=sun,-1=moon)
-flat varying vec3 WsunVec;
 
 uniform vec3 sunVec;
 uniform float frameTimeCounter;
@@ -60,7 +62,7 @@ uniform float rainStrength;
 uniform float blindness;
 uniform float darknessFactor;
 uniform float darknessLightFactor;
-
+uniform float caveDetection;
 
 #include "/lib/waterBump.glsl"
 #include "/lib/res_params.glsl"
@@ -250,18 +252,23 @@ void main() {
 	vec3 fragpos = toScreenSpace_DH(texcoord/RENDER_SCALE-vec2(TAA_Offset)*texelSize*0.5, z, DH_depth0);
   
 	// vec3 fragpos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(TAA_Offset)*texelSize*0.5,z));
-	vec3 p3 = mat3(gbufferModelViewInverse) * fragpos;
+	vec3 p3 = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
 	vec3 np3 = normVec(p3);
 
   float linearDistance = length(p3);
   float linearDistance_cylinder = length(p3.xz);
+  
+	// vec3 fragpos_NODH = toScreenSpace(texcoord/RENDER_SCALE-vec2(TAA_Offset)*texelSize*0.5, z);
+  
+  // float linearDistance_NODH = length(p3);
+
 
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 	float lightleakfixfast = clamp(eyeBrightness.y/240.,0.0,1.0);
 
 	////// --------------- UNPACK TRANSLUCENT GBUFFERS --------------- //////
 	vec4 data = texture2D(colortex11,texcoord).rgba;
-	vec4 unpack0 =  vec4(decodeVec2(data.r),decodeVec2(data.g)) ;
+	vec4 unpack0 = vec4(decodeVec2(data.r),decodeVec2(data.g)) ;
 	vec4 unpack1 = vec4(decodeVec2(data.b),0,0) ;
 	
 	vec4 albedo = vec4(unpack0.ba,unpack1.rg);
@@ -281,7 +288,6 @@ void main() {
 	bool isReflectiveEntity = abs(translucentMasks - 0.8) < 0.01;
 	bool isReflective = abs(translucentMasks - 0.7) < 0.01 || isWater || isReflectiveEntity;
 	bool isEntity = abs(translucentMasks - 0.9) < 0.01 || isReflectiveEntity;
-
 
   ////// --------------- get volumetrics
   #ifdef TOGGLE_VL_FOG
@@ -307,7 +313,7 @@ void main() {
   vec3 color = texture2D(colortex3, refractedCoord).rgb;
 
   // apply block breaking effect.
-  if(albedo.a > 0.01 && !isWater && TranslucentShader.a <= 0.0) color = mix(color*6.0, color, luma(albedo.rgb)) * albedo.rgb;
+  if(albedo.a > 0.01 && !isWater && TranslucentShader.a <= 0.0 && !isEntity) color = mix(color*6.0, color, luma(albedo.rgb)) * albedo.rgb;
 
   ////// --------------- BLEND TRANSLUCENT GBUFFERS 
   //////////// and do border fog on opaque and translucents
@@ -323,7 +329,7 @@ void main() {
 
     if(swappedDepth >= 1.0 || isEyeInWater != 0) fog = 0.0;
     
-    if(lightleakfixfast < 1.0) fog *= lightleakfix;
+    // fog *= lightleakfix;
   
     #ifdef SKY_GROUND
       vec3 borderFogColor = skyGroundColor;
@@ -352,21 +358,21 @@ void main() {
 //////////// blindness, nightvision, liquid fogs and misc fogs
 
 #if defined OVERWORLD_SHADER && defined CAVE_FOG
-    if (isEyeInWater == 0 && eyeAltitude < 1500 && lightleakfix < 1.0){
+    if (isEyeInWater == 0 && eyeAltitude < 1500){
 
-      float cavefog = clamp( pow(linearDistance / far, CaveFogFallOff) ,0.0,1.0);
-      cavefog = cavefog*0.95 + clamp( pow(1.0 - exp((linearDistance / far) * -5), 2.0) ,0.0,1.0)*0.05;
+      float cavefog = pow(1.0 - max(1.0 - linearDistance/far,0.0),2.0);
+    
+      vec3 cavefogCol = vec3(CaveFogColor_R, CaveFogColor_G, CaveFogColor_B) * cavefog;
 
-  	  cavefog *= exp(-30.0*(pow(clamp(np3.y-0.5,0.0,1.0),2.0))); // create a hole in the fog above, so the sky is a little visible.
-
-      vec3 cavefogCol = vec3(CaveFogColor_R, CaveFogColor_G, CaveFogColor_B);
-      cavefogCol *= clamp( exp(clamp(np3.y * 0.5 + 0.5,0,1) * -3.0)  ,0.0,1.0); // apply a vertical gradient to the fog color
+      cavefogCol *= exp(-7.0*clamp(normalize(np3).y*0.5+0.5,0.0,1.0)) * 0.999 + 0.001;
 
       #ifdef PER_BIOME_ENVIRONMENT
         BiomeFogColor(cavefogCol);
       #endif
 
-      color.rgb = mix(color.rgb,  cavefogCol,  cavefog * (1.0-lightleakfix));
+  	  float skyhole = pow(clamp(1.0-pow(max(np3.y - 0.6,0.0)*5.0,2.0),0.0,1.0),2);
+
+      color.rgb = mix(color.rgb + cavefogCol * caveDetection, cavefogCol, swappedDepth >= 1.0 ? skyhole * caveDetection : 0.0);
     }
 #endif
 
@@ -408,9 +414,12 @@ void main() {
 
 ////// --------------- BLEND FOG INTO SCENE
 //////////// apply VL fog over opaque and translucents
+
+  // color += skyGroundColor * (1.0 - pow(max(1.0 - linearDistance/far,0.0),3.0)) * rainStrength;
+
   color *= vl.a;
   color += vl.rgb;
-  bloomyFogMult *= vl.a;
+  bloomyFogMult *= mix(vl.a,vl.a*0.5 + 0.5, rainStrength);
   
 ////// --------------- VARIOUS FOG EFFECTS (in front of volumetric fog)
 //////////// blindness, nightvision, liquid fogs and misc fogs
@@ -448,12 +457,11 @@ void main() {
     }
   #endif
   
-
   gl_FragData[0].r = bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);
   
-  	// gl_FragData[1].rgb =  vec3(tangentNormals.xy,0.0)  ;
-  	// gl_FragData[1].rgb =  vec3(1.0) * ld(    (data.a > 0.0 ? data.a : texture2D(depthtex0, texcoord).x   )              )   ;
+  // gl_FragData[1].rgb =  vec3(tangentNormals.xy,0.0)  ;
+  // gl_FragData[1].rgb =  vec3(1.0) * ld(    (data.a > 0.0 ? data.a : texture2D(depthtex0, texcoord).x   )              )   ;
   // gl_FragData[1].rgb = gl_FragData[1].rgb * (1.0-TranslucentShader.a) + TranslucentShader.rgb*10.0;
   // gl_FragData[1].rgb = 1-(texcoord.x > 0.5 ? vec3(TranslucentShader.a) : vec3(data.a));
 

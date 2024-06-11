@@ -31,12 +31,11 @@ vec3 DoAmbientLightColor(
     float Exposure
 ){
 	// Lightmap = vec2(0.0,1.0);
-
-    float LightLevelZero = clamp(pow(eyeBrightnessSmooth.y/240. + Lightmap.y,2.0) ,0.0,1.0);
+    // float LightLevelZero = clamp(pow(eyeBrightnessSmooth.y/240. + Lightmap.y,2.0) ,0.0,1.0);
 
     // do sky lighting.
     float skyLM = (pow(Lightmap.y,15.0)*2.0 + pow(Lightmap.y,2.5))*0.5;
-    vec3 MinimumLight = MinimumColor * (MIN_LIGHT_AMOUNT*0.01 + nightVision);
+    vec3 MinimumLight = MinimumColor * max(MIN_LIGHT_AMOUNT*0.01, nightVision * 0.1);
     vec3 IndirectLight = max(SkyColor * ambient_brightness * skyLM * 0.7,     MinimumLight); 
     
     // do torch lighting

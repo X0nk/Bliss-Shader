@@ -143,14 +143,10 @@ void main() {
 		averageSkyCol_Clouds += 1.5 * (skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.0);
 		averageSkyCol += 1.5 * (skyFromTex(pos,colortex4).rgb/maxIT/150.0);
    	}
-
-	// only need to sample one spot for this
-	// averageSkyCol_Clouds = max(averageSkyCol_Clouds * (1.0/(luma(averageSkyCol_Clouds)*0.25+0.75)), minimumlight);
-	// averageSkyCol = max(averageSkyCol*PLANET_GROUND_BRIGHTNESS, minimumlight);
 	
 	// maximum control of color and luminance
-	vec3 minimumlight =  vec3(0.2,0.4,1.0) * (MIN_LIGHT_AMOUNT*0.003 + nightVision);
-	averageSkyCol_Clouds = max(	normalize(averageSkyCol_Clouds) * min(luma(averageSkyCol_Clouds) * 3.0,2.5), minimumlight);
+	vec3 minimumlight =  vec3(0.5,0.75,1.0) * (MIN_LIGHT_AMOUNT*0.001 + nightVision);
+	averageSkyCol_Clouds = max(	normalize(averageSkyCol_Clouds) * min(luma(averageSkyCol_Clouds) * 3.0,2.5) * (1.0-rainStrength*0.3), minimumlight);
 	averageSkyCol = max(averageSkyCol * PLANET_GROUND_BRIGHTNESS, minimumlight);
 
 ////////////////////////////////////////
@@ -181,7 +177,7 @@ void main() {
 	// as the day counter changes, switch to a different set of stored values.
 	
 	#ifdef CHOOSE_RANDOM_WEATHER_PROFILE
-		int dayCounter = clamp(int(hash11(float(mod(worldDay, 1000))) * 11.0), 0,10);
+		int dayCounter = int(clamp(hash11(float(mod(worldDay, 1000))) * 10.0, 0,10));
 	#else
 		int dayCounter = int(mod(worldDay, 10));
 	#endif
@@ -217,6 +213,7 @@ void main() {
 
 	dailyWeatherParams0 = weatherParameters_A[dayCounter];
 	dailyWeatherParams1 = weatherParameters_B[dayCounter];
+
 #endif
 
 //////////////////////////////

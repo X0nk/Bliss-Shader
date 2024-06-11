@@ -46,6 +46,7 @@ uniform int isEyeInWater;
 uniform float rainStrength;
 uniform ivec2 eyeBrightnessSmooth;
 uniform float eyeAltitude;
+uniform float caveDetection;
 
 #define DHVLFOG
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
@@ -366,7 +367,7 @@ void main() {
 
 		vec4 VolumetricFog2 = vec4(0,0,0,1);
 		#ifdef OVERWORLD_SHADER
-			if(!iswater) VolumetricFog2 = GetVolumetricFog(viewPos1, vec2(noise_1, noise_2), directLightColor, indirectLightColor);
+			if(!iswater) VolumetricFog2 = GetVolumetricFog(viewPos1, vec2(noise_1, noise_2), directLightColor, indirectLightColor,indirectLightColor_dynamic);
 		#endif
 		
 		vec4 underwaterVlFog = vec4(0,0,0,1);

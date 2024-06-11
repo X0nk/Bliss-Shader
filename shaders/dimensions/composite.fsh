@@ -1,5 +1,9 @@
 #include "/lib/settings.glsl"
 
+#ifndef DH_AMBIENT_OCCLUSION
+	#undef DISTANT_HORIZONS
+#endif
+
 
 flat varying vec3 WsunVec;
 flat varying vec2 TAA_Offset;

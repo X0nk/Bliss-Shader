@@ -2,6 +2,12 @@
 
 varying vec2 texcoord;
 flat varying vec3 zMults;
+
+#ifdef BorderFog
+	uniform sampler2D colortex4;
+	flat varying vec3 skyGroundColor;
+#endif
+
 flat varying vec3 WsunVec;
 
 uniform float far;
@@ -24,11 +30,9 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 							vec2(7.,-7.)/8.);
 
 
-#ifdef BorderFog
-	uniform sampler2D colortex4;
-	flat varying vec3 skyGroundColor;
-#endif
+#ifdef OVERWORLD_SHADER
 
+#endif
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -37,8 +41,11 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 
 void main() {
 
-	#ifdef BorderFog
-		skyGroundColor = texelFetch2D(colortex4,ivec2(1,37),0).rgb / 30.0;
+	#ifdef OVERWORLD_SHADER
+		#ifdef BorderFog
+			skyGroundColor = texelFetch2D(colortex4,ivec2(1,37),0).rgb / 30.0 * Sky_Brightness;
+		#endif
+		WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
 	#endif
 
 	#ifdef TAA
@@ -46,13 +53,8 @@ void main() {
 	#else
 		TAA_Offset = vec2(0.0);
 	#endif
-
-	float lightCola = float(sunElevation > 1e-5)*2.0 - 1.0;
-	WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
-
 	zMults = vec3(1.0/(far * near),far+near,far-near);
 
 	gl_Position = ftransform();
 	texcoord = gl_MultiTexCoord0.xy;
-
 }

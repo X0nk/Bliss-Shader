@@ -66,6 +66,9 @@ varying vec4 tangent;
 varying vec4 normalMat;
 varying vec3 binormal;
 varying vec3 flatnormal;
+#ifdef LARGE_WAVE_DISPLACEMENT
+varying vec3 shitnormal;
+#endif
 
 
 flat varying float exposure;
@@ -580,9 +583,20 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 ////////////////////////////////////////////////////////////////////////////////
 
 	vec3 normal = normalMat.xyz; // in viewSpace
+
+	#ifdef LARGE_WAVE_DISPLACEMENT
+		if (isWater){
+			normal = viewToWorld(normal) ;
+			normal.xz = shitnormal.xy;
+			normal = worldToView(normal);
+		}
+	#endif
+	
 	vec3 worldSpaceNormal = viewToWorld(normal).xyz;
 	vec2 TangentNormal = vec2(0); // for refractions
 	
+
+
 	vec3 tangent2 = normalize(cross(tangent.rgb,normal)*tangent.w);
 	mat3 tbnMatrix = mat3(tangent.x, tangent2.x, normal.x,
 						  tangent.y, tangent2.y, normal.y,
@@ -638,7 +652,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 	
 	#ifdef Hand_Held_lights
-		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS*clamp( pow(max(1.0-length(viewPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
+		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS*clamp( pow(max(1.0-length(feetPlayerPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
 	#endif
 
 	vec3 Indirect_lighting = vec3(0.0);

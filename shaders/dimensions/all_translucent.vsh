@@ -17,6 +17,7 @@ varying vec4 lmtexcoord;
 varying vec4 color;
 
 uniform sampler2D colortex4;
+uniform sampler2D noisetex;
 flat varying float exposure;
 
 #ifdef OVERWORLD_SHADER
@@ -35,7 +36,12 @@ varying vec3 binormal;
 varying vec4 tangent;
 varying vec3 flatnormal;
 
+#ifdef LARGE_WAVE_DISPLACEMENT
+varying vec3 shitnormal;
+#endif
+
 uniform mat4 gbufferModelViewInverse;
+uniform mat4 gbufferModelView;
 varying vec3 viewVector;
 
 flat varying int glass;
@@ -45,6 +51,7 @@ attribute vec4 mc_Entity;
 
 
 uniform vec3 sunPosition;
+uniform vec3 cameraPosition;
 uniform float sunElevation;
 
 varying vec4 tangent_other;
@@ -80,6 +87,28 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
     return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
 }
 
+
+float getWave (vec3 pos, float range){
+	return pow(1.0-texture2D(noisetex, (pos.xz + frameTimeCounter * WATER_WAVE_SPEED)/150.0).b,2) * WATER_WAVE_STRENGTH / range;
+}
+vec3 getWaveNormal(vec3 posxz, float range){
+
+	float deltaPos = 0.5;
+
+	vec3 coord = posxz;
+
+	float h0 = getWave(coord,range);
+	float h1 = getWave(coord - vec3(deltaPos,0.0,0.0),range);
+	float h3 = getWave(coord - vec3(0.0,0.0,deltaPos),range);
+
+
+	float xDelta = (h1-h0)/deltaPos*1.5;
+	float yDelta = (h3-h0)/deltaPos*1.5;
+
+	vec3 wave = normalize(vec3(xDelta, yDelta,	1.0-pow(abs(xDelta+yDelta),2.0)));
+
+	return wave;
+}
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -95,17 +124,28 @@ void main() {
 
  	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
 
+	#ifdef LARGE_WAVE_DISPLACEMENT
+		if(mc_Entity.x == 8.0) {
+			vec3 displacedPos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
+			#ifdef DISTANT_HORIZONS
+				float range = min(1.0 + pow(length(displacedPos - cameraPosition) / min(far,256.0),2.0), 256.0);
+			#else
+				float range = min(1.0 + pow(length(displacedPos - cameraPosition) / 256,2.0), 256.0);
+			#endif
+
+			displacedPos.y -= (1.0-getWave(displacedPos, range)) * 0.5 - 0.2;
+			shitnormal = getWaveNormal(displacedPos, range);
+    		position = mat3(gbufferModelView) * (displacedPos - cameraPosition) + gbufferModelView[3].xyz;
+		}
+	#endif
  	gl_Position = toClipSpace3(position);
 
-
 	HELD_ITEM_BRIGHTNESS = 0.0;
-
+	
 	#ifdef Hand_Held_lights
-		if(heldItemId == ITEM_LIGHT_SOURCES || heldItemId2 == ITEM_LIGHT_SOURCES) HELD_ITEM_BRIGHTNESS = 0.9;
+		if(heldItemId > 999 || heldItemId2 > 999) HELD_ITEM_BRIGHTNESS = 0.9;
 	#endif
 	
-
-
 	// 1.0 = water mask
 	// 0.9 = entity mask
 	// 0.8 = reflective entities
@@ -141,7 +181,8 @@ void main() {
 	
 	flatnormal = normalMat.xyz;
 
-	viewVector = ( gl_ModelViewMatrix * gl_Vertex).xyz;
+	viewVector = position.xyz;
+	// viewVector = (gl_ModelViewMatrix * gl_Vertex).xyz;
 	viewVector = normalize(tbnMatrix * viewVector);
 
 
@@ -158,8 +199,8 @@ void main() {
 		// WsunVec = normalize(LightDir);
 	
 		#if defined Daily_Weather
-			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0, 0.0);
-			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0, 0.0);
+			dailyWeatherParams0 = vec4((texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0)/2.0, 0.0);
+			dailyWeatherParams1 = vec4((texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0)/2.0, 0.0);
 		#endif
 
 	#endif

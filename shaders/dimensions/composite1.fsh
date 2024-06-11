@@ -158,10 +158,10 @@ vec3 toScreenSpace(vec3 p) {
 
 
 
+#define TESTTHINGYG
 
 #include "/lib/color_transforms.glsl"
 #include "/lib/waterBump.glsl"
-#include "/lib/sky_gradient.glsl"
 
 #include "/lib/Shadow_Params.glsl"
 #include "/lib/Shadows.glsl"
@@ -187,6 +187,7 @@ float ld(float dist) {
     return (2.0 * near) / (far + near - dist * (far - near));
 }
 
+#include "/lib/sky_gradient.glsl"
 vec3 decode (vec2 encn){
     vec3 n = vec3(0.0);
     encn = encn * 2.0 - 1.0;
@@ -231,7 +232,9 @@ vec3 normVec (vec3 vec){
 float lengthVec (vec3 vec){
 	return sqrt(dot(vec,vec));
 }
-#define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
+
+// #define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
+
 float triangularize(float dither)
 {
     float center = dither*2.0-1.0;
@@ -362,7 +365,7 @@ vec3 worldToView(vec3 worldPos) {
 }
 
 vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, bool isSSS, bool hand){
-   
+	
 	float handSwitch = hand ? 1.0 : 0.0;
 
     float steps = 16.0;
@@ -385,41 +388,29 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
     vec3 direction = toClipSpace3_DH(viewPos + lightDir*rayLength, depthCheck) - clipPosition;  //convert to clip space
     direction.xyz = direction.xyz / max(abs(direction.x)/texelSize.x, abs(direction.y)/texelSize.y);	//fixed step size
 	
-	float Stepmult = depthCheck ? (isSSS ? 0.5 : 6.0) : (isSSS ? 1.0 : 3.0);
+	float Stepmult = depthCheck ? (isSSS ? 1.0 : 6.0) : (isSSS ? 1.0 : 3.0);
 
-	// Stepmult = depthCheck ? 0.5 : 1.0;
-	
-
-    vec3 rayDir = direction * Stepmult  * vec3(RENDER_SCALE,1.0);
-	
-	vec3 screenPos = clipPosition * vec3(RENDER_SCALE,1.0) + rayDir*noise;
-	if(isSSS) screenPos -= rayDir*0.9;
+    vec3 rayDir = direction * Stepmult  * vec3(RENDER_SCALE,1.0) ;
+	vec3 screenPos = clipPosition * vec3(RENDER_SCALE,1.0) + rayDir * noise;
 
 	for (int i = 0; i < int(steps); i++) {
 		
 		screenPos += rayDir;
 	
-
 		float samplePos = convertHandDepth_2(texture2D(depthtex1, screenPos.xy).x, hand);
 		
 		#ifdef DISTANT_HORIZONS
 			if(depthCheck) samplePos = texture2D(dhDepthTex1, screenPos.xy).x;
 		#endif
 
-		if(samplePos <= screenPos.z) {
+		if(samplePos < screenPos.z) {
 			vec2 linearZ = vec2(linearizeDepthFast(screenPos.z, _near, _far), linearizeDepthFast(samplePos, _near, _far));
 			float calcthreshold = abs(linearZ.x - linearZ.y) / linearZ.x;
 
-			bool depthThreshold1 = calcthreshold < mix(0.015, 0.035,  handSwitch);
-			bool depthThreshold2 = calcthreshold < 0.05;
-
-			if (depthThreshold1) Shadow = 0.0;
-
-			if (depthThreshold2) SSS = i/steps;
-				
+			if (calcthreshold < 0.035) Shadow = 0.0;
+			if (calcthreshold < (depthCheck ? 1.0 : 0.035)) SSS = i/steps;
 		}
 	}
-
 	return vec2(Shadow, SSS);
 }
 
@@ -641,7 +632,7 @@ float CustomPhase(float LightPos){
 	return Final;
 }
 
-vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, float lightPos, float shadows){
+vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, float lightPos, float shadows, bool distantSSS){
 	
 	Scattering *= sss_density_multiplier;
 
@@ -650,13 +641,14 @@ vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, floa
 	float scatterDepth = max(1.0 - Scattering/density,0.0);
 	scatterDepth = exp((1.0-scatterDepth) * -7.0);
 
+	if(distantSSS) scatterDepth = exp(Scattering * -10.0);
+
 	// this is for SSS when there is no shadow blocker depth
 	#if defined BASIC_SHADOW_FILTER && defined Variable_Penumbra_Shadows
 		scatterDepth = max(scatterDepth, pow(shadows, 0.5 + (1.0-Density) * 2.0)  );
 	#else
 		scatterDepth = exp(-7.0 * pow(1.0-shadows,3.0))*min(2.0-sss_density_multiplier,1.0);
 	#endif
-
 
 	// PBR at its finest :clueless:
 	vec3 absorbColor = exp(max(luma(albedo) - albedo*vec3(1.0,1.1,1.2), 0.0) * -(20.0 - 19*scatterDepth) * sss_absorbance_multiplier);
@@ -855,21 +847,14 @@ void main() {
 	vec3 filteredShadow = vec3(1.412,1.0,0.0);
 	vec2 SSAO_SSS = vec2(1.0);
 	
-	#ifdef DISTANT_HORIZONS
+	#if defined DISTANT_HORIZONS && defined DH_AMBIENT_OCCLUSION
 		BilateralUpscale_REUSE_Z(colortex3,	colortex14, colortex12, gl_FragCoord.xy, DH_mixedLinearZ, SSAO_SSS, filteredShadow, hand);
 	#else
 		BilateralUpscale_REUSE_Z(colortex3,	colortex14, depthtex0, gl_FragCoord.xy, ld(z0), SSAO_SSS, filteredShadow, hand);
 	#endif
 
-	// SSAO_SSS = texture2D(colortex14,texcoord).xy;
-	// filteredShadow = texture2D(colortex3,texcoord).xyz;
-	// filteredShadow.rgb = vec3(filteredShadow.x, temporallyReprojectedData.gb);
-	// SSAO_SSS.x = temporallyReprojectedData.a;
-
 	float ShadowBlockerDepth = filteredShadow.y;
-	// Shadows = vec3(clamp(1.0-filteredShadow.b,0.0,1.0));
-	// shadowMap = vec3(Shadows);
-	
+
 	
 	////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	START DRAW	    ////////////////////////////////////////
@@ -881,7 +866,7 @@ void main() {
 			#if RESOURCEPACK_SKY == 1 || RESOURCEPACK_SKY == 0
 				// vec3 orbitstar = vec3(feetPlayerPos_normalized.x,abs(feetPlayerPos_normalized.y),feetPlayerPos_normalized.z); orbitstar.x -= WsunVec.x*0.2;
 
-				vec3 orbitstar = normalize(mat3(gbufferModelViewInverse) * toScreenSpace(vec3(texcoord,1.0)));
+				vec3 orbitstar = normalize(mat3(gbufferModelViewInverse) * toScreenSpace(vec3(texcoord/RENDER_SCALE,1.0)));
 				float radiance = 2.39996 - (worldTime + worldDay*24000.0) / 24000.0;
 				// float radiance = 2.39996 + frameTimeCounter;
 				mat2 rotationMatrix  = mat2(vec2(cos(radiance),  -sin(radiance)),  vec2(sin(radiance),  cos(radiance)));
@@ -905,7 +890,7 @@ void main() {
 
 			Background *= 1.0 - exp2(-50.0 * pow(clamp(feetPlayerPos_normalized.y+0.025,0.0,1.0),2.0)  ); // darken the ground in the sky.
 			
-			vec3 Sky = skyFromTex(feetPlayerPos_normalized, colortex4)/30.0;
+			vec3 Sky = skyFromTex(feetPlayerPos_normalized, colortex4)/30.0 * Sky_Brightness;
 			Background += Sky;
 
 			#if defined VOLUMETRIC_CLOUDS && !defined CLOUDS_INTERSECT_TERRAIN
@@ -1002,11 +987,8 @@ void main() {
 
 			float depthfalloff = 1.0 - clamp(exp(-0.1*estimatedDepth),0.0,1.0);
 			
-
 			float estimatedSunDepth = Vdiff; //assuming water plane
 			Absorbtion = mix(exp(-2.0 * totEpsilon * estimatedDepth), exp(-8.0 * totEpsilon), depthfalloff);
-
-			// DirectLightColor *= Absorbtion;
 
 			// apply caustics to the lighting, and make sure they dont look weird
 			DirectLightColor *= mix(1.0, waterCaustics(feetPlayerPos + cameraPosition, WsunVec)*WATER_CAUSTICS_BRIGHTNESS + 0.25, clamp(estimatedDepth,0,1));
@@ -1039,9 +1021,9 @@ void main() {
 			vec3 ambientcoefs = slopednormal / allDirections;
 			float SkylightDir = ambientcoefs.y*1.5;
 			
-			if(isGrass) SkylightDir = 1.25;
+			if(isGrass) SkylightDir = 1.5;
 
-			float skylight = max(pow(viewToWorld(FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.2 + (1-lightmap.y)*0.8) ;
+			float skylight = max(pow(viewToWorld(FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.2 + (1-lightmap.y)*0.8*0) ;
 
 			#if indirect_effect == 1
 				skylight =  min(skylight, mix(0.95, 2.5, pow(1-pow(1-SSAO_SSS.x, 0.5),2.0)	));
@@ -1081,6 +1063,9 @@ void main() {
 		#else
 			const vec3 lpvPos = vec3(0.0);
 		#endif
+
+		// little highlight effect just to make caves look a little less flat.
+		MinimumLightColor = MinimumLightColor + MinimumLightColor*dot(feetPlayerPos_normalized, slopednormal)*0.7;
 
 		Indirect_lighting = DoAmbientLightColor(feetPlayerPos, lpvPos, Indirect_lighting, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B) , lightmap.xy, exposure);
 		
@@ -1181,9 +1166,11 @@ void main() {
 				
 				// combine shadowmap blocker depth with a minumum determined by the screenspace shadows, starting after the shadowmap ends
 				ShadowBlockerDepth = mix(SS_directLight.g, ShadowBlockerDepth, shadowMapFalloff2);
+				// ShadowBlockerDepth = SS_directLight.g;
 			#endif
 
-			Direct_SSS = SubsurfaceScattering_sun(albedo, ShadowBlockerDepth, sunSSS_density, clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), SSS_shadow);
+			
+			Direct_SSS = SubsurfaceScattering_sun(albedo, ShadowBlockerDepth, sunSSS_density, clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), SSS_shadow, shadowMapFalloff2 < 1.0);
 			Direct_SSS *= mix(LM_shadowMapFallback, 1.0, shadowMapFalloff2);
 			if (isEyeInWater == 0) Direct_SSS *= lightLeakFix;
 
@@ -1211,6 +1198,7 @@ void main() {
 
 		#ifdef OVERWORLD_SHADER
 			Direct_lighting =  max(DirectLightColor * NdotL * Shadows, DirectLightColor * Direct_SSS);
+			// Direct_lighting =  0.5 + DirectLightColor * exp(-7*SS_directLight.g);
 		#endif
 
 		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * albedo;
@@ -1239,7 +1227,7 @@ void main() {
 	}
 
 	#if defined VOLUMETRIC_CLOUDS && defined CLOUDS_INTERSECT_TERRAIN
-		vec4 Clouds = texture2D_bicubic_offset(colortex0, texcoord*CLOUDS_QUALITY, noise, RENDER_SCALE.x);
+		vec4 Clouds = texture2D_bicubic_offset(colortex0, ((gl_FragCoord.xy + 0.5)*texelSize)*CLOUDS_QUALITY, noise, RENDER_SCALE.x);
 		// vec4 Clouds = BilateralUpscale_REUSE_Z_clouds(colortex0, colortex12, DH_mixedLinearZ, gl_FragCoord.xy*CLOUDS_QUALITY, texcoord*CLOUDS_QUALITY);
 
 		gl_FragData[1] = texture2D(colortex2, texcoord);
@@ -1279,6 +1267,9 @@ void main() {
 	 	if(hideGUI == 0)  gl_FragData[0].rgb = vec3(1)	* (1.0 - SSAO_SSS.x);
 	 	// if(hideGUI == 0)  gl_FragData[0].rgb = vec3(1)	* filteredShadow.z;//exp(-7*(1-clamp(1.0 - filteredShadow.x,0.0,1.0)));
 	#endif
+
+	// gl_FragData[0].rgb = vec3(1) * ld(texture2D(depthtex1, texcoord).r);
+	// if(texcoord.x > 0.5 )gl_FragData[0].rgb = vec3(1) * ld(texture2D(depthtex0, texcoord).r);
 	
 	/* DRAWBUFFERS:3 */
 }

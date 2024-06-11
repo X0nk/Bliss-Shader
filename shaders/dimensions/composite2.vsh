@@ -16,7 +16,6 @@ flat varying vec3 averageSkyCol_Clouds;
 flat varying vec3 WsunVec;
 flat varying vec3 refractedSunVec;
 
-flat varying float tempOffsets;
 uniform vec2 texelSize;
 
 uniform sampler2D colortex4;
@@ -44,11 +43,11 @@ void main() {
 	// gl_Position.xy = (gl_Position.xy*0.5+0.5)*0.51*2.0-1.0;
 	gl_Position.xy = (gl_Position.xy*0.5+0.5)*(0.01+VL_RENDER_RESOLUTION)*2.0-1.0;
 	
-  	#ifdef TAA
-	tempOffsets = HaltonSeq2(frameCounter%10000);
-	#else
-	tempOffsets = 0.0;
-	#endif
+  	// #ifdef TAA
+	// tempOffsets = HaltonSeq2(frameCounter%10000);
+	// #else
+	// tempOffsets = 0.0;
+	// #endif
 
 	#ifdef OVERWORLD_SHADER
 		lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
@@ -56,11 +55,11 @@ void main() {
 		averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 	
 		#if defined Daily_Weather
-			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0, 0.0);
-			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0, 0.0);
+			dailyWeatherParams0 = vec4((texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0)/2.0, 0.0);
+			dailyWeatherParams1 = vec4((texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0)/2.0, 0.0);
 			
-			dailyWeatherParams0.a = texelFetch2D(colortex4,ivec2(3,1),0).x/150.0;
-			dailyWeatherParams1.a = texelFetch2D(colortex4,ivec2(3,1),0).y/150.0;
+			dailyWeatherParams0.a = (texelFetch2D(colortex4,ivec2(3,1),0).x/150.0)/2.0;
+			dailyWeatherParams1.a = (texelFetch2D(colortex4,ivec2(3,1),0).y/150.0)/2.0;
 		#endif
 	
 	#endif

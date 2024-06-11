@@ -229,7 +229,7 @@ void DoSpecularReflections(
 	#ifdef Sky_reflection
 
 		#ifdef OVERWORLD_SHADER
-			if(hasReflections) Background_Reflection = (skyCloudsFromTexLOD(L, colortex4, sqrt(Roughness) * 9.0).rgb / 30.0) * Metals;
+			if(hasReflections) Background_Reflection = (skyCloudsFromTexLOD(L, colortex4, sqrt(Roughness) * 9.0).rgb / 30.0) * Metals ;
 		#else
 			if(hasReflections) Background_Reflection = (skyCloudsFromTexLOD2(L, colortex4, sqrt(Roughness) * 6.0).rgb / 30.0) * Metals;
 		#endif

@@ -153,22 +153,6 @@
 		FinalFogColor = mix(FinalFogColor, BiomeColors, Inbiome);
 	}
 
-	// void BiomeSunlightColor(
-	// 	inout vec3 FinalSunlightColor
-	// ){	
-	// 	// this is a little complicated? lmao
-	// 	vec3 BiomeColors = vec3(0.0);
-	// 	BiomeColors.r = isSwamps*SWAMP_R + isJungles*JUNGLE_R + isDarkForests*DARKFOREST_R + sandStorm*1.0 + snowStorm*0.6;
-	// 	BiomeColors.g = isSwamps*SWAMP_G + isJungles*JUNGLE_G + isDarkForests*DARKFOREST_G + sandStorm*0.5 + snowStorm*0.8;
-	// 	BiomeColors.b = isSwamps*SWAMP_B + isJungles*JUNGLE_B + isDarkForests*DARKFOREST_B + sandStorm*0.3 + snowStorm*1.0;
-
-	// 	// these range 0.0-1.0. they will never overlap.
-	// 	float Inbiome = isJungles+isSwamps+isDarkForests+sandStorm+snowStorm;
-
-	// 	// interpoloate between normal fog colors and biome colors. the transition speeds are conrolled by the biome uniforms.
-	// 	FinalSunlightColor = mix(FinalSunlightColor, FinalSunlightColor * (BiomeColors*0.8+0.2), Inbiome);
-	// }
-
 	void BiomeFogDensity(
 		inout vec4 UniformDensity,
 		inout vec4 CloudyDensity,
@@ -178,8 +162,11 @@
 		float Inbiome = isJungles+isSwamps+isDarkForests+sandStorm+snowStorm;
 
 		vec2 BiomeFogDensity = vec2(0.0); // x = uniform  ||  y = cloudy
-		BiomeFogDensity.x = isSwamps*SWAMP_UNIFORM_DENSITY + isJungles*JUNGLE_UNIFORM_DENSITY + isDarkForests*DARKFOREST_UNIFORM_DENSITY + sandStorm*15  + snowStorm*150;
-		BiomeFogDensity.y = isSwamps*SWAMP_CLOUDY_DENSITY + isJungles*JUNGLE_CLOUDY_DENSITY + isDarkForests*DARKFOREST_CLOUDY_DENSITY + sandStorm*255 + snowStorm*255;
+		// BiomeFogDensity.x = isSwamps*SWAMP_UNIFORM_DENSITY + isJungles*JUNGLE_UNIFORM_DENSITY + isDarkForests*DARKFOREST_UNIFORM_DENSITY + sandStorm*15  + snowStorm*150;
+		// BiomeFogDensity.y = isSwamps*SWAMP_CLOUDY_DENSITY + isJungles*JUNGLE_CLOUDY_DENSITY + isDarkForests*DARKFOREST_CLOUDY_DENSITY + sandStorm*255 + snowStorm*255;
+
+		BiomeFogDensity.x = isSwamps*SWAMP_UNIFORM_DENSITY + isJungles*JUNGLE_UNIFORM_DENSITY + isDarkForests*DARKFOREST_UNIFORM_DENSITY + sandStorm*0.0 + snowStorm*0.01;
+		BiomeFogDensity.y = isSwamps*SWAMP_CLOUDY_DENSITY + isJungles*JUNGLE_CLOUDY_DENSITY + isDarkForests*DARKFOREST_CLOUDY_DENSITY + sandStorm*0.5 + snowStorm*0.5;
 		
 		UniformDensity = mix(UniformDensity, vec4(BiomeFogDensity.x), Inbiome*maxDistance);
 		CloudyDensity  = mix(CloudyDensity,  vec4(BiomeFogDensity.y), Inbiome*maxDistance);
@@ -190,12 +177,14 @@
 		// this is a little complicated? lmao
 		vec3 BiomeColors = vec3(0.0);
 		BiomeColors.r = isSwamps*SWAMP_R + isJungles*JUNGLE_R + isDarkForests*DARKFOREST_R + sandStorm*1.0 + snowStorm*0.6;
-		BiomeColors.g = isSwamps*SWAMP_G + isJungles*JUNGLE_G + isDarkForests*DARKFOREST_G + sandStorm*0.5 + snowStorm*0.8;
-		BiomeColors.b = isSwamps*SWAMP_B + isJungles*JUNGLE_B + isDarkForests*DARKFOREST_B + sandStorm*0.3 + snowStorm*1.0;
+		BiomeColors.g = isSwamps*SWAMP_G + isJungles*JUNGLE_G + isDarkForests*DARKFOREST_G + sandStorm*0.3 + snowStorm*0.8;
+		BiomeColors.b = isSwamps*SWAMP_B + isJungles*JUNGLE_B + isDarkForests*DARKFOREST_B + sandStorm*0.1 + snowStorm*1.0;
 
 		// insure the biome colors are locked to the fog shape and lighting, but not its orignal color.
-		DirectLightCol = BiomeColors * max(dot(DirectLightCol,vec3(0.33333)), MIN_LIGHT_AMOUNT*0.025 + nightVision*0.2); 
+		// DirectLightCol = BiomeColors * max(dot(DirectLightCol,vec3(0.33333)), MIN_LIGHT_AMOUNT*0.025 + nightVision*0.2); 
+		// IndirectLightCol = BiomeColors * max(dot(IndirectLightCol,vec3(0.33333)), MIN_LIGHT_AMOUNT*0.025 + nightVision*0.2); 
 		
+		DirectLightCol = BiomeColors * max(dot(DirectLightCol,vec3(0.33333)), MIN_LIGHT_AMOUNT*0.025 + nightVision*0.2); 
 		IndirectLightCol = BiomeColors * max(dot(IndirectLightCol,vec3(0.33333)), MIN_LIGHT_AMOUNT*0.025 + nightVision*0.2); 
 		
 		// these range 0.0-1.0. they will never overlap.
@@ -212,27 +201,28 @@
 
 #ifdef TIMEOFDAYFOG
 	// uniform int worldTime;
-	void TimeOfDayFog(
-		inout float Uniform, inout float Cloudy, float maxDistance, float DailyWeather_UniformFogDensity, float DailyWeather_CloudyFogDensity
+	void FogDensities(
+		inout float Uniform, inout float Cloudy, inout float Rainy, float maxDistance, float DailyWeather_UniformFogDensity, float DailyWeather_CloudyFogDensity
 	) {
 	
 	    float Time = worldTime%24000;
 
 		// set schedules for fog to appear at specific ranges of time in the day.
-		float Morning = clamp((Time-22000)/2000,0,1) + clamp((2000-Time)/2000,0,1);
-		float Noon 	  = clamp(Time/2000,0,1) * clamp((12000-Time)/2000,0,1);
-		float Evening = clamp((Time-10000)/2000,0,1) * clamp((14000-Time)/2000,0,1) ;
-		float Night   = clamp((Time-13000)/2000,0,1) * clamp((23000-Time)/2000,0,1) ;
+		float Morning = clamp((Time-22000.0)/2000.0,0.0,1.0) + clamp((2000.0-Time)/2000.0,0.0,1.0);
+		float Noon 	  = clamp(Time/2000.0,0.0,1.0) * clamp((12000.0-Time)/2000.0,0.0,1.0);
+		float Evening = clamp((Time-10000.0)/2000.0,0.0,1.0) * clamp((14000.0-Time)/2000.0,0.0,1.0);
+		float Night   = clamp((Time-13000.0)/2000.0,0.0,1.0) * clamp((23000.0-Time)/2000.0,0.0,1.0);
 
 		// set densities.		   morn, noon, even, night
 		vec4 UniformDensity = TOD_Fog_mult * vec4(Morning_Uniform_Fog, Noon_Uniform_Fog, Evening_Uniform_Fog, Night_Uniform_Fog);
 		vec4 CloudyDensity =  TOD_Fog_mult * vec4(Morning_Cloudy_Fog, Noon_Cloudy_Fog, Evening_Cloudy_Fog, Night_Cloudy_Fog);
-
+		
+		Rainy = Rainy*RainFog_amount;
+		
 		#ifdef Daily_Weather
 			// let daily weather influence fog densities.
-			UniformDensity = max(UniformDensity, DailyWeather_UniformFogDensity * 50.0);
-			CloudyDensity = max(CloudyDensity, DailyWeather_CloudyFogDensity * 50.0);
-			// DailyWeather_FogDensity(UniformDensity, CloudyDensity); 
+			UniformDensity = max(UniformDensity, DailyWeather_UniformFogDensity);
+			CloudyDensity = max(CloudyDensity, DailyWeather_CloudyFogDensity);
 		#endif
 
 		#ifdef PER_BIOME_ENVIRONMENT
