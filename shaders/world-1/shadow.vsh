@@ -16,7 +16,11 @@ Read the terms of modification and sharing before changing something below pleas
 
 #ifdef IS_LPV_ENABLED
 	attribute vec4 mc_Entity;
-	attribute vec3 at_midBlock;
+	#ifdef IRIS_FEATURE_BLOCK_EMISSION_ATTRIBUTE
+		attribute vec4 at_midBlock;
+	#else
+		attribute vec3 at_midBlock;
+	#endif
 	attribute vec3 vaPosition;
 
 	uniform mat4 shadowModelViewInverse;
@@ -48,9 +52,12 @@ void main() {
 			renderStage == MC_RENDER_STAGE_TERRAIN_SOLID || renderStage == MC_RENDER_STAGE_TERRAIN_TRANSLUCENT ||
 			renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT || renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT_MIPPED
 		) {
-			vec3 originPos = playerpos + at_midBlock/64.0;
+			vec3 originPos = playerpos + at_midBlock.xyz/64.0;
 
 			uint voxelId = uint(mc_Entity.x + 0.5);
+			#ifdef IRIS_FEATURE_BLOCK_EMISSION_ATTRIBUTE
+				if (voxelId == 0u && at_midBlock.w > 0) voxelId = BLOCK_LIGHT_1 + uint(at_midBlock.w - 1);
+			#endif
 			if (voxelId == 0u) voxelId = 1u;
 
 			SetVoxelBlock(originPos, voxelId);
