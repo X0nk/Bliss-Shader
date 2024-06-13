@@ -158,7 +158,7 @@ screen.Fog = Fog Settings
     option.BLOOMY_FOG = Bloomy Fog Multiplier
     option.Haze_amount = Atmospheric Haze Density
     option.RainFog_amount = Rain Fog Multiplier
-    option.RAYMARCH_CLOUDS_WITH_FOG = Render Clouds As Fog
+    option.RAYMARCH_CLOUDS_WITH_FOG = Render Clouds As Fog §c(READ DESCRIPTION)§r
     option.BorderFog = Chunk Border Fog
 
     screen.TOD_fog = Time Of Day Fog
@@ -592,7 +592,7 @@ screen.Fog.comment = Configure settings related to the raymarched volumetric fog
     option.BLOOMY_FOG.comment = Configure the strength of bloom that is applied to fog. §bWhat is this?§r This effect makes the fog look soft, it helps hide a little noise too. can cause some visible flickering on detailed edges. §aPERFORMANCE COST:§r very low
     option.Haze_amount.comment = Configure how dense the atmosphere around you is. §bWhat is this?§r This is the blue haze you see in the distance.
     option.RainFog_amount.comment = Configure how dense the fog gets when it rains.
-    option.RAYMARCH_CLOUDS_WITH_FOG.comment = Toggle detailed fog when you go within or around a cloud. §aPERFORMANCE COST:§r medium to high
+    option.RAYMARCH_CLOUDS_WITH_FOG.comment = §cWARNING§r: This setting is experimental and not very well made! you will need to increase fog samples to make it match the normal clouds. Toggle detailed fog when you go within or around a cloud. §aPERFORMANCE COST:§r high. 
     option.BorderFog.comment = §bWhat is this?§r Toggle a fog that attempts to hide the chunks loading in. But because the sky is all over the place, it is difficult to do well. §aPERFORMANCE COST:§r very very low
 
     screen.TOD_fog.comment = Configure the density of fog that appears at specific times of the day.

@@ -456,7 +456,7 @@ void main() {
 			gl_FragData[0] = clamp(fp10Dither(color, triangularize(interleaved_gradientNoise())), 0.0, 65000.0);
 		#endif
 	#else
-		vec3 color = clamp(fp10Dither(vec4(texture2D(colortex3,taauTC).rgb,1.0), triangularize(interleaved_gradientNoise())).rgb,0.0,65000.);
+		vec3 color = clamp(fp10Dither(vec4(texture2D(colortex3,texcoord).rgb,1.0), triangularize(interleaved_gradientNoise())).rgb,0.0,65000.);
 		gl_FragData[0].rgb = color;
 	#endif
 }

@@ -107,7 +107,7 @@ void main() {
 
 	#if DOF_QUALITY >= 0
 		/*--------------------------------*/
-		float z = ld(texture2D(depthtex0, texcoord.st*RENDER_SCALE).r)*far;
+		float z = ld(texture2D(depthtex1, texcoord.st*RENDER_SCALE).r)*far;
 		#if MANUAL_FOCUS == -2
 			float focus = rodExposureDepth.y*far;
 		#elif MANUAL_FOCUS == -1
@@ -120,10 +120,10 @@ void main() {
 		#ifdef FAR_BLUR_ONLY
 			pcoc *= float(z > focus);
 		#endif
-		float noise = blueNoise()*6.28318530718;
-		mat2 noiseM = mat2( cos( noise ), -sin( noise ),
-	                       sin( noise ), cos( noise )
-	                         );
+		// float noise = blueNoise()*6.28318530718;
+		// mat2 noiseM = mat2( cos( noise ), -sin( noise ),
+	    //                    sin( noise ), cos( noise )
+	    //                      );
 		vec3 bcolor = vec3(0.);
 		float nb = 0.0;
 		vec2 bcoord = vec2(0.0);

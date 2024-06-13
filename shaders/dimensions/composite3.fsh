@@ -114,7 +114,6 @@ vec4 BilateralUpscale(sampler2D tex, sampler2D depth, vec2 coord, float referenc
 	ivec2 posDepth  = ivec2(coord*VL_RENDER_RESOLUTION) * scaling;
 	ivec2 posColor  = ivec2(coord*VL_RENDER_RESOLUTION);
  	ivec2 pos = ivec2(gl_FragCoord.xy*texelSize + 1);
-
 	ivec2 getRadius[4] = ivec2[](
    	ivec2(-2,-2),
 	 	ivec2(-2, 0),
@@ -266,6 +265,10 @@ void main() {
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 	float lightleakfixfast = clamp(eyeBrightness.y/240.,0.0,1.0);
 
+	////// --------------- UNPACK OPAQUE GBUFFERS --------------- //////
+	// float opaqueMasks = decodeVec2(texture2D(colortex1,texcoord).a).y;
+	// bool isOpaque_entity = abs(opaqueMasks-0.45) < 0.01;
+
 	////// --------------- UNPACK TRANSLUCENT GBUFFERS --------------- //////
 	vec4 data = texture2D(colortex11,texcoord).rgba;
 	vec4 unpack0 = vec4(decodeVec2(data.r),decodeVec2(data.g)) ;
@@ -292,9 +295,9 @@ void main() {
   ////// --------------- get volumetrics
   #ifdef TOGGLE_VL_FOG
     #ifdef DISTANT_HORIZONS
-      vec4 vl = BilateralUpscale(colortex0, colortex12, gl_FragCoord.xy, sqrt(texture2D(colortex12,texcoord).a/65000.0));
+      vec4 vl = BilateralUpscale(colortex0, colortex12, gl_FragCoord.xy - 1.5, sqrt(texture2D(colortex12,texcoord).a/65000.0));
     #else
-      vec4 vl = BilateralUpscale(colortex0, depthtex0, gl_FragCoord.xy, frDepth);
+      vec4 vl = BilateralUpscale(colortex0, depthtex0, gl_FragCoord.xy - 1.5, frDepth);
     #endif
   #else
     vec4 vl = vec4(0,0,0,1);
@@ -327,10 +330,12 @@ void main() {
 
     fog *= exp(-10.0 * pow(clamp(np3.y,0.0,1.0)*4.0,2.0));
 
+    fog *= caveDetection;
+
     if(swappedDepth >= 1.0 || isEyeInWater != 0) fog = 0.0;
     
-    // fog *= lightleakfix;
-  
+    
+
     #ifdef SKY_GROUND
       vec3 borderFogColor = skyGroundColor;
     #else
@@ -350,8 +355,9 @@ void main() {
     #ifdef BorderFog
       TranslucentShader = mix(TranslucentShader, vec4(0.0), fog);
     #endif
-
-    color = color*(1.0-TranslucentShader.a) + TranslucentShader.rgb*10.0; 
+    
+    color *= (1.0-TranslucentShader.a);
+    color += TranslucentShader.rgb*10.0; 
   }
 
 ////// --------------- VARIOUS FOG EFFECTS (behind volumetric fog)
@@ -372,7 +378,7 @@ void main() {
 
   	  float skyhole = pow(clamp(1.0-pow(max(np3.y - 0.6,0.0)*5.0,2.0),0.0,1.0),2);
 
-      color.rgb = mix(color.rgb + cavefogCol * caveDetection, cavefogCol, swappedDepth >= 1.0 ? skyhole * caveDetection : 0.0);
+      color.rgb = mix(color.rgb + cavefogCol * caveDetection, cavefogCol, z >= 1.0 ? skyhole * caveDetection : 0.0);
     }
 #endif
 
@@ -459,7 +465,6 @@ void main() {
   
   gl_FragData[0].r = bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);
-  
   // gl_FragData[1].rgb =  vec3(tangentNormals.xy,0.0)  ;
   // gl_FragData[1].rgb =  vec3(1.0) * ld(    (data.a > 0.0 ? data.a : texture2D(depthtex0, texcoord).x   )              )   ;
   // gl_FragData[1].rgb = gl_FragData[1].rgb * (1.0-TranslucentShader.a) + TranslucentShader.rgb*10.0;

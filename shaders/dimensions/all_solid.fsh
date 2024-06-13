@@ -1,6 +1,9 @@
 #extension GL_ARB_shader_texture_lod : enable
 
 #include "/lib/settings.glsl"
+#include "/lib/blocks.glsl"
+#include "/lib/entities.glsl"
+#include "/lib/items.glsl"
 
 flat varying int NameTags;
 
@@ -415,9 +418,9 @@ void main() {
 	#ifdef AEROCHROME_MODE
 		float gray = dot(Albedo.rgb, vec3(0.2, 1.0, 0.07));
 		if (
-			blockID == BLOCK_AMETHYST_BUD_MEDIUM || blockID == BLOCK_AMETHYST_BUD_LARGE || blockID == BLOCK_AMETHYST_CLUSTER ||
-			blockID == BLOCK_SSS_STRONG || blockID == BLOCK_SSS_WEAK ||
-			blockID >= 10 && blockId < 80
+			blockID == BLOCK_AMETHYST_BUD_MEDIUM || blockID == BLOCK_AMETHYST_BUD_LARGE || blockID == BLOCK_AMETHYST_CLUSTER 
+			|| blockID == BLOCK_SSS_STRONG || blockID == BLOCK_SSS_WEAK
+			|| blockID >= 10 && blockID < 80
 		) {
 			// IR Reflective (Pink-red)
 			Albedo.rgb = mix(vec3(gray), aerochrome_color, 0.7);

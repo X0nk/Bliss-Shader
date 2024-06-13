@@ -56,7 +56,7 @@ void main() {
 
 			uint voxelId = uint(mc_Entity.x + 0.5);
 			#ifdef IRIS_FEATURE_BLOCK_EMISSION_ATTRIBUTE
-				if (voxelId == 0u && at_midBlock.w > 0) voxelId = BLOCK_LIGHT_1 + uint(at_midBlock.w - 1);
+				if (voxelId == 0u && at_midBlock.w > 0) voxelId = uint(BLOCK_LIGHT_1 + at_midBlock.w - 1);
 			#endif
 			if (voxelId == 0u) voxelId = 1u;
 

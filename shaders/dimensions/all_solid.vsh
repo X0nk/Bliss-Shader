@@ -229,10 +229,9 @@ void main() {
 	normalMat = vec4(normalize(gl_NormalMatrix * gl_Normal), 1.0);
 	FlatNormals = normalMat.xyz;
 
-	blockID = mc_Entity.x;
-	// velocity = at_velocity;
+	blockID = mc_Entity.x ;
 
-	if(mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL || mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_GRASS_TALL_LOWER || mc_Entity.x == BLOCK_GRASS_TALL_UPPER ) normalMat.a = 0.60;
+	if(blockID == BLOCK_GROUND_WAVING_VERTICAL || blockID == BLOCK_GRASS_SHORT || blockID == BLOCK_GRASS_TALL_LOWER || blockID == BLOCK_GRASS_TALL_UPPER ) normalMat.a = 0.60;
 
 
 	PORTAL = 0;

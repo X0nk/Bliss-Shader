@@ -117,8 +117,8 @@ void main() {
     float materials = normals_and_materials.a;
 	vec2 PackLightmaps = lightmapCoords;
 
-    PackLightmaps.y *= 1.05;
-    PackLightmaps = min(max(PackLightmaps  - 0.001*blueNoise(),0.0)*1.002,1.0);
+    // PackLightmaps.y *= 1.05;
+    // PackLightmaps = min(max(PackLightmaps  - 0.001*blueNoise(),0.0)*1.002,1.0);
     
     vec4 data1 = clamp( encode(normals.xyz, PackLightmaps), 0.0, 1.0);
     

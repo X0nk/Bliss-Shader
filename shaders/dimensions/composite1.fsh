@@ -515,10 +515,10 @@ void BilateralUpscale_REUSE_Z(sampler2D tex1, sampler2D tex2, sampler2D depth, v
   	ivec2 pos = ivec2(gl_FragCoord.xy*texelSize + 1);
 
 	ivec2 getRadius[4] = ivec2[](
-   	 	ivec2(-2,-2),
-	  	ivec2(-2, 0),
+   	 	ivec2(-1,-1),
+	  	ivec2(-1, 0),
 		ivec2( 0, 0),
-		ivec2( 0,-2)
+		ivec2( 0,-1)
   	);
 
 	#ifdef DISTANT_HORIZONS
@@ -729,12 +729,15 @@ void main() {
 
 		vec3 albedo = toLinear(vec3(dataUnpacked0.xz,dataUnpacked1.x));
 		vec3 normal = decode(dataUnpacked0.yw);
-		vec2 lightmap = min(max(dataUnpacked1.yz - 0.05,0.0)*1.06,1.0);// small offset to hide flickering from precision error in the encoding/decoding on values close to 1.0 or 0.0
-
+		vec2 lightmap = dataUnpacked1.yz;
+		
+		lightmap.xy = min(max(lightmap.xy - 0.05,0.0)*1.06,1.0); // small offset to hide flickering from precision error in the encoding/decoding on values close to 1.0 or 0.0
+		
 		#if defined END_SHADER || defined NETHER_SHADER
 			lightmap.y = 1.0;
 		#endif
-
+		// lightmap.y = 0.0;
+		// if(isDHrange) lightmap.y = pow(lightmap.y,25);
 		// if(isEyeInWater == 1) lightmap.y = max(lightmap.y, 0.75);
 
 	////// --------------- UNPACK MISC --------------- //////
@@ -888,7 +891,9 @@ void main() {
 				#endif
 			#endif
 
-			Background *= 1.0 - exp2(-50.0 * pow(clamp(feetPlayerPos_normalized.y+0.025,0.0,1.0),2.0)  ); // darken the ground in the sky.
+			#ifdef SKY_GROUND
+				Background *= 1.0 - exp2(-50.0 * pow(clamp(feetPlayerPos_normalized.y+0.025,0.0,1.0),2.0)  ); // darken the ground in the sky.
+			#endif
 			
 			vec3 Sky = skyFromTex(feetPlayerPos_normalized, colortex4)/30.0 * Sky_Brightness;
 			Background += Sky;
@@ -1226,14 +1231,14 @@ void main() {
     	gl_FragData[0].rgb = gl_FragData[0].rgb * vlBehingTranslucents.a + vlBehingTranslucents.rgb;
 	}
 
-	#if defined VOLUMETRIC_CLOUDS && defined CLOUDS_INTERSECT_TERRAIN
-		vec4 Clouds = texture2D_bicubic_offset(colortex0, ((gl_FragCoord.xy + 0.5)*texelSize)*CLOUDS_QUALITY, noise, RENDER_SCALE.x);
-		// vec4 Clouds = BilateralUpscale_REUSE_Z_clouds(colortex0, colortex12, DH_mixedLinearZ, gl_FragCoord.xy*CLOUDS_QUALITY, texcoord*CLOUDS_QUALITY);
+	// #if defined VOLUMETRIC_CLOUDS && defined CLOUDS_INTERSECT_TERRAIN
+	// 	vec4 Clouds = texture2D_bicubic_offset(colortex0, ((gl_FragCoord.xy + 0.5)*texelSize)*CLOUDS_QUALITY, noise, RENDER_SCALE.x);
+	// 	// vec4 Clouds = BilateralUpscale_REUSE_Z_clouds(colortex0, colortex12, DH_mixedLinearZ, gl_FragCoord.xy*CLOUDS_QUALITY, texcoord*CLOUDS_QUALITY);
 
-		gl_FragData[1] = texture2D(colortex2, texcoord);
-		gl_FragData[0].rgb = gl_FragData[0].rgb * Clouds.a + Clouds.rgb;
-		gl_FragData[1].a = gl_FragData[1].a	* pow(Clouds.a,5.0);
-	#endif
+	// 	gl_FragData[1] = texture2D(colortex2, texcoord);
+	// 	gl_FragData[0].rgb = gl_FragData[0].rgb * Clouds.a + Clouds.rgb;
+	// 	gl_FragData[1].a = gl_FragData[1].a	* pow(Clouds.a,5.0);
+	// #endif
 
 	// gl_FragData[0].rgb = vec3(1.0) * clamp(1.0 - filteredShadow.y/1,0,1);
 	// if(hideGUI > 0) gl_FragData[0].rgb = vec3(1.0) * Shadows;
@@ -1267,7 +1272,8 @@ void main() {
 	 	if(hideGUI == 0)  gl_FragData[0].rgb = vec3(1)	* (1.0 - SSAO_SSS.x);
 	 	// if(hideGUI == 0)  gl_FragData[0].rgb = vec3(1)	* filteredShadow.z;//exp(-7*(1-clamp(1.0 - filteredShadow.x,0.0,1.0)));
 	#endif
-
+	// gl_FragData[0].rgb = vec3(1) * lightmap.y;
+	// if(swappedDepth >= 1.0) gl_FragData[0].rgb = vec3(0.1);
 	// gl_FragData[0].rgb = vec3(1) * ld(texture2D(depthtex1, texcoord).r);
 	// if(texcoord.x > 0.5 )gl_FragData[0].rgb = vec3(1) * ld(texture2D(depthtex0, texcoord).r);
 	

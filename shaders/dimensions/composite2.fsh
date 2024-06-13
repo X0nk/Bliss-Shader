@@ -13,6 +13,7 @@ uniform sampler2D dhDepthTex;
 uniform sampler2D dhDepthTex1;
 #endif
 
+uniform sampler2D colortex0;
 uniform sampler2D colortex2;
 uniform sampler2D colortex3;
 // uniform sampler2D colortex4;
@@ -81,6 +82,7 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 
 	
 	#include "/lib/volumetricClouds.glsl"
+	// #define CLOUDS_INTERSECT_TERRAIN
 	#include "/lib/overworld_fog.glsl"
 #endif
 #ifdef NETHER_SHADER
@@ -403,6 +405,14 @@ void main() {
 	
 	#if defined NETHER_SHADER || defined END_SHADER
 		vec4 VolumetricFog = GetVolumetricFog(viewPos0, noise_1, noise_2);
+	#endif
+	
+	#if defined VOLUMETRIC_CLOUDS && defined CLOUDS_INTERSECT_TERRAIN
+		vec4 Clouds = texture2D(colortex0, (gl_FragCoord.xy*texelSize) / (VL_RENDER_RESOLUTION/CLOUDS_QUALITY));
+
+		VolumetricFog.rgb = Clouds.rgb * VolumetricFog.a + VolumetricFog.rgb;
+
+		VolumetricFog.a = VolumetricFog.a*Clouds.a;
 	#endif
 
 	gl_FragData[0] = clamp(VolumetricFog, 0.0, 65000.0);

@@ -153,7 +153,7 @@ const float entityShadowDistanceMul = 0.25; // [0.01 0.02 0.03 0.04 0.05 0.10 0.
 #define Stochastic_Transparent_Shadows
 
 #define Glass_Tint
-#define TRANSLUCENT_COLORED_SHADOWS
+// #define TRANSLUCENT_COLORED_SHADOWS
 #ifdef TRANSLUCENT_COLORED_SHADOWS
 	#undef Stochastic_Transparent_Shadows
 #endif

@@ -252,12 +252,12 @@ float ld(float dist) {
     return (2.0 * near) / (far + near - dist * (far - near));
 }
 
-vec3 texture2D_POMSwitch(
+vec4 texture2D_POMSwitch(
 	sampler2D sampler, 
 	vec2 lightmapCoord,
 	vec4 dcdxdcdy
 ){
-	return texture2DGradARB(sampler, lightmapCoord, dcdxdcdy.xy, dcdxdcdy.zw).rgb;
+	return texture2DGradARB(sampler, lightmapCoord, dcdxdcdy.xy, dcdxdcdy.zw);
 }
 
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -332,12 +332,14 @@ void main() {
 			}
 		}
 
-		vec3 Albedo = toLinear(texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy)));
+		vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy));
 	#else
-		vec3 Albedo = toLinear(texture2D(texture, adjustedTexCoord.xy).rgb);
+		vec4 Albedo = texture2D(texture, adjustedTexCoord.xy);
 	#endif
 	
-	if(dot(Albedo.rgb, vec3(0.33333)) < 1.0/255.0) { discard; return; }
+	Albedo.rgb = toLinear(Albedo.rgb);
+
+	if(dot(Albedo.rgb, vec3(0.33333)) < 1.0/255.0 || Albedo.a < 0.01 ) { discard; return; }
 	
 	gl_FragData[0] = vec4(encodeVec2(vec2(0.5)), encodeVec2(Albedo.rg), encodeVec2(vec2(Albedo.b,0.02)), 1.0);
 #endif
