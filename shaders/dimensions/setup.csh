@@ -827,9 +827,65 @@ void main() {
         }
 
         if (blockId == BLOCK_TORCH || blockId == ITEM_TORCH) {
-            lightColor = vec3(1.0, 0.6, 0.1);
+            lightColor = vec3(TORCH_R, TORCH_G, TORCH_B);
             lightRange = 14.0;
             mixWeight = 0.8;
+        }
+
+        if (blockId >= BLOCK_LAMP_LIT_BLACK && blockId <= BLOCK_LAMP_LIT_YELLOW) {
+            lightRange = 15.0;
+            mixWeight = 0.25;
+
+            switch (blockId) {
+                case BLOCK_LAMP_LIT_BLACK:
+                    lightColor = LightColor_Candles_Black;
+                    break;
+                case BLOCK_LAMP_LIT_BLUE:
+                    lightColor = LightColor_Candles_Blue;
+                    break;
+                case BLOCK_LAMP_LIT_BROWN:
+                    lightColor = LightColor_Candles_Brown;
+                    break;
+                case BLOCK_LAMP_LIT_CYAN:
+                    lightColor = LightColor_Candles_Cyan;
+                    break;
+                case BLOCK_LAMP_LIT_GRAY:
+                    lightColor = LightColor_Candles_Gray;
+                    break;
+                case BLOCK_LAMP_LIT_GREEN:
+                    lightColor = LightColor_Candles_Green;
+                    break;
+                case BLOCK_LAMP_LIT_LIGHT_BLUE:
+                    lightColor = LightColor_Candles_LightBlue;
+                    break;
+                case BLOCK_LAMP_LIT_LIGHT_GRAY:
+                    lightColor = LightColor_Candles_LightGray;
+                    break;
+                case BLOCK_LAMP_LIT_LIME:
+                    lightColor = LightColor_Candles_Lime;
+                    break;
+                case BLOCK_LAMP_LIT_MAGENTA:
+                    lightColor = LightColor_Candles_Magenta;
+                    break;
+                case BLOCK_LAMP_LIT_ORANGE:
+                    lightColor = LightColor_Candles_Orange;
+                    break;
+                case BLOCK_LAMP_LIT_PINK:
+                    lightColor = LightColor_Candles_Pink;
+                    break;
+                case BLOCK_LAMP_LIT_PURPLE:
+                    lightColor = LightColor_Candles_Purple;
+                    break;
+                case BLOCK_LAMP_LIT_RED:
+                    lightColor = LightColor_Candles_Red;
+                    break;
+                case BLOCK_LAMP_LIT_WHITE:
+                    lightColor = LightColor_Candles_White;
+                    break;
+                case BLOCK_LAMP_LIT_YELLOW:
+                    lightColor = LightColor_Candles_Yellow;
+                    break;
+            }
         }
 
         // reflective translucents / glass
@@ -1063,11 +1119,15 @@ void main() {
         // hack to increase light (if set)
         if (lightRange > 0.0) lightRange += 1.0;
 
-        // apply saturation changes to light and tint colors
+        // apply saturation changes to light color
         const float saturationF = LPV_SATURATION / 100.0;
         mat4 matSaturation = GetSaturationMatrix(saturationF);
         lightColor = (matSaturation * vec4(lightColor, 1.0)).rgb;
-        tintColor = (matSaturation * vec4(tintColor, 1.0)).rgb;
+
+        // apply saturation changes to tint color
+        const float tintSaturationF = LPV_TINT_SATURATION / 100.0;
+        mat4 matTintSaturation = GetSaturationMatrix(tintSaturationF);
+        tintColor = (matTintSaturation * vec4(tintColor, 1.0)).rgb;
 
         // lazy fix for migrating from mixWeight to tintColor
         tintColor *= mixWeight;
