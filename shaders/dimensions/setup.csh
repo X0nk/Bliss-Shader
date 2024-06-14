@@ -564,6 +564,12 @@ void main() {
             mixWeight = 1.0;
         }
 
+        if (blockId == BLOCK_FIRE_FLIES) {
+            lightColor = vec3(0.729, 0.639, 0.31);
+            lightRange = 2.0;
+            mixWeight = 1.0;
+        }
+
         if (blockId == BLOCK_FROGLIGHT_OCHRE || blockId == ITEM_FROGLIGHT_OCHRE) {
             lightColor = vec3(0.768, 0.648, 0.108);
             lightRange = 15.0;
