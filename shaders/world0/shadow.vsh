@@ -220,12 +220,14 @@ void main() {
 		
 		#ifdef LPV_ENTITY_LIGHTS
 			if (
-				(currentRenderedItemId > 0 || entityId > 0) &&
-				(renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES || renderStage == MC_RENDER_STAGE_ENTITIES)
+				((renderStage == MC_RENDER_STAGE_ENTITIES && (currentRenderedItemId > 0 || entityId > 0)) || renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES)
 			) {
 				uint voxelId = 0u;
 
-				if (currentRenderedItemId > 0 && currentRenderedItemId < 1000) {
+				if (renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES) {
+					voxelId = uint(blockEntityId);
+				}
+				else if (currentRenderedItemId > 0 && currentRenderedItemId < 1000) {
 					if (entityId != ENTITY_ITEM_FRAME && entityId != ENTITY_PLAYER)
 						voxelId = uint(currentRenderedItemId);
 				}

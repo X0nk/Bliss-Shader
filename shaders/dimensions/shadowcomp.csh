@@ -70,15 +70,18 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 	}
 
 	vec4 mixNeighbours(const in ivec3 fragCoord, const in uint mask) {
-	    vec4 nX1 = sampleShared(fragCoord + ivec3(-1,  0,  0), 1) * ((mask     ) & 1u);
-	    vec4 nX2 = sampleShared(fragCoord + ivec3( 1,  0,  0), 0) * ((mask >> 1) & 1u);
-	    vec4 nY1 = sampleShared(fragCoord + ivec3( 0, -1,  0), 3) * ((mask >> 2) & 1u);
-	    vec4 nY2 = sampleShared(fragCoord + ivec3( 0,  1,  0), 2) * ((mask >> 3) & 1u);
-	    vec4 nZ1 = sampleShared(fragCoord + ivec3( 0,  0, -1), 5) * ((mask >> 4) & 1u);
-	    vec4 nZ2 = sampleShared(fragCoord + ivec3( 0,  0,  1), 4) * ((mask >> 5) & 1u);
+	    uvec3 m1 = (mask >> uvec3(0, 2, 4)) & 1u;
+	    uvec3 m2 = (mask >> uvec3(1, 3, 5)) & 1u;
+
+	    vec4 sX1 = sampleShared(fragCoord + ivec3(-1,  0,  0), 1) * m1.x;
+	    vec4 sX2 = sampleShared(fragCoord + ivec3( 1,  0,  0), 0) * m2.x;
+	    vec4 sY1 = sampleShared(fragCoord + ivec3( 0, -1,  0), 3) * m1.y;
+	    vec4 sY2 = sampleShared(fragCoord + ivec3( 0,  1,  0), 2) * m2.y;
+	    vec4 sZ1 = sampleShared(fragCoord + ivec3( 0,  0, -1), 5) * m1.z;
+	    vec4 sZ2 = sampleShared(fragCoord + ivec3( 0,  0,  1), 4) * m2.z;
 
 	    const vec4 avgFalloff = (1.0/6.0) * LpvBlockSkyFalloff.xxxy;
-	    return (nX1 + nX2 + nY1 + nY2 + nZ1 + nZ2) * avgFalloff;
+	    return (sX1 + sX2 + sY1 + sY2 + sZ1 + sZ2) * avgFalloff;
 	}
 	
 	uint GetVoxelBlock(const in ivec3 voxelPos) {
