@@ -518,6 +518,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
     WavePixelData wave = physics_wavePixel(physics_localPosition.xz, waviness, physics_iterationsNormal, physics_gameTime);
     vec3 NormalTex = wave.normal;
 
+    if (isEyeInWater == 1 && !gl_FrontFacing) NormalTex = -NormalTex;
+
 	// tangent space normals for refraction
 	TangentNormal = NormalTex.xy*0.5+0.5;
 
