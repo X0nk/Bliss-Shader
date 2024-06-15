@@ -171,24 +171,6 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 #define PW_POINTS 2 //[2 4 6 8 16 32]
 
 varying vec3 viewVector;
-vec3 getParallaxDisplacement(vec3 posxz) {
-
-	vec3 parallaxPos = posxz;
-	vec2 vec = viewVector.xy * (1.0 / float(PW_POINTS)) * 22.0 * PW_DEPTH;
-	// float waterHeight = (1.0 - (getWaterHeightmap(posxz.xz)*0.5+0.5)) * 2.0 - 1.0;
-	float waterHeight = getWaterHeightmap(posxz.xz) * 2.0;
-	parallaxPos.xz -= waterHeight * vec;
-
-	return parallaxPos;
-}
-
-
-vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
-	float bumpmult = puddle_values;
-	bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
-	// 
-	return normalize(bump*tbnMatrix);
-}
 
 vec2 CleanSample(
 	int samples, float totalSamples, float noise
@@ -362,13 +344,7 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 	float shadowmap = 0.0;
 	vec3 translucentTint = vec3(0.0);
 
-	#ifndef HAND
-		projectedShadowPosition.z -= 0.0001;
-	#endif
-
-	#if defined ENTITIES
-		projectedShadowPosition.z -= 0.0002;
-	#endif
+	projectedShadowPosition.z -= 0.0001;
 
 	#ifdef BASIC_SHADOW_FILTER
 		int samples = int(SHADOW_FILTER_SAMPLE_COUNT * 0.5);
@@ -421,80 +397,7 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 }
 #endif
 
-void convertHandDepth(inout float depth) {
-    float ndcDepth = depth * 2.0 - 1.0;
-    ndcDepth /= MC_HAND_DEPTH;
-    depth = ndcDepth * 0.5 + 0.5;
-}
-void Emission(
-	inout vec3 Lighting,
-	vec3 Albedo,
-	float Emission,
-	float exposure
-){
-	float autoBrightnessAdjust = mix(5.0, 100.0, clamp(exp(-10.0*exposure),0.0,1.0));
-	if( Emission < 254.5/255.0) Lighting = mix(Lighting, Albedo * Emissive_Brightness * autoBrightnessAdjust * 0.1, pow(Emission, Emissive_Curve)); // old method.... idk why
-}
 
-/*
-uniform float viewWidth;
-uniform float viewHeight;
-void frisvad(in vec3 n, out vec3 f, out vec3 r){
-    if(n.z < -0.9) {
-        f = vec3(0.,-1,0);
-        r = vec3(-1, 0, 0);
-    } else {
-    	float a = 1./(1.+n.z);
-    	float b = -n.x*n.y*a;
-    	f = vec3(1. - n.x*n.x*a, b, -n.x) ;
-    	r = vec3(b, 1. - n.y*n.y*a , -n.y);
-    }
-}
-mat3 CoordBase(vec3 n){
-	vec3 x,y;
-    frisvad(n,x,y);
-    return mat3(x,y,n);
-}
-vec2 R2_samples(int n){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha * n);
-}
-float fma(float a,float b,float c){
- return a * b + c;
-}
-//// thank you Zombye | the paper: https://ggx-research.github.io/publication/2023/06/09/publication-ggx.html
-vec3 SampleVNDFGGX(
-    vec3 viewerDirection, // Direction pointing towards the viewer, oriented such that +Z corresponds to the surface normal
-    vec2 alpha, // Roughness parameter along X and Y of the distribution
-    float xy // Pair of uniformly distributed numbers in [0, 1)
-) {
-	// alpha *= alpha;
-    // Transform viewer direction to the hemisphere configuration
-    viewerDirection = normalize(vec3(alpha * viewerDirection.xy, viewerDirection.z));
-
-    // Sample a reflection direction off the hemisphere
-    const float tau = 6.2831853; // 2 * pi
-    float phi = tau * xy;
-
-    float cosTheta = fma(1.0 - xy, 1.0 + viewerDirection.z, -viewerDirection.z) ;
-    float sinTheta = sqrt(clamp(1.0 - cosTheta * cosTheta, 0.0, 1.0));
-
-	// xonk note, i dont know what im doing but this kinda does what i want so whatever
-	float attemptTailClamp  = clamp(sinTheta,max(cosTheta-0.25,0), cosTheta);
-	float attemptTailClamp2 = clamp(cosTheta,max(sinTheta-0.25,0), sinTheta);
-
-    vec3 reflected = vec3(vec2(cos(phi), sin(phi)) * attemptTailClamp2, attemptTailClamp);
-    // vec3 reflected = vec3(vec2(cos(phi), sin(phi)) * sinTheta, cosTheta);
-
-    // Evaluate halfway direction
-    // This gives the normal on the hemisphere
-    vec3 halfway = reflected + viewerDirection;
-
-    // Transform the halfway direction back to hemiellispoid configuation
-    // This gives the final sampled normal
-    return normalize(vec3(alpha * halfway.xy, halfway.z));
-}
-*/
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -510,10 +413,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	
 	vec3 FragCoord = gl_FragCoord.xyz;
 
-	#ifdef HAND
-		convertHandDepth(FragCoord.z);
-	#endif
-
 	vec2 tempOffset = offsets[framemod8];
 
 	vec3 viewPos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
@@ -524,7 +423,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 //////////////////////////////// MATERIAL MASKS ////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 	
-	float MATERIALS = normalMat.w;
+	float MATERIALS = 1.0;//normalMat.w;
 
 	// 1.0 = water mask
 	// 0.9 = entity mask
@@ -561,16 +460,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		#ifdef Vanilla_like_water
 			if (isWater) Albedo *= sqrt(luma(Albedo));
 		#else
-			if (isWater){
-				Albedo = vec3(0.0);
-				gl_FragData[0].a = 1.0/255.0;
-			}
+			Albedo = vec3(0.0);
+			gl_FragData[0].a = 1.0/255.0;
 		#endif
 	#endif
-
-	// #ifdef ENTITIES
-	// 	Albedo.rgb = mix(Albedo.rgb, entityColor.rgb, clamp(entityColor.a*1.5,0,1));
-	// #endif
 
 	vec4 GLASS_TINT_COLORS = vec4(Albedo, UnchangedAlpha);
 	
@@ -603,29 +496,30 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	// tangent space normals for refraction
 	//TangentNormal = NormalTex.xy*0.5+0.5;
 	
-			// vec3 posxz = (mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz) + cameraPosition;
-			
-			// make the waves flow in the direction the water faces, except for perfectly up facing parts.
-			// if(abs(worldSpaceNormal.y) < 0.9995) posxz.xz -= (posxz.y + frameTimeCounter*3 * WATER_WAVE_SPEED) * normalize(worldSpaceNormal.xz) ;
-		
-			// posxz.xyz = getParallaxDisplacement(posxz);
-			// vec3 bump = normalize(getWaveNormal(posxz, false));
 
-			// float bumpmult = 10.0 * WATER_WAVE_STRENGTH;
-			// bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
+	// vec3 posxz = (mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz) + cameraPosition;
+	
+	// make the waves flow in the direction the water faces, except for perfectly up facing parts.
+	// if(abs(worldSpaceNormal.y) < 0.9995) posxz.xz -= (posxz.y + frameTimeCounter*3 * WATER_WAVE_SPEED) * normalize(worldSpaceNormal.xz) ;
 
-			// NormalTex.xyz = bump;
+	// posxz.xyz = getParallaxDisplacement(posxz);
+	// vec3 bump = normalize(getWaveNormal(posxz, false));
 
-			// tangent space normals for refraction
-			// TangentNormal = (bump.xy/3.0)*0.5+0.5; 
+	// float bumpmult = 10.0 * WATER_WAVE_STRENGTH;
+	// bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
+
+	// NormalTex.xyz = bump;
+
+	// tangent space normals for refraction
+	// TangentNormal = (bump.xy/3.0)*0.5+0.5; 
 
 
-		    float waviness = max(physics_localWaviness, 0.02);
-		    WavePixelData wave = physics_wavePixel(physics_localPosition.xz, waviness, physics_iterationsNormal, physics_gameTime);
-		    vec3 NormalTex = wave.normal;
+    float waviness = max(physics_localWaviness, 0.02);
+    WavePixelData wave = physics_wavePixel(physics_localPosition.xz, waviness, physics_iterationsNormal, physics_gameTime);
+    vec3 NormalTex = wave.normal;
 
-			// tangent space normals for refraction
-			TangentNormal = NormalTex.xy*0.5+0.5;
+	// tangent space normals for refraction
+	TangentNormal = NormalTex.xy*0.5+0.5;
 
 
 	// normal = applyBump(tbnMatrix, NormalTex.xyz, 1.0);
@@ -766,10 +660,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		
 		float roughness = pow(1.0-specularValues.r,2.0);
 		float f0 = isReflective ? max(specularValues.g, 0.02) : specularValues.g;
-
-		#ifdef HAND
-			f0 = max(specularValues.g, 0.02);
-		#endif
 		
 		// f0 = SpecularTex.g;
 		// roughness = pow(1.0-specularValues.r,2.0);
@@ -867,9 +757,9 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0].rgb = FinalColor*0.1;
 	#endif
 
-	#if EMISSIVE_TYPE == 2 || EMISSIVE_TYPE == 3
-		Emission(gl_FragData[0].rgb, Albedo, SpecularTex.b, exposure);
-	#endif
+	// #if EMISSIVE_TYPE == 2 || EMISSIVE_TYPE == 3
+	// 	Emission(gl_FragData[0].rgb, Albedo, SpecularTex.b, exposure);
+	// #endif
 	
 	#if defined DISTANT_HORIZONS && defined DH_OVERDRAW_PREVENTION && !defined HAND
 		bool WATER = texture2D(colortex7, gl_FragCoord.xy*texelSize).a > 0.0 && length(feetPlayerPos) > far-16*4 && texture2D(depthtex1, gl_FragCoord.xy*texelSize).x >= 1.0;
@@ -877,9 +767,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		if(WATER) gl_FragData[0].a = 0.0;
 	#endif
 
-	#ifndef HAND
-		gl_FragData[1] = vec4(Albedo, MATERIALS);
-	#endif
+	gl_FragData[1] = vec4(Albedo, MATERIALS);
+
 	#if DEBUG_VIEW == debug_DH_WATER_BLENDING
 		if(gl_FragCoord.x*texelSize.x < 0.47) gl_FragData[0] = vec4(0.0);
 	#endif
@@ -894,6 +783,5 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	gl_FragData[3].a = clamp(lightmap.y,0.0,1.0);
-
 }
 }
