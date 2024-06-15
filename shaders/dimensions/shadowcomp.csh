@@ -70,8 +70,8 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 	}
 
 	vec4 mixNeighbours(const in ivec3 fragCoord, const in uint mask) {
-	    uvec3 m1 = (mask >> uvec3(0, 2, 4)) & 1u;
-	    uvec3 m2 = (mask >> uvec3(1, 3, 5)) & 1u;
+	    uvec3 m1 = (uvec3(mask) >> uvec3(0, 2, 4)) & uvec3(1u);
+	    uvec3 m2 = (uvec3(mask) >> uvec3(1, 3, 5)) & uvec3(1u);
 
 	    vec4 sX1 = sampleShared(fragCoord + ivec3(-1,  0,  0), 1) * m1.x;
 	    vec4 sX2 = sampleShared(fragCoord + ivec3( 1,  0,  0), 0) * m2.x;
