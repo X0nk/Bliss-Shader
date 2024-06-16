@@ -196,59 +196,12 @@ void main() {
 	// 	}
 	// #endif
 
-	int blockId = int(mc_Entity.x + 0.5);
-
 	#if defined IS_LPV_ENABLED || defined WAVY_PLANTS
 		vec3 playerpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
 	#endif
 
 	#if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
-		if (
-			renderStage == MC_RENDER_STAGE_TERRAIN_SOLID || renderStage == MC_RENDER_STAGE_TERRAIN_TRANSLUCENT ||
-			renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT || renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT_MIPPED
-		) {
-			uint voxelId = uint(blockId);
-			#ifdef IRIS_FEATURE_BLOCK_EMISSION_ATTRIBUTE
-				if (voxelId == 0u && at_midBlock.w > 0) voxelId = uint(BLOCK_LIGHT_1 + at_midBlock.w - 1);
-			#endif
-			if (voxelId == 0u) voxelId = 1u;
-
-			vec3 originPos = playerpos + at_midBlock.xyz/64.0;
-
-			SetVoxelBlock(originPos, voxelId);
-		}
-		
-		#ifdef LPV_ENTITY_LIGHTS
-			if (
-				((renderStage == MC_RENDER_STAGE_ENTITIES && (currentRenderedItemId > 0 || entityId > 0)) || renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES)
-			) {
-				uint voxelId = 0u;
-
-				if (renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES) {
-					voxelId = uint(blockEntityId);
-				}
-				else if (currentRenderedItemId > 0 && currentRenderedItemId < 1000) {
-					if (entityId != ENTITY_ITEM_FRAME && entityId != ENTITY_PLAYER)
-						voxelId = uint(currentRenderedItemId);
-				}
-				else {
-					switch (entityId) {
-						case ENTITY_BLAZE:
-						case ENTITY_END_CRYSTAL:
-						// case ENTITY_FIREBALL_SMALL:
-						case ENTITY_GLOW_SQUID:
-						case ENTITY_MAGMA_CUBE:
-						case ENTITY_SPECTRAL_ARROW:
-						case ENTITY_TNT:
-							voxelId = uint(entityId);
-							break;
-					}
-				}
-
-				if (voxelId > 0u)
-					SetVoxelBlock(playerpos, voxelId);
-			}
-		#endif
+		PopulateShadowVoxel(playerpos);
 	#endif
 
 	// #ifdef WAVY_PLANTS
@@ -269,6 +222,8 @@ void main() {
 	// 		position = mat3(shadowModelView) * playerpos + shadowModelView[3].xyz;
   	// 	}
 	// #endif
+
+	int blockId = int(mc_Entity.x + 0.5);
 
 	#ifdef WAVY_PLANTS
 		// also use normal, so up/down facing geometry does not get detatched from its model parts.

@@ -957,6 +957,7 @@ void main() {
                 mixWeight = 0.5;
                 break;
             case BLOCK_SLAB_BOTTOM:
+            case BLOCK_SNOW_LAYERS:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);
                 mixWeight = 0.5;
                 break;

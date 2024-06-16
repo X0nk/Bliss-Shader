@@ -9,3 +9,52 @@ void SetVoxelBlock(const in vec3 playerPos, const in uint blockId) {
 
 	imageStore(imgVoxelMask, voxelPos, uvec4(blockId));
 }
+
+void PopulateShadowVoxel(const in vec3 playerPos) {
+	//int blockId = int(mc_Entity.x + 0.5);
+	uint voxelId = uint(mc_Entity.x + 0.5);
+	vec3 originPos = playerPos;
+
+	if (
+		renderStage == MC_RENDER_STAGE_TERRAIN_SOLID || renderStage == MC_RENDER_STAGE_TERRAIN_TRANSLUCENT ||
+		renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT || renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT_MIPPED
+	) {
+		#ifdef IRIS_FEATURE_BLOCK_EMISSION_ATTRIBUTE
+			if (voxelId == 0u && at_midBlock.w > 0) voxelId = uint(BLOCK_LIGHT_1 + at_midBlock.w - 1);
+		#endif
+		if (voxelId == 0u) voxelId = 1u;
+
+		originPos += at_midBlock.xyz/64.0;
+	}
+	
+	#ifdef LPV_ENTITY_LIGHTS
+		if (
+			((renderStage == MC_RENDER_STAGE_ENTITIES && (currentRenderedItemId > 0 || entityId > 0)) || renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES)
+		) {
+			if (renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES) {
+				if (blockEntityId > 0)
+					voxelId = uint(blockEntityId);
+			}
+			else if (currentRenderedItemId > 0 && currentRenderedItemId < 1000) {
+				if (entityId != ENTITY_ITEM_FRAME && entityId != ENTITY_PLAYER)
+					voxelId = uint(currentRenderedItemId);
+			}
+			else {
+				switch (entityId) {
+					case ENTITY_BLAZE:
+					case ENTITY_END_CRYSTAL:
+					// case ENTITY_FIREBALL_SMALL:
+					case ENTITY_GLOW_SQUID:
+					case ENTITY_MAGMA_CUBE:
+					case ENTITY_SPECTRAL_ARROW:
+					case ENTITY_TNT:
+						voxelId = uint(entityId);
+						break;
+				}
+			}
+		}
+	#endif
+
+	if (voxelId > 0u)
+		SetVoxelBlock(originPos, voxelId);
+}
