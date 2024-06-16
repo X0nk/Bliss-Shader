@@ -4,12 +4,12 @@ The block, item, and entity property files are generated with a template builder
 # Editing Colored Lighting
 There are two ways to edit colored lighting (explained below). Either method will require editing the block.properties mappings.
 
-### The Simple/Easy Way
+## The Simple/Easy Way
 New block IDs can be easily added to existing block/light mappings.
 
 TODO: expand and example
 
-### The Advanced Way
+## The Advanced Way
 Completely new block/light mappings can also be added, but it will require working with some GLSL code.
 
 TODO: expand and example
