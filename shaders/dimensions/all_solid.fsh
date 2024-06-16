@@ -419,7 +419,7 @@ void main() {
 		float gray = dot(Albedo.rgb, vec3(0.2, 1.0, 0.07));
 		if (
 			blockID == BLOCK_AMETHYST_BUD_MEDIUM || blockID == BLOCK_AMETHYST_BUD_LARGE || blockID == BLOCK_AMETHYST_CLUSTER 
-			|| blockID == BLOCK_SSS_STRONG || blockID == BLOCK_SSS_WEAK
+			|| blockID == BLOCK_SSS_STRONG || blockID == BLOCK_SSS_WEAK || blockID == BLOCK_SNOW_LAYERS
 			|| blockID >= 10 && blockID < 80
 		) {
 			// IR Reflective (Pink-red)
