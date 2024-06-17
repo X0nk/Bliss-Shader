@@ -32,7 +32,7 @@ void PopulateShadowVoxel(const in vec3 playerPos) {
 			((renderStage == MC_RENDER_STAGE_ENTITIES && (currentRenderedItemId > 0 || entityId > 0)) || renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES)
 		) {
 			if (renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES) {
-				if (blockEntityId > 0)
+				if (blockEntityId > 0 && blockEntityId < 1000)
 					voxelId = uint(blockEntityId);
 			}
 			else if (currentRenderedItemId > 0 && currentRenderedItemId < 1000) {
