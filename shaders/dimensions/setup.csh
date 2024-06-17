@@ -830,18 +830,8 @@ void main() {
         // reflective translucents / glass
 
         switch (blockId) {
-            case BLOCK_HONEY:
-                tintColor = vec3(0.984, 0.733, 0.251);
-                mixWeight = 1.0;
-                break;
-            case BLOCK_NETHER_PORTAL:
-                lightColor = vec3(0.502, 0.165, 0.831);
-                tintColor = vec3(0.502, 0.165, 0.831);
-                lightRange = 11.0;
-                mixWeight = 1.0;
-                break;
-            case BLOCK_SLIME:
-                tintColor = vec3(0.408, 0.725, 0.329);
+            case BLOCK_GLASS:
+                tintColor = vec3(1.0);
                 mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_BLACK:
@@ -906,6 +896,20 @@ void main() {
                 break;
             case BLOCK_GLASS_YELLOW:
                 tintColor = vec3(0.965, 0.965, 0.123);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_HONEY:
+                tintColor = vec3(0.984, 0.733, 0.251);
+                mixWeight = 1.0;
+                break;
+            case BLOCK_NETHER_PORTAL:
+                lightColor = vec3(0.502, 0.165, 0.831);
+                tintColor = vec3(0.502, 0.165, 0.831);
+                lightRange = 11.0;
+                mixWeight = 1.0;
+                break;
+            case BLOCK_SLIME:
+                tintColor = vec3(0.408, 0.725, 0.329);
                 mixWeight = 1.0;
                 break;
 
