@@ -235,7 +235,7 @@ void main() {
 				(InterpolateFromBase && (blockId == BLOCK_GRASS_TALL_LOWER || blockId == BLOCK_GROUND_WAVING || blockId == BLOCK_GRASS_SHORT || blockId == BLOCK_SAPLING || blockId == BLOCK_GROUND_WAVING_VERTICAL)) 
 
 				// these wave off of the ceiling. the area connected to the ceiling does not wave.
-				|| (!InterpolateFromBase && (blockId == 17))
+				|| (!InterpolateFromBase && (blockId == BLOCK_VINE_OTHER))
 
 				// these wave off of the air. they wave uniformly
 				|| (blockId == BLOCK_GRASS_TALL_UPPER || blockId == BLOCK_AIR_WAVING)
@@ -256,7 +256,8 @@ void main() {
 
 	
 	#ifdef DISTORT_SHADOWMAP
-		if(entityId == 1100) position.xyz = position.xyz - normalize(gl_NormalMatrix * gl_Normal) * 0.25;
+		if (entityId == ENTITY_SSS_MEDIUM || entityId == ENTITY_SLIME)
+			position.xyz = position.xyz - normalize(gl_NormalMatrix * gl_Normal) * 0.25;
 
 		gl_Position = BiasShadowProjection(toClipSpace3(position));
 	#else
