@@ -11,13 +11,15 @@ void SetVoxelBlock(const in vec3 playerPos, const in uint blockId) {
 }
 
 void PopulateShadowVoxel(const in vec3 playerPos) {
-	uint voxelId = uint(mc_Entity.x + 0.5);
+	uint voxelId = 0u;
 	vec3 originPos = playerPos;
 
 	if (
 		renderStage == MC_RENDER_STAGE_TERRAIN_SOLID || renderStage == MC_RENDER_STAGE_TERRAIN_TRANSLUCENT ||
 		renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT || renderStage == MC_RENDER_STAGE_TERRAIN_CUTOUT_MIPPED
 	) {
+		voxelId = uint(mc_Entity.x + 0.5);
+
 		#ifdef IRIS_FEATURE_BLOCK_EMISSION_ATTRIBUTE
 			if (voxelId == 0u && at_midBlock.w > 0) voxelId = uint(BLOCK_LIGHT_1 + at_midBlock.w - 1);
 		#endif
@@ -31,11 +33,13 @@ void PopulateShadowVoxel(const in vec3 playerPos) {
 		if (
 			((renderStage == MC_RENDER_STAGE_ENTITIES && (currentRenderedItemId > 0 || entityId > 0)) || renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES)
 		) {
+			voxelId = uint(mc_Entity.x + 0.5);
+
 			if (renderStage == MC_RENDER_STAGE_BLOCK_ENTITIES) {
 				if (blockEntityId > 0 && blockEntityId < 500)
 					voxelId = uint(blockEntityId);
 			}
-			else if (currentRenderedItemId > 0 && currentRenderedItemId < 1000) {
+			else if (currentRenderedItemId > 0 && currentRenderedItemId < 1200) {
 				if (entityId != ENTITY_ITEM_FRAME && entityId != ENTITY_PLAYER)
 					voxelId = uint(currentRenderedItemId);
 			}
