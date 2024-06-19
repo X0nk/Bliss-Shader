@@ -1057,7 +1057,10 @@ void main() {
 		#endif
 	
 		#ifdef IS_LPV_ENABLED
-			vec3 normalOffset = 0.5*viewToWorld(FlatNormals);
+			vec3 normalOffset = vec3(0.0);
+
+			if (any(greaterThan(abs(FlatNormals), vec3(1.0e-6))))
+				normalOffset = 0.5*viewToWorld(FlatNormals);
 
 			#if LPV_NORMAL_STRENGTH > 0
 				vec3 texNormalOffset = -normalOffset + slopednormal;

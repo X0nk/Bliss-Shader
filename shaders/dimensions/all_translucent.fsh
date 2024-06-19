@@ -722,7 +722,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	#ifdef IS_LPV_ENABLED
-		vec3 normalOffset = 0.5*worldSpaceNormal;
+		vec3 normalOffset = vec3(0.0);
+
+		if (any(greaterThan(abs(worldSpaceNormal), vec3(1.0e-6))))
+			normalOffset = 0.5*worldSpaceNormal;
 
 		#if LPV_NORMAL_STRENGTH > 0
 			if (any(greaterThan(abs(normal), vec3(1.0e-6)))) {
