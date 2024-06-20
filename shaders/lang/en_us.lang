@@ -1,4 +1,5 @@
-option.SHADER_VERSION_LABEL = Bliss In-Dev Commit Number
+option.SHADER_VERSION_LABEL = Bliss In-Dev Version
+    prefix.SHADER_VERSION_LABEL = COMMIT #
 
 # if you're here to translate, this is a joke, these don't do what they say
 profile.QUALITY=Quality
