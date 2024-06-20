@@ -191,7 +191,7 @@ void DoSpecularReflections(
 	Roughness = 1.0 - Roughness; Roughness *= Roughness;
 	F0 = F0 == 0.0 ? 0.02 : F0;
 
-	// Roughness = 0.1;
+	// Roughness = 0.0;
 	// F0 = 0.9;
 
 	mat3 Basis = CoordBase(Normal);

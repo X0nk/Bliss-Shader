@@ -1,6 +1,6 @@
-#define saturate(x) clamp(x,0.0,1.0)
+#define SHADER_VERSION_LABEL 439 // [439]
 
-#define BLISS_SHADERS 0 // [0 1 2]
+#define saturate(x) clamp(x,0.0,1.0)
 
 ////////////////////////////////////////
 // ----- WATER RELATED SETTINGS ----- //
@@ -403,7 +403,7 @@ uniform int moonPhase;
 #define cloud_ShadowLevelOfDetail 0	// [-1 0 1 2 3 4 5 6 7 8]
 #define cloud_LevelOfDetailLQ 1	// [-1 0 1 2 3 4 5 6 7 8]
 #define cloud_ShadowLevelOfDetailLQ 0 // [-1 0 1 2 3 4 5 6 7 8]
-#define minRayMarchSteps 10	// [20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120 125 130 135 140 145 150 155 160 165 170 175 180 185 190 195 200]
+#define minRayMarchSteps 15	// [20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120 125 130 135 140 145 150 155 160 165 170 175 180 185 190 195 200]
 #define maxRayMarchSteps 15	// [5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120 125 130 135 140 145 150 155 160 165 170 175 180 185 190 195 200]
 #define minRayMarchStepsLQ 10 // [5  10  15  20  25  30  35  40  45  50  55  60  65  70  75  80  85  90 95 100]
 #define maxRayMarchStepsLQ 30 //  [ 5  10  15  20  25  30  35  40  45  50  55  60  65  70  75  80  85  90 95 100]
@@ -551,9 +551,9 @@ uniform int moonPhase;
 #define SATURATION 0.00 // [-1.0 -0.98 -0.96 -0.94 -0.92 -0.9 -0.88 -0.86 -0.84 -0.82 -0.8 -0.78 -0.76 -0.74 -0.72 -0.7 -0.68 -0.66 -0.64 -0.62 -0.6 -0.58 -0.56 -0.54 -0.52 -0.5 -0.48 -0.46 -0.44 -0.42 -0.4 -0.38 -0.36 -0.34 -0.32 -0.3 -0.28 -0.26 -0.24 -0.22 -0.2 -0.18 -0.16 -0.14 -0.12 -0.1 -0.08 -0.06 -0.04 -0.02 0.0 0.02 0.04 0.06 0.08 0.1 0.12 0.14 0.16 0.18 0.2 0.22 0.24 0.26 0.28 0.3 0.32 0.34 0.36 0.38 0.4 0.42 0.44 0.46 0.48 0.5 0.52 0.54 0.56 0.58 0.6 0.62 0.64 0.66 0.68 0.7 0.72 0.74 0.76 0.78 0.8 0.82 0.84 0.86 0.88 0.9 0.92 0.94 0.96 0.98 1.0 ]
 #define CROSSTALK 0.0 // [-1.0 -0.98 -0.96 -0.94 -0.92 -0.9 -0.88 -0.86 -0.84 -0.82 -0.8 -0.78 -0.76 -0.74 -0.72 -0.7 -0.68 -0.66 -0.64 -0.62 -0.6 -0.58 -0.56 -0.54 -0.52 -0.5 -0.48 -0.46 -0.44 -0.42 -0.4 -0.38 -0.36 -0.34 -0.32 -0.3 -0.28 -0.26 -0.24 -0.22 -0.2 -0.18 -0.16 -0.14 -0.12 -0.1 -0.08 -0.06 -0.04 -0.02 0.0 0.02 0.04 0.06 0.08 0.1 0.12 0.14 0.16 0.18 0.2 0.22 0.24 0.26 0.28 0.3 0.32 0.34 0.36 0.38 0.4 0.42 0.44 0.46 0.48 0.5 0.52 0.54 0.56 0.58 0.6 0.62 0.64 0.66 0.68 0.7 0.72 0.74 0.76 0.78 0.8 0.82 0.84 0.86 0.88 0.9 0.92 0.94 0.96 0.98 1.0 ]
 
-// #define TONE_CURVE
-#define UPPER_CURVE 0.0 // [-1.0 -0.9 -0.8 -0.7 -0.6 -0.5 -0.4 -0.3 -0.2 -0.1 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
-#define LOWER_CURVE 0.0 // [-1.0 -0.9 -0.8 -0.7 -0.6 -0.5 -0.4 -0.3 -0.2 -0.1 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
+// #define LUMINANCE_CURVE
+#define UPPER_CURVE 0.0 // [-2.0 -1.9 -1.8 -1.7 -1.6 -1.5 -1.4 -1.3 -1.2 -1.1 -1.0 -0.9 -0.8 -0.7 -0.6 -0.5 -0.4 -0.3 -0.2 -0.1 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
+#define LOWER_CURVE 0.0 // [-2.0 -1.9 -1.8 -1.7 -1.6 -1.5 -1.4 -1.3 -1.2 -1.1 -1.0 -0.9 -0.8 -0.7 -0.6 -0.5 -0.4 -0.3 -0.2 -0.1 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
 
 // #define COLOR_GRADING_ENABLED
 #define SHADOWS_GRADE_R 1.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
@@ -594,11 +594,10 @@ const vec3 HIGHLIGHTS_TARGET = length(vec3(HIGHLIGHTS_GRADE_R, HIGHLIGHTS_GRADE_
 #define AEROCHROME_PINKNESS 0.3 // How pink it is from red [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631), AEROCHROME_PINKNESS);
 
-//#define BICUBIC_UPSCALING
 // #define CAMERA_GRIDLINES
 
 // #define MOTION_BLUR
-#define MOTION_BLUR_STRENGTH 1.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
+#define MOTION_BLUR_STRENGTH 1.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 3.0 4.0 5.0]
 
 ///////////////////////////////////////////////////////
 // ----- GAMEPLAY POST EFFECT RELATED SETTINGS ----- //
@@ -688,6 +687,7 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 // #define DISABLE_VANILLA_EMISSIVES
 #define PARTICLE_RENDERING_FIX
 
+#define LIGHTING_EFFECTS_BLUR_FILTER
 
 ///////////////////////////////////////////
 // ----- DISTANT HORIZONS SETTINGS ----- //
@@ -697,7 +697,7 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 #define DISTORT_SHADOWMAP
 // #define DISTANT_HORIZONS_SHADOWMAP
 #ifdef DISTANT_HORIZONS_SHADOWMAP
-	#undef DISTORT_SHADOWMAP
+	// #undef DISTORT_SHADOWMAP
 	
 	const float shadowNearPlane = -1.0;
 	const float shadowFarPlane = -1.0;
@@ -724,6 +724,8 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 #define LPV_ENTITY_LIGHTS
 #define LPV_REDSTONE_LIGHTS
 //#define LPV_COLORED_CANDLES
+//#define LPV_VL_FOG_ILLUMINATION
+#define LPV_VL_FOG_ILLUMINATION_BRIGHTNESS 100 // [0 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120 125 130 135 140 145 150 155 160 165 170 175 180 185 190 195 200]]
 
 // Fix for making nether/end work until next Iris release to fix shadow matrices
 //#define LPV_NOSHADOW_HACK
@@ -780,11 +782,13 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 #endif
 #ifdef LIGHTNING_FLASH
 #endif
-#if BLISS_SHADERS == 0
+#if SHADER_VERSION_LABEL > 0
 #endif
 #if DH_KNOWN_ISSUES == 0
 #endif
 #ifdef PARTICLE_RENDERING_FIX
 #endif
 #ifdef RENDER_PLAYER_SHADOWS
+#endif
+#ifdef LPV_VL_FOG_ILLUMINATION
 #endif

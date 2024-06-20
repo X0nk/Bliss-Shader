@@ -476,6 +476,10 @@ vec4 BilateralUpscale_DH(sampler2D tex, sampler2D depth, vec2 coord, float refer
 	 	ivec2(-2, 0),
 		ivec2( 0, 0),
 		ivec2( 0,-2)
+		// ivec2(-1,-1),
+	 	// ivec2( 1, 1),
+		// ivec2(-1, 1),
+		// ivec2( 1,-1)
   	);
 
 	#ifdef DISTANT_HORIZONS
@@ -487,9 +491,11 @@ vec4 BilateralUpscale_DH(sampler2D tex, sampler2D depth, vec2 coord, float refer
 	vec4 RESULT = vec4(0.0);
 	float SUM = 0.0;
 
+	RESULT += texelFetch2D(tex, posColor + pos, 0);
+
 	for (int i = 0; i < 4; i++) {
 		
-		ivec2 radius = getRadius[i];
+		ivec2 radius = getRadius[i] ;
 
 		#ifdef DISTANT_HORIZONS
 			float offsetDepth = sqrt(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling,0).a/65000.0);
@@ -515,10 +521,10 @@ void BilateralUpscale_REUSE_Z(sampler2D tex1, sampler2D tex2, sampler2D depth, v
   	ivec2 pos = ivec2(gl_FragCoord.xy*texelSize + 1);
 
 	ivec2 getRadius[4] = ivec2[](
-   	 	ivec2(-1,-1),
-	  	ivec2(-1, 0),
-		ivec2( 0, 0),
-		ivec2( 0,-1)
+		ivec2(-1,-1),
+	 	ivec2( 1,-1),
+		ivec2( 1, 1),
+		ivec2(-1, 1)
   	);
 
 	#ifdef DISTANT_HORIZONS
@@ -529,7 +535,65 @@ void BilateralUpscale_REUSE_Z(sampler2D tex1, sampler2D tex2, sampler2D depth, v
 
 	vec3 shadow_RESULT = vec3(0.0);
 	vec2 ssao_RESULT = vec2(0.0);
-	vec4 fog_RESULT = vec4(0.0);
+	float SUM = 1.0;
+
+	#ifdef LIGHTING_EFFECTS_BLUR_FILTER
+		for (int i = 0; i < 4; i++) {
+
+			ivec2 radius = getRadius[i];
+
+			#ifdef DISTANT_HORIZONS
+				float offsetDepth = sqrt(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling,0).a/65000.0);
+			#else
+				float offsetDepth = ld(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling, 0).r);
+			#endif
+
+			float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
+
+			#ifdef Variable_Penumbra_Shadows
+				shadow_RESULT += texelFetch2D(tex1, posColor + radius + pos, 0).rgb * EDGES;
+			#endif
+
+			#if indirect_effect == 1
+				ssao_RESULT += texelFetch2D(tex2, posColor + radius + pos, 0).rg * EDGES;
+			#endif
+
+			SUM += EDGES;
+		}
+	#endif
+
+	#ifdef Variable_Penumbra_Shadows
+		shadow_RESULT += texture2D(tex1, gl_FragCoord.xy*texelSize).rgb;
+		filteredShadow = shadow_RESULT/SUM;
+	#endif
+	
+	#if indirect_effect == 1
+		ssao_RESULT += texture2D(tex2, gl_FragCoord.xy*texelSize).rg;
+		ambientEffects = ssao_RESULT/SUM;
+	#endif
+}
+
+vec4 BilateralUpscale_VLFOG(sampler2D tex, sampler2D depth, vec2 coord, float referenceDepth){
+	ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
+	ivec2 posDepth  = ivec2(coord*VL_RENDER_RESOLUTION) * scaling;
+	ivec2 posColor  = ivec2(coord*VL_RENDER_RESOLUTION);
+ 	ivec2 pos = ivec2(gl_FragCoord.xy*texelSize + 1);
+
+	ivec2 getRadius[5] = ivec2[](
+    	ivec2(-1,-1),
+	 	ivec2( 1, 1),
+		ivec2(-1, 1),
+		ivec2( 1,-1),
+		ivec2( 0, 0)
+  );
+
+	#ifdef DISTANT_HORIZONS
+		float diffThreshold = 0.01;
+	#else
+		float diffThreshold = zMults.x;
+	#endif
+
+	vec4 RESULT = vec4(0.0);
 	float SUM = 0.0;
 
 	for (int i = 0; i < 4; i++) {
@@ -543,22 +607,13 @@ void BilateralUpscale_REUSE_Z(sampler2D tex1, sampler2D tex2, sampler2D depth, v
 		#endif
 
 		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
-		// #ifdef Variable_Penumbra_Shadows
-			shadow_RESULT += texelFetch2D(tex1, posColor + radius + pos, 0).rgb * EDGES;
-		// #endif
-
-		#if indirect_effect == 1
-			ssao_RESULT += texelFetch2D(tex2, posColor + radius + pos, 0).rg * EDGES;
-		#endif
-
-		SUM += EDGES;
+		
+		RESULT += texelFetch2D(tex, posColor + radius + pos, 0) * EDGES;
+		
+   		SUM += EDGES;
 	}
-	// #ifdef Variable_Penumbra_Shadows
-		filteredShadow = shadow_RESULT/SUM;
-	// #endif
-	#if indirect_effect == 1
-		ambientEffects = ssao_RESULT/SUM;
-	#endif
+
+	return RESULT / SUM;
 }
 
 #ifdef OVERWORLD_SHADER
@@ -617,8 +672,8 @@ float ComputeShadowMap(in vec3 projectedShadowPosition, float distortFactor, flo
 	#endif
 
 	// return maxDistFade;
-
-	return mix(1.0, shadowmap / samples, maxDistFade);
+	return shadowmap / samples;
+	// return mix(1.0, shadowmap / samples, maxDistFade);
 
 }
 #endif
@@ -632,7 +687,7 @@ float CustomPhase(float LightPos){
 	return Final;
 }
 
-vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, float lightPos, float shadows, bool distantSSS){
+vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, float lightPos, float shadows, float distantSSS){
 	
 	Scattering *= sss_density_multiplier;
 
@@ -641,7 +696,7 @@ vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, floa
 	float scatterDepth = max(1.0 - Scattering/density,0.0);
 	scatterDepth = exp((1.0-scatterDepth) * -7.0);
 
-	if(distantSSS) scatterDepth = exp(Scattering * -10.0);
+	scatterDepth = mix(exp(Scattering * -10.0), scatterDepth,  distantSSS);
 
 	// this is for SSS when there is no shadow blocker depth
 	#if defined BASIC_SHADOW_FILTER && defined Variable_Penumbra_Shadows
@@ -851,9 +906,9 @@ void main() {
 	vec2 SSAO_SSS = vec2(1.0);
 	
 	#if defined DISTANT_HORIZONS && defined DH_AMBIENT_OCCLUSION
-		BilateralUpscale_REUSE_Z(colortex3,	colortex14, colortex12, gl_FragCoord.xy, DH_mixedLinearZ, SSAO_SSS, filteredShadow, hand);
+		BilateralUpscale_REUSE_Z(colortex3,	colortex14, colortex12, gl_FragCoord.xy-1.5, DH_mixedLinearZ, SSAO_SSS, filteredShadow, hand);
 	#else
-		BilateralUpscale_REUSE_Z(colortex3,	colortex14, depthtex0, gl_FragCoord.xy, ld(z0), SSAO_SSS, filteredShadow, hand);
+		BilateralUpscale_REUSE_Z(colortex3,	colortex14, depthtex0, gl_FragCoord.xy-1.5, ld(z0), SSAO_SSS, filteredShadow, hand);
 	#endif
 
 	float ShadowBlockerDepth = filteredShadow.y;
@@ -936,8 +991,10 @@ void main() {
 		projectedShadowPosition = diagonal3_old(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
 		#if OPTIMIZED_SHADOW_DISTANCE > 0
-			float shadowMapFalloff = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / (shadowDistance+16),0.0)*5.0,1.0));
+
+			float shadowMapFalloff = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / (shadowDistance+16.0),0.0)*5.0,1.0));
 			float shadowMapFalloff2 = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / shadowDistance,0.0)*5.0,1.0));
+
 		#else
 			vec3 shadowEdgePos = projectedShadowPosition * vec3(0.4,0.4,0.5/6.0) + vec3(0.5,0.5,0.12);
       		float fadeLength = max((shadowDistance/256)*30,10.0); 
@@ -964,7 +1021,8 @@ void main() {
 		float ShadowAlpha = 0.0; // this is for subsurface scattering later.
 		Shadows = ComputeShadowMap(projectedShadowPosition, distortFactor, noise_2, filteredShadow.x, flatNormNdotL, shadowMapFalloff, DirectLightColor, ShadowAlpha, LabSSS > 0.0);
 
-		if(!isWater) Shadows *= mix(LM_shadowMapFallback, 1.0, shadowMapFalloff2);
+		// transition to fallback lightmap shadow mask.
+		Shadows = mix(isWater ? 1.0 : LM_shadowMapFallback, Shadows, shadowMapFalloff);
 
 		#ifdef OLD_LIGHTLEAK_FIX
 			if (isEyeInWater == 0) Shadows *= lightLeakFix; // light leak fix
@@ -1022,6 +1080,8 @@ void main() {
 	/////////////////////////////////////////////////////////////////////////////////
 
 		#if defined OVERWORLD_SHADER && (indirect_effect == 0 || indirect_effect == 1)
+			Indirect_lighting = AmbientLightColor;
+			
 			float allDirections = dot(abs(slopednormal),vec3(1.0));
 			vec3 ambientcoefs = slopednormal / allDirections;
 			float SkylightDir = ambientcoefs.y*1.5;
@@ -1034,26 +1094,20 @@ void main() {
 				skylight =  min(skylight, mix(0.95, 2.5, pow(1-pow(1-SSAO_SSS.x, 0.5),2.0)	));
 			#endif
 
-			Indirect_lighting = AmbientLightColor * skylight;
+			Indirect_lighting *= skylight;
 		#endif
 
 		#ifdef NETHER_SHADER
-			// Indirect_lighting = skyCloudsFromTexLOD2(normal, colortex4, 6).rgb / 15.0;
-
-			// vec3 up 	= skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb/ 30.0;
-			// vec3 down 	= skyCloudsFromTexLOD2(vec3( 0,-1, 0), colortex4, 6).rgb/ 30.0;
-
-			// up   *= pow( max( slopednormal.y, 0), 2);
-			// down *= pow( max(-slopednormal.y, 0), 2);
-			// Indirect_lighting += up + down;
-
-			Indirect_lighting = vec3(0.05);
+			Indirect_lighting = skyCloudsFromTexLOD2(normal, colortex4, 6).rgb / 30.0;
+			vec3 up = skyCloudsFromTexLOD2(vec3(0.0,1.0,0.0), colortex4, 6).rgb / 30.0;
+			
+			Indirect_lighting =  mix(up, Indirect_lighting,  clamp(pow(1.0-pow(1.0-SSAO_SSS.x, 0.5),2.0),0.0,1.0));
 		#endif
 		
 		#ifdef END_SHADER
-			Indirect_lighting += (vec3(0.5,0.75,1.0) * 0.9 + 0.1) * 0.1;
-
-			Indirect_lighting *= clamp(1.5 + dot(normal, feetPlayerPos_normalized)*0.5,0,2);
+			Indirect_lighting = vec3(0.3,0.6,1.0) * 0.5;
+			
+			Indirect_lighting = Indirect_lighting + 0.7*mix(-Indirect_lighting, Indirect_lighting * dot(slopednormal, feetPlayerPos_normalized), clamp(pow(1.0-pow(1.0-SSAO_SSS.x, 0.5),2.0),0.0,1.0));
 		#endif
 	
 		#ifdef IS_LPV_ENABLED
@@ -1165,7 +1219,6 @@ void main() {
 				if(entities) sunSSS_density = 0.0;
 			#endif
 			
-
 			#ifdef SCREENSPACE_CONTACT_SHADOWS
 				vec2 SS_directLight = SSRT_Shadows(toScreenSpace_DH(texcoord/RENDER_SCALE, z, DH_depth1), isDHrange, normalize(WsunVec*mat3(gbufferModelViewInverse)), interleaved_gradientNoise(), sunSSS_density > 0.0 && shadowMapFalloff2 < 1.0, hand);
 				
@@ -1174,12 +1227,12 @@ void main() {
 				
 				// combine shadowmap blocker depth with a minumum determined by the screenspace shadows, starting after the shadowmap ends
 				ShadowBlockerDepth = mix(SS_directLight.g, ShadowBlockerDepth, shadowMapFalloff2);
-				// ShadowBlockerDepth = SS_directLight.g;
 			#endif
 
 			
-			Direct_SSS = SubsurfaceScattering_sun(albedo, ShadowBlockerDepth, sunSSS_density, clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), SSS_shadow, shadowMapFalloff2 < 1.0);
-			Direct_SSS *= mix(LM_shadowMapFallback, 1.0, shadowMapFalloff2);
+			Direct_SSS = SubsurfaceScattering_sun(albedo, ShadowBlockerDepth, sunSSS_density, clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), SSS_shadow, shadowMapFalloff2);
+			// Direct_SSS = vec3(1.0);
+
 			if (isEyeInWater == 0) Direct_SSS *= lightLeakFix;
 
 			#ifndef SCREENSPACE_CONTACT_SHADOWS
@@ -1206,7 +1259,7 @@ void main() {
 
 		#ifdef OVERWORLD_SHADER
 			Direct_lighting =  max(DirectLightColor * NdotL * Shadows, DirectLightColor * Direct_SSS);
-			// Direct_lighting =  0.5 + DirectLightColor * exp(-7*SS_directLight.g);
+			// Direct_lighting =  DirectLightColor * Direct_SSS;
 		#endif
 
 		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * albedo;
@@ -1222,35 +1275,21 @@ void main() {
 
 		gl_FragData[0].rgb *= Absorbtion;
 	}
-	
 
 	if(translucentMasks > 0.0){
 		#ifdef DISTANT_HORIZONS
-    	  vec4 vlBehingTranslucents = BilateralUpscale_DH(colortex13, colortex12, gl_FragCoord.xy, sqrt(texture2D(colortex12,texcoord).a/65000.0));
+			vec4 vlBehingTranslucents = BilateralUpscale_VLFOG(colortex13, colortex12, gl_FragCoord.xy - 1.5, sqrt(texture2D(colortex12,texcoord).a/65000.0));
     	#else
-    	  vec4 vlBehingTranslucents = BilateralUpscale(colortex13, depthtex1, gl_FragCoord.xy, ld(z));
+    		vec4 vlBehingTranslucents = BilateralUpscale_VLFOG(colortex13, depthtex1, gl_FragCoord.xy - 1.5, ld(z));
     	#endif
 
     	gl_FragData[0].rgb = gl_FragData[0].rgb * vlBehingTranslucents.a + vlBehingTranslucents.rgb;
 	}
 
-	// #if defined VOLUMETRIC_CLOUDS && defined CLOUDS_INTERSECT_TERRAIN
-	// 	vec4 Clouds = texture2D_bicubic_offset(colortex0, ((gl_FragCoord.xy + 0.5)*texelSize)*CLOUDS_QUALITY, noise, RENDER_SCALE.x);
-	// 	// vec4 Clouds = BilateralUpscale_REUSE_Z_clouds(colortex0, colortex12, DH_mixedLinearZ, gl_FragCoord.xy*CLOUDS_QUALITY, texcoord*CLOUDS_QUALITY);
-
-	// 	gl_FragData[1] = texture2D(colortex2, texcoord);
-	// 	gl_FragData[0].rgb = gl_FragData[0].rgb * Clouds.a + Clouds.rgb;
-	// 	gl_FragData[1].a = gl_FragData[1].a	* pow(Clouds.a,5.0);
-	// #endif
-
-	// gl_FragData[0].rgb = vec3(1.0) * clamp(1.0 - filteredShadow.y/1,0,1);
-	// if(hideGUI > 0) gl_FragData[0].rgb = vec3(1.0) * Shadows;
 	////// DEBUG VIEW STUFF
-	// #if DEBUG_VIEW == debug_SHADOWMAP
-	// 	vec3 OutsideShadowMap_and_DH_shadow = (shadowMapFalloff > 0.0 && z >= 1.0) ? vec3(0.25,1.0,0.25) : vec3(1.0,0.25,0.25);
-	// 	vec3 Normal_Shadowmap =  z < 1.0 ? vec3(1.0,1.0,1.0) : OutsideShadowMap_and_DH_shadow;
-	// 	gl_FragData[0].rgb = mix(vec3(0.1) * (normal.y * 0.1 +0.9), Normal_Shadowmap,  shadowMap) * 30.0;
-	// #endif
+	#if DEBUG_VIEW == debug_SHADOWMAP	
+		gl_FragData[0].rgb = vec3(0.5) + vec3(1.0) * Shadows * 30.0;
+	#endif
 	#if DEBUG_VIEW == debug_NORMALS
 		if(swappedDepth >= 1.0) Direct_lighting = vec3(1.0);
 		gl_FragData[0].rgb = normalize(worldToView(normal));
@@ -1271,11 +1310,11 @@ void main() {
 		gl_FragData[0].rgb = viewPos * 0.001;
 	#endif
 	#if DEBUG_VIEW == debug_FILTERED_STUFF
-	 	if(hideGUI == 1)  gl_FragData[0].rgb = vec3(1)	* (1.0 - SSAO_SSS.y);
-	 	if(hideGUI == 0)  gl_FragData[0].rgb = vec3(1)	* (1.0 - SSAO_SSS.x);
-	 	// if(hideGUI == 0)  gl_FragData[0].rgb = vec3(1)	* filteredShadow.z;//exp(-7*(1-clamp(1.0 - filteredShadow.x,0.0,1.0)));
+	 	// if(hideGUI == 1)  gl_FragData[0].rgb = vec3(1)	* (1.0 - SSAO_SSS.y);
+	 	// if(hideGUI == 0)  gl_FragData[0].rgb = vec3(1)	* (1.0 - SSAO_SSS.x);
+	 	if(hideGUI == 0)  gl_FragData[0].rgb = vec3(1)	* exp(-10*filteredShadow.y);//exp(-7*(1-clamp(1.0 - filteredShadow.x,0.0,1.0)));
 	#endif
-	// gl_FragData[0].rgb = vec3(1) * lightmap.y;
+	// gl_FragData[0].rgb = vec3(1) * Shadows;
 	// if(swappedDepth >= 1.0) gl_FragData[0].rgb = vec3(0.1);
 	// gl_FragData[0].rgb = vec3(1) * ld(texture2D(depthtex1, texcoord).r);
 	// if(texcoord.x > 0.5 )gl_FragData[0].rgb = vec3(1) * ld(texture2D(depthtex0, texcoord).r);

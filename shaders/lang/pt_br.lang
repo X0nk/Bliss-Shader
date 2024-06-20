@@ -1,3 +1,5 @@
+option.SHADER_VERSION_LABEL = Bliss In-Dev Commit Number
+
 screen.Misc_Settings = Configurações Diversas
      screen.the_orb = O Orb
      option.THE_ORB = O Orb

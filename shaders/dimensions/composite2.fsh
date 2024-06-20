@@ -1,8 +1,11 @@
 #include "/lib/settings.glsl"
 
+#define EXCLUDE_WRITE_TO_LUT
+
 flat varying vec4 lightCol;
 flat varying vec3 averageSkyCol;
 flat varying vec3 averageSkyCol_Clouds;
+
 
 uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
@@ -41,6 +44,7 @@ uniform ivec2 eyeBrightnessSmooth;
 uniform float eyeAltitude;
 uniform float caveDetection;
 
+// uniform int dhRenderDistance;
 #define DHVLFOG
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
@@ -66,6 +70,60 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
     return (near * far) / (depth * (near - far) + far);
 }
 
+#if defined LPV_VL_FOG_ILLUMINATION && defined IS_LPV_ENABLED
+	
+	flat varying float exposure;
+
+	#ifdef IS_LPV_ENABLED
+		#extension GL_ARB_shader_image_load_store: enable
+		#extension GL_ARB_shading_language_packing: enable
+	#endif
+
+	#ifdef IS_LPV_ENABLED
+		uniform usampler1D texBlockData;
+		uniform sampler3D texLpv1;
+		uniform sampler3D texLpv2;
+	#endif
+
+	// #ifdef IS_LPV_ENABLED
+	// 	uniform int heldItemId;
+	// 	uniform int heldItemId2;
+	// #endif
+
+	#ifdef IS_LPV_ENABLED
+		#include "/lib/hsv.glsl"
+		#include "/lib/lpv_common.glsl"
+		#include "/lib/lpv_render.glsl"
+	#endif
+
+
+	vec3 LPV_FOG_ILLUMINATION(in vec3 playerPos, float dd, float dL){
+		vec3 color = vec3(0.0);
+
+		vec3 lpvPos = GetLpvPosition(playerPos);
+
+        float fadeLength = 10.0; // in blocks
+        vec3 cubicRadius = clamp(	min(((LpvSize3-1.0) - lpvPos)/fadeLength,      lpvPos/fadeLength) ,0.0,1.0);
+        float LpvFadeF = cubicRadius.x*cubicRadius.y*cubicRadius.z;
+
+		if(LpvFadeF > 0.0){
+
+			vec4 lpvSample = SampleLpvLinear(lpvPos);
+
+			if(length(lpvSample.xyz) > 1e-5){
+        		vec3 LpvTorchLight = GetLpvBlockLight(lpvSample);
+
+				vec3 lighting = LpvTorchLight;
+				float density = exp(-5.0 * clamp( 1.0 - length(lpvSample.xyz) / 16.0,0.0,1.0)) * (LPV_VL_FOG_ILLUMINATION_BRIGHTNESS/100) * LpvFadeF;
+
+				color = lighting - lighting * exp(-density*dd*dL);
+			}
+		}
+
+		return color;
+	}
+
+#endif
 
 #ifdef OVERWORLD_SHADER
 	const bool shadowHardwareFiltering = true;
@@ -77,12 +135,11 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 	#endif
 	flat varying vec3 refractedSunVec;
 	
+	// uniform int dhRenderDistance;
 	#define TIMEOFDAYFOG
 	#include "/lib/lightning_stuff.glsl"
-
-	
-	#include "/lib/volumetricClouds.glsl"
 	// #define CLOUDS_INTERSECT_TERRAIN
+	#include "/lib/volumetricClouds.glsl"
 	#include "/lib/overworld_fog.glsl"
 #endif
 #ifdef NETHER_SHADER
@@ -105,12 +162,10 @@ float interleaved_gradientNoise(){
 	return noise;
 }
 
-// float interleaved_gradientNoise(){
-// 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+ 1.0/1.6180339887 * frameCounter);
-// }
 float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a+ 1.0/1.6180339887 * frameCounter );
 }
+
 float R2_dither(){
   	#ifdef TAA
 		vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
@@ -165,75 +220,6 @@ void waterVolumetrics_notoverworld(inout vec3 inColor, vec3 rayStart, vec3 rayEn
 	inColor += vL;
 
 }
-
-// #ifdef OVERWORLD_SHADER
-// vec4 waterVolumetrics_test( vec3 rayStart, vec3 rayEnd, float estEndDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient, vec3 lightSource, float VdotL){
-// 	int spCount = rayMarchSampleCount;
-
-// 	vec3 start = toShadowSpaceProjected(rayStart);
-// 	vec3 end = toShadowSpaceProjected(rayEnd);
-// 	vec3 dV = (end-start);
-
-// 	//limit ray length at 32 blocks for performance and reducing integration error
-// 	//you can't see above this anyway
-// 	float maxZ = min(rayLength,12.0)/(1e-8+rayLength);
-// 	dV *= maxZ;
-// 	rayLength *= maxZ;
-// 	estEndDepth *= maxZ;
-// 	estSunDepth *= maxZ;
-	
-// 	vec3 wpos = mat3(gbufferModelViewInverse) * rayStart  + gbufferModelViewInverse[3].xyz;
-// 	vec3 dVWorld = (wpos - gbufferModelViewInverse[3].xyz);
-
-// 	vec3 newabsorbance = exp(-rayLength * waterCoefs);	// No need to take the integrated value
-    
-// 	float phase = fogPhase(VdotL) * 5.0;
-// 	vec3 absorbance = vec3(1.0);
-// 	vec3 vL = vec3(0.0);
-
-
-// 	float expFactor = 11.0;
-// 	for (int i=0;i<spCount;i++) {
-// 		float d = (pow(expFactor, float(i+dither)/float(spCount))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
-// 		float dd = pow(expFactor, float(i+dither)/float(spCount)) * log(expFactor) / float(spCount)/(expFactor-1.0);
-// 		vec3 spPos = start.xyz + dV*d;
-
-// 		vec3 progressW = start.xyz+cameraPosition+dVWorld;
-
-// 		//project into biased shadowmap space
-// 		#ifdef DISTORT_SHADOWMAP
-// 			float distortFactor = calcDistort(spPos.xy);
-// 		#else
-// 			float distortFactor = 1.0;
-// 		#endif
-
-// 		vec3 pos = vec3(spPos.xy*distortFactor, spPos.z);
-// 		float sh = 1.0;
-// 		if (abs(pos.x) < 1.0-0.5/2048. && abs(pos.y) < 1.0-0.5/2048){
-// 			pos = pos*vec3(0.5,0.5,0.5/6.0)+0.5;
-// 			sh =  shadow2D( shadow, pos).x;
-// 		}
-
-// 		#ifdef VL_CLOUDS_SHADOWS
-// 			sh *= GetCloudShadow_VLFOG(progressW,WsunVec);
-// 		#endif
-
-// 		vec3 sunMul = exp(-estSunDepth * d * waterCoefs * 1.1);
-// 		vec3 ambientMul = exp(-estEndDepth * d * waterCoefs );
-
-// 		vec3 Directlight = (lightSource * phase * sunMul) * sh;
-// 		// vec3 Indirectlight = ambient * ambientMul;
-// 		vec3 Indirectlight = max(ambient * ambientMul, vec3(0.01,0.2,0.4) * ambientMul * 0.1) ;
-
-// 		vec3 light = (Indirectlight + Directlight) * scatterCoef;
-
-// 		vL += (light - light * exp(-waterCoefs * dd * rayLength)) / waterCoefs * absorbance;
-// 		absorbance *= exp(-waterCoefs * dd * rayLength);
-// 	}
-// 	// inColor += vL;
-//     return vec4( vL, dot(newabsorbance,vec3(0.335)));
-// }
-
 
 void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estEyeDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient, vec3 lightSource, float VdotL){
 	int spCount = 8;
@@ -324,6 +310,11 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 
 		vL += (light - light * exp(-waterCoefs * dd * rayLength)) / waterCoefs * absorbance;
 		absorbance *= exp(-waterCoefs * dd * rayLength);
+
+		#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
+			vL += LPV_FOG_ILLUMINATION(progressW-cameraPosition, dd, 1.0);
+		#endif
+
 	}
 	inColor += vL;
 }
@@ -346,6 +337,15 @@ float fogPhase2(float lightPoint){
 
 	return exponential;
 }
+//encoding by jodie
+float encodeVec2(vec2 a){
+    const vec2 constant1 = vec2( 1., 256.) / 65535.;
+    vec2 temp = floor( a * 255. );
+	return temp.x*constant1.x+temp.y*constant1.y;
+}
+
+
+
 
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -355,17 +355,20 @@ float fogPhase2(float lightPoint){
 
 
 void main() {
-/* RENDERTARGETS:0 */
+#if defined OVERWORLD_SHADER && defined CLOUDS_INTERSECT_TERRAIN
+	/* RENDERTARGETS:0,14 */
+#else
+	/* RENDERTARGETS:0 */
+#endif
 
 	float noise_1 = max(1.0 - R2_dither(),0.0015);
 	float noise_2 = blueNoise();
 	
-
 	vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
 
 	bool iswater = texture2D(colortex7,tc).a > 0.99;
 
-	float z0 = texture2D(depthtex0,tc).x;
+	float z0 = texture2D(depthtex0, tc).x;
 	
 	#ifdef DISTANT_HORIZONS
 		float DH_z0 = texture2D(dhDepthTex,tc).x;
@@ -373,22 +376,8 @@ void main() {
 		float DH_z0 = 0.0;
 	#endif
 	
-	float z = texture2D(depthtex1,tc).x;
-
-	#ifdef DISTANT_HORIZONS
-		float DH_z = texture2D(dhDepthTex1,tc).x;
-	#else
-		float DH_z = 0.0;
-	#endif
-	
-	vec3 viewPos1 = toScreenSpace_DH(tc/RENDER_SCALE, z, DH_z);
 	vec3 viewPos0 = toScreenSpace_DH(tc/RENDER_SCALE, z0, DH_z0);
 
-	vec3 playerPos = normalize(mat3(gbufferModelViewInverse) *  viewPos1);
-	// vec3 lightningColor = (lightningEffect / 3) * (max(eyeBrightnessSmooth.y,0)/240.);
-	
-	
-	
 	float dirtAmount = Dirt_Amount + 0.01;
 	vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
 	vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
@@ -399,23 +388,27 @@ void main() {
 	vec3 indirectLightColor = averageSkyCol/30.0;
 	vec3 indirectLightColor_dynamic = averageSkyCol_Clouds/30.0;
 
+	vec3 cloudDepth = vec3(0.0);
+	vec3 fogDepth = vec3(0.0);
+
+	#if defined OVERWORLD_SHADER && defined CLOUDS_INTERSECT_TERRAIN
+		vec4 VolumetricClouds = renderClouds(viewPos0, vec2(noise_1,noise_2), directLightColor, indirectLightColor, cloudDepth);
+	#endif
+
 	#ifdef OVERWORLD_SHADER
-		vec4 VolumetricFog = GetVolumetricFog(viewPos0, vec2(noise_1,noise_2), directLightColor, indirectLightColor, averageSkyCol_Clouds/30.0);
+		vec4 VolumetricFog = GetVolumetricFog(viewPos0, vec2(noise_2,noise_1), directLightColor, indirectLightColor, averageSkyCol_Clouds/30.0, cloudDepth);
 	#endif
 	
 	#if defined NETHER_SHADER || defined END_SHADER
 		vec4 VolumetricFog = GetVolumetricFog(viewPos0, noise_1, noise_2);
 	#endif
 	
-	#if defined VOLUMETRIC_CLOUDS && defined CLOUDS_INTERSECT_TERRAIN
-		vec4 Clouds = texture2D(colortex0, (gl_FragCoord.xy*texelSize) / (VL_RENDER_RESOLUTION/CLOUDS_QUALITY));
-
-		VolumetricFog.rgb = Clouds.rgb * VolumetricFog.a + VolumetricFog.rgb;
-
-		VolumetricFog.a = VolumetricFog.a*Clouds.a;
+	#if defined OVERWORLD_SHADER && defined CLOUDS_INTERSECT_TERRAIN
+		VolumetricFog = vec4(VolumetricClouds.rgb * VolumetricFog.a + VolumetricFog.rgb, VolumetricFog.a);
 	#endif
 
 	gl_FragData[0] = clamp(VolumetricFog, 0.0, 65000.0);
+
 
 	if (isEyeInWater == 1){
 
@@ -432,4 +425,7 @@ void main() {
 
 	}
 
+	#if defined OVERWORLD_SHADER && defined CLOUDS_INTERSECT_TERRAIN
+		gl_FragData[1] = vec4(VolumetricClouds.a,0.0,0.0,0.0);
+	#endif
 }

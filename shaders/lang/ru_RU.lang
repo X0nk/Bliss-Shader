@@ -1,8 +1,4 @@
-option.BLISS_SHADERS = Шейдер Bliss
-	value.BLISS_SHADERS.0 = Редакция Chocapic13
-	value.BLISS_SHADERS.1 = Автор Xonk
-	value.BLISS_SHADERS.2 = Версия GIT-HEAD
-	option.BLISS_SHADERS.comment = Информация о шейдере
+option.SHADER_VERSION_LABEL = Bliss In-Dev Commit Number
 
 profile.QUALITY = Качество
 profile.PERFORMANCE = Представление
@@ -421,7 +417,7 @@ screen.Post_Processing = Постобработка
 		option.DoF_Adaptation_Speed = Скорость адаптации DoF
 		option.FAR_BLUR_ONLY = Только дальнее размытие
 	screen.COLOR_GRADING = Расширенная цветокоррекция
-		option.TONE_CURVE = Кривая тона
+		option.LUMINANCE_CURVE = Кривая тона
 		option.LOWER_CURVE = Нижняя кривая
 		option.UPPER_CURVE = Верхняя кривая
 		option.COLOR_GRADING_ENABLED = Расширенная цветокоррекция
@@ -704,7 +700,7 @@ screen.Post_Processing.comment = Настройте параметры для в
         option.TAA_UPSCALING.comment = Переключите временное масштабирование. Это позволяет сохранить хорошее качество изображения с более низким разрешением при увеличении масштаба. таким образом, вы все равно можете получить высокое разрешение по сравнению с обычным увеличением и при этом получить лучшую производительность
         option.SCALE_FACTOR.comment = Настройте, с какой доли вашего разрешения увеличивать масштаб. Ниже 0,5 вообще не рекомендуется, я использую это только как опцию, потому что это забавно :P
 	screen.COLOR_GRADING.comment = Расширенные возможности цветокоррекции
-		option.TONE_CURVE.comment = Включите кривую тона. Это не зависит от цветокоррекции и применяется в первую очередь
+		option.LUMINANCE_CURVE.comment = Включите кривую тона. Это не зависит от цветокоррекции и применяется в первую очередь
 		option.COLOR_GRADING_ENABLED.comment = Включите цветовую градацию. Ползунки RGB не будут влиять на яркость. Это применяется после кривой тона
 
 option.RESOURCEPACK_SKY.comment = Включите поддержку неба пакета ресурсов. Настройте параметры так, чтобы использовать все небо пакета ресурсов или сохранить солнце и луну шейдера. §aНАГРУЗКА:§r очень низкая

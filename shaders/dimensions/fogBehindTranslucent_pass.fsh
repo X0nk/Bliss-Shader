@@ -11,6 +11,7 @@ flat varying vec3 averageSkyCol;
 flat varying vec3 averageSkyCol_Clouds;
 flat varying float exposure;
 
+// uniform int dhRenderDistance;
 uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
@@ -91,6 +92,7 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 	#define TIMEOFDAYFOG
 	#include "/lib/lightning_stuff.glsl"
 
+	// #define CLOUDS_INTERSECT_TERRAIN
 	// #define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
 	#include "/lib/overworld_fog.glsl"
@@ -286,42 +288,45 @@ vec2 decodeVec2(float a){
 void main() {
 /* RENDERTARGETS:13 */
 
-	float noise_1 = R2_dither();
-	float noise_2 = blueNoise();
-	
+	gl_FragData[0] = vec4(0,0,0,1);
 
 	vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
 
 	bool iswater = texture2D(colortex7,tc).a > 0.99;
 
-	float z0 = texture2D(depthtex0,tc).x;
-	
-	#ifdef DISTANT_HORIZONS
-		float DH_z0 = texture2D(dhDepthTex,tc).x;
-	#else
-		float DH_z0 = 0.0;
-	#endif
-	
-	float z = texture2D(depthtex1,tc).x;
+	//////////////////////////////////////////////////////////
+	///////////////// BEHIND OF TRANSLUCENTS /////////////////
+	//////////////////////////////////////////////////////////
 
-	#ifdef DISTANT_HORIZONS
-		float DH_z = texture2D(dhDepthTex1,tc).x;
-	#else
-		float DH_z = 0.0;
-	#endif
-	
-	vec3 viewPos1 = toScreenSpace_DH(tc/RENDER_SCALE, z, DH_z);
-	vec3 viewPos0 = toScreenSpace_DH(tc/RENDER_SCALE, z0, DH_z0);
+	if(texture2D(colortex2, tc).a > 0.0 || iswater){
+		
+		float noise_1 = R2_dither();
+		float noise_2 = blueNoise();
 
-	vec3 playerPos = normalize(mat3(gbufferModelViewInverse) *  viewPos1);
-	// vec3 lightningColor = (lightningEffect / 3) * (max(eyeBrightnessSmooth.y,0)/240.);
-	
-	float dirtAmount = Dirt_Amount + 0.1;
-    // float dirtAmount = Dirt_Amount + 0.01;
-	vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
-	vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
-	vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;
-	vec3 scatterCoef = dirtAmount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / 3.14;
+		float z0 = texture2D(depthtex0,tc).x;
+
+		#ifdef DISTANT_HORIZONS
+			float DH_z0 = texture2D(dhDepthTex,tc).x;
+		#else
+			float DH_z0 = 0.0;
+		#endif
+
+		float z = texture2D(depthtex1,tc).x;
+
+		#ifdef DISTANT_HORIZONS
+			float DH_z = texture2D(dhDepthTex1,tc).x;
+		#else
+			float DH_z = 0.0;
+		#endif
+
+		// vec3 lightningColor = (lightningEffect / 3) * (max(eyeBrightnessSmooth.y,0)/240.);
+
+		float dirtAmount = Dirt_Amount + 0.1;
+    	// float dirtAmount = Dirt_Amount + 0.01;
+		vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
+		vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
+		vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;
+		vec3 scatterCoef = dirtAmount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / 3.14;
 
 		#ifdef BIOME_TINT_WATER
 			// yoink the biome tint written in this buffer for water only.
@@ -332,17 +337,14 @@ void main() {
 			}
 		#endif
 
-	vec3 directLightColor = lightCol.rgb/80.0;
-	vec3 indirectLightColor = averageSkyCol/30.0;
-	vec3 indirectLightColor_dynamic = averageSkyCol_Clouds/30.0;
+		vec3 directLightColor = lightCol.rgb/80.0;
+		vec3 indirectLightColor = averageSkyCol/30.0;
+		vec3 indirectLightColor_dynamic = averageSkyCol_Clouds/30.0;
 
-	//////////////////////////////////////////////////////////
-	///////////////// BEHIND OF TRANSLUCENTS /////////////////
-	//////////////////////////////////////////////////////////
+		vec3 viewPos1 = toScreenSpace_DH(tc/RENDER_SCALE, z, DH_z);
+		vec3 viewPos0 = toScreenSpace_DH(tc/RENDER_SCALE, z0, DH_z0);
+		vec3 playerPos = normalize(mat3(gbufferModelViewInverse) *  viewPos1);
 
-
-	if(texture2D(colortex2, tc).a > 0.0 || iswater){
-		
 		#ifdef OVERWORLD_SHADER
 			// vec2 lightmap = decodeVec2(texture2D(colortex14, tc).a);
 			
@@ -365,19 +367,30 @@ void main() {
 		// float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) ;
 		// indirectLightColor_dynamic += vec3(TORCH_R,TORCH_G,TORCH_B)	* TorchBrightness_autoAdjust * pow(1.0-sqrt(1.0-clamp(lightmap.x,0.0,1.0)),2.0) * 2.0;
 
+		vec3 cloudDepth = vec3(0.0);
 		vec4 VolumetricFog2 = vec4(0,0,0,1);
+		vec4 VolumetricClouds = vec4(0,0,0,1);
+		
 		#ifdef OVERWORLD_SHADER
-			if(!iswater) VolumetricFog2 = GetVolumetricFog(viewPos1, vec2(noise_1, noise_2), directLightColor, indirectLightColor,indirectLightColor_dynamic);
+			if(!iswater){
+
+				#if defined CLOUDS_INTERSECT_TERRAIN
+					VolumetricClouds = renderClouds(viewPos1, vec2(noise_1,noise_2), directLightColor, indirectLightColor, cloudDepth);
+				#endif
+
+				VolumetricFog2 = GetVolumetricFog(viewPos1, vec2(noise_1, noise_2), directLightColor, indirectLightColor,indirectLightColor_dynamic,cloudDepth);
+
+				#if defined CLOUDS_INTERSECT_TERRAIN
+					VolumetricFog2 = vec4(VolumetricClouds.rgb * VolumetricFog2.a + VolumetricFog2.rgb, VolumetricFog2.a*VolumetricClouds.a);
+				#endif
+			}
 		#endif
 		
 		vec4 underwaterVlFog = vec4(0,0,0,1);
 		if(iswater) underwaterVlFog = waterVolumetrics_test(viewPos0, viewPos1, estimatedDepth, estimatedSunDepth, Vdiff, noise_1, totEpsilon, scatterCoef, indirectLightColor_dynamic, directLightColor, dot(normalize(viewPos1), normalize(sunVec*lightCol.a)) );		
-
+		
 		vec4 fogFinal = vec4(underwaterVlFog.rgb * VolumetricFog2.a + VolumetricFog2.rgb, VolumetricFog2.a * underwaterVlFog.a);
 
 		gl_FragData[0] = clamp(fogFinal, 0.0, 65000.0);
-
-	}else{
-		gl_FragData[0] = vec4(0,0,0,1);
 	}
 }

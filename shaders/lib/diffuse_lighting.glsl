@@ -40,8 +40,9 @@ vec3 DoAmbientLightColor(
     
     // do torch lighting
     float TorchLM = pow(1.0-sqrt(1.0-clamp(Lightmap.x,0.0,1.0)),2.0) * 2.0;
-    float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*Exposure),0.0,1.0)) ;
-    vec3 TorchLight = TorchColor * TorchLM * TORCH_AMOUNT  ;
+    float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*Exposure),0.0,1.0));
+    
+    vec3 TorchLight = TorchColor * TorchLM * TORCH_AMOUNT;
     
     #if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
         vec4 lpvSample = SampleLpvLinear(lpvPos);
@@ -54,7 +55,7 @@ vec3 DoAmbientLightColor(
 
         LpvFadeF = 1.0 - pow(1.0-pow(LpvFadeF,1.5),3.0); // make it nice and soft :)
         
-        TorchLight = mix(TorchLight,LpvTorchLight/5.0,   LpvFadeF);
+        TorchLight = mix(TorchLight, LpvTorchLight/5.0, LpvFadeF);
 
         const vec3 normal = vec3(0.0); // TODO
 

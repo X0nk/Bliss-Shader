@@ -256,7 +256,8 @@ vec3 DoCloudLighting(
 }
 
 vec4 renderLayer(
-	int layer, 
+	int layer,
+	in vec3 POSITION,
 	in vec3 rayProgress, 
 	in vec3 dV_view,
 	in float mult,
@@ -276,7 +277,8 @@ vec4 renderLayer(
 	in vec3 indirectScatter,
 	in float distantfog,
 	bool notVisible,
-	vec3 FragPosition
+	vec3 FragPosition,
+	inout vec3 cloudDepth
 ){
 	vec3 COLOR = vec3(0.0);
 	float TOTAL_EXTINCTION = 1.0;
@@ -332,20 +334,22 @@ if(layer == 2){
 
 }else{
 	#if defined CloudLayer1 && defined CloudLayer0
-		float upperLayerOcclusion = layer == 0 ? GetCumulusDensity(1, rayProgress + vec3(0.0,1.0,0.0) * max((LAYER1_minHEIGHT+30) - rayProgress.y,0.0), 0, LAYER1_minHEIGHT, LAYER1_maxHEIGHT) : 0.0;
+		float upperLayerOcclusion = layer == 0 ? GetCumulusDensity(1, rayProgress + vec3(0.0,1.0,0.0) * max((LAYER1_minHEIGHT+70*dither) - rayProgress.y,0.0), 0, LAYER1_minHEIGHT, LAYER1_maxHEIGHT) : 0.0;
 		float skylightOcclusion = mix(1.0, (1.0 - LAYER1_DENSITY)*0.8 + 0.2, (1.0 - exp2(-5.0 * (upperLayerOcclusion*upperLayerOcclusion))) * distantfog);
 	#else
 		float skylightOcclusion = 1.0;
 	#endif
 
+	float expFactor = 11.0;
 	for(int i = 0; i < QUALITY; i++) {
 
 		#ifdef CLOUDS_INTERSECT_TERRAIN
 			IntersecTerrain = length(rayProgress - cameraPosition) > lViewPosM;
 		#endif
+		
 		/// avoid overdraw
 		if(notVisible || IntersecTerrain) break;
-		
+
 		// do not sample anything unless within a clouds bounding box
 		if(clamp(rayProgress.y - maxHeight,0.0,1.0) < 1.0 && clamp(rayProgress.y - minHeight,0.0,1.0) > 0.0){
 
@@ -353,6 +357,7 @@ if(layer == 2){
 			float fadedDensity = cloudDensity * pow(clamp((rayProgress.y - minHeight)/25,0.0,1.0),2.0);
 			float CumulusWithDensity = cloudDensity * cumulus;
 
+			
 			if(CumulusWithDensity > 1e-5 ){ // make sure no work is done on pixels with no densities
 				float muE =	cumulus * fadedDensity;
 
@@ -365,7 +370,7 @@ if(layer == 2){
 				/// shadows cast from one layer to another
 				/// large cumulus -> small cumulus
 				#if defined CloudLayer1 && defined CloudLayer0
-					if(layer == 0) directLight += LAYER1_DENSITY * 2.0 * GetCumulusDensity(1, rayProgress + dV_Sun/abs(dV_Sun.y) * max((LAYER1_minHEIGHT+35) - rayProgress.y,0.0), 0, LAYER1_minHEIGHT, LAYER1_maxHEIGHT);
+					if(layer == 0) directLight += LAYER1_DENSITY * 2.0 * GetCumulusDensity(1, rayProgress + dV_Sun/abs(dV_Sun.y) * max((LAYER1_minHEIGHT+70*dither) - rayProgress.y,0.0), 0, LAYER1_minHEIGHT, LAYER1_maxHEIGHT);
 				#endif
 				// altostratus -> cumulus
 				#ifdef CloudLayer2
@@ -379,11 +384,14 @@ if(layer == 2){
 
 				COLOR += max(lighting - lighting*exp(-mult*muE),0.0) * TOTAL_EXTINCTION;
 				TOTAL_EXTINCTION *= max(exp(-mult*muE),0.0);
-
+				
 				if (TOTAL_EXTINCTION < 1e-5) break;
 			}
+
 		}
+		
 		rayProgress += dV_view;
+
 
 	}
 	return vec4(COLOR, TOTAL_EXTINCTION);
@@ -399,10 +407,10 @@ vec3 layerStartingPosition(
 	float maxHeight
 ){
 	// allow passing through/above/below the plane without limits
-	float flip = mix(max(cameraPos.y - maxHeight,0.0), max(minHeight - cameraPos.y,0), clamp(dV_view.y,0,1));
+	float flip = mix(max(cameraPos.y - maxHeight,0.0), max(minHeight - cameraPos.y,0.0), clamp(dV_view.y,0.0,1.0));
 
 	// orient the ray to be a flat plane facing up/down
-	vec3 position = dV_view*dither + cameraPos + dV_view/abs(dV_view.y) * flip;
+	vec3 position = dV_view*dither + cameraPos + (dV_view/abs(dV_view.y)) * flip;
 	
 	return position;
 }
@@ -410,7 +418,8 @@ vec4 renderClouds(
 	vec3 FragPosition,
 	vec2 Dither,
 	vec3 LightColor,
-	vec3 SkyColor
+	vec3 SkyColor,
+	inout vec3 cloudDepth
 ){	
 	vec3 SignedWsunvec = WsunVec;
 	vec3 WsunVec = WsunVec * (float(sunElevation > 1e-5)*2.0-1.0);
@@ -427,11 +436,10 @@ vec4 renderClouds(
 //////////////////////////////////////////
 ////// Raymarching stuff 
 //////////////////////////////////////////
-
 	//project pixel position into projected shadowmap space
 	vec4 viewPos = normalize(gbufferModelViewInverse * vec4(FragPosition,1.0) );
 	maxIT_clouds = int(clamp(maxIT_clouds / sqrt(exp2(viewPos.y)),0.0, maxIT));
-	// maxIT_clouds = 15;
+	// maxIT_clouds = 30;
 
 	vec3 dV_view = normalize(viewPos.xyz);
 	
@@ -448,14 +456,18 @@ vec4 renderClouds(
 	vec3 dV_viewTEST = dV_view * (90.0/abs(dV_view.y)/maxIT_clouds);
 	float mult = length(dV_viewTEST);
 
+	
+
 //////////////////////////////////////////
 ////// lighting stuff 
 //////////////////////////////////////////
 
-	float shadowStep = 1.0;
-
-	vec3 dV_Sun = WsunVec*shadowStep;
-	float SdotV = dot(mat3(gbufferModelView)*WsunVec, normalize(FragPosition));
+	vec3 dV_Sun = WsunVec;
+	#ifdef EXCLUDE_WRITE_TO_LUT
+		dV_Sun *= lightCol.a;
+	#endif
+	
+	float SdotV = dot(mat3(gbufferModelView)*WsunVec, normalize(FragPosition)) ;
 
 	float mieDay = phaseg(SdotV, 0.85) + phaseg(SdotV, 0.75);
 	float mieDayMulti = (phaseg(SdotV, 0.35) + phaseg(-SdotV, 0.35) * 0.5) ;
@@ -509,7 +521,9 @@ vec4 renderClouds(
 	#ifdef CloudLayer0
 		vec3 layer0_dV_view = dV_view * (LAYER0_width/abs(dV_view.y)/maxIT_clouds);
 		vec3 layer0_start = layerStartingPosition(layer0_dV_view, cameraPosition, Dither.y, MinHeight, MaxHeight);
+
 	#endif
+
 	#ifdef CloudLayer1
 		vec3 layer1_dV_view = dV_view * (LAYER1_width/abs(dV_view.y)/maxIT_clouds);
 		vec3 layer1_start = layerStartingPosition(layer1_dV_view, cameraPosition, Dither.y, MinHeight1, MaxHeight1);
@@ -519,7 +533,7 @@ vec4 renderClouds(
 	#endif
 
 	#ifdef CloudLayer0
-		vec4 layer0 = renderLayer(0, layer0_start, layer0_dV_view, mult, Dither.x, maxIT_clouds, MinHeight, MaxHeight, dV_Sun, LAYER0_DENSITY, SkyColor, directScattering, directMultiScattering, sunIndirectScattering, distantfog, false, FragPosition);
+		vec4 layer0 = renderLayer(0,dV_view, layer0_start, layer0_dV_view, mult, Dither.x, maxIT_clouds, MinHeight, MaxHeight, dV_Sun, LAYER0_DENSITY, SkyColor, directScattering, directMultiScattering, sunIndirectScattering, distantfog, false, FragPosition, cloudDepth);
 		total_extinction *= layer0.a;
 
 		// stop overdraw.
@@ -531,7 +545,7 @@ vec4 renderClouds(
 	#endif
 
 	#ifdef CloudLayer1
-		vec4 layer1 = renderLayer(1, layer1_start, layer1_dV_view, mult, Dither.x, maxIT_clouds, MinHeight1, MaxHeight1, dV_Sun, LAYER1_DENSITY, SkyColor, directScattering, directMultiScattering, sunIndirectScattering, distantfog, notVisible, FragPosition);
+		vec4 layer1 = renderLayer(1,dV_view, layer1_start, layer1_dV_view, mult, Dither.x, maxIT_clouds, MinHeight1, MaxHeight1, dV_Sun, LAYER1_DENSITY, SkyColor, directScattering, directMultiScattering, sunIndirectScattering, distantfog, notVisible, FragPosition, cloudDepth);
 		total_extinction *= layer1.a;
 
 		// stop overdraw.
@@ -539,7 +553,7 @@ vec4 renderClouds(
 	#endif
 
 	#ifdef CloudLayer2
-		vec4 layer2 = renderLayer(2, layer2_start, dV_view_Alto, mult_alto, Dither.x, maxIT_clouds, Height2, Height2, dV_Sun, LAYER2_DENSITY, SkyColor, directScattering * (1.0 + rainStrength*3), directMultiScattering* (1.0 + rainStrength*3), sunIndirectScattering, distantfog, altoNotVisible, FragPosition);
+		vec4 layer2 = renderLayer(2,dV_view,layer2_start, dV_view_Alto, mult_alto, Dither.x, maxIT_clouds, Height2, Height2, dV_Sun, LAYER2_DENSITY, SkyColor, directScattering * (1.0 + rainStrength*3), directMultiScattering* (1.0 + rainStrength*3), sunIndirectScattering, distantfog, altoNotVisible, FragPosition, cloudDepth);
 		total_extinction *= layer2.a;
 	#endif
 	

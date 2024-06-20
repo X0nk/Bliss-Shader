@@ -1,20 +1,19 @@
-option.BLISS_SHADERS=Bliss
-	value.BLISS_SHADERS.0=A Chocapic13 Edit
-	value.BLISS_SHADERS.1=By Xonk
-	value.BLISS_SHADERS.2=Version GIT-HEAD
+option.SHADER_VERSION_LABEL = Bliss In-Dev Commit Number
 
 # if you're here to translate, this is a joke, these don't do what they say
 profile.QUALITY=Quality
 profile.PERFORMANCE=Performance
 
-screen.Misc_Settings = Misc. Settings
+screen.Misc_Settings = §cDebugging§r/Experimental Settings
 screen.Sun_and_Moon_Colors = Sun/Moon Colors
 option.sunPathRotation = Sun Angle
 option.sun_illuminance = Sun Illuminance
 option.moon_illuminance = Moon Illuminance
 option.MOONPHASE_BASED_MOONLIGHT = Moonphase brightness levels
 
-option.RESOURCEPACK_SKY = ResourcePack Sky
+screen.Mod_support = Settings For Supported Mods
+
+option.RESOURCEPACK_SKY = Resource Pack Sky
     value.RESOURCEPACK_SKY.0 = Do not use
     value.RESOURCEPACK_SKY.1 = Sky + Shader sun/moon
     value.RESOURCEPACK_SKY.2 = Full sky
@@ -109,6 +108,9 @@ screen.Direct_Light = Direct Light
         option.LPV_REDSTONE_LIGHTS = Redstone Lights
         option.LPV_COLORED_CANDLES = Colored Candles
         option.LPV_NOSHADOW_HACK = Iris <= 1.7.0 Fix
+        option.LPV_VL_FOG_ILLUMINATION = Fog Light Propagation
+        option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS = Fog Light Propagation Brightness
+            suffix.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS=%
 
 screen.Subsurface_Scattering = Sub-Surface Scattering
     option.LabSSS_Curve = LabSSS Curve
@@ -417,7 +419,7 @@ screen.Post_Processing = Post Processing
         option.TAA_UPSCALING = Temporal Upscaling
         option.SCALE_FACTOR = Scale Factor
 	screen.COLOR_GRADING = Color Grading
-		option.TONE_CURVE = Tone Curve
+		option.LUMINANCE_CURVE = Tone Curve
 		option.LOWER_CURVE = Lower Curve
 		option.UPPER_CURVE = Upper Curve
 		option.COLOR_GRADING_ENABLED=Color Grading
@@ -552,7 +554,9 @@ screen.Ambient_light.comment = Configure settings related to the lighting in sha
     option.LPV_REDSTONE_LIGHTS.comment = Allows redstone blocks to contribute to colored lighting.
     option.LPV_COLORED_CANDLES.comment = Allows colored candles to emit matching colored lighting.
     option.LPV_NOSHADOW_HACK.comment = Fix for Iris 1.7.0 and lower! Allows floodfill to work in Nether & End, but disables entity & dropped item lights.
-
+    option.LPV_VL_FOG_ILLUMINATION.comment = Allow the colored lighting to light up the air around it.
+    option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS.comment = Configure the brightness of lit up fog.
+    
 screen.Resource_Pack_Support.comment = A handfull of effects that use information provided by a resourcepack.
     screen.Reflections.comment = Configure the reflections that use information provided by a LabPBR resourcepack.
         option.Specular_Reflections.comment = Toggle all reflections for Labpbr packs. This enables the sun reflection, and allows other settings to be enabled below. §aPERFORMANCE COST:§r low
@@ -668,7 +672,7 @@ screen.Post_Processing.comment = Configure settings for all post processing effe
         option.TAA_UPSCALING.comment = Toggle temporal upscaling. This retains a good amount of quality from a lower resolution image when it upscales. so you can still have a high looking resolution compared to typical upsanpling and still have better performance.
         option.SCALE_FACTOR.comment = Configure from what fraction of your resolution to upscale from. Below 0.5 is not recommended at all i only have it as an option because it's funny :P
 	screen.COLOR_GRADING.comment = Advanced color grading options
-		option.TONE_CURVE.comment = Enable the tone curve. This is independent from color grading and is applied first.
+		option.LUMINANCE_CURVE.comment = Enable the tone curve. This is independent from color grading and is applied first.
 		option.COLOR_GRADING_ENABLED.comment = Enable color grading. The RGB sliders will not affect the brightness. This is applied after the tone curve
 
 option.RESOURCEPACK_SKY.comment = Toggle resourcepack sky support. Configure settings to use the whole resourcepack sky, or keep the shader's sun and moon. §aPERFORMANCE COST:§r very low

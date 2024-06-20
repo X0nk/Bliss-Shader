@@ -436,65 +436,6 @@ void Emission(
 	if( Emission < 254.5/255.0) Lighting = mix(Lighting, Albedo * Emissive_Brightness * autoBrightnessAdjust * 0.1, pow(Emission, Emissive_Curve)); // old method.... idk why
 }
 
-/*
-uniform float viewWidth;
-uniform float viewHeight;
-void frisvad(in vec3 n, out vec3 f, out vec3 r){
-    if(n.z < -0.9) {
-        f = vec3(0.,-1,0);
-        r = vec3(-1, 0, 0);
-    } else {
-    	float a = 1./(1.+n.z);
-    	float b = -n.x*n.y*a;
-    	f = vec3(1. - n.x*n.x*a, b, -n.x) ;
-    	r = vec3(b, 1. - n.y*n.y*a , -n.y);
-    }
-}
-mat3 CoordBase(vec3 n){
-	vec3 x,y;
-    frisvad(n,x,y);
-    return mat3(x,y,n);
-}
-vec2 R2_samples(int n){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha * n);
-}
-float fma(float a,float b,float c){
- return a * b + c;
-}
-//// thank you Zombye | the paper: https://ggx-research.github.io/publication/2023/06/09/publication-ggx.html
-vec3 SampleVNDFGGX(
-    vec3 viewerDirection, // Direction pointing towards the viewer, oriented such that +Z corresponds to the surface normal
-    vec2 alpha, // Roughness parameter along X and Y of the distribution
-    float xy // Pair of uniformly distributed numbers in [0, 1)
-) {
-	// alpha *= alpha;
-    // Transform viewer direction to the hemisphere configuration
-    viewerDirection = normalize(vec3(alpha * viewerDirection.xy, viewerDirection.z));
-
-    // Sample a reflection direction off the hemisphere
-    const float tau = 6.2831853; // 2 * pi
-    float phi = tau * xy;
-
-    float cosTheta = fma(1.0 - xy, 1.0 + viewerDirection.z, -viewerDirection.z) ;
-    float sinTheta = sqrt(clamp(1.0 - cosTheta * cosTheta, 0.0, 1.0));
-
-	// xonk note, i dont know what im doing but this kinda does what i want so whatever
-	float attemptTailClamp  = clamp(sinTheta,max(cosTheta-0.25,0), cosTheta);
-	float attemptTailClamp2 = clamp(cosTheta,max(sinTheta-0.25,0), sinTheta);
-
-    vec3 reflected = vec3(vec2(cos(phi), sin(phi)) * attemptTailClamp2, attemptTailClamp);
-    // vec3 reflected = vec3(vec2(cos(phi), sin(phi)) * sinTheta, cosTheta);
-
-    // Evaluate halfway direction
-    // This gives the normal on the hemisphere
-    vec3 halfway = reflected + viewerDirection;
-
-    // Transform the halfway direction back to hemiellispoid configuation
-    // This gives the final sampled normal
-    return normalize(vec3(alpha * halfway.xy, halfway.z));
-}
-*/
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -717,8 +658,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		Direct_lighting = lightColors * endFogPhase(lightPos) * NdotL;
 
-		vec3 AmbientLightColor = vec3(0.5,0.75,1.0) * 0.9 + 0.1;
-		AmbientLightColor *= clamp(1.5 + dot(worldSpaceNormal, normalize(feetPlayerPos))*0.5,0,2);
+		// vec3 AmbientLightColor = vec3(0.5,0.75,1.0) * 0.9 + 0.1;
+		// AmbientLightColor *= clamp(1.5 + dot(worldSpaceNormal, normalize(feetPlayerPos))*0.5,0,2);
+
+		vec3 AmbientLightColor = vec3(0.3,0.6,1.0) * 0.5;
+			
+		AmbientLightColor = AmbientLightColor + 0.7 * AmbientLightColor * dot(worldSpaceNormal, normalize(feetPlayerPos));
 	#endif
 
 	#ifdef IS_LPV_ENABLED

@@ -441,7 +441,8 @@ void main() {
         }
 
         if (blockId == BLOCK_CAVE_VINE_BERRIES || blockId == ITEM_GLOW_BERRIES) {
-            lightColor = vec3(0.651, 0.369, 0.157);
+            lightColor = vec3(1.0, 1.0, 0.5);
+            
             lightRange = 14.0;
             mixWeight = 1.0;
         }
@@ -524,7 +525,7 @@ void main() {
         }
 
         if (blockId == BLOCK_GLOW_LICHEN || blockId == ITEM_GLOW_LICHEN) {
-            lightColor = vec3(0.092, 0.217, 0.126);
+            lightColor = vec3(0.1, 0.2, 0.12);
             lightRange = 7.0;
         }
 

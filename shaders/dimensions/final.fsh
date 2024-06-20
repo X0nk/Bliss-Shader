@@ -85,6 +85,8 @@ vec3 doMotionBlur(vec2 texcoord, float depth, float noise){
   return color / samples;
 }
 
+uniform sampler2D shadowcolor1;
+
 void main() {
   
   float depth = texture2D(depthtex0,texcoord*RENDER_SCALE).r;
@@ -104,6 +106,14 @@ void main() {
   #ifdef CAMERA_GRIDLINES
     doCameraGridLines(COLOR, texcoord);
   #endif
+
+  #if DEBUG_VIEW == debug_SHADOWMAP
+
+  vec2 shadowUV = texcoord * vec2(2.0, 1.0);
+
+  if(shadowUV.x < 1.0 && shadowUV.y < 1.0 && hideGUI == 1)COLOR = texture2D(shadowcolor1,shadowUV).rgb;
+  #endif
+
 
   gl_FragColor.rgb = COLOR;
 }

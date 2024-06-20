@@ -1,5 +1,5 @@
 // LPV block brightness scale
-const float LpvBlockBrightness = 2.0;
+const float LpvBlockBrightness = 1.0;
 
 
 float lpvCurve(float values) {

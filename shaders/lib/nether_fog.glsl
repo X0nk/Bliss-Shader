@@ -13,9 +13,7 @@ float densityAtPosFog(in vec3 pos){
 }
 
 float cloudVol(in vec3 pos){
-	float Output = 0.0;
 	vec3 samplePos = pos*vec3(1.0,1./48.,1.0);
-
 
     float Wind = pow(max(pos.y-30,0.0) / 15.0,2.1);
 
@@ -25,83 +23,91 @@ float cloudVol(in vec3 pos){
 
 	float Erosion = densityAtPosFog(samplePos * 400	- frameTimeCounter*10 - Wind*10) *0.7+0.3 ;
 
-	// float maxdist = clamp((12 * 8) - length(pos - cameraPosition),0.0,1.0);
-
     float RoofToFloorDensityFalloff = exp(max(100-pos.y,0.0) / -15);
 	float FloorDensityFalloff = pow(exp(max(pos.y-31,0.0) / -3.0),2);
 	float RoofDensityFalloff = exp(max(120-pos.y,0.0) / -10);
 
-	Output = max((RoofToFloorDensityFalloff - Plumes * (1.0-Erosion)) * 2.0,	clamp((FloorDensityFalloff - floorPlumes*0.5) * Erosion ,0.0,1.0) );
+	float Output = max((RoofToFloorDensityFalloff - Plumes * (1.0-Erosion)) * 2.0,	clamp((FloorDensityFalloff - floorPlumes*0.5) * Erosion ,0.0,1.0) );
     
 	return Output;
 }
 
 vec4 GetVolumetricFog(
-	vec3 viewPos,
+	vec3 viewPosition,
 	float dither,
 	float dither2
 ){
-	
 	#ifndef TOGGLE_VL_FOG
 		return vec4(0.0,0.0,0.0,1.0);
 	#endif
-	
-	int SAMPLES = 16;
-	vec3 vL = vec3(0.0);
-	float absorbance = 1.0;
 
-  	//project pixel position into projected shadowmap space
-	vec3 wpos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
-	vec3 fragposition = mat3(shadowModelView) * wpos + shadowModelView[3].xyz;
-	fragposition = diagonal3(shadowProjection) * fragposition + shadowProjection[3].xyz;
+	/// -------------  RAYMARCHING STUFF ------------- \\\
 
-	//project view origin into projected shadowmap space
-	vec3 start = toShadowSpaceProjected(vec3(0.));
+	int SAMPLECOUNT = 10;
 
-	//rayvector into projected shadow map space
-	//we can use a projected vector because its orthographic projection
-	//however we still have to send it to curved shadow map space every step
-	vec3 dV = fragposition-start;
+	vec3 wpos = mat3(gbufferModelViewInverse) * viewPosition + gbufferModelViewInverse[3].xyz;
 	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
+	vec3 progressW = vec3(0.0);
 
-	float maxLength = min(length(dVWorld),far)/length(dVWorld);
+	float maxLength = min(length(dVWorld), far)/length(dVWorld);
 
-	dV *= maxLength;
 	dVWorld *= maxLength;
 
 	float dL = length(dVWorld);
-	vec3 fogcolor = (gl_Fog.color.rgb / max(dot(gl_Fog.color.rgb,vec3(0.3333)),0.05)) ;
 
 	float expFactor = 11.0;
-	for (int i=0;i<SAMPLES;i++) {
-		float d = (pow(expFactor, float(i+dither)/float(SAMPLES))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
-		float dd = pow(expFactor, float(i+dither)/float(SAMPLES)) * log(expFactor) / float(SAMPLES)/(expFactor-1.0);
-		vec3 progress = start.xyz + d*dV;
-		vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
+	
+	/// -------------  COLOR/LIGHTING STUFF ------------- \\\
 
-		// do main lighting
-		float Density = cloudVol(progressW) * pow(exp(max(progressW.y-65,0.0) / -15),2);
+	vec3 color = vec3(0.0);
+	float absorbance = 1.0;
 
-		float clearArea =  1.0-min(max(1.0 - length(progressW - cameraPosition) / 100,0.0),1.0);
-		Density = min(Density * clearArea, NETHER_PLUME_DENSITY);
+	vec3 hazeColor = normalize(gl_Fog.color.rgb);
+
+	#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
+    	float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) / 5.0;
+	#endif
+
+	for (int i = 0; i < SAMPLECOUNT; i++) {
+		float d = (pow(expFactor, float(i+dither)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
+		float dd = pow(expFactor, float(i+dither)/float(SAMPLECOUNT)) * log(expFactor) / float(SAMPLECOUNT)/(expFactor-1.0);
 		
-		float fireLight = cloudVol(progressW - vec3(0,1,0)) * clamp(exp(max(30 - progressW.y,0.0) / -10.0),0,1);
+		progressW = gbufferModelViewInverse[3].xyz + cameraPosition + d*dVWorld;
 
-		vec3 vL0 = vec3(1.0,0.4,0.2) * exp(fireLight * -25) * exp(max(progressW.y-30,0.0) / -10) * 25;
-		vL0 += vec3(0.8,0.8,1.0) * (1.0 - exp(Density * -1)) / 10 ;
+		float densityVol = cloudVol(progressW);
 
-		
-		// do background fog lighting	
-		float AirDensity = 0.01;
-		vec3 vL1 = fogcolor / 20.0;
+		//------ PLUME EFFECT
+			float plumeDensity = min(densityVol * pow(min(max(100.0-progressW.y,0.0)/30.0,1.0),4.0), pow(clamp(1.0 - length(progressW-cameraPosition)/far,0.0,1.0),5.0) * NETHER_PLUME_DENSITY);
+			float plumeVolumeCoeff = exp(-plumeDensity*dd*dL);
 
-		vL += (vL1 - vL1*exp(-AirDensity*dd*dL)) * absorbance;
-		vL += (vL0 - vL0*exp(-Density*dd*dL)) * absorbance;
+			vec3 lighting = vec3(1.0,0.4,0.2) * exp(-15.0*densityVol);
 
-        absorbance *= exp(-(Density+AirDensity)*dd*dL);
+			color += (lighting - lighting * plumeVolumeCoeff) * absorbance;
+			absorbance *= plumeVolumeCoeff;
 
-		if (absorbance < 1e-5) break;
+		//------ HAZE EFFECT
+			// dont make haze contrube to absorbance.
+			float hazeDensity = 0.001;
+			float hazeVolumeCoeff = exp(-hazeDensity*dd*dL);
+			
+			vec3 hazeLighting = hazeColor;
+			
+			color += (hazeLighting - hazeLighting*hazeVolumeCoeff) * absorbance;
+
+		//------ CEILING SMOKE EFFECT
+			float ceilingSmokeDensity = 0.001 * pow(min(max(progressW.y-40.0,0.0)/50.0,1.0),3.0);
+			float ceilingSmokeVolumeCoeff = exp(-ceilingSmokeDensity*dd*dL);
+			
+			vec3 ceilingSmoke = vec3(1.0);
+
+			color += (ceilingSmoke - ceilingSmoke*ceilingSmokeVolumeCoeff) * (absorbance*0.5+0.5);
+			absorbance *= ceilingSmokeVolumeCoeff;
+
+		//------ LPV FOG EFFECT
+			#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
+				color += LPV_FOG_ILLUMINATION(progressW-cameraPosition, dd, dL) * TorchBrightness_autoAdjust * absorbance;
+			#endif
+
 	}
-	// return vec4(0.0,0.0,0.0,1.0);
-	return vec4(vL, absorbance);
+	return vec4(color, absorbance);
 }

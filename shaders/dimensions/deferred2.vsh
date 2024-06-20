@@ -1,5 +1,6 @@
 #include "/lib/settings.glsl"
 
+// uniform int dhRenderDistance;
 #if defined Daily_Weather
 	flat varying vec4 dailyWeatherParams0;
 	flat varying vec4 dailyWeatherParams1;

@@ -1,7 +1,4 @@
-option.BLISS_SHADERS=Bliss
-	value.BLISS_SHADERS.0=A Chocapic13 Edit
-	value.BLISS_SHADERS.1=作者: Xonk
-	value.BLISS_SHADERS.2=版本: GIT-HEAD
+option.SHADER_VERSION_LABEL = Bliss In-Dev Commit Number
 
 # if you're here to translate, this is a joke, these don't do what they say
 profile.QUALITY=质量
@@ -408,7 +405,7 @@ screen.Post_Processing = 后期处理
         option.TAA_UPSCALING = TAA 升采样
         option.SCALE_FACTOR = 放大倍率
 	screen.COLOR_GRADING = 颜色分级
-		option.TONE_CURVE = 色调曲线
+		option.LUMINANCE_CURVE = 色调曲线
 		option.LOWER_CURVE = 下部曲线
 		option.UPPER_CURVE = 上部曲线
 		option.COLOR_GRADING_ENABLED = 颜色分级
@@ -649,7 +646,7 @@ screen.Post_Processing.comment = 配置所有后处理效果设置, 从抗锯齿
         option.TAA_UPSCALING.comment = 时间性升分辨率. 升分辨率时, 可以从低分辨率的图像中保留大多数质量. 因此与常规升分辨率相比, 可以开启一个看起来很高的分辨率的同时也能有更好的性能.
         option.SCALE_FACTOR.comment = 配置以原有分辨率的多大一部分来开始升分辨率. 不推荐低于0.5, 只把它作为一个选项, 因为它很有趣. :P
 	screen.COLOR_GRADING.comment = 高级调色选项.
-		option.TONE_CURVE.comment = 启用色调曲线. 独立于颜色分级且首先应用.
+		option.LUMINANCE_CURVE.comment = 启用色调曲线. 独立于颜色分级且首先应用.
 		option.COLOR_GRADING_ENABLED.comment = 启用颜色分级. RGB 滑块不会影响亮度. 在色调曲线之后应用.
 
 option.RESOURCEPACK_SKY.comment = 开关资源包天空支持. 配置设置来使用完整的资源包天空, 或保持光影的日月. §a性能消耗水平:§r 非常低.

@@ -31,6 +31,7 @@ uniform sampler2D colortex10;
 uniform sampler2D colortex11;
 uniform sampler2D colortex12;
 uniform sampler2D colortex13;
+uniform sampler2D colortex14;
 uniform sampler2D colortex15;
 uniform vec2 texelSize;
 
@@ -71,7 +72,7 @@ uniform float caveDetection;
   #include "/lib/sky_gradient.glsl"
   #include "/lib/lightning_stuff.glsl"
   #include "/lib/climate_settings.glsl"
-  
+  //#define CLOUDS_INTERSECT_TERRAIN
 	// #define CLOUDSHADOWSONLY
   // #include "/lib/volumetricClouds.glsl"
 #endif
@@ -99,78 +100,6 @@ vec3 toScreenSpace(vec3 p) {
 
 #include "/lib/DistantHorizons_projections.glsl"
 
-float DH_ld(float dist) {
-    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
-}
-float DH_inv_ld (float lindepth){
-	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
-}
-float linearizeDepthFast(const in float depth, const in float near, const in float far) {
-    return (near * far) / (depth * (near - far) + far);
-}
-
-vec4 BilateralUpscale(sampler2D tex, sampler2D depth, vec2 coord, float referenceDepth){
-	ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
-	ivec2 posDepth  = ivec2(coord*VL_RENDER_RESOLUTION) * scaling;
-	ivec2 posColor  = ivec2(coord*VL_RENDER_RESOLUTION);
- 	ivec2 pos = ivec2(gl_FragCoord.xy*texelSize + 1);
-	ivec2 getRadius[4] = ivec2[](
-   	ivec2(-2,-2),
-	 	ivec2(-2, 0),
-		ivec2( 0, 0),
-		ivec2( 0,-2)
-  );
-
-	#ifdef DISTANT_HORIZONS
-		float diffThreshold = 0.01;
-	#else
-		float diffThreshold = zMults.x;
-	#endif
-
-
-	vec4 RESULT = vec4(0.0);
-	float SUM = 0.0;
-
-	for (int i = 0; i < 4; i++) {
-		
-		ivec2 radius = getRadius[i];
-
-		#ifdef DISTANT_HORIZONS
-			float offsetDepth = sqrt(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling,0).a/65000.0);
-		#else
-			float offsetDepth = ld(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling, 0).r);
-		#endif
-
-		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
-		
-		RESULT += texelFetch2D(tex, posColor + radius + pos, 0) * EDGES;
-
-		SUM += EDGES;
-	}
-	// return vec4(1) * SUM;
-	return RESULT / SUM;
-
-}
-
-vec3 decode (vec2 encn){
-    vec3 n = vec3(0.0);
-    encn = encn * 2.0 - 1.0;
-    n.xy = abs(encn);
-    n.z = 1.0 - n.x - n.y;
-    n.xy = n.z <= 0.0 ? (1.0 - n.yx) * sign(encn) : encn;
-    return clamp(normalize(n.xyz),-1.0,1.0);
-}
-vec2 decodeVec2(float a){
-    const vec2 constant1 = 65535. / vec2( 256., 65536.);
-    const float constant2 = 256. / 255.;
-    return fract( a * constant1 ) * constant2 ;
-}
-
-vec3 worldToView(vec3 worldPos) {
-    vec4 pos = vec4(worldPos, 0.0);
-    pos = gbufferModelView * pos;
-    return pos.xyz;
-}
 float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
@@ -185,6 +114,87 @@ float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy;
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 	return noise;
+}
+
+float DH_ld(float dist) {
+    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+}
+float DH_inv_ld (float lindepth){
+	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
+}
+float linearizeDepthFast(const in float depth, const in float near, const in float far) {
+    return (near * far) / (depth * (near - far) + far);
+}
+vec2 decodeVec2(float a){
+    const vec2 constant1 = 65535. / vec2( 256., 65536.);
+    const float constant2 = 256. / 255.;
+    return fract( a * constant1 ) * constant2 ;
+}
+vec4 BilateralUpscale(sampler2D tex, sampler2D tex2, sampler2D depth, vec2 coord, float referenceDepth, inout float CLOUDALPHA){
+	ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
+	ivec2 posDepth  = ivec2(coord*VL_RENDER_RESOLUTION) * scaling;
+	ivec2 posColor  = ivec2(coord*VL_RENDER_RESOLUTION);
+ 	ivec2 pos = ivec2(gl_FragCoord.xy*texelSize + 1);
+
+	ivec2 getRadius[5] = ivec2[](
+    ivec2(-1,-1),
+	 	ivec2( 1, 1),
+		ivec2(-1, 1),
+		ivec2( 1,-1),
+		ivec2( 0, 0)
+  );
+
+	#ifdef DISTANT_HORIZONS
+		float diffThreshold = 0.01;
+	#else
+		float diffThreshold = zMults.x;
+	#endif
+
+	vec4 RESULT = vec4(0.0);
+	float SUM = 0.0;
+
+	for (int i = 0; i < 5; i++) {
+		
+		ivec2 radius = getRadius[i];
+
+		#ifdef DISTANT_HORIZONS
+			float offsetDepth = sqrt(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling,0).a/65000.0);
+		#else
+			float offsetDepth = ld(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling, 0).r);
+		#endif
+
+		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
+		
+		RESULT += texelFetch2D(tex, posColor + radius + pos, 0) * EDGES;
+
+    #if defined OVERWORLD_SHADER && defined CLOUDS_INTERSECT_TERRAIN
+	    CLOUDALPHA += texelFetch2D(tex2, posColor + radius + pos, 0).x * EDGES;
+    #endif
+		
+    SUM += EDGES;
+	}
+
+  #if defined OVERWORLD_SHADER && defined CLOUDS_INTERSECT_TERRAIN
+   CLOUDALPHA = CLOUDALPHA / SUM;
+  #endif
+
+	return RESULT / SUM;
+}
+
+vec3 decode (vec2 encn){
+    vec3 n = vec3(0.0);
+    encn = encn * 2.0 - 1.0;
+    n.xy = abs(encn);
+    n.z = 1.0 - n.x - n.y;
+    n.xy = n.z <= 0.0 ? (1.0 - n.yx) * sign(encn) : encn;
+    return clamp(normalize(n.xyz),-1.0,1.0);
+}
+
+
+vec3 worldToView(vec3 worldPos) {
+    vec4 pos = vec4(worldPos, 0.0);
+    pos = gbufferModelView * pos;
+    return pos.xyz;
 }
 vec3 viewToWorld(vec3 viewPosition) {
     vec4 pos;
@@ -293,14 +303,18 @@ void main() {
 	bool isEntity = abs(translucentMasks - 0.9) < 0.01 || isReflectiveEntity;
 
   ////// --------------- get volumetrics
-  #ifdef TOGGLE_VL_FOG
-    #ifdef DISTANT_HORIZONS
-      vec4 vl = BilateralUpscale(colortex0, colortex12, gl_FragCoord.xy - 1.5, sqrt(texture2D(colortex12,texcoord).a/65000.0));
-    #else
-      vec4 vl = BilateralUpscale(colortex0, depthtex0, gl_FragCoord.xy - 1.5, frDepth);
-    #endif
+
+
+  #if defined OVERWORLD_SHADER && defined CLOUDS_INTERSECT_TERRAIN 
+    float cloudAlpha = 0.0;
   #else
-    vec4 vl = vec4(0,0,0,1);
+    float cloudAlpha = 1.0;
+  #endif
+
+  #ifdef DISTANT_HORIZONS
+    vec4 vl = BilateralUpscale(colortex0, colortex14, colortex12, gl_FragCoord.xy - 1.5, sqrt(texture2D(colortex12,texcoord).a/65000.0), cloudAlpha);
+  #else
+    vec4 vl = BilateralUpscale(colortex0, colortex14, depthtex0, gl_FragCoord.xy - 1.5, frDepth,cloudAlpha);
   #endif
 
   float bloomyFogMult = 1.0;
@@ -330,11 +344,9 @@ void main() {
 
     fog *= exp(-10.0 * pow(clamp(np3.y,0.0,1.0)*4.0,2.0));
 
-    fog *= caveDetection;
+    fog *= (1.0-caveDetection);
 
     if(swappedDepth >= 1.0 || isEyeInWater != 0) fog = 0.0;
-    
-    
 
     #ifdef SKY_GROUND
       vec3 borderFogColor = skyGroundColor;
@@ -366,15 +378,14 @@ void main() {
 #if defined OVERWORLD_SHADER && defined CAVE_FOG
     if (isEyeInWater == 0 && eyeAltitude < 1500){
 
-      float cavefog = pow(1.0 - max(1.0 - linearDistance/far,0.0),2.0);
-    
-      vec3 cavefogCol = vec3(CaveFogColor_R, CaveFogColor_G, CaveFogColor_B) * cavefog;
-
-      cavefogCol *= exp(-7.0*clamp(normalize(np3).y*0.5+0.5,0.0,1.0)) * 0.999 + 0.001;
+      vec3 cavefogCol = vec3(CaveFogColor_R, CaveFogColor_G, CaveFogColor_B);
 
       #ifdef PER_BIOME_ENVIRONMENT
         BiomeFogColor(cavefogCol);
       #endif
+
+      cavefogCol *= pow(1.0 - max(1.0 - linearDistance/far,0.0),2.0);
+      cavefogCol *= exp(-7.0*clamp(normalize(np3).y*0.5+0.5,0.0,1.0)) * 0.999 + 0.001;
 
   	  float skyhole = pow(clamp(1.0-pow(max(np3.y - 0.6,0.0)*5.0,2.0),0.0,1.0),2);
 
@@ -382,15 +393,17 @@ void main() {
     }
 #endif
 
-////// --------------- Distance fog for the end shader
 #ifdef END_SHADER
-    if (isEyeInWater == 0){
-      vec3 hazeColor = vec3(0.3,0.75,1.0) * 0.3;
+  // create a point that "glows" but in worldspace.
+  
+  // this is not correct but whatever
+	float CenterdotV = dot(normalize(vec3(0.0,400.0,0.0) - cameraPosition), normalize(p3 + cameraPosition));
 
-      float hazeDensity = clamp(1.0 - linearDistance / max(far, 32.0 * 24.0),0.0,1.0);
-      color.rgb = mix(hazeColor,  color.rgb,  hazeDensity) ; 
-    }
+  float distanceFadeOff = pow(min(max(length(cameraPosition)-300.0,0.0)/100.0,1.0),2.0);
+
+  color.rgb += vec3(0.1,0.5,1.0) * (exp2(-10.0 * max(-CenterdotV*0.5+0.5,0.0)) + exp(-150.0 * max(-CenterdotV*0.5+0.5,0.0))) * distanceFadeOff;
 #endif
+
 
 ////// --------------- underwater fog
   if (isEyeInWater == 1){
@@ -421,9 +434,7 @@ void main() {
 ////// --------------- BLEND FOG INTO SCENE
 //////////// apply VL fog over opaque and translucents
 
-  // color += skyGroundColor * (1.0 - pow(max(1.0 - linearDistance/far,0.0),3.0)) * rainStrength;
-
-  color *= vl.a;
+  color *= vl.a*cloudAlpha;
   color += vl.rgb;
   bloomyFogMult *= mix(vl.a,vl.a*0.5 + 0.5, rainStrength);
   
@@ -462,7 +473,7 @@ void main() {
       vl.a = 1.0;
     }
   #endif
-  
+
   gl_FragData[0].r = bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);
   // gl_FragData[1].rgb =  vec3(tangentNormals.xy,0.0)  ;

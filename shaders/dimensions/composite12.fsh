@@ -1,32 +1,26 @@
 #include "/lib/settings.glsl"
 
 varying vec2 texcoord;
+uniform vec2 texelSize;
 
 uniform sampler2D colortex7;
 uniform sampler2D colortex14;
 uniform sampler2D depthtex0;
-uniform vec2 texelSize;
-uniform float frameTimeCounter;
+uniform sampler2D noisetex;
+
 uniform float viewHeight;
 uniform float viewWidth;
 uniform float aspectRatio;
 
-uniform sampler2D shadow;
-uniform sampler2D shadowcolor0;
-uniform sampler2D shadowcolor1;
-uniform sampler2D shadowtex0;
-uniform sampler2D shadowtex1;
-uniform sampler2D noisetex;
+uniform float frameTimeCounter;
 
-uniform vec3 previousCameraPosition;
-uniform vec3 cameraPosition;
+uniform int hideGUI;
 
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
 #include "/lib/res_params.glsl"
 
-uniform int hideGUI;
-
+/*
 vec4 SampleTextureCatmullRom(sampler2D tex, vec2 uv, vec2 texSize )
 {
     // We're going to sample a a 4x4 grid of texels surrounding the target UV coordinate. We'll do this by rounding
@@ -76,21 +70,19 @@ vec4 SampleTextureCatmullRom(sampler2D tex, vec2 uv, vec2 texSize )
 
     return result;
 }
-
-/// thanks stackoverflow https://stackoverflow.com/questions/944713/help-with-pixel-shader-effect-for-brightness-and-contrast#3027595
-void applyContrast(inout vec3 color, float contrast){
-  color = (color - 0.5) * contrast + 0.5;
-}
+*/
 
 float lowerCurve(float x) {
 	float y = 16 * x * (0.5 - x) * 0.1;
 	return clamp(y, 0.0, 1.0);
 }
+
 float upperCurve(float x) {
 	float y = 16 * (0.5 - x) * (x - 1.0) * 0.1;
 	return clamp(y, 0.0, 1.0);
 }
-vec3 toneCurve(vec3 color){
+
+vec3 luminanceCurve(vec3 color){
 	color.r += LOWER_CURVE * lowerCurve(color.r) + UPPER_CURVE * upperCurve(color.r);
 	color.g += LOWER_CURVE * lowerCurve(color.g) + UPPER_CURVE * upperCurve(color.g);
 	color.b += LOWER_CURVE * lowerCurve(color.b) + UPPER_CURVE * upperCurve(color.b);
@@ -110,49 +102,57 @@ vec3 colorGrading(vec3 color) {
 	return saturate(graded_shadows * shadows_amount + graded_mids * mids_amount + graded_highlights * highlights_amount);
 }
 
+vec3 contrastAdaptiveSharpening(vec3 color, vec2 texcoord){
+
+  //Weights : 1 in the center, 0.5 middle, 0.25 corners
+  vec3 albedoCurrent1 = texture2D(colortex7, texcoord + vec2(texelSize.x,texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
+  vec3 albedoCurrent2 = texture2D(colortex7, texcoord + vec2(texelSize.x,-texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
+  vec3 albedoCurrent3 = texture2D(colortex7, texcoord + vec2(-texelSize.x,-texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
+  vec3 albedoCurrent4 = texture2D(colortex7, texcoord + vec2(-texelSize.x,texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
+ 
+  vec3 m1 = -0.5/3.5*color + albedoCurrent1/3.5 + albedoCurrent2/3.5 + albedoCurrent3/3.5 + albedoCurrent4/3.5;
+  
+  vec3 std = abs(color - m1) + abs(albedoCurrent1 - m1) + abs(albedoCurrent2 - m1) +
+  abs(albedoCurrent3 - m1) + abs(albedoCurrent3 - m1) + abs(albedoCurrent4 - m1);
+
+  float contrast = 1.0 - luma(std)/5.0;
+
+  color = color*(1.0+(SHARPENING+UPSCALING_SHARPNENING)*contrast) -
+  (SHARPENING+UPSCALING_SHARPNENING)/(1.0-0.5/3.5)*contrast*(m1 - 0.5/3.5*color); 
+
+  return color;
+}
+
+vec3 saturationAndCrosstalk(vec3 color){
+
+	float luminance = luma(color);
+
+	vec3 lumaColDiff = color - luminance;
+
+	color = color + lumaColDiff*(-luminance*CROSSTALK + SATURATION);
+  
+  return color;
+}
+
 void main() {
 
   /* DRAWBUFFERS:7 */
 
-	#ifdef BICUBIC_UPSCALING
-	  vec3 col = SampleTextureCatmullRom(colortex7,texcoord,1.0/texelSize).rgb;
-	#else
-	  vec3 col = texture2D(colortex7,texcoord).rgb;
-	#endif
-
+	vec3 color = texture2D(colortex7,texcoord).rgb;
 
 	#ifdef CONTRAST_ADAPTATIVE_SHARPENING
-		//Weights : 1 in the center, 0.5 middle, 0.25 corners
-		vec3 albedoCurrent1 = texture2D(colortex7, texcoord + vec2(texelSize.x,texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
-		vec3 albedoCurrent2 = texture2D(colortex7, texcoord + vec2(texelSize.x,-texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
-		vec3 albedoCurrent3 = texture2D(colortex7, texcoord + vec2(-texelSize.x,-texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
-		vec3 albedoCurrent4 = texture2D(colortex7, texcoord + vec2(-texelSize.x,texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;	
-		
-		vec3 m1 = -0.5/3.5*col + albedoCurrent1/3.5 + albedoCurrent2/3.5 + albedoCurrent3/3.5 + albedoCurrent4/3.5;
-		vec3 std = abs(col - m1) + abs(albedoCurrent1 - m1) + abs(albedoCurrent2 - m1) +
-		
-		abs(albedoCurrent3 - m1) + abs(albedoCurrent3 - m1) + abs(albedoCurrent4 - m1);
-		
-		float contrast = 1.0 - luma(std)/5.0;
-		col = col*(1.0+(SHARPENING+UPSCALING_SHARPNENING)*contrast)
-	        - (SHARPENING+UPSCALING_SHARPNENING)/(1.0-0.5/3.5)*contrast*(m1 - 0.5/3.5*col);
+    color = contrastAdaptiveSharpening(color, texcoord);
 	#endif
-
-	float lum = luma(col);
-	vec3 diff = col-lum;
-	col = col + diff*(-lum*CROSSTALK + SATURATION);
-
-	vec3 FINAL_COLOR = clamp(int8Dither(col,texcoord),0.0,1.0);
-
-  #ifdef TONE_CURVE
-	  FINAL_COLOR = toneCurve(FINAL_COLOR);
+  
+  color = saturationAndCrosstalk(color);
+  
+  #ifdef LUMINANCE_CURVE
+	  color = luminanceCurve(color);
   #endif
 
   #ifdef COLOR_GRADING_ENABLED
-	  FINAL_COLOR = colorGrading(FINAL_COLOR);
+	  color = colorGrading(color);
   #endif
 
-	applyContrast(FINAL_COLOR, CONTRAST); // for fun
-
-	gl_FragData[0].rgb = FINAL_COLOR;
+	gl_FragData[0].rgb = clamp(int8Dither(color, texcoord),0.0,1.0);
 }

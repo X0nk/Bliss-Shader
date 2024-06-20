@@ -34,7 +34,7 @@ SOFTWARE.*/
 		    p *= p + p;
 		    return fract(p);
 		}
-
+	
 //----------------------------------------------------------------------------------------
 
 // Integer Hash - II
@@ -142,11 +142,11 @@ void VolumeBounds(inout float Volume, vec3 Origin){
 
 // create the volume shape
 float fogShape(in vec3 pos){
+
 	float vortexBounds = clamp(vortexBoundRange - length(pos), 0.0,1.0);
 	vec3 samplePos = pos*vec3(1.0,1.0/48.0,1.0);
 	float fogYstart = -60;
 
-    
 	// this is below down where you fall to your death.
 	float voidZone = max(exp2(-1.0 * sqrt(max(pos.y - -60,0.0))) ,0.0) ;
 
@@ -207,7 +207,11 @@ vec3 LightSourceLighting(vec3 startPos, vec3 lightPos, float noise, float densit
 
 	return finalLighting;
 }
-
+//Mie phase function
+float phaseEND(float x, float g){
+    float gg = g * g;
+    return (gg * -0.25 + 0.25) * pow(-2.0 * (g * x) + (gg + 1.0), -1.5) / 3.14;
+}
 vec4 GetVolumetricFog(
 	vec3 viewPosition,
 	float dither,
@@ -216,82 +220,115 @@ vec4 GetVolumetricFog(
 	#ifndef TOGGLE_VL_FOG
 		return vec4(0.0,0.0,0.0,1.0);
 	#endif
+
+
 	/// -------------  RAYMARCHING STUFF ------------- \\\
 
-	int SAMPLES = 16;
-
-	//project pixel position into projected shadowmap space
 	vec3 wpos = mat3(gbufferModelViewInverse) * viewPosition + gbufferModelViewInverse[3].xyz;
-	vec3 fragposition = mat3(shadowModelView) * wpos + shadowModelView[3].xyz;
-	fragposition = diagonal3(shadowProjection) * fragposition + shadowProjection[3].xyz;
-
-	//project view origin into projected shadowmap space
-	vec3 start = vec3(0.0);
-
-	//rayvector into projected shadow map space
-	//we can use a projected vector because its orthographic projection
-	//however we still have to send it to curved shadow map space every step
-	vec3 dV = fragposition - start;
 	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
+	vec3 progressW = vec3(0.0);
 
 	float maxLength = min(length(dVWorld),32.0 * 12.0)/length(dVWorld);
-	dV *= maxLength;
+	
 	dVWorld *= maxLength;
-	float dL = length(dVWorld);
 
-	vec3 progressW = gbufferModelViewInverse[3].xyz + cameraPosition;
+	float dL = length(dVWorld);
+	float expFactor = 11.0;
 	
 	/// -------------  COLOR/LIGHTING STUFF ------------- \\\
 
-	vec3 color = vec3(0.0);
-	vec3 absorbance = vec3(1.0);
+	int SAMPLECOUNT = 16;
 
-	vec3 fogcolor = (gl_Fog.color.rgb / max(dot(gl_Fog.color.rgb,vec3(0.3333)),0.05)) ;
+	vec3 color = vec3(0.0);
+	float absorbance = 1.0;
+
+	float CenterdotV = dot(normalize(vec3(0,100,0)-cameraPosition), normalize(wpos + cameraPosition));
+
+	// float phsething = phaseEND(CenterdotV, 0.35) + phaseEND(CenterdotV, 0.85) ;
+
+	float skyPhase = 0.5 + pow(clamp(normalize(wpos).y*0.5+0.5,0.0,1.0),4.0)*5.0;
+
+	vec3 hazeColor = normalize(gl_Fog.color.rgb) * 0.1;
     
 	float lightningflash = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
 
-	float expFactor = 11.0;
-	for (int i=0;i<SAMPLES;i++) {
-		float d = (pow(expFactor, float(i+dither)/float(SAMPLES))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
-		float dd = pow(expFactor, float(i+dither)/float(SAMPLES)) * log(expFactor) / float(SAMPLES)/(expFactor-1.0);
+	#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
+    	float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) / 5.0;
+	#endif
+	
+	for (int i = 0; i < SAMPLECOUNT; i++) {
+		float d = (pow(expFactor, float(i+dither)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
+		float dd = pow(expFactor, float(i+dither)/float(SAMPLECOUNT)) * log(expFactor) / float(SAMPLECOUNT)/(expFactor-1.0);
 
 		vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
 		
-		// determine where the vortex area ends and chaotic lightning area begins.
-		float vortexBounds = clamp(vortexBoundRange - length(progressW), 0.0,1.0);
 
-        vec3 lightPosition = LightSourcePosition(progressW, cameraPosition, vortexBounds);
-		vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
+		//------ END STORM EFFECT
 
-		float volumeDensity = fogShape(progressW);
+			float volumeDensity = fogShape(progressW);
+			
+			float clearArea =  1.0-min(max(1.0 - length(progressW - cameraPosition) / 100,0.0),1.0);
+			float stormDensity = min(volumeDensity, clearArea*clearArea * END_STORM_DENSTIY);
+			float volumeCoeff = exp(-stormDensity*dd*dL);
+
+			// determine where the vortex area ends and chaotic lightning area begins.
+			float vortexBounds = clamp(vortexBoundRange - length(progressW), 0.0,1.0);
+
+        	vec3 lightPosition = LightSourcePosition(progressW, cameraPosition, vortexBounds);
+			vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
+
+			vec3 lightsources = LightSourceLighting(progressW, lightPosition, dither2, volumeDensity, lightColors, vortexBounds);
+			vec3 indirect = vec3(0.5,0.75,1.0) * 0.2 * (exp((volumeDensity*volumeDensity) * -50) * 0.9 + 0.1);
+			vec3 stormLighting = indirect + lightsources;
+			
+			color += (stormLighting - stormLighting*volumeCoeff) * absorbance;
+        	absorbance *= volumeCoeff;
+
+		//------ HAZE EFFECT
+			// dont make haze contrube to absorbance.
+			float hazeDensity = 0.001;
+			vec3 hazeLighting = vec3(0.3,0.6,1.0) * skyPhase;
+			color += (hazeLighting - hazeLighting*exp(-hazeDensity*dd*dL)) * absorbance;
+
+
+		// // determine where the vortex area ends and chaotic lightning area begins.
+		// float vortexBounds = clamp(vortexBoundRange - length(progressW), 0.0,1.0);
+
+        // vec3 lightPosition = LightSourcePosition(progressW, cameraPosition, vortexBounds);
+		// vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
+
 		// volumeDensity += max(1.0 - length(vec3(lightPosition.x,lightPosition.y*2,lightPosition.z))/50,0.0) * vortexBounds;
 		
-		float clearArea =  1.0-min(max(1.0 - length(progressW - cameraPosition) / 100,0.0),1.0);
-		float density = min(volumeDensity * clearArea, END_STORM_DENSTIY);
+		// float clearArea =  1.0-min(max(1.0 - length(progressW - cameraPosition) / 100,0.0),1.0);
+		// float density = min(volumeDensity * clearArea, END_STORM_DENSTIY);
 
-		///// ----- air lighting, the haze
-			float distanceFog =  max(1.0 - length(progressW - cameraPosition) / max(far, 32.0 * 13.0),0.0);
-			float hazeDensity = min(exp2(distanceFog * -25)+0.0005,1.0);
-			vec3 hazeColor = vec3(0.3,0.75,1.0) * 0.3;
-			color += (hazeColor - hazeColor*exp(-hazeDensity*dd*dL)) * absorbance;
+		// ///// ----- air lighting, the haze
+		// 	float distanceFog =  max(1.0 - length(progressW - cameraPosition) / max(far, 32.0 * 13.0),0.0);
+		// 	float hazeDensity = min(exp2(distanceFog * -25)+0.0005,1.0);
+		// 	vec3 hazeColor = vec3(0.3,0.75,1.0) * 0.3;
+		// 	color += (hazeColor - hazeColor*exp(-hazeDensity*dd*dL)) * absorbance;
 
-		///// ----- main lighting
-			vec3 voidLighting = vec3(1.0,0.0,0.8) * 0.1 * (1-exp(volumeDensity * -25)) * max(exp2(-1 * sqrt(max(progressW.y - -60,0.0))),0.0) ;
+		// ///// ----- main lighting
+		// 	vec3 voidLighting = vec3(1.0,0.0,0.8) * 0.1 * (1-exp(volumeDensity * -25)) * max(exp2(-1 * sqrt(max(progressW.y - -60,0.0))),0.0) ;
 
-			vec3 ambient = vec3(0.5,0.75,1.0) * 0.2  * (exp((volumeDensity*volumeDensity) * -50) * 0.9 + 0.1);
-			float shadows = 0;
-			vec3 lightsources = LightSourceLighting(progressW, lightPosition, dither2, volumeDensity, lightColors, vortexBounds);
-			vec3 lighting = lightsources + ambient + voidLighting;
+		// 	vec3 ambient = vec3(0.5,0.75,1.0) * 0.2  * (exp((volumeDensity*volumeDensity) * -50) * 0.9 + 0.1);
+		// 	float shadows = 0;
+		// 	vec3 lightsources = LightSourceLighting(progressW, lightPosition, dither2, volumeDensity, lightColors, vortexBounds);
+		// 	vec3 lighting = lightsources + ambient + voidLighting;
 
-			#ifdef THE_ORB
-				density += min(50.0*max(1.0 - length(lightPosition)/10,0.0),1.0);
+		// 	#ifdef THE_ORB
+		// 		density += min(50.0*max(1.0 - length(lightPosition)/10,0.0),1.0);
+		// 	#endif
+
+		// ///// ----- blend
+		// 	color += (lighting - lighting*exp(-(density)*dd*dL)) * absorbance;
+        // 	absorbance *= exp(-max(density,hazeDensity)*dd*dL);
+
+		//------ LPV FOG EFFECT
+			#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
+				color += LPV_FOG_ILLUMINATION(progressW-cameraPosition, dd, dL) * TorchBrightness_autoAdjust * absorbance;
 			#endif
-
-		///// ----- blend
-			color += (lighting - lighting*exp(-(density)*dd*dL)) * absorbance;
-        	absorbance *= exp(-max(density,hazeDensity)*dd*dL);
 	}
-	// return vec4(0.0,0.0,0.0,1.0);
 	return vec4(color, absorbance);
 }
 

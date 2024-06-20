@@ -432,6 +432,14 @@ void main() {
 			#endif
 
 		#endif
+		
+		#ifdef NETHER_SHADER
+			AmbientLightColor = skyCloudsFromTexLOD2(vec3(0.0,1.0,0.0), colortex4, 6).rgb / 30.0;
+		#endif
+
+		#ifdef END_SHADER
+			AmbientLightColor = vec3(0.3,0.6,1.0) * 0.5;
+		#endif
 
 		#ifdef IS_LPV_ENABLED
 			vec3 lpvPos = GetLpvPosition(feetPlayerPos);

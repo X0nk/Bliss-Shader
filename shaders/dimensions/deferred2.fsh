@@ -105,7 +105,7 @@ uniform int dhRenderDistance;
 #include "/lib/res_params.glsl"
 
 // #define CLOUDS_INTERSECT_TERRAIN
-
+uniform float eyeAltitude;
 #include "/lib/volumetricClouds.glsl"
 
 
@@ -123,7 +123,10 @@ uniform int dhRenderDistance;
 
 void main() {
 /* DRAWBUFFERS:0 */
-	#if defined OVERWORLD_SHADER && defined VOLUMETRIC_CLOUDS 
+
+
+
+	#if defined OVERWORLD_SHADER && defined VOLUMETRIC_CLOUDS && !defined  CLOUDS_INTERSECT_TERRAIN
 		vec2 halfResTC = vec2(floor(gl_FragCoord.xy)/CLOUDS_QUALITY/RENDER_SCALE+0.5+offsets[framemod8]*CLOUDS_QUALITY*RENDER_SCALE*0.5);
 
 		vec2 halfResTC2 = vec2(floor(gl_FragCoord.xy)/CLOUDS_QUALITY+0.5+offsets[framemod8]*CLOUDS_QUALITY*0.5);
@@ -141,8 +144,8 @@ void main() {
 			vec3 viewPos = toScreenSpace(vec3(halfResTC*texelSize, 1.0));
 		#endif
 
-
-		vec4 VolumetricClouds = renderClouds(viewPos, vec2(R2_dither(), blueNoise()), sunColor/80.0, averageSkyCol/30.0);
+		vec3 tesvar = vec3(0.0);
+		vec4 VolumetricClouds = renderClouds(viewPos, vec2(R2_dither(), blueNoise()), sunColor/80.0, averageSkyCol/30.0,tesvar);
 
 		gl_FragData[0] = VolumetricClouds;
 	#else

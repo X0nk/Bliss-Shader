@@ -168,7 +168,7 @@ const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
 
 vec3 rayTrace(vec3 dir, vec3 position,float dither, float fresnel, bool inwater){
 
-    float quality = mix(15,SSR_STEPS,fresnel);
+    float quality = mix(5,SSR_STEPS,fresnel);
     vec3 clipPosition = DH_toClipSpace3(position);
 	float rayLength = ((position.z + dir.z * dhFarPlane*sqrt(3.)) > -dhNearPlane) ?
        (-dhNearPlane - position.z) / dir.z : dhFarPlane*sqrt(3.);
