@@ -788,9 +788,10 @@ void main() {
 		
 		lightmap.xy = min(max(lightmap.xy - 0.05,0.0)*1.06,1.0); // small offset to hide flickering from precision error in the encoding/decoding on values close to 1.0 or 0.0
 		
-		#if defined END_SHADER || defined NETHER_SHADER
+		#if !defined OVERWORLD_SHADER
 			lightmap.y = 1.0;
 		#endif
+		
 		// lightmap.y = 0.0;
 		// if(isDHrange) lightmap.y = pow(lightmap.y,25);
 		// if(isEyeInWater == 1) lightmap.y = max(lightmap.y, 0.75);
@@ -1102,6 +1103,8 @@ void main() {
 			vec3 up = skyCloudsFromTexLOD2(vec3(0.0,1.0,0.0), colortex4, 6).rgb / 30.0;
 			
 			Indirect_lighting =  mix(up, Indirect_lighting,  clamp(pow(1.0-pow(1.0-SSAO_SSS.x, 0.5),2.0),0.0,1.0));
+
+			AmbientLightColor = Indirect_lighting / 5.0;
 		#endif
 		
 		#ifdef END_SHADER
@@ -1175,7 +1178,10 @@ void main() {
 
 		// RTAO and/or SSGI
 		#if indirect_effect == 3 || indirect_effect == 4
-			Indirect_lighting = AmbientLightColor;
+			
+			// Indirect_lighting = AmbientLightColor;
+
+
 			ApplySSRT(Indirect_lighting, viewPos, normal, vec3(bnoise, noise_2), 		feetPlayerPos, lpvPos, exposure, lightmap.xy, AmbientLightColor*2.5, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass, hand);
 		#endif
 

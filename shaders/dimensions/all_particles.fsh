@@ -450,7 +450,10 @@ void main() {
 		Indirect_lighting = DoAmbientLightColor(feetPlayerPos, lpvPos, AmbientLightColor, MinimumLightColor, Torch_Color, clamp(lightmap.xy,0,1), exposure);
 
 		#ifdef LINES
+
 			gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * toLinear(color.rgb);
+
+			if(SELECTION_BOX > 0) gl_FragData[0].rgba = vec4(toLinear(vec3(SELECT_BOX_COL_R, SELECT_BOX_COL_G, SELECT_BOX_COL_B)), 1.0);
 		#else
 			gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * Albedo;
 		#endif

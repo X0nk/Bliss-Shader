@@ -1,4 +1,4 @@
-#define SHADER_VERSION_LABEL 458 // [439]
+#define SHADER_VERSION_LABEL 459 // [459]
 
 #define saturate(x) clamp(x,0.0,1.0)
 
@@ -668,7 +668,6 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 
 #define LIT_PARTICLE_BRIGHTNESS 1.0 // [1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 15.0 20.0 25.0 30.0 35.0 40.0 45.0 50.0 100.]
 
-#define SELECT_BOX
 
 #define LIGHTNING_FLASH // FOR OPTIFINE USERS. some mods change the sky color, which can trigger the lightning flash detection.
 
@@ -765,6 +764,11 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 // #define ORIGINAL_CHOCAPIC_SKY
 // #define CLOUDS_INFRONT_OF_WORLD
 // #define LARGE_WAVE_DISPLACEMENT
+
+#define SELECT_BOX
+#define SELECT_BOX_COL_R 0.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
+#define SELECT_BOX_COL_G 0.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
+#define SELECT_BOX_COL_B 0.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 
 
 // fix settings

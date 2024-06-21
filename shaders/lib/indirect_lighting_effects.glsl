@@ -341,15 +341,17 @@ void ApplySSRT(
 				// rayDir.y = mix(-1.0, rayDir.y, lightmaps.y*lightmaps.y);
 				skycontribution = pow(skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb/30, vec3(0.7)) *2.5 * ambient_brightness * Lighting.a  + Lighting.rgb;
 			#else
-				skycontribution = (pow(skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0,vec3(0.7)) * 2.5  * ambient_brightness) * Lighting.a + skylightcolor*(1-Lighting.a)  + Lighting.rgb;
+				skycontribution = (pow(skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0,vec3(0.7))/2.5 * ambient_brightness) * Lighting.a + skylightcolor*(1-Lighting.a)  + Lighting.rgb;
 			#endif
 		#else
 
 			#ifdef OVERWORLD_SHADER
 				if(isGrass) rayDir.y = clamp(rayDir.y +  0.25,-1,1);
+			
+				skycontribution = skylightcolor * (max(rayDir.y,pow(1.0-lightmaps.y,2))*0.95+0.05) + Lighting.rgb;
+			#else
+				skycontribution = skylightcolor + Lighting.rgb;
 			#endif
-
-			skycontribution = skylightcolor * (max(rayDir.y,pow(1.0-lightmaps.y,2))*0.95+0.05) + Lighting.rgb;
 
 			#if indirect_effect == 4
 				skycontribution2 = skylightcolor + Lighting.rgb;

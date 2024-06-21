@@ -114,7 +114,7 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
         		vec3 LpvTorchLight = GetLpvBlockLight(lpvSample);
 
 				vec3 lighting = LpvTorchLight;
-				float density = exp(-5.0 * clamp( 1.0 - length(lpvSample.xyz) / 16.0,0.0,1.0)) * (LPV_VL_FOG_ILLUMINATION_BRIGHTNESS/100) * LpvFadeF;
+				float density = exp(-5.0 * clamp( 1.0 - length(lpvSample.xyz) / 16.0,0.0,1.0)) * (LPV_VL_FOG_ILLUMINATION_BRIGHTNESS/100.0) * LpvFadeF;
 
 				color = lighting - lighting * exp(-density*dd*dL);
 			}
