@@ -384,7 +384,7 @@ void main() {
         BiomeFogColor(cavefogCol);
       #endif
 
-      cavefogCol *= pow(1.0 - max(1.0 - linearDistance/far,0.0),2.0);
+      cavefogCol *= 1.0-pow(1.0-pow(1.0 - max(1.0 - linearDistance/far,0.0),2.0),CaveFogFallOff);
       cavefogCol *= exp(-7.0*clamp(normalize(np3).y*0.5+0.5,0.0,1.0)) * 0.999 + 0.001;
 
   	  float skyhole = pow(clamp(1.0-pow(max(np3.y - 0.6,0.0)*5.0,2.0),0.0,1.0),2);
