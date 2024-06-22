@@ -55,7 +55,7 @@ attribute vec4 mc_midTexCoord;
 
 uniform int blockEntityId;
 uniform int entityId;
-flat varying float blockID;
+flat varying int blockID;
 
 uniform int heldItemId;
 uniform int heldItemId2;
@@ -229,7 +229,7 @@ void main() {
 	normalMat = vec4(normalize(gl_NormalMatrix * gl_Normal), 1.0);
 	FlatNormals = normalMat.xyz;
 
-	blockID = mc_Entity.x;
+	blockID = int(mc_Entity.x + 0.5);
 
 	if (blockID == BLOCK_GROUND_WAVING_VERTICAL || blockID == BLOCK_GRASS_SHORT || blockID == BLOCK_GRASS_TALL_LOWER || blockID == BLOCK_GRASS_TALL_UPPER ) normalMat.a = 0.60;
 

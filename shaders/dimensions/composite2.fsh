@@ -74,7 +74,7 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 	
 	flat varying float exposure;
 
-	# WARN: thought extensions needed to be at beginning?
+	// WARN: thought extensions needed to be at beginning?
 	#extension GL_ARB_shader_image_load_store: enable
 	#extension GL_ARB_shading_language_packing: enable
 
