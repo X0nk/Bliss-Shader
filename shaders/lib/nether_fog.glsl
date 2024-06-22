@@ -104,7 +104,7 @@ vec4 GetVolumetricFog(
 			absorbance *= ceilingSmokeVolumeCoeff;
 
 		//------ LPV FOG EFFECT
-			#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
+			#if defined IS_LPV_ENABLED && defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
 				color += LPV_FOG_ILLUMINATION(progressW-cameraPosition, dd, dL) * TorchBrightness_autoAdjust * absorbance;
 			#endif
 

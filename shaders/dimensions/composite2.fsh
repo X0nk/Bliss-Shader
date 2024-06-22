@@ -74,27 +74,22 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 	
 	flat varying float exposure;
 
-	#ifdef IS_LPV_ENABLED
-		#extension GL_ARB_shader_image_load_store: enable
-		#extension GL_ARB_shading_language_packing: enable
-	#endif
+	# WARN: thought extensions needed to be at beginning?
+	#extension GL_ARB_shader_image_load_store: enable
+	#extension GL_ARB_shading_language_packing: enable
 
-	#ifdef IS_LPV_ENABLED
-		uniform usampler1D texBlockData;
-		uniform sampler3D texLpv1;
-		uniform sampler3D texLpv2;
-	#endif
+	uniform usampler1D texBlockData;
+	uniform sampler3D texLpv1;
+	uniform sampler3D texLpv2;
 
 	// #ifdef IS_LPV_ENABLED
 	// 	uniform int heldItemId;
 	// 	uniform int heldItemId2;
 	// #endif
 
-	#ifdef IS_LPV_ENABLED
-		#include "/lib/hsv.glsl"
-		#include "/lib/lpv_common.glsl"
-		#include "/lib/lpv_render.glsl"
-	#endif
+	#include "/lib/hsv.glsl"
+	#include "/lib/lpv_common.glsl"
+	#include "/lib/lpv_render.glsl"
 
 
 	vec3 LPV_FOG_ILLUMINATION(in vec3 playerPos, float dd, float dL){
@@ -311,7 +306,7 @@ void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estE
 		vL += (light - light * exp(-waterCoefs * dd * rayLength)) / waterCoefs * absorbance;
 		absorbance *= exp(-waterCoefs * dd * rayLength);
 
-		#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
+		#if defined IS_LPV_ENABLED && defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
 			vL += LPV_FOG_ILLUMINATION(progressW-cameraPosition, dd, 1.0);
 		#endif
 

@@ -1,19 +1,17 @@
 #include "/lib/settings.glsl"
 
-// #if defined END_SHADER || defined NETHER_SHADER
-// 	#undef IS_LPV_ENABLED
-// #endif
-
 #ifdef IS_LPV_ENABLED
 	#extension GL_EXT_shader_image_load_store: enable
 	#extension GL_ARB_shading_language_packing: enable
 #endif
 
 #include "/lib/res_params.glsl"
+#include "/lib/blocks.glsl"
 
 varying vec4 lmtexcoord;
 varying vec4 color;
 uniform vec4 entityColor;
+flat varying int blockID;
 
 #ifdef OVERWORLD_SHADER
 	const bool shadowHardwareFiltering = true;
@@ -813,6 +811,13 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	
 	#else
 		gl_FragData[0].rgb = FinalColor*0.1;
+	#endif
+
+	#ifdef BLOCKENTITIES
+		if (blockID == BLOCK_SIGN && lmtexcoord.z >= (14.5/15.0)) {
+			// glowing sign text emission
+			SpecularTex.b = 0.6;
+		}
 	#endif
 
 	#if EMISSIVE_TYPE == 2 || EMISSIVE_TYPE == 3

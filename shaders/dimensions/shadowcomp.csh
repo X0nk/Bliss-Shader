@@ -42,6 +42,8 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
             ? imageLoad(imgLpv2, texCoord)
             : imageLoad(imgLpv1, texCoord);
 
+        // lpvSample.rgb = pow(lpvSample.rgb, vec3(2.2));
+
         vec4 hsv_sky = vec4(RgbToHsv(lpvSample.rgb), lpvSample.a);
         hsv_sky.zw = exp2(hsv_sky.zw * LpvBlockSkyRange) - 1.0;
         lpvSample = vec4(HsvToRgb(hsv_sky.xyz), hsv_sky.w);
@@ -155,6 +157,8 @@ void main() {
         vec4 hsv_sky = vec4(RgbToHsv(lightValue.rgb), lightValue.a);
         hsv_sky.zw = log2(hsv_sky.zw + 1.0) / LpvBlockSkyRange;
         lightValue = vec4(HsvToRgb(hsv_sky.xyz), hsv_sky.w);
+
+        // lightValue.rgb = pow(lightValue.rgb, vec3(1.0/2.2));
 
         // Store final value
         if (frameCounter % 2 == 0)
