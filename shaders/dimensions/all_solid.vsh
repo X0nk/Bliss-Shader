@@ -55,7 +55,7 @@ attribute vec4 mc_midTexCoord;
 
 uniform int blockEntityId;
 uniform int entityId;
-flat varying float blockID;
+flat varying int blockID;
 
 uniform int heldItemId;
 uniform int heldItemId2;
@@ -229,18 +229,19 @@ void main() {
 	normalMat = vec4(normalize(gl_NormalMatrix * gl_Normal), 1.0);
 	FlatNormals = normalMat.xyz;
 
-	blockID = mc_Entity.x ;
+	blockID = int(mc_Entity.x + 0.5);
 
-	if(blockID == BLOCK_GROUND_WAVING_VERTICAL || blockID == BLOCK_GRASS_SHORT || blockID == BLOCK_GRASS_TALL_LOWER || blockID == BLOCK_GRASS_TALL_UPPER ) normalMat.a = 0.60;
+	if (blockID == BLOCK_GROUND_WAVING_VERTICAL || blockID == BLOCK_GRASS_SHORT || blockID == BLOCK_GRASS_TALL_LOWER || blockID == BLOCK_GRASS_TALL_UPPER ) normalMat.a = 0.60;
 
 
 	PORTAL = 0;
 	SIGN = 0;
 
-	#ifdef WORLD
-		if(blockEntityId == BLOCK_SIGN) SIGN = 1;
+	#if defined WORLD && defined BLOCKENTITIES
+		blockID = blockEntityId;
 
-		if(blockEntityId == BLOCK_END_PORTAL) PORTAL = 1;
+		if (blockID == BLOCK_SIGN) SIGN = 1;
+		if (blockID == BLOCK_END_PORTAL) PORTAL = 1;
 	#endif
 	
 	NameTags = 0;
@@ -258,7 +259,7 @@ void main() {
 	
 #endif
 
-	if(mc_Entity.x == BLOCK_AIR_WAVING) normalMat.a = 0.55;
+	if(blockID == BLOCK_AIR_WAVING) normalMat.a = 0.55;
 
     /////// ----- EMISSIVE STUFF ----- ///////
 		EMISSIVE = 0.0;
@@ -271,7 +272,7 @@ void main() {
 	#endif
 
 	// normal block lightsources		
-	if(mc_Entity.x >= 100 && mc_Entity.x < 300) EMISSIVE = 0.5;
+	if(blockID >= 100 && blockID < 300) EMISSIVE = 0.5;
 	
 	// special cases light lightning and beacon beams...	
 	#ifdef ENTITIES
@@ -288,25 +289,25 @@ void main() {
     /////// ----- SSS ON BLOCKS ----- ///////
 	// strong
 	if (
-		mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL || mc_Entity.x == BLOCK_AIR_WAVING ||
-		mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_GRASS_TALL_UPPER || mc_Entity.x == BLOCK_GRASS_TALL_LOWER ||
-		mc_Entity.x == BLOCK_SSS_STRONG || mc_Entity.x == BLOCK_SAPLING
+		blockID == BLOCK_GROUND_WAVING || blockID == BLOCK_GROUND_WAVING_VERTICAL || blockID == BLOCK_AIR_WAVING ||
+		blockID == BLOCK_GRASS_SHORT || blockID == BLOCK_GRASS_TALL_UPPER || blockID == BLOCK_GRASS_TALL_LOWER ||
+		blockID == BLOCK_SSS_STRONG || blockID == BLOCK_SAPLING
 	) {
 		SSSAMOUNT = 1.0;
 	}
 
 	// medium
 	if (
-		mc_Entity.x == BLOCK_SSS_WEAK || mc_Entity.x == BLOCK_SSS_WEAK_2 ||
-		mc_Entity.x == BLOCK_GLOW_LICHEN || mc_Entity.x == BLOCK_SNOW_LAYERS ||
-		mc_Entity.x == BLOCK_AMETHYST_BUD_MEDIUM || mc_Entity.x == BLOCK_AMETHYST_BUD_LARGE || mc_Entity.x == BLOCK_AMETHYST_CLUSTER ||
-		mc_Entity.x == BLOCK_BAMBOO || mc_Entity.x == BLOCK_SAPLING || mc_Entity.x == BLOCK_VINE
+		blockID == BLOCK_SSS_WEAK || blockID == BLOCK_SSS_WEAK_2 ||
+		blockID == BLOCK_GLOW_LICHEN || blockID == BLOCK_SNOW_LAYERS ||
+		blockID == BLOCK_AMETHYST_BUD_MEDIUM || blockID == BLOCK_AMETHYST_BUD_LARGE || blockID == BLOCK_AMETHYST_CLUSTER ||
+		blockID == BLOCK_BAMBOO || blockID == BLOCK_SAPLING || blockID == BLOCK_VINE
 	) {
 		SSSAMOUNT = 0.75;
 	}
 	// low
 	#ifdef MISC_BLOCK_SSS
-		if(mc_Entity.x == BLOCK_SSS_WEIRD || mc_Entity.x == BLOCK_GRASS) SSSAMOUNT = 0.5; // weird SSS on blocks like grass and stuff
+		if(blockID == BLOCK_SSS_WEIRD || blockID == BLOCK_GRASS) SSSAMOUNT = 0.5; // weird SSS on blocks like grass and stuff
 	#endif
 
 	#ifdef ENTITIES
@@ -327,7 +328,7 @@ void main() {
 		// strong
 
 		// medium
-		if(blockEntityId == BLOCK_SSS_WEAK_3) SSSAMOUNT = 0.4;
+		if(blockID == BLOCK_SSS_WEAK_3) SSSAMOUNT = 0.4;
 
 		// low
 
@@ -341,13 +342,13 @@ void main() {
 		if(	
 			(
 				// these wave off of the ground. the area connected to the ground does not wave.
-				(InterpolateFromBase && (mc_Entity.x == BLOCK_GRASS_TALL_LOWER || mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_SAPLING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL)) 
+				(InterpolateFromBase && (blockID == BLOCK_GRASS_TALL_LOWER || blockID == BLOCK_GROUND_WAVING || blockID == BLOCK_GRASS_SHORT || blockID == BLOCK_SAPLING || blockID == BLOCK_GROUND_WAVING_VERTICAL)) 
 
 				// these wave off of the ceiling. the area connected to the ceiling does not wave.
-				|| (!InterpolateFromBase && (mc_Entity.x == 17))
+				|| (!InterpolateFromBase && (blockID == BLOCK_VINE_OTHER))
 
 				// these wave off of the air. they wave uniformly
-				|| (mc_Entity.x == BLOCK_GRASS_TALL_UPPER || mc_Entity.x == BLOCK_AIR_WAVING)
+				|| (blockID == BLOCK_GRASS_TALL_UPPER || blockID == BLOCK_AIR_WAVING)
 
 			) && abs(position.z) < 64.0
 		){
@@ -358,7 +359,7 @@ void main() {
 			worldpos += calcMovePlants(worldpos + cameraPosition) * max(lmtexcoord.w,0.5);
 
 			// apply displacement for waving leaf blocks specifically, overwriting the other waving mode. these wave off of the air. they wave uniformly
-			if(mc_Entity.x == BLOCK_AIR_WAVING) worldpos = UnalteredWorldpos + calcMoveLeaves(worldpos + cameraPosition, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*lmtexcoord.w;
+			if(blockID == BLOCK_AIR_WAVING) worldpos = UnalteredWorldpos + calcMoveLeaves(worldpos + cameraPosition, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*lmtexcoord.w;
 		
 			position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 		}
@@ -368,7 +369,7 @@ void main() {
 #endif
 
 	#if defined Seasons && defined WORLD && !defined ENTITIES && !defined BLOCKENTITIES && !defined HAND
-		YearCycleColor(color.rgb, gl_Color.rgb, mc_Entity.x == BLOCK_AIR_WAVING, true);
+		YearCycleColor(color.rgb, gl_Color.rgb, blockID == BLOCK_AIR_WAVING, true);
 	#endif
 
 	#ifdef TAA_UPSCALING

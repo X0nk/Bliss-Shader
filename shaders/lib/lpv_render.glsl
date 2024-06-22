@@ -13,6 +13,8 @@ vec4 SampleLpvLinear(const in vec3 lpvPos) {
         ? textureLod(texLpv1, texcoord, 0)
         : textureLod(texLpv2, texcoord, 0);
 
+    // lpvSample.rgb = pow(lpvSample.rgb, vec3(2.2));
+
     vec3 hsv = RgbToHsv(lpvSample.rgb);
     hsv.z = lpvCurve(hsv.b) * LpvBlockSkyRange.x;
     lpvSample.rgb = HsvToRgb(hsv);

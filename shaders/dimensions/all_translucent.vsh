@@ -1,6 +1,8 @@
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/bokeh.glsl"
+#include "/lib/blocks.glsl"
+#include "/lib/entities.glsl"
 #include "/lib/items.glsl"
 
 uniform float frameTimeCounter;
@@ -15,6 +17,7 @@ Read the terms of modification and sharing before changing something below pleas
 
 varying vec4 lmtexcoord;
 varying vec4 color;
+flat varying int blockID;
 
 uniform sampler2D colortex4;
 uniform sampler2D noisetex;
@@ -44,7 +47,7 @@ uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;
 varying vec3 viewVector;
 
-flat varying int glass;
+// flat varying int glass;
 
 attribute vec4 at_tangent;
 attribute vec4 mc_Entity;
@@ -124,8 +127,14 @@ void main() {
 
  	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
 
+ 	blockID = int(mc_Entity.x + 0.5);
+
+	#ifdef BLOCKENTITIES
+		blockID = blockEntityId;
+	#endif
+
 	#ifdef LARGE_WAVE_DISPLACEMENT
-		if(mc_Entity.x == 8.0) {
+		if (blockID == BLOCK_WATER) {
 			vec3 displacedPos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
 			#ifdef DISTANT_HORIZONS
 				float range = min(1.0 + pow(length(displacedPos - cameraPosition) / min(far,256.0),2.0), 256.0);
@@ -153,7 +162,7 @@ void main() {
 	float mat = 0.0;
 
 	// water mask
-	if(mc_Entity.x == 8.0) {
+	if (blockID == BLOCK_WATER) {
     	mat = 1.0;
     	gl_Position.z -= 1e-4;
   	}
@@ -161,11 +170,11 @@ void main() {
 	// translucent entities
 	#if defined ENTITIES || defined BLOCKENTITIES
 		mat = 0.9;
-		if (entityId == 1803) mat = 0.8;
+		if (entityId == ENTITY_SLIME) mat = 0.8;
 	#endif
 
 	// translucent blocks
-	if (mc_Entity.x >= 301 && mc_Entity.x <= 321) mat = 0.7;
+	if (blockID >= BLOCK_GLASS && blockID <= BLOCK_SLIME) mat = 0.7;
 	
 	tangent = vec4(normalize(gl_NormalMatrix *at_tangent.rgb),at_tangent.w);
 

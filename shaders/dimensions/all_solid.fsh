@@ -83,7 +83,7 @@ uniform vec4 entityColor;
 
 // in vec3 velocity;
 
-flat varying float blockID;
+flat varying int blockID;
 
 flat varying float SSSAMOUNT;
 flat varying float EMISSIVE;
