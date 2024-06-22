@@ -813,7 +813,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0].rgb = FinalColor*0.1;
 	#endif
 
-	#ifdef BLOCKENTITIES
+	#if defined BLOCKENTITIES && defined IS_LPV_ENABLED
 		if (blockID == BLOCK_SIGN && lmtexcoord.z >= (14.5/15.0)) {
 			// glowing sign text emission
 			SpecularTex.b = 0.6;
