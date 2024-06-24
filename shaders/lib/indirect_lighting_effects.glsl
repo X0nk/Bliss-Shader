@@ -291,22 +291,17 @@ vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes, bool hand){
 	return vec3(1.1);
 }
 
-void ApplySSRT(
-	inout vec3 lighting, 
+vec3 ApplySSRT(
 	vec3 viewPos,
 	vec3 normal,
 	vec3 noise,
 	
-	vec3 playerPos,
-    vec3 lpvPos,
-    float Exposure,
-	vec2 lightmaps, 
-
-	vec3 skylightcolor, 
-	vec3 torchcolor, 
+	vec3 indirectLightColor,
+	vec3 minLightColor,
+	float lightmap, 
 
 	bool isGrass,
-	bool hand
+	bool isLOD
 ){
 	int nrays = RAY_COUNT;
 
@@ -318,9 +313,7 @@ void ApplySSRT(
 	vec3 occlusion2 = vec3(0.0);
 	vec3 skycontribution2 = vec3(0.0);
 
-	// rgb = torch color * lightmap. a = sky lightmap.
-	vec4 Lighting = RT_AmbientLight(playerPos, lpvPos, Exposure, lightmaps, torchcolor);
-    skylightcolor = max(skylightcolor * ambient_brightness * Lighting.a,  vec3(1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision)); 
+	vec3 ambientColor = doIndirectLighting(indirectLightColor * 2.5, minLightColor, lightmap);
 
 	for (int i = 0; i < nrays; i++){
 		int seed = (frameCounter%40000)*nrays+i;
@@ -330,33 +323,32 @@ void ApplySSRT(
 		#ifdef HQ_SSGI
 			vec3 rayHit = rayTrace_GI( mat3(gbufferModelView) * rayDir, viewPos, noise.z, 50.); // ssr rt
 		#else
-			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, viewPos, noise.z, 30., hand);  // choc sspt 
+			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, viewPos, noise.z, 30., isLOD);  // choc sspt 
 		#endif
 
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
 			#ifdef OVERWORLD_SHADER
 				if(isGrass) rayDir.y = clamp(rayDir.y +  0.5,-1,1);
 
-				// rayDir.y = mix(-1.0, rayDir.y, lightmaps.y*lightmaps.y);
-				skycontribution = pow(skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb/30, vec3(0.7)) *2.5 * ambient_brightness * Lighting.a  + Lighting.rgb;
+				skycontribution = mix(ambientColor,  pow(skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb/30, vec3(0.7)), lightmap);
 			#else
-				skycontribution = (pow(skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0,vec3(0.7))/2.5 * ambient_brightness) * Lighting.a + skylightcolor*(1-Lighting.a)  + Lighting.rgb;
+				skycontribution = pow(skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0,vec3(0.7));
 			#endif
 
 			
-   			skycontribution = max(skycontribution,  vec3(1.0) * (MIN_LIGHT_AMOUNT*0.01 + nightVision));
+   			skycontribution = max(skycontribution,  minLightColor * max(MIN_LIGHT_AMOUNT*0.01, nightVision * 0.1));
 		#else
 
 			#ifdef OVERWORLD_SHADER
 				if(isGrass) rayDir.y = clamp(rayDir.y +  0.25,-1,1);
 			
-				skycontribution = skylightcolor * (max(rayDir.y,pow(1.0-lightmaps.y,2))*0.95+0.05) + Lighting.rgb;
+				skycontribution = ambientColor * (max(rayDir.y,pow(1.0-lightmap,2))*0.95+0.05);
 			#else
-				skycontribution = skylightcolor + Lighting.rgb;
+				skycontribution = ambientColor;
 			#endif
 
 			#if indirect_effect == 4
-				skycontribution2 = skylightcolor + Lighting.rgb;
+				skycontribution2 = ambientColor;
 			#endif
 
 		#endif
@@ -370,7 +362,6 @@ void ApplySSRT(
 				
 				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0){
 					radiance += texture2D(colortex5, previousPosition.xy).rgb * GI_Strength + skycontribution;
-		
 				} else{
 					radiance += skycontribution;
 				}
@@ -389,14 +380,14 @@ void ApplySSRT(
 			radiance += skycontribution;
 		}
 	}
+
+	if(isLOD) return max(radiance/nrays, 0.0);
 	
 	occlusion *= AO_Strength;
-	
-	#if indirect_effect == 4
-		lighting = max(radiance/nrays - max(occlusion, occlusion2*0.5)/nrays, 0.0);
-	#else
-		lighting = max(radiance/nrays - occlusion/nrays, 0.0);
-	#endif
 
-	if(hand) lighting = skylightcolor/1.5;
+	#if indirect_effect == 4
+		return max(radiance/nrays - max(occlusion, occlusion2*0.5)/nrays, 0.0);
+	#else
+		return max(radiance/nrays - occlusion/nrays, 0.0);
+	#endif
 }

@@ -503,7 +503,7 @@ void main() {
 
 		#if EMISSIVE_TYPE == 2
 			gl_FragData[1].a = SpecularTex.a;
-			if(SpecularTex.a <= 0.0) gl_FragData[2].a = EMISSIVE;
+			if(SpecularTex.a <= 0.0) gl_FragData[1].a = EMISSIVE;
 		#endif
 
 		#if EMISSIVE_TYPE == 3		
@@ -526,13 +526,6 @@ void main() {
 		#if SSS_TYPE == 3		
 			gl_FragData[1].b = SpecularTex.b;
 		#endif
-		
-		// #ifndef ENTITIES
-		// 	if(PORTAL > 0){
-		// 		gl_FragData[2].rgb = vec3(0);
-		// 		gl_FragData[2].a = clamp(ENDPORTAL_EFFECT * 0.9, 0,0.9);
-		// 	}
-		// #endif
 	#endif
 
 	// hit glow effect...

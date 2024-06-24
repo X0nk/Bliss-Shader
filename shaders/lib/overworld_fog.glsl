@@ -112,6 +112,7 @@ vec4 GetVolumetricFog(
 	
 	vec3 color = vec3(0.0);
 	float absorbance = 1.0;
+	float AtmosphereAbsorbance = 1.0;
 
 	float lightleakfix = 1.0 - caveDetection;
 	float lightleakfix2 = pow(clamp(eyeBrightnessSmooth.y/240. ,0.0,1.0),3.0);
@@ -235,19 +236,28 @@ vec4 GetVolumetricFog(
 			absorbance *= fogVolumeCoeff;
 
 		//------ ATMOSPHERE HAZE EFFECT
+			#if defined CloudLayer0 && defined VOLUMETRIC_CLOUDS
+				float cloudPlaneCutoff = clamp((CloudLayer0_height +  max(eyeAltitude-(CloudLayer0_height-100),0)) - progressW.y,0.0,1.0);
+			#else
+				float cloudPlaneCutoff = 1.0;
+			#endif
+
 			// just air
-			vec2 airCoef = exp2(-max(progressW.y-SEA_LEVEL,0.0)/vec2(8.0e3, 1.2e3)*vec2(6.,7.0)) * (24.0 * atmosphereMult) * Haze_amount * clamp((CloudLayer0_height +  max(eyeAltitude-(CloudLayer0_height-100),0)) - progressW.y,0.0,1.0);
+			vec2 airCoef = exp2(-max(progressW.y-SEA_LEVEL,0.0)/vec2(8.0e3, 1.2e3)*vec2(6.,7.0)) * (24.0 * atmosphereMult) * Haze_amount * cloudPlaneCutoff;
 
 			// Pbr for air, yolo mix between mie and rayleigh for water droplets
 			vec3 rL = rC*airCoef.x;
 			vec3 m =  mC*(airCoef.y+densityVol*300.0);
 
 			// calculate the atmosphere haze seperately and purely additive to color, do not contribute to absorbtion.
-			vec3 Atmosphere = LightSourcePhased * sh * (rayL*rL + sunPhase*m) + (AveragedAmbientColor*0.7) * (rL+m) * lightleakfix2;
-			color += (Atmosphere - Atmosphere*exp(-(rL+m)*dd*dL_alternate)) / (rL+m+1e-6) * absorbance;	
+			vec3 atmosphereVolumeCoeff = exp(-(rL+m)*dd*dL_alternate);
+			
+			vec3 Atmosphere = (LightSourcePhased * sh * (rayL*rL + sunPhase*m) + AveragedAmbientColor * (rL+m)) * lightleakfix2;
+			color += (Atmosphere - Atmosphere * atmosphereVolumeCoeff) / (rL+m+1e-6) * AtmosphereAbsorbance * absorbance;
+			AtmosphereAbsorbance *= dot(atmosphereVolumeCoeff, vec3(0.33333));
 			
 		//------ LPV FOG EFFECT
-			#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
+			#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT 
 				color += LPV_FOG_ILLUMINATION(progressW-cameraPosition, dd, dL) * TorchBrightness_autoAdjust * absorbance;
 			#endif
 

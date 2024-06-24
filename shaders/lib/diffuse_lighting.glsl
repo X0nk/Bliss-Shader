@@ -21,92 +21,56 @@
     }
 #endif
 
-vec3 DoAmbientLightColor(
-    vec3 playerPos,
-    vec3 lpvPos,
-    vec3 SkyColor,
-    vec3 MinimumColor,
-    vec3 TorchColor, 
-    vec2 Lightmap,
-    float Exposure
+vec3 doBlockLightLighting(
+    vec3 lightColor, float lightmap, float exposureValue,
+    vec3 playerPos, vec3 lpvPos
 ){
-	// Lightmap = vec2(0.0,1.0);
-    // float LightLevelZero = clamp(pow(eyeBrightnessSmooth.y/240. + Lightmap.y,2.0) ,0.0,1.0);
 
-    // do sky lighting.
-    float skyLM = (pow(Lightmap.y,15.0)*2.0 + pow(Lightmap.y,2.5))*0.5;
-    vec3 MinimumLight = MinimumColor * max(MIN_LIGHT_AMOUNT*0.01, nightVision * 0.1);
-    vec3 IndirectLight = max(SkyColor * ambient_brightness * skyLM * 0.7,     MinimumLight); 
+    float lightmapCurve = pow(1.0-sqrt(1.0-clamp(lightmap,0.0,1.0)),2.0) * 2.0;
     
-    // do torch lighting
-    float TorchLM = pow(1.0-sqrt(1.0-clamp(Lightmap.x,0.0,1.0)),2.0) * 2.0;
-    float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*Exposure),0.0,1.0));
-    
-    vec3 TorchLight = TorchColor * TorchLM * TORCH_AMOUNT;
+    vec3 blockLight = lightColor * lightmapCurve; //;
     
     #if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
         vec4 lpvSample = SampleLpvLinear(lpvPos);
-        vec3 LpvTorchLight = GetLpvBlockLight(lpvSample);
+        vec3 lpvBlockLight = GetLpvBlockLight(lpvSample);
 
-        // i gotchu
-        float fadeLength = 10.0; // in blocks
+        // create a smooth falloff at the edges of the voxel volume.
+        float fadeLength = 10.0; // in meters
         vec3 cubicRadius = clamp( min(((LpvSize3-1.0) - lpvPos)/fadeLength,      lpvPos/fadeLength) ,0.0,1.0);
-        float LpvFadeF = cubicRadius.x*cubicRadius.y*cubicRadius.z;
-
-        LpvFadeF = 1.0 - pow(1.0-pow(LpvFadeF,1.5),3.0); // make it nice and soft :)
+        float voxelRangeFalloff = cubicRadius.x*cubicRadius.y*cubicRadius.z;
+        voxelRangeFalloff = 1.0 - pow(1.0-pow(voxelRangeFalloff,1.5),3.0);
         
-        TorchLight = mix(TorchLight, LpvTorchLight/5.0, LpvFadeF);
+        // outside the voxel volume, lerp to vanilla lighting as a fallback
+        blockLight = mix(blockLight, lpvBlockLight/5.0, voxelRangeFalloff);
 
-        const vec3 normal = vec3(0.0); // TODO
+        #ifdef Hand_Held_lights
+            // create handheld lightsources
+            const vec3 normal = vec3(0.0); // TODO
 
-        if (heldItemId > 0)
-            TorchLight += GetHandLight(heldItemId, playerPos, normal);
+                if (heldItemId > 0)
+                blockLight += GetHandLight(heldItemId, playerPos, normal);
 
-        if (heldItemId2 > 0)
-            TorchLight += GetHandLight(heldItemId2, playerPos, normal);
+                if (heldItemId2 > 0)
+                blockLight += GetHandLight(heldItemId2, playerPos, normal);
+        #endif
     #endif
 
-    return IndirectLight + TorchLight * TorchBrightness_autoAdjust;
+    // try to make blocklight have consistent visiblity in different light levels.
+    float autoBrightness = mix(1.0, 30.0,  clamp(exp(-10.0*exposureValue),0.0,1.0));
+    blockLight *= autoBrightness;
+    
+    return blockLight * TORCH_AMOUNT;
 }
 
-
-// this is dumb, and i plan to remove it eventually...
-vec4 RT_AmbientLight(
-    vec3 playerPos,
-    vec3 lpvPos,
-    float Exposure,
-    vec2 Lightmap,
-    vec3 TorchColor
+vec3 doIndirectLighting(
+    vec3 lightColor, vec3 minimumLightColor, float lightmap
 ){
-    float skyLM = (pow(Lightmap.y,15.0)*2.0 + pow(Lightmap.y,2.5))*0.5;
 
+    float lightmapCurve = (pow(lightmap,15.0)*2.0 + pow(lightmap,2.5))*0.5;
 
-    // do torch lighting
-    float TorchLM = pow(1.0-sqrt(1.0-clamp(Lightmap.x,0.0,1.0)),2.0) * 2.0;
-    float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*Exposure),0.0,1.0)) ;
-    vec3 TorchLight = TorchColor * TorchLM * TORCH_AMOUNT  ;
-    
-    #if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
-        vec4 lpvSample = SampleLpvLinear(lpvPos);
-        vec3 LpvTorchLight = GetLpvBlockLight(lpvSample);
+    vec3 indirectLight = lightColor * lightmapCurve * ambient_brightness * 0.7; 
 
-        // i gotchu
-        float fadeLength = 10.0; // in blocks
-        vec3 cubicRadius = clamp( min(((LpvSize3-1.0) - lpvPos)/fadeLength,      lpvPos/fadeLength) ,0.0,1.0);
-        float LpvFadeF = cubicRadius.x*cubicRadius.y*cubicRadius.z;
+    indirectLight += minimumLightColor * max(MIN_LIGHT_AMOUNT*0.01, nightVision * 0.1);
 
-        LpvFadeF = 1.0 - pow(1.0-pow(LpvFadeF,1.5),3.0); // make it nice and soft :)
-        
-        TorchLight = mix(TorchLight,LpvTorchLight/5.0,   LpvFadeF);
-
-        const vec3 normal = vec3(0.0); // TODO
-
-        if (heldItemId > 0)
-            TorchLight += GetHandLight(heldItemId, playerPos, normal);
-
-        if (heldItemId2 > 0)
-            TorchLight += GetHandLight(heldItemId2, playerPos, normal);
-    #endif
-
-    return vec4(TorchLight, skyLM);
+    return indirectLight;
 }

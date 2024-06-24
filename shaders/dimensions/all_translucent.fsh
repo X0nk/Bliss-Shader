@@ -217,7 +217,7 @@ vec3 viewToWorld(vec3 viewPos) {
     vec4 pos;
     pos.xyz = viewPos;
     pos.w = 0.0;
-    pos = gbufferModelViewInverse * pos;
+    pos = gbufferModelViewInverse * pos ;
     return pos.xyz;
 }
 
@@ -629,19 +629,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		
 		float skylight = max(pow(viewToWorld(flatnormal).y*0.5+0.5,0.1) + SkylightDir, 0.2);
 		AmbientLightColor *= skylight;
+		
+		Indirect_lighting = doIndirectLighting(AmbientLightColor, MinimumLightColor, lightmap.y);
 	#endif
 
 	#ifdef NETHER_SHADER
-		// vec3 AmbientLightColor = skyCloudsFromTexLOD2(worldSpaceNormal, colortex4, 6).rgb / 15.0;
-		
-		// vec3 up 	= skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb/ 30.0;
-		// vec3 down 	= skyCloudsFromTexLOD2(vec3( 0,-1, 0), colortex4, 6).rgb/ 30.0;
-
-		// up   *= pow( max( worldSpaceNormal.y, 0), 2);
-		// down *= pow( max(-worldSpaceNormal.y, 0), 2);
-		// AmbientLightColor += up + down;
-		
-		vec3 AmbientLightColor = vec3(0.1);
+		Indirect_lighting = skyCloudsFromTexLOD2(worldSpaceNormal, colortex4, 6).rgb / 30.0 ;
 	#endif
 
 	#ifdef END_SHADER
@@ -658,14 +651,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		Direct_lighting = lightColors * endFogPhase(lightPos) * NdotL;
 
-		// vec3 AmbientLightColor = vec3(0.5,0.75,1.0) * 0.9 + 0.1;
-		// AmbientLightColor *= clamp(1.5 + dot(worldSpaceNormal, normalize(feetPlayerPos))*0.5,0,2);
-
 		vec3 AmbientLightColor = vec3(0.3,0.6,1.0) * 0.5;
 			
-		AmbientLightColor = AmbientLightColor + 0.7 * AmbientLightColor * dot(worldSpaceNormal, normalize(feetPlayerPos));
+		Indirect_lighting = AmbientLightColor + 0.7 * AmbientLightColor * dot(worldSpaceNormal, normalize(feetPlayerPos));
 	#endif
 
+	///////////////////////// BLOCKLIGHT LIGHTING OR LPV LIGHTING OR FLOODFILL COLORED LIGHTING
 	#ifdef IS_LPV_ENABLED
 		vec3 normalOffset = vec3(0.0);
 
@@ -684,7 +675,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		const vec3 lpvPos = vec3(0.0);
 	#endif
 
-	Indirect_lighting = DoAmbientLightColor(feetPlayerPos, lpvPos, AmbientLightColor, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy, exposure);
+	Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, exposure, feetPlayerPos, lpvPos);
 	
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
 

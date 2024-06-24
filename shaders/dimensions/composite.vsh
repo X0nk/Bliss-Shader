@@ -6,9 +6,13 @@ flat varying vec3 WsunVec;
 uniform sampler2D colortex4;
 
 uniform int frameCounter;
+
 uniform float sunElevation;
 uniform vec3 sunPosition;
 uniform mat4 gbufferModelViewInverse;
+
+
+
 #include "/lib/util.glsl"
 #include "/lib/res_params.glsl"
 

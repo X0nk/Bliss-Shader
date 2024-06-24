@@ -70,6 +70,8 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
     return (near * far) / (depth * (near - far) + far);
 }
 
+#define IS_LPV_ENABLED
+
 #if defined LPV_VL_FOG_ILLUMINATION && defined IS_LPV_ENABLED
 	
 	flat varying float exposure;

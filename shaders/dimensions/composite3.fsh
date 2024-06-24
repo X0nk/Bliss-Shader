@@ -434,7 +434,7 @@ void main() {
 ////// --------------- BLEND FOG INTO SCENE
 //////////// apply VL fog over opaque and translucents
 
-  color *= vl.a*cloudAlpha;
+  color *= vl.a*cloudAlpha ;
   color += vl.rgb;
   bloomyFogMult *= mix(vl.a,vl.a*0.5 + 0.5, rainStrength);
   

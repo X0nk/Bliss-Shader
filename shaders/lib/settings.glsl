@@ -699,7 +699,7 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 #define SELECT_BOX_COL_G 0.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 #define SELECT_BOX_COL_B 0.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 
-// #define OLD_CAVE_DETECTION
+#define OLD_CAVE_DETECTION
 
 ///////////////////////////////////////////
 // ----- DISTANT HORIZONS SETTINGS ----- //

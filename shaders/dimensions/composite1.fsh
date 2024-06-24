@@ -809,8 +809,9 @@ void main() {
 		normalAndAO.a = clamp(pow(normalAndAO.a*5,4),0,1);
 
 		if(isDHrange){
+			FlatNormals = normal;
+			normal = viewToWorld(normal);
 			slopednormal = normal;
-			FlatNormals = worldToView(normal);
 		}
 
 
@@ -898,6 +899,8 @@ void main() {
 
 			bool inShadowmapBounds = false;
 		#endif
+
+		MinimumLightColor = MinimumLightColor + 0.7 * MinimumLightColor * dot(slopednormal, feetPlayerPos_normalized);
 
 	////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////	    FILTER STUFF      //////////////////////////////////
@@ -1023,7 +1026,7 @@ void main() {
 		Shadows = ComputeShadowMap(projectedShadowPosition, distortFactor, noise_2, filteredShadow.x, flatNormNdotL, shadowMapFalloff, DirectLightColor, ShadowAlpha, LabSSS > 0.0);
 
 		// transition to fallback lightmap shadow mask.
-		Shadows = mix(isWater ? 1.0 : LM_shadowMapFallback, Shadows, shadowMapFalloff);
+		Shadows = mix(isWater ? lightLeakFix : LM_shadowMapFallback, Shadows, shadowMapFalloff);
 
 		#ifdef OLD_LIGHTLEAK_FIX
 			if (isEyeInWater == 0) Shadows *= lightLeakFix; // light leak fix
@@ -1080,29 +1083,29 @@ void main() {
 	/////////////////////////////	INDIRECT LIGHTING 	/////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////////
 
-		#if defined OVERWORLD_SHADER && (indirect_effect == 0 || indirect_effect == 1)
+		#if defined OVERWORLD_SHADER 
 			Indirect_lighting = AmbientLightColor;
-			
-			float allDirections = dot(abs(slopednormal),vec3(1.0));
-			vec3 ambientcoefs = slopednormal / allDirections;
-			float SkylightDir = ambientcoefs.y*1.5;
-			
-			if(isGrass) SkylightDir = 1.5;
 
-			float skylight = max(pow(viewToWorld(FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.2 + (1-lightmap.y)*0.8*0) ;
+			float skylight = 1.0;
+			#if indirect_effect != 2
+				float SkylightDir = (slopednormal / dot(abs(slopednormal),vec3(1.0))).y*1.5;
+				if(isGrass) SkylightDir = 1.5;
 
-			#if indirect_effect == 1
-				skylight =  min(skylight, mix(0.95, 2.5, pow(1-pow(1-SSAO_SSS.x, 0.5),2.0)	));
+				skylight = max(pow(viewToWorld(FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.2 + (1-lightmap.y)*0.8);
+
+				#if indirect_effect == 1
+					skylight =  min(skylight, mix(0.95, 2.5, pow(1-pow(1-SSAO_SSS.x, 0.5),2.0)	));
+				#endif
 			#endif
-
-			Indirect_lighting *= skylight;
+			
+			Indirect_lighting = doIndirectLighting(AmbientLightColor * skylight, MinimumLightColor, lightmap.y);
 		#endif
 
 		#ifdef NETHER_SHADER
 			Indirect_lighting = skyCloudsFromTexLOD2(normal, colortex4, 6).rgb / 30.0;
 			vec3 up = skyCloudsFromTexLOD2(vec3(0.0,1.0,0.0), colortex4, 6).rgb / 30.0;
 			
-			Indirect_lighting =  mix(up, Indirect_lighting,  clamp(pow(1.0-pow(1.0-SSAO_SSS.x, 0.5),2.0),0.0,1.0));
+			Indirect_lighting = mix(up, Indirect_lighting,  clamp(pow(1.0-pow(1.0-SSAO_SSS.x, 0.5),2.0),0.0,1.0));
 
 			AmbientLightColor = Indirect_lighting / 5.0;
 		#endif
@@ -1112,28 +1115,7 @@ void main() {
 			
 			Indirect_lighting = Indirect_lighting + 0.7*mix(-Indirect_lighting, Indirect_lighting * dot(slopednormal, feetPlayerPos_normalized), clamp(pow(1.0-pow(1.0-SSAO_SSS.x, 0.5),2.0),0.0,1.0));
 		#endif
-	
-		#ifdef IS_LPV_ENABLED
-			vec3 normalOffset = vec3(0.0);
 
-			if (any(greaterThan(abs(FlatNormals), vec3(1.0e-6))))
-				normalOffset = 0.5*viewToWorld(FlatNormals);
-
-			#if LPV_NORMAL_STRENGTH > 0
-				vec3 texNormalOffset = -normalOffset + slopednormal;
-				normalOffset = mix(normalOffset, texNormalOffset, (LPV_NORMAL_STRENGTH*0.01));
-			#endif
-
-			vec3 lpvPos = GetLpvPosition(feetPlayerPos) + normalOffset;
-		#else
-			const vec3 lpvPos = vec3(0.0);
-		#endif
-
-		// little highlight effect just to make caves look a little less flat.
-		MinimumLightColor = MinimumLightColor + MinimumLightColor*dot(feetPlayerPos_normalized, slopednormal)*0.7;
-
-		Indirect_lighting = DoAmbientLightColor(feetPlayerPos, lpvPos, Indirect_lighting, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B) , lightmap.xy, exposure);
-		
 		#ifdef OVERWORLD_SHADER
 			Indirect_lighting += LightningFlashLighting;
 		#endif
@@ -1166,28 +1148,55 @@ void main() {
 			Indirect_lighting *= AO;
 		#endif
 
-		// GTAO
+		// GTAO... this is so dumb but whatevverrr
 		#if indirect_effect == 2
-			vec2 r2 = fract(R2_samples((frameCounter%40000) + frameCounter*2) + bnoise);
-			Indirect_lighting = AmbientLightColor/2.5;
-			
-			AO = ambient_occlusion(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z), viewPos, worldToView(slopednormal), r2) * vec3(1.0);
+			float vanillaAO_curve = pow(1.0 - vanilla_AO*vanilla_AO,5.0);
 
-			Indirect_lighting *= AO;
+			vec2 r2 = fract(R2_samples((frameCounter%40000) + frameCounter*2) + bnoise);
+			float GTAO =  !hand ? ambient_occlusion(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5, z), viewPos, worldToView(slopednormal), r2) : 1.0;
+			AO = vec3(min(vanillaAO_curve,GTAO));
+			
+			vec3 IndirectColor = Indirect_lighting;
+
+			float SkylightDir = (slopednormal / dot(abs(slopednormal),vec3(1.0))).y*1.5;
+			if(isGrass) SkylightDir = 1.5;
+
+			skylight = max(pow(viewToWorld(FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.2 + (1-lightmap.y)*0.8);
+			skylight =  min(skylight, mix(0.95, 2.5, pow(1-pow(1-GTAO, 0.5),2.0)	));
+
+			IndirectColor *= skylight;
+
+			Indirect_lighting = doIndirectLighting(IndirectColor, lightmap.y) * AO;
 		#endif
 
 		// RTAO and/or SSGI
 		#if indirect_effect == 3 || indirect_effect == 4
-			
-			// Indirect_lighting = AmbientLightColor;
-
-
-			ApplySSRT(Indirect_lighting, viewPos, normal, vec3(bnoise, noise_2), 		feetPlayerPos, lpvPos, exposure, lightmap.xy, AmbientLightColor*2.5, vec3(TORCH_R,TORCH_G,TORCH_B), isGrass, hand);
+			if(!hand) Indirect_lighting = ApplySSRT(viewPos, normal, vec3(bnoise, noise_2), AmbientLightColor, MinimumLightColor, lightmap.y, isGrass, isDHrange);
 		#endif
 
 		#if defined END_SHADER
 			Direct_lighting *= AO;
 		#endif
+
+	///////////////////////// BLOCKLIGHT LIGHTING OR LPV LIGHTING OR FLOODFILL COLORED LIGHTING
+	
+		#ifdef IS_LPV_ENABLED
+			vec3 normalOffset = vec3(0.0);
+
+			if (any(greaterThan(abs(FlatNormals), vec3(1.0e-6))))
+				normalOffset = 0.5*viewToWorld(FlatNormals);
+
+			#if LPV_NORMAL_STRENGTH > 0
+				vec3 texNormalOffset = -normalOffset + slopednormal;
+				normalOffset = mix(normalOffset, texNormalOffset, (LPV_NORMAL_STRENGTH*0.01));
+			#endif
+
+			vec3 lpvPos = GetLpvPosition(feetPlayerPos) + normalOffset;
+		#else
+			const vec3 lpvPos = vec3(0.0);
+		#endif	
+
+		Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, exposure, feetPlayerPos, lpvPos);
 
 	////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////	SUB SURFACE SCATTERING	////////////////////////////
@@ -1237,9 +1246,8 @@ void main() {
 
 			
 			Direct_SSS = SubsurfaceScattering_sun(albedo, ShadowBlockerDepth, sunSSS_density, clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), SSS_shadow, shadowMapFalloff2);
-			// Direct_SSS = vec3(1.0);
 
-			if (isEyeInWater == 0) Direct_SSS *= lightLeakFix;
+			Direct_SSS *= lightLeakFix;
 
 			#ifndef SCREENSPACE_CONTACT_SHADOWS
 				Direct_SSS = mix(vec3(0.0), Direct_SSS, shadowMapFalloff2);
@@ -1298,7 +1306,7 @@ void main() {
 	#endif
 	#if DEBUG_VIEW == debug_NORMALS
 		if(swappedDepth >= 1.0) Direct_lighting = vec3(1.0);
-		gl_FragData[0].rgb = normalize(worldToView(normal));
+		gl_FragData[0].rgb = normal ;
 	#endif
 	#if DEBUG_VIEW == debug_SPECULAR
 		if(swappedDepth >= 1.0) Direct_lighting = vec3(1.0);

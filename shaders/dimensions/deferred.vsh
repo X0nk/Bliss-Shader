@@ -148,7 +148,7 @@ void main() {
 	// maximum control of color and luminance
 	// vec3 minimumlight =  vec3(0.5,0.75,1.0) * (MIN_LIGHT_AMOUNT*0.001 + nightVision);
 	vec3 minimumlight =  vec3(0.5,0.75,1.0) * nightVision;
-	averageSkyCol_Clouds = max(	normalize(averageSkyCol_Clouds) * min(luma(averageSkyCol_Clouds) * 3.0,2.5) * (1.0-rainStrength*0.3), minimumlight);
+	averageSkyCol_Clouds = max(	normalize(averageSkyCol_Clouds) * min(luma(averageSkyCol_Clouds) * 3.0,2.5) * (1.0-rainStrength*0.7), minimumlight);
 	averageSkyCol = max(averageSkyCol * PLANET_GROUND_BRIGHTNESS, minimumlight);
 
 ////////////////////////////////////////

@@ -440,7 +440,7 @@ void main() {
 		vec3 FlatNormals = texture2D(colortex15,texcoord).rgb * 2.0 - 1.0;
 		
 		if(z >= 1.0){
-			FlatNormals = worldToView(normal);
+			FlatNormals = normal;
 		}
 
 		vec2 SSAO_SSS = SSAO(viewPos, FlatNormals, hand, isLeaf, noise);

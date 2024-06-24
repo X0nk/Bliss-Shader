@@ -467,7 +467,7 @@ vec4 renderClouds(
 		dV_Sun *= lightCol.a;
 	#endif
 	
-	float SdotV = dot(mat3(gbufferModelView)*WsunVec, normalize(FragPosition)) ;
+	float SdotV = dot(WsunVec, normalize(mat3(gbufferModelViewInverse)*FragPosition + gbufferModelViewInverse[3].xyz));
 
 	float mieDay = phaseg(SdotV, 0.85) + phaseg(SdotV, 0.75);
 	float mieDayMulti = (phaseg(SdotV, 0.35) + phaseg(-SdotV, 0.35) * 0.5) ;

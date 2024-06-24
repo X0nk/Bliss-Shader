@@ -425,32 +425,34 @@ void main() {
 			#endif
 
 			AmbientLightColor = averageSkyCol_Clouds / 30.0;
+
 			#ifdef IS_IRIS
 				AmbientLightColor *= 2.5;
 			#else
 				AmbientLightColor *= 0.5;
 			#endif
-
+			
+			Indirect_lighting = doIndirectLighting(AmbientLightColor, MinimumLightColor, lightmap.y);
 		#endif
 		
 		#ifdef NETHER_SHADER
-			AmbientLightColor = skyCloudsFromTexLOD2(vec3(0.0,1.0,0.0), colortex4, 6).rgb / 30.0;
+			Indirect_lighting = skyCloudsFromTexLOD2(vec3(0.0,1.0,0.0), colortex4, 6).rgb / 30.0;
 		#endif
 
 		#ifdef END_SHADER
-			AmbientLightColor = vec3(0.3,0.6,1.0) * 0.5;
+			Indirect_lighting = vec3(0.3,0.6,1.0) * 0.5;
 		#endif
 
+	///////////////////////// BLOCKLIGHT LIGHTING OR LPV LIGHTING OR FLOODFILL COLORED LIGHTING
 		#ifdef IS_LPV_ENABLED
 			vec3 lpvPos = GetLpvPosition(feetPlayerPos);
 		#else
 			const vec3 lpvPos = vec3(0.0);
 		#endif
 
-		Indirect_lighting = DoAmbientLightColor(feetPlayerPos, lpvPos, AmbientLightColor, MinimumLightColor, Torch_Color, clamp(lightmap.xy,0,1), exposure);
+		Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, exposure, feetPlayerPos, lpvPos);
 
 		#ifdef LINES
-
 			gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * toLinear(color.rgb);
 
 			if(SELECTION_BOX > 0) gl_FragData[0].rgba = vec4(toLinear(vec3(SELECT_BOX_COL_R, SELECT_BOX_COL_G, SELECT_BOX_COL_B)), 1.0);
