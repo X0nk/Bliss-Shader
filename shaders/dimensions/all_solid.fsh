@@ -432,7 +432,7 @@ void main() {
 			Albedo.rgb = mix(Albedo.rgb, aerochrome_color, strength);
 		}
 		#ifdef AEROCHROME_WOOL_ENABLED
-			else if(blockID == BLOCK_SSS_WEAK_2) {
+			else if (blockID == BLOCK_SSS_WEAK_2 || blockID == BLOCK_CARPET) {
 			// Wool
 				Albedo.rgb = mix(Albedo.rgb, aerochrome_color, 0.3);
 			}
