@@ -1179,7 +1179,7 @@ void main() {
 
 		// RTAO and/or SSGI
 		#if indirect_effect == 3 || indirect_effect == 4
-			if(!hand) Indirect_lighting = ApplySSRT(Indirect_lighting, blockLightColor, viewPos, normal, vec3(bnoise, noise_2), lightmap.y, isGrass, isDHrange);
+			if(!hand) Indirect_lighting = ApplySSRT(Indirect_lighting, blockLightColor, MinimumLightColor, viewPos, normal, vec3(bnoise, noise_2), lightmap.y, isGrass, isDHrange);
 		#endif
 
 		#if defined END_SHADER

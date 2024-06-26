@@ -359,13 +359,12 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 vec3 ApplySSRT(
 	in vec3 unchangedIndirect,
 	in vec3 blockLightColor,
+	in vec3 minimumLightColor,
 
 	vec3 viewPos,
 	vec3 normal,
 	vec3 noise,
-	
-	// vec3 indirectLightColor,
-	// vec3 minLightColor,
+
 	float lightmap, 
 
 	bool isGrass,
@@ -395,7 +394,7 @@ vec3 ApplySSRT(
 
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
 			#ifdef OVERWORLD_SHADER
-				skycontribution = doIndirectLighting(skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb/30.0, minLightColor, lightmap) + blockLightColor;
+				skycontribution = doIndirectLighting(skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb/30.0, minimumLightColor, lightmap) + blockLightColor;
 			#else
 				skycontribution = pow(skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0,vec3(0.7)) + blockLightColor;
 			#endif
