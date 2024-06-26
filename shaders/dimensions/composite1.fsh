@@ -903,31 +903,17 @@ void main() {
 		MinimumLightColor = MinimumLightColor + 0.7 * MinimumLightColor * dot(slopednormal, feetPlayerPos_normalized);
 
 	////////////////////////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////	    FILTER STUFF      //////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////
-	
-	vec3 filteredShadow = vec3(1.412,1.0,0.0);
-	vec2 SSAO_SSS = vec2(1.0);
-	
-	#if defined DISTANT_HORIZONS && defined DH_AMBIENT_OCCLUSION
-		BilateralUpscale_REUSE_Z(colortex3,	colortex14, colortex12, gl_FragCoord.xy-1.5, DH_mixedLinearZ, SSAO_SSS, filteredShadow, hand);
-	#else
-		BilateralUpscale_REUSE_Z(colortex3,	colortex14, depthtex0, gl_FragCoord.xy-1.5, ld(z0), SSAO_SSS, filteredShadow, hand);
-	#endif
-
-	float ShadowBlockerDepth = filteredShadow.y;
-
-	
-	////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	START DRAW	    ////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////
 	if (swappedDepth >= 1.0) {
-		#ifdef OVERWORLD_SHADER
-			vec3 Background = vec3(0.0);
-			
-			#if RESOURCEPACK_SKY == 1 || RESOURCEPACK_SKY == 0
-				// vec3 orbitstar = vec3(feetPlayerPos_normalized.x,abs(feetPlayerPos_normalized.y),feetPlayerPos_normalized.z); orbitstar.x -= WsunVec.x*0.2;
+		vec3 Background = vec3(0.0);
 
+		#ifdef OVERWORLD_SHADER
+
+			float atmosphereGround = 1.0 - exp2(-50.0 * pow(clamp(feetPlayerPos_normalized.y+0.025,0.0,1.0),2.0)  ); // darken the ground in the sky.
+			
+			#if RESOURCEPACK_SKY == 1 || RESOURCEPACK_SKY == 0 || RESOURCEPACK_SKY == 3
+				// vec3 orbitstar = vec3(feetPlayerPos_normalized.x,abs(feetPlayerPos_normalized.y),feetPlayerPos_normalized.z); orbitstar.x -= WsunVec.x*0.2;
 				vec3 orbitstar = normalize(mat3(gbufferModelViewInverse) * toScreenSpace(vec3(texcoord/RENDER_SCALE,1.0)));
 				float radiance = 2.39996 - (worldTime + worldDay*24000.0) / 24000.0;
 				// float radiance = 2.39996 + frameTimeCounter;
@@ -936,42 +922,56 @@ void main() {
 				orbitstar.xy *= rotationMatrix;
 
 				Background += stars(orbitstar) * 10.0 * clamp(-unsigned_WsunVec.y*2.0,0.0,1.0);
-			#endif
 
-			#if RESOURCEPACK_SKY == 2
-				Background += toLinear(texture2D(colortex10, texcoord).rgb * (255.0 * 2.0));
-			#else
-				#if RESOURCEPACK_SKY == 1
-					Background += toLinear(texture2D(colortex10, texcoord).rgb * (255.0 * 2.0));
-				#endif
-				#ifndef ambientLight_only
+				#if !defined ambientLight_only && (RESOURCEPACK_SKY == 1 || RESOURCEPACK_SKY == 0)
 					Background += drawSun(dot(lightCol.a * WsunVec, feetPlayerPos_normalized),0, DirectLightColor,vec3(0.0));
 					Background += drawMoon(feetPlayerPos_normalized,  lightCol.a * WsunVec, DirectLightColor*20, Background); 
 				#endif
+
+				Background *= atmosphereGround;
 			#endif
 
-			#ifdef SKY_GROUND
-				Background *= 1.0 - exp2(-50.0 * pow(clamp(feetPlayerPos_normalized.y+0.025,0.0,1.0),2.0)  ); // darken the ground in the sky.
-			#endif
-			
 			vec3 Sky = skyFromTex(feetPlayerPos_normalized, colortex4)/30.0 * Sky_Brightness;
 			Background += Sky;
+			
+		#endif
 
-			#if defined VOLUMETRIC_CLOUDS && !defined CLOUDS_INTERSECT_TERRAIN
-				vec4 Clouds = texture2D_bicubic_offset(colortex0, texcoord*CLOUDS_QUALITY, noise, RENDER_SCALE.x);
-				Background = Background * Clouds.a + Clouds.rgb;
+		#if RESOURCEPACK_SKY == 1 || RESOURCEPACK_SKY == 2 || RESOURCEPACK_SKY == 3
+			vec3 resourcePackskyBox = toLinear(texture2D(colortex10, texcoord).rgb * 5.0) * 15.0 * clamp(unsigned_WsunVec.y*2.0,0.1,1.0);
+
+			#ifdef SKY_GROUND
+				resourcePackskyBox *= atmosphereGround;
 			#endif
 
-			gl_FragData[0].rgb = clamp(fp10Dither(Background, triangularize(noise_2)), 0.0, 65000.);
+			Background += resourcePackskyBox;
 		#endif
 
-		#if defined NETHER_SHADER || defined END_SHADER
-			gl_FragData[0].rgb = vec3(0);
+		#if defined VOLUMETRIC_CLOUDS && !defined CLOUDS_INTERSECT_TERRAIN
+			vec4 Clouds = texture2D_bicubic_offset(colortex0, texcoord*CLOUDS_QUALITY, noise, RENDER_SCALE.x);
+			Background = Background * Clouds.a + Clouds.rgb;
 		#endif
+
+		gl_FragData[0].rgb = clamp(fp10Dither(Background, triangularize(noise_2)), 0.0, 65000.);
 
 	} else {
 
 		feetPlayerPos += gbufferModelViewInverse[3].xyz;
+
+	////////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////	    FILTER STUFF      //////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////
+		
+		vec3 filteredShadow = vec3(1.412,1.0,0.0);
+		vec2 SSAO_SSS = vec2(1.0);
+		
+		#if defined DISTANT_HORIZONS && defined DH_AMBIENT_OCCLUSION
+			BilateralUpscale_REUSE_Z(colortex3,	colortex14, colortex12, gl_FragCoord.xy-1.5, DH_mixedLinearZ, SSAO_SSS, filteredShadow, hand);
+		#else
+			BilateralUpscale_REUSE_Z(colortex3,	colortex14, depthtex0, gl_FragCoord.xy-1.5, ld(z0), SSAO_SSS, filteredShadow, hand);
+		#endif
+	
+		float ShadowBlockerDepth = filteredShadow.y;
+
 	
 	////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////	MAJOR LIGHTSOURCE STUFF 	////////////////////////
@@ -1006,7 +1006,7 @@ void main() {
       		vec3 cubicRadius = clamp(   min((1.0-shadowEdgePos)*fadeLength, shadowEdgePos*fadeLength),0.0,1.0);
       		float shadowmapFade = cubicRadius.x*cubicRadius.y*cubicRadius.z;
 
-        	shadowmapFade = 1.0 - pow(1.0-pow(shadowmapFade,1.5),3.0); // make it nice and soft :)
+        	shadowmapFade = 1.0 - pow(1.0-pow(shadowmapFade,1.5),3.0);
 
 			float shadowMapFalloff = shadowmapFade;
 			float shadowMapFalloff2 = shadowmapFade;
@@ -1035,32 +1035,32 @@ void main() {
 	
 	////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////	UNDER WATER SHADING		////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////////////////////
- 		if ((isEyeInWater == 0 && isWater) || (isEyeInWater == 1 && !isWater)){
-			#ifdef DISTANT_HORIZONS
-				vec3 viewPos0 = toScreenSpace_DH(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5, z0, DH_depth0);
-			#else
-				vec3 viewPos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0));
-			#endif
+	////////////////////////////////////////////////////////////////////////////////////////////
 
-			float Vdiff = distance(viewPos, viewPos0)*mix(5.0,2.0,clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0));
-			float estimatedDepth = Vdiff * abs(feetPlayerPos_normalized.y);	//assuming water plane
+ 	if ((isEyeInWater == 0 && isWater) || (isEyeInWater == 1 && !isWater)){
+		#ifdef DISTANT_HORIZONS
+			vec3 viewPos0 = toScreenSpace_DH(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5, z0, DH_depth0);
+		#else
+			vec3 viewPos0 = toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0));
+		#endif
 
-			// make it such that the estimated depth flips to be correct when entering water.
-			if (isEyeInWater == 1){
-				estimatedDepth = 40.0 * pow(max(1.0-lightmap.y,0.0),2.0);
-				MinimumLightColor = vec3(10.0);
-			}
+		float Vdiff = distance(viewPos, viewPos0)*mix(5.0,2.0,clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0));
+		float estimatedDepth = Vdiff * abs(feetPlayerPos_normalized.y);	//assuming water plane
 
-			float depthfalloff = 1.0 - clamp(exp(-0.1*estimatedDepth),0.0,1.0);
-			
-			float estimatedSunDepth = Vdiff; //assuming water plane
-			Absorbtion = mix(exp(-2.0 * totEpsilon * estimatedDepth), exp(-8.0 * totEpsilon), depthfalloff);
-
-			// apply caustics to the lighting, and make sure they dont look weird
-			DirectLightColor *= mix(1.0, waterCaustics(feetPlayerPos + cameraPosition, WsunVec)*WATER_CAUSTICS_BRIGHTNESS + 0.25, clamp(estimatedDepth,0,1));
+		// make it such that the estimated depth flips to be correct when entering water.
+		if (isEyeInWater == 1){
+			estimatedDepth = 40.0 * pow(max(1.0-lightmap.y,0.0),2.0);
+			MinimumLightColor = vec3(10.0);
 		}
 
+		float depthfalloff = 1.0 - clamp(exp(-0.1*estimatedDepth),0.0,1.0);
+		
+		float estimatedSunDepth = Vdiff; //assuming water plane
+		Absorbtion = mix(exp(-2.0 * totEpsilon * estimatedDepth), exp(-8.0 * totEpsilon), depthfalloff);
+
+		// apply caustics to the lighting, and make sure they dont look weird
+		DirectLightColor *= mix(1.0, waterCaustics(feetPlayerPos + cameraPosition, WsunVec)*WATER_CAUSTICS_BRIGHTNESS + 0.25, clamp(estimatedDepth,0,1));
+	}
 
 	#ifdef END_SHADER
 		float vortexBounds = clamp(vortexBoundRange - length(feetPlayerPos+cameraPosition), 0.0,1.0);
@@ -1079,15 +1079,15 @@ void main() {
 		AmbientLightColor += lightColors * (endPhase*endPhase) * (1.0-exp(vec3(0.6,2.0,2) * -(endPhase*0.1))) ;
 	#endif
 	
+
 	/////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////	INDIRECT LIGHTING 	/////////////////////////////
 	/////////////////////////////////////////////////////////////////////////////////
 
-		#if defined OVERWORLD_SHADER 
-			Indirect_lighting = AmbientLightColor;
-
+		#if defined OVERWORLD_SHADER
 			float skylight = 1.0;
-			#if indirect_effect != 2
+		
+			#if indirect_effect == 0 || indirect_effect == 1 || indirect_effect == 2
 				float SkylightDir = (slopednormal / dot(abs(slopednormal),vec3(1.0))).y*1.5;
 				if(isGrass) SkylightDir = 1.5;
 
@@ -1097,16 +1097,23 @@ void main() {
 					skylight =  min(skylight, mix(0.95, 2.5, pow(1-pow(1-SSAO_SSS.x, 0.5),2.0)	));
 				#endif
 			#endif
+
+			#if indirect_effect == 3 || indirect_effect == 4
+				skylight = 2.5;
+			#endif
 			
-			Indirect_lighting = doIndirectLighting(AmbientLightColor * skylight, MinimumLightColor, lightmap.y);
+			Indirect_lighting += doIndirectLighting(AmbientLightColor * skylight, MinimumLightColor, lightmap.y);
+
 		#endif
 
 		#ifdef NETHER_SHADER
 			Indirect_lighting = skyCloudsFromTexLOD2(normal, colortex4, 6).rgb / 30.0;
 			vec3 up = skyCloudsFromTexLOD2(vec3(0.0,1.0,0.0), colortex4, 6).rgb / 30.0;
 			
-			Indirect_lighting = mix(up, Indirect_lighting,  clamp(pow(1.0-pow(1.0-SSAO_SSS.x, 0.5),2.0),0.0,1.0));
-
+			#if indirect_effect == 1
+				Indirect_lighting = mix(up, Indirect_lighting,  clamp(pow(1.0-pow(1.0-SSAO_SSS.x, 0.5),2.0),0.0,1.0));
+			#endif
+			
 			AmbientLightColor = Indirect_lighting / 5.0;
 		#endif
 		
@@ -1115,71 +1122,7 @@ void main() {
 			
 			Indirect_lighting = Indirect_lighting + 0.7*mix(-Indirect_lighting, Indirect_lighting * dot(slopednormal, feetPlayerPos_normalized), clamp(pow(1.0-pow(1.0-SSAO_SSS.x, 0.5),2.0),0.0,1.0));
 		#endif
-
-		#ifdef OVERWORLD_SHADER
-			Indirect_lighting += LightningFlashLighting;
-		#endif
-
-		#ifdef SSS_view
-			Indirect_lighting = vec3(3.0);
-		#endif
-
-	/////////////////////////////////////////////////////////////////////////////////////
-	/////////////////////////////	EFFECTS FOR INDIRECT	/////////////////////////////
-	/////////////////////////////////////////////////////////////////////////////////////
-
-		float SkySSS = 1.0;
-		vec3 AO = vec3(1.0);
-
-		#if indirect_effect == 0
-			AO = pow(1.0 - vanilla_AO*vanilla_AO,5.0) * vec3(1.0);
-			Indirect_lighting *= AO;
-		#endif
-
-		#if indirect_effect == 1
-			SkySSS = SSAO_SSS.y;
-
-			float vanillaAO_curve = pow(1.0 - vanilla_AO*vanilla_AO,5.0);
-			float SSAO_curve = pow(SSAO_SSS.x,6.0);
-
-			// use the min of vanilla ao so they dont overdarken eachother
-			AO = vec3( min(vanillaAO_curve, SSAO_curve) );
-			
-			Indirect_lighting *= AO;
-		#endif
-
-		// GTAO... this is so dumb but whatevverrr
-		#if indirect_effect == 2
-			float vanillaAO_curve = pow(1.0 - vanilla_AO*vanilla_AO,5.0);
-
-			vec2 r2 = fract(R2_samples((frameCounter%40000) + frameCounter*2) + bnoise);
-			float GTAO =  !hand ? ambient_occlusion(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5, z), viewPos, worldToView(slopednormal), r2) : 1.0;
-			AO = vec3(min(vanillaAO_curve,GTAO));
-			
-			vec3 IndirectColor = Indirect_lighting;
-
-			float SkylightDir = (slopednormal / dot(abs(slopednormal),vec3(1.0))).y*1.5;
-			if(isGrass) SkylightDir = 1.5;
-
-			skylight = max(pow(viewToWorld(FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.2 + (1-lightmap.y)*0.8);
-			skylight =  min(skylight, mix(0.95, 2.5, pow(1-pow(1-GTAO, 0.5),2.0)	));
-
-			IndirectColor *= skylight;
-
-			Indirect_lighting = doIndirectLighting(IndirectColor, lightmap.y) * AO;
-		#endif
-
-		// RTAO and/or SSGI
-		#if indirect_effect == 3 || indirect_effect == 4
-			if(!hand) Indirect_lighting = ApplySSRT(viewPos, normal, vec3(bnoise, noise_2), AmbientLightColor, MinimumLightColor, lightmap.y, isGrass, isDHrange);
-		#endif
-
-		#if defined END_SHADER
-			Direct_lighting *= AO;
-		#endif
-
-	///////////////////////// BLOCKLIGHT LIGHTING OR LPV LIGHTING OR FLOODFILL COLORED LIGHTING
-	
+		
 		#ifdef IS_LPV_ENABLED
 			vec3 normalOffset = vec3(0.0);
 
@@ -1194,9 +1137,54 @@ void main() {
 			vec3 lpvPos = GetLpvPosition(feetPlayerPos) + normalOffset;
 		#else
 			const vec3 lpvPos = vec3(0.0);
-		#endif	
+		#endif
 
-		Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, exposure, feetPlayerPos, lpvPos);
+		vec3 blockLightColor = doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, exposure, feetPlayerPos, lpvPos);
+		Indirect_lighting += blockLightColor;
+
+	/////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////	EFFECTS FOR INDIRECT	/////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////
+
+		float SkySSS = 1.0;
+		vec3 AO = vec3(1.0);
+
+		#if indirect_effect == 0
+			AO = vec3(pow(1.0 - vanilla_AO*vanilla_AO,5.0));
+			Indirect_lighting *= AO;
+		#endif
+
+		#if indirect_effect == 1
+			SkySSS = SSAO_SSS.y;
+
+			float vanillaAO_curve = pow(1.0 - vanilla_AO*vanilla_AO,5.0);
+			float SSAO_curve = pow(SSAO_SSS.x,6.0);
+
+			// use the min of vanilla ao so they dont overdarken eachother
+			AO = vec3( min(vanillaAO_curve, SSAO_curve) );
+			Indirect_lighting *= AO;
+		#endif
+
+		// // GTAO... this is so dumb but whatevverrr
+		#if indirect_effect == 2
+			float vanillaAO_curve = pow(1.0 - vanilla_AO*vanilla_AO,5.0);
+
+			vec2 r2 = fract(R2_samples((frameCounter%40000) + frameCounter*2) + bnoise);
+			float GTAO =  !hand ? ambient_occlusion(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5, z), viewPos, worldToView(slopednormal), r2) : 1.0;
+			
+			AO = vec3(min(vanillaAO_curve,GTAO));
+			
+			Indirect_lighting *= AO;
+		#endif
+
+		// RTAO and/or SSGI
+		#if indirect_effect == 3 || indirect_effect == 4
+			if(!hand) Indirect_lighting = ApplySSRT(Indirect_lighting, blockLightColor, viewPos, normal, vec3(bnoise, noise_2), lightmap.y, isGrass, isDHrange);
+		#endif
+
+		#if defined END_SHADER
+			Direct_lighting *= AO;
+		#endif
 
 	////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////	SUB SURFACE SCATTERING	////////////////////////////

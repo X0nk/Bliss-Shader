@@ -671,7 +671,7 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 
 #define LIGHTNING_FLASH // FOR OPTIFINE USERS. some mods change the sky color, which can trigger the lightning flash detection.
 
-#define RESOURCEPACK_SKY 0 // [0 1 2]
+#define RESOURCEPACK_SKY 0 // [0 1 2 3]
 
 #ifdef IS_IRIS
 	#define TRANSLUCENT_ENTITIES

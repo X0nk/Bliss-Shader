@@ -210,29 +210,36 @@ vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 	direction.xy = normalize(direction.xy);
 
 	//get at which length the ray intersects with the edge of the screen
-	vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
-	float mult = maxLengths.y;
+	vec3 maxLengths = (step(0.0,direction)-clipPosition) / direction;
+	float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z);
 
-	vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0) * dither;
-	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) ;
+	vec3 stepv = (direction * mult) / quality*vec3(RENDER_SCALE,1.0);
+	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0)	+ stepv*dither;
 
-	spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
+	spos.xy += TAA_Offset*texelSize*0.5*RENDER_SCALE ;
 
-	float biasdist =  clamp(position.z*position.z/50.0,1,2); // shrink sample size as distance increases
+	float minZ = spos.z;
+	float maxZ = spos.z;
 
 	for(int i = 0; i < int(quality); i++){
-		spos += stepv;
-		#ifdef UseQuarterResDepth
-			float sp = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4),0).w/65000.0);
-		#else
-			float sp = linZ(texelFetch2D(depthtex1,ivec2(spos.xy/ texelSize),0).r);
-		#endif
-		float currZ = linZ(spos.z);
+		if (spos.x < 0.0 || spos.y < 0.0 || spos.z < 0.0 || spos.x > 1.0 || spos.y > 1.0 || spos.z > 1.0) return vec3(1.1);
 
-		if( sp < currZ) {
-			float dist = abs(sp-currZ)/currZ;
-			if (abs(dist) < biasdist*0.05) return vec3(spos.xy, invLinZ(sp))/vec3(RENDER_SCALE,1.0);
-		}
+		#ifdef UseQuarterResDepth
+			float sp = invLinZ(sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4),0).w/65000.0));
+		#else
+			float sp = texelFetch2D(depthtex1,ivec2(spos.xy/ texelSize),0).r;
+		#endif
+
+		float currZ = linZ(spos.z);
+		float nextZ = linZ(sp);
+
+		if(nextZ < currZ && (sp <= max(minZ,maxZ) && sp >= min(minZ,maxZ))) return vec3(spos.xy/RENDER_SCALE,sp);
+		
+		float biasamount = 0.00005;
+
+		minZ = maxZ - biasamount / currZ;
+		maxZ += stepv.z;
+
 		spos += stepv;
 	}
   return vec3(1.1);
@@ -269,18 +276,21 @@ vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes, bool hand){
 	//Do one iteration for closest texel (good contact shadows)
 	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) ;
 	spos.xy += TAA_Offset*texelSize*0.5*RENDER_SCALE;
-	spos += stepv/(stepSize/2);
+	
+	spos += stepv;
 	
 	float distancered = 1.0 + clamp(position.z*position.z/50.0,0,2); // shrink sample size as distance increases
 
   	for(int i = 0; i < iterations; i++){
 		if (spos.x < 0.0 || spos.y < 0.0 || spos.z < 0.0 || spos.x > 1.0 || spos.y > 1.0 || spos.z > 1.0) return vec3(1.1);
+		
 		spos += stepv*noise;
 		#ifdef UseQuarterResDepth
 			float sp = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/ texelSize/4),0).w/65000.0);
 		#else
 			float sp = linZ(texelFetch2D(depthtex1,ivec2(spos.xy/ texelSize),0).r);
 		#endif
+		
 		float currZ = linZ(spos.z);
 		
 		if( sp < currZ) {
@@ -291,13 +301,71 @@ vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes, bool hand){
 	return vec3(1.1);
 }
 
+vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool hand){
+
+	vec3 worldpos = mat3(gbufferModelViewInverse) * position;
+
+	float dist = 1.0 + length(worldpos)/far; // step length as distance increases
+	float stepSize = stepsizes / dist;
+
+	int maxSteps = 10;
+	vec3 clipPosition = toClipSpace3(position);
+	float rayLength = ((position.z + dir.z * sqrt(3.0)*far) > -sqrt(3.0)*near) ?
+	   								(-sqrt(3.0)*near -position.z) / dir.z : sqrt(3.0)*far;
+	vec3 end = toClipSpace3(position+dir*rayLength) ;
+	vec3 direction = end-clipPosition ;  //convert to clip space
+
+	float len = max(abs(direction.x)/texelSize.x,abs(direction.y)/texelSize.y)/stepSize;
+	//get at which length the ray intersects with the edge of the screen
+	vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
+	
+	float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z)*2000.0;
+
+	vec3 stepv = direction/len;
+
+	int iterations = min(int(min(len, mult*len)-2), maxSteps);
+
+	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0);// + stepv*noise;
+	spos.xy += TAA_Offset*texelSize*0.5*RENDER_SCALE;
+
+	float minZ = spos.z;
+	float maxZ = spos.z;
+
+  	for(int i = 0; i < iterations; i++){
+		if (spos.x < 0.0 || spos.y < 0.0 || spos.z < 0.0 || spos.x > 1.0 || spos.y > 1.0 || spos.z > 1.0) return vec3(1.1);
+		
+		#ifdef UseQuarterResDepth
+			float sp = invLinZ(sqrt(texelFetch2D(colortex4,ivec2(spos.xy/ texelSize/4),0).w/65000.0));
+		#else
+			float sp = texelFetch2D(depthtex1,ivec2(spos.xy/texelSize),0).r;
+		#endif
+
+		float currZ = linZ(spos.z);
+		float nextZ = linZ(sp);
+
+		if(nextZ < currZ && (sp <= max(minZ,maxZ) && sp >= min(minZ,maxZ))) return vec3(spos.xy/RENDER_SCALE,sp);
+		
+		float biasamount = 0.00005;
+
+		minZ = maxZ-biasamount / currZ;
+		maxZ += stepv.z;
+
+		spos += stepv*(noise*0.25+0.75);
+
+	}
+	return vec3(1.1);
+}
+
 vec3 ApplySSRT(
+	in vec3 unchangedIndirect,
+	in vec3 blockLightColor,
+
 	vec3 viewPos,
 	vec3 normal,
 	vec3 noise,
 	
-	vec3 indirectLightColor,
-	vec3 minLightColor,
+	// vec3 indirectLightColor,
+	// vec3 minLightColor,
 	float lightmap, 
 
 	bool isGrass,
@@ -306,88 +374,66 @@ vec3 ApplySSRT(
 	int nrays = RAY_COUNT;
 
 	vec3 radiance = vec3(0.0);
-
 	vec3 occlusion = vec3(0.0);
-	vec3 skycontribution = vec3(0.0);
+	vec3 skycontribution = unchangedIndirect;
 
+	vec3 radiance2 = vec3(0.0);
 	vec3 occlusion2 = vec3(0.0);
-	vec3 skycontribution2 = vec3(0.0);
+	vec3 skycontribution2 = unchangedIndirect;
 
-	vec3 ambientColor = doIndirectLighting(indirectLightColor * 2.5, minLightColor, lightmap);
-
+	vec3 bouncedLight = vec3(0.0);
 	for (int i = 0; i < nrays; i++){
 		int seed = (frameCounter%40000)*nrays+i;
 		vec2 ij = fract(R2_samples(seed) + noise.xy);
-		vec3 rayDir = TangentToWorld(normal, normalize(cosineHemisphereSample(ij)) ,1.0);
+		vec3 rayDir = TangentToWorld(normal, normalize(cosineHemisphereSample(ij)), lightmap);
 
 		#ifdef HQ_SSGI
 			vec3 rayHit = rayTrace_GI( mat3(gbufferModelView) * rayDir, viewPos, noise.z, 50.); // ssr rt
 		#else
-			vec3 rayHit = RT(mat3(gbufferModelView)*rayDir, viewPos, noise.z, 30., isLOD);  // choc sspt 
+			vec3 rayHit = RT_alternate(mat3(gbufferModelView)*rayDir, viewPos, noise.z, 10., isLOD);  // choc sspt 
 		#endif
 
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
 			#ifdef OVERWORLD_SHADER
-				if(isGrass) rayDir.y = clamp(rayDir.y +  0.5,-1,1);
-
-				skycontribution = mix(ambientColor,  pow(skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb/30, vec3(0.7)), lightmap);
+				skycontribution = doIndirectLighting(skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb/30.0, minLightColor, lightmap) + blockLightColor;
 			#else
-				skycontribution = pow(skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0,vec3(0.7));
+				skycontribution = pow(skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0,vec3(0.7)) + blockLightColor;
 			#endif
-
-			
-   			skycontribution = max(skycontribution,  minLightColor * max(MIN_LIGHT_AMOUNT*0.01, nightVision * 0.1));
 		#else
-
 			#ifdef OVERWORLD_SHADER
-				if(isGrass) rayDir.y = clamp(rayDir.y +  0.25,-1,1);
-			
-				skycontribution = ambientColor * (max(rayDir.y,pow(1.0-lightmap,2))*0.95+0.05);
-			#else
-				skycontribution = ambientColor;
+				skycontribution = unchangedIndirect  * (max(rayDir.y,pow(1.0-lightmap,2))*0.95+0.05);
 			#endif
-
-			#if indirect_effect == 4
-				skycontribution2 = ambientColor;
-			#endif
-
 		#endif
 
-		if (rayHit.z < 1.){
-			
+		radiance += skycontribution;
+		radiance2 += skycontribution2;
+
+		if (rayHit.z < 1.0){
 			#if indirect_effect == 4
 				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
 				previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
 				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
-				
+
 				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0){
-					radiance += texture2D(colortex5, previousPosition.xy).rgb * GI_Strength + skycontribution;
-				} else{
-					radiance += skycontribution;
+					bouncedLight = texture2D(colortex5, previousPosition.xy).rgb * GI_Strength;	
+
+					radiance += bouncedLight;
+					radiance2 += bouncedLight;
 				}
-
-			#else
-				radiance += skycontribution;
 			#endif
 
-			occlusion += skycontribution * GI_Strength;
-			
-			#if indirect_effect == 4
-				occlusion2 += skycontribution2 * GI_Strength;
-			#endif
-				
-		} else {
-			radiance += skycontribution;
+			occlusion += skycontribution;
+			occlusion2 += skycontribution2;
 		}
 	}
 
 	if(isLOD) return max(radiance/nrays, 0.0);
-	
-	occlusion *= AO_Strength;
 
-	#if indirect_effect == 4
-		return max(radiance/nrays - max(occlusion, occlusion2*0.5)/nrays, 0.0);
+	#ifdef SKY_CONTRIBUTION_IN_SSRT
+		return max((radiance - occlusion)/nrays,0.0);
 	#else
-		return max(radiance/nrays - occlusion/nrays, 0.0);
+		float threshold = isGrass ? 0.8 : (pow(1.0-lightmap,2.0) * 0.9 + 0.1);
+		return max((radiance - occlusion)/nrays, (radiance2 - occlusion2)/nrays * threshold);
 	#endif
+
 }

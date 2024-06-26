@@ -24,12 +24,19 @@ void main() {
 
 		vec4 COLOR = texture2D(texture, texcoord.xy)*color;
 
-		if(renderStage == 4) COLOR.rgb *= 5.0;
-		// if(renderStage == 5) COLOR.rgb *= 1.5;
+		#if RESOURCEPACK_SKY == 3
+			if(renderStage == 1 || renderStage == 3) { discard; return; }
+		#endif
 
-		COLOR.rgb = max(COLOR.rgb * (0.9+0.1*interleaved_gradientNoise()), 0.0);
+		#if RESOURCEPACK_SKY == 1
+			if(renderStage == 4 || renderStage == 5) { discard; return; }
+		#else
+			if(renderStage == 4) COLOR.rgb *= 5.0;
+		#endif
+
+		COLOR.rgb = max(COLOR.rgb - COLOR.rgb * interleaved_gradientNoise()*0.05, 0.0);
 		
-		gl_FragData[0] = vec4(COLOR.rgb/255.0, COLOR.a);
+		gl_FragData[0] = vec4(COLOR.rgb/5.0, COLOR.a);
 	#else
 		discard;
 	#endif

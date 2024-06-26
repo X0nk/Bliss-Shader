@@ -86,22 +86,36 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
 	float dist = 1.0 + clamp(position.z*position.z/50.0,0.0,2.0); // shrink sample size as distance increases
   	for (int i = 0; i <= int(quality); i++) {
 
+		// float sp = invLinZ(sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4.0),0).a/65000.0));
+
+		// if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ) ) return vec3(spos.xy/RENDER_SCALE,sp);
+		
+		// spos += stepv;
+		
+		// //small bias
+		// float biasamount = (0.0002 + 0.0015*pow(depthcancleoffset,5) ) / dist;
+
+		// if(hand) biasamount = 0.00035;
+
+		// minZ = maxZ-biasamount / ld(spos.z);
+		// maxZ += stepv.z;
+
+
 		float sp = invLinZ(sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4.0),0).a/65000.0));
 
-		if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ) ) return vec3(spos.xy/RENDER_SCALE,sp);
-		
-		spos += stepv;
-		
-		//small bias
-		float biasamount = (0.0002 + 0.0015*pow(depthcancleoffset,5) ) / dist;
+		float currZ = linZ(spos.z);
+		float nextZ = linZ(sp);
 
-		if(hand) biasamount = 0.00035;
-
-		minZ = maxZ-biasamount / ld(spos.z);
+		// if(nextZ < currZ) {
+			if(abs(nextZ-currZ)/currZ < 0.15 && sp <= max(minZ,maxZ) && sp >= min(minZ,maxZ)) return vec3(spos.xy/RENDER_SCALE,sp);
+		// }
+		float biasamount = 0.005;
+		minZ = maxZ-biasamount / linZ(spos.z);
 		maxZ += stepv.z;
 
-		reflectLength += 1.0 / quality; // for shit
+		spos += stepv;
 
+		reflectLength += 1.0 / quality; // for shit
   	}
   return vec3(1.1);
 }

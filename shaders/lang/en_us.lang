@@ -18,6 +18,7 @@ option.RESOURCEPACK_SKY = Resource Pack Sky
     value.RESOURCEPACK_SKY.0 = Do not use
     value.RESOURCEPACK_SKY.1 = Sky + Shader sun/moon
     value.RESOURCEPACK_SKY.2 = Full sky
+    value.RESOURCEPACK_SKY.3 = Shader Sky + RP sun/moon
 
 screen.Waving_Stuff = Waving Stuff
     option.WAVY_PLANTS = Waving Plants

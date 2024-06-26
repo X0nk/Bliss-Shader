@@ -11,7 +11,7 @@ void GriAndEminShadowFix(
 	float MinimumValue = 0.05;
 
 	// give a tiny boost to the distance mulitplier when shadowmap resolution is below 2048.0
-	float ResMultiplier = 1.0 + (shadowDistance/8.0)*(1.0 - min(shadowMapResolution,2048.0)/2048.0)*0.3;
+	float ResMultiplier = 1.0 + (shadowDistance/8.0)*(1.0 - min(shadowMapResolution,2048)/2048.0)*0.3;
 
 	float DistanceMultiplier = max(1.0 - max(1.0 - length(WorldPos) / shadowDistance, 0.0), MinimumValue) * ResMultiplier;
 

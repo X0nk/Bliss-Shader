@@ -364,7 +364,8 @@ void main() {
 
 	vec3 Albedo = toLinear(TEXTURE.rgb);
 	
-	vec2 lightmap = lmtexcoord.zw;
+	vec2 lightmap = clamp(lmtexcoord.zw,0.0,1.0);
+
 
 	#ifndef OVERWORLD_SHADER
 		lightmap.y = 1.0;
