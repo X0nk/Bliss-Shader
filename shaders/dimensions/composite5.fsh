@@ -115,7 +115,7 @@ vec4 smoothfilter(in sampler2D tex, in vec2 uv)
 
 	uv = (uv - 0.5)/textureResolution;
 	
-	return texture2D( tex, uv);
+	return texture2D(tex, uv);
 }
 //approximation from SMAA presentation from siggraph 2016
 vec3 FastCatmulRom(sampler2D colorTex, vec2 texcoord, vec4 rtMetrics, float sharpenAmount)
@@ -337,20 +337,25 @@ vec4 TAA_hq(bool hand){
 	#else
 		vec2 adjTC = texcoord;
 	#endif
-	
-	bool depthCheck = texture2D(depthtex0,adjTC).x >= 1.0;
 
+	vec2 offsets = offsets[framemod8]*texelSize*0.5;
+	
+	#ifdef DISTANT_HORIZONS
+		bool depthCheck = texture2D(depthtex0,adjTC).x >= 1.0;
+	#else
+		bool depthCheck = false;
+	#endif
 	//use velocity from the nearest texel from camera in a 3x3 box in order to improve edge quality in motion
 	#ifdef CLOSEST_VELOCITY
 		#ifdef DISTANT_HORIZONS
 			vec3 closestToCamera = closestToCamera5taps_DH(adjTC, depthtex0, dhDepthTex, depthCheck, hand);
 		#else
-			vec3 closestToCamera = closestToCamera5taps(adjTC,depthtex0, hand);
+			vec3 closestToCamera = closestToCamera5taps(adjTC, depthtex0, hand);
 		#endif
 	#endif
 
 	#ifndef CLOSEST_VELOCITY
-		vec3 closestToCamera = vec3(texcoord, texture2D(depthtex1,adjTC).x);
+		vec3 closestToCamera = vec3(texcoord, texture2D(depthtex1, adjTC).x);
 	#endif
 
 	//reproject previous frame
@@ -370,11 +375,11 @@ vec4 TAA_hq(bool hand){
 
 	//reject history if off-screen and early exit
 	if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0)
-		return vec4(smoothfilter(colortex3, adjTC + offsets[framemod8]*texelSize*0.5).xyz,1.0);
+		return vec4(smoothfilter(colortex3, adjTC + offsets).xyz,1.0);
 
 
 	#ifdef TAA_UPSCALING
-		vec3 albedoCurrent0 = smoothfilter(colortex3, adjTC + offsets[framemod8]*texelSize*0.5).xyz;
+		vec3 albedoCurrent0 = smoothfilter(colortex3, adjTC + offsets).xyz;
 		// Interpolating neighboorhood clampling boundaries between pixels
 		vec3 cMax = texture2D(colortex0, adjTC).rgb;
 		vec3 cMin = texture2D(colortex6, adjTC).rgb;
@@ -388,15 +393,17 @@ vec4 TAA_hq(bool hand){
 		vec3 albedoCurrent6 = texture2D(colortex3, adjTC + vec2(0.0,-texelSize.y)).rgb;
 		vec3 albedoCurrent7 = texture2D(colortex3, adjTC + vec2(-texelSize.x,0.0)).rgb;
 		vec3 albedoCurrent8 = texture2D(colortex3, adjTC + vec2(texelSize.x,0.0)).rgb;
+
 		//Assuming the history color is a blend of the 3x3 neighborhood, we clamp the history to the min and max of each channel in the 3x3 neighborhood
 		vec3 cMax = max(max(max(albedoCurrent0,albedoCurrent1),albedoCurrent2),max(albedoCurrent3,max(albedoCurrent4,max(albedoCurrent5,max(albedoCurrent6,max(albedoCurrent7,albedoCurrent8))))));
 		vec3 cMin = min(min(min(albedoCurrent0,albedoCurrent1),albedoCurrent2),min(albedoCurrent3,min(albedoCurrent4,min(albedoCurrent5,min(albedoCurrent6,min(albedoCurrent7,albedoCurrent8))))));
-		albedoCurrent0 = smoothfilter(colortex3, adjTC + offsets[framemod8]*texelSize*0.5).rgb;
+
+		albedoCurrent0 = smoothfilter(colortex3, adjTC + offsets).rgb;
 	#endif
 
 	#ifndef SCREENSHOT_MODE
 
-		vec3 albedoPrev = max(FastCatmulRom(colortex5, previousPosition.xy,vec4(texelSize, 1.0/texelSize), 0.75).xyz, 0.0);
+		vec3 albedoPrev = max(FastCatmulRom(colortex5, previousPosition.xy, vec4(texelSize, 1.0/texelSize), 0.75).xyz, 0.0);
 		vec3 finalcAcc = clamp(albedoPrev, cMin, cMax);
 
 		//Increases blending factor when far from AABB and in motion, reduces ghosting
@@ -441,7 +448,7 @@ void main() {
 
 		vec2 taauTC = clamp(texcoord*RENDER_SCALE, vec2(0.0), RENDER_SCALE - texelSize*2.0);
 		
-		float dataUnpacked = decodeVec2(texture2D(colortex1,taauTC).w).y; 
+		float dataUnpacked = decodeVec2(texelFetch2D(colortex1,ivec2(gl_FragCoord.xy*RENDER_SCALE),0).w).y; 
 		bool hand = abs(dataUnpacked-0.75) < 0.01 && texture2D(depthtex1,taauTC).x < 1.0;
 		
 		vec4 color = TAA_hq(hand);

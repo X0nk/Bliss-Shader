@@ -363,9 +363,18 @@ vec3 worldToView(vec3 worldPos) {
     pos = gbufferModelView * pos;
     return pos.xyz;
 }
+float swapperlinZ(float depth, float _near, float _far) {
+    return (2.0 * _near) / (_far + _near - depth * (_far - _near));
+	// l = (2*n)/(f+n-d(f-n))
+	// f+n-d(f-n) = 2n/l
+	// -d(f-n) = ((2n/l)-f-n)
+	// d = -((2n/l)-f-n)/(f-n)
+
+}
 
 vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, bool isSSS, bool hand){
 	
+
 	float handSwitch = hand ? 1.0 : 0.0;
 
     float steps = 16.0;
@@ -379,6 +388,8 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 		_far = dhFarPlane;
 	}
     
+	vec3 worldpos = mat3(gbufferModelViewInverse) * viewPos;
+	float dist = 1.0 + length(worldpos)/(_far/2.0); // step length as distance increases
 	vec3 clipPosition = toClipSpace3_DH(viewPos, depthCheck);
 
 	//prevents the ray from going behind the camera
@@ -390,26 +401,35 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 	
 	float Stepmult = depthCheck ? (isSSS ? 1.0 : 6.0) : (isSSS ? 1.0 : 3.0);
 
-    vec3 rayDir = direction * Stepmult  * vec3(RENDER_SCALE,1.0) ;
+    vec3 rayDir = direction * Stepmult * vec3(RENDER_SCALE,1.0) ;
+	
 	vec3 screenPos = clipPosition * vec3(RENDER_SCALE,1.0) + rayDir * noise;
+
+	float minZ = screenPos.z;
+	float maxZ = screenPos.z;
 
 	for (int i = 0; i < int(steps); i++) {
 		
-		screenPos += rayDir;
-	
 		float samplePos = convertHandDepth_2(texture2D(depthtex1, screenPos.xy).x, hand);
 		
 		#ifdef DISTANT_HORIZONS
 			if(depthCheck) samplePos = texture2D(dhDepthTex1, screenPos.xy).x;
 		#endif
 
-		if(samplePos < screenPos.z) {
-			vec2 linearZ = vec2(linearizeDepthFast(screenPos.z, _near, _far), linearizeDepthFast(samplePos, _near, _far));
+		if(samplePos < screenPos.z && (samplePos <= max(minZ,maxZ) && samplePos >= min(minZ,maxZ))){
+
+			vec2 linearZ = vec2(swapperlinZ(screenPos.z, _near, _far), swapperlinZ(samplePos, _near, _far));
 			float calcthreshold = abs(linearZ.x - linearZ.y) / linearZ.x;
 
 			if (calcthreshold < 0.035) Shadow = 0.0;
-			if (calcthreshold < (depthCheck ? 1.0 : 0.035)) SSS = i/steps;
-		}
+			
+			SSS += 1.0/steps;
+		} 
+		
+		minZ = maxZ - (isSSS ? 1.0 : 0.0001) / swapperlinZ(samplePos, _near, _far);
+		maxZ += rayDir.z;
+
+		screenPos += rayDir;
 	}
 	return vec2(Shadow, SSS);
 }
@@ -1227,9 +1247,11 @@ void main() {
 				
 				// combine shadowmap with a minumum shadow determined by the screenspace shadows.
 				Shadows = min(Shadows, SS_directLight.r);
+				// Shadows = SS_directLight.r;
 				
 				// combine shadowmap blocker depth with a minumum determined by the screenspace shadows, starting after the shadowmap ends
 				ShadowBlockerDepth = mix(SS_directLight.g, ShadowBlockerDepth, shadowMapFalloff2);
+				// ShadowBlockerDepth = max( SS_directLight.g,0.0);
 			#endif
 
 			

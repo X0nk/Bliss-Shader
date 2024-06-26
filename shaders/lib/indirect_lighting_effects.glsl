@@ -318,7 +318,6 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 	float len = max(abs(direction.x)/texelSize.x,abs(direction.y)/texelSize.y)/stepSize;
 	//get at which length the ray intersects with the edge of the screen
 	vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
-	
 	float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z)*2000.0;
 
 	vec3 stepv = direction/len;
