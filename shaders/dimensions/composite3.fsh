@@ -72,7 +72,7 @@ uniform float caveDetection;
   #include "/lib/sky_gradient.glsl"
   #include "/lib/lightning_stuff.glsl"
   #include "/lib/climate_settings.glsl"
-  //#define CLOUDS_INTERSECT_TERRAIN
+  #define CLOUDS_INTERSECT_TERRAIN
 	// #define CLOUDSHADOWSONLY
   // #include "/lib/volumetricClouds.glsl"
 #endif

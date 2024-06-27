@@ -1,4 +1,4 @@
-#define SHADER_VERSION_LABEL 468 // [468]
+#define SHADER_VERSION_LABEL 469 // [469]
 
 #define saturate(x) clamp(x,0.0,1.0)
 
@@ -691,7 +691,6 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 // #define OLD_BLOOM
 // #define BLOOMY_PARTICLES
 // #define ORIGINAL_CHOCAPIC_SKY
-// #define CLOUDS_INFRONT_OF_WORLD
 // #define LARGE_WAVE_DISPLACEMENT
 
 #define SELECT_BOX

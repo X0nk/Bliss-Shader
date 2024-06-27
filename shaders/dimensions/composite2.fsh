@@ -140,7 +140,7 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 	// uniform int dhRenderDistance;
 	#define TIMEOFDAYFOG
 	#include "/lib/lightning_stuff.glsl"
-	// #define CLOUDS_INTERSECT_TERRAIN
+	#define CLOUDS_INTERSECT_TERRAIN
 	#include "/lib/volumetricClouds.glsl"
 	#include "/lib/overworld_fog.glsl"
 #endif
