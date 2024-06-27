@@ -158,8 +158,6 @@ void main() {
   	VL_abs = clamp((1.0-VL_abs)*BLOOMY_FOG*0.75*(1.0+rainStrength) * (1.0-purkinje*0.3),0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
 	
 	col = (mix(col, bloom, VL_abs) + bloom * lightScat) * exposure.rgb;
-
-	// if(hideGUI > 0) col = bloom  * lightScat* exposure.rgb;
 	
   	float lum = dot(col, vec3(0.15,0.3,0.55));
 	float lum2 = dot(col, vec3(0.85,0.7,0.45));
@@ -178,7 +176,6 @@ void main() {
 	#endif
 
 	gl_FragData[0].rgb = clamp(int8Dither(col,texcoord),0.0,1.0);
-
 	
 	#if DOF_QUALITY == 5
 		#if FOCUS_LASER_COLOR == 0 // Red

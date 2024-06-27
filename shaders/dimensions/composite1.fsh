@@ -1338,6 +1338,7 @@ void main() {
 	 	// if(hideGUI == 0)  gl_FragData[0].rgb = vec3(1)	* (1.0 - SSAO_SSS.x);
 	 	if(hideGUI == 0)  gl_FragData[0].rgb = vec3(1)	* exp(-10*filteredShadow.y);//exp(-7*(1-clamp(1.0 - filteredShadow.x,0.0,1.0)));
 	#endif
+	// gl_FragData[0].rgb = albedo*30;
 	// gl_FragData[0].rgb = vec3(1) * Shadows;
 	// if(swappedDepth >= 1.0) gl_FragData[0].rgb = vec3(0.1);
 	// gl_FragData[0].rgb = vec3(1) * ld(texture2D(depthtex1, texcoord).r);
