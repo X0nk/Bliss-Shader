@@ -1340,7 +1340,7 @@ void main() {
 	#endif
 	// gl_FragData[0].rgb = albedo*30;
 	// gl_FragData[0].rgb = vec3(1) * Shadows;
-	if(swappedDepth >= 1.0) gl_FragData[0].rgb = vec3(0.1);
+	// if(swappedDepth >= 1.0) gl_FragData[0].rgb = vec3(0.1);
 	// gl_FragData[0].rgb = vec3(1) * ld(texture2D(depthtex1, texcoord).r);
 	// if(texcoord.x > 0.5 )gl_FragData[0].rgb = vec3(1) * ld(texture2D(depthtex0, texcoord).r);
 	
