@@ -379,6 +379,9 @@ void main() {
 	#endif
 	
 	vec3 viewPos0 = toScreenSpace_DH(tc/RENDER_SCALE, z0, DH_z0);
+	vec3 playerPos_normalized = normalize(mat3(gbufferModelViewInverse) * viewPos0 + gbufferModelViewInverse[3].xyz);
+
+
 
 	float dirtAmount = Dirt_Amount + 0.01;
 	vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
@@ -395,6 +398,12 @@ void main() {
 
 	#if defined OVERWORLD_SHADER && defined CLOUDS_INTERSECT_TERRAIN
 		vec4 VolumetricClouds = renderClouds(viewPos0, vec2(noise_1,noise_2), directLightColor, indirectLightColor, cloudDepth);
+		
+		#ifdef CAVE_FOG
+  	  		float skyhole = (1.0-pow(clamp(1.0-pow(max(playerPos_normalized.y - 0.6,0.0)*5.0,2.0),0.0,1.0),2)) * caveDetection;
+			VolumetricClouds.rgb *=skyhole;
+			VolumetricClouds.a = mix(1.0,VolumetricClouds.a,  skyhole);
+		#endif
 	#endif
 
 	#ifdef OVERWORLD_SHADER
@@ -406,6 +415,7 @@ void main() {
 	#endif
 	
 	#if defined OVERWORLD_SHADER && defined CLOUDS_INTERSECT_TERRAIN
+	
 		VolumetricFog = vec4(VolumetricClouds.rgb * VolumetricFog.a + VolumetricFog.rgb, VolumetricFog.a);
 	#endif
 
