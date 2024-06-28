@@ -84,6 +84,7 @@ vec3 toScreenSpace(vec3 p) {
     return viewPos.xyz / viewPos.w;
 }
 
+uniform float near;
 uniform float dhFarPlane;
 uniform float dhNearPlane;
 
@@ -116,6 +117,9 @@ float DH_inv_ld (float lindepth){
 
 float linearizeDepthFast(const in float depth, const in float near, const in float far) {
     return (near * far) / (depth * (near - far) + far);
+}
+float invLinZ (float lindepth){
+	return -((2.0*near/lindepth)-far-near)/(far-near);
 }
 #ifdef OVERWORLD_SHADER
 

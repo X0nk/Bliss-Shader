@@ -282,7 +282,6 @@ vec4 renderLayer(
 ){
 	vec3 COLOR = vec3(0.0);
 	float TOTAL_EXTINCTION = 1.0;
-
 	bool IntersecTerrain = false;
 
 	#ifdef CLOUDS_INTERSECT_TERRAIN
@@ -384,16 +383,16 @@ if(layer == 2){
 
 				COLOR += max(lighting - lighting*exp(-mult*muE),0.0) * TOTAL_EXTINCTION;
 				TOTAL_EXTINCTION *= max(exp(-mult*muE),0.0);
-				
+
 				if (TOTAL_EXTINCTION < 1e-5) break;
+	 			
 			}
 
 		}
 		
 		rayProgress += dV_view;
-
-
 	}
+	
 	return vec4(COLOR, TOTAL_EXTINCTION);
 }
 }
@@ -413,6 +412,9 @@ vec3 layerStartingPosition(
 	vec3 position = dV_view*dither + cameraPos + (dV_view/abs(dV_view.y)) * flip;
 	
 	return position;
+}
+float invLinZ_cloud (float lindepth){
+	return -((2.0*near/lindepth)-far-near)/(far-near);
 }
 vec4 renderClouds(
 	vec3 FragPosition,
@@ -549,7 +551,7 @@ vec4 renderClouds(
 		total_extinction *= layer1.a;
 
 		// stop overdraw.
-		altoNotVisible = (layer1.a < 1e-5  || notVisible)&& below_Layer1;	
+		altoNotVisible = (layer1.a < 1e-5  || notVisible) && below_Layer1;	
 	#endif
 
 	#ifdef CloudLayer2
@@ -593,10 +595,9 @@ vec4 renderClouds(
 	#endif
 
 	#ifndef SKY_GROUND
-		vec3 normView = normalize(dV_viewTEST);
-		vec4 fogcolor = vec4(skyFromTex(normView, colortex4)/30.0, 0.0);
 		
-		return mix(fogcolor, vec4(color, total_extinction), clamp(distantfog2,0.0,1.0));
+		// return mix(fogcolor, vec4(color, total_extinction), clamp(distantfog2,0.0,1.0));
+		return mix(vec4(vec3(0.0),1.0), vec4(color, total_extinction), clamp(distantfog2,0.0,1.0));
 	#else
 		return vec4(color, total_extinction);
 	#endif

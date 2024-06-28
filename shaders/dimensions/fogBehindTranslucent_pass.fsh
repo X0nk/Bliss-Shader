@@ -35,6 +35,7 @@ uniform float sunElevation;
 // uniform float far;
 uniform float dhFarPlane;
 uniform float dhNearPlane;
+uniform float near;
 
 uniform int frameCounter;
 uniform float frameTimeCounter;
@@ -64,7 +65,7 @@ uniform float caveDetection;
 #include "/lib/DistantHorizons_projections.glsl"
 
 float DH_ld(float dist) {
-    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+    return (2.0 * near) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
 }
 float DH_inv_ld (float lindepth){
 	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);

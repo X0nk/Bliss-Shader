@@ -28,6 +28,7 @@ uniform vec3 sunVec;
 uniform float sunElevation;
 
 // uniform float far;
+uniform float near;
 uniform float dhFarPlane;
 uniform float dhNearPlane;
 
@@ -126,7 +127,9 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 	}
 
 #endif
-
+float invLinZ (float lindepth){
+	return -((2.0*near/lindepth)-far-near)/(far-near);
+}
 #ifdef OVERWORLD_SHADER
 	const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
