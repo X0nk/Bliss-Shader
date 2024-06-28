@@ -111,11 +111,9 @@ vec4 GetVolumetricFog(
 	/// -------------  COLOR/LIGHTING STUFF ------------- \\\
 	
 	vec3 color = vec3(0.0);
-	float absorbance = 1.0;
-	float AtmosphereAbsorbance = 1.0;
-
-	float lightleakfix = 1.0 - caveDetection;
-	float lightleakfix2 = pow(clamp(eyeBrightnessSmooth.y/240. ,0.0,1.0),3.0);
+	float totalAbsorbance = 1.0;
+	float fogAbsorbance = 1.0;
+	float atmosphereAbsorbance = 1.0;
 
 	vec3 WsunVec = mat3(gbufferModelViewInverse) * sunVec;
 	float SdotV = dot(sunVec, normalize(viewPosition))*lightCol.a;
@@ -172,6 +170,11 @@ vec4 GetVolumetricFog(
     	float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) / 5.0;
 	#endif
 
+	float inACave = 1.0 - caveDetection;
+	float lightLevelZero = pow(clamp(eyeBrightnessSmooth.y/240.0 ,0.0,1.0),3.0);
+
+	// SkyLightColor *= lightLevelZero*0.9 + 0.1;
+
 	for (int i = 0; i < SAMPLECOUNT; i++) {
 		float d = (pow(expFactor, float(i+dither.x)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
 		float dd = pow(expFactor, float(i+dither.x)/float(SAMPLECOUNT)) * log(expFactor) / float(SAMPLECOUNT)/(expFactor-1.0);
@@ -179,7 +182,9 @@ vec4 GetVolumetricFog(
 		progress = start.xyz + d*dV;
 		progressW = gbufferModelViewInverse[3].xyz + cameraPosition + d*dVWorld;
 
+		//------------------------------------
 		//------ SAMPLE SHADOWS FOR FOG EFFECTS
+		//------------------------------------
 			#ifdef DISTORT_SHADOWMAP
 				float distortFactor = calcDistort(progress.xy);
 			#else
@@ -212,12 +217,14 @@ vec4 GetVolumetricFog(
 
 		#ifdef PER_BIOME_ENVIRONMENT
 			float maxDistance = inBiome * min(max(1.0 -  length(d*dVWorld.xz)/(32*8),0.0)*2.0,1.0);
-			float densityVol = cloudVol(progressW, maxDistance) * lightleakfix;
+			float densityVol = cloudVol(progressW, maxDistance) * inACave;
 		#else
-			float densityVol = cloudVol(progressW, 0.0) * lightleakfix;
+			float densityVol = cloudVol(progressW, 0.0) * inACave;
 		#endif
-		
+
+		//------------------------------------
 		//------ MAIN FOG EFFECT
+		//------------------------------------
 			float fogDensity = densityVol;
 			float fogVolumeCoeff = exp(-fogDensity*dd*dL); // this is like beer-lambert law or something
 
@@ -230,12 +237,16 @@ vec4 GetVolumetricFog(
 			#endif
 
 			vec3 Lightning = Iris_Lightningflash_VLfog(progressW-cameraPosition, lightningBoltPosition.xyz);
-			vec3 lighting = DirectLight * lightleakfix + indirectLight * lightleakfix2 + Lightning;
+			vec3 lighting = DirectLight + indirectLight * (lightLevelZero*0.99 + 0.01) + Lightning;
 
-			color += (lighting - lighting * fogVolumeCoeff) * absorbance;
-			absorbance *= fogVolumeCoeff;
+			color += (lighting - lighting * fogVolumeCoeff) * fogAbsorbance;
+			fogAbsorbance *= fogVolumeCoeff;
 
+			// kill fog absorbance when in caves.
+			totalAbsorbance *= mix(1.0, fogVolumeCoeff, lightLevelZero);
+		//------------------------------------
 		//------ ATMOSPHERE HAZE EFFECT
+		//------------------------------------
 			#if defined CloudLayer0 && defined VOLUMETRIC_CLOUDS
 				float cloudPlaneCutoff = clamp((CloudLayer0_height +  max(eyeAltitude-(CloudLayer0_height-100),0)) - progressW.y,0.0,1.0);
 			#else
@@ -252,15 +263,18 @@ vec4 GetVolumetricFog(
 			// calculate the atmosphere haze seperately and purely additive to color, do not contribute to absorbtion.
 			vec3 atmosphereVolumeCoeff = exp(-(rL+m)*dd*dL_alternate);
 			
-			vec3 Atmosphere = (LightSourcePhased * sh * (rayL*rL + sunPhase*m) + AveragedAmbientColor * (rL+m)) * lightleakfix2;
-			color += (Atmosphere - Atmosphere * atmosphereVolumeCoeff) / (rL+m+1e-6) * AtmosphereAbsorbance * absorbance;
-			AtmosphereAbsorbance *= dot(atmosphereVolumeCoeff, vec3(0.33333));
-			
+			vec3 Atmosphere = (LightSourcePhased * sh * (rayL*rL + sunPhase*m) + AveragedAmbientColor * (rL+m) * (lightLevelZero*0.99 + 0.01)) * inACave;
+			color += (Atmosphere - Atmosphere * atmosphereVolumeCoeff) / (rL+m+1e-6) * atmosphereAbsorbance * totalAbsorbance;
+			atmosphereAbsorbance *= dot(atmosphereVolumeCoeff, vec3(0.33333));
+		//------------------------------------
 		//------ LPV FOG EFFECT
+		//------------------------------------
 			#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT 
-				color += LPV_FOG_ILLUMINATION(progressW-cameraPosition, dd, dL) * TorchBrightness_autoAdjust * absorbance;
+				color += LPV_FOG_ILLUMINATION(progressW-cameraPosition, dd, dL) * TorchBrightness_autoAdjust * totalAbsorbance;
 			#endif
-
+		//------------------------------------
+		//------ STUPID RENDER CLOUDS AS FOG EFFECT
+		//------------------------------------
 		#ifdef RAYMARCH_CLOUDS_WITH_FOG
 			float otherlayer = max(progressW.y - (CloudLayer0_height+99.5), 0.0) > 0.0 ? 0.0 : 1.0;
 
@@ -313,15 +327,15 @@ vec4 GetVolumetricFog(
 					float distantfade = 1- exp( -10*pow(clamp(1.0 - length(progressW - cameraPosition)/(32*65),0.0,1.0),2));
 					vec3 cloudlighting = DoCloudLighting(DUAL_DENSITY * cumulus, SkyLightColor*skylightOcclusion, skyScatter, directLight, directScattering*sh_forClouds, directMultiScattering*sh_forClouds, 1);
 
-					color += max(cloudlighting - cloudlighting*exp(-muE*dd*dL_alternate),0.0) * absorbance;
-					absorbance *= max(exp(-muE*dd*dL_alternate),0.0);
+					color += max(cloudlighting - cloudlighting*exp(-muE*dd*dL_alternate),0.0) * totalAbsorbance * lightLevelZero;
+					totalAbsorbance *= max(exp(-muE*dd*dL_alternate),1.0-lightLevelZero);
 				}
 			}
 		#else
-			if (absorbance < 1e-5) break;
+			if (totalAbsorbance < 1e-5) break;
 		#endif
 	}
-	return vec4(color, absorbance);
+	return vec4(color, totalAbsorbance);
 }
 
 
