@@ -966,7 +966,7 @@ void main() {
 			Background += resourcePackskyBox;
 		#endif
 
-		#if defined VOLUMETRIC_CLOUDS && !defined CLOUDS_INTERSECT_TERRAIN
+		#if defined OVERWORLD_SHADER && defined VOLUMETRIC_CLOUDS && !defined CLOUDS_INTERSECT_TERRAIN
 			vec4 Clouds = texture2D_bicubic_offset(colortex0, texcoord*CLOUDS_QUALITY, noise, RENDER_SCALE.x);
 			Background = Background * Clouds.a + Clouds.rgb;
 		#endif
@@ -1340,7 +1340,7 @@ void main() {
 	#endif
 	// gl_FragData[0].rgb = albedo*30;
 	// gl_FragData[0].rgb = vec3(1) * Shadows;
-	// if(swappedDepth >= 1.0) gl_FragData[0].rgb = vec3(0.1);
+	if(swappedDepth >= 1.0) gl_FragData[0].rgb = vec3(0.1);
 	// gl_FragData[0].rgb = vec3(1) * ld(texture2D(depthtex1, texcoord).r);
 	// if(texcoord.x > 0.5 )gl_FragData[0].rgb = vec3(1) * ld(texture2D(depthtex0, texcoord).r);
 	
