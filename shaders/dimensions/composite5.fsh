@@ -244,22 +244,6 @@ vec3 FastCatmulRom(sampler2D colorTex, vec2 texcoord, vec4 rtMetrics, float shar
 
 }
 
-// vec3 clip_aabb(vec3 q, vec3 aabb_min, vec3 aabb_max)
-// {
-// 		vec3 p_clip = 0.5 * (aabb_max + aabb_min);
-// 		vec3 e_clip = 0.5 * (aabb_max - aabb_min) + 0.00000001;
-
-// 		vec3 v_clip = q - vec3(p_clip);
-// 		vec3 v_unit = v_clip.xyz / e_clip;
-// 		vec3 a_unit = abs(v_unit);
-// 		float ma_unit = max(a_unit.x, max(a_unit.y, a_unit.z));
-
-// 		if (ma_unit > 1.0)
-// 			return vec3(p_clip) + v_clip / ma_unit;
-// 		else
-// 			return q;
-// }
-
 vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth, bool hand)
 {
 	vec2 du = vec2(texelSize.x*2., 0.0);
@@ -330,109 +314,6 @@ vec3 closestToCamera5taps_DH(vec2 texcoord, sampler2D depth, sampler2D dhDepth, 
 	return dmin;
 }
 
-vec4 TAA_hq(bool hand){
-
-	#ifdef TAA_UPSCALING
-		vec2 adjTC = clamp(texcoord*RENDER_SCALE, vec2(0.0), RENDER_SCALE - texelSize*2.0);
-	#else
-		vec2 adjTC = texcoord;
-	#endif
-
-	vec2 offsets = offsets[framemod8] * texelSize * 0.5;
-	
-	#ifdef DISTANT_HORIZONS
-		bool depthCheck = texture2D(depthtex0,adjTC).x >= 1.0;
-	#else
-		bool depthCheck = false;
-	#endif
-	//use velocity from the nearest texel from camera in a 3x3 box in order to improve edge quality in motion
-	#ifdef CLOSEST_VELOCITY
-		#ifdef DISTANT_HORIZONS
-			vec3 closestToCamera = closestToCamera5taps_DH(adjTC, depthtex0, dhDepthTex, depthCheck, hand);
-		#else
-			vec3 closestToCamera = closestToCamera5taps(adjTC, depthtex0, hand);
-		#endif
-	#endif
-
-	#ifndef CLOSEST_VELOCITY
-		vec3 closestToCamera = vec3(texcoord, texture2D(depthtex1, adjTC).x);
-	#endif
-
-	//reproject previous frame
-	#ifdef DISTANT_HORIZONS
-		vec3 viewPos = toScreenSpace_DH_special(closestToCamera, depthCheck);
-	#else
-		vec3 viewPos = toScreenSpace(closestToCamera);
-	#endif
-	
-	viewPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
-	
-	vec3 previousPosition = mat3(gbufferPreviousModelView) * viewPos + gbufferPreviousModelView[3].xyz;
-	previousPosition = toClipSpace3Prev_DH(previousPosition, depthCheck);
-	
-	vec2 velocity = previousPosition.xy - closestToCamera.xy;
-	previousPosition.xy = texcoord + velocity;
-
-	//reject history if off-screen and early exit
-	if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0)
-		return vec4(smoothfilter(colortex3, adjTC + offsets).xyz,1.0);
-
-
-	#ifdef TAA_UPSCALING
-		vec3 albedoCurrent0 = smoothfilter(colortex3, adjTC + offsets).xyz;
-		// Interpolating neighboorhood clampling boundaries between pixels
-		vec3 cMax = texture2D(colortex0, adjTC).rgb;
-		vec3 cMin = texture2D(colortex6, adjTC).rgb;
-	#else
-		vec3 albedoCurrent0 = texture2D(colortex3, adjTC).rgb;
-		vec3 albedoCurrent1 = texture2D(colortex3, adjTC + vec2(texelSize.x,texelSize.y)).rgb;
-		vec3 albedoCurrent2 = texture2D(colortex3, adjTC + vec2(texelSize.x,-texelSize.y)).rgb;
-		vec3 albedoCurrent3 = texture2D(colortex3, adjTC + vec2(-texelSize.x,-texelSize.y)).rgb;
-		vec3 albedoCurrent4 = texture2D(colortex3, adjTC + vec2(-texelSize.x,texelSize.y)).rgb;
-		vec3 albedoCurrent5 = texture2D(colortex3, adjTC + vec2(0.0,texelSize.y)).rgb;
-		vec3 albedoCurrent6 = texture2D(colortex3, adjTC + vec2(0.0,-texelSize.y)).rgb;
-		vec3 albedoCurrent7 = texture2D(colortex3, adjTC + vec2(-texelSize.x,0.0)).rgb;
-		vec3 albedoCurrent8 = texture2D(colortex3, adjTC + vec2(texelSize.x,0.0)).rgb;
-
-		//Assuming the history color is a blend of the 3x3 neighborhood, we clamp the history to the min and max of each channel in the 3x3 neighborhood
-		vec3 cMax = max(max(max(albedoCurrent0,albedoCurrent1),albedoCurrent2),max(albedoCurrent3,max(albedoCurrent4,max(albedoCurrent5,max(albedoCurrent6,max(albedoCurrent7,albedoCurrent8))))));
-		vec3 cMin = min(min(min(albedoCurrent0,albedoCurrent1),albedoCurrent2),min(albedoCurrent3,min(albedoCurrent4,min(albedoCurrent5,min(albedoCurrent6,min(albedoCurrent7,albedoCurrent8))))));
-
-		albedoCurrent0 = smoothfilter(colortex3, adjTC + offsets).rgb;
-	#endif
-
-	#ifndef SCREENSHOT_MODE
-
-		vec3 albedoPrev = max(FastCatmulRom(colortex5, previousPosition.xy, vec4(texelSize, 1.0/texelSize), 0.75).xyz, 0.0);
-		vec3 finalcAcc = clamp(albedoPrev, cMin, cMax);
-
-		//Increases blending factor when far from AABB and in motion, reduces ghosting
-		float isclamped = distance(albedoPrev,finalcAcc)/luma(albedoPrev) * 0.5;
-		float movementRejection = (0.12+isclamped)*clamp(length(velocity/texelSize),0.0,1.0);
-
-		if(hand) movementRejection *= 5.0;
-		
-		//Blend current pixel with clamped history, apply fast tonemap beforehand to reduce flickering
-		vec4 supersampled = vec4(invTonemap(mix(tonemap(finalcAcc), tonemap(albedoCurrent0), clamp(BLEND_FACTOR + movementRejection, 0.0,1.0))), 1.0);
-		// vec4 supersampled = vec4(invTonemap(mix(tonemap(finalcAcc), tonemap(albedoCurrent0), 0.5)), 1.0);
-
-        #ifdef DAMAGE_TAKEN_EFFECT
-			if(CriticalDamageTaken > 0.01) supersampled.rgb = mix(supersampled.rgb, texture2D(colortex5, adjTC).rgb,  sqrt(CriticalDamageTaken)*0.8);
-		#endif
-
-		//De-tonemap
-		return supersampled;
-	#endif
-
-	#ifdef SCREENSHOT_MODE
-		vec4 albedoPrev = texture2D(colortex5, previousPosition.xy);
-		vec3 supersampled =  albedoPrev.rgb * albedoPrev.a + albedoCurrent0;
-
-		if ( hideGUI < 1) return vec4(albedoCurrent0,1.0);
-		return vec4(supersampled/(albedoPrev.a+1.0), albedoPrev.a+1.0);
-	#endif
-}
-
 vec4 computeTAA(vec2 texcoord, bool hand){
 
 	vec2 jitter = offsets[framemod8]*texelSize*0.5;
@@ -448,9 +329,15 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		vec3 closestToCamera = closestToCamera5taps(adjTC, depthtex0, hand);
 		vec3 viewPos = toScreenSpace(closestToCamera);
 	#endif
-	vec3 playerPos = mat3(gbufferModelViewInverse) * toScreenSpace(closestToCamera) + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
+	
+	vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
 	vec3 previousPosition = mat3(gbufferPreviousModelView) * playerPos + gbufferPreviousModelView[3].xyz;
-	previousPosition = toClipSpace3Prev(previousPosition);
+	#ifdef DISTANT_HORIZONS
+		previousPosition = toClipSpace3Prev_DH(previousPosition, depthCheck);
+	#else
+		previousPosition = toClipSpace3Prev(previousPosition);
+	#endif
+
 	vec2 velocity = previousPosition.xy - closestToCamera.xy;
 	previousPosition.xy = texcoord + velocity;
 
