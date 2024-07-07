@@ -412,7 +412,9 @@ void main() {
 	#endif
 
 	#ifdef OVERWORLD_SHADER
-		vec4 VolumetricFog = GetVolumetricFog(viewPos0, vec2(noise_2,noise_1), directLightColor, indirectLightColor, averageSkyCol_Clouds/30.0, cloudDepth);
+		float atmosphereAlpha = 1.0;
+		vec4 VolumetricFog = GetVolumetricFog(viewPos0, vec2(noise_2,noise_1), directLightColor, indirectLightColor, averageSkyCol_Clouds/30.0, atmosphereAlpha);
+		VolumetricClouds.a *= atmosphereAlpha;
 	#endif
 	
 	#if defined NETHER_SHADER || defined END_SHADER
@@ -420,7 +422,7 @@ void main() {
 	#endif
 	
 	#if defined OVERWORLD_SHADER && defined CLOUDS_INTERSECT_TERRAIN
-		VolumetricFog = vec4(VolumetricClouds.rgb * VolumetricFog.a + VolumetricFog.rgb, VolumetricFog.a);
+		VolumetricFog = vec4(VolumetricClouds.rgb * VolumetricFog.a * atmosphereAlpha + VolumetricFog.rgb, VolumetricFog.a);
 	#endif
 
 	gl_FragData[0] = clamp(VolumetricFog, 0.0, 65000.0);

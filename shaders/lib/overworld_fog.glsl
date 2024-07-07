@@ -68,7 +68,7 @@ vec4 GetVolumetricFog(
 	vec3 LightColor,
 	vec3 AmbientColor,
 	vec3 AveragedAmbientColor,
-	inout vec3 cloudDepth
+	inout float atmosphereAlpha
 ){
 	#ifndef TOGGLE_VL_FOG
 		return vec4(0.0,0.0,0.0,1.0);
@@ -266,6 +266,7 @@ vec4 GetVolumetricFog(
 			vec3 Atmosphere = (LightSourcePhased * sh * (rayL*rL + sunPhase*m) + AveragedAmbientColor * (rL+m) * (lightLevelZero*0.99 + 0.01)) * inACave;
 			color += (Atmosphere - Atmosphere * atmosphereVolumeCoeff) / (rL+m+1e-6) * atmosphereAbsorbance * totalAbsorbance;
 			atmosphereAbsorbance *= dot(atmosphereVolumeCoeff, vec3(0.33333));
+			
 		//------------------------------------
 		//------ LPV FOG EFFECT
 		//------------------------------------
@@ -335,6 +336,7 @@ vec4 GetVolumetricFog(
 			if (totalAbsorbance < 1e-5) break;
 		#endif
 	}
+	atmosphereAlpha = atmosphereAbsorbance;
 	return vec4(color, totalAbsorbance);
 }
 

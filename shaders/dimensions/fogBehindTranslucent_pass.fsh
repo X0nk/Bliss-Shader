@@ -379,10 +379,12 @@ void main() {
 					VolumetricClouds = renderClouds(viewPos1, vec2(noise_1,noise_2), directLightColor, indirectLightColor, cloudDepth);
 				#endif
 
-				VolumetricFog2 = GetVolumetricFog(viewPos1, vec2(noise_1, noise_2), directLightColor, indirectLightColor,indirectLightColor_dynamic,cloudDepth);
+				float atmosphereAlpha = 1.0;
+				VolumetricFog2 = GetVolumetricFog(viewPos1, vec2(noise_1, noise_2), directLightColor, indirectLightColor,indirectLightColor_dynamic, atmosphereAlpha);
+				VolumetricClouds.a *= atmosphereAlpha;
 
 				#if defined CLOUDS_INTERSECT_TERRAIN
-					VolumetricFog2 = vec4(VolumetricClouds.rgb * VolumetricFog2.a + VolumetricFog2.rgb, VolumetricFog2.a*VolumetricClouds.a);
+					VolumetricFog2 = vec4(VolumetricClouds.rgb * VolumetricFog2.a * atmosphereAlpha  + VolumetricFog2.rgb, VolumetricFog2.a*VolumetricClouds.a);
 				#endif
 			}
 		#endif

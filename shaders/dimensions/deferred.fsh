@@ -278,24 +278,22 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition) ;// * ( float(sunElevation > 1e-5)*2.0-1.0 );
 
 	vec3 sky = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150.0;	
+	sky = mix(dot(sky, vec3(0.333)) * vec3(0.5), sky,  pow(clamp(viewVector.y+1.0,0.0,1.0),5));
 	
 	vec3 suncol = lightSourceColor;
-	
 	#ifdef ambientLight_only
 		suncol = vec3(0.0);
 	#endif
+	
 	vec3 cloudDepth = vec3(0.0);
+	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024., vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), suncol*2.0, skyGroundCol/30.0, cloudDepth);
+	
+	float atmosphereAlpha = 1.0;
+	vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*1024.,  vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), suncol*2.0, skyGroundCol/30.0, averageSkyCol_Clouds*5.0, atmosphereAlpha);
 
-	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024., vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), suncol*2.0, skyGroundCol/30.0,cloudDepth);
-	sky = sky*clouds.a + clouds.rgb / 5.0; 
-
-	sky = mix(dot(sky, vec3(0.333)) * vec3(0.5), sky,  pow(clamp(viewVector.y+1.0,0.0,1.0),5));
-	vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*1024.,  vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), suncol*1.75, skyGroundCol/30.0, averageSkyCol_Clouds/30.0,cloudDepth);
-
+	sky = sky*clouds.a + clouds.rgb / 5.0;
+	sky *= atmosphereAlpha;
 	sky = sky * VL_Fog.a + VL_Fog.rgb / 5.0;
-
-
-	// if(p.y < 0.05) sky = averageSkyCol_Clouds;
 
 	gl_FragData[0] = vec4(sky,1.0);
 }
