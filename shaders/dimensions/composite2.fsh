@@ -351,6 +351,8 @@ float encodeVec2(vec2 a){
 
 
 
+// uniform int framemod8;
+// #include "/lib/TAA_jitter.glsl"
 
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -369,7 +371,7 @@ void main() {
 	float noise_1 = max(1.0 - R2_dither(),0.0015);
 	float noise_2 = blueNoise();
 	
-	vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
+	vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize + texelSize*0.5;
 
 	bool iswater = texture2D(colortex7,tc).a > 0.99;
 
@@ -381,7 +383,7 @@ void main() {
 		float DH_z0 = 0.0;
 	#endif
 	
-	vec3 viewPos0 = toScreenSpace_DH(tc/RENDER_SCALE, z0, DH_z0);
+	vec3 viewPos0 = toScreenSpace_DH(tc/RENDER_SCALE , z0, DH_z0);
 	vec3 playerPos_normalized = normalize(mat3(gbufferModelViewInverse) * viewPos0 + gbufferModelViewInverse[3].xyz);
 
 
@@ -418,7 +420,6 @@ void main() {
 	#endif
 	
 	#if defined OVERWORLD_SHADER && defined CLOUDS_INTERSECT_TERRAIN
-	
 		VolumetricFog = vec4(VolumetricClouds.rgb * VolumetricFog.a + VolumetricFog.rgb, VolumetricFog.a);
 	#endif
 

@@ -244,7 +244,7 @@ vec3 DoCloudLighting(
 	float distantfog
 ){
 	float powder = 1.0 - exp(-10.0 * density);
-	vec3 directLight = sunMultiScatter * exp(-3.0 * sunShadows) * powder + sunScatter * exp(-10.0 * sunShadows);
+	vec3 directLight = sunScatter * exp(-10.0 * sunShadows) + sunMultiScatter * exp(-3.0 * sunShadows) * powder;
 
 	vec3 indirectLight = skyLightCol * mix(1.0,  2.0 * (1.0 - sqrt((skyScatter*skyScatter*skyScatter)*density)) , pow(distantfog,1.0 - rainStrength*0.5));
 	
@@ -315,6 +315,7 @@ if(layer == 2){
 
 			float directLight = 0.0;
 			for (int j = 0; j < 2; j++){
+				
 				// lower the step size as the sun gets higher in the sky
 				vec3 shadowSamplePos_high = rayProgress + dV_Sun * (1.0 + j * dither) / (pow(abs(dV_Sun.y*0.5),3.0) * 0.995 + 0.005);
 

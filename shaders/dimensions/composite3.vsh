@@ -20,14 +20,8 @@ uniform vec3 sunPosition;
 uniform float sunElevation;
 flat varying vec2 TAA_Offset;
 uniform int framemod8;
-const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
-							vec2(-1.,3.)/8.,
-							vec2(5.0,1.)/8.,
-							vec2(-3,-5.)/8.,
-							vec2(-5.,5.)/8.,
-							vec2(-7.,-1.)/8.,
-							vec2(3,7.)/8.,
-							vec2(7.,-7.)/8.);
+#include "/lib/TAA_jitter.glsl"
+
 
 
 #ifdef OVERWORLD_SHADER

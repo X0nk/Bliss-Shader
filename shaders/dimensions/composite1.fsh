@@ -742,7 +742,7 @@ vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 	float scatterDepth = 1.0 - pow(Scattering, 0.5 + Density * 2.5);
 
 	// PBR at its finest :clueless:
-	vec3 absorbColor = exp(max(luma(albedo) - albedo*vec3(1.0,1.1,1.2), 0.0)  * -(15.0 - 10.0*scatterDepth)  * sss_absorbance_multiplier);
+	vec3 absorbColor = exp(max(luma(albedo) - albedo*vec3(1.0,1.1,1.2), 0.0)  * -(15.0 - 10.0*scatterDepth)  * sss_absorbance_multiplier * 0.01);
 	
 	vec3 scatter = scatterDepth * absorbColor * pow(Density, LabSSS_Curve);
 
@@ -1283,7 +1283,6 @@ void main() {
 
 		#ifdef OVERWORLD_SHADER
 			Direct_lighting =  max(DirectLightColor * NdotL * Shadows, DirectLightColor * Direct_SSS);
-			// Direct_lighting =  DirectLightColor * Direct_SSS;
 		#endif
 
 		gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * albedo;
@@ -1343,6 +1342,8 @@ void main() {
 	// if(swappedDepth >= 1.0) gl_FragData[0].rgb = vec3(0.1);
 	// gl_FragData[0].rgb = vec3(1) * ld(texture2D(depthtex1, texcoord).r);
 	// if(texcoord.x > 0.5 )gl_FragData[0].rgb = vec3(1) * ld(texture2D(depthtex0, texcoord).r);
-	
+
+
+
 	/* DRAWBUFFERS:3 */
 }

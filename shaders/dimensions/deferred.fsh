@@ -151,6 +151,7 @@ float invLinZ (float lindepth){
 	uniform sampler2D colortex4;
 	#include "/lib/end_fog.glsl"
 #endif
+
 vec3 rodSample(vec2 Xi)
 {
 	float r = sqrt(1.0f - Xi.x*Xi.y);
@@ -378,7 +379,6 @@ vec3 curr = gl_FragData[0].rgb*150.;
 if(accumuteSpeed < 1.0) mixhistory = 1.0;
 
 gl_FragData[0].rgb = clamp(mix(temp, curr, mixhistory),0.0,65000.);
-
 
 //Exposure values
 if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )

@@ -393,9 +393,9 @@ vec3 ApplySSRT(
 
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
 			#ifdef OVERWORLD_SHADER
-				skycontribution = doIndirectLighting(skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb/30.0, minimumLightColor, lightmap) + blockLightColor;
+				skycontribution = doIndirectLighting(pow(skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb/30.0, vec3(0.7)) * 2.5, minimumLightColor, lightmap) + blockLightColor;
 			#else
-				skycontribution = pow(skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0,vec3(0.7)) + blockLightColor;
+				skycontribution = pow(skyCloudsFromTexLOD2(rayDir, colortex4, 6).rgb / 30.0, vec3(0.7)) + blockLightColor;
 			#endif
 		#else
 			#ifdef OVERWORLD_SHADER
