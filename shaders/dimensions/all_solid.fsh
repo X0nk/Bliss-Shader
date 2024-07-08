@@ -399,7 +399,7 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 	float textureLOD = bias();
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD) * color;
-
+	
 	#if defined HAND
 		if (Albedo.a < 0.1) discard;
 	#endif
@@ -553,7 +553,7 @@ void main() {
 		vec2 PackLightmaps = vec2(torchlightmap, lmtexcoord.w);
 		
 		vec4 data1 = clamp( encode(viewToWorld(normal), PackLightmaps), 0.0, 1.0);
-
+		
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
 
 		gl_FragData[2] = vec4(FlatNormals * 0.5 + 0.5, VanillaAO);	

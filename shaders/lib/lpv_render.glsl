@@ -3,6 +3,7 @@ const float LpvBlockBrightness = 1.0;
 
 
 float lpvCurve(float values) {
+    // return values;
     return pow(1.0 - sqrt(1.0-values), 2.0);
 }
 

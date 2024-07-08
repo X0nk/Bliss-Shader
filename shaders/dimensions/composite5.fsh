@@ -41,11 +41,11 @@ const bool colortex15Clear = false;
 
 #ifdef SCREENSHOT_MODE
 	/*
-	const int colortex5Format = RGBA32F;			//TAA buffer (everything)
+	const int colortex5Format = RGBA32F;// TAA buffer (everything)
 	*/
 #else
 	/*
-	const int colortex5Format = RGBA16F;			//TAA buffer (everything)
+	const int colortex5Format = R11F_G11F_B10F;	// TAA buffer (everything)
 	*/
 #endif
 
@@ -374,7 +374,7 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	#endif
     #ifdef DAMAGE_TAKEN_EFFECT
 		// when this triggers, use current frame UV to sample history, for a funny trailing effect.
-		if(CriticalDamageTaken > 0.01) previousPosition.xy = adjTC;
+		if(CriticalDamageTaken > 0.01) previousPosition.xy = texcoord;
 	#endif
 
 	vec3 frameHistory = max(FastCatmulRom(colortex5, previousPosition.xy, vec4(texelSize, 1.0/texelSize), 0.75).xyz,0.0);
@@ -410,10 +410,7 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 
 void main() {
 /* DRAWBUFFERS:5 */
-
-
 	#ifdef TAA
-
 		vec2 taauTC = clamp(texcoord*RENDER_SCALE, vec2(0.0), RENDER_SCALE - texelSize*2.0);
 		
 		float dataUnpacked = decodeVec2(texelFetch2D(colortex1,ivec2(gl_FragCoord.xy*RENDER_SCALE),0).w).y; 
