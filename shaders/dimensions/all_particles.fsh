@@ -254,6 +254,8 @@ vec4 texture2D_POMSwitch(
 	return texture2DGradARB(sampler, lightmapCoord, dcdxdcdy.xy, dcdxdcdy.zw);
 }
 
+uniform vec3 eyePosition;
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -365,8 +367,13 @@ void main() {
 		lightmap.y = 1.0;
 	#endif
 
-	#ifdef Hand_Held_lights
-		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(feetPlayerPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
+	#if defined Hand_Held_lights && !defined LPV_ENABLED
+		#ifdef IS_IRIS
+			vec3 playerCamPos = eyePosition;
+		#else
+			vec3 playerCamPos = cameraPosition;
+		#endif
+		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length((feetPlayerPos+cameraPosition) - playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
 	#endif
 
 	#ifdef WEATHER

@@ -275,7 +275,7 @@ vec4 texture2D_POMSwitch(
 	}
 }
 
-
+uniform vec3 eyePosition;
 
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -315,8 +315,14 @@ void main() {
 
 	float torchlightmap = lmtexcoord.z;
 
-	#ifdef Hand_Held_lights
-		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(worldpos-cameraPosition)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
+	#if defined Hand_Held_lights && !defined LPV_ENABLED
+		#ifdef IS_IRIS
+			vec3 playerCamPos = eyePosition;
+		#else
+			vec3 playerCamPos = cameraPosition;
+		#endif
+
+		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(worldpos-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
 
 		#ifdef HAND
 			torchlightmap *= 0.9;
@@ -351,8 +357,6 @@ void main() {
 	if(!ifPOM) maxdist = 0.0;
 
 	gl_FragDepth = gl_FragCoord.z;
-		// coord += noise*interval;
-		// float sumVec = noise;
 	if (dist < maxdist) {
 
 		float depthmap = readNormal(vtexcoord.st).a;

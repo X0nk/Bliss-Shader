@@ -430,6 +430,8 @@ void Emission(
 	if( Emission < 254.5/255.0) Lighting = mix(Lighting, Albedo * Emissive_Brightness * autoBrightnessAdjust * 0.1, pow(Emission, Emissive_Curve)); // old method.... idk why
 }
 
+uniform vec3 eyePosition;
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -586,8 +588,13 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		lightmap.y = 1.0;
 	#endif
 	
-	#ifdef Hand_Held_lights
-		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS*clamp( pow(max(1.0-length(feetPlayerPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
+	#if defined Hand_Held_lights && !defined LPV_ENABLED
+		#ifdef IS_IRIS
+			vec3 playerCamPos = eyePosition;
+		#else
+			vec3 playerCamPos = cameraPosition;
+		#endif
+		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS*clamp( pow(max(1.0-length((feetPlayerPos+cameraPosition) - playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
 	#endif
 
 	vec3 Indirect_lighting = vec3(0.0);
