@@ -265,17 +265,22 @@ vec4 GetVolumetricFog(
 
 		//------ END STORM EFFECT
 
+			// determine where the vortex area ends and chaotic lightning area begins.
+			float vortexBounds = clamp(vortexBoundRange - length(progressW), 0.0,1.0);
+        	vec3 lightPosition = LightSourcePosition(progressW, cameraPosition, vortexBounds);
+			vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
+
 			float volumeDensity = fogShape(progressW);
 			
 			float clearArea =  1.0-min(max(1.0 - length(progressW - cameraPosition) / 100,0.0),1.0);
 			float stormDensity = min(volumeDensity, clearArea*clearArea * END_STORM_DENSTIY);
+			
+			#ifdef THE_ORB
+				stormDensity += min(50.0*max(1.0 - length(lightPosition)/10,0.0),1.0);
+			#endif
+			
 			float volumeCoeff = exp(-stormDensity*dd*dL);
 
-			// determine where the vortex area ends and chaotic lightning area begins.
-			float vortexBounds = clamp(vortexBoundRange - length(progressW), 0.0,1.0);
-
-        	vec3 lightPosition = LightSourcePosition(progressW, cameraPosition, vortexBounds);
-			vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
 
 			vec3 lightsources = LightSourceLighting(progressW, lightPosition, dither2, volumeDensity, lightColors, vortexBounds);
 			vec3 indirect = vec3(0.5,0.75,1.0) * 0.2 * (exp((volumeDensity*volumeDensity) * -50) * 0.9 + 0.1);
