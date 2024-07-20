@@ -62,6 +62,10 @@ void main() {
         uint mixMask = 0xFFFF;
         vec3 tintColor = vec3(1.0);
 
+        if (blockId == BLOCK_SSS_WEAK_3) {
+            mixWeight = 1.0;
+        }
+
         switch (blockId) {
             case BLOCK_WATER:
                 mixWeight = 0.8;
