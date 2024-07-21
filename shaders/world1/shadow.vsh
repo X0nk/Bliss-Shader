@@ -23,6 +23,10 @@ Read the terms of modification and sharing before changing something below pleas
 	#endif
 	attribute vec3 vaPosition;
 
+	#ifdef LPV_ENTITY_LIGHTS
+		uniform usampler1D texBlockData;
+	#endif
+
 	uniform mat4 shadowModelViewInverse;
 	
 	uniform int renderStage;

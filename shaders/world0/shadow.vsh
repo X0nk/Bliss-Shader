@@ -59,6 +59,11 @@ uniform int entityId;
 	#else
 		attribute vec3 at_midBlock;
 	#endif
+
+	#ifdef LPV_ENTITY_LIGHTS
+		uniform usampler1D texBlockData;
+	#endif
+	
     uniform int currentRenderedItemId;
 	uniform int renderStage;
 

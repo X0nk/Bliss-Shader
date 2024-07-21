@@ -38,8 +38,13 @@ void PopulateShadowVoxel(const in vec3 playerPos) {
 					voxelId = uint(blockEntityId);
 			}
 			else if (currentRenderedItemId > 0 && currentRenderedItemId < 1200) {
-				if (entityId != ENTITY_ITEM_FRAME && entityId != ENTITY_PLAYER)
-					voxelId = uint(currentRenderedItemId);
+				if (entityId != ENTITY_ITEM_FRAME && entityId != ENTITY_PLAYER) {
+		            uint blockDataR = texelFetch(texBlockData, currentRenderedItemId, 0).r;
+		            float lightRange = unpackUnorm4x8(blockDataR).a * 255.0;
+
+		            if (lightRange > 0.0)
+						voxelId = uint(currentRenderedItemId);
+				}
 			}
 			else {
 				switch (entityId) {

@@ -62,6 +62,10 @@ void main() {
         uint mixMask = 0xFFFF;
         vec3 tintColor = vec3(1.0);
 
+        if (blockId == BLOCK_SSS_WEAK || blockId == BLOCK_SSS_WEAK_3) {
+            mixWeight = 1.0;
+        }
+
         switch (blockId) {
             case BLOCK_WATER:
                 mixWeight = 0.8;
@@ -917,7 +921,16 @@ void main() {
         // LPV shapes
 
             case BLOCK_LPV_IGNORE:
-                mixWeight = 1.0;
+                mixWeight = 1.00;
+                break;
+            case BLOCK_LPV_MIN:
+                mixWeight = 0.75;
+                break;
+            case BLOCK_LPV_MED:
+                mixWeight = 0.50;
+                break;
+            case BLOCK_LPV_MAX:
+                mixWeight = 0.25;
                 break;
 
             case BLOCK_CARPET:
@@ -942,16 +955,6 @@ void main() {
                 mixWeight = 0.8;
                 break;
 
-            case BLOCK_FENCE:
-            case BLOCK_FENCE_GATE:
-                mixWeight = 0.7;
-                break;
-            case BLOCK_FLOWER_POT:
-                mixWeight = 0.7;
-                break;
-            case BLOCK_IRON_BARS:
-                mixWeight = 0.6;
-                break;
             case BLOCK_PRESSURE_PLATE:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);
                 mixWeight = 0.9;
