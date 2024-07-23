@@ -3,6 +3,7 @@
 #ifdef IS_LPV_ENABLED
 	#extension GL_ARB_explicit_attrib_location: enable
 	#extension GL_ARB_shader_image_load_store: enable
+	#extension GL_ARB_shading_language_packing : enable
 #endif
 
 #define RENDER_SHADOW
