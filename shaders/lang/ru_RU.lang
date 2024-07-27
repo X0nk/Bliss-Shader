@@ -1,46 +1,105 @@
-option.SHADER_VERSION_LABEL = Bliss In-Dev Commit Number
+ ____________________
+|                    |
+| By ShrikerChestTree|
+|   Version: 1.1.0   |
+|____________________|
 
-profile.QUALITY = Качество
-profile.PERFORMANCE = Представление
+{~=~=~BLISS SHADERS~=~=~}
 
-screen.Sun_and_Moon_Colors = Цвет солнца/луны
-    option.sunColorR = Солнечный свет R
-	option.sunColorG = Солнечный свет G
-	option.sunColorB = Солнечный свет B
-	option.moonColorR = Лунный свет R
-	option.moonColorG = Лунный свет G
-	option.moonColorB = Лунный свет B
-	option.colortype = Цветовой тип
-	option.Sun_temp = Температура солнца
-	option.Moon_temp = Температура луны
-	
-	option.colortype.comment = 1 = RGB для цвета солнца/луны; 2 = черное тело
+option.SHADER_VERSION_LABEL = Bliss В-Разраб(In-Dev) Число Коммита
+    prefix.SHADER_VERSION_LABEL = КОММИТ #
 
-screen.Misc_Settings = Разные настройки
-option.sunPathRotation = Угол наклона солнца/луны
-option.sun_illuminance = Свет Солнца
-option.moon_illuminance = Свет Луны
-option.MOONPHASE_BASED_MOONLIGHT = Уровень яркости фаз луны
-option.TRANSLUCENT_COLORED_SHADOWS = Полупрозрачные цветные тени
-option.OLD_LIGHTLEAK_FIX = Исправление утечки света
+# если вы здесь, чтобы переводить, это шутка, они ничего не выполняют того, что говорят.
+# Okay)
+profile.QUALITY=Качество
+profile.PERFORMANCE=Производительность
 
-option.RESOURCEPACK_SKY = Небо текстурпака
-    value.RESOURCEPACK_SKY.0 = Выкл.
-    value.RESOURCEPACK_SKY.1 = Небо + Шейдер солнца/луны
-    value.RESOURCEPACK_SKY.2 = Все небо
+{#####_Misc. Settings_#####}
 
-screen.Waving_Stuff = Колыхание растительности
-    option.WAVY_PLANTS = Колыхание растительности
-    option.WAVY_STRENGTH = Интенсивность колыхания
-    option.WAVY_SPEED = Скорость колыхания
+screen.Misc_Settings = Настройка §cОтладочный§r/Экспериментальный
 
-screen.Direct_Light = Прямой свет
+|/////Sun and Moon Colors/////|
+
+screen.Sun_and_Moon_Colors = Цвет Солнца/Луны
+
+[-----sunPathRotation-----]
+
+option.sunPathRotation = Наклон Солнца
+
+[-----sun illuminance-----]
+
+option.sun_illuminance = Яркость Солнца
+
+[-----moon illuminance-----]
+
+option.moon_illuminance = Яркость Луны
+
+[-----Moonphase Based Moonlight-----]
+
+option.MOONPHASE_BASED_MOONLIGHT = Уровни яркости лунных фаз
+
+{#####_Settings For Supported Mods_#####}
+
+screen.Mod_support = Настройка Для Поддерживаемых Модов
+
+[-----ResourcePack Sky-----]
+
+option.RESOURCEPACK_SKY = Небо РесурсПака
+    value.RESOURCEPACK_SKY.0 = Не использовать
+    value.RESOURCEPACK_SKY.1 = Небо + Шейдерное солнце/луна
+    value.RESOURCEPACK_SKY.2 = Полностю небо
+    value.RESOURCEPACK_SKY.2 = Шейдерное Небо + РП (RP) солнце/луна
+
+|/////Waving Stuff/////|
+
+screen.Waving_Stuff = Развевающиеся Вещи
+    
+[-----Waving Plants-----]
+
+    option.WAVY_PLANTS = Развевающиеся Растения
+
+[-----Waving Strength-----]
+
+    option.WAVY_STRENGTH = Сила Развевания
+
+[-----Waving Speed-----]
+
+    option.WAVY_SPEED = Скорость Развевания
+
+{#####_Direct Light_#####}
+
+screen.Direct_Light = Прямой Свет
+
+|/////Shadows/////|
+
     screen.Shadows = Тени
-        option.SCREENSPACE_CONTACT_SHADOWS = Тени от объектов
-        option.RENDER_ENTITY_SHADOWS = Тени от сущностей
-        option.shadowMapResolution = Разрешение теней
-        option.shadowDistance = Дистанция теней 
-            value.shadowDistance.64.0 = 4 Чанков
+
+[-----Colored Shadows-----]
+
+        option.TRANSLUCENT_COLORED_SHADOWS = Цветные Тени
+
+[-----Contact Shadows-----]
+
+        option.SCREENSPACE_CONTACT_SHADOWS = В пространстве-экрана Тени
+
+[-----Render Entity Shadows-----]
+
+        option.RENDER_ENTITY_SHADOWS = Тени от Сущности
+
+[-----Shadows for the Player-----]
+
+        option.RENDER_PLAYER_SHADOWS = Тени для Игрока
+
+[-----Shadow Resolution-----]
+
+        option.shadowMapResolution = Разрешение Тени
+
+[-----Shadow Distance-----]
+
+        option.shadowDistance = Дистанция Тени
+            value.shadowDistance.32.0 = 2 Чанка
+            value.shadowDistance.48.0 = 3 Чанка
+            value.shadowDistance.64.0 = 4 Чанка
             value.shadowDistance.80.0 = 5 Чанков
             value.shadowDistance.96.0 = 6 Чанков
             value.shadowDistance.112.0 = 7 Чанков
@@ -61,684 +120,1432 @@ screen.Direct_Light = Прямой свет
             value.shadowDistance.352.0 = 22 Чанков
             value.shadowDistance.368.0 = 23 Чанков
             value.shadowDistance.384.0 = 24 Чанков
-            value.shadowDistance.400.0 = 25 Чанков
-            value.shadowDistance.416.0 = 26 Чанков
-            value.shadowDistance.432.0 = 27 Чанков
-            value.shadowDistance.448.0 = 28 Чанков
-            value.shadowDistance.464.0 = 29 Чанков
-            value.shadowDistance.480.0 = 30 Чанков
-            value.shadowDistance.496.0 = 31 Чанков
             value.shadowDistance.512.0 = 32 Чанков
-        option.OPTIMIZED_SHADOW_DISTANCE = Границы теней
-            value.OPTIMIZED_SHADOW_DISTANCE.-1.0 = Неоптимизированный 
-            value.OPTIMIZED_SHADOW_DISTANCE.1.0 = Оптимизированный
-        option.entityShadowDistanceMul = Расстояние до тени объекта
+            value.shadowDistance.768.0 = 48 чанков
+            value.shadowDistance.1024.0 = 64 Чанков
+            value.shadowDistance.1536.0 = 96 Чанков
+            value.shadowDistance.2048.0 = 128 Чанков
+            value.shadowDistance.4096.0 = 256 Чанков
+            value.shadowDistance.8192.0 = 512 Чанков
 
-    screen.Filtering = Параметры теневой фильтрации
-	    option.BASIC_SHADOW_FILTER = Теневой фильтр
-        option.SHADOW_FILTER_SAMPLE_COUNT = Качество теневого фильтра
-        option.Min_Shadow_Filter_Radius = Мини. радиус фильтра теней
-        option.Variable_Penumbra_Shadows = Переменные тени/полутени
-        option.VPS_Search_Samples = Качество фильтра VPS
-        option.Max_Shadow_Filter_Radius = Макс. радиус фильтра теней
-        option.Max_Filter_Depth = Коэффициент "размера солнца"
+[-----Max Shadow Bounds-----]
 
+        option.OPTIMIZED_SHADOW_DISTANCE = Максимальные Грани Теней
+            value.OPTIMIZED_SHADOW_DISTANCE.-1.0 = Не-Оптимизированные
+            value.OPTIMIZED_SHADOW_DISTANCE.1.0 = Оптимизированные
 
-screen.Subsurface_Scattering = Поверхностное рассеивание
-    option.LabSSS_Curve = Интенсивность LabSSS
-    option.MISC_BLOCK_SSS = SSS для случайных блоков
-    option.MOB_SSS = SSS для мобов
-    option.Ambient_SSS = SSS для неба
-    option.ambientsss_brightness = SSS для неба
+[-----Entity Shadow Distance-----]
+
+        option.entityShadowDistanceMul = Дистанция Теней Сущности
+            value.entityShadowDistanceMul.0.01 = 1% от Дистанции Теней
+            value.entityShadowDistanceMul.0.02 = 2% от Дистанции Теней
+            value.entityShadowDistanceMul.0.03 = 3% от Дистанции Теней
+            value.entityShadowDistanceMul.0.04 = 4% от Дистанции Теней
+            value.entityShadowDistanceMul.0.05 = 5% от Дистанции Теней
+            value.entityShadowDistanceMul.0.10 = 10% от Дистанции Теней
+            value.entityShadowDistanceMul.0.15 = 15% от Дистанции Теней
+            value.entityShadowDistanceMul.0.20 = 20% от Дистанции Теней
+            value.entityShadowDistanceMul.0.25 = 25% от Дистанции Теней
+            value.entityShadowDistanceMul.0.30 = 30% от Дистанции Теней
+            value.entityShadowDistanceMul.0.35 = 35% от Дистанции Теней
+            value.entityShadowDistanceMul.0.40 = 40% от Дистанции Теней
+            value.entityShadowDistanceMul.0.45 = 45% от Дистанции Теней
+            value.entityShadowDistanceMul.0.50 = 50% от Дистанции Теней
+            value.entityShadowDistanceMul.0.75 = 75% от Дистанции Теней
+            value.entityShadowDistanceMul.1.00 = 100% от Дистанции Теней
+
+|/////Shadow Filtering Settings/////|
+
+    screen.Filtering = Настройка Фильтра Теней
+
+[-----Basic Shadow Filter Samples-----]
+
+        option.SHADOW_FILTER_SAMPLE_COUNT = Обычный Образец Фильтра Теней
+
+[-----Minimum Shadow filter Radius-----]
+
+        option.Min_Shadow_Filter_Radius = Минимальный Радиус Фильтра Теней
+
+[-----Variable Penumbra Shadows-----]
+
+        option.Variable_Penumbra_Shadows = Переменные Полутеневые Тени
+
+[-----VPS Filter Samples-----]
+
+        option.VPS_Search_Samples = Образцы Фильтра ППТ (VPS)
+
+[-----Maximum Shadow Filter Radius-----]
+
+        option.Max_Shadow_Filter_Radius = Максимальный Радиус Фильтра Теней
+
+[-----Sun Size Factor-----]
+
+        option.Max_Filter_Depth = Фактор Размера Солнца
+
+|/////FloodFill/////|
+
+    screen.LPV = НаливноеЗаполнение (FloodFill) - §cОБЯЗАТЕЛЬНО IRIS§r
+
+[-----Enabled-----]
+
+        option.LPV_ENABLED = Включён
+
+[-----Size-----]
+
+        option.LPV_SIZE = Размер
+            value.LPV_SIZE.6 = Маленький [64]
+            value.LPV_SIZE.7 = Средний [128]
+            value.LPV_SIZE.8 = Большой [256]
+
+[-----Light Saturation-----]
+
+        option.LPV_SATURATION = Насыщенность Света
+            suffix.LPV_SATURATION=%
+
+[-----Tint Saturation-----]
+
+        option.LPV_TINT_SATURATION = Насыщенность Тонировки (Tint)
+            suffix.LPV_TINT_SATURATION=%
+
+[-----Normal Strength-----]
+
+        option.LPV_NORMAL_STRENGTH = Сила Нормалей
+            suffix.LPV_NORMAL_STRENGTH = %
+            value.LPV_NORMAL_STRENGTH.0 = ВЫКЛ
+
+[-----Entity Lights-----]
+
+        option.LPV_ENTITY_LIGHTS = Свет Сущностей
+
+[-----Redstone Lights-----]
+
+        option.LPV_REDSTONE_LIGHTS = Свет Редстоуна
+
+[-----Colored Candles-----]
+
+        option.LPV_COLORED_CANDLES = Цветные Свечи
+
+[-----Iris <= 1.7.0 Fix-----]
+
+        option.LPV_NOSHADOW_HACK = Исправление Iris <= 1.7.0
+
+[-----Fog Light Propagation-----]
+
+        option.LPV_VL_FOG_ILLUMINATION = Распространение Света Тумана
+
+[-----Fog Light Propagation Brightness-----]
+
+        option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS = Яркость Распространение Света Тумана
+            suffix.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS=%
+
+|/////Sub-Surface Scattering/////|
+
+screen.Subsurface_Scattering = Под-Поверхностное Рассеяние
+
+[-----LabSSS Curve-----]
+
+    option.LabSSS_Curve = Кривость LabППР (SSS)
+
+[-----SSS for random blocks-----]
+
+    option.MISC_BLOCK_SSS = ППР (SSS) для разных блоков
+
+[-----SSS for mobs-----]
+
+    option.MOB_SSS = ППР (SSS) для мобов
+
+[-----SSS from the sky-----]
+
+    option.Ambient_SSS = ППР (SSS) от неба
+
+[-----Sky SSS Brightness-----]
+
+    option.ambientsss_brightness = Яркость Неба ППР (SSS)
+
+[-----Mode-----]
+
     option.SSS_TYPE = Режим
-        value.SSS_TYPE.0 = Выкл.
-        value.SSS_TYPE.1 = Hardcoded only
-        value.SSS_TYPE.2 = Hardcoded + LabSSS
-        value.SSS_TYPE.3 = LabSSS only
+        value.SSS_TYPE.0 = Никакой
+        value.SSS_TYPE.1 = Только Жёсткозакодированный
+        value.SSS_TYPE.2 = Жёсткозакодированный + LabППР (SSS)
+        value.SSS_TYPE.3 = Только LabППР (SSS)
 
+{#####_Ambient Light_#####}
 
-screen.Ambient_light = Окружающий свет
-    option.AO_Strength = Интенсивность AO
-    option.GI_Strength = Интенсивность GI
-    option.HQ_SSGI = SSGI дальнего радиуса
-    option.Hand_Held_lights = Ручной свет
-    option.SKY_CONTRIBUTION_IN_SSRT = Высокое качество света
-    option.ambientOcclusionLevel = Интенсивность Vanilla AO
-    option.ambient_brightness = Яркость окружающего света
-    option.MIN_LIGHT_AMOUNT = Минимальная яркость света
-    option.indirect_effect = Качество освещения
-        value.indirect_effect.0 = Vanilla AO
-            value.indirect_effect.1 = SSAO
-            value.indirect_effect.2 = GTAO
-            value.indirect_effect.3 = RTAO
-            value.indirect_effect.4 = SSGI
+screen.Ambient_light = Окружающее Освещение (AO)
 
-    screen.Ambient_Colors =  Цвет окружающего света
-        option.AmbientLight_R = Количество красного
-        option.AmbientLight_G = Количество зеленого
-        option.AmbientLight_B = Количество синего
-        option.ambient_colortype = Тип окраса
+[-----AO Multiplier-----]
+
+    option.AO_Strength = Множитель ОО (AO)
+
+[-----GI Multiplier-----]
+
+    option.GI_Strength = Множитель ГО (GI)
+
+[-----Long Range SSGI-----]
+
+    option.HQ_SSGI = Длинный Диапазон ПЭГО (SSGI)
+
+[-----Hand Held Light-----]
+
+    option.Hand_Held_lights = Руковое Освещение
+
+[-----High Quality Ambient Light-----]
+
+    option.SKY_CONTRIBUTION_IN_SSRT = Высокое Качество Окружающего Освещения (AO)
+
+[-----Vanilla AO Amount-----]
+
+    option.ambientOcclusionLevel = Количество Ванильного ОО (AO)
+
+[-----Ambient Light Brightness-----]
+
+    option.ambient_brightness = Яркость Окружающего Света (Ambient Light)
+
+[-----Minimum Light Brightness-----]
+
+    option.MIN_LIGHT_AMOUNT = Минимальная Яркость Света
+
+[-----Indirect Lighting-----]
+
+    option.indirect_effect = Косвенное Освещение
+        value.indirect_effect.0 = Ванильный ОО (AO)
+            value.indirect_effect.1 = ПЭОО (SSAO)
+            value.indirect_effect.2 = НРОО (GTAO)
+            value.indirect_effect.3 = ТЛОО (RTAO)
+            value.indirect_effect.4 = ПЭГО (SSGI)
+
+|/////Ambient Light Color/////|
+
+    screen.Ambient_Colors =  Цвет Окружающего Освещения (Ambient Light)
+
+[-----Red Amount-----]
+
+        option.AmbientLight_R = Количество Красного
+
+[-----Green Amount-----]
+
+        option.AmbientLight_G = Количество Зелёного
+
+[-----Blue Amount-----]
+
+        option.AmbientLight_B = Количество Синего
+
+[-----Coloring Type-----]
+
+        option.ambient_colortype = Тип Раскраска
             value.ambient_colortype.0 = Температура
-            value.ambient_colortype.1 = RGB
+            value.ambient_colortype.1 = КЗС (RGB)
+
+|/////Torch Color/////|
+
+    screen.Torch_Colors = Цвет Факела
+
+[-----Torch Color Multiplier-----]
+
+        option.TORCH_AMOUNT = Множитель Цвета Факела
+        option.TORCH_R = Количество Красного
+        option.TORCH_G = Количество Зелёного
+        option.TORCH_B = Количество Синего
     
-    screen.Torch_Colors = Цвет факела
-        option.TORCH_AMOUNT = Интенсивность освещения факела
-        option.TORCH_R = Количество красного
-        option.TORCH_G = Количество зеленого
-        option.TORCH_B = Количество синего
-		
-	option.HANDHELD_LIGHT_RANGE = Диапазон портативного освещения
-	option.UseQuarterResDepth = Используйте четверть глубины разрешения
+{#####_Fog Settings_#####}
 
-screen.Fog = Туман
-    option.VL_RENDER_RESOLUTION = Разрешение объемного тумана
-    option.VL_SAMPLES = Качество объемного тумана
-    option.BLOOMY_FOG = Количество рассеянного тумана
-    option.Haze_amount = Плотность атмосферной дымки
-    option.RainFog_amount = Количество дождевого тумана
-    option.RAYMARCH_CLOUDS_WITH_FOG = Рендер Облака в виде Тумана
-    option.BorderFog = Граница тумана
+screen.Fog = Настройка Тумана
 
-    screen.TOD_fog = Дневной туман
-        option.TOD_Fog_mult = Плотности тумана
-        option.Morning_Uniform_Fog = Плотность утреннего тумана
-        option.Noon_Uniform_Fog = Плотность полудневного тумана
-        option.Evening_Uniform_Fog = Плотность вечернего тумана
-        option.Night_Uniform_Fog = Плотность ночного тумана
-        option.Morning_Cloudy_Fog = Плотность утреннего облачного тумана
-        option.Noon_Cloudy_Fog = Плотность полудневного облачного тумана
-        option.Evening_Cloudy_Fog = Плотность вечернего облачного тумана
-        option.Night_Cloudy_Fog = Плотность ночного облачного тумана
+[-----Fog Resolution Scaling-----]
 
-        option.PER_BIOME_ENVIRONMENT = Специфичная среда биомов 
+    option.VL_RENDER_RESOLUTION = Шкала Разрешения Тумана
 
-    screen.Cave_Fog = Пещерный туман
-        option.CAVE_FOG = Пещерный туман
-        option.CaveFogFallOff = Яркость тумана
-        option.CaveFogColor_R = Количество красного
-        option.CaveFogColor_G = Количество зеленого
-        option.CaveFogColor_B = Количество синего
-		option.FOG_START_HEIGHT = Высота начала тумана
+[-----Fog Samples-----]
 
-    screen.END_AND_NETHER_FOG = Туман в Незере/Энде
-        option.END_STORM_DENSTIY = Плотность шторма в энде
-        option.NETHER_PLUME_DENSITY = Плотность дыма в незере
-		option.CLOUD_SHADOW_STRENGTH = Сила тени от облаков
+    option.VL_SAMPLES = Образцы Тумана
 
-screen.Clouds = Облака
-    option.VOLUMETRIC_CLOUDS = Объемные облака
-    option.CLOUDS_QUALITY = Разрешение облаков
-    option.CLOUDS_SHADOWS = Тень от облаков
-    option.Cloud_Speed = Скорость облаков
-    option.Rain_coverage = Покрытие во время дождя
-    option.Daily_Weather = Ежедневная погода
+[-----Bloomy Fog Multiplier-----]
 
-    option.CloudLayer0          = Малые кучевые облака
-    option.CloudLayer0_coverage = Покрытие
+    option.BLOOMY_FOG = Множитель Блюмового (Разцветённого) Тумана
+
+[-----Atmospheric Haze Density-----]
+
+    option.Haze_amount = Глубина Атмосферного Газа
+
+[-----Rain Fog Multiplier-----]
+
+    option.RainFog_amount = Множитель Дождевого Тумана
+
+[-----Render Clouds As Fog (READ DESCRIPTION)-----]
+
+    option.RAYMARCH_CLOUDS_WITH_FOG = Рендер Облаков Под Туманом §c(ПРОЧИТАТЬ ОПИСАНИЕ)§r
+
+[-----Chunk Border Fog-----]
+
+    option.BorderFog = Чанк Границы Тумана
+
+|/////Time Of Day Fog/////|
+
+    screen.TOD_fog = Время Дневного Тумана
+
+[-----Fog Density Multiplier-----]
+
+        option.TOD_Fog_mult = Множитель Глубины Тумана
+
+[-----Morning Fog Density-----]
+
+        option.Morning_Uniform_Fog = Утренняя Глубина Тумана
+
+[-----Noon Fog Density-----]
+
+        option.Noon_Uniform_Fog = Полдневная Глубина Тумана
+
+[-----Evening Fog Density-----]
+
+        option.Evening_Uniform_Fog = Вечерняя Глубина Тумана
+
+[-----Night Fog Density-----]
+
+        option.Night_Uniform_Fog = Ночная Глубина Тумана
+
+[-----Cloudy Morning Fog Density-----]
+
+        option.Morning_Cloudy_Fog = Облачное Утро Глубины Тумана
+
+[-----Cloudy Noon Fog Density-----]
+
+        option.Noon_Cloudy_Fog = Облачный Полдень Глубины Тумана
+
+[-----Cloudy Evening Fog Density-----]
+
+        option.Evening_Cloudy_Fog = Облачный Вечер Глубины Тумана
+
+[-----Cloudy Night Fog Density-----]
+
+        option.Night_Cloudy_Fog = Облачная Ночь Глубины Тумана
+
+[-----Per Biome Environments-----]
+
+        option.PER_BIOME_ENVIRONMENT = Окружать На Биом
+
+|/////Cave Fog/////|
+
+    screen.Cave_Fog = Пещерный Туман
+
+[-----Cave Fog-----]
+
+        option.Cave_Fog = Пещерный Туман
+
+[-----Fog Falloff-----]
+
+        option.CaveFogFallOff = Спад Тумана
+
+[-----Fog R-----]
+
+        option.CaveFogColor_R = Туман К (R)
+
+[-----Fog G-----]
+
+        option.CaveFogColor_G = Туман З (G)
+
+[-----Fog B-----]
+
+        option.CaveFogColor_B = Туман Г (B)
+
+|/////Nether/End Fog/////|
+
+    screen.END_AND_NETHER_FOG = Туман Незера/Энда
+
+[-----End Storm Density-----]
+
+        option.END_STORM_DENSTIY = Глубина Шторма Энда
+
+[-----Nether Smoke Density-----]
+
+        option.NETHER_PLUME_DENSITY = Глубина Дыма Незера
+
+{#####_Cloud Settings_#####}
+
+screen.Clouds = Настройка Облаков
+
+[-----Volumetric Clouds-----]
+
+    option.VOLUMETRIC_CLOUDS = Объёмные Облака
+
+[-----Cloud Resolution Scaling-----]
+
+    option.CLOUDS_QUALITY = Шкала Разрешения Облаков
+
+[-----Cloud Shadows-----]
+
+    option.CLOUDS_SHADOWS = Тени Облаков
+
+[-----Cloud Speed Multiplier-----]
+
+    option.Cloud_Speed = Множитель Скорости Облаков
+
+[-----Coverage When Raining-----]
+
+    option.Rain_coverage = Охват Когда Дождливо
+
+[-----Daily Weather-----]
+
+    option.Daily_Weather = Ежедневная Погода
+
+[-----Small Cumulus Clouds-----]
+
+    option.CloudLayer0          = Маленькие Кучевые Облака
+    option.CloudLayer0_coverage = Охват
     option.CloudLayer0_density  = Плотность
     option.CloudLayer0_height   = Высота
 
-    option.CloudLayer1          = Большие кучевые облака
-    option.CloudLayer1_coverage = Покрытие
+[-----Large Cumulus Clouds-----]
+
+    option.CloudLayer1          = Большие Кучевые Облака
+    option.CloudLayer1_coverage = Охват
     option.CloudLayer1_density  = Плотность
     option.CloudLayer1_height   = Высота
 
-    option.CloudLayer2          = Высокослойные кучевые облака
-    option.CloudLayer2_coverage = Покрытие
+[-----Altostratus Clouds-----]
+
+    option.CloudLayer2          = Высокослоистые Облака
+    option.CloudLayer2_coverage = Охват
     option.CloudLayer2_density  = Плотность
     option.CloudLayer2_height   = Высота
 
-screen.DAILY_WEATHER = Дневная погода
-    screen.DAY0_WEATHER = День 0 Погода
-        option.DAY0_l0_coverage = Покрытие малых облаков
-        option.DAY0_l0_density = Плотность малых облаков
-        option.DAY0_l1_coverage = Покрытие больших облаков
-        option.DAY0_l1_density = Плотность больших облаков
-        option.DAY0_l2_coverage = Покрытие высокослоистых облаков
-        option.DAY0_l2_density =  Плотность высокослоистых облаков 
-        option.DAY0_ufog_density = Покрытие плотности тумана
-        option.DAY0_cfog_density = Облачная плотность тумана
+|/////Daily Weather Settings/////|
+
+screen.DAILY_WEATHER = Настройка Ежедневной Погоды
+
+[-----Random Weather Profile-----]
+
+option.CHOOSE_RANDOM_WEATHER_PROFILE = Случайный Профиль Погоды
+
+|/////Day 0 Weather Profile/////|
+
+    screen.DAY0_WEATHER = Профиль Погоды День 0
+        option.DAY0_l0_coverage = Охват Маленьких Кучевых
+        option.DAY0_l0_density = Плотность Маленьких Кучевых
+        option.DAY0_l1_coverage = Охват Больших Кучевых
+        option.DAY0_l1_density = Плотность Больших Кучевых
+        option.DAY0_l2_coverage = Охват Высокослоистых Облаков
+        option.DAY0_l2_density =  Плотность Высокослоистых Облаков
+        option.DAY0_ufog_density = Плотность Униформного Тумана
+        option.DAY0_cfog_density = Плотность Облачного Тумана
+
+|/////Day 1 Weather Profile/////|
+
+    screen.DAY1_WEATHER = Профиль Погоды День 1
+        option.DAY1_l0_coverage = Охват Маленьких Кучевых
+        option.DAY1_l0_density = Плотность Маленьких Кучевых
+        option.DAY1_l1_coverage = Охват Больших Кучевых
+        option.DAY1_l1_density = Плотность Больших Кучевых
+        option.DAY1_l2_coverage = Охват Высокослоистых Облаков
+        option.DAY1_l2_density =  Плотность Высокослоистых Облаков
+        option.DAY1_ufog_density = Плотность Униформного Тумана
+        option.DAY1_cfog_density = Плотность Облачного Тумана
+
+|/////Day 2 Weather/////|
+
+    screen.DAY2_WEATHER = Профиль Погоды День 2
+        option.DAY2_l0_coverage = Охват Маленьких Кучевых
+        option.DAY2_l0_density = Плотность Маленьких Кучевых
+        option.DAY2_l1_coverage = Охват Больших Кучевых
+        option.DAY2_l1_density = Плотность Больших Кучевых
+        option.DAY2_l2_coverage = Охват Высокослоистых Облаков
+        option.DAY2_l2_density =  Плотность Высокослоистых Облаков
+        option.DAY2_ufog_density = Плотность Униформного Тумана
+        option.DAY2_cfog_density = Плотность Облачного Тумана
+
+|/////Day 3 Weather Profile/////|
+
+    screen.DAY3_WEATHER = Профиль Погоды День 3
+        option.DAY3_l0_coverage = Охват Маленьких Кучевых
+        option.DAY3_l0_density = Плотность Маленьких Кучевых
+        option.DAY3_l1_coverage = Охват Больших Кучевых
+        option.DAY3_l1_density = Плотность Больших Кучевых
+        option.DAY3_l2_coverage = Охват Высокослоистых Облаков
+        option.DAY3_l2_density =  Плотность Высокослоистых Облаков
+        option.DAY3_ufog_density = Плотность Униформного Тумана
+        option.DAY3_cfog_density = Плотность Облачного Тумана
+
+|/////Day 4 Weather Profile/////|
+
+    screen.DAY4_WEATHER = Профиль Погоды День 4
+        option.DAY4_l0_coverage = Охват Маленьких Кучевых
+        option.DAY4_l0_density = Плотность Маленьких Кучевых
+        option.DAY4_l1_coverage = Охват Больших Кучевых
+        option.DAY4_l1_density = Плотность Больших Кучевых
+        option.DAY4_l2_coverage = Охват Высокослоистых Облаков
+        option.DAY4_l2_density =  Плотность Высокослоистых Облаков
+        option.DAY4_ufog_density = Плотность Униформного Тумана
+        option.DAY4_cfog_density = Плотность Облачного Тумана
+
+|/////Day 5 Weather Profile/////|
+
+    screen.DAY5_WEATHER = Профиль Погоды День 5
+        option.DAY5_l0_coverage = Охват Маленьких Кучевых
+        option.DAY5_l0_density = Плотность Маленьких Кучевых
+        option.DAY5_l1_coverage = Охват Больших Кучевых
+        option.DAY5_l1_density = Плотность Больших Кучевых
+        option.DAY5_l2_coverage = Охват Высокослоистых Облаков
+        option.DAY5_l2_density =  Плотность Высокослоистых Облаков
+        option.DAY5_ufog_density = Плотность Униформного Тумана
+        option.DAY5_cfog_density = Плотность Облачного Тумана
+
+|/////Day 6 Weather Profile/////|
+
+    screen.DAY6_WEATHER = Профиль Погоды День 6
+        option.DAY6_l0_coverage = Охват Маленьких Кучевых
+        option.DAY6_l0_density = Плотность Маленьких Кучевых
+        option.DAY6_l1_coverage = Охват Больших Кучевых
+        option.DAY6_l1_density = Плотность Больших Кучевых
+        option.DAY6_l2_coverage = Охват Высокослоистых Облаков
+        option.DAY6_l2_density =  Плотность Высокослоистых Облаков
+        option.DAY6_ufog_density = Плотность Униформного Тумана
+        option.DAY6_cfog_density = Плотность Облачного Тумана
+
+|/////Day 7 Weather Profile/////|
+    screen.DAY7_WEATHER = Профиль Погоды День 7
+        option.DAY7_l0_coverage = Охват Маленьких Кучевых
+        option.DAY7_l0_density = Плотность Маленьких Кучевых
+        option.DAY7_l1_coverage = Охват Больших Кучевых
+        option.DAY7_l1_density = Плотность Больших Кучевых
+        option.DAY7_l2_coverage = Охват Высокослоистых Облаков
+        option.DAY7_l2_density =  Плотность Высокослоистых Облаков
+        option.DAY7_ufog_density = Плотность Униформа Тумана
+        option.DAY7_cfog_density = Плотность Облачного Тумана
+
+|/////Day 8 Weather Profile/////|
+
+    screen.DAY8_WEATHER = Профиль Погоды День 8
+        option.DAY8_l0_coverage = Охват Маленьких Кучевых
+        option.DAY8_l0_density = Плотность Маленьких Кучевых
+        option.DAY8_l1_coverage = Охват Больших Кучевых
+        option.DAY8_l1_density = Плотность Больших Кучевых
+        option.DAY8_l2_coverage = Охват Высокослоистых Облаков
+        option.DAY8_l2_density =  Плотность Высокослоистых Облаков
+        option.DAY8_ufog_density = Плотность Униформного Тумана
+        option.DAY8_cfog_density = Плотность Облачного Тумана
+
+|/////Day 9 Weather Profile/////|
+
+    screen.DAY9_WEATHER = Профиль Погоды День 9
+        option.DAY9_l0_coverage = Охват Маленьких Кучевых
+        option.DAY9_l0_density = Плотность Маленьких Кучевых
+        option.DAY9_l1_coverage = Охват Больших Кучевых
+        option.DAY9_l1_density = Плотность Больших Кучевых
+        option.DAY9_l2_coverage = Охват Высокослоистых Облаков
+        option.DAY9_l2_density =  Плотность Высокослоистых Облаков
+        option.DAY9_ufog_density = Плотность Униформного Тумана
+        option.DAY9_cfog_density = Плотность Облачного Тумана
         
-    screen.DAY1_WEATHER = День 1 Погода
-        option.DAY1_l0_coverage = Покрытие малых облаков
-        option.DAY1_l0_density = Плотность малых облаков
-        option.DAY1_l1_coverage = Покрытие больших облаков
-        option.DAY1_l1_density = Плотность больших облаков
-        option.DAY1_l2_coverage = Покрытие высокослоистых облаков
-        option.DAY1_l2_density =  Плотность высокослоистых облаков 
-        option.DAY1_ufog_density = Покрытие плотности тумана
-        option.DAY1_cfog_density = Облачная плотность тумана
-        
-    screen.DAY2_WEATHER = День 2 Погода
-        option.DAY2_l0_coverage = Покрытие малых облаков
-        option.DAY2_l0_density = Плотность малых облаков
-        option.DAY2_l1_coverage = Покрытие больших облаков
-        option.DAY2_l1_density = Плотность больших облаков
-        option.DAY2_l2_coverage = Покрытие высокослоистых облаков
-        option.DAY2_l2_density =  Плотность высокослоистых облаков 
-        option.DAY2_ufog_density = Покрытие плотности тумана
-        option.DAY2_cfog_density = Облачная плотность тумана
+{#####_Climate Settings_#####}
 
-    screen.DAY3_WEATHER = День 3 Погода
-        option.DAY3_l0_coverage = Покрытие малых облаков
-        option.DAY3_l0_density = Плотность малых облаков
-        option.DAY3_l1_coverage = Покрытие больших облаков
-        option.DAY3_l1_density = Плотность больших облаков
-        option.DAY3_l2_coverage = Покрытие высокослоистых облаков
-        option.DAY3_l2_density =  Плотность высокослоистых облаков 
-        option.DAY3_ufog_density = Покрытие плотности тумана
-        option.DAY3_cfog_density = Облачная плотность тумана
+screen.Climate = Настройка Климата
 
-    screen.DAY4_WEATHER = День 4 Погода
-        option.DAY4_l0_coverage = Покрытие малых облаков
-        option.DAY4_l0_density = Плотность малых облаков
-        option.DAY4_l1_coverage = Покрытие больших облаков
-        option.DAY4_l1_density = Плотность больших облаков
-        option.DAY4_l2_coverage = Покрытие высокослоистых облаков
-        option.DAY4_l2_density =  Плотность высокослоистых облаков 
-        option.DAY4_ufog_density = Покрытие плотности тумана
-        option.DAY4_cfog_density = Облачная плотность тумана
+[-----Seasonal Colors-----]
 
-    screen.DAY5_WEATHER = День 5 Погода
-        option.DAY5_l0_coverage = Покрытие малых облаков
-        option.DAY5_l0_density = Плотность малых облаков
-        option.DAY5_l1_coverage = Покрытие больших облаков
-        option.DAY5_l1_density = Плотность больших облаков
-        option.DAY5_l2_coverage = Покрытие высокослоистых облаков
-        option.DAY5_l2_density =  Плотность высокослоистых облаков 
-        option.DAY5_ufog_density = Покрытие плотности тумана
-        option.DAY5_cfog_density = Облачная плотность тумана
+    option.Seasons = Сезонные Цвета
 
-    screen.DAY6_WEATHER = День 6 Погода
-        option.DAY6_l0_coverage = Покрытие малых облаков
-        option.DAY6_l0_density = Плотность малых облаков
-        option.DAY6_l1_coverage = Покрытие больших облаков
-        option.DAY6_l1_density = Плотность больших облаков
-        option.DAY6_l2_coverage = Покрытие высокослоистых облаков
-        option.DAY6_l2_density =  Плотность высокослоистых облаков 
-        option.DAY6_ufog_density = Покрытие плотности тумана
-        option.DAY6_cfog_density = Облачная плотность тумана
+[-----Season Length (In Days)-----]
 
-    screen.DAY7_WEATHER = День 7 Погода
-        option.DAY7_l0_coverage = Покрытие малых облаков
-        option.DAY7_l0_density = Плотность малых облаков
-        option.DAY7_l1_coverage = Покрытие больших облаков
-        option.DAY7_l1_density = Плотность больших облаков
-        option.DAY7_l2_coverage = Покрытие высокослоистых облаков
-        option.DAY7_l2_density =  Плотность высокослоистых облаков 
-        option.DAY7_ufog_density = Покрытие плотности тумана
-        option.DAY7_cfog_density = Облачная плотность тумана
+    option.Season_Length = Длина Сезонов (В днях)
 
-    screen.DAY8_WEATHER = День 8 Погода
-        option.DAY8_l0_coverage = Покрытие малых облаков
-        option.DAY8_l0_density = Плотность малых облаков
-        option.DAY8_l1_coverage = Покрытие больших облаков
-        option.DAY8_l1_density = Плотность больших облаков
-        option.DAY8_l2_coverage = Покрытие высокослоистых облаков
-        option.DAY8_l2_density =  Плотность высокослоистых облаков 
-        option.DAY8_ufog_density = Покрытие плотности тумана
-        option.DAY8_cfog_density = Облачная плотность тумана
+[-----Starting Season-----]
 
-    screen.DAY9_WEATHER = День 9 Погода
-        option.DAY9_l0_coverage = Покрытие малых облаков
-        option.DAY9_l0_density = Плотность малых облаков
-        option.DAY9_l1_coverage = Покрытие больших облаков
-        option.DAY9_l1_density = Плотность больших облаков
-        option.DAY9_l2_coverage = Покрытие высокослоистых облаков
-        option.DAY9_l2_density =  Плотность высокослоистых облаков 
-        option.DAY9_ufog_density = Покрытие плотности тумана
-        option.DAY9_cfog_density = Облачная плотность тумана
-        
-
-screen.Climate = Климат
-    screen.Seasons = Сезонные цвета
-	option.Seasons = Сезонные цвета
-    option.Season_Length = Продолжительность сезона (в днях)
-	option.Start_Season = Начало сезона
-		value.Start_Season.0 = Лето (по умолчанию)
+	option.Start_Season = Начинающийся Сезон
+		value.Start_Season.0 = Лето (По умолчанию)
 		value.Start_Season.1 = Осень
 		value.Start_Season.2 = Зима
 		value.Start_Season.3 = Весна
-    option.Snowy_Winter = Снег зимой
-    screen.Summer_colors =  Летние цвета
-        option.Summer_R = Количество красного
-        option.Summer_G = Количество зеленого
-        option.Summer_B = Количество синего
-        option.Summer_Leaf_R = Количество красного (листва)
-        option.Summer_Leaf_G = Количество зеленого (листва)
-        option.Summer_Leaf_B = Количество синего (листва)
 
-    screen.Fall_colors = Осенние цвета
-        option.Fall_R = Количество красного
-        option.Fall_G = Количество зеленого
-        option.Fall_B = Количество синего
-        option.Fall_Leaf_R = Количество красного (листва)
-        option.Fall_Leaf_G = Количество зеленого (листва)
-        option.Fall_Leaf_B = Количество синего (листва)
+[-----Snow During Winter-----]
 
-    screen.Winter_colors = Зимние цвета
-        option.Winter_R = Количество красного
-        option.Winter_G = Количество зеленого
-        option.Winter_B = Количество синего
-        option.Winter_Leaf_R = Количество красного (листва)
-        option.Winter_Leaf_G = Количество зеленого (листва)
-        option.Winter_Leaf_B = Количество синего (листва)
+    option.Snowy_Winter = Снег Зимой
 
-    screen.Spring_colors = Весенние цвета
-        option.Spring_R = Количество красного
-        option.Spring_G = Количество зеленого
-        option.Spring_B = Количество синего
-        option.Spring_Leaf_R = Количество красного (листва)
-        option.Spring_Leaf_G = Количество зеленого (листва)
-        option.Spring_Leaf_B = Количество синего (листва)
-        
+|/////Summer Colors/////|
+
+    screen.Summer_colors = Летние Цвета
+        option.Summer_R = Количество Красного
+        option.Summer_G = Количество Зелёного
+        option.Summer_B = Количество Синего
+        option.Summer_Leaf_R = Количество Красного (на листьях)
+        option.Summer_Leaf_G = Количество Зелёного (на листьях)
+        option.Summer_Leaf_B = Количество Синего (на листьях)
+
+|/////Autumn Colors/////|
+
+    screen.Fall_colors = Осенние Цвета
+        option.Fall_R = Количество Красного
+        option.Fall_G = Количество Зелёного
+        option.Fall_B = Количество Синего
+        option.Fall_Leaf_R = Количество Красного (на листьях)
+        option.Fall_Leaf_G = Количество Зелёного (на листьях)
+        option.Fall_Leaf_B = Количество Синего (на листьях)
+
+|/////Winter Colors/////|
+
+    screen.Winter_colors = Зимние Цвета
+        option.Winter_R = Количество Красного
+        option.Winter_G = Количество Зелёного
+        option.Winter_B = Количество Синего
+        option.Winter_Leaf_R = Количество Красного (на листьях)
+        option.Winter_Leaf_G = Количество Зелёного (на листьях)
+        option.Winter_Leaf_B = Количество Синего (на листьях)
+
+|/////Spring Colors/////|
+
+    screen.Spring_colors = Весенние Цвета
+        option.Spring_R = Количество Красного
+        option.Spring_G = Количество Зелёного
+        option.Spring_B = Количество Синего
+        option.Spring_Leaf_R = Количество Красного (на листьях)
+        option.Spring_Leaf_G = Количество Зелёного (на листьях)
+        option.Spring_Leaf_B = Количество Синего (на листьях)
+
+|/////Swamp/////|
+
     screen.SWAMP = Болото
-        option.SWAMP_ENV = Окружающая среда болот
-        option.SWAMP_UNIFORM_DENSITY = Равномерная плотность тумана
-        option.SWAMP_CLOUDY_DENSITY = Облачная плотность тумана
-        option.SWAMP_R = Количество красного
-        option.SWAMP_G = Количество зеленого
-        option.SWAMP_B = Количество синего
+
+[-----Swamp Enviroment-----]
+
+        option.SWAMP_ENV = Окружение Болоты
+
+[-----Uniform Fog Density-----]
+
+        option.SWAMP_UNIFORM_DENSITY = Плотность Униформного Тумана
+
+[-----Cloudy Fog Density-----]
+
+        option.SWAMP_CLOUDY_DENSITY = Плотность Облачного Тумана
+        option.SWAMP_R = Количество Красного
+        option.SWAMP_G = Количество Зелёного
+        option.SWAMP_B = Количество Синего
+
+|/////Jungle/////|
 
     screen.JUNGLE = Джунгли
-        option.JUNGLE_ENV = Окружающая среда джунглей
-        option.JUNGLE_UNIFORM_DENSITY = Равномерная плотность тумана
-        option.JUNGLE_CLOUDY_DENSITY = Облачная плотность тумана
-        option.JUNGLE_R = Количество красного
-        option.JUNGLE_G = Количество зеленого
-        option.JUNGLE_B = Количество синего
 
-    screen.DARKFOREST = Темный лес
-        option.DARKFOREST_ENV = Окружающая среда темного леса
-        option.DARKFOREST_UNIFORM_DENSITY = Равномерная плотность тумана
-        option.DARKFOREST_CLOUDY_DENSITY = Облачная плотность тумана
-        option.DARKFOREST_R = Количество красного
-        option.DARKFOREST_G = Количество зеленого
-        option.DARKFOREST_B = Количество синего
+[-----Jungle Enviroment-----]
+
+        option.JUNGLE_ENV = Окружение Джунглей
+
+[-----Uniform Fog Density-----]
+
+        option.JUNGLE_UNIFORM_DENSITY = Плотность Униформного Тумана
+
+[-----Cloudy Fog Density-----]
+
+        option.JUNGLE_CLOUDY_DENSITY = Плотность Облачного Тумана
+        option.JUNGLE_R = Количество Красного
+        option.JUNGLE_G = Количество Зелёного
+        option.JUNGLE_B = Количество Синего
+
+|/////Dark Forest/////|
+
+    screen.DARKFOREST = Тёмный Лес
+
+[-----Dark Forest Enviroment-----]
+
+        option.DARKFOREST_ENV = Окружение Тёмного Леса
+
+[-----Uniform Fog Density-----]
+
+        option.DARKFOREST_UNIFORM_DENSITY = Плотность Униформного Тумана
+
+[-----Cloudy Fog Density-----]
+
+        option.DARKFOREST_CLOUDY_DENSITY = Плотность Облачного Тумана
+        option.DARKFOREST_R = Количество Красного
+        option.DARKFOREST_G = Количество Зелёного
+        option.DARKFOREST_B = Количество Синего
+
+{#####_World_#####}
 
 screen.World = Мир
-    screen.Water = Вода
-        option.WATER_REFLECTIONS = Зеркальные отражения от воды
-        option.SCREENSPACE_REFLECTIONS = Отражения объектов
-        option.SSR_STEPS = Качество SSR
-        option.WATER_SUN_SPECULAR = Отражения солнца/луны
-        option.WATER_BACKGROUND_SPECULAR = Отражения неба/тумана
-        option.Refraction = Преломление в воде/стекле
-        option.Dirt_Amount = Количество грязи
-        option.Water_Top_Layer = Координата океана Y
-        option.WATER_WAVE_STRENGTH = Сила волны
-        option.SNELLS_WINDOW = Вид из подводы
-		option.WATER_WAVE_SPEED = Скорость волн
-        
-        screen.Water_fog_color = Настройка водяного тумана
-            option.Dirt_Scatter_R = Рассеяный красный (грязь)
-            option.Dirt_Scatter_G = Рассеяный зеленый (грязь)
-            option.Dirt_Scatter_B = Рассеяный синий (грязь)
-            option.Dirt_Absorb_R = Поглощ. красный (грязь)
-            option.Dirt_Absorb_G = Поглощ. зеленый (грязь)
-            option.Dirt_Absorb_B = Поглощ. синий (грязь)
-            option.Water_Absorb_R = Поглощ. красный (вода)
-            option.Water_Absorb_G = Поглощ. зеленый (вода)
-            option.Water_Absorb_B = Поглощ. синий (вода)
-			
-		option.Vanilla_like_water = Ванильная вода
-		option.Vanilla_like_water.comment = Влючите ваниильную текстуру воды
 
+|/////Water Settings/////|
 
-screen.Post_Processing = Постобработка
-    screen.Tonemapping = Настройки тональной карты/цвета
-    screen.Exposure = Настройки экспозиции
-    screen.DepthOfField = Настройки глубины резкости
-    screen.Purkinje_effect = Настройки эффекта Пуркинье
-    option.SHARPENING = Степень контрастной адаптации
-    option.BLOOM_STRENGTH = Степень размытия
-    screen.TAA_OPTIONS = Настройки сглаживания
-        option.SCREENSHOT_MODE = Режим скриншота
-        option.TAA = TAA
-        option.BLEND_FACTOR = Коэффициент смешивания 
-        option.TAA_UPSCALING = Увеличение масштаба 
-        option.SCALE_FACTOR = Коэффициент масштаба
-		option.AUTO_EXPOSURE = Авто. экспозиция
-		option.EXPOSURE_MULTIPLIER = Коэффициент экспозиции
-		option.Exposure_Speed = Скорость экспозиции
-		option.Manual_exposure_value = Значение ручной экспозиции
-		option.Purkinje_strength = Интенсивность Пуркинье
-		option.Purkinje_R = Пуркинье красный
-		option.Purkinje_G = Пуркинье зеленый
-		option.Purkinje_B = Пуркинье синий
-		option.Purkinje_Multiplier = Коэффициент Пуркинье
-		option.TONEMAP = Тональная карта
-		option.USE_ACES_COLORSPACE_APPROXIMATION = Аппроксимация цветового пространства
-		option.SATURATION = Насыщенность
-		option.CROSSTALK = Перекрестные помехи
-		option.CONTRAST = Контраст
-		option.focal = Фокусный
-		option.aperture = Апертура
-		option.DoF_Adaptation_Speed = Скорость адаптации DoF
-		option.FAR_BLUR_ONLY = Только дальнее размытие
-	screen.COLOR_GRADING = Расширенная цветокоррекция
-		option.LUMINANCE_CURVE = Кривая тона
-		option.LOWER_CURVE = Нижняя кривая
-		option.UPPER_CURVE = Верхняя кривая
-		option.COLOR_GRADING_ENABLED = Расширенная цветокоррекция
-		option.SHADOWS_GRADE_R = Тень §cКоличество красного
-		option.SHADOWS_GRADE_G = Тень §aКоличество зеленого
-		option.SHADOWS_GRADE_B = Тень §9Количество синего
-		option.SHADOWS_GRADE_MUL = Яркость теней
-		option.MIDS_GRADE_R = Полутона §cКоличество красного
-		option.MIDS_GRADE_G = Полутона §aКоличество зеленого
-		option.MIDS_GRADE_B = Полутона §9Количество синего
-		option.MIDS_GRADE_MUL = Яркость полутонов
-		option.HIGHLIGHTS_GRADE_R = Основное освещение §cКоличество красного
-		option.HIGHLIGHTS_GRADE_G = Основное освещение §aКоличество зеленого
-		option.HIGHLIGHTS_GRADE_B = Основное освещение §9Количество синего
-		option.HIGHLIGHTS_GRADE_MUL = Яркость основного освещения
+    screen.Water = Настройка Воды
 
+[-----Specular Reflections for Water-----]
 
-screen.Resource_Pack_Support = Эффекты LabPBR
-    screen.Reflections = Зеркальные отражения
-        option.Specular_Reflections = Зеркальные отражения
-        option.Screen_Space_Reflections = Отражения в пространстве экрана
-        option.Rough_reflections = Детализированный объем
-        option.Sky_reflection = Отражения Неба/Тумана
-        option.Dynamic_SSR_quality = Динамическое качество SSR
-        option.Roughness_Threshold = Порог отражений
-        option.Sun_specular_Strength = Яркость отражений от солнца
-        option.reflection_quality = Качество SSR
+        option.WATER_REFLECTIONS = Спекулярное Отражение для Воды
 
-    screen.Emissives = Излучаемый свет
-        option.Emissive_Brightness = Яркость излучения
-        option.Emissive_Curve = Скорость излучения  
+[-----Screen-Space Reflections-----]
+
+        option.SCREENSPACE_REFLECTIONS = В Пространстве-Экрана Отражение (SSR)
+
+[-----SSR Quality-----]
+
+        option.SSR_STEPS = Качество ПЭО (SSR)
+
+[-----Sun/Moon Reflections-----]
+
+        option.WATER_SUN_SPECULAR = Отражение Солнца/Луны
+
+[-----Sky/Fog Reflections-----]
+
+        option.WATER_BACKGROUND_SPECULAR = Отражение Неба/Тумана
+
+[-----Refraction In Water/Glass-----]
+
+        option.Refraction = Отражение В Воде/Стекле
+
+[-----Dirt Amount-----]
+
+        option.Dirt_Amount = Количество Грязи
+
+[-----Ocean Y coordinate-----]
+
+        option.Water_Top_Layer = Координаты Океана Y
+
+[-----Wave Strength-----]
+
+        option.WATER_WAVE_STRENGTH = Сила Волн
+
+[-----Snell's Window-----]
+
+        option.SNELLS_WINDOW = Снеллсовое Окно
+
+|/////Water Fog Settings/////|
+
+        screen.Water_fog_color = Настройка Тумана Воды
+            option.Dirt_Scatter_R = Рассеиватель Красного (грязь)
+            option.Dirt_Scatter_G = Рассеиватель Зелёного (грязь)
+            option.Dirt_Scatter_B = Рассеиватель Синего (грязь)
+            option.Dirt_Absorb_R = Поглощатель Красного (грязь)
+            option.Dirt_Absorb_G = Поглощатель Зелёного (грязь)
+            option.Dirt_Absorb_B = Поглощатель Синего (грязь)
+            option.Water_Absorb_R = Поглощатель Красного (вода)
+            option.Water_Absorb_G = Поглощатель Зелёного (вода)
+            option.Water_Absorb_B = Поглощатель Синего (вода)
+
+{#####_Post Processing_#####}
+
+screen.Post_Processing = Пост Обработка
+
+|/////Tone-Map/Color Settings/////|
+
+    screen.Tonemapping = Настройка Тон-Карты/Цвета
+
+|/////Exprouse Settings/////|
+
+    screen.Exposure = Настройка Экспозиции
+
+|/////Depth Of Field Settings/////|
+
+    screen.DepthOfField = Настройка Глубины Резкости
+
+|/////Purkinje Effect Settings/////|
+
+    screen.Purkinje_effect = Настройка Пуркиньего (Purkinje) Эффекта
+
+[-----Sharpening amount-----]
+
+    option.SHARPENING = Количество Резкости
+
+[-----Bloom Multiplier-----]
+
+    option.BLOOM_STRENGTH = Множитель Блюма (Разцветение)
+
+|/////Anti-Aliasing Settings/////|
+
+    screen.TAA_OPTIONS = Настройка Сглаживания (Anti-Aliasing)
+
+[-----Screenshot Mode-----]
+
+        option.SCREENSHOT_MODE = Режим Скриншота
+
+[-----TAA-----]
+
+        option.TAA = ВС (TAA)
+
+[-----Blend Factor-----]
+
+        option.BLEND_FACTOR = Фактор Смеси
+
+[-----Temporal Upscaling-----]
+
+        option.TAA_UPSCALING = Временное Масштабирование (Temporal Upscaling)
+
+[-----Scale Factor-----]
+
+        option.SCALE_FACTOR = Шкала Фактора
+
+|/////Color Grading/////|
+
+	screen.COLOR_GRADING = Градиенты Цветов
+		option.LUMINANCE_CURVE = Тон Кривости
+		option.LOWER_CURVE = Низкая Кривость
+		option.UPPER_CURVE = Высокая Кривость
+
+[-----Color Grading-----]
+
+		option.COLOR_GRADING_ENABLED=Градиенты Цветов
+		option.SHADOWS_GRADE_R = Тени §cКрасного
+		option.SHADOWS_GRADE_G = Тени §aЗелёного
+		option.SHADOWS_GRADE_B = Тени §9Синего
+		option.SHADOWS_GRADE_MUL = Яркость Тени
+		option.MIDS_GRADE_R = Средтона §cКрасного
+		option.MIDS_GRADE_G = Средтона §aЗелёного
+		option.MIDS_GRADE_B = Средтона §9Синего
+		option.MIDS_GRADE_MUL = Яркость Средтон
+		option.HIGHLIGHTS_GRADE_R = Высокийсвет §cКрасного
+		option.HIGHLIGHTS_GRADE_G = Высокийсвет §aЗелёного
+		option.HIGHLIGHTS_GRADE_B = Высокийсвет §9Голубого
+		option.HIGHLIGHTS_GRADE_MUL = Яркость Высокогосвета
+
+{#####_Resource_Pack_Support_#####}
+
+screen.Resource_Pack_Support = Поддержка Ресурс Паков
+
+|/////Specular Reflections/////|
+
+    screen.Reflections = Спекулярные Отражения
+
+[-----Specular Reflections-----]
+
+        option.Specular_Reflections = Спекулярные Отражения
+
+[-----Screen-Space Reflections-----]
+
+        option.Screen_Space_Reflections = В Пространстве-Экрана Отражение (SSR)
+
+[-----Detailed Roughness-----]
+
+        option.Rough_reflections = Детальная Шереховатость (Roughness)
+
+[-----Sky/Fog in Reflections-----]
+
+        option.Sky_reflection = Небо/Туман в Отражении
+
+[-----Dynamic SSR Quality-----]
+
+        option.Dynamic_SSR_quality = Динамическое Качество ПЭО (SSR)
+
+[-----Reflection Threshold-----]
+
+        option.Roughness_Threshold = Порог (Threshold) Отражения
+
+[-----Sun Reflection Multiplier-----]
+
+        option.Sun_specular_Strength = Множитель Отражения Солнца
+
+[-----SSR Quality-----]
+
+        option.reflection_quality = Качество ПЭО (SSR)
+
+|/////Emissives/////|
+
+    screen.Emissives = Излучение
+
+[-----Emission Multiplier-----]
+
+        option.Emissive_Brightness = Множитель Излучения
+
+[-----Emission Curve-----]
+
+        option.Emissive_Curve = Излучение Кривости
+
+[-----Mode-----]
+
         option.EMISSIVE_TYPE = Режим
-            value.EMISSIVE_TYPE.0 = Выкл.
-            value.EMISSIVE_TYPE.1 = Hardcoded only
-            value.EMISSIVE_TYPE.2 = Hardcoded + Lab Emission
-            value.EMISSIVE_TYPE.3 = Lab Emission only
+            value.EMISSIVE_TYPE.0 = Без Излучения
+            value.EMISSIVE_TYPE.1 = Только Жёсткозакодированный
+            value.EMISSIVE_TYPE.2 = Жёсткозакодированный + Lab Излучение
+            value.EMISSIVE_TYPE.3 = Только Lab Излучение
 
+|/////Parallax Occlusion Mapping / POM/////|
 
-screen.POM = Параллаксная окклюзия/POM
-    option.POM = Параллаксная окклюзия
+screen.POM = Составление Окклюзии Параллакса / СОП
+
+[-----Parallax Occlusion Mapping-----]
+
+    option.POM = Составление Окклюзии Параллакса (POM)
+
+[-----Quality-----]
+
     option.MAX_ITERATIONS = Качество
+
+[-----Depth-----]
+
     option.POM_DEPTH = Глубина
-    option.MAX_DIST = Максимальное расстояние
-    option.Adaptive_Step_length = Динамическое качество
-    option.Horrible_slope_normals = Ужастные нормали наклона
 
+[-----Maximum Distance-----]
 
-screen.Porosity = Объем/лужи
-    option.Porosity = Объем
+    option.MAX_DIST = Максимальная Дистанция
+
+[-----Dynamic Quality-----]
+
+    option.Adaptive_Step_length = Динамическое Качество
+
+[-----Horrible Slope Normals-----]
+
+    option.Horrible_slope_normals = Ужасный Склон Нормали
+
+|/////Porosity / Puddles/////|
+
+screen.Porosity = Пористость / Лужи
+
+[-----Porosity-----]
+
+    option.Porosity = Пористость
+
+[-----Puddles-----]
+
     option.Puddles = Лужи
-    option.Puddle_Size = Размера луж
 
-option.MATERIAL_AO = Материальная окружающая окклюзия
+[-----Puddle Size Multiplier-----]
 
-option.DOF_QUALITY = Глубина резкости
-    value.DOF_QUALITY.-1 = Выкл.
-    value.DOF_QUALITY.0 = Шестиугольный
-    value.DOF_QUALITY.1 = Низкая
-    value.DOF_QUALITY.2 = Средняя
-    value.DOF_QUALITY.3 = Высокая
-    value.DOF_QUALITY.4 = Ультра
-    value.DOF_QUALITY.5 = Дрожание
-	option.MANUAL_FOCUS = Фокусировка 
-    option.DOF_ANAMORPHIC_RATIO = Анаморфическое соотношение
-    value.MANUAL_FOCUS.-2 = Автофокус
-	value.MANUAL_FOCUS.-1 = Ползунок яркости
+    option.Puddle_Size = Множитель Размера Луж
 
-	screen.JITTER_DOF = Коэффициента дрожания
-		option.JITTER_STRENGTH = Сила дрожания
-		option.JITTER_STRENGTH.comment = Извините
-		option.FOCUS_LASER_COLOR = Цвет фокусировки 
-		option.FOCUS_LASER_COLOR.comment = Красный, зеленый, синий, розовый, желтый, белый
-		value.FOCUS_LASER_COLOR.0 = Красный
-		value.FOCUS_LASER_COLOR.1 = Зеленый
-		value.FOCUS_LASER_COLOR.2 = Синий
-		value.FOCUS_LASER_COLOR.3 = Розовый
-		value.FOCUS_LASER_COLOR.4 = Желтый
-		value.FOCUS_LASER_COLOR.5 = Белый
+[-----Material Ambient Occlusion-----]
 
-option.AEROCHROME_MODE = Режим аэрохрома
-option.AEROCHROME_PINKNESS = Соотношение аэрохромного красного и розового
-option.AEROCHROME_WOOL_ENABLED = Аэрохромная шерсть
+option.MATERIAL_AO = Материал Окружающей Окклюзии (AO)
 
-option.AEROCHROME_MODE.comment = Инфракрасная пленка. Погуглите "Аэрохром", чтобы получить представление о том, что он делает
-option.AEROCHROME_PINKNESS.comment = Больше = Розовый. Меньше = Красный
-option.AEROCHROME_WOOL_ENABLED.comment = Технически шерстяные вещи должны быть затронуты, но это разрушает многие сборки. Позвольте быть более технически корректным
+[-----Depth Of Field-----]
 
+option.DOF_QUALITY=Глубина Резкости (DOF)
+    value.DOF_QUALITY.-1=Выкл
+    value.DOF_QUALITY.0=Шестигранный
+    value.DOF_QUALITY.1=Низкий
+    value.DOF_QUALITY.2=Средний
+    value.DOF_QUALITY.3=Высокий
+    value.DOF_QUALITY.4=Ультра
+    value.DOF_QUALITY.5=Дрожание (Jitter)
 
-option.DEBUG_VIEW = Вид отладки
-    value.debug_off = вылк.
-    value.debug_SHADOWMAP = Теневая карта
-    value.debug_NORMALS = Нормали
-    value.debug_SPECULAR = Зеркальное
-    value.debug_INDIRECT = Косвенный
-    value.debug_DIRECT = Прямой
-    value.debug_VIEW_POSITION = Позиция просмотра
-	value.debug_DH_WATER_BLENDING = Смешивание воды  DH
-	value.debug_FILTERED_STUFF = Фильтрованный материал
-	
-option.display_LUT = дисплей LUT
-option.SSS_view = Вид SSS
-option.LIGHTNING_FLASH = Вспышка молнии
-option.LIGHTNING_FLASH.comment = ДЛЯ ПОЛЬЗОВАТЕЛЕЙ OPTIFINE. некоторые моды изменяют цвет неба, что может привести к обнаружению вспышки молнии
-option.LIT_PARTICLE_BRIGHTNESS = Яркость освещенных частиц
-option.BLOOMY_PARTICLES = Цветущие частицы
-option.BIOME_TINT_WATER = Биом подкрашивает воду
-option.SELECT_BOX = Устанавливать флажок
-option.WATER_CAUSTICS_BRIGHTNESS = Водная каустика воды
+[-----Focus-----]
 
-screen.the_orb = Сфера
-     option.THE_ORB = Сфера
-     option.ORB_X = Сфера X
-     option.ORB_Y = Сфера Y
-     option.ORB_Z = Сфера Z
-     option.ORB_ColMult = Сфера ColMult
-     option.ORB_R = Сфера красного
-     option.ORB_G = Сфера зеленого 
-     option.ORB_B = Сфера синего
-option.WhiteWorld = Белый мир
-option.WhiteWorld.comment = ЭТО ОТЛАДОЧНЫЙ РЕЖИМ. используется для упрощения просмотра AO. используется для лучшего просмотра поддельного GI (зеленый свет)
-option.ambientLight_only = Только рассеянный свет
-option.ambientLight_only.comment = ЭТО ОТЛАДОЧНЫЙ РЕЖИМ. выключите солнечный свет. Производительность не увеличивается, тени по-прежнему работают в фоновом режиме
-option.HURT_AND_DEATH_EFFECT = Эффект боли и смерти
-option.PLANET_GROUND_BRIGHTNESS = Яркость поверхности планеты
-option.ORIGINAL_CHOCAPIC_SKY = Оригинальное Chocapic небо
-option.CLOUDS_INFRONT_OF_WORLD = Облака перед миром
-option.DENOISE_SSS_AND_SSAO = Удаление шумов SSS и SSAO
-option.HYPER_DETAILED_WAVES = Сверхподобные
+	option.MANUAL_FOCUS=Фокус
+
+[-----Anamorphic Ratio-----]
+
+    option.DOF_ANAMORPHIC_RATIO=Анаморфотное Соотношение
+    value.MANUAL_FOCUS.-2=Автофокус
+	value.MANUAL_FOCUS.-1=Ползунок Яркости
+
+|/////Jitter DOF Settings/////|
+
+	screen.JITTER_DOF=Настройка Дрожания ГР (Jitter DOF)
+
+[-----Jitter Strength-----]
+
+		option.JITTER_STRENGTH=Сила Дрожания (Jitter)
+
+[-----Focus-----]
+
+		option.FOCUS_LASER_COLOR=Фокус
+		value.FOCUS_LASER_COLOR.0=Красный
+		value.FOCUS_LASER_COLOR.1=Зелёный
+		value.FOCUS_LASER_COLOR.2=Синий
+		value.FOCUS_LASER_COLOR.3=Розовый
+		value.FOCUS_LASER_COLOR.4=Жёлтый
+		value.FOCUS_LASER_COLOR.5=Белый
+
+[-----Aerochrome Mode-----]
+
+option.AEROCHROME_MODE=Режим Аэрохрома
+
+[-----Aerochrome Red:Pink Ratio-----]
+
+option.AEROCHROME_PINKNESS=Аэрохромное Соотношение Красного:Розового
+
+[-----Aerochrome Wool-----]
+
+option.AEROCHROME_WOOL_ENABLED=Аэрохромная Шерсть
+
+{#####_OTHER_#####}
+
+option.AEROCHROME_MODE.comment = Инфракрасный Фильм. Наберите в Google "Aerochrome", чтобы понять, что он делает.
+option.AEROCHROME_PINKNESS.comment = Высокий = Розовый. Низкий = Красный
+option.AEROCHROME_WOOL_ENABLED.comment = Технически шерстяные материалы должны быть затронуты, но это портит многие сборки. Включите, чтобы быть более технически корректным
 
 
-screen.Misc_Settings.comment = Случайные настройки для ОТЛАДКИ или других забавных вещей
-screen.Sun_and_Moon_Colors.comment = Настройте цвет солнца или луны
-option.sunPathRotation.comment = Настройте угол наклона солнца или луны
-option.sun_illuminance.comment = Настройте яркость солнца
-option.moon_illuminance.comment = Настройте яркость луны
 
-screen.Direct_Light.comment = Настройте параметры, связанные с солнцем/луной и тенями
 
-screen.Shadows.comment = Настройте тени от солнца по своему вкусу
-    option.SCREENSPACE_CONTACT_SHADOWS.comment = §bЧто это?§r Это небольшие тени от объектов, которые находятся далеко или поблизости. §aНАГРУЗКА:§r от низкой до средней; при более высоком разрешении это приводит к большей нагрузке
-    option.RENDER_ENTITY_SHADOWS.comment = §bЧто это?§r Тени от всех типов сущностей, таких как мобы, сундуки, баннеры или таблички. §aНАГРУЗКА:§r от низкой до высокой; это очень нагружающе, когда поблизости много сущностей
-    option.shadowMapResolution.comment = Качество теней от солнца, вызванное объектами в мире. §aНАГРУЗКА:§r от средней до очень высокой; Тени должны повторно отображать 3D мир с точки зрения солнца, вот почему это снижает производительность вдвое
-    option.shadowDistance.comment = Максимальное расстояние, которое может отобразить теневая карта. Расстояние не измеряется линейно чанками, если установлено значение §b"неоптимизировано".  §aНАГРУЗКА:§r от средней до очень высокой; Если расстояние 
-    option.OPTIMIZED_SHADOW_DISTANCE.comment = §b"Оптимизированный"§r тени только в сфере вокруг вас, ограничиваясь максимальным расстоянием в чанках. §b"Неоптимизированный"§r не отображает тени в сфере и не привязан к чанкам; он может охватывать гораздо большую площадь при тех же настройках дистанции.  §aНАГРУЗКА:§r от низкой до средней; §b"Оптимизированный"§r работает быстрее, а §b"неоптимизированный"§r медленнее
-    screen.Filtering.comment = Настройте эффекты фильтрации, применяемые к теням
-	    option.BASIC_SHADOW_FILTER.comment = Включает/Выключает теневой фильтр
-        option.SHADOW_FILTER_SAMPLE_COUNT.comment = Этот фильтр просто смягчает тени. §aНАГРУЗКА:§r от низкой до средней; увеличение этого значения должно уменьшить некоторый шум на границе теней
-        option.Min_Shadow_Filter_Radius.comment = Максимальная мягкость базового теневого фильтра
-        option.Variable_Penumbra_Shadows.comment = Этот эффект смягчает тени тем больше, чем дальше тень от того, что ее отбрасывает. Этот эффект используется для создания теней более высокого качества и рассеивания на поверхности. §aНАГРУЗКА:§r от низкой к высокой
-        option.VPS_Search_Samples.comment = Качество фильтра с переменной полутенью и тенью. §aНАГРУЗКА:§r от низкой до высокой; увеличение этого значения должно уменьшить некоторый шум при поверхностном рассеивании и очень мягких тенях
-        option.Max_Shadow_Filter_Radius.comment = Максимальная мягкость, которую могут получить тени, когда они находятся далеко от того, что их отбрасывает
-        option.Max_Filter_Depth.comment = Если солнце больше, тени становятся мягче ближе к тому, что их отбрасывает
 
-screen.Ambient_light.comment = Настройте параметры, связанные с освещением в затененных местах
-    option.AO_Strength.comment = Настройте силу внешней окклюзии, создаваемой SSAO, GTAO, RTAO, и SSGI. §bЧто это?§r окружающая окклюзия - это небольшие мягкие тени в углах и тому подобное
-    option.GI_Strength.comment = Настройте интенсивность глобального освещения, создаваемого SSGI. §bЧто это?§r глобальное освещение в данном раскладе конкретно представляет собой свет, отражающийся от поверхности и попадающий в какую-либо другую область
-    option.HQ_SSGI.comment = Переключить глобальное освещение экранного пространства на большие расстояния. §aНАГРУЗКА:§r очень высокая
-    option.Hand_Held_lights.comment = Переключайте ручные источники света на стороне шейдера. §aНАГРУЗКА:§r очень низкая
-    option.SKY_CONTRIBUTION_IN_SSRT.comment = Разрешите RTAO или SSGI учитывать все небо и туман, чтобы создать высококачественное освещение для затененных областей. Это может привести к увеличению шума. §aНАГРУЗКА:§r средняя
+screen.Misc_Settings.comment = Различные настройки для ОТЛАДКИ (DEBUG) или других интересных вещей.
+screen.Sun_and_Moon_Colors.comment = Цвет солнца или луны.
+option.sunPathRotation.comment = Наклон солнца или луны
+option.sun_illuminance.comment = Яркость солнца
+option.moon_illuminance.comment = Яркость луны
 
-    option.ambientOcclusionLevel.comment = Настройте силу внешней окклюзии в vanilla minecraft. §bЧто это?§r Эта окружающая окклюзия присутствует в minecraft даже без включенных шейдеров
-    option.ambient_brightness.comment = Настройте яркость освещения в затененных местах
-    option.MIN_LIGHT_AMOUNT.comment = Настройте минимальное количество света, которое может быть в затененных местах
-    option.indirect_effect.comment = Переключайте различные типы эффектов, чтобы повысить качество освещения в затененных местах. §aНАГРУЗКА:§r. Vanilla AO: очень низкая. SSAO: от низкой до средней. GTAO: от средней до высокой. RTAO or SSGI: от высокой до очень высокой
+screen.Direct_Light.comment = Настройка, связанные с солнцем и тенями.
 
-    screen.Ambient_Colors.comment = Настройте цвет освещения в затененных областях
-    screen.Torch_Colors.comment = Настройте цвет света от факелов или других размещенных источников света
+screen.Shadows.comment = Тени от солнца по своему вкусу.
+    option.SCREENSPACE_CONTACT_SHADOWS.comment = §bЧто это?§r Это тени на объектах, находящиеся вдали, и на мелких деталях вблизи. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к среднему; при высоких разрешениях она стоит дороже.
+    option.RENDER_ENTITY_SHADOWS.comment =  §bЧто это?§r Тень на всех типах сущности, таких как мобы, сундуки, баннеры или таблички. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к высокому; это очень дорого, когда рядом много сущностей.
+    option.shadowMapResolution.comment = Качество тени от солнца, отбрасываемых объектов в мире. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от среднего к очень высокому; Тени должны рендерить 3D мир второй раз с точки зрения солнца, поэтому производительность снижается вдвое.
+    option.shadowDistance.comment = Максимальная дистанция, на которое картатеней (shadowmap) может рендерить. Дистанция не линейно измеряется в чанках, если установлено значение не оптимизированный.  §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от среднего к очень высокому; Если дистанция рендеринга чанка велико, тень будет стоить дороже.
+    option.OPTIMIZED_SHADOW_DISTANCE.comment = Рендер теней только в сфере вокруг вас, ограниченной максимальной дистанцией в чанках. Не оптимизированный не рендерит тени в сфере и не ограничевается на чанки; он может покрыть гораздо большую зону при тех же настройках дистанции. Дистанция не измеряется в чанках, если установлено значение не оптимизированный.  §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к среднему. Оптимизированный быстрее, а не оптимизированный медленнее.
+    screen.Filtering.comment = Эффекты фильтра, применяемые к теням.
+        option.SHADOW_FILTER_SAMPLE_COUNT.comment = Качество обычного фильтра теней. Этот фильтр просто смягчает тени. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к среднему; Увеличение этого значения должно уменьшить шум на краях теней.
+        option.Min_Shadow_Filter_Radius.comment = Максимальная мягкость обычного фильтра теней.
+        option.Variable_Penumbra_Shadows.comment = Эффект смягчает тени всё больше и больше, чем дальше тени от того, кто её отбрасывает. Этот эффект используется для создания более качественной тени и Под-поверхностное рассеяние. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к высокому;
+        option.VPS_Search_Samples.comment = Качество фильтра переменных полутеневых тени. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к высокому; Увеличение этого значения должно уменьшить шум в под-поверхностное рассеяние (sss) и очень мягких теней.
+        option.Max_Shadow_Filter_Radius.comment = Максимальная мягкость теней, которую можно получить, когда они находятся далеко от того, что их отбрасывает.
+        option.Max_Filter_Depth.comment = Размер солнца. Если солнце большое, тени становятся более мягкими, ближе к тому, что их отбрасывает.
 
-screen.Resource_Pack_Support.comment = Множество эффектов, использующих информацию, предоставляемую любым пакетом ресурсов, который соответствует формату LabPBR
-    screen.Reflections.comment = Настройте отражения, использующие информацию, предоставленную пакетом ресурсов LabPBR
-        option.Specular_Reflections.comment = Переключите все отражения для пакетов LabPBR. Это включает отражение солнца и позволяет включить другие настройки, указанные ниже. §aНАГРУЗКА:§r низкая
-        option.Screen_Space_Reflections.comment = Переключение отражений в пространстве экрана. §aНАГРУЗКА:§r средняя
-        option.Rough_reflections.comment = Переключите более детализированный объем для более качественного отражения. Это вызовет значительное количество видимых шумов. §aНАГРУЗКА:§r от средней до высокой
-        option.Sky_reflection.comment = Переключайте отражения неба и тумана. §aНАГРУЗКА:§r от низкой до средней
-        option.Dynamic_SSR_quality.comment = Это снижает качество отражений в пространстве экрана в зависимости от того, насколько они заметны. это может повысить производительность, но снизить качество
-        option.Roughness_Threshold.comment = Если объем достигает этого порога, все отражения, кроме солнечных, не отображаются. это может повысить производительность
-        option.Sun_specular_Strength.comment = Настройте, насколько ярким будет отражение солнца
-        option.reflection_quality.comment = Настройте качество отражений в пространстве экрана
+screen.Ambient_light.comment = Настройка, связанных с освещением в затенённых местах
+    option.AO_Strength.comment = Сила окружающей окклюзии, создаваемой ПЭОО (SSAO), НРОО (GTAO), ТЛОО (RTAO) и ПЭГО (SSGI). §bЧто это?§r окружающая окклюзия (ao) это небольшие мягкие тени в углах и т.п..
+    option.GI_Strength.comment = Сила глобального освещения, созданного ПЭГО (SSGI). §bЧто это?§r глобальное освещение (gi) в данном сценарии это свет, отражающийся от поверхности и попадающий на другую область.
+    option.HQ_SSGI.comment = Переключение дальнего диапазона в пространстве-экрана глобального освещения (ssgi). §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень высоко
+    option.Hand_Held_lights.comment = Переключение руковых источниковсвета на сторону шейдера. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низко
+    option.SKY_CONTRIBUTION_IN_SSRT.comment = Позволяет ТЛОО (RTAO) или ПЭГО (SSGI) учитывать всё небо и туман для создания высокого качества освещения затенённых участков. Это может привести к увеличению шума. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r средний
 
-screen.Subsurface_Scattering.comment = §bЧто это?§r Поверхностное рассеивание - это то, что происходит, когда вы направляете яркий свет на свою руку, и она начинает светиться. На самом деле солнце делает то же самое с растениями, тканью, кожей и другими вещами
-    option.SSS_TYPE.comment = Настройте, как поверхностное рассеивание применяется к окружающему миру.  §bHardcoded:§r Управляет шейдер. §bLabSSS:§r Управляет пакет ресурсов. §aНАГРУЗКА:§r очень низкая
-    option.MOB_SSS.comment = Переключите поверхностное рассеивание для мобов; Игроки тоже включены. §aНАГРУЗКА:§r очень низкая
-    option.MISC_BLOCK_SSS.comment = Переключите поверхностное рассеяние для случайных блоков; в основном это для травы и песка. §aНАГРУЗКА:§r очень низкая
-    option.Ambient_SSS.comment = §bЧто это?§r поверхностное рассеивание от света, исходящего с неба, а не от солнца. §aНАГРУЗКА:§r от очень низкой до средней; если SSAO включен, маленькая нагрузка, но если SSAO выключен, большая нагрузка
-    option.ambientsss_brightness.comment = Настройте яркость поверхностного рассеивания света с неба
+    option.ambientOcclusionLevel.comment = Настривает силу окружающего окклюзии (ao) из ванильного майнкрафта. §bЧто это?§r Эта окружающая окклюзия (ao) есть в майнкрафт даже без включённых шейдеров.
+    option.ambient_brightness.comment = Яркость освещения в затенённых местах
+    option.MIN_LIGHT_AMOUNT.comment = Минимальное количество света, которое может попадать в затенённые места.
+    option.indirect_effect.comment = Переключение различных типов эффектов, чтобы сделать освещение в затенённых местах высокого качества. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r. Ванильный ОО (AO): очень низко. ПЭОО (SSAO): от низкого к среднему. НРОО (GTAO): от среднего к высокому. ТЛОО (RTAO) или ПЭГО (SSGI): от высокого к очень высокому
 
-screen.Emissives.comment = §bЧто это?§r Излучательная способность - это просто количество света, которое что-то испускает, или насколько сильно что-то светится
-    option.Emissive_Brightness.comment = Настройте, насколько ярким должно быть излучение текстур
-    option.EMISSIVE_TYPE.comment = Настройте способ применения излучения текстур к окружающему миру.  §bHardcoded:§r Шейдер решает, что ему достанется. §bLabSSS:§r Пакет ресурсов решает, что ему достанется. §aНАГРУЗКА:§r очень низкая
-    option.Emissive_Curve.comment = Это определяет, как быстро излучение текстур достигнет своей самой яркой точки. 1.0 является линейным
+    screen.Ambient_Colors.comment = Цвет света в затенённых областях.
+    screen.Torch_Colors.comment = Цвет света от факелов или других размещённых источниковсвета (sourcelight).
 
-screen.POM.comment = Настройте параметры, связанные с отображением параллаксной окклюзии, в котором используется информация, предоставляемая пакетом ресурсов
-    option.POM.comment = §bЧто это?§r Этот эффект пытается создать трехмерную геометрию там, где ее раньше не было, используя специальное изображение из пакета ресурсов. Этот эффект в основном направлен только внутрь, поэтому при взгляде под крутыми углами могут наблюдаться некоторые артефакты. §aНАГРУЗКА:§r от средней до высокой
-    option.MAX_ITERATIONS.comment = Настройте качество отображения эффекта параллаксной окклюзии. если вы видите отдельные слои при близком рассмотрении, при увеличении этого параметра слоев становится больше, поэтому их будет труднее разглядеть. §aНАГРУЗКА:§r высокая
-    option.POM_DEPTH.comment = Насколько глубоко эффект отображения параллаксной окклюзии может проникнуть в поверхность. §aНАГРУЗКА:§r очень низкая
-    option.MAX_DIST.comment = Максимальное расстояние от камеры, которое может отобразить эффект отображения параллаксной окклюзии. §aНАГРУЗКА:§r высокая
-    option.Adaptive_Step_length.comment = Это повысит визуальное качество без необходимости повышать фактическое. Это приводит к появлению некоторых артефактов, если вы смотрите очень внимательно или у вас очень насыщенная карта высот с резкими перепадами высот
-    option.Horrible_slope_normals.comment = Это плохо выполненная реализация для придания поверхности отображения параллаксной окклюзии. Я не рекомендую это!. §aНАГРУЗКА:§r низкая
+    option.LPV_SIZE.comment = Размер (в блоках) объёма для цветного освещения.
+    option.LPV_SATURATION.comment = Интенсивность цветного освещения.
+    option.LPV_TINT_SATURATION.comment = Интенсивность тонирования прозрачных блоков в цветном освещении.
+    option.LPV_NORMAL_STRENGTH.comment = Количество поверхностей нормалей, влияющих на направление освещения.
+    option.LPV_ENTITY_LIGHTS.comment = Участие сущностей в цветном освещении.
+    option.LPV_REDSTONE_LIGHTS.comment = Участие редстоун блоков в цветном освещении.
+    option.LPV_COLORED_CANDLES.comment = Соответствующее излучение цветных свечей в цветном освещении.
+    option.LPV_NOSHADOW_HACK.comment = Исправление для Iris 1.7.0 и ниже! Позволяет наливномузаполнению (floodfill) работать в Незере и Энде, но отключает освещение сущностей и выпавших предметов.
+    option.LPV_VL_FOG_ILLUMINATION.comment = Осветить цветному освещению воздух вокруг него.
+    option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS.comment = Яркость светящегося тумана.
+
+screen.Resource_Pack_Support.comment = Несколько эффектов, которые используют информацию, предоставляемую любым ресурспаком (набором ресурсов), который следует формату LabФОР (PBR).
+    screen.Reflections.comment = Отражения, использующие информацию, предоставленную ресурспаком (набором ресурсов) LabФОР (PBR).
+        option.Specular_Reflections.comment = Переключение всех отражений для пакетов (наборов) Labфор (pbr). Это включает отражение солнца и позволяет включить другие настройки, приведённые ниже.. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+        option.Screen_Space_Reflections.comment = Переключение в пространстве-экрана отражения (ssr). §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r средний
+        option.Rough_reflections.comment = Переключение на более подробную шероховатость (roughness) для высокого качества отражения. Это приведёт к появлению большого количества видимого шума. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от среднего к высокому
+        option.Sky_reflection.comment = Переключение отражений неба и тумана. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к среднему.
+        option.Dynamic_SSR_quality.comment = Низкое качество в пространстве-экрана отражение (ssr) в зависимости от того, насколько они заметны. это может повысить производительность, но низкое качество. 
+        option.Roughness_Threshold.comment = Если шероховатость (roughness) достигает этого порога, все отражения, кроме солнца, не отображаются. он может улучшить производительность.
+        option.Sun_specular_Strength.comment = Яркость отражения солнца.
+        option.reflection_quality.comment = Качество в пространстве-экрана отражение (ssr).
+
+screen.Subsurface_Scattering.comment = §bЧто это?§r Под-поверхностное рассеяние (sss) это то, что происходит, когда вы подносите к руке яркий свет, и она начинает светиться. Солнце делает то же самое с растениями, бронёй, скином и другими объектами.
+    option.SSS_TYPE.comment = Как под-поверхностное рассеяние (sss) применяется к миру.  §bЖёсткозакодированный:§r Шейдер решает, что ему достанется. §bLabППР (SSS):§r Ресурспак (Набор ресурсов) решает, что ему достанется. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низко
+    option.MOB_SSS.comment = Переключение под-поверхностного рассеяния (sss) для мобов. игроки включены. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низко
+    option.MISC_BLOCK_SSS.comment = Переключение под-поверхностного рассеяния (sss) для случайных блоков, которые могут не поместиться. в основном для травы и песка. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низко
+    option.Ambient_SSS.comment = §bЧто это?§r под-поверхностное рассеяние (sss) от света, исходящего с неба, а не с солнца. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от очень низкого к среднему; если ПЭОО (SSAO) включена, то это стоит совсем недорого, но стоит дороже, если ПЭОО (SSAO) это Выкл
+    option.ambientsss_brightness.comment = Яркость под-поверхностное рассеяние (sss) от небесного света
+
+screen.Emissives.comment = §bЧто это?§r Излучение это то, насколько сильно что-то пропускает свет, или насколько сильно что-то светится.
+    option.Emissive_Brightness.comment = Насколько ярким должно быть излучение текстуры.
+    option.EMISSIVE_TYPE.comment = Как применять излучение текстур к миру.  §bЖёсткозакодированный:§r Шейдер решает, что ему достанется. §bLabППР (SSS):§r Ресурспак (Набор ресурсов) решает, что ему достанется. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низко
+    option.Emissive_Curve.comment = Определяет, как быстро излучение текстуры достигнет своей самой яркой точки. 1.0 это линейный.
+
+screen.POM.comment = Настройка, связанные с составлением окклюзии параллакса (pom), которая использует информацию, предоставленную ресурспаком.
+    option.POM.comment = §bЧто это?§r Эффект позволяет создать 3D геометрию там, где её раньше не было, с помощью специального изображения из ресурспака (набор ресурсов). Этот эффект в основном распространяется только внутрь, поэтому при взгляде под крутым углом могут возникать некоторые артефакты. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от среднего к высокому
+    option.MAX_ITERATIONS.comment = Качество эффекта составления окклюзии параллакса (pom). если вы видите отдельные слои при близком рассмотрении, то при увеличении этого показателя слоёв становится больше, поэтому их будет сложнее разглядеть. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r высокий
+    option.POM_DEPTH.comment = Насколько глубоко составление окклюзии параллакса (pom) может проникнуть в поверхность. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низко
+    option.MAX_DIST.comment = Максимальная дистанция от камеры, на которой возможен эффект составление окклюзии параллакса (pom). §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r высокий
+    option.Adaptive_Step_length.comment = Позволит повысить визуальное качество без необходимости увеличивать само качество. Это приводит к появлению некоторых артефактов, если вы смотрите очень близко или у вас очень насыщенная высотакарты (heightmap) с резкими перепадами высот. 
+    option.Horrible_slope_normals.comment = Это плохая реализация для придания поверхности сторонам составления окклюзии параллакса (pom). я не рекомендую это. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
     
-screen.Porosity.comment = Настройка параметров, связанных с объемом и лужами
-    option.Porosity.comment = §bЧто это?§r Объем - это описание того, насколько пористым является какой-либо материал, или, по сути, сколько воды может удерживаться внутри него. например, губки очень пористые; вода содержится внутри и в результате темнеет. §aНАГРУЗКА:§r низкая
-    option.Puddles.comment = Переключайте лужи на время дождя. §aНАГРУЗКА:§r низкая
-    option.Puddle_Size.comment = Настройте размер лужиц
+screen.Porosity.comment = Настройка, связанных с влажностью и лужами
+    option.Porosity.comment = §bЧто это?§r Пористость это описание того, насколько пористым является тот или иной материал, или, по сути, сколько воды может в нём удержаться. например, губки очень пористые; вода содержится внутри и темнеет в результате. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+    option.Puddles.comment = Переключение лужи от дождя. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+    option.Puddle_Size.comment = Размер лужи.
 
-screen.Fog.comment = Настройте параметры, связанные с объемным туманом, нанесенным с помощью raymarched, или туманом, основанным на расстоянии
-    option.VL_RENDER_RESOLUTION.comment = Настройте разрешение объемного тумана. §aНАГРУЗКА:§r высокая
-    option.VL_SAMPLES.comment = Настройте качество объемного тумана. §aНАГРУЗКА:§r высокая
-    option.BLOOMY_FOG.comment = Настройте мягкость, применяемую к туману. §bЧто это?§r Этот эффект делает туман более мягким, а также помогает скрыть небольшие шумы; может вызвать некоторое видимое мерцание на детализированных краях. §aНАГРУЗКА:§r очень низкая
-    option.Haze_amount.comment = Настройте, насколько плотной является атмосфера вокруг вас. §bЧто это?§r Это голубая дымка, которую вы видите вдалеке
-    option.RainFog_amount.comment = Настройте, насколько плотным становится туман во время дождя
-    option.RAYMARCH_CLOUDS_WITH_FOG.comment = Переключайте детализацию тумана, когда вы находитесь внутри облака или вокруг него. §aНАГРУЗКА:§r от средней до высокой
-    option.BorderFog.comment = §bЧто это?§r Включите туман, который пытается скрыть загружаемые фрагменты; Но из-за того, что небо повсюду, это трудно сделать хорошо. §aНАГРУЗКА:§r очень, очень низкая
+screen.Fog.comment = Настройка, связанных с лучевоймаркировкой объёмного тумана или дистанции обычного тумана.
+    option.VL_RENDER_RESOLUTION.comment = Разрешение объёмного тумана. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r высокий
+    option.VL_SAMPLES.comment = Качество объёмного тумана. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r высокий
+    option.BLOOMY_FOG.comment = Сила блюма (разцветение), применяемого к туману. §bЧто это?§r Этот эффект придаёт туману мягкий вид, а также помогает скрыть небольшой шум. может вызвать заметное мерцание на детализированных краях. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низко
+    option.Haze_amount.comment = Плотность атмосферы вокруг вас. §bЧто это?§r Это синяя дымка, которую вы видите вдали.
+    option.RainFog_amount.comment = Плотность тумана во время дождя.
+    option.RAYMARCH_CLOUDS_WITH_FOG.comment = §cВНИМАНИЕ§r: Эта настройка является экспериментальной и не очень хорошо сделана! вам нужно будет увеличить образцы тумана, чтобы он соответствовал обычным облакам. Переключение детального тумана, когда вы находитесь внутри или вокруг облака. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r высокий.
+    option.BorderFog.comment = §bЧто это?§r Переключение тумана, который пытается скрыть загружаемые чанки. Но из-за того, что небо находится повсюду, это трудно сделать хорошо. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень очень низко
 
-    screen.TOD_fog.comment = Настройте плотность тумана, которая появляется в определенное время суток
-        option.TOD_Fog_mult.comment = Настройте общее количество тумана, появляющегося в определенное время в течение дня. это не влияет на атмосферную дымку
+    screen.TOD_fog.comment = Плотность тумана, который появляется в определённое время суток.
+        option.TOD_Fog_mult.comment = Общее содержание тумана, который появляется в определённое время в течение дня. это не влияет на атмосферный дым. 
 
-    screen.Cave_Fog.comment = Настройте параметры для тумана, который появляется, когда вы находитесь в очень темных местах, таких как пещеры
-        option.Cave_Fog.comment = Отключите туман, который появляется в темных местах. Невозможно точно определить, когда вы находитесь в пещере с помощью шейдера, поэтому этот туман может появляться в местах, которые пещерой не являются. §aНАГРУЗКА:§r низкая
-        option.CaveFogFallOff.comment = Настройте, как быстро градиент тумана достигает своей самой яркой части
+    screen.Cave_Fog.comment = Настройка тумана, который появляется, когда вы находитесь в очень тёмных местах, например в пещерах.
+        option.Cave_Fog.comment = Переключение тумана, который появляется в тёмных местах. С помощью шейдера невозможно точно установить, когда вы находитесь в пещере, поэтому туман может появляться в местах, которые пещерой не являются. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низко
+        option.CaveFogFallOff.comment = Как быстро градиент тумана достигает своей самой яркой части.
 
-screen.Clouds.comment = Настройте параметры, относящиеся к размерным объемным облакам
-    option.VOLUMETRIC_CLOUDS.comment = Переключи облака. §aНАГРУЗКА:§r от средней до высокой
-    option.CLOUDS_QUALITY.comment = Настройте разрешение объемных облаков. §aНАГРУЗКА:§r высокая
-    option.CLOUDS_SHADOWS.comment = Переключайте тени, отбрасываемые облаками на землю, и туман под ними. §aНАГРУЗКА:§r от низкой до средней
-    option.Daily_Weather.comment = Переключите ежедневную погоду. Я установил 8 погодных профилей, которые шейдер циклически просматривает каждый день. Вы не можете изменить какие-либо настройки облачного покрытия, когда это включено. §aНАГРУЗКА:§r низкая
-    option.Cloud_Speed.comment = Настройте, с какой скоростью движутся облака в течение дня
-    option.Rain_coverage.comment = Настройте, какую долю неба закрывают облака во время дождя
+screen.Clouds.comment = Настройка, связанная с лучевоймаркировкой объёмных облаков.
+    option.VOLUMETRIC_CLOUDS.comment = Переключение облаков. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от среднего к высокому
+    option.CLOUDS_QUALITY.comment = Разрешение объёмных облаков. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r высокий
+    option.CLOUDS_SHADOWS.comment = Переключение тени, отбрасываемые облаками на землю, и тумананами под ними. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к среднему
+    option.Daily_Weather.comment = Погода, которая меняется каждый день. §bЧто это?§r Существует 10 профилей погоды, которые шейдер циклически меняет каждый день. При включении этой функции нельзя изменить настройки покрытия облаков. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+    option.CHOOSE_RANDOM_WEATHER_PROFILE.comment = §bЧто это?§r Настраивает шейдер на случайный выбор погоды из дней, указанных ниже. Если он выключен, шейдер будет выбирать день по порядку.
+    option.Cloud_Speed.comment = Как быстро перемещаются облака в течении дня.
+    option.Rain_coverage.comment = Какую часть неба закрывают облака во время дождя.
 
-screen.World.comment = Настраивайте параметры для различных событий, происходящих в мире, от колышущихся растений до настроек, связанных с водой
-    screen.Water.comment = Настройте параметры, связанные с водой
-        option.WATER_REFLECTIONS.comment = Переключите все отражения для полупрозрачных объектов; Это позволяет включить другие настройки, указанные ниже. §aНАГРУЗКА:§r от низкой до высокой
-        option.SCREENSPACE_REFLECTIONS.comment = Переключать отражения в пространстве экрана на полупрозрачных объектах. §aНАГРУЗКА:§r средняя
-        option.SSR_STEPS.comment = Настройте качество отражения в пространстве экрана на полупрозрачных объектах. §aНАГРУЗКА:§r от средней до высокой
-        option.WATER_SUN_SPECULAR.comment = Переключайте отражения солнца и луны на полупрозрачных объектах. §aНАГРУЗКА:§r низкая 
-        option.WATER_BACKGROUND_SPECULAR.comment = Переключайте отражения неба и тумана на полупрозрачных объектах. §aНАГРУЗКА:§r от низкой до средней
-        option.Refraction.comment = Переключите преломление на полупрозрачных объектах. §bЧто это?§r Если вы посмотрите на воду, то увидите, что преломление света искажает то, что в ней находится. §aНАГРУЗКА:§r низкая
-        option.Dirt_Amount.comment = Настройте количество грязи в воде. Это определяет количество тумана в воде
-        option.Water_Top_Layer.comment = Настройте координату Y, в которой должен находиться океан в мире
+screen.World.comment = Настройка для различных вещей, происходящих в мире, от вьющихся растений до настроек, связанных с водой.
+    screen.Water.comment = Настройка, связанных с водой.
+        option.WATER_REFLECTIONS.comment = Переключение всех отражений для полупрозрачных объектов. Это позволяет включить другие настройки, приведённые ниже. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низко-высокий
+        option.SCREENSPACE_REFLECTIONS.comment = Переключение в пространстве-экрана отражение на полупрозрачных объектах. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r средний
+        option.SSR_STEPS.comment = Качество в пространстве-экрана отражение (ssr) на полупрозрачных объектах.  §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от среднего к высокому
+        option.WATER_SUN_SPECULAR.comment = Переключение солнечного и лунного отражения на полупрозрачных объектах. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+        option.WATER_BACKGROUND_SPECULAR.comment = Переключение отражения неба и тумана на полупрозрачных объектах. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к высокому
+        option.Refraction.comment = Переключение преломления на полупрозрачных объектах. §bЧто это?§r Если вы посмотрите на воду, то увидите, как преломляющийся свет искажает то, что в ней находится. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+        option.Dirt_Amount.comment = Количество грязи в воде. Это позволяет контролировать количество тумана в воде.
+        option.Water_Top_Layer.comment = Координаты Y, по которой океан должен находиться в мире.
         
-        screen.Water_fog_color.comment = Настройте цвет водного тумана
+        screen.Water_fog_color.comment = Цвет водяного тумана. 
 
-screen.Climate.comment = Настройте параметры, связанные с климатом, такие как сезонные цвета, ежедневная погода и туман, специфичный для биома
-    screen.Seasons.comment = Сезонные цвета, которые сменяют друг друга: лето, осень, зима и весна
-        option.Seasons.comment = Сезонные цвета, которые сменяют друг друга: лето, осень, зима и весна. §aНАГРУЗКА:§r низкая
-        option.Season_Length.comment = Контролируйте, как долго длится один сезон в игровых днях
-        option.Snowy_Winter.comment = Снег в зимнее время. §aНАГРУЗКА:§r низкая
-        screen.Summer_colors.comment = Настраивайте цвета растительности летом
-        screen.Fall_colors.comment = Настраивайте цвета растительности осенью
-        screen.Winter_colors.comment = Настраивайте цвета растительности зимний
-        screen.Spring_colors.comment = Настраивайте цвета растительности весной
+screen.Climate.comment = Настройка, связанная с климатом, например, сезонные цвета, погоду на каждый день и туман для конкретного биома.
+    screen.Seasons.comment = Сезонные цвета, которые проходят цикл лета, осени, зимы и весны.
+        option.Seasons.comment = Сезонные цвета, которые проходят цикл лета, осени, зимы и весны. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+        option.Season_Length.comment = Контролирует продолжительность одного сезона в днях майнкрафта.
+        option.Snowy_Winter.comment = Переключение снега зимой. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+        screen.Summer_colors.comment = Цвет растительности в летний период.
+        screen.Fall_colors.comment = Цвет растительности в осенний период.
+        screen.Winter_colors.comment = Цвет растительности в зимний период.
+        screen.Spring_colors.comment = Цвет растительности в весенний период.
     
-    option.PER_BIOME_ENVIRONMENT.comment = Переключите все специальные окружающие среды, которые появляются только в некоторых биомах. §aНАГРУЗКА:§r низкая
+    option.PER_BIOME_ENVIRONMENT.comment = Переключение всех специальных окружений, которые появляются только в некоторых биомах. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
 
-        screen.SWAMP.comment = Настройте окружающая среду в этом типе биома
-            option.SWAMP_ENV.comment = Переключайте окружающую среду только для этого типа биома. Другие среды биома остаются активными, даже если эта отключена
+        screen.SWAMP.comment = Окружающее в этом типе биома.
+            option.SWAMP_ENV.comment = Переключение окружения только для этого типа биома. Другие биомы остаются активными, даже если этот отключён.
 
-        screen.JUNGLE.comment = Настройте окружающая среду в этом типе биома.
-            option.JUNGLE_ENV.comment = Переключайте окружающую среду только для этого типа биома. Другие среды биома остаются активными, даже если эта отключена
+        screen.JUNGLE.comment = Окружающее в этом типе биома.
+            option.JUNGLE_ENV.comment = Переключение окружения только для этого типа биома. Другие биомы остаются активными, даже если этот отключён.
 
-        screen.DARKFOREST.comment = Настройте окружающая среду в этом типе биома
-            option.DARKFOREST_ENV.comment = Переключайте окружающую среду только для этого типа биома. Другие среды биома остаются активными, даже если эта отключена
+        screen.DARKFOREST.comment = Окружающее в этом типе биома.
+            option.DARKFOREST_ENV.comment = Переключение окружения только для этого типа биома. Другие биомы остаются активными, даже если этот отключён.
 
 
-screen.Waving_Stuff.comment = Настройте параметры, связанные с движением растительности
-    option.WAVY_PLANTS.comment = Переключайте раскачивание растений. §aНАГРУЗКА:§r очень низкая
-    option.WAVY_STRENGTH.comment = Настройте силу, с которой растения раскачиваются
-    option.WAVY_SPEED.comment = Настройте скорость, с которой растения раскачиваются
+screen.Waving_Stuff.comment = Настройка, связанные с развевающимися объектами.
+    option.WAVY_PLANTS.comment = Переключение развевающихся растений. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низкий
+    option.WAVY_STRENGTH.comment = Количество развевания растений.
+    option.WAVY_SPEED.comment = Скорость развевания растений.
 
-screen.Post_Processing.comment = Настройте параметры для всех эффектов постобработки, от сглаживания до отображения тонов
-    screen.Tonemapping.comment = Настройте параметры, связанные с отображением цвета и тона
-    screen.Exposure.comment = Настройте параметры, связанные с экспозицией
-    screen.DepthOfField.comment = Настройте параметры, связанные с глубиной резкости
-    screen.Purkinje_effect.comment = Настройте параметры, связанные с эффектом Пуркинье. §bЧто это?§r Это изменения цветового восприятия человеческим глазом при понижении освещённости объектов
-    option.SHARPENING.comment = Настройте степень контрастной адаптивной резкости, применяемой к изображению. Это действительно может выявить детали, утраченные в результате сглаживания или увеличения масштаба
-    option.BLOOM_STRENGTH.comment = Настройте степень размытия, которая будет применена к изображению. §bЧто это?§r Свечение - это мягкое свечение на всем, чтобы можно описать, является чем-то ярким или нет
-    screen.TAA_OPTIONS.comment = Настройте параметры, связанные со сглаживанием
-        option.SCREENSHOT_MODE.comment = Переключайте накопление кадров, чтобы получить изображение с низким уровнем шума и высоким качеством. §bЧто это?§r Он складывает кадры, которые произошли, в следующий сгенерированный кадр, так что это похоже на фотографию с длительной экспозицией
-        option.TAA.comment = Включите временное сглаживание. Это уберет все неровные края объектов, смягчит изображение и поможет убрать шум для многих эффектов. Это приведет к появлению ghosting или trailing, поскольку для получения дополнительной информации о мире используются прошлые кадры. §aНАГРУЗКА:§r низкая
-        option.BLEND_FACTOR.comment = Настройте, какой объем истории кадров используется. большое число означает, что оно в меньшей степени зависит от истории кадров, поэтому оно может выглядеть мерцающим и шумным. низкие числа больше зависят от истории кадров, поэтому оно может выглядеть смазанным и вызывать отставание
-        option.TAA_UPSCALING.comment = Переключите временное масштабирование. Это позволяет сохранить хорошее качество изображения с более низким разрешением при увеличении масштаба. таким образом, вы все равно можете получить высокое разрешение по сравнению с обычным увеличением и при этом получить лучшую производительность
-        option.SCALE_FACTOR.comment = Настройте, с какой доли вашего разрешения увеличивать масштаб. Ниже 0,5 вообще не рекомендуется, я использую это только как опцию, потому что это забавно :P
-	screen.COLOR_GRADING.comment = Расширенные возможности цветокоррекции
-		option.LUMINANCE_CURVE.comment = Включите кривую тона. Это не зависит от цветокоррекции и применяется в первую очередь
-		option.COLOR_GRADING_ENABLED.comment = Включите цветовую градацию. Ползунки RGB не будут влиять на яркость. Это применяется после кривой тона
+screen.Post_Processing.comment = Настройка для всех эффектов пост обработки, от сглаживания (taa) до тона карты (tonemap).
+    screen.Tonemapping.comment = Настройка связанных с цветом и тономкарты (tonemap).
+    screen.Exposure.comment = Настройка связанных с экспозицией.
+    screen.DepthOfField.comment = Настройка связанных с глубиной резкости.
+    screen.Purkinje_effect.comment = Настройка связанных с Пуркиньевым (Purkinje) эффектом.
+    option.SHARPENING.comment = Степени контрастного адаптивного повышения резкости, применяемого к изображению. Это может действительно улучшить детали, потерянные при сглаживании (taa) или масштабирования изображения (temporal upscaling).
+    option.BLOOM_STRENGTH.comment = Количество блюма (разцветение), применяемой к изображению. §bЧто это?§r Блюм (Разцветение) это мягкое свечение на всём, для описания того, что что-то ярко или нет.
+    screen.TAA_OPTIONS.comment = Настройка сглаживания (taa).
+        option.SCREENSHOT_MODE.comment = Переключение частоты накопления кадров для получения изображения с низким уровнем шума и высоким качеством. §bЧто это?§r Он складывает частоту, которые произошли, на следующей частоте, который генерируется, так что это похоже на фотографию с длинной экспозицией.
+        option.TAA.comment = Переключение временного сглаживания (taa). Это убирает все неровности на объектах, смягчает изображение и помогает удалить шум для многих эффектов. Это приведёт к появлению "призраков" или " следов", так как для получения дополнительной информации о мире используются прошлые частоты. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+        option.BLEND_FACTOR.comment = Какой объём истории частот будет использоваться. высокое число означает, что он меньше зависит от истории частот, поэтому он может выглядеть нечётким и шумным. низкие числа больше зависят от истории частот, поэтому они могут выглядеть менее мутными, но более размазанными, с большим количеством следов.
+        option.TAA_UPSCALING.comment = Переключение временного масштабирования (temporal upscaling). При этом сохраняется хорошее количество качества изображения с низким разрешением при его масштабировании. таким образом, вы можете получить высокое разрешение по сравнению с типичным масштабированием и при этом лучшую производительность.
+        option.SCALE_FACTOR.comment = С какой части вашего экрана будет осуществляться масштабирование. Ниже 0.5 вообще не рекомендуется, я просто поставил это как опцию, потому что это забавно :P
+	screen.COLOR_GRADING.comment = Дополнительная настройка градиента цвета
+		option.LUMINANCE_CURVE.comment = Включить тон кривости. Это не зависит от градиента цвета и применяется в первую очередь.
+		option.COLOR_GRADING_ENABLED.comment = Включить градиенты цвета. Ползунки КЗС не влияют на яркость. Она применяется после тон кривости
 
-option.RESOURCEPACK_SKY.comment = Включите поддержку неба пакета ресурсов. Настройте параметры так, чтобы использовать все небо пакета ресурсов или сохранить солнце и луну шейдера. §aНАГРУЗКА:§r очень низкая
-option.SKY_GROUND = Атмосфера грунта
+option.RESOURCEPACK_SKY.comment = Переключение поддержки неба ресурспака (набора ресурсов). Настройка, чтобы использовать всё небо ресурспака (набора ресурсов) или сохранить солнце и луну в шейдере. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низкий
+option.SKY_GROUND = Основа Атмосферы
 
-option.MATERIAL_AO.comment = Переключайте использование внешней окклюзии в зависимости от того, что предоставляет пакет ресурсов. §aНАГРУЗКА:§r очень низкая
-option.WATER_WAVE_STRENGTH.comment = Настройте, насколько сильными будут казаться волны
-option.MOONPHASE_BASED_MOONLIGHT.comment = §bЧто это?§r каждую ночь луна освещается по-разному. Этот параметр регулирует яркость лунного света в зависимости от того, насколько сильно светит Луна. §aНАГРУЗКА:§r незначительная
+option.MATERIAL_AO.comment = Переключение использования окружающей окклюзии (ao) на основе того, что предоставляет ресурспак (наборы ресурсов). §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень низкий
+option.WATER_WAVE_STRENGTH.comment = насколько сильными кажутся волны.
+option.MOONPHASE_BASED_MOONLIGHT.comment = §bЧто это?§r каждую ночь луна освещается по-разному. Эта настройка регулирует яркость светалуны в зависимости от того, какая часть луны светится. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r почти ничего
 
-option.END_STORM_DENSTIY.comment = §bЧто это?§r Это темный облачный туман в конце. Настройте плотность конечной бури (та, что в эндер мире)
-option.NETHER_PLUME_DENSITY.comment = §bЧто это?§r Это густые, светящиеся дымовые башни в преисподней. Настройте плотность дыма в преисподней
+option.END_STORM_DENSTIY.comment =  §bЧто это?§r Это тёмный облачный туман в энде. Плотность шторма энда.
+option.NETHER_PLUME_DENSITY.comment =  §bЧто это?§r Это густые, светящиеся дымом башни в незере. Плотность дыма незера.
 
-option.CloudLayer0.comment          = Переключите слой облаков, которые являются маленькими. §aНАГРУЗКА:§r средняя
-option.CloudLayer0_coverage.comment = Настройте, какую часть неба закрывают эти облака
-option.CloudLayer0_density.comment  = Настройте, насколько плотными являются эти облака
-option.CloudLayer0_height.comment   = Настройте высоту, на которой летят эти облака
+option.CloudLayer0.comment          = Переключение слоёв облака, которые являются небольшими. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r средний
+option.CloudLayer0_coverage.comment = Какую часть неба покрывают облака.
+option.CloudLayer0_density.comment  = Плотность или толщина облаков.
+option.CloudLayer0_height.comment   = Высота, на которой будут летать эти облака.
 
-option.CloudLayer1.comment          = Переключите слой облаков, которые являются большими. §aНАГРУЗКА:§r средняя
-option.CloudLayer1_coverage.comment = Настройте, какую часть неба закрывают эти облака
-option.CloudLayer1_density.comment  = Настройте, насколько плотными являются эти облака
-option.CloudLayer1_height.comment   = Настройте высоту, на которой летят эти облака. §cОНИ НЕ МОГУТ БЫТЬ НИЖЕ МАЛЕНЬКИХ ОБЛАКОВ§r
+option.CloudLayer1.comment          = Переключение слоёв облака, которые являются большими. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r средний
+option.CloudLayer1_coverage.comment = Какую часть неба покрывают облака.
+option.CloudLayer1_density.comment  = Плотность или толщина облаков.
+option.CloudLayer1_height.comment   = Высота, на которой будут летать эти облака. §cОНИ НЕ МОГУТ БЫТЬ НИЖЕ, ЧЕМ МАЛЕНЬКИЕ ОБЛАКА§r
 
-option.CloudLayer2.comment          = Переключите слой облаков, который является очень высоким и тонким. §aНАГРУЗКА:§r низкая
-option.CloudLayer2_coverage.comment = Настройте, какую часть неба закрывают эти облака
-option.CloudLayer2_density.comment  = Настройте, насколько плотными являются эти облака
-option.CloudLayer2_height.comment   = Настройте высоту, на которой летят эти облака. §cОНИ НЕ МОГУТ БЫТЬ НИЖЕ БОЛЬШИХ ОБЛАКОВ§r
+option.CloudLayer2.comment          = Переключение слоёв облака, которые являются очень высокими и тонкими. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r низкий
+option.CloudLayer2_coverage.comment = Какую часть неба покрывают облака.
+option.CloudLayer2_density.comment  = Плотность или толщина облаков.
+option.CloudLayer2_height.comment   = Высота, на которой будут летать эти облака. §cОНИ НЕ МОГУТ БЫТЬ НИЖЕ, ЧЕМ БОЛЬШИЕ ОБЛАКА§r
 
-option.SKY_GROUND.comment = §bЧто это?§r Это темная нижняя половина неба, которая была бы землей, если бы в minecraft было бесконечное расстояние рендеринга. §aНАГРУЗКА:§r очень, очень низкая. §cотключение этого происходит совсем немного медленнее, чем включение из-за дополнительной математики.§r
-option.SNELLS_WINDOW.comment = §bЧто это?§r это темный отражающий круг, который вы видите под водой. Это приблизительное изображение того, что происходит в реальности, известное как "полное внутреннее отражение". §aНАГРУЗКА:§r очень, очень, очень маленькая.
-option.entityShadowDistanceMul.comment = §bЧто это?§r Настройте, насколько далеко должны работать тени для объектов. Это полезно, если вы хотите сохранить тени объектов и повысить производительность в областях с большим количеством объектов.
+option.SKY_GROUND.comment = §bЧто это?§r Это тёмная нижняя половина неба, которая ДОЛЖНА была быть основанием, если бы в майнкрафт была бесконечная дистанция рендеринга. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень очень низко. §cотключение этой функции немного медленнее, чем её включение, из-за дополнительных вычислений.§r
+option.SNELLS_WINDOW.comment = §bЧто это?§r Это тёмный отражающий круг, который вы видите под-водой. Это приближение к тому, что происходит в реальности, известное как "полное внутреннее отражение". §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r очень очень очень низко.
+option.entityShadowDistanceMul.comment = §bЧто это?§r Как далеко должны работать тени для сущностей. Это хорошо, если вы хотите сохранить тени сущностей и улучшить производительность в областях с большим количеством сущностей.
 
-screen.DISTANT_HORIZONS_SETTINGS = §2Мод Distant Horizons §fнастройки
+|/////Distant Horizons settings/////|
 
-option.DH_KNOWN_ISSUES =
-value.DH_KNOWN_ISSUES.0 = §c ЩЕЛКНИТЕ ПО ЭТОМУ ТЕКСТУ, ЧТОБЫ ПРОСМОТРЕТЬ СПИСОК ИЗВЕСТНЫХ ПРОБЛЕМ
-value.DH_KNOWN_ISSUES.1 = §a GTAO, RTAO, и SSGI прерываются на LODs - поддержка DH не реализована
+screen.DISTANT_HORIZONS_SETTINGS = Настройка §2Distant Horizons
 
-option.DISTANT_HORIZONS_SHADOWMAP = §c(НЕ ИСПОЛЬЗУЙТЕ, ЕСЛИ ВЫ НЕ ЗНАЕТЕ, ЧТО ЭТО ТАКОЕ)§r Поддержка карты теней DH
-option.DISTANT_HORIZONS_SHADOWMAP.comment =  §cЭТОТ ПАРАМЕТР СНИЗИТ ПРОИЗВОДИТЕЛЬНОСТЬ, ИЗ-ЗА ЧЕГО ТЕНИ БУДУТ ВЫГЛЯДЕТЬ БЛОЧНЫМИ, МЕРЦАЮЩИМИ И С НИЗКОЙ ДЕТАЛИЗАЦИЕЙ§r. установите дистанцию теней равную 32 фрагментам (или больше). установите разрешение теней равную 4096 (или больше)
-option.TOGGLE_VL_FOG = Объемный туман
-option.TOGGLE_VL_FOG.comment = одна большая кнопка, чтобы просто отключить весь туман
+option.DH_KNOWN_ISSUES = ИЗВЕСТНЫЕ_ПРОБЛЕМЫ_DH
+value.DH_KNOWN_ISSUES.0 = §c НАЖМИТЕ НА ЭТОТ ТЕКСТ, ЧТОБЫ ПРОСМОТРЕТЬ СПИСОК ИЗВЕСТНЫХ ПРОБЛЕМ
+value.DH_KNOWN_ISSUES.1 = §a НРОО (GTAO), ТЛОО (RTAO), и ПЭГО (SSGI) ломаются на УДях (LODs) - поддержка DH не внедрена
+
+option.DISTANT_HORIZONS_SHADOWMAP = §c(НЕ ИСПОЛЬЗУЙТЕ, ЕСЛИ ВЫ НЕ ЗНАЕТЕ, ЧТО ЭТО ТАКОЕ)§r поддержка картытени DH
+option.DISTANT_HORIZONS_SHADOWMAP.comment =  §cЭТА НАСТРОЙКА УНИЧТОЖИТ ПРОИЗВОДИТЕЛЬНОСТЬ, И ТЕНИ БУДУТ ВЫГЛЯДЕТЬ БЛОЧНЫМИ, МЕРЦАЮЩИМИ И С НИЗКОЙ ДЕТАЛИЗАЦИЕЙ§r. установите дистанцию между тенью в 32 чанка (или больше). установите разрешение теней на 4096 (или больше)
+option.TOGGLE_VL_FOG = Переключение Объёмного Тумана
+option.TOGGLE_VL_FOG.comment = одна большая кнопка, чтобы просто отключить весь туман.
+option.TRANSLUCENT_COLORED_SHADOWS.comment = §bЧто это?§r Этот эффект позволяет прозрачным предметам, таким как стеклянные панели, красить солнечный свет, когда он проходит сквозь них. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r средний
+
+option.DH_OVERDRAW_PREVENTION = НИЧЬЁ_ПРЕДОТВРАЩЕНИЕ_DH
+
+|/////GAMEPLAY_EFFECTS/////|
+
+screen.GAMEPLAY_EFFECTS = ЭФФЕКТЫ_ГЕЙМПЛЕЯ
+
+[-----MOTION_AMOUNT-----]
+
+   option.MOTION_AMOUNT = КОЛИЧЕСТВО_ДВИЖЕНИЯ
+
+[-----DAMAGE_TAKEN_EFFECT-----]
+
+   option.DAMAGE_TAKEN_EFFECT = ЭФФЕКТ_ПОЛУЧЕННОГО_УРОНА
+
+[-----LOW_HEALTH_EFFECT-----]
+
+   option.LOW_HEALTH_EFFECT = ЭФФЕКТ_НИЗКОГО_ЗДОРОВЬЯ
+
+|/////the_orb/////|
+
+   screen.the_orb = сфера_(orb)
+
+[-----THE_ORB-----]
+
+   option.THE_ORB = СФЕРА_(ORB)
+
+[-----ORB_X-----]
+
+   option.ORB_X = СФЕРА_X
+
+[-----ORB_Y-----]
+
+   option.ORB_Y = СФЕРА_Y
+
+[-----ORB_Z-----]
+
+   option.ORB_X = СФЕРА_Z
+
+[-----ORB_ColMult-----]
+
+   option.ORB_ColMult = СФЕРА_МножЦв_(ColMult)
+
+[-----ORB_R-----]
+
+   option.ORB_R = СФЕРА_К
+
+[-----ORB_G-----]
+
+   option.ORB_G = СФЕРА_З
+
+[-----ORB_B-----]
+
+   option.ORB_B = СФЕРА_С
+
+[-----display_LUT-----]
+
+   option.display_LUT = отображение_ТБ_(LUT)
+
+[-----DEBUG_VIEW-----]
+
+   option.DEBUG_VIEW = ВИД_ОТЛАДКИ_(DEBUG)
+value.DEBUG_VIEW.debug_OFF = отладка_(debug)_ВЫКЛ
+value.DEBUG_VIEW.debug_SHADOWMAP = отладка_(debug)_КАРТАТЕНЕЙ_(SHADOWMAP)
+value.DEBUG_VIEW.debug_NORMALS = отладка_(debug)_НОРМАЛИ
+value.DEBUG_VIEW.debug_SPECULAR = отладка_(debug)_СПЕКУЛЯР
+value.DEBUG_VIEW.debug_INDIRECT = отладка_(debug)_КОСВЕННЫЙ
+value.DEBUG_VIEW.debug_DIRECT = отладка_(debug)_ПРЯМОЙ
+value.DEBUG_VIEW.debug_VIEW_POSITION = отладка_(debug)_ВИД_ПОЗИЦИИ
+value.DEBUG_VIEW.debug_DH_WATER_BLENDING = отладка_(debug)_СМЕШИВАНИЕ_ВОДЫ_DH
+value.DEBUG_VIEW.debug_FILTERED_STUFF = отладка_(debug)_ФИЛЬТРОВАННЫЙ_МАТЕРИАЛ
+
+[-----WhiteWorld-----]
+
+   option.WhiteWorld = БелыйМир
+
+[-----SSS_view-----]
+
+   option.SSS_view - посмотреть_ППР_(SSS)
+
+[-----ambientLight_only-----]
+
+   option.ambientLight_only = только_окружающийСвет(ambientLight)
+
+[-----LIGHTNING_FLASH-----]
+
+   option.LIGHTNING_FLASH = ВСПЫШКА_МОЛНИИ
+
+[-----LIT_PARTICLE_BRIGHTNESS-----]
+
+   option.LIT_PARTICLE_BRIGHTNESS = ЯРКОСТЬ_ЧАСТИЦ_LIT
+
+[-----PLANET_GROUND_BRIGHTNESS-----]
+
+   option.PLANET_GROUND_BRIGHTNESS = ЯРКОСТЬ_ПОВЕРХНОСТИ_ПЛАНЕТЫ
+
+[-----BLOOMY_PARTICLES-----]
+
+   option.BLOOMY_PARTICLES = БЛЮМОВЫЕ(BLOOMY)_ЧАСТИЦЫ
+
+[-----ORIGINAL_CHOCAPIC_SKY-----]
+
+   option.ORIGINAL_CHOCAPIC_SKY = ОРИГИНАЛЬНОЕ_НЕБО_CHOCAPIC
+
+[-----BIOME_TINT_WATER-----]
+
+   option.BIOME_TINT_WATER = ОТТЕНОК(TINT)_ВОДЫ_БИОМА
+
+[-----CLOUDS_INFRONT_OF_WORLD-----]
+
+   option.CLOUDS_INFRONT_OF_WORLD = ОБЛАКА_ВНУТРИ_МИРА
+
+[-----SELECT_BOX-----]
+
+   option.SELECT_BOX = ВЫБРАТЬ_КОРОБКУ_(BOX)
+
+[-----DENOISE_SSS_AND_SSAO-----]
+
+   option.DENOISE_SSS_AND_SSAO = УМЕНЬШЕНИЕ_ППР_(SSS)_И_ПЭОО_(SSAO)
+
+[-----WATER_CAUSTICS_BRIGHTNESS-----]
+
+   option.WATER_CAUSTICS_BRIGHTNESS = ЯРКОСТЬ_ВОДЯНЫХ_ТЕНЕЙ
+
+[-----HYPER_DETAILED_WAVES-----]
+
+   option.HYPER_DETAILED_WAVES = ГИПЕР_ДЕТАЛЬНЫЕ_ВОЛНЫ
+
+[-----BASIC_SHADOW_FILTER-----]
+
+   option.BASIC_SHADOW_FILTER = ОБЫЧНЫЙ_ФИЛЬТР_ТЕНЕЙ
+
+[-----TRANSLUCENT_COLORED_SHADOWS-----]
+
+   option.TRANSLUCENT_COLORED_SHADOWS = ПОЛУПРОЗРАЧНЫЕ_ЦВЕТНЫЕ_ТЕНИ
+
+[-----OLD_LIGHTLEAK_FIX-----]
+
+   option.OLD_LIGHTLEAK_FIX = ИСПРАВЛЕНИЕ_СТАРОЙ_УТЕЧКИ_СВЕТА_(LIGHTLEAK)
+
+[-----sunColorR-----]
+
+   option.sunColorR = ЦветсолнцаК(R)
+
+[-----sunColorG-----]
+
+   option.sunColorG = ЦветсолнцаЗ(G)
+
+[-----sunColorB-----]
+
+   option.sunColorB = ЦветсолнцаС(B)
+
+[-----moonColorR-----]
+
+   option.moonColorR = ЦветлуныК(R)
+
+[-----moonColorG-----]
+
+   option.moonColorG = ЦветлуныЗ(G)
+
+[-----moonColorB-----]
+
+   option.moonColorB = ЦветлуныС(B)
+
+[-----colortype-----]
+
+   option.colortype = типцвета
+
+[-----Sun_temp-----]
+
+   option.Sun_temp = Темп_Солнца
+
+[-----Moon_temp-----]
+
+   option.Moon_temp = Темп_Луны
+
+[-----HANDHELD_LIGHT_RANGE-----]
+
+   option.HANDHELD_LIGHT_RANGE = ДИАПАЗОН_РУКОВОГО_(HANDHELD)_ОСВЕЩЕНИЯ
+
+[-----UseQuarterResDepth-----]
+
+   option.UseQuarterResDepth = ИспЧетвертьРазрГлубины
+
+[-----AUTO_EXPOSURE-----]
+			
+   option.AUTO_EXPOSURE = АВТО_ЭКСПОЗИЦИЯ	
+
+[-----EXPOSURE_MULTIPLIER-----]
+
+   option.EXPOSURE_MULTIPLIER = МНОЖИТЕЛЬ_ЭКСПОЗИЦИИ
+
+[-----Exposure_Speed-----]
+
+      option.Exposure_Speed = Скорость_Экспозиции
+
+[-----Manual_exposure_value-----]
+
+   option.Manual_exposure_value = Значение_экспозиции_вручную
+
+[-----TONEMAP-----]
+
+   option.TONEMAP = ТОНКАРТЫ (TONEMAP)
+
+[-----USE_ACES_COLORSPACE_APPROXIMATION-----]
+
+   option.USE_ACES_COLORSPACE_APPROXIMATION = ИСПОЛЬЗОВАТЬ_ПРИБЛИЖЕНИЕ_ЦВЕТОВОГО_ПРОСТРАНСТВА_ACES
+
+[-----SATURATION-----]
+
+   option.SATURATION = НАСЫЩЕННОСТЬ
+
+[-----CROSSTALK-----]
+
+   option.CROSSTALK = ПЕРЕКРЁСТНЫЕПОДРОБНОСТИ (CROSSTALK)
+
+[-----CONTRAST-----]
+
+   option.CONTRAST = КОНТРАСТНОСТЬ
+
+[-----focal-----]
+
+   option.focal = фокусировка
+
+[-----aperture-----]
+
+   option.aperture = апертура
+
+[-----DoF_Adaptation_Speed-----]
+
+   option.DoF_Adaptation_Speed = Скорость_Адаптации_ГР_(DOF)
+
+[-----FAR_BLUR_ONLY-----]
+
+   option.FAR_BLUR_ONLY = ТОЛЬКО_ДАЛЁКОЕ_РАЗМЫТИЕ
+
+[-----Purkinje_strength-----]
+
+   option.Purkinje_strength = сила_Пуркинья_(Purkinje)
+
+[-----Purkinje_R-----]
+
+   option.Purkinje_R = Пуркинье_К_(R)
+
+[-----Purkinje_G-----]
+
+   option.Purkinje_G = Пуркинье_З_(G)
+
+[-----Purkinje_B-----]
+
+   option.Purkinje_B = Пуркинье_С_(B)
+
+[-----Purkinje_Multiplier-----]
+
+   option.Purkinje_Multiplier = Множитель_Пуркинья_(Purkinje)
+
+[-----Vanilla_like_water-----]
+
+   option.Vanilla_like_water = как_Ванильная_вода
+
+[-----WATER_WAVE_SPEED-----]
+
+   option.WATER_WAVE_SPEED = СКОРОСТЬ_ВОЛН_ВОДЫ
+
+[-----FOG_START_HEIGHT-----]
+
+   option.FOG_START_HEIGHT = НАЧАЛЬНАЯ_ВЫСОТА_ТУМАНА
+
+[-----CAVE_FOG-----]
+
+   option.CAVE_FOG = ПЕЩЕРНЫЙ_ТУМАН
+
+[-----CLOUD_SHADOW_STRENGTH-----]
+
+   option.CLOUD_SHADOW_STRENGTH = СИЛА_ТЕНИ_ОБЛАКА
+
+|/////Seasons/////|
+
+screen.Seasons = Сезоны
