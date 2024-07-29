@@ -1,22 +1,22 @@
  ____________________
 |                    |
 | By ShrikerChestTree|
-|   Version: 1.1.1   |
+|   Version: 1.1.2   |
 |____________________|
 
 {~=~=~BLISS SHADERS~=~=~}
 
-option.SHADER_VERSION_LABEL = Bliss В-Разраб(In-Dev) Число Коммита
+option.SHADER_VERSION_LABEL = Bliss В-Разр(In-Dev) Число Коммита
     prefix.SHADER_VERSION_LABEL = КОММИТ #
 
-# если вы здесь, чтобы переводить, это шутка, они ничего не выполняют того, что говорят.
+# если вы здесь, чтобы переводить, это шутка, они ничего не выполняют того, что им скажут.
 # Okay)
 profile.QUALITY=Качество
 profile.PERFORMANCE=Производительность
 
 {#####_Misc. Settings_#####}
 
-screen.Misc_Settings = Настройка §cОтладочная§r/Экспериментальная
+screen.Misc_Settings = Настройка §cОтладочной§r/Экспериментальной
 
 |/////Sun and Moon Colors/////|
 
@@ -36,7 +36,7 @@ option.moon_illuminance = Яркость Луны
 
 [-----Moonphase Based Moonlight-----]
 
-option.MOONPHASE_BASED_MOONLIGHT = Уровни яркости лунных фаз
+option.MOONPHASE_BASED_MOONLIGHT = Уровень яркости лунных фаз
 
 {#####_Settings For Supported Mods_#####}
 
@@ -52,7 +52,7 @@ option.RESOURCEPACK_SKY = Небо РесурсПака
 
 |/////Waving Stuff/////|
 
-screen.Waving_Stuff = Развевающиеся Вещи
+screen.Waving_Stuff = Развевающиеся Штуки (Stuff)
     
 [-----Waving Plants-----]
 
@@ -80,7 +80,7 @@ screen.Direct_Light = Прямой Свет
 
 [-----Screen-Space Shadows-----]
 
-        option.SCREENSPACE_CONTACT_SHADOWS = Тени в пространстве-экрана
+        option.SCREENSPACE_CONTACT_SHADOWS = Тени в Пространстве-Экрана
 
 [-----Shadows from Entity-----]
 
@@ -130,41 +130,41 @@ screen.Direct_Light = Прямой Свет
 
 [-----Max Shadow Bounds-----]
 
-        option.OPTIMIZED_SHADOW_DISTANCE = Максимальные Грани Теней
-            value.OPTIMIZED_SHADOW_DISTANCE.-1.0 = Не-Оптимизированные
-            value.OPTIMIZED_SHADOW_DISTANCE.1.0 = Оптимизированные
+        option.OPTIMIZED_SHADOW_DISTANCE = Максимальная Грань Тени
+            value.OPTIMIZED_SHADOW_DISTANCE.-1.0 = Не-Оптимизированная
+            value.OPTIMIZED_SHADOW_DISTANCE.1.0 = Оптимизированная
 
 [-----Entity Shadow Distance-----]
 
-        option.entityShadowDistanceMul = Дистанция Теней Сущности
-            value.entityShadowDistanceMul.0.01 = 1% от Дистанции Теней
-            value.entityShadowDistanceMul.0.02 = 2% от Дистанции Теней
-            value.entityShadowDistanceMul.0.03 = 3% от Дистанции Теней
-            value.entityShadowDistanceMul.0.04 = 4% от Дистанции Теней
-            value.entityShadowDistanceMul.0.05 = 5% от Дистанции Теней
-            value.entityShadowDistanceMul.0.10 = 10% от Дистанции Теней
-            value.entityShadowDistanceMul.0.15 = 15% от Дистанции Теней
-            value.entityShadowDistanceMul.0.20 = 20% от Дистанции Теней
-            value.entityShadowDistanceMul.0.25 = 25% от Дистанции Теней
-            value.entityShadowDistanceMul.0.30 = 30% от Дистанции Теней
-            value.entityShadowDistanceMul.0.35 = 35% от Дистанции Теней
-            value.entityShadowDistanceMul.0.40 = 40% от Дистанции Теней
-            value.entityShadowDistanceMul.0.45 = 45% от Дистанции Теней
-            value.entityShadowDistanceMul.0.50 = 50% от Дистанции Теней
-            value.entityShadowDistanceMul.0.75 = 75% от Дистанции Теней
-            value.entityShadowDistanceMul.1.00 = 100% от Дистанции Теней
+        option.entityShadowDistanceMul = Дистанция Тени Сущности
+            value.entityShadowDistanceMul.0.01 = 1% от Дистанции Тени
+            value.entityShadowDistanceMul.0.02 = 2% от Дистанции Тени
+            value.entityShadowDistanceMul.0.03 = 3% от Дистанции Тени
+            value.entityShadowDistanceMul.0.04 = 4% от Дистанции Тени
+            value.entityShadowDistanceMul.0.05 = 5% от Дистанции Тени
+            value.entityShadowDistanceMul.0.10 = 10% от Дистанции Тени
+            value.entityShadowDistanceMul.0.15 = 15% от Дистанции Тени
+            value.entityShadowDistanceMul.0.20 = 20% от Дистанции Тени
+            value.entityShadowDistanceMul.0.25 = 25% от Дистанции Тени
+            value.entityShadowDistanceMul.0.30 = 30% от Дистанции Тени
+            value.entityShadowDistanceMul.0.35 = 35% от Дистанции Тени
+            value.entityShadowDistanceMul.0.40 = 40% от Дистанции Тени
+            value.entityShadowDistanceMul.0.45 = 45% от Дистанции Тени
+            value.entityShadowDistanceMul.0.50 = 50% от Дистанции Тени
+            value.entityShadowDistanceMul.0.75 = 75% от Дистанции Тени
+            value.entityShadowDistanceMul.1.00 = 100% от Дистанции Тени
 
 |/////Shadow Filtering Settings/////|
 
-    screen.Filtering = Настройка Фильтра Теней
+    screen.Filtering = Настройка Фильтра Тени
 
 [-----Basic Shadow Filter Samples-----]
 
-        option.SHADOW_FILTER_SAMPLE_COUNT = Обычный Образец Фильтра Теней
+        option.SHADOW_FILTER_SAMPLE_COUNT = Обычный Образец Фильтра Тени
 
 [-----Minimum Shadow filter Radius-----]
 
-        option.Min_Shadow_Filter_Radius = Минимальный Радиус Фильтра Теней
+        option.Min_Shadow_Filter_Radius = Минимальный Радиус Фильтра Тени
 
 [-----Variable Penumbra Shadows-----]
 
@@ -176,7 +176,7 @@ screen.Direct_Light = Прямой Свет
 
 [-----Maximum Shadow Filter Radius-----]
 
-        option.Max_Shadow_Filter_Radius = Максимальный Радиус Фильтра Теней
+        option.Max_Shadow_Filter_Radius = Максимальный Радиус Фильтра Тени
 
 [-----Sun Size Factor-----]
 
@@ -235,7 +235,7 @@ screen.Direct_Light = Прямой Свет
 
 [-----Fog Light Propagation Brightness-----]
 
-        option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS = Яркость Распространение Света Тумана
+        option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS = Яркость Распространения Света Тумана
             suffix.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS=%
 
 |/////Sub-Surface Scattering/////|
@@ -266,8 +266,8 @@ screen.Subsurface_Scattering = Под-Поверхностное Рассеив�
 
     option.SSS_TYPE = Режим
         value.SSS_TYPE.0 = Никакой
-        value.SSS_TYPE.1 = Только Жёсткозакодированный
-        value.SSS_TYPE.2 = Жёсткозакодированный + LabППР (SSS)
+        value.SSS_TYPE.1 = Только Жёсткозакодированный (Hardcoded)
+        value.SSS_TYPE.2 = Жёсткозакодированный + LabППР (Hardcoded + SSS)
         value.SSS_TYPE.3 = Только LabППР (SSS)
 
 {#####_Ambient Light_#####}
@@ -333,7 +333,7 @@ screen.Ambient_light = Окружающее Освещение (AO)
 
 [-----Coloring Type-----]
 
-        option.ambient_colortype = Тип Раскраска
+        option.ambient_colortype = Тип Раскраски
             value.ambient_colortype.0 = Температура
             value.ambient_colortype.1 = КЗС (RGB)
 
@@ -362,7 +362,7 @@ screen.Fog = Настройка Тумана
 
 [-----Bloomy Fog Multiplier-----]
 
-    option.BLOOMY_FOG = Множитель Блюмового (Разцветённого) Тумана
+    option.BLOOMY_FOG = Множитель Блюмного (Разцветённого) Тумана
 
 [-----Atmospheric Haze Density-----]
 
@@ -390,35 +390,35 @@ screen.Fog = Настройка Тумана
 
 [-----Morning Fog Density-----]
 
-        option.Morning_Uniform_Fog = Утренняя Глубина Тумана
+        option.Morning_Uniform_Fog = Глубина Утреннего Тумана
 
 [-----Noon Fog Density-----]
 
-        option.Noon_Uniform_Fog = Полдневная Глубина Тумана
+        option.Noon_Uniform_Fog = Глубина Полдневного Тумана
 
 [-----Evening Fog Density-----]
 
-        option.Evening_Uniform_Fog = Вечерняя Глубина Тумана
+        option.Evening_Uniform_Fog = Глубина Вечернего Тумана
 
 [-----Night Fog Density-----]
 
-        option.Night_Uniform_Fog = Ночная Глубина Тумана
+        option.Night_Uniform_Fog = Глубина Ночного Тумана
 
 [-----Cloudy Morning Fog Density-----]
 
-        option.Morning_Cloudy_Fog = Облачное Утро Глубины Тумана
+        option.Morning_Cloudy_Fog = Глубина Облачно Утреннего Тумана
 
 [-----Cloudy Noon Fog Density-----]
 
-        option.Noon_Cloudy_Fog = Облачный Полдень Глубины Тумана
+        option.Noon_Cloudy_Fog = Глубина Облачно Полдневного Тумана
 
 [-----Cloudy Evening Fog Density-----]
 
-        option.Evening_Cloudy_Fog = Облачный Вечер Глубины Тумана
+        option.Evening_Cloudy_Fog = Глубина Облачно Вечернего Тумана
 
 [-----Cloudy Night Fog Density-----]
 
-        option.Night_Cloudy_Fog = Облачная Ночь Глубины Тумана
+        option.Night_Cloudy_Fog = Глубина Облачно Ночного Тумана
 
 [-----Per Biome Environments-----]
 
@@ -446,7 +446,7 @@ screen.Fog = Настройка Тумана
 
 [-----Fog B-----]
 
-        option.CaveFogColor_B = Туман Г (B)
+        option.CaveFogColor_B = Туман С (B)
 
 |/////Nether/End Fog/////|
 
@@ -470,7 +470,7 @@ screen.Clouds = Настройка Облаков
 
 [-----Cloud Resolution Scaling-----]
 
-    option.CLOUDS_QUALITY = Шкала Разрешения Облаков
+    option.CLOUDS_QUALITY = Шкала Разрешения Облака
 
 [-----Cloud Shadows-----]
 
@@ -478,7 +478,7 @@ screen.Clouds = Настройка Облаков
 
 [-----Cloud Speed Multiplier-----]
 
-    option.Cloud_Speed = Множитель Скорости Облаков
+    option.Cloud_Speed = Множитель Скорости Облака
 
 [-----Coverage When Raining-----]
 
@@ -670,7 +670,7 @@ screen.Climate = Настройка Климата
         option.Summer_Leaf_G = Количество Зелёного (на листьях)
         option.Summer_Leaf_B = Количество Синего (на листьях)
 
-|/////Autumn Colors/////|
+|/////Autumn(Fall) Colors/////|
 
     screen.Fall_colors = Осенние Цвета
         option.Fall_R = Количество Красного
@@ -795,7 +795,7 @@ screen.World = Мир
 
 [-----Ocean Y coordinate-----]
 
-        option.Water_Top_Layer = Координаты Океана Y
+        option.Water_Top_Layer = Координаты Y Океана
 
 [-----Wave Strength-----]
 
@@ -824,7 +824,7 @@ screen.Post_Processing = Пост Обработка
 
 |/////Tone-Map/Color Settings/////|
 
-    screen.Tonemapping = Настройка Тон-Карты/Цвета
+    screen.Tonemapping = Настройка Тон-Карты(Tone-Map)/Цвета
 
 |/////Exprouse Settings/////|
 
@@ -832,11 +832,11 @@ screen.Post_Processing = Пост Обработка
 
 |/////Depth Of Field Settings/////|
 
-    screen.DepthOfField = Настройка Глубины Резкости
+    screen.DepthOfField = Настройка Глубины Резкости (DOF)
 
 |/////Purkinje Effect Settings/////|
 
-    screen.Purkinje_effect = Настройка Пуркиньего (Purkinje) Эффекта
+    screen.Purkinje_effect = Настройка Эффекта Пуркинья (Purkinje)
 
 [-----Sharpening amount-----]
 
@@ -883,14 +883,14 @@ screen.Post_Processing = Пост Обработка
 		option.SHADOWS_GRADE_R = Тени §cКрасного
 		option.SHADOWS_GRADE_G = Тени §aЗелёного
 		option.SHADOWS_GRADE_B = Тени §9Синего
-		option.SHADOWS_GRADE_MUL = Яркость Тени
+		option.SHADOWS_GRADE_MUL = Яркость Теней
 		option.MIDS_GRADE_R = Средтона §cКрасного
 		option.MIDS_GRADE_G = Средтона §aЗелёного
 		option.MIDS_GRADE_B = Средтона §9Синего
 		option.MIDS_GRADE_MUL = Яркость Средтон
 		option.HIGHLIGHTS_GRADE_R = Высокийсвет §cКрасного
 		option.HIGHLIGHTS_GRADE_G = Высокийсвет §aЗелёного
-		option.HIGHLIGHTS_GRADE_B = Высокийсвет §9Голубого
+		option.HIGHLIGHTS_GRADE_B = Высокийсвет §9Синего
 		option.HIGHLIGHTS_GRADE_MUL = Яркость Высокогосвета
 
 {#####_Resource_Pack_Support_#####}
@@ -943,19 +943,19 @@ screen.Resource_Pack_Support = Поддержка Ресурс Паков
 
 [-----Emission Curve-----]
 
-        option.Emissive_Curve = Излучение Кривости
+        option.Emissive_Curve = Кривость Излучения
 
 [-----Mode-----]
 
         option.EMISSIVE_TYPE = Режим
             value.EMISSIVE_TYPE.0 = Без Излучения
-            value.EMISSIVE_TYPE.1 = Только Жёсткозакодированный
-            value.EMISSIVE_TYPE.2 = Жёсткозакодированный + Lab Излучение
+            value.EMISSIVE_TYPE.1 = Только Жёсткозакодированный (Hardcoded)
+            value.EMISSIVE_TYPE.2 = Жёсткозакодированный(Hardcoded) + Lab Излучение
             value.EMISSIVE_TYPE.3 = Только Lab Излучение
 
 |/////Parallax Occlusion Mapping / POM/////|
 
-screen.POM = Составление Окклюзии Параллакса / СОП
+screen.POM = Составление Окклюзии Параллакса / СОП (POM)
 
 [-----Parallax Occlusion Mapping-----]
 
@@ -1056,7 +1056,7 @@ option.AEROCHROME_WOOL_ENABLED=Аэрохромная Шерсть
 
 option.AEROCHROME_MODE.comment = Инфракрасный Фильм. Наберите в Google "Aerochrome", чтобы понять, что он делает.
 option.AEROCHROME_PINKNESS.comment = Высокий = Розовый. Низкий = Красный
-option.AEROCHROME_WOOL_ENABLED.comment = Технически шерстяные материалы должны быть затронуты, но это портит многие сборки. Включите, чтобы быть более технически корректным
+option.AEROCHROME_WOOL_ENABLED.comment = Технически шерстяные материалы должны быть затронуты, но это портит многие сборки. Включите, чтобы было более технически точным
 
 
 
@@ -1068,9 +1068,9 @@ option.sunPathRotation.comment = Наклон солнца или луны
 option.sun_illuminance.comment = Яркость солнца
 option.moon_illuminance.comment = Яркость луны
 
-screen.Direct_Light.comment = Настройка, связанные с солнцем и тенями.
+screen.Direct_Light.comment = Настройка, связанная с солнцем и тенью.
 
-screen.Shadows.comment = Тени от солнца по своему вкусу.
+screen.Shadows.comment = Тень от солнца по своему вкусу.
     option.SCREENSPACE_CONTACT_SHADOWS.comment = §bЧто это?§r Это тени на объектах, находящиеся вдали, и на мелких деталях вблизи. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к среднему; при высоких разрешениях она стоит дороже.
     option.RENDER_ENTITY_SHADOWS.comment =  §bЧто это?§r Тень на всех типах сущности, таких как мобы, сундуки, баннеры или таблички. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от низкого к высокому; это очень дорого, когда рядом много сущностей.
     option.shadowMapResolution.comment = Качество тени от солнца, отбрасываемых объектов в мире. §aСТОИМОСТЬ ПРОИЗВОДИТЕЛЬНОСТИ:§r от среднего к очень высокому; Тени должны рендерить 3D мир второй раз с точки зрения солнца, поэтому производительность снижается вдвое.
@@ -1384,11 +1384,11 @@ value.DEBUG_VIEW.debug_FILTERED_STUFF = отладка_(debug)_ФИЛЬТРОВ�
 
 [-----SELECT_BOX-----]
 
-   option.SELECT_BOX = ВЫБРАТЬ_КОРОБКУ_(BOX)
+   option.SELECT_BOX = ВЫБРАТЬ_КОРОБКУ(BOX)
 
 [-----DENOISE_SSS_AND_SSAO-----]
 
-   option.DENOISE_SSS_AND_SSAO = УМЕНЬШЕНИЕ_ППР_(SSS)_И_ПЭОО_(SSAO)
+   option.DENOISE_SSS_AND_SSAO = УМЕНЬШЕНИЕ_ППР(SSS)_И_ПЭОО(SSAO)
 
 [-----WATER_CAUSTICS_BRIGHTNESS-----]
 
@@ -1408,7 +1408,7 @@ value.DEBUG_VIEW.debug_FILTERED_STUFF = отладка_(debug)_ФИЛЬТРОВ�
 
 [-----OLD_LIGHTLEAK_FIX-----]
 
-   option.OLD_LIGHTLEAK_FIX = ИСПРАВЛЕНИЕ_СТАРОЙ_УТЕЧКИ_СВЕТА_(LIGHTLEAK)
+   option.OLD_LIGHTLEAK_FIX = ИСПРАВЛЕНИЕ_СТАРОЙ_УТЕЧКИ_СВЕТА(LIGHTLEAK)
 
 [-----sunColorR-----]
 
@@ -1440,15 +1440,15 @@ value.DEBUG_VIEW.debug_FILTERED_STUFF = отладка_(debug)_ФИЛЬТРОВ�
 
 [-----Sun_temp-----]
 
-   option.Sun_temp = Темп_Солнца
+   option.Sun_temp = темп_Солнца
 
 [-----Moon_temp-----]
 
-   option.Moon_temp = Темп_Луны
+   option.Moon_temp = темп_Луны
 
 [-----HANDHELD_LIGHT_RANGE-----]
 
-   option.HANDHELD_LIGHT_RANGE = ДИАПАЗОН_РУКОВОГО_(HANDHELD)_ОСВЕЩЕНИЯ
+   option.HANDHELD_LIGHT_RANGE = ДИАПАЗОН_РУЧНОГО_(HANDHELD)_ОСВЕЩЕНИЯ
 
 [-----UseQuarterResDepth-----]
 
@@ -1476,7 +1476,7 @@ value.DEBUG_VIEW.debug_FILTERED_STUFF = отладка_(debug)_ФИЛЬТРОВ�
 
 [-----USE_ACES_COLORSPACE_APPROXIMATION-----]
 
-   option.USE_ACES_COLORSPACE_APPROXIMATION = ИСПОЛЬЗОВАТЬ_ПРИБЛИЖЕНИЕ_ЦВЕТОВОГО_ПРОСТРАНСТВА_ACES
+   option.USE_ACES_COLORSPACE_APPROXIMATION = ИСПОЛЬЗОВАТЬ_ПРИБЛИЖЕНИЕ_ЦВЕТОВОГОПРОСТРАНСТВА_ACES
 
 [-----SATURATION-----]
 
@@ -1546,6 +1546,3 @@ value.DEBUG_VIEW.debug_FILTERED_STUFF = отладка_(debug)_ФИЛЬТРОВ�
 
    option.CLOUD_SHADOW_STRENGTH = СИЛА_ТЕНИ_ОБЛАКА
 
-|/////Seasons/////|
-
-screen.Seasons = Сезоны
