@@ -996,6 +996,73 @@ void main() {
                 break;
         }
 
+        // STAIRS
+        if (blockId >= BLOCK_STAIRS_BOTTOM_N && blockId <= BLOCK_STAIRS_TOP_OUTER_S_W) {
+            mixWeight = 0.25;
+
+            switch (blockId) {
+                case BLOCK_STAIRS_BOTTOM_N:
+                    mixMask = BuildLpvMask(1u, 1u, 0u, 1u, 1u, 0u);
+                    break;
+                case BLOCK_STAIRS_BOTTOM_E:
+                    mixMask = BuildLpvMask(1u, 1u, 1u, 0u, 1u, 0u);
+                    break;
+                case BLOCK_STAIRS_BOTTOM_S:
+                    mixMask = BuildLpvMask(0u, 1u, 1u, 1u, 1u, 0u);
+                    break;
+                case BLOCK_STAIRS_BOTTOM_W:
+                    mixMask = BuildLpvMask(1u, 0u, 1u, 1u, 1u, 0u);
+                    break;
+                case BLOCK_STAIRS_BOTTOM_INNER_S_E:
+                    mixMask = BuildLpvMask(0u, 1u, 1u, 0u, 0u, 1u);
+                    break;
+                case BLOCK_STAIRS_BOTTOM_INNER_S_W:
+                    mixMask = BuildLpvMask(0u, 0u, 1u, 1u, 0u, 1u);
+                    break;
+                case BLOCK_STAIRS_BOTTOM_INNER_N_W:
+                    mixMask = BuildLpvMask(1u, 0u, 0u, 1u, 0u, 1u);
+                    break;
+                case BLOCK_STAIRS_BOTTOM_INNER_N_E:
+                    mixMask = BuildLpvMask(1u, 1u, 0u, 0u, 0u, 1u);
+                    break;
+            }
+
+            if (blockId >= BLOCK_STAIRS_BOTTOM_OUTER_N_W && blockId <= BLOCK_STAIRS_BOTTOM_OUTER_S_W) {
+                mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 0u, 1u);
+            }
+
+            switch (blockId) {
+                case BLOCK_STAIRS_TOP_N:
+                    mixMask = BuildLpvMask(1u, 1u, 0u, 1u, 0u, 1u);
+                    break;
+                case BLOCK_STAIRS_TOP_E:
+                    mixMask = BuildLpvMask(1u, 1u, 1u, 0u, 0u, 1u);
+                    break;
+                case BLOCK_STAIRS_TOP_S:
+                    mixMask = BuildLpvMask(0u, 1u, 1u, 1u, 0u, 1u);
+                    break;
+                case BLOCK_STAIRS_TOP_W:
+                    mixMask = BuildLpvMask(1u, 0u, 1u, 1u, 0u, 1u);
+                    break;
+                case BLOCK_STAIRS_TOP_INNER_S_E:
+                    mixMask = BuildLpvMask(0u, 1u, 1u, 0u, 0u, 1u);
+                    break;
+                case BLOCK_STAIRS_TOP_INNER_S_W:
+                    mixMask = BuildLpvMask(0u, 0u, 1u, 1u, 0u, 1u);
+                    break;
+                case BLOCK_STAIRS_TOP_INNER_N_W:
+                    mixMask = BuildLpvMask(1u, 0u, 0u, 1u, 0u, 1u);
+                    break;
+                case BLOCK_STAIRS_TOP_INNER_N_E:
+                    mixMask = BuildLpvMask(1u, 1u, 0u, 0u, 0u, 1u);
+                    break;
+            }
+
+            if (blockId >= BLOCK_STAIRS_TOP_OUTER_N_W && blockId <= BLOCK_STAIRS_TOP_OUTER_S_W) {
+                mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 0u, 1u);
+            }
+        }
+
         // WALL
         if (blockId >= BLOCK_WALL_MIN && blockId <= BLOCK_WALL_MAX) {
             mixWeight = 0.25;
