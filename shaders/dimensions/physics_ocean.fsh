@@ -397,6 +397,23 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 }
 #endif
 
+void convertHandDepth(inout float depth) {
+    float ndcDepth = depth * 2.0 - 1.0;
+    ndcDepth /= MC_HAND_DEPTH;
+    depth = ndcDepth * 0.5 + 0.5;
+}
+void Emission(
+	inout vec3 Lighting,
+	vec3 Albedo,
+	float Emission,
+	float exposure
+){
+	float autoBrightnessAdjust = mix(5.0, 100.0, clamp(exp(-10.0*exposure),0.0,1.0));
+	if( Emission < 254.5/255.0) Lighting = mix(Lighting, Albedo * Emissive_Brightness * autoBrightnessAdjust * 0.1, pow(Emission, Emissive_Curve)); // old method.... idk why
+}
+
+uniform vec3 eyePosition;
+
 
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -547,8 +564,13 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		lightmap.y = 1.0;
 	#endif
 	
-	#ifdef Hand_Held_lights
-		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS*clamp( pow(max(1.0-length(feetPlayerPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
+	#if defined Hand_Held_lights && !defined LPV_ENABLED
+		#ifdef IS_IRIS
+			vec3 playerCamPos = eyePosition;
+		#else
+			vec3 playerCamPos = cameraPosition;
+		#endif
+		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS*clamp( pow(max(1.0-length((feetPlayerPos+cameraPosition) - playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
 	#endif
 
 	vec3 Indirect_lighting = vec3(0.0);
@@ -584,19 +606,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		
 		float skylight = max(pow(viewToWorld(flatnormal).y*0.5+0.5,0.1) + SkylightDir, 0.2);
 		AmbientLightColor *= skylight;
+		
+		Indirect_lighting = doIndirectLighting(AmbientLightColor, MinimumLightColor, lightmap.y);
 	#endif
 
 	#ifdef NETHER_SHADER
-		// vec3 AmbientLightColor = skyCloudsFromTexLOD2(worldSpaceNormal, colortex4, 6).rgb / 15.0;
-		
-		// vec3 up 	= skyCloudsFromTexLOD2(vec3( 0, 1, 0), colortex4, 6).rgb/ 30.0;
-		// vec3 down 	= skyCloudsFromTexLOD2(vec3( 0,-1, 0), colortex4, 6).rgb/ 30.0;
-
-		// up   *= pow( max( worldSpaceNormal.y, 0), 2);
-		// down *= pow( max(-worldSpaceNormal.y, 0), 2);
-		// AmbientLightColor += up + down;
-		
-		vec3 AmbientLightColor = vec3(0.1);
+		Indirect_lighting = skyCloudsFromTexLOD2(worldSpaceNormal, colortex4, 6).rgb / 30.0 ;
 	#endif
 
 	#ifdef END_SHADER
@@ -613,12 +628,17 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		Direct_lighting = lightColors * endFogPhase(lightPos) * NdotL;
 
-		vec3 AmbientLightColor = vec3(0.5,0.75,1.0) * 0.9 + 0.1;
-		AmbientLightColor *= clamp(1.5 + dot(worldSpaceNormal, normalize(feetPlayerPos))*0.5,0,2);
+		vec3 AmbientLightColor = vec3(0.3,0.6,1.0) * 0.5;
+			
+		Indirect_lighting = AmbientLightColor + 0.7 * AmbientLightColor * dot(worldSpaceNormal, normalize(feetPlayerPos));
 	#endif
 
+	///////////////////////// BLOCKLIGHT LIGHTING OR LPV LIGHTING OR FLOODFILL COLORED LIGHTING
 	#ifdef IS_LPV_ENABLED
-		vec3 normalOffset = 0.5*worldSpaceNormal;
+		vec3 normalOffset = vec3(0.0);
+
+		if (any(greaterThan(abs(worldSpaceNormal), vec3(1.0e-6))))
+			normalOffset = 0.5*worldSpaceNormal;
 
 		#if LPV_NORMAL_STRENGTH > 0
 			if (any(greaterThan(abs(normal), vec3(1.0e-6)))) {
@@ -632,7 +652,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		const vec3 lpvPos = vec3(0.0);
 	#endif
 
-	Indirect_lighting = DoAmbientLightColor(feetPlayerPos, lpvPos, AmbientLightColor, MinimumLightColor, vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.xy, exposure);
+	Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, exposure, feetPlayerPos, lpvPos);
 	
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
 
@@ -662,6 +682,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		
 		float roughness = pow(1.0-specularValues.r,2.0);
 		float f0 = isReflective ? max(specularValues.g, 0.02) : specularValues.g;
+
+		#ifdef HAND
+			f0 = max(specularValues.g, 0.02);
+		#endif
 		
 		// f0 = SpecularTex.g;
 		// roughness = pow(1.0-specularValues.r,2.0);
@@ -759,9 +783,9 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0].rgb = FinalColor*0.1;
 	#endif
 
-	// #if EMISSIVE_TYPE == 2 || EMISSIVE_TYPE == 3
-	// 	Emission(gl_FragData[0].rgb, Albedo, SpecularTex.b, exposure);
-	// #endif
+	#if EMISSIVE_TYPE == 2 || EMISSIVE_TYPE == 3
+		Emission(gl_FragData[0].rgb, Albedo, SpecularTex.b, exposure);
+	#endif
 	
 	#if defined DISTANT_HORIZONS && defined DH_OVERDRAW_PREVENTION && !defined HAND
 		bool WATER = texture2D(colortex7, gl_FragCoord.xy*texelSize).a > 0.0 && length(feetPlayerPos) > far-16*4 && texture2D(depthtex1, gl_FragCoord.xy*texelSize).x >= 1.0;
@@ -769,8 +793,9 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		if(WATER) gl_FragData[0].a = 0.0;
 	#endif
 
-	gl_FragData[1] = vec4(Albedo, MATERIALS);
-
+	#ifndef HAND
+		gl_FragData[1] = vec4(Albedo, MATERIALS);
+	#endif
 	#if DEBUG_VIEW == debug_DH_WATER_BLENDING
 		if(gl_FragCoord.x*texelSize.x < 0.47) gl_FragData[0] = vec4(0.0);
 	#endif
