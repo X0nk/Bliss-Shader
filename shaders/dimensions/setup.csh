@@ -770,7 +770,9 @@ void main() {
             mixWeight = 0.8;
         }
 
-        if (blockId == BLOCK_TORCH || blockId == ITEM_TORCH) {
+        if (blockId == BLOCK_TORCH || blockId == ITEM_TORCH ||
+            blockId == BLOCK_LANTERN || blockId == ITEM_LANTERN
+        ) {
             lightColor = vec3(TORCH_R, TORCH_G, TORCH_B);
             lightRange = 14.0;
             mixWeight = 0.8;
