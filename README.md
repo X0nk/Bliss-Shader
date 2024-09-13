@@ -10,6 +10,7 @@ i wanted to emphasize a varying scene, where the lighting isn't always the same 
 + Null, for doing a huge amount of work creating the voxel floodfill colored lighting
 + Emin, and Gri573, for teaching me how to stop alot of light leaking
 + RRe36 and Sixthsurge, for the great ideas to steal
+### [You can contact me on discord, by joining the shaderLabs discord server and using the "bliss-xonk" channel](https://discord.com/invite/RpzWN9S)
 ### [Want to support me? Consider donating](https://buymeacoffee.com/xonkdev)
 
 # IN-DEVELOPMENT VERSIONS AND RELEASE VERSIONS
