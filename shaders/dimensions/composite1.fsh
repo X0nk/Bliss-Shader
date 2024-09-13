@@ -935,7 +935,7 @@ void main() {
 			#if RESOURCEPACK_SKY == 1 || RESOURCEPACK_SKY == 0 || RESOURCEPACK_SKY == 3
 				// vec3 orbitstar = vec3(feetPlayerPos_normalized.x,abs(feetPlayerPos_normalized.y),feetPlayerPos_normalized.z); orbitstar.x -= WsunVec.x*0.2;
 				vec3 orbitstar = normalize(mat3(gbufferModelViewInverse) * toScreenSpace(vec3(texcoord/RENDER_SCALE,1.0)));
-				float radiance = 2.39996 - (worldTime + worldDay*24000.0) / 24000.0;
+				float radiance = 2.39996 - (worldTime + (worldDay & 0xFFFF) * 24000.0) / 24000.0;
 				// float radiance = 2.39996 + frameTimeCounter;
 				mat2 rotationMatrix  = mat2(vec2(cos(radiance),  -sin(radiance)),  vec2(sin(radiance),  cos(radiance)));
 				
