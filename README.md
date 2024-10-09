@@ -11,7 +11,7 @@ i wanted to emphasize a varying scene, where the lighting isn't always the same 
 + Emin, and Gri573, for teaching me how to stop alot of light leaking
 + RRe36 and Sixthsurge, for the great ideas to steal
 ### [You can contact me on discord, by joining the shaderLabs discord server and using the "bliss-xonk" channel](https://discord.com/invite/RpzWN9S)
-### [Want to support me? Consider donating](https://buymeacoffee.com/xonkdev)
+### [Want to support me? Consider donating](https://ko-fi.com/xonkdev)
 
 # IN-DEVELOPMENT VERSIONS AND RELEASE VERSIONS
 `In-development versions` are the very latest versions, and are released regularly to be tested by anyone. **Please report any issues you find.**
