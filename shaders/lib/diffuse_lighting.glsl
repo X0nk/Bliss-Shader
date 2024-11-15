@@ -25,13 +25,29 @@ vec3 doBlockLightLighting(
     vec3 lightColor, float lightmap, float exposureValue,
     vec3 playerPos, vec3 lpvPos
 ){
+    lightmap = clamp(lightmap,0.0,1.0);
 
-    float lightmapCurve = pow(1.0-sqrt(1.0-clamp(lightmap,0.0,1.0)),2.0) * 2.0;
+    float lightmapBrightspot = min(max(lightmap-0.7,0.0)*3.3333,1.0);
+    lightmapBrightspot *= lightmapBrightspot*lightmapBrightspot;
+
+    float lightmapLight = 1.0-sqrt(1.0-lightmap);
+    lightmapLight *= lightmapLight;
+
+    float lightmapCurve = mix(lightmapLight, 2.0, lightmapBrightspot);
+
+    // lightmapCurve = lightmap*lightmap;
+
+    // float lightmapCurve = (exp(-15.0 * (1.0-lightmap))*10.0 + lightmap*pow(1.0-pow(1.0-lightmap,2.0),2.0))*0.5;
+    // float lightmapCurve = (pow(min(max(lightmap-0.6, 0.0) * 2.5,1.0),4.0) * 10.0 + lightmap*pow(1.0-pow(1.0-lightmap,2.0),2.0))*0.5;
+    // float lightmapCurve = pow(1.0-pow(1.0-lightmap,2.0),2.0);
     
-    vec3 blockLight = lightColor * lightmapCurve; //;
+    vec3 blockLight = lightColor * lightmapCurve;
     
     #if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
         vec4 lpvSample = SampleLpvLinear(lpvPos);
+        #ifdef VANILLA_LIGHTMAP_MASK
+            lpvSample.rgb *= lightmapCurve;
+        #endif
         vec3 lpvBlockLight = GetLpvBlockLight(lpvSample);
 
         // create a smooth falloff at the edges of the voxel volume.
@@ -41,7 +57,7 @@ vec3 doBlockLightLighting(
         voxelRangeFalloff = 1.0 - pow(1.0-pow(voxelRangeFalloff,1.5),3.0);
         
         // outside the voxel volume, lerp to vanilla lighting as a fallback
-        blockLight = mix(blockLight, lpvBlockLight/5.0, voxelRangeFalloff);
+        blockLight = mix(blockLight, lpvSample.rgb, voxelRangeFalloff);
 
         #ifdef Hand_Held_lights
             // create handheld lightsources
@@ -56,8 +72,8 @@ vec3 doBlockLightLighting(
     #endif
 
     // try to make blocklight have consistent visiblity in different light levels.
-    float autoBrightness = mix(1.0, 30.0,  clamp(exp(-10.0*exposureValue),0.0,1.0));
-    blockLight *= autoBrightness;
+    // float autoBrightness = mix(0.5, 1.0,  clamp(exp(-10.0*exposureValue),0.0,1.0));
+    // blockLight *= autoBrightness;
     
     return blockLight * TORCH_AMOUNT;
 }
@@ -66,11 +82,14 @@ vec3 doIndirectLighting(
     vec3 lightColor, vec3 minimumLightColor, float lightmap
 ){
 
+    // float lightmapCurve = pow(1.0-pow(1.0-lightmap,2.0),2.0);
+    // float lightmapCurve = lightmap*lightmap;
     float lightmapCurve = (pow(lightmap,15.0)*2.0 + pow(lightmap,2.5))*0.5;
 
     vec3 indirectLight = lightColor * lightmapCurve * ambient_brightness * 0.7; 
 
-    indirectLight += minimumLightColor * max(MIN_LIGHT_AMOUNT*0.01, nightVision * 0.1);
+    // indirectLight = max(indirectLight, minimumLightColor * (MIN_LIGHT_AMOUNT * 0.02 * 0.2 + nightVision));
+    indirectLight += minimumLightColor * (MIN_LIGHT_AMOUNT * 0.02 * 0.2 + nightVision*0.02);
 
     return indirectLight;
 }

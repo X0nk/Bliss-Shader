@@ -122,7 +122,6 @@
 ///////////////////////////// BIOME SPECIFICS /////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-	uniform float nightVision;
 
 	uniform float isJungles;
 	uniform float isSwamps;
@@ -144,7 +143,7 @@
 		BiomeColors.b = isSwamps*SWAMP_B + isJungles*JUNGLE_B + isDarkForests*DARKFOREST_B + sandStorm*0.3 + snowStorm*1.0;
 
 		// insure the biome colors are locked to the fog shape and lighting, but not its orignal color.
-		BiomeColors *= max(dot(FinalFogColor,vec3(0.33333)), MIN_LIGHT_AMOUNT*0.025 + nightVision*0.2); 
+		BiomeColors *= max(dot(FinalFogColor,vec3(0.33333)), MIN_LIGHT_AMOUNT*0.025); 
 		
 		// these range 0.0-1.0. they will never overlap.
 		float Inbiome = isJungles+isSwamps+isDarkForests+sandStorm+snowStorm;
@@ -184,8 +183,8 @@
 		// DirectLightCol = BiomeColors * max(dot(DirectLightCol,vec3(0.33333)), MIN_LIGHT_AMOUNT*0.025 + nightVision*0.2); 
 		// IndirectLightCol = BiomeColors * max(dot(IndirectLightCol,vec3(0.33333)), MIN_LIGHT_AMOUNT*0.025 + nightVision*0.2); 
 		
-		DirectLightCol = BiomeColors * max(dot(DirectLightCol,vec3(0.33333)), MIN_LIGHT_AMOUNT*0.025 + nightVision*0.2); 
-		IndirectLightCol = BiomeColors * max(dot(IndirectLightCol,vec3(0.33333)), MIN_LIGHT_AMOUNT*0.025 + nightVision*0.2); 
+		DirectLightCol = BiomeColors * max(dot(DirectLightCol,vec3(0.33333)), MIN_LIGHT_AMOUNT*0.025 ); 
+		IndirectLightCol = BiomeColors * max(dot(IndirectLightCol,vec3(0.33333)), MIN_LIGHT_AMOUNT*0.025 ); 
 		
 		// these range 0.0-1.0. they will never overlap.
 		float Inbiome = isJungles+isSwamps+isDarkForests+sandStorm+snowStorm;

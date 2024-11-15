@@ -21,11 +21,14 @@ uniform sampler2D depthtex1;
 uniform sampler2D colortex1;
 uniform sampler2D colortex3; // Noise
 uniform sampler2D colortex6; // Noise
+uniform sampler2D colortex7; // Noise
 uniform sampler2D colortex8; // Noise
 uniform sampler2D colortex14; // Noise
+uniform sampler2D colortex10; // Noise
 uniform sampler2D colortex12; // Noise
+uniform sampler2D colortex13; // Noise
 uniform sampler2D colortex15; // Noise
-
+uniform int isEyeInWater;
 uniform sampler2D shadow;
 
 #ifdef TRANSLUCENT_COLORED_SHADOWS
@@ -121,30 +124,39 @@ vec2 decodeVec2(float a){
 }
 
 
-
 float interleaved_gradientNoise_temporal(){
-	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
+	vec2 coord = gl_FragCoord.xy;
+	
+	#ifdef TAA
+		coord += (frameCounter*9)%40000;
+	#endif
+
+	return fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 }
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy;
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 	return noise;
 }
-
 float R2_dither(){
-  	#ifdef TAA
-		vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
-	#else
-		vec2 coord = gl_FragCoord.xy;
+	vec2 coord = gl_FragCoord.xy ;
+
+	#ifdef TAA
+		coord += (frameCounter*2)%40000;
 	#endif
+	
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
 float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+	#ifdef TAA
+  		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+	#else
+		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
+	#endif
 }
 vec4 blueNoise(vec2 coord){
-  return texelFetch2D(colortex6, ivec2(coord )%512  , 0);
+  return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
 }
 vec2 R2_samples(int n){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
@@ -236,63 +248,53 @@ float convertHandDepth_2(in float depth, bool hand) {
     ndcDepth /= MC_HAND_DEPTH;
     return ndcDepth * 0.5 + 0.5;
 }
+
 vec2 SSAO(
 	vec3 viewPos, vec3 normal, bool hand, bool leaves, float noise
 ){
-	// if(hand) return vec2(1.0,0.0);
 	int samples = 7;
 	float occlusion = 0.0; 
 	float sss = 0.0;
 
+	vec3 normalizedNormals = normalize(normal);
+	vec2 jitterOffsets = TAA_Offset*texelSize*0.5 * RENDER_SCALE - texelSize*0.5;
 
-	float dist = 1.0 + clamp(viewPos.z*viewPos.z/50.0,0,5); // shrink sample size as distance increases
-	float mulfov2 = gbufferProjection[1][1]/(3 * dist);
-	float maxR2 = viewPos.z*viewPos.z*mulfov2*2.0 * 5.0 / mix(4.0, 50.0, clamp(viewPos.z*viewPos.z - 0.1,0,1));
-
-	#ifdef Ambient_SSS
-		float maxR2_2 = viewPos.z;//*viewPos.z*mulfov2*2.*2./4.0;
-
-		float dist3 = clamp(1-exp( viewPos.z*viewPos.z / -50),0,1);
-		// if(leaves) maxR2_2 = 0.1;
-		// if(leaves) maxR2_2 = mix(10, maxR2_2, dist3);
-	#endif
-
-	vec2 acc = -(TAA_Offset*(texelSize/2.0))*RENDER_SCALE ;
+	// scale the offset radius down as distance increases.
+	float linearViewDistance = length(viewPos);
+	float distanceScale = hand ? 30.0 : mix(40.0, 10.0, pow(clamp(1.0 - linearViewDistance/50.0,0.0,1.0),2.0));
+	float depthCancelation = (linearViewDistance*linearViewDistance) / distanceScale * 0.5;
 	
-	// vec2 BLUENOISE = blueNoise(gl_FragCoord.xy).rg;
-
-	int n = 0;
-
 	float leaf = leaves ? -0.5 : 0.0;
 
+	int n = 0;
 	for (int i = 0; i < samples; i++) {
 		
-		// vec2 sampleOffset = (SpiralSample(i, 7, 8 , noise)) * mulfov2  * clamp(0.05 + i*0.095, 0.0,0.3)  ;
-		vec2 sampleOffset = CleanSample(i, samples - 1, noise) * mulfov2 * 0.3 ;
+		vec2 offsets = CleanSample(i, samples - 1, noise) / distanceScale;
 
-		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio)*RENDER_SCALE);
+		ivec2 offsetUV = ivec2(gl_FragCoord.xy + offsets*vec2(viewWidth, viewHeight*aspectRatio)*RENDER_SCALE);
 
-		if (offset.x >= 0 && offset.y >= 0 && offset.x < viewWidth*RENDER_SCALE.x && offset.y < viewHeight*RENDER_SCALE.y ) {
+		if (offsetUV.x >= 0 && offsetUV.y >= 0 && offsetUV.x < viewWidth*RENDER_SCALE.x && offsetUV.y < viewHeight*RENDER_SCALE.y ) {
+			
+			float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, offsetUV, 0).x, hand);
+
 			#ifdef DISTANT_HORIZONS
-				float dhdepth = texelFetch2D(dhDepthTex1, offset,0).x;
+				float sampleDHDepth = texelFetch2D(dhDepthTex1, offsetUV, 0).x;
+				vec3 offsetViewPos = toScreenSpace_DH((offsetUV*texelSize - jitterOffsets) * (1.0/RENDER_SCALE), sampleDepth, sampleDHDepth);
 			#else
-				float dhdepth = 0.0;
+				vec3 offsetViewPos = toScreenSpace(vec3((offsetUV*texelSize - jitterOffsets) * (1.0/RENDER_SCALE), sampleDepth));
 			#endif
 
-			vec3 t0 = toScreenSpace_DH((offset*texelSize+acc+0.5*texelSize) * (1.0/RENDER_SCALE), convertHandDepth_2(texelFetch2D(depthtex1, offset,0).x, hand), dhdepth);
-		
-			vec3 vec = (t0.xyz - viewPos);
-			float dsquared = dot(vec, vec);
+			vec3 viewPosDiff = offsetViewPos - viewPos;
+			float viewPosDiffSquared = dot(viewPosDiff, viewPosDiff);
 			
-			if (dsquared > 1e-5){
-				
-				if( dsquared < maxR2){
-					float NdotV = clamp(dot(vec*inversesqrt(dsquared), normalize(normal)),0.,1.);
-					occlusion += NdotV * clamp(1.0-dsquared/maxR2,0.0,1.0);
+			if (viewPosDiffSquared > 1e-5){
+				if(viewPosDiffSquared < depthCancelation){
+					float NdotV = clamp(dot(viewPosDiff*inversesqrt(viewPosDiffSquared), normalizedNormals),0.0,1.0);
+					occlusion += NdotV * clamp(1.0-(viewPosDiffSquared/depthCancelation),0.0,1.0);
 				}
-
+				
 				#ifdef Ambient_SSS
-					sss += clamp(leaf - dot(vec, normalize(normal)),0.0,1.0);
+					sss += clamp(0.0 - dot(viewPosDiff, normalizedNormals),0.0,1.0) * exp(-10.0 * occlusion);
 				#endif
 
 				n += 1;
@@ -300,6 +302,52 @@ vec2 SSAO(
 		}
 	}
 	return max(1.0 - vec2(occlusion*AO_Strength, sss)/n, 0.0);
+}
+
+float ScreenSpace_SSS(
+	vec3 viewPos, vec3 normal, bool hand, bool leaves, float noise
+){
+	int samples = 7;
+	float occlusion = 0.0; 
+	float sss = 0.0;
+
+	vec3 normalizedNormals = normalize(normal);
+	vec2 jitterOffsets = TAA_Offset*texelSize*0.5 * RENDER_SCALE - texelSize*0.5;
+
+	// scale the offset radius down as distance increases.
+	float linearViewDistance = length(viewPos);
+	float distanceScale = hand ? 30.0 : mix(40.0, 10.0, pow(clamp(1.0 - linearViewDistance/50.0,0.0,1.0),2.0));
+
+	float leaf = leaves ? -0.5 : 0.0;
+
+	int n = 0;
+	for (int i = 0; i < samples; i++) {
+		
+		vec2 offsets = CleanSample(i, samples - 1, noise) / distanceScale;
+
+		ivec2 offsetUV = ivec2(gl_FragCoord.xy + offsets*vec2(viewWidth, viewHeight*aspectRatio)*RENDER_SCALE);
+
+		if (offsetUV.x >= 0 && offsetUV.y >= 0 && offsetUV.x < viewWidth*RENDER_SCALE.x && offsetUV.y < viewHeight*RENDER_SCALE.y ) {
+			
+			float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, offsetUV, 0).x, hand);
+
+			#ifdef DISTANT_HORIZONS
+				float sampleDHDepth = texelFetch2D(dhDepthTex1, offsetUV, 0).x;
+				vec3 offsetViewPos = toScreenSpace_DH((offsetUV*texelSize - jitterOffsets) * (1.0/RENDER_SCALE), sampleDepth, sampleDHDepth);
+			#else
+				vec3 offsetViewPos = toScreenSpace(vec3((offsetUV*texelSize - jitterOffsets) * (1.0/RENDER_SCALE), sampleDepth));
+			#endif
+
+			vec3 viewPosDiff = offsetViewPos - viewPos;
+			float viewPosDiffSquared = dot(viewPosDiff, viewPosDiff);
+			
+			if (viewPosDiffSquared > 1e-5){
+				sss += clamp(leaf - dot(viewPosDiff, normalizedNormals),0.0,1.0);
+				n += 1;
+			}
+		}
+	}
+	return max(1.0 - sss/n, 0.0);
 }
 
 vec4 encode (vec3 n, vec2 lightmaps){
@@ -366,14 +414,59 @@ float sampleDepth(sampler2D depthTex, vec2 texcoord, bool hand){
 	return convertHandDepth_2(texture2D(depthTex, texcoord).r, hand);
 }
 
+flat varying vec3 zMults;
+
+vec4 BilateralUpscale_VLFOG(sampler2D tex, sampler2D depth, vec2 coord, float referenceDepth){
+	ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
+	ivec2 posDepth  = ivec2(coord*VL_RENDER_RESOLUTION) * scaling;
+	ivec2 posColor  = ivec2(coord*VL_RENDER_RESOLUTION);
+ 	ivec2 pos = ivec2(gl_FragCoord.xy*texelSize + 1);
+
+	ivec2 getRadius[5] = ivec2[](
+    	ivec2(-1,-1),
+	 	ivec2( 1, 1),
+		ivec2(-1, 1),
+		ivec2( 1,-1),
+		ivec2( 0, 0)
+  	);
+
+	#ifdef DISTANT_HORIZONS
+		float diffThreshold = 0.01;
+	#else
+		float diffThreshold = zMults.x;
+	#endif
+
+	vec4 RESULT = vec4(0.0);
+	float SUM = 0.0;
+
+	for (int i = 0; i < 4; i++) {
+		
+		ivec2 radius = getRadius[i];
+
+		#ifdef DISTANT_HORIZONS
+			float offsetDepth = sqrt(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling,0).a/65000.0);
+		#else
+			float offsetDepth = ld(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling, 0).r);
+		#endif
+
+		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
+		
+		RESULT += texelFetch2D(tex, posColor + radius + pos, 0) * EDGES;
+		
+   		SUM += EDGES;
+	}
+
+	return RESULT / SUM;
+}
 
 
-/* RENDERTARGETS:3,14,12*/
+#include "/lib/sky_gradient.glsl"
+
+/* RENDERTARGETS:3,14,12,10*/
 
 void main() {
 
 	float noise = R2_dither();
-
 	vec2 texcoord = gl_FragCoord.xy*texelSize;
 
 	float z = texture2D(depthtex1,texcoord).x;
@@ -389,7 +482,7 @@ void main() {
 
 	vec4 SHADOWDATA = vec4(0.0);
 
-	vec4 data = texture2D(colortex1,texcoord);
+	vec4 data = texelFetch2D(colortex1,ivec2(gl_FragCoord.xy),0);
 	vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y));
 	vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w));
 	vec3 normal = mat3(gbufferModelViewInverse) * clamp(worldToView( decode(dataUnpacked0.yw) ),-1.,1.);
@@ -437,13 +530,11 @@ void main() {
 			gl_FragData[2] = vec4(vec3(0.0), 65000.0);
 
 
-		vec3 FlatNormals = texture2D(colortex15,texcoord).rgb * 2.0 - 1.0;
-		
-		if(z >= 1.0){
-			FlatNormals = normal;
-		}
+		vec3 FlatNormals = normalize(texture2D(colortex15,texcoord).rgb * 2.0 - 1.0);
+		if(z >= 1.0) FlatNormals = normal;
 
-		vec2 SSAO_SSS = SSAO(viewPos, FlatNormals, hand, isLeaf, noise);
+
+		vec2 SSAO_SSS = SSAO(viewPos, worldToView(FlatNormals), hand, isLeaf, noise);
 
 		if(swappedDepth >= 1.0) SSAO_SSS = vec2(1.0,0.0);
 
@@ -451,6 +542,21 @@ void main() {
 	#else
 		vec2 SSAO_SSS = vec2(1.0,0.0);
 	#endif
+
+
+
+	/*------------- VOLUMETRICS BEHIND TRANSLUCENTS PASS-THROUGH -------------*/
+	// colortex10 is the history buffer used in reprojection of volumetrics, i can just hijack that.
+	gl_FragData[3] = texture2D(colortex10, texcoord);
+	
+	// if(texture2D(colortex7,texcoord).a > 0.0) {
+	// 	vec4 VL = BilateralUpscale_VLFOG(colortex13, depthtex1, gl_FragCoord.xy - 1.5, ld(z));
+		
+	// 	// gl_FragData[3].rgb += VL.rgb * gl_FragData[3].a;
+	// 	// gl_FragData[3].a *= VL.a; 
+	// }
+
+
 
 
 #ifdef OVERWORLD_SHADER
@@ -463,9 +569,7 @@ void main() {
 	float minshadowfilt = Min_Shadow_Filter_Radius;
 	float maxshadowfilt = Max_Shadow_Filter_Radius;
 
-	// if(lightmap.y < 0.1 && !entities){
-	// 	maxshadowfilt = mix(minshadowfilt, maxshadowfilt,	vanillAO);
-	// }
+	if(lightmap.y < 0.1) maxshadowfilt = min(maxshadowfilt, minshadowfilt);
 
 	#ifdef BASIC_SHADOW_FILTER
 		if (LabSSS > 0.0 && NdotL < 0.001){  

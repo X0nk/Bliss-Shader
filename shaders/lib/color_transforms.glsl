@@ -70,11 +70,17 @@ return x/(1.0+x);
 vec3 ACESFilm( vec3 x )
 {
 		x*=0.9;
+    // float a = 2.51f;
+    // float b = 0.03f;
+    // float c = 2.43f;
+    // float d = 0.59f;
+    // float e = 0.14f;
+    // slower rate to bright color
     float a = 2.51f;
     float b = 0.03f;
     float c = 2.43f;
-    float d = 0.59f;
-    float e = 0.14f;
+    float d = 0.95f;
+    float e = 0.12f;
 		return (x*(a*x+b))/(x*(c*x+d)+e);
 }
 
@@ -241,7 +247,7 @@ vec3 agxLook(vec3 val) {
   vec3 slope = vec3(1.0);
   vec3 power = vec3(1.0);
   float sat = 1.25;
- 
+  
   // ASC CDL
   val = pow(val * slope + offset, power);
   return luma + sat * (val - luma);

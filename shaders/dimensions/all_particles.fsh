@@ -62,17 +62,25 @@ uniform vec2 texelSize;
 
 uniform ivec2 eyeBrightnessSmooth;
 uniform float rainStrength;
+uniform float nightVision;
+
 flat varying float HELD_ITEM_BRIGHTNESS;
 
-#ifndef OVERWORLD_SHADER
-	uniform float nightVision;
-#endif
+
 
 #include "/lib/util.glsl"
 
 #ifdef OVERWORLD_SHADER
-	
+	#ifdef Daily_Weather
+		flat varying vec4 dailyWeatherParams0;
+		flat varying vec4 dailyWeatherParams1;
+	#else
+		vec4 dailyWeatherParams0 = vec4(CloudLayer0_coverage, CloudLayer1_coverage, CloudLayer2_coverage, 0.0);
+		vec4 dailyWeatherParams1 = vec4(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density, 0.0);
+	#endif
+
 	#define CLOUDSHADOWSONLY
+	
 	#include "/lib/volumetricClouds.glsl"
 #endif
 
@@ -223,8 +231,8 @@ vec3 toClipSpace3(vec3 viewSpacePosition) {
 }
 
 flat varying vec3 WsunVec2;
-const float mincoord = 1.0/4096.0;
-const float maxcoord = 1.0-mincoord;
+	const float mincoord = 1.0/4096.0;
+	const float maxcoord = 1.0-mincoord;
 
 	uniform sampler2D normals;
 	varying vec4 tangent;
@@ -373,7 +381,12 @@ void main() {
 		#else
 			vec3 playerCamPos = cameraPosition;
 		#endif
-		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length((feetPlayerPos+cameraPosition) - playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
+		// lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length((feetPlayerPos+cameraPosition) - playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
+		if(HELD_ITEM_BRIGHTNESS > 0.0){ 
+			float pointLight = clamp(1.0-length((feetPlayerPos+cameraPosition)-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0,1.0);
+			lightmap.x = mix(lightmap.x, HELD_ITEM_BRIGHTNESS, pointLight*pointLight);
+		}
+	
 	#endif
 
 	#ifdef WEATHER
@@ -402,7 +415,7 @@ void main() {
 		if(lightmap.x >= 0.9) Torch_Color *= LIT_PARTICLE_BRIGHTNESS;
 
 		#ifdef OVERWORLD_SHADER
-			directLightColor =  lightCol.rgb/80.0;
+			directLightColor =  lightCol.rgb/2400.0;
 			float Shadows = 1.0;
 
 			vec3 shadowPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
@@ -417,7 +430,7 @@ void main() {
 			Shadows = mix(LM_shadowMapFallback, Shadows, shadowMapFalloff2);
 
 			#ifdef CLOUDS_SHADOWS	
-				Shadows *= GetCloudShadow(feetPlayerPos);
+				Shadows *= GetCloudShadow(feetPlayerPos+cameraPosition, WsunVec);
 			#endif
 
 			Direct_lighting = directLightColor * Shadows;
@@ -426,7 +439,7 @@ void main() {
 				Direct_lighting *= phaseg(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), 0.65)*2 + 0.5;
 			#endif
 
-			AmbientLightColor = averageSkyCol_Clouds / 30.0;
+			AmbientLightColor = averageSkyCol_Clouds / 900.0;
 
 			#ifdef IS_IRIS
 				AmbientLightColor *= 2.5;
@@ -438,11 +451,11 @@ void main() {
 		#endif
 		
 		#ifdef NETHER_SHADER
-			Indirect_lighting = skyCloudsFromTexLOD2(vec3(0.0,1.0,0.0), colortex4, 6).rgb / 30.0;
+			Indirect_lighting = volumetricsFromTex(vec3(0.0,1.0,0.0), colortex4, 6).rgb / 1200.0;
 		#endif
 
 		#ifdef END_SHADER
-			Indirect_lighting = vec3(0.3,0.6,1.0) * 0.5;
+			Indirect_lighting = vec3(0.3,0.6,1.0) * 0.1;
 		#endif
 
 	///////////////////////// BLOCKLIGHT LIGHTING OR LPV LIGHTING OR FLOODFILL COLORED LIGHTING
