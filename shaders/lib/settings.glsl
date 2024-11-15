@@ -402,7 +402,7 @@ uniform int moonPhase;
 
 #define HQ_CLOUDS
 
-#define Daily_Weather
+// #define Daily_Weather
 // #define CHOOSE_RANDOM_WEATHER_PROFILE
 
 #ifdef Daily_Weather
