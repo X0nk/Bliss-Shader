@@ -117,10 +117,22 @@ uniform int isEyeInWater;
 uniform float rainStrength;
 
 #ifdef OVERWORLD_SHADER
+
+	#ifdef Daily_Weather
+		flat varying vec4 dailyWeatherParams0;
+		flat varying vec4 dailyWeatherParams1;
+	#else
+		vec4 dailyWeatherParams0 = vec4(CloudLayer0_coverage, CloudLayer1_coverage, CloudLayer2_coverage, 0.0);
+		vec4 dailyWeatherParams1 = vec4(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density, 0.0);
+	#endif
+
 	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
 #endif
 
+#ifndef OVERWORLD_SHADER
+#undef WATER_SUN_SPECULAR
+#endif
 float GGX(vec3 n, vec3 v, vec3 l, float r, float f0) {
   r = max(pow(r,2.5), 0.0001);
 
@@ -200,16 +212,30 @@ vec3 rayTrace(vec3 dir, vec3 position,float dither, float fresnel, bool inwater)
 
     return vec3(1.1);
 }
+
+float interleaved_gradientNoise_temporal(){
+	#ifdef TAA
+		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887 * frameCounter);
+	#else
+		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
+	#endif
+}
+float interleaved_gradientNoise(){
+	vec2 coord = gl_FragCoord.xy;
+	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
+	return noise;
+}
 float R2_dither(){
-	vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
+	vec2 coord = gl_FragCoord.xy ;
+
+	#ifdef TAA
+		coord += + (frameCounter%40000) * 2.0;
+	#endif
+	
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
-float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
-	float noise = fract( 52.9829189 * fract( (coord.x * 0.06711056) + (coord.y * 0.00583715) ) );
-	return noise ;
-}
+
 vec3 viewToWorld(vec3 viewPos) {
     vec4 pos;
     pos.xyz = viewPos;
@@ -246,6 +272,10 @@ vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
 	return normalize(bump*tbnMatrix);
 }
 
+#define FORWARD_SPECULAR
+#define FORWARD_ENVIORNMENT_REFLECTION
+#define FORWARD_BACKGROUND_REFLECTION
+#define FORWARD_ROUGH_REFLECTION
 
 /* RENDERTARGETS:2,7 */
 void main() {
@@ -310,7 +340,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	vec3 Direct_lighting = vec3(0.0);
 
     #ifdef OVERWORLD_SHADER
-		vec3 DirectLightColor = lightCol.rgb/80.0;
+		vec3 DirectLightColor = lightCol.rgb/2400.0;
 
     	float NdotL = clamp(dot(normals, normalize(WsunVec2)),0.0,1.0); 
         NdotL = clamp((-15 + NdotL*255.0) / 240.0  ,0.0,1.0);
@@ -342,13 +372,14 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
     	    	Shadows = shadow2D(shadow, projectedShadowPosition + vec3(0.0,0.0, smallbias)).x;
     	    }
         #endif
-        #ifdef CLOUDS_SHADOWS
-    		Shadows *= pow(GetCloudShadow(playerPos),3);
-        #endif
+
+		#ifdef CLOUDS_SHADOWS
+			Shadows *= GetCloudShadow(playerPos + cameraPosition, WsunVec);
+		#endif
 
     	Direct_lighting = DirectLightColor * NdotL * Shadows;
 
-    	vec3 AmbientLightColor = averageSkyCol_Clouds/30.0;
+    	vec3 AmbientLightColor = averageSkyCol_Clouds/900.0;
 
     	vec3 ambientcoefs = normals_and_materials.xyz / dot(abs(normals_and_materials.xyz), vec3(1.0));
     	float SkylightDir = ambientcoefs.y*1.5;
@@ -366,7 +397,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
 
     // specular
-    #ifdef WATER_REFLECTIONS
+    #ifdef FORWARD_SPECULAR
 		vec3 Reflections_Final = vec3(0.0);
 		vec4 Reflections = vec4(0.0);
 		vec3 BackgroundReflection = FinalColor; 
@@ -386,8 +417,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
         #ifdef SNELLS_WINDOW
 	    	if(isEyeInWater == 1) fresnel = pow(clamp(1.5 + normalDotEye,0.0,1.0), 25.0);
 	    #endif
-        #if defined SCREENSPACE_REFLECTIONS && defined DH_SCREENSPACE_REFLECTIONS
-            vec3 rtPos = rayTrace(reflectedVector, viewPos, interleaved_gradientNoise(), fresnel, false);
+        #if defined FORWARD_ENVIORNMENT_REFLECTION && defined DH_SCREENSPACE_REFLECTIONS
+            vec3 rtPos = rayTrace(reflectedVector, viewPos, interleaved_gradientNoise_temporal(), fresnel, false);
             if (rtPos.z < 1.){
             	vec3 previousPosition = mat3(gbufferModelViewInverse) * DH_toScreenSpace(rtPos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
             	previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
@@ -398,11 +429,11 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
             	}
             }
         #endif
-		#ifdef WATER_BACKGROUND_SPECULAR
-            BackgroundReflection = skyCloudsFromTex(mat3(gbufferModelViewInverse) * reflectedVector, colortex4).rgb / 30.0; 
+		#ifdef FORWARD_BACKGROUND_REFLECTION
+            BackgroundReflection = skyCloudsFromTex(mat3(gbufferModelViewInverse) * reflectedVector, colortex4).rgb / 1200.0; 
         #endif
         #ifdef WATER_SUN_SPECULAR
-            SunReflection = Direct_lighting * GGX(normalize(normals), -normalize(viewPos), normalize(WsunVec2), roughness, f0) * (1.0-Reflections.a);
+            SunReflection = (DirectLightColor * Shadows) * GGX(normalize(normals), -normalize(viewPos), normalize(WsunVec2), roughness, f0) * (1.0-Reflections.a);
         #endif
 
 		Reflections_Final = mix(BackgroundReflection, Reflections.rgb, Reflections.a) * fresnel;

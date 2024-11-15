@@ -152,6 +152,8 @@ void main() {
 	color = gl_Color;
 
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
+	
+	
 	// playerpos = vec4(0.0);
 	// playerpos = gbufferModelViewInverse * (gl_ModelViewMatrix * gl_Vertex);
 	
@@ -202,9 +204,9 @@ void main() {
 	// 	}
 	// #endif
 
-	#if defined IS_LPV_ENABLED || defined WAVY_PLANTS
+	// #if defined IS_LPV_ENABLED || defined WAVY_PLANTS  || !defined PLANET_CURVATURE
 		vec3 playerpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
-	#endif
+	// #endif
 
 	#if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
 		PopulateShadowVoxel(playerpos);
@@ -231,6 +233,7 @@ void main() {
 
 	int blockId = int(mc_Entity.x + 0.5);
 
+	vec3 worldpos = playerpos;
 	#ifdef WAVY_PLANTS
 		// also use normal, so up/down facing geometry does not get detatched from its model parts.
 		bool InterpolateFromBase = gl_MultiTexCoord0.t < max(mc_midTexCoord.t, abs(viewToWorld(normalize(gl_NormalMatrix * gl_Normal)).y));
@@ -248,7 +251,6 @@ void main() {
 
 			) && length(position.xy) < 24.0
 		){
-			vec3 worldpos = playerpos;
 
 			// apply displacement for waving plant blocks
 			worldpos += calcMovePlants(playerpos + cameraPosition) * max(gl_MultiTexCoord1.y,0.5);
@@ -256,11 +258,16 @@ void main() {
 			// apply displacement for waving leaf blocks specifically, overwriting the other waving mode. these wave off of the air. they wave uniformly
 			if(blockId == BLOCK_AIR_WAVING) worldpos = playerpos + calcMoveLeaves(playerpos + cameraPosition, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*gl_MultiTexCoord1.y;
 			
-			position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz;
 		}
 	#endif
 
-	
+	#ifdef PLANET_CURVATURE
+		float curvature = length(worldpos) / (16*8);
+		worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
+	#endif
+
+	position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz;
+
 	#ifdef DISTORT_SHADOWMAP
 		if (entityId == ENTITY_SSS_MEDIUM || entityId == ENTITY_SLIME)
 			position.xyz = position.xyz - normalize(gl_NormalMatrix * gl_Normal) * 0.25;

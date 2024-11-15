@@ -43,7 +43,7 @@ vec4 GetVolumetricFog(
 
 	/// -------------  RAYMARCHING STUFF ------------- \\\
 
-	int SAMPLECOUNT = 10;
+	int SAMPLECOUNT = 16;
 
 	vec3 wpos = mat3(gbufferModelViewInverse) * viewPosition + gbufferModelViewInverse[3].xyz;
 	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
@@ -62,14 +62,14 @@ vec4 GetVolumetricFog(
 	vec3 color = vec3(0.0);
 	float absorbance = 1.0;
 
-	vec3 hazeColor = normalize(gl_Fog.color.rgb);
+	vec3 hazeColor = normalize(gl_Fog.color.rgb + 1e-6) * 0.25;
 
 	#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
     	float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) / 5.0;
 	#endif
 
 	for (int i = 0; i < SAMPLECOUNT; i++) {
-		float d = (pow(expFactor, float(i+dither)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
+		float d = (pow(expFactor, float(i+dither2)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
 		float dd = pow(expFactor, float(i+dither)/float(SAMPLECOUNT)) * log(expFactor) / float(SAMPLECOUNT)/(expFactor-1.0);
 		
 		progressW = gbufferModelViewInverse[3].xyz + cameraPosition + d*dVWorld;
@@ -80,7 +80,7 @@ vec4 GetVolumetricFog(
 			float plumeDensity = min(densityVol * pow(min(max(100.0-progressW.y,0.0)/30.0,1.0),4.0), pow(clamp(1.0 - length(progressW-cameraPosition)/far,0.0,1.0),5.0) * NETHER_PLUME_DENSITY);
 			float plumeVolumeCoeff = exp(-plumeDensity*dd*dL);
 
-			vec3 lighting = vec3(1.0,0.4,0.2) * exp(-15.0*densityVol);
+			vec3 lighting = vec3(1.0,0.4,0.2)*0.25 * exp(-15.0*densityVol);
 
 			color += (lighting - lighting * plumeVolumeCoeff) * absorbance;
 			absorbance *= plumeVolumeCoeff;
@@ -98,7 +98,7 @@ vec4 GetVolumetricFog(
 			float ceilingSmokeDensity = 0.001 * pow(min(max(progressW.y-40.0,0.0)/50.0,1.0),3.0);
 			float ceilingSmokeVolumeCoeff = exp(-ceilingSmokeDensity*dd*dL);
 			
-			vec3 ceilingSmoke = vec3(1.0);
+			vec3 ceilingSmoke = vec3(0.1);
 
 			color += (ceilingSmoke - ceilingSmoke*ceilingSmokeVolumeCoeff) * (absorbance*0.5+0.5);
 			absorbance *= ceilingSmokeVolumeCoeff;

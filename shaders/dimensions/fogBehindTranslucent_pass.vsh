@@ -6,10 +6,11 @@ flat varying vec4 lightCol;
 flat varying vec3 averageSkyCol;
 flat varying vec3 averageSkyCol_Clouds;
 
-#if defined Daily_Weather
-	flat varying vec4 dailyWeatherParams0;
-	flat varying vec4 dailyWeatherParams1;
-#endif
+	#ifdef Daily_Weather
+		flat varying vec4 dailyWeatherParams0;
+		flat varying vec4 dailyWeatherParams1;
+	#endif
+
 
 flat varying vec3 WsunVec;
 flat varying vec3 refractedSunVec;
@@ -56,11 +57,11 @@ void main() {
 		averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 		
 		#if defined Daily_Weather
-			dailyWeatherParams0 = vec4((texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0)/2.0, 0.0);
-			dailyWeatherParams1 = vec4((texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0)/2.0, 0.0);
+			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb / 1500.0, 0.0);
+			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb / 1500.0, 0.0);
 			
-			dailyWeatherParams0.a = (texelFetch2D(colortex4,ivec2(3,1),0).x/150.0)/2.0;
-			dailyWeatherParams1.a = (texelFetch2D(colortex4,ivec2(3,1),0).y/150.0)/2.0;
+			dailyWeatherParams0.a = texelFetch2D(colortex4,ivec2(3,1),0).x/1500.0;
+			dailyWeatherParams1.a = texelFetch2D(colortex4,ivec2(3,1),0).y/1500.0;
 		#endif
 	
 	#endif
@@ -68,7 +69,7 @@ void main() {
 	#ifdef NETHER_SHADER
 		lightCol.rgb = vec3(0.0);
 		averageSkyCol = vec3(0.0);
-		averageSkyCol_Clouds = vec3(2.0, 1.0, 0.5) * 5.0;
+		averageSkyCol_Clouds = volumetricsFromTex(vec3(0.0,1.0,0.0), colortex4, 6).rgb;
 	#endif
 
 	#ifdef END_SHADER

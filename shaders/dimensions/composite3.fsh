@@ -13,6 +13,7 @@ uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 
+	// const bool colortex4MipmapEnabled = true;
 #ifdef DISTANT_HORIZONS
 uniform sampler2D dhDepthTex;
 uniform sampler2D dhDepthTex1;
@@ -36,8 +37,9 @@ uniform sampler2D colortex15;
 uniform vec2 texelSize;
 
 uniform sampler2D colortex4;
-
-
+uniform float viewHeight;
+uniform float viewWidth;
+uniform float nightVision;
 uniform vec3 sunVec;
 uniform float frameTimeCounter;
 uniform int frameCounter;
@@ -56,6 +58,8 @@ uniform mat4 gbufferPreviousProjection;
 uniform vec3 cameraPosition;
 uniform vec3 previousCameraPosition;
 
+uniform int hideGUI;
+uniform int dhRenderDistance;
 uniform int isEyeInWater;
 uniform ivec2 eyeBrightnessSmooth;
 uniform ivec2 eyeBrightness;
@@ -69,14 +73,12 @@ uniform float caveDetection;
 #include "/lib/res_params.glsl"
 
 #ifdef OVERWORLD_SHADER
-  #include "/lib/sky_gradient.glsl"
-  #include "/lib/lightning_stuff.glsl"
   #include "/lib/climate_settings.glsl"
-  #define CLOUDS_INTERSECT_TERRAIN
-	// #define CLOUDSHADOWSONLY
-  // #include "/lib/volumetricClouds.glsl"
 #endif
 
+#include "/lib/sky_gradient.glsl"
+
+uniform float eyeAltitude;
 
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
@@ -93,27 +95,48 @@ vec3 toLinear(vec3 sRGB){
 }
 vec3 toScreenSpace(vec3 p) {
 	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
-    vec3 p3 = p * 2. - 1.;
-    vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
+    vec3 playerPos = p * 2. - 1.;
+    vec4 fragposition = iProjDiag * playerPos.xyzz + gbufferProjectionInverse[3];
     return fragposition.xyz / fragposition.w;
 }
 
 #include "/lib/DistantHorizons_projections.glsl"
 
-float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
-}
-vec4 blueNoise(vec2 coord){
-  return texelFetch2D(colortex6, ivec2(coord )%512  , 0);
-}
-vec3 normVec (vec3 vec){
-	return vec*inversesqrt(dot(vec,vec));
-}
 
+float interleaved_gradientNoise_temporal(){
+	#ifdef TAA
+		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887 * frameCounter);
+	#else
+		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
+	#endif
+}
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy;
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 	return noise;
+}
+float R2_dither(){
+	vec2 coord = gl_FragCoord.xy ;
+
+	#ifdef TAA
+		coord +=  (frameCounter%40000) * 2.0;
+	#endif
+	
+	vec2 alpha = vec2(0.75487765, 0.56984026);
+	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
+}
+float blueNoise(){
+	#ifdef TAA
+  		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+	#else
+		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
+	#endif
+}
+vec4 blueNoise(vec2 coord){
+  return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
+}
+vec3 normVec (vec3 vec){
+	return vec*inversesqrt(dot(vec,vec));
 }
 
 float DH_ld(float dist) {
@@ -216,7 +239,8 @@ void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, float lineardista
   float refractionStrength = isTranslucentEntity ? 0.25 : 1.0 ;
 
   // Texcoord = abs(Texcoord + (TangentNormals * clamp((ld(depths.x) - ld(depths.y)) * 0.5,0.0,0.15)) * RENDER_SCALE * refractionStrength );
-  Texcoord = abs(Texcoord + (TangentNormals * mix(0.01, 0.1, pow(clamp(1.0-lineardistance/(32*4),0.0,1.0),2))) * RENDER_SCALE * refractionStrength );
+  // Texcoord = abs(Texcoord + (TangentNormals * mix(0.01, 0.1, pow(clamp(1.0-lineardistance/(32*4),0.0,1.0),2))) * RENDER_SCALE * refractionStrength );
+  Texcoord = abs(Texcoord + TangentNormals * RENDER_SCALE * 0.1 );
 
   float DistortedAlpha = decodeVec2(texture2D(colortex11,Texcoord).b).g;
   // float DistortedAlpha = decodeVec2(texelFetch2D(colortex11,ivec2(Texcoord/texelSize),0).b).g;
@@ -225,17 +249,201 @@ void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, float lineardista
   Texcoord = mix(Texcoord, UnalteredTexcoord,  min(max(0.1-DistortedAlpha,0.0) * 1000.0,1.0)); // remove distortion on non-translucents
 }
 
-uniform int dhRenderDistance;
-uniform float eyeAltitude;
+vec3 doRefractionEffect( inout vec2 texcoord, vec2 normal, float linearDistance){
+  
+  // make the tangent space normals match the directions of the texcoord UV, this greatly improves the refraction effect.
+  vec2 UVNormal = vec2(normal.x,-normal.y);
+  
+  float refractionMult = 0.3 / (1.0 + linearDistance);
+  float diffractionMult = 0.035;
+  float smudgeMult = 1.0;
+
+  // for diffraction, i wanted to know *when* normals were at an angle, not what the
+  float clampValue = 0.2;
+  vec2 abberationOffset = (clamp(UVNormal,-clampValue, clampValue)/clampValue) * diffractionMult;
+
+  // return vec3(abs(abberationOffset), 0.0);
+
+  #ifdef REFRACTION_SMUDGE
+    vec2 directionalSmudge = abberationOffset * (blueNoise()-0.5) * smudgeMult;
+  #else
+    vec2 directionalSmudge = vec2(0.0);
+  #endif
+  
+  vec2 refractedUV = texcoord - (UVNormal + directionalSmudge)*refractionMult;
+  
+  // a max bound around screen edges and edges of the refracted screen
+  vec2 vignetteSides = clamp(min((1.0 - refractedUV)/0.05, refractedUV/0.05)+0.5,0.0,1.0);
+  float vignette = vignetteSides.x*vignetteSides.y;
+
+  refractionMult *= decodeVec2(texelFetch2D(colortex11, ivec2(refractedUV/texelSize),0).b).g > 0.0 ? 1.0 : 0.0;
+
+  vec3 color = vec3(0.0);
+
+  #ifdef FAKE_DISPERSION_EFFECT
+    //// RED
+    refractedUV = clamp(texcoord - ((UVNormal + abberationOffset) + directionalSmudge)*refractionMult ,0.0,1.0);
+    color.r = texelFetch2D(colortex3, ivec2(refractedUV/texelSize),0).r;
+    //// GREEN
+    refractedUV = clamp(texcoord - (UVNormal + directionalSmudge)*refractionMult ,0,1);
+    color.g = texelFetch2D(colortex3, ivec2(refractedUV/texelSize),0).g;
+    //// BLUE
+    refractedUV = clamp(texcoord - ((UVNormal - abberationOffset) + directionalSmudge)*refractionMult ,0.0,1.0);
+    color.b = texelFetch2D(colortex3, ivec2(refractedUV/texelSize),0).b;
+  
+  #else
+    refractedUV = clamp(texcoord - UVNormal,0.0,1.0);
+    color = texture2D(colortex3, refractedUV).rgb;
+  #endif
+
+  // texcoord = texcoord - (UVNormal+directionalSmudge)*refractionMult*vignette;
+  return color;
+}
+
+vec3 toClipSpace3Prev(vec3 viewSpacePosition) {
+    return projMAD(gbufferPreviousProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+}
+
+vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth)
+{
+	vec2 du = vec2(texelSize.x*2., 0.0);
+	vec2 dv = vec2(0.0, texelSize.y*2.);
+
+	vec3 dtl = vec3(texcoord,0.) + vec3(-texelSize, 				texture2D(depth, texcoord - dv - du).x);
+	vec3 dtr = vec3(texcoord,0.) + vec3( texelSize.x, -texelSize.y, texture2D(depth, texcoord - dv + du).x);
+	vec3 dmc = vec3(texcoord,0.) + vec3( 0.0, 0.0, 					texture2D(depth, texcoord).x);
+	vec3 dbl = vec3(texcoord,0.) + vec3(-texelSize.x, texelSize.y, 	texture2D(depth, texcoord + dv - du).x);
+	vec3 dbr = vec3(texcoord,0.) + vec3( texelSize.x, texelSize.y, 	texture2D(depth, texcoord + dv + du).x);
+
+	vec3 dmin = dmc;
+	dmin = dmin.z > dtr.z ? dtr : dmin;
+	dmin = dmin.z > dtl.z ? dtl : dmin;
+	dmin = dmin.z > dbl.z ? dbl : dmin;
+	dmin = dmin.z > dbr.z ? dbr : dmin;
+	
+	#ifdef TAA_UPSCALING
+		dmin.xy = dmin.xy/RENDER_SCALE;
+	#endif
+
+	return dmin;
+}
+
+vec3 toClipSpace3Prev_DH( vec3 viewSpacePosition, bool depthCheck ) {
+
+	#ifdef DISTANT_HORIZONS
+		mat4 projectionMatrix = depthCheck ? dhPreviousProjection : gbufferPreviousProjection;
+   		return projMAD(projectionMatrix, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+	#else
+    	return projMAD(gbufferPreviousProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+	#endif
+}
+
+vec3 toScreenSpace_DH_special(vec3 POS, bool depthCheck ) {
+
+	vec4 viewPos = vec4(0.0);
+	vec3 feetPlayerPos = vec3(0.0);
+	vec4 iProjDiag = vec4(0.0);
+
+	#ifdef DISTANT_HORIZONS
+    	if (depthCheck) {
+			iProjDiag = vec4(dhProjectionInverse[0].x, dhProjectionInverse[1].y, dhProjectionInverse[2].zw);
+
+    		feetPlayerPos = POS * 2.0 - 1.0;
+    		viewPos = iProjDiag * feetPlayerPos.xyzz + dhProjectionInverse[3];
+			viewPos.xyz /= viewPos.w;
+
+		} else {
+	#endif
+			iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
+
+    		feetPlayerPos = POS * 2.0 - 1.0;
+    		viewPos = iProjDiag * feetPlayerPos.xyzz + gbufferProjectionInverse[3];
+			viewPos.xyz /= viewPos.w;
+			
+	#ifdef DISTANT_HORIZONS
+		}
+	#endif
+
+    return viewPos.xyz;
+}
+vec3 tonemap(vec3 col){
+	return col/(1+luma(col));
+}
+vec3 invTonemap(vec3 col){
+	return col/(1-luma(col));
+}
+
+vec4 VLTemporalFiltering(vec3 viewPos, bool depthCheck, out float DEBUG){
+  vec2 texcoord = ((gl_FragCoord.xy)*2.0 + 0.5)*texelSize/2.0;
+
+  vec2 VLtexCoord = texcoord * VL_RENDER_RESOLUTION;
+
+	// vec3 closestToCamera = closestToCamera5taps(texcoord, depthtex0);
+	// vec3 viewPos_5tap = toScreenSpace(closestToCamera);
+
+	// get previous frames position stuff for UV
+	vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
+	vec3 previousPosition = mat3(gbufferPreviousModelView) * playerPos + gbufferPreviousModelView[3].xyz;
+	previousPosition = toClipSpace3Prev(previousPosition);
+
+	vec2 velocity = previousPosition.xy - texcoord/RENDER_SCALE;
+	previousPosition.xy = texcoord + velocity;
+
+  // vec4 currentFrame = texture2D_bicubic(colortex0, VLtexCoord);
+  vec4 currentFrame = texture2D(colortex0, VLtexCoord );
+  // vec4 currentFrame = texelFetch2D(colortex0, ivec2(VLtexCoord/texelSize),0);
+
+  if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0) return currentFrame;
+  
+	vec4 col1 = texture2D(colortex0, VLtexCoord + vec2( texelSize.x,  texelSize.y));
+	vec4 col2 = texture2D(colortex0, VLtexCoord + vec2( texelSize.x, -texelSize.y));
+	vec4 col3 = texture2D(colortex0, VLtexCoord + vec2(-texelSize.x, -texelSize.y));
+	vec4 col4 = texture2D(colortex0, VLtexCoord + vec2(-texelSize.x,  texelSize.y));
+	vec4 col5 = texture2D(colortex0, VLtexCoord + vec2( 0.0,			    texelSize.y));
+	vec4 col6 = texture2D(colortex0, VLtexCoord + vec2( 0.0,			   -texelSize.y));
+	vec4 col7 = texture2D(colortex0, VLtexCoord + vec2(-texelSize.x,  		    0.0));
+	vec4 col8 = texture2D(colortex0, VLtexCoord + vec2( texelSize.x,  		    0.0));
+
+	vec4 colMax = max(currentFrame,max(col1,max(col2,max(col3, max(col4, max(col5, max(col6, max(col7, col8))))))));
+	vec4 colMin = min(currentFrame,min(col1,min(col2,min(col3, min(col4, min(col5, min(col6, min(col7, col8))))))));
+	
+  // colMin = 0.5 * (colMin + min(currentFrame,min(col5,min(col6,min(col7,col8)))));
+  // colMax = 0.5 * (colMax + max(currentFrame,max(col5,max(col6,max(col7,col8)))));
+
+  // vec4 col0 = texture(colortex0, VLtexCoord + vec2( texelSize.x,	 		 0.0));
+  // vec4 col1 = texture(colortex0, VLtexCoord + vec2( 0.0,			 texelSize.y));
+  // vec4 col2 = texture(colortex0, VLtexCoord + vec2(-texelSize.x,	 		 0.0));
+  // vec4 col3 = texture(colortex0, VLtexCoord + vec2( 0.0,			-texelSize.y));
+
+  // vec4 colMin = min(currentFrame, min(col0, min(col1, min(col2, col3))));
+  // vec4 colMax = max(currentFrame, max(col0, max(col1, max(col2, col3))));
+
+  vec4 frameHistory = texture2D(colortex10, previousPosition.xy);
+  vec4 clampedFrameHistory = clamp(frameHistory, colMin, colMax);
+  
+  float blendingFactor = 0.1;
+	// if((min(max(clampedFrameHistory.a - frameHistory.a,0.0) / 0.0000001, 1.0)) > 0.0) blendingFactor = 1.0;
+  
+	// if(abs(clampedFrameHistory.a-frameHistory.a) > 0.1 && abs(currentFrame.a-frameHistory.a) > 0.1) blendingFactor = 1.0;
+
+  // if(abs(currentFrame.a - frameHistory.a) > 0.6) blendingFactor = 1.0;
+  if(abs(clampedFrameHistory.a  - frameHistory.a) > 0.1) blendingFactor = 1.0;
+  // blendingFactor = clamp(blendingFactor + abs(clampedFrameHistory.a - frameHistory.a),0.0,1.0);
+
+  // DEBUG = abs(clampedFrameHistory.a - frameHistory.a) > 0.1 ? 0. : 1.0;
+  // DEBUG = clamp(abs(clampedFrameHistory.a - frameHistory.a),0.0,1.0);
+  
+  return clamp(mix(clampedFrameHistory, currentFrame, blendingFactor),0.0,65000.0);
+}
 
 void main() {
-  /* DRAWBUFFERS:73 */
+  /* RENDERTARGETS:7,3,10 */
 
 	////// --------------- SETUP STUFF --------------- //////
   vec2 texcoord = gl_FragCoord.xy*texelSize;
 
-  float z = texture2D(depthtex0,texcoord).x;
-  float z2 = texture2D(depthtex1,texcoord).x;
+  float z = texture2D(depthtex0, texcoord).x;
+  float z2 = texture2D(depthtex1, texcoord).x;
   float frDepth = ld(z);
 
 	float swappedDepth = z;
@@ -258,19 +466,13 @@ void main() {
 		float DH_depth0 = 0.0;
 	#endif
 
-	vec3 fragpos = toScreenSpace_DH(texcoord/RENDER_SCALE-vec2(TAA_Offset)*texelSize*0.5, z, DH_depth0);
-  
-	// vec3 fragpos = toScreenSpace(vec3(texcoord/RENDER_SCALE-vec2(TAA_Offset)*texelSize*0.5,z));
-	vec3 p3 = mat3(gbufferModelViewInverse) * fragpos + gbufferModelViewInverse[3].xyz;
-	vec3 np3 = normVec(p3);
+	vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE, z, DH_depth0);
+	vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
+	vec3 playerPos_normalized = normVec(playerPos);
+	vec3 playerPos222 = mat3(gbufferModelViewInverse) * toScreenSpace_DH(texcoord/RENDER_SCALE, 1.0,1.0) + gbufferModelViewInverse[3].xyz ;
 
-  float linearDistance = length(p3);
-  float linearDistance_cylinder = length(p3.xz);
-  
-	// vec3 fragpos_NODH = toScreenSpace(texcoord/RENDER_SCALE-vec2(TAA_Offset)*texelSize*0.5, z);
-  
-  // float linearDistance_NODH = length(p3);
-
+  float linearDistance = length(playerPos);
+  float linearDistance_cylinder = length(playerPos.xz);
 
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 	float lightleakfixfast = clamp(eyeBrightness.y/240.,0.0,1.0);
@@ -280,7 +482,7 @@ void main() {
 	// bool isOpaque_entity = abs(opaqueMasks-0.45) < 0.01;
 
 	////// --------------- UNPACK TRANSLUCENT GBUFFERS --------------- //////
-	vec4 data = texture2D(colortex11,texcoord).rgba;
+	vec4 data = texelFetch2D(colortex11,ivec2(texcoord/texelSize),0).rgba;
 	vec4 unpack0 = vec4(decodeVec2(data.r),decodeVec2(data.g)) ;
 	vec4 unpack1 = vec4(decodeVec2(data.b),0,0) ;
 	
@@ -288,7 +490,6 @@ void main() {
 	vec2 tangentNormals = unpack0.xy*2.0-1.0;
   if(albedo.a < 0.01) tangentNormals = vec2(0.0);
 
-  vec4 TranslucentShader = texture2D(colortex2, texcoord);
 
 	////// --------------- UNPACK MISC --------------- //////
 	// 1.0 = water mask
@@ -310,25 +511,36 @@ void main() {
   #else
     float cloudAlpha = 1.0;
   #endif
+  float DEBUG = 0.0;
+  vec4 temporallyFilteredVL = VLTemporalFiltering(viewPos, z >= 1.0,DEBUG);
+  gl_FragData[2] = temporallyFilteredVL;
+  
+  // #ifdef DISTANT_HORIZONS
+  //   vec4 vl = BilateralUpscale(colortex0, colortex14, colortex12, gl_FragCoord.xy - 1.5, sqrt(texture2D(colortex12,texcoord).a/65000.0), cloudAlpha);
+  // #else
+  //   vec4 vl = BilateralUpscale(colortex0, colortex14, depthtex0, gl_FragCoord.xy - 1.5, frDepth,cloudAlpha);
+  // #endif
+  // vec4 temporallyFilteredVL = vl;
 
-  #ifdef DISTANT_HORIZONS
-    vec4 vl = BilateralUpscale(colortex0, colortex14, colortex12, gl_FragCoord.xy - 1.5, sqrt(texture2D(colortex12,texcoord).a/65000.0), cloudAlpha);
-  #else
-    vec4 vl = BilateralUpscale(colortex0, colortex14, depthtex0, gl_FragCoord.xy - 1.5, frDepth,cloudAlpha);
-  #endif
+  // vec4 temporallyFilteredVL = texture2D(colortex10, texcoord*VL_RENDER_RESOLUTION);
+
 
   float bloomyFogMult = 1.0;
 
   ////// --------------- distort texcoords as a refraction effect
   vec2 refractedCoord = texcoord;
 
-  #ifdef Refraction
-    ApplyDistortion(refractedCoord, tangentNormals, linearDistance, isEntity);
-  #endif
-  
   ////// --------------- MAIN COLOR BUFFER
-  vec3 color = texture2D(colortex3, refractedCoord).rgb;
-
+  #ifdef FAKE_REFRACTION_EFFECT
+    // ApplyDistortion(refractedCoord, tangentNormals, linearDistance, isEntity);
+    // vec3 color = texture2D(colortex3, refractedCoord).rgb;
+    vec3 color = doRefractionEffect(refractedCoord, tangentNormals.xy, linearDistance);
+  #else
+    // vec3 color = texture2D(colortex3, refractedCoord).rgb;
+    vec3 color = texelFetch2D(colortex3, ivec2(refractedCoord/texelSize),0).rgb;
+  #endif
+  vec4 TranslucentShader = texture2D(colortex2, texcoord);
+  // color = vec3(texcoord-0.5,0.0) * mat3(gbufferModelViewInverse);
   // apply block breaking effect.
   if(albedo.a > 0.01 && !isWater && TranslucentShader.a <= 0.0 && !isEntity) color = mix(color*6.0, color, luma(albedo.rgb)) * albedo.rgb;
 
@@ -342,7 +554,7 @@ void main() {
     	float fog = smoothstep(1.0, 0.0, min(max(1.0 - linearDistance_cylinder / far,0.0)*3.0,1.0)   );
     #endif
 
-    fog *= exp(-10.0 * pow(clamp(np3.y,0.0,1.0)*4.0,2.0));
+    fog *= exp(-10.0 * pow(clamp(playerPos_normalized.y,0.0,1.0)*4.0,2.0));
 
     fog *= (1.0-caveDetection);
 
@@ -351,7 +563,7 @@ void main() {
     #ifdef SKY_GROUND
       vec3 borderFogColor = skyGroundColor;
     #else
-      vec3 borderFogColor = skyFromTex(np3, colortex4)/30.0;
+      vec3 borderFogColor = skyFromTex(playerPos_normalized, colortex4)/30.0;
     #endif
 
     color.rgb = mix(color.rgb, borderFogColor, fog);
@@ -361,7 +573,7 @@ void main() {
 	
   if (TranslucentShader.a > 0.0){
     #ifdef Glass_Tint
-      if(!isWater) color *= mix(normalize(albedo.rgb+0.0001)*0.9+0.1, vec3(1.0), max(fog, min(max(0.1-albedo.a,0.0) * 1000.0,1.0))) ;
+      if(!isWater) color *= mix(normalize(albedo.rgb+1e-7), vec3(1.0), max(fog, min(max(0.1-albedo.a,0.0) * 10.0,1.0))) ;
     #endif
 
     #ifdef BorderFog
@@ -385,58 +597,50 @@ void main() {
       #endif
 
       cavefogCol *= 1.0-pow(1.0-pow(1.0 - max(1.0 - linearDistance/far,0.0),2.0),CaveFogFallOff);
-      cavefogCol *= exp(-7.0*clamp(normalize(np3).y*0.5+0.5,0.0,1.0)) * 0.999 + 0.001;
+      cavefogCol *= exp(-7.0*clamp(normalize(playerPos_normalized).y*0.5+0.5,0.0,1.0)) * 0.999 + 0.001;
 
-  	  float skyhole = pow(clamp(1.0-pow(max(np3.y - 0.6,0.0)*5.0,2.0),0.0,1.0),2);
+      cavefogCol *= 0.3;
+
+  	  float skyhole = pow(clamp(1.0-pow(max(playerPos_normalized.y - 0.6,0.0)*5.0,2.0),0.0,1.0),2);
 
       color.rgb = mix(color.rgb + cavefogCol * caveDetection, cavefogCol, z >= 1.0 ? skyhole * caveDetection : 0.0);
+      
     }
-#endif
-
-#ifdef END_SHADER
-  // create a point that "glows" but in worldspace.
-  
-  // this is not correct but whatever
-	float CenterdotV = dot(normalize(vec3(0.0,400.0,0.0) - cameraPosition), normalize(p3 + cameraPosition));
-
-  float distanceFadeOff = pow(min(max(length(cameraPosition)-300.0,0.0)/100.0,1.0),2.0);
-
-  color.rgb += vec3(0.1,0.5,1.0) * (exp2(-10.0 * max(-CenterdotV*0.5+0.5,0.0)) + exp(-150.0 * max(-CenterdotV*0.5+0.5,0.0))) * distanceFadeOff;
 #endif
 
 
 ////// --------------- underwater fog
   if (isEyeInWater == 1){
-    float dirtAmount = Dirt_Amount + 0.01;
+    float dirtAmount = Dirt_Amount;
     vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
     vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
     vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;
+		vec3 scatterCoef = dirtAmount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / 3.14;
 
-    vec3 absorbColor = exp(-totEpsilon*linearDistance);
-    vec3 maxAbsorb = exp(-8.0 * totEpsilon);
+    vec3 absorption = exp(-2.0 * totEpsilon * linearDistance);
+    vec3 fixedAbsorption = exp(-30.0 * totEpsilon) ;
+    vec3 finalAbsorption =  (absorption + fixedAbsorption * 5.0 * (1.0 + nightVision*10));   
+    // vec3 finalAbsorption =  absorption;   
 
-    #ifdef OVERWORLD_SHADER
-    
-      linearDistance = length(vec3(p3.x,max(-p3.y,0.0),p3.z));
-      float fogfade =  exp(-0.001*(linearDistance*linearDistance));
-      vec3 thresholdAbsorbedColor = mix(maxAbsorb, absorbColor, clamp(dot(absorbColor,vec3(0.33333)),0.0,1.0));
-      color.rgb = mix(vec3(1.0) * clamp(WsunVec.y,0,1) * pow(normalize(np3).y*0.3+0.7,1.5) * maxAbsorb, color.rgb * thresholdAbsorbedColor, clamp(fogfade,0.0,1.0));
-    
-    #else
-   
-      color.rgb *= absorbColor;
-      
-    #endif
-    
+    linearDistance = length(vec3(playerPos.x,max(-playerPos.y,0.0),playerPos.z));
+
+    // in vanilla, the water fog has a max distance of ~7 chunks
+    float fogfade =  max(1.0 - linearDistance / min(far, 16.0*7.0), 0.0);
+    fogfade *= fogfade;
+    // fogfade = exp(-5.0* (1.0-fogfade));
+
+    color.rgb = mix(fixedAbsorption, color.rgb * finalAbsorption, fogfade);
+    // color.rgb = color.rgb * finalAbsorption;
+
     bloomyFogMult *= 0.4;
   }
 
 ////// --------------- BLEND FOG INTO SCENE
 //////////// apply VL fog over opaque and translucents
 
-  color *= vl.a*cloudAlpha ;
-  color += vl.rgb;
-  bloomyFogMult *= mix(vl.a,vl.a*0.5 + 0.5, rainStrength);
+  bloomyFogMult *= temporallyFilteredVL.a;
+  color *= temporallyFilteredVL.a;
+  color += temporallyFilteredVL.rgb;
   
 ////// --------------- VARIOUS FOG EFFECTS (in front of volumetric fog)
 //////////// blindness, nightvision, liquid fogs and misc fogs
@@ -449,12 +653,13 @@ void main() {
   
 ////// --------------- lava.
   if (isEyeInWater == 2){
-    color.rgb = vec3(4.0,0.5,0.1);
+    color.rgb = mix(color.rgb, vec3(0.1,0.0,0.0), 1.0-exp(-10.0*clamp(linearDistance*0.5,0.,1.))*0.5  );
+    bloomyFogMult = 0.0;
   }
 
 ///////// --------------- powdered snow
   if (isEyeInWater == 3){
-    color.rgb = mix(color.rgb,vec3(10,15,20),clamp(linearDistance*0.5,0.,1.));
+    color.rgb = mix(color.rgb,vec3(0.5,0.75,1.0),clamp(linearDistance*0.5,0.,1.));
     bloomyFogMult = 0.0;
   }
 
@@ -462,23 +667,30 @@ void main() {
   color.rgb *= mix(1.0,clamp( exp(pow(linearDistance*(blindness*0.2),2) * -5),0.,1.)   ,    blindness);
 
 //////// --------------- darkness effect
-  color.rgb *= mix(1.0, (1.0-darknessLightFactor*2.0) * clamp(1.0-pow(length(fragpos)*(darknessFactor*0.07),2.0),0.0,1.0), darknessFactor);
+  color.rgb *= mix(1.0, (1.0-darknessLightFactor*2.0) * clamp(1.0-pow(length(viewPos)*(darknessFactor*0.07),2.0),0.0,1.0), darknessFactor);
   
 ////// --------------- FINALIZE
   #ifdef display_LUT
-    vec3 thingy = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy),0).rgb / 30;
 
-    if(luma(thingy) > 0.0){
-      color.rgb =  thingy;
-      vl.a = 1.0;
-    }
+    // if(hideGUI == 0){
+      vec3 thingy = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy/150),0).rgb /1200.0;
+
+      if(luma(thingy) > 0.0){
+        color.rgb =  thingy;
+      //   // vl.a = 1.0;
+      }
+    // }
+    #if defined OVERWORLD_SHADER
+    
+      if( hideGUI == 1) color.rgb = skyCloudsFromTex(playerPos_normalized, colortex4).rgb/1200.0;
+    #else
+      if( hideGUI == 1) color.rgb = volumetricsFromTex(playerPos_normalized, colortex4, 0.0).rgb/1200.0;
+    #endif
   #endif
-  
-  // if(texcoord.x > 0.5 )color.rgb = skyCloudsFromTex(np3, colortex4).rgb/30.0;
-
+// color.rgb = vec3(DEBUG);
   gl_FragData[0].r = bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);
-  // gl_FragData[1].rgb =  vec3(tangentNormals.xy,0.0)  ;
+  // gl_FragData[1].rgb =  vec3(tangentNormals.xy,0.0) * 0.1  ;
   // gl_FragData[1].rgb =  vec3(1.0) * ld(    (data.a > 0.0 ? data.a : texture2D(depthtex0, texcoord).x   )              )   ;
   // gl_FragData[1].rgb = gl_FragData[1].rgb * (1.0-TranslucentShader.a) + TranslucentShader.rgb*10.0;
   // gl_FragData[1].rgb = 1-(texcoord.x > 0.5 ? vec3(TranslucentShader.a) : vec3(data.a));
