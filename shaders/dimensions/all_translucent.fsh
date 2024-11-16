@@ -371,15 +371,6 @@ uniform vec3 eyePosition;
 #define FORWARD_BACKGROUND_REFLECTION
 #define FORWARD_ROUGH_REFLECTION
 
-#ifdef FORWARD_SPECULAR
-#endif
-#ifdef FORWARD_ENVIORNMENT_REFLECTION
-#endif
-#ifdef FORWARD_BACKGROUND_REFLECTION
-#endif
-#ifdef FORWARD_ROUGH_REFLECTION
-#endif
-
 #include "/lib/specular.glsl"
 
 //////////////////////////////VOID MAIN//////////////////////////////
