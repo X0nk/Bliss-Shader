@@ -359,7 +359,7 @@ vec3 getRayOrigin(
 	
 	return position;
 }
-
+// uniform float dhFarPlane;
 vec4 GetVolumetricClouds(
 	vec3 viewPos,
 	vec2 dither,
@@ -382,7 +382,7 @@ vec4 GetVolumetricClouds(
 	float heightRelativeToClouds = clamp(1.0 - max(cameraPosition.y - minHeight,0.0) / 100.0 ,0.0,1.0);
 
 	#if defined DISTANT_HORIZONS
-		float maxdist = dhRenderDistance + 16 * 32;
+		float maxdist = dhFarPlane;
 	#else
 		float maxdist = far + 16*5.0;
 	#endif
