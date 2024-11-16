@@ -435,9 +435,9 @@ void main() {
 
 			Direct_lighting = directLightColor * Shadows;
 
-			// #ifndef LINES
-			// 	Direct_lighting *= phaseg(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), 0.65)*2 + 0.5;
-			// #endif
+			#ifndef LINES
+				Direct_lighting *= phaseg(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), 0.65)*2 + 0.5;
+			#endif
 
 			AmbientLightColor = averageSkyCol_Clouds / 900.0;
 
