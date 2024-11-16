@@ -5,9 +5,8 @@
 #include "/lib/projections.glsl"
 
 #ifdef OVERWORLD_SHADER
-	#define WATER_SUN_SPECULAR
+#define WATER_SUN_SPECULAR
 #endif
-
 uniform vec2 texelSize;
 // uniform int moonPhase;
 uniform float frameTimeCounter;
