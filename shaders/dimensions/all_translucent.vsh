@@ -25,11 +25,10 @@ flat varying float exposure;
 	flat varying vec4 lightCol;
 	flat varying vec3 WsunVec;
 
-	#ifdef Daily_Weather
+	#if defined Daily_Weather
 		flat varying vec4 dailyWeatherParams0;
 		flat varying vec4 dailyWeatherParams1;
 	#endif
-
 #endif
 
 varying vec4 normalMat;
@@ -133,15 +132,6 @@ void main() {
     		position = mat3(gbufferModelView) * (displacedPos - cameraPosition) + gbufferModelView[3].xyz;
 		}
 	#endif
-	
-	// vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-   	vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
-	#ifdef PLANET_CURVATURE
-		float curvature = length(worldpos) / (16*8);
-		worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
-	#endif
-	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
-	
  	gl_Position = toClipSpace3(position);
 
 	HELD_ITEM_BRIGHTNESS = 0.0;
@@ -159,6 +149,7 @@ void main() {
 	// water mask
 	if(mc_Entity.x == 8.0) {
     	mat = 1.0;
+    	gl_Position.z -= 1e-4;
   	}
 
 	// translucent entities
@@ -202,8 +193,8 @@ void main() {
 		// WsunVec = normalize(LightDir);
 	
 		#if defined Daily_Weather
-			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb / 1500.0, 0.0);
-			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb / 1500.0, 0.0);
+			dailyWeatherParams0 = vec4((texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0)/2.0, 0.0);
+			dailyWeatherParams1 = vec4((texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0)/2.0, 0.0);
 		#endif
 
 	#endif

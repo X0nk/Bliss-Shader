@@ -168,15 +168,12 @@ float fogShape(in vec3 pos){
 
 float endFogPhase(vec3 LightPos){
 
-    // float mie = exp(length(LightPos) / -150);
-    // mie *= mie;
-    // mie *= mie;
-    // mie *= 100;
+    float mie = exp(length(LightPos) / -150);
+    mie *= mie;
+    mie *= mie;
+    mie *= 100;
 
-    // float mie = 1.0 - clamp(1.0 - length(LightPos) / 100.0,0.0,1.0);
-    float mie = exp(length(LightPos) / -50.0);
-
-    return (mie*10.0)*(mie*10.0);
+    return mie;
 }
 
 vec3 LightSourceColors(float vortexBounds, float lightningflash){
@@ -200,13 +197,13 @@ vec3 LightSourceLighting(vec3 startPos, vec3 lightPos, float noise, float densit
 	float shadow = 0.0;
 
 	for (int j = 0; j < 3; j++){
-		vec3 shadowSamplePos = startPos - lightPos * (0.05 + j * (0.25 + 0*0.15));
+		vec3 shadowSamplePos = startPos - lightPos * (0.05 + j * (0.25 + noise*0.15));
 		shadow += fogShape(shadowSamplePos);
 	}
 
+    vec3 finalLighting = lightColor * phase * exp(shadow * -10.0);
 
-    vec3 finalLighting = lightColor * phase * exp(-7.0 * shadow) ;
-	finalLighting += lightColor * phase*phase * (1.0 - exp( -shadow * vec3(0.6,2.0,2))) * (1.0 - exp(-density*density));
+	finalLighting += lightColor * phase*phase * (1.0-exp((shadow*shadow*shadow) * vec3(0.6,2.0,2) * -1)) * (1.0 - exp(-density*density)); 
 
 	return finalLighting;
 }
@@ -249,9 +246,9 @@ vec4 GetVolumetricFog(
 
 	// float phsething = phaseEND(CenterdotV, 0.35) + phaseEND(CenterdotV, 0.85) ;
 
-	float skyPhase = (0.5 + pow(clamp(normalize(wpos).y*0.5+0.5,0.0,1.0),4.0)*5.0) * 0.1;
+	float skyPhase = 0.5 + pow(clamp(normalize(wpos).y*0.5+0.5,0.0,1.0),4.0)*5.0;
 
-	vec3 hazeColor = normalize(gl_Fog.color.rgb + 1e-6) * 0.1;
+	vec3 hazeColor = normalize(gl_Fog.color.rgb) * 0.1;
     
 	float lightningflash = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
 
@@ -261,7 +258,7 @@ vec4 GetVolumetricFog(
 	
 	for (int i = 0; i < SAMPLECOUNT; i++) {
 		float d = (pow(expFactor, float(i+dither)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
-		float dd = pow(expFactor, float(i+dither2)/float(SAMPLECOUNT)) * log(expFactor) / float(SAMPLECOUNT)/(expFactor-1.0);
+		float dd = pow(expFactor, float(i+dither)/float(SAMPLECOUNT)) * log(expFactor) / float(SAMPLECOUNT)/(expFactor-1.0);
 
 		vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
 		
@@ -271,7 +268,7 @@ vec4 GetVolumetricFog(
 			// determine where the vortex area ends and chaotic lightning area begins.
 			float vortexBounds = clamp(vortexBoundRange - length(progressW), 0.0,1.0);
         	vec3 lightPosition = LightSourcePosition(progressW, cameraPosition, vortexBounds);
-			vec3 lightColors = LightSourceColors(vortexBounds, lightningflash) * 0.25;
+			vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
 
 			float volumeDensity = fogShape(progressW);
 			
@@ -284,9 +281,9 @@ vec4 GetVolumetricFog(
 			
 			float volumeCoeff = exp(-stormDensity*dd*dL);
 
-			vec3 lightsources = LightSourceLighting(progressW, lightPosition, dither, volumeDensity, lightColors, vortexBounds);
-			vec3 indirect = vec3(0.5,0.75,1.0) * 0.2 * (exp((volumeDensity*volumeDensity) * -50) * 0.9 + 0.1) * 0.1;
-			
+
+			vec3 lightsources = LightSourceLighting(progressW, lightPosition, dither2, volumeDensity, lightColors, vortexBounds);
+			vec3 indirect = vec3(0.5,0.75,1.0) * 0.2 * (exp((volumeDensity*volumeDensity) * -50) * 0.9 + 0.1);
 			vec3 stormLighting = indirect + lightsources;
 			
 			color += (stormLighting - stormLighting*volumeCoeff) * absorbance;
@@ -340,7 +337,7 @@ vec4 GetVolumetricFog(
 	return vec4(color, absorbance);
 }
 
-float GetEndFogShadow(vec3 WorldPos, vec3 LightPos){
+float GetCloudShadow(vec3 WorldPos, vec3 LightPos){
     float Shadow = 0.0;
 
 	for (int i=0; i < 3; i++){
@@ -350,5 +347,5 @@ float GetEndFogShadow(vec3 WorldPos, vec3 LightPos){
 	    Shadow += fogShape(shadowSamplePos)*END_STORM_DENSTIY;
     }
 
-	return clamp(exp2(Shadow * -10.0),0.0,1.0);
+	return clamp(exp2(Shadow * -5.0),0.0,1.0);
 }

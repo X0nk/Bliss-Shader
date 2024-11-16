@@ -64,17 +64,10 @@ vec3 toShadowSpaceProjected(vec3 p3){
 
     return p3;
 }
-float interleaved_gradientNoise_temporal(){
-	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y) + 1.0/1.6180339887 * frameCounter);
-}
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
+	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y)+frameCounter/1.6180339887);
 	return noise;
-}
-float R2_dither(){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter) ;
 }
 float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
@@ -130,7 +123,6 @@ float invLinZ (float lindepth){
 }
 #ifdef OVERWORLD_SHADER
 
-	uniform sampler2D colortex4;
 	// uniform sampler2D colortex12;
 	// const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
@@ -143,27 +135,11 @@ float invLinZ (float lindepth){
 		uniform sampler2DShadow shadowtex1;
 	#endif
 
-	// #define TEST
+	#define TEST
 	#define TIMEOFDAYFOG
 	#include "/lib/lightning_stuff.glsl"
-
-
-	#ifdef Daily_Weather
-		flat varying vec4 dailyWeatherParams0;
-		flat varying vec4 dailyWeatherParams1;
-	#else
-		vec4 dailyWeatherParams0 = vec4(CloudLayer0_coverage, CloudLayer1_coverage, CloudLayer2_coverage, 0.0);
-		vec4 dailyWeatherParams1 = vec4(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density, 0.0);
-	#endif
-
-	flat varying vec4 CurrentFrame_dailyWeatherParams0;
-	flat varying vec4 CurrentFrame_dailyWeatherParams1;
-
-
-	#define VL_CLOUDS_DEFERRED
-
+	
 	#include "/lib/volumetricClouds.glsl"
-	#include "/lib/climate_settings.glsl"
 	#include "/lib/overworld_fog.glsl"
 	
 #endif
@@ -189,15 +165,22 @@ vec2 R2_samples(float n){
 	return fract(alpha * n);
 }
 
-uniform float dayChangeSmooth;
-uniform bool worldTimeChangeCheck;
-
 void main() {
 /* DRAWBUFFERS:4 */
 
 gl_FragData[0] = vec4(0.0);
-
 float mixhistory = 0.06;
+
+float accumuteSpeed = texelFetch2D(colortex4, ivec2(5,5), 0).r/150.0;
+
+vec2 pixelPos6 = vec2(5,5);
+
+if (gl_FragCoord.x > pixelPos6.x && gl_FragCoord.x < pixelPos6.x + 1 && gl_FragCoord.y > pixelPos6.y && gl_FragCoord.y < pixelPos6.y + 1){
+	mixhistory = 0.1;
+	gl_FragData[0] = vec4(1,0,0,1);
+}
+
+
 
 
 #ifdef OVERWORLD_SHADER
@@ -211,12 +194,12 @@ float mixhistory = 0.06;
 	#ifdef Daily_Weather
 		ivec2 pixelPos = ivec2(0,0);
 		if (gl_FragCoord.x > 1 && gl_FragCoord.x < 4 && gl_FragCoord.y > 1 && gl_FragCoord.y < 2){
-
-			mixhistory = clamp(dayChangeSmooth*dayChangeSmooth*dayChangeSmooth*0.1, frameTime*0.1, 1.0);
 			
-			if(gl_FragCoord.x < 2) gl_FragData[0] = vec4(CurrentFrame_dailyWeatherParams0.rgb * 10.0,1.0);
-			if(gl_FragCoord.x > 2) gl_FragData[0] = vec4(CurrentFrame_dailyWeatherParams1.rgb * 10.0,1.0);
-			if(gl_FragCoord.x > 3) gl_FragData[0] = vec4(CurrentFrame_dailyWeatherParams0.a * 10.0, CurrentFrame_dailyWeatherParams1.a * 10.0, 0.0, 1.0);
+			mixhistory = 0.005;
+			
+			if(gl_FragCoord.x < 2) gl_FragData[0] = vec4(dailyWeatherParams0.rgb * 2.0,1.0);
+			if(gl_FragCoord.x > 2) gl_FragData[0] = vec4(dailyWeatherParams1.rgb * 2.0,1.0);
+			if(gl_FragCoord.x > 3) gl_FragData[0] = vec4(dailyWeatherParams0.a * 2.0, dailyWeatherParams1.a * 2.0, 0.0, 1.0);
 	
 		}
 	#endif
@@ -284,9 +267,7 @@ if (gl_FragCoord.x > 18. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257){
 		sky *= vec3(0.0, 0.18, 0.35);
 	#endif
 
-	gl_FragData[0] = vec4(sky / 4000.0 , 1.0);
-  
-	if(worldTimeChangeCheck) mixhistory = 1.0;
+  gl_FragData[0] = vec4(sky / 4000.0, 1.0);
 }
 
 /// --- Sky + clouds + fog 
@@ -294,31 +275,27 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
 	vec3 viewVector = cartToSphere(p);
 
-	vec3 viewPos = mat3(gbufferModelView)*viewVector*1024.0;
-	float noise = interleaved_gradientNoise_temporal();
-
-	WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition + gbufferModelViewInverse[3].xyz) ;// * ( float(sunElevation > 1e-5)*2.0-1.0 );
+	WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition) ;// * ( float(sunElevation > 1e-5)*2.0-1.0 );
 
 	vec3 sky = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150.0;	
-	sky = mix(averageSkyCol_Clouds * AmbientLightTint * 0.25, sky,  pow(clamp(viewVector.y+1.0,0.0,1.0),5.0));
+	sky = mix(dot(sky, vec3(0.333)) * vec3(0.5), sky,  pow(clamp(viewVector.y+1.0,0.0,1.0),5));
 	
 	vec3 suncol = lightSourceColor;
-
 	#ifdef ambientLight_only
 		suncol = vec3(0.0);
 	#endif
-	float rejection = 1.0;
-	vec4 volumetricClouds = GetVolumetricClouds(viewPos, vec2(noise, 1.0-noise), WsunVec, suncol*2.5, skyGroundCol/30.0);
-
+	
+	vec3 cloudDepth = vec3(0.0);
+	vec4 clouds = renderClouds(mat3(gbufferModelView)*viewVector*1024., vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), suncol*2.0, skyGroundCol/30.0, cloudDepth);
+	
 	float atmosphereAlpha = 1.0;
-	vec4 volumetricFog = GetVolumetricFog(viewPos,  vec2(noise, 1.0-noise), suncol*2.5, skyGroundCol/30.0, averageSkyCol_Clouds*5.0, atmosphereAlpha, volumetricClouds.rgb);
+	vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*1024.,  vec2(fract(frameCounter/1.6180339887),1-fract(frameCounter/1.6180339887)), suncol*2.0, skyGroundCol/30.0, averageSkyCol_Clouds*5.0, atmosphereAlpha);
 
-	sky = sky * volumetricClouds.a + volumetricClouds.rgb / 5.0;
-	sky = sky * volumetricFog.a + volumetricFog.rgb / 5.0;
+	sky = sky*clouds.a + clouds.rgb / 5.0;
+	sky *= atmosphereAlpha;
+	sky = sky * VL_Fog.a + VL_Fog.rgb / 5.0;
 
 	gl_FragData[0] = vec4(sky,1.0);
-
-	if(worldTimeChangeCheck) mixhistory = 1.0;
 }
 #endif
 
@@ -329,15 +306,14 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	if (gl_FragCoord.x > (fogPos.x - fogPos.x*0.22) && gl_FragCoord.y > 0.4 && gl_FragCoord.x < 535){
 		vec2 p = clamp(floor(gl_FragCoord.xy-fogPos)/256.+tempOffsets/256.,-0.2,1.2);
 		vec3 viewVector = cartToSphere(p);
-		float noise = interleaved_gradientNoise_temporal();
 
 	 	vec3 BackgroundColor = vec3(0.0);
 
-		vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*256.,  noise, 1.0-noise);
+		vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*256.,  fract(frameCounter/1.6180339887), fract(frameCounter/2.6180339887));
 
-		BackgroundColor += VL_Fog.rgb;
+		BackgroundColor += VL_Fog.rgb/5.0;
 
-	  	gl_FragData[0] = vec4(BackgroundColor*8.0, 1.0);
+	  	gl_FragData[0] = vec4(BackgroundColor, 1.0);
 
 	}
 #endif
@@ -395,11 +371,12 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 
 
 //Temporally accumulate sky and light values
-vec3 frameHistory = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy),0).rgb;
-vec3 currentFrame = gl_FragData[0].rgb*150.;
+vec3 temp = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy),0).rgb;
+vec3 curr = gl_FragData[0].rgb*150.;
 
+if(accumuteSpeed < 1.0) mixhistory = 1.0;
 
-gl_FragData[0].rgb = clamp(mix(frameHistory, currentFrame, mixhistory),0.0,65000.);
+gl_FragData[0].rgb = clamp(mix(temp, curr, mixhistory),0.0,65000.);
 
 //Exposure values
 if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )

@@ -94,40 +94,25 @@ flat varying int SIGN;
 
 flat varying float HELD_ITEM_BRIGHTNESS;
 uniform float noPuddleAreas;
-uniform float nightVision;
+
 
 // float interleaved_gradientNoise(){
 // 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
 // }
-
 float interleaved_gradientNoise_temporal(){
-	#ifdef TAA
-		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887 * frameCounter);
-	#else
-		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
-	#endif
+	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
 }
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy;
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 	return noise;
 }
-float R2_dither(){
-	vec2 coord = gl_FragCoord.xy ;
-
-	#ifdef TAA
-		coord += + (frameCounter%40000) * 2.0;
-	#endif
-	
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
-}
 float blueNoise(){
-	#ifdef TAA
-  		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
-	#else
-		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
-	#endif
+  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+}
+float R2_dither(){
+	vec2 alpha = vec2(0.75487765, 0.56984026);
+	return fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter) ;
 }
 
 mat3 inverseMatrix(mat3 m) {
@@ -326,8 +311,7 @@ void main() {
 	vec2 tempOffset = offsets[framemod8];
 
 	vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
-	vec3 playerpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz;
-	vec3 worldpos = playerpos + cameraPosition;
+	vec3 worldpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz + cameraPosition;
 
 	float torchlightmap = lmtexcoord.z;
 
@@ -338,11 +322,8 @@ void main() {
 			vec3 playerCamPos = cameraPosition;
 		#endif
 
-		// if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(worldpos-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
-		if(HELD_ITEM_BRIGHTNESS > 0.0){ 
-			float pointLight = clamp(1.0-length(worldpos-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0,1.0);
-			torchlightmap = mix(torchlightmap, HELD_ITEM_BRIGHTNESS, pointLight*pointLight);
-		}
+		if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(worldpos-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
+
 		#ifdef HAND
 			torchlightmap *= 0.9;
 		#endif
@@ -350,17 +331,17 @@ void main() {
 	
 	float lightmap = clamp( (lmtexcoord.w-0.9) * 10.0,0.,1.);
 
-	// float rainfall = 1.0;
-	// float Puddle_shape = 0.0;
+	float rainfall = 0.0;
+	float Puddle_shape = 0.0;
 	
-	// #if defined Puddles && defined WORLD && !defined ENTITIES && !defined HAND
-	// 	// rainfall = rainStrength * noPuddleAreas * lightmap;
+	#if defined Puddles && defined WORLD && !defined ENTITIES && !defined HAND
+		rainfall = rainStrength * noPuddleAreas * lightmap;
 
-	// 	// Puddle_shape = clamp(lightmap - exp(-15.0 * pow(texture2D(noisetex, worldpos.xz * (0.020 * Puddle_Size)	).b,5.0)),0.0,1.0);
-	// 	// Puddle_shape *= clamp( viewToWorld(normal).y*0.5+0.5,0.0,1.0);
-	// 	// Puddle_shape *= rainStrength * noPuddleAreas ;
+		Puddle_shape = clamp(lightmap - exp(-15.0 * pow(texture2D(noisetex, worldpos.xz * (0.020 * Puddle_Size)	).b,5.0)),0.0,1.0);
+		Puddle_shape *= clamp( viewToWorld(normal).y*0.5+0.5,0.0,1.0);
+		Puddle_shape *= rainStrength * noPuddleAreas ;
 
-	// #endif
+	#endif
 
 	
 	vec2 adjustedTexCoord = lmtexcoord.xy;
@@ -370,38 +351,31 @@ void main() {
 	adjustedTexCoord = fract(vtexcoord.st)*vtexcoordam.pq+vtexcoordam.st;
 	// vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
 	vec3 viewVector = normalize(tbnMatrix*fragpos);
-	float dist = length(playerpos);
-
-	float falloff = min(max(1.0-dist/MAX_OCCLUSION_DISTANCE,0.0) * 2.0,1.0);
-
-	falloff = pow(1.0-pow(1.0-falloff,1.0),2.0);
-
-	// falloff =  1;
+	float dist = length(fragpos);
 
 	float maxdist = MAX_OCCLUSION_DISTANCE;
 	if(!ifPOM) maxdist = 0.0;
 
 	gl_FragDepth = gl_FragCoord.z;
-	if (falloff > 0.0) {
+	if (dist < maxdist) {
 
 		float depthmap = readNormal(vtexcoord.st).a;
 		float used_POM_DEPTH = 1.0;
-		float pomdepth = POM_DEPTH*falloff;
 
  		if ( viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
 			float noise = blueNoise();
 			#ifdef Adaptive_Step_length
-				vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * pomdepth) * clamp(1.0-pow(depthmap,2),0.1,1.0);
+				vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * POM_DEPTH) * clamp(1.0-pow(depthmap,2),0.1,1.0);
 				used_POM_DEPTH = 1.0;
 			#else
-				vec3 interval = viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS*pomdepth;
+				vec3 interval = viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS*POM_DEPTH;
 			#endif
 			vec3 coord = vec3(vtexcoord.st , 1.0);
 
 			coord += interval * noise * used_POM_DEPTH;
 
 			float sumVec = noise;
-			for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - pomdepth + pomdepth * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
+			for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - POM_DEPTH + POM_DEPTH * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
 				coord = coord + interval  * used_POM_DEPTH; 
 				sumVec += used_POM_DEPTH; 
 			}
@@ -429,7 +403,7 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 	float textureLOD = bias();
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD) * color;
-	// Albedo.rgb = vec3(1.0) * min(max(exp(-15.0 * pow(1.0-luma(Albedo.rgb),3.0)) - 0.2,0.0)*5.0,1.0);
+	
 	#if defined HAND
 		if (Albedo.a < 0.1) discard;
 	#endif
@@ -509,7 +483,7 @@ void main() {
 		NormalTex.xy = NormalTex.xy * 2.0-1.0;
 		NormalTex.z = sqrt(max(1.0 - dot(NormalTex.xy, NormalTex.xy), 0.0));
 
-		normal = applyBump(tbnMatrix, NormalTex.xyz,  1.0);
+		normal = applyBump(tbnMatrix, NormalTex.xyz,  1.0-Puddle_shape);
 	#endif
 	
 	//////////////////////////////// 				////////////////////////////////
@@ -519,8 +493,8 @@ void main() {
 	#ifdef WORLD
 		vec4 SpecularTex = texture2D_POMSwitch(specular, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM,textureLOD);
 
-		// SpecularTex.r = max(SpecularTex.r, rainfall);
-		// SpecularTex.g = max(SpecularTex.g, max(Puddle_shape*0.02,0.02));
+		SpecularTex.r = max(SpecularTex.r, rainfall);
+		SpecularTex.g = max(SpecularTex.g, max(Puddle_shape*0.02,0.02));
 
 		gl_FragData[1].rg = SpecularTex.rg;
 
@@ -569,23 +543,24 @@ void main() {
 	//////////////////////////////// 				////////////////////////////////
 
 	#ifdef WORLD
-		// #ifdef Puddles
-		// 	float porosity = 0.4;
+		#ifdef Puddles
+			float porosity = 0.4;
 			
-		// 	#ifdef Porosity
-		// 		porosity = SpecularTex.z >= 64.5/255.0 ? 0.0 : (SpecularTex.z*255.0/64.0)*0.65;
-		// 	#endif
+			#ifdef Porosity
+				porosity = SpecularTex.z >= 64.5/255.0 ? 0.0 : (SpecularTex.z*255.0/64.0)*0.65;
+			#endif
 
-		// 	// if(SpecularTex.g < 229.5/255.0) Albedo.rgb = mix(Albedo.rgb, vec3(0), Puddle_shape*porosity);
-		// #endif
+			if(SpecularTex.g < 229.5/255.0) Albedo.rgb = mix(Albedo.rgb, vec3(0), Puddle_shape*porosity);
+		#endif
 
 		// apply noise to lightmaps to reduce banding.
 		vec2 PackLightmaps = vec2(torchlightmap, lmtexcoord.w);
+		
 		vec4 data1 = clamp( encode(viewToWorld(normal), PackLightmaps), 0.0, 1.0);
-
+		
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
 
-		gl_FragData[2] = vec4(viewToWorld(FlatNormals) * 0.5 + 0.5, VanillaAO);	
+		gl_FragData[2] = vec4(FlatNormals * 0.5 + 0.5, VanillaAO);	
 	#endif
 	
 }

@@ -23,12 +23,10 @@ flat varying float exposure;
 	flat varying vec3 averageSkyCol_Clouds;
 	flat varying vec4 lightCol;
 	flat varying vec3 WsunVec;
-
-	#ifdef Daily_Weather
+	#if defined Daily_Weather
 		flat varying vec4 dailyWeatherParams0;
 		flat varying vec4 dailyWeatherParams1;
 	#endif
-
 #endif
 	
 
@@ -108,12 +106,12 @@ void main() {
 		vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
 
    		vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
-		bool istopv = worldpos.y > cameraPosition.y + 5.0 && lmtexcoord.w > 0.99;
+		bool istopv = worldpos.y > cameraPosition.y + 5.0 && lmtexcoord.w > 0.94;
 
 		if(!istopv){
-			worldpos.xyz -= cameraPosition - vec3(2.0,0.0,2.0) * min(max(eyeBrightnessSmooth.y/240.0-0.95,0.0)*11.0,1.0);
+			worldpos.xyz -= cameraPosition;
 		}else{
-			worldpos.xyz -= cameraPosition ;
+			worldpos.xyz -= cameraPosition + vec3(2.0,0.0,2.0);
 		}
 
 		position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
@@ -142,8 +140,8 @@ void main() {
 	
 		WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
 		#if defined Daily_Weather
-			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb / 1500.0, 0.0);
-			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb / 1500.0, 0.0);
+			dailyWeatherParams0 = vec4((texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0) / 2.0, 0.0);
+			dailyWeatherParams1 = vec4((texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0) / 2.0, 0.0);
 		#endif
 	#endif
 	

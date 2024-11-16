@@ -83,7 +83,7 @@ flat varying int SIGN;
 // in vec3 at_velocity;
 // out vec3 velocity;
 
-uniform float nightVision;
+
 
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
@@ -198,8 +198,6 @@ void main() {
 
 	VanillaAO = 1.0 - clamp(color.a,0,1);
 	if (color.a < 0.3) color.a = 1.0; // fix vanilla ao on some custom block models.
-	
-
 
     /////// ----- RANDOM STUFF ----- ///////
 	// gl_TextureMatrix[0] for animated things like charged creepers
@@ -243,7 +241,6 @@ void main() {
 	NameTags = 0;
 
 #ifdef ENTITIES
-
 	// disallow POM to work on item frames.
 	if(entityId == ENTITY_ITEM_FRAME) SIGN = 1;
 
@@ -300,7 +297,7 @@ void main() {
 		mc_Entity.x == BLOCK_AMETHYST_BUD_MEDIUM || mc_Entity.x == BLOCK_AMETHYST_BUD_LARGE || mc_Entity.x == BLOCK_AMETHYST_CLUSTER ||
 		mc_Entity.x == BLOCK_BAMBOO || mc_Entity.x == BLOCK_SAPLING || mc_Entity.x == BLOCK_VINE
 	) {
-		SSSAMOUNT = 0.0;
+		SSSAMOUNT = 0.75;
 	}
 	// low
 	#ifdef MISC_BLOCK_SSS
@@ -331,7 +328,6 @@ void main() {
 
 	#endif
 
-   	vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
 
 	#ifdef WAVY_PLANTS
 		// also use normal, so up/down facing geometry does not get detatched from its model parts.
@@ -350,24 +346,18 @@ void main() {
 
 			) && abs(position.z) < 64.0
 		){
+   			vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
 			vec3 UnalteredWorldpos = worldpos;
 
 			// apply displacement for waving plant blocks
 			worldpos += calcMovePlants(worldpos + cameraPosition) * max(lmtexcoord.w,0.5);
 
-
 			// apply displacement for waving leaf blocks specifically, overwriting the other waving mode. these wave off of the air. they wave uniformly
 			if(mc_Entity.x == BLOCK_AIR_WAVING) worldpos = UnalteredWorldpos + calcMoveLeaves(worldpos + cameraPosition, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*lmtexcoord.w;
 		
+			position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 		}
 	#endif
-	
-	#ifdef PLANET_CURVATURE
-		float curvature = length(worldpos) / (16*8);
-		worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
-	#endif
-
-	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 
 	gl_Position = toClipSpace3(position);
 #endif

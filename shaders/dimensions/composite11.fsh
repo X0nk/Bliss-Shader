@@ -14,7 +14,7 @@ uniform sampler2D colortex3;
 // uniform sampler2D colortex6;
 uniform sampler2D colortex7;
 // uniform sampler2D colortex8; // specular
-uniform sampler2D colortex9; // specular
+// uniform sampler2D colortex9; // specular
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 uniform sampler2D noisetex;
@@ -72,6 +72,12 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
     return (near * far) / (depth * (near - far) + far);
 }
 
+
+
+
+
+
+
 float bloomWeight(){
 	
 	float weights[7] = float[](     1.0,    1.0/2.0,    1.0/3.0,    1.0/5.5,    1.0/8.0,    1.0/10.0,   1.0/12.0    );
@@ -85,101 +91,8 @@ float bloomWeight(){
 
 	return result;
 }
-vec3 invTonemap(vec3 col){
-	return col/(1-luma(col));
-}
+
 #define linear_to_srgb(x) (pow(x, vec3(1.0/2.2)))
-
-uniform sampler2D colortex6;
-
-
-float w0(float a)
-{
-    return (1.0/6.0)*(a*(a*(-a + 3.0) - 3.0) + 1.0);
-}
-
-float w1(float a)
-{
-    return (1.0/6.0)*(a*a*(3.0*a - 6.0) + 4.0);
-}
-
-float w2(float a)
-{
-    return (1.0/6.0)*(a*(a*(-3.0*a + 3.0) + 3.0) + 1.0);
-}
-
-float w3(float a)
-{
-    return (1.0/6.0)*(a*a*a);
-}
-
-float g0(float a)
-{
-    return w0(a) + w1(a);
-}
-
-float g1(float a)
-{
-    return w2(a) + w3(a);
-}
-
-float h0(float a)
-{
-    return -1.0 + w1(a) / (w0(a) + w1(a));
-}
-
-float h1(float a)
-{
-    return 1.0 + w3(a) / (w2(a) + w3(a));
-}
-
-vec4 texture2D_bicubic(sampler2D tex, vec2 uv)
-{
-	vec4 texelSize = vec4(texelSize,1.0/texelSize);
-	uv = uv*texelSize.zw;
-	vec2 iuv = floor( uv );
-	vec2 fuv = fract( uv );
-
-    float g0x = g0(fuv.x);
-    float g1x = g1(fuv.x);
-    float h0x = h0(fuv.x);
-    float h1x = h1(fuv.x);
-    float h0y = h0(fuv.y);
-    float h1y = h1(fuv.y);
-
-	vec2 p0 = (vec2(iuv.x + h0x, iuv.y + h0y) - 0.5) * texelSize.xy;
-	vec2 p1 = (vec2(iuv.x + h1x, iuv.y + h0y) - 0.5) * texelSize.xy;
-	vec2 p2 = (vec2(iuv.x + h0x, iuv.y + h1y) - 0.5) * texelSize.xy;
-	vec2 p3 = (vec2(iuv.x + h1x, iuv.y + h1y) - 0.5) * texelSize.xy;
-
-    return g0(fuv.y) * (g0x * texture2D(tex, p0)  +
-                        g1x * texture2D(tex, p1)) +
-           g1(fuv.y) * (g0x * texture2D(tex, p2)  +
-                        g1x * texture2D(tex, p3));
-}
-
-// vec3 lenseFlare(vec2 UV){
-//   float noise = blueNoise();
-
-//   float vignetteLength = 0.2;
-//   float vignette =  0.5+length(texcoord-0.5);//min(max(length(texcoord-0.5) - vignetteLength,0.0) / (1.0/(1.0-vignetteLength)),1.0);
-
-//   float aberrationStrength = vignette;//clamp(CHROMATIC_ABERRATION_STRENGTH * 0.01 * (1.0 - vignette),0.0,0.9) * vignette * 0.75;
-
-//   vec2 centeredUV = texcoord - 0.5;
-
-//   vec3 color = vec3(0.0);
-//   color = texture2D(colortex7, texcoord).rgb;
-
-//   vec2 distortedUV = (centeredUV -  (centeredUV ) * aberrationStrength) + 0.5;
-
-//   color += texture2D(colortex7,  distortedUV).rgb;
-//   // color.r = texture2D(colortex7, (centeredUV - (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).r;
-//   // color.g = texture2D(colortex7, texcoord).g;
-//   // color.b = texture2D(colortex7, (centeredUV + (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).b;
-
-//   return color;
-// }
 
 void main() {
   /* DRAWBUFFERS:7 */
@@ -219,21 +132,16 @@ void main() {
 
 	vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
 
-	vec2 resScale = vec2(1920.,1080.)/clampedRes;
-	vec2 bloomTileUV = (((gl_FragCoord.xy)*2.0 + 0.5)*texelSize/2.0) / clampedRes*vec2(1920.,1080.);
 
-	vec3 bloomTile0 = texture2D_bicubic(colortex3, bloomTileUV/2.).rgb; //1/4 res
-	vec3 bloomTile1 = texture2D_bicubic(colortex6, bloomTileUV/4.).rgb; //1/8 res
-	vec3 bloomTile2 = texture2D_bicubic(colortex6, bloomTileUV/8.+vec2(0.25*resScale.x+2.5*texelSize.x,.0)).rgb;  //1/16 res
-	vec3 bloomTile3 = texture2D_bicubic(colortex6, bloomTileUV/16.+vec2(0.375*resScale.x+4.5*texelSize.x,.0)).rgb; //1/32 res
-	vec3 bloomTile4 = texture2D_bicubic(colortex6, bloomTileUV/32.+vec2(0.4375*resScale.x+6.5*texelSize.x,.0)).rgb; //1/64 res
-	vec3 bloomTile5 = texture2D_bicubic(colortex6, bloomTileUV/64.+vec2(0.46875*resScale.x+8.5*texelSize.x,.0)).rgb; //1/128 res
-	vec3 bloomTile6 = texture2D_bicubic(colortex6, bloomTileUV/128.+vec2(0.484375*resScale.x+10.5*texelSize.x,.0)).rgb; //1/256 res
-	
-	float weights[7] = float[](     1.0,    1.0/2.0,    1.0/3.0,    1.0/5.5,    1.0/8.0,    1.0/10.0,   1.0/12.0    );
-	vec3 bloom = (bloomTile0*weights[0] + bloomTile1*weights[1] + bloomTile2*weights[2] + bloomTile3*weights[3] + bloomTile4*weights[4] + bloomTile5*weights[5] + bloomTile6*weights[6]) / bloomWeight();
-	vec3 fogBloom = (bloomTile0 + bloomTile1 + bloomTile2 + bloomTile3 + bloomTile4 + bloomTile5 + bloomTile6) / 7.0;
+	#ifdef OLD_BLOOM
+		vec3 bloom = texture2D(colortex3, texcoord/clampedRes*vec2(1920.,1080.)*BLOOM_QUALITY	).rgb / 2.0 / 7.0;
+		float lightScat = clamp((BLOOM_STRENGTH+3) * 0.05 * pow(exposure.a, 0.2)  ,0.0,1.0) * vignette;
+	#else
+		vec3 bloom = texture2D(colortex3, texcoord/clampedRes*vec2(1920.,1080.)*BLOOM_QUALITY ).rgb / 3.0 / bloomWeight();
+		float lightScat = clamp(BLOOM_STRENGTH * 0.5 * pow(exposure.a, 0.2)  ,0.0,1.0) * vignette;
+	#endif
 
+ 	float VL_abs = texture2D(colortex7, texcoord*RENDER_SCALE).r;
 
 	#ifdef AUTO_EXPOSURE
 		float purkinje = clamp(exposure.a*exposure.a,0.0,1.0) * clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*Purkinje_strength,0,1);
@@ -241,12 +149,9 @@ void main() {
 		float purkinje = clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*Purkinje_strength,0,1);
 	#endif	
 
-	float lightScat = clamp(BLOOM_STRENGTH * 0.3,0.0,1.0) * vignette;
- 	float VL_abs = texture2D(colortex7, texcoord*RENDER_SCALE).r;
-
   	VL_abs = clamp((1.0-VL_abs)*BLOOMY_FOG*0.75*(1.0+rainStrength) * (1.0-purkinje*0.3),0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
 	
-	col = (mix(col, fogBloom, VL_abs) + bloom*lightScat) * exposure.rgb;
+	col = (mix(col, bloom, VL_abs) + bloom * lightScat) * exposure.rgb;
 	
   	float lum = dot(col, vec3(0.15,0.3,0.55));
 	float lum2 = dot(col, vec3(0.85,0.7,0.45));

@@ -2,14 +2,12 @@
 #include "/lib/res_params.glsl"
 
 varying vec4 pos;
-varying vec4 localPos;
 varying vec4 gcolor;
 varying vec2 lightmapCoords;
 varying vec4 normals_and_materials;
 flat varying float SSSAMOUNT;
 flat varying float EMISSIVE;
 flat varying int dh_material_id;
-uniform float nightVision;
 
 uniform vec2 texelSize;
 uniform int framemod8;
@@ -27,9 +25,9 @@ uniform float far;
 
 
 
+/*
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;
-
 uniform float far;
 uniform mat4 dhProjection;
 uniform vec3 cameraPosition;
@@ -39,45 +37,38 @@ uniform vec3 cameraPosition;
 vec4 toClipSpace3(vec3 viewSpacePosition) {
     return vec4(projMAD(dhProjection, viewSpacePosition),-viewSpacePosition.z);
 }
+*/  
 
 #define SEASONS_VSH
 #define DH_SEASONS
 #include "/lib/climate_settings.glsl"
 
 void main() {
+    gl_Position = ftransform();
 
-	// vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-   	// vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
-	// #ifdef PLANET_CURVATURE
-	// 	float curvature = length(worldpos) / (16*8);
-	// 	worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
-	// #endif
-	// position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
+	/*
+		vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
+	    vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
 
-	// gl_Position = toClipSpace3(position);
-	
-    vec4 vPos = gl_Vertex;
+		float cellSize = 32*2;
+		vec3 modulusWorldPos = vec3(worldpos.x,worldpos.y,worldpos.z) + fract(cameraPosition/cellSize)*cellSize - cellSize*0.5;
 
-    vec3 cameraOffset = fract(cameraPosition);
-    vPos.xyz = floor(vPos.xyz + cameraOffset + 0.5) - cameraOffset;
-
-    vec4 viewPos = gl_ModelViewMatrix * vPos;
-	localPos = gbufferModelViewInverse * viewPos;
-    gl_Position = dhProjection * viewPos;
-
+		worldpos.y -= (clamp(1.0-length(modulusWorldPos)/max(far-32,0.0),0.0,1.0)) * 50.0;
+	    position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
+		gl_Position = toClipSpace3(position);
+	*/
 
 	#ifdef TAA_UPSCALING
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
-	
     #ifdef TAA
 		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
 	#endif
 	
-	lightmapCoords = (gl_TextureMatrix[1] * gl_MultiTexCoord1).xy;
+	lightmapCoords = gl_MultiTexCoord1.xy; // is this even correct? lol'
     
     gcolor = gl_Color;
-	
+    pos = gl_ModelViewMatrix * gl_Vertex;
 
 	EMISSIVE = 0.0;
 	if(dhMaterialId == DH_BLOCK_ILLUMINATED || gl_MultiTexCoord1.x >= 0.95) EMISSIVE = 0.5;
@@ -93,6 +84,7 @@ void main() {
 
 	normals_and_materials = vec4(normalize(gl_NormalMatrix * gl_Normal), MATERIALS);
 	dh_material_id = dhMaterialId;
+
 
 	#if defined Seasons && defined OVERWORLD_SHADER
 		YearCycleColor(gcolor.rgb, gl_Color.rgb, dhMaterialId == DH_BLOCK_LEAVES, dhMaterialId == DH_BLOCK_GRASS);

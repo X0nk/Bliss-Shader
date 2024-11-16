@@ -5,11 +5,10 @@
 	flat varying float Flashing;
 #endif
 
-	#ifdef Daily_Weather
-		flat varying vec4 dailyWeatherParams0;
-		flat varying vec4 dailyWeatherParams1;
-	#endif
-
+#if defined Daily_Weather
+	flat varying vec4 dailyWeatherParams0;
+	flat varying vec4 dailyWeatherParams1;
+#endif
 
 flat varying vec3 WsunVec;
 flat varying vec3 unsigned_WsunVec;
@@ -54,14 +53,14 @@ void main() {
 
 	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 
+	WsunVec = lightCol.a*normalize(mat3(gbufferModelViewInverse) * sunPosition);
 	unsigned_WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
-	WsunVec = lightCol.a*unsigned_WsunVec;
 
 	exposure = texelFetch2D(colortex4,ivec2(10,37),0).r;
 	
 	#if defined Daily_Weather
-			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb / 1500.0, 0.0);
-			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb / 1500.0, 0.0);
+		dailyWeatherParams0 = vec4((texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0)/2.0, 0.0);
+		dailyWeatherParams1 = vec4((texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0)/2.0, 0.0);
 	#endif
 	
 	#ifdef TAA

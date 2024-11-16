@@ -216,7 +216,7 @@ screen.World = Mundo
         option.SSR_STEPS = Qualidade do SSR
         option.WATER_SUN_SPECULAR = Reflexos do Sol/Lua
         option.WATER_BACKGROUND_SPECULAR = Reflexos do Céu/Névoa 
-        option.FAKE_REFRACTION_EFFECT = Refração na Água/Vidro
+        option.Refraction = Refração na Água/Vidro
         option.Dirt_Amount = Quantidade de Sujeira
         option.Water_Top_Layer = Coordenada Y do Oceano
         
@@ -451,7 +451,7 @@ screen.World.comment = Ajuste configurações para váriadas coisas que acontece
         option.SSR_STEPS.comment = Ajuste a qualiade dos reflexos em coisas translúcidas. §aCUSTO DE PERFORMANCE:§r Médio pra Alto
         option.WATER_SUN_SPECULAR.comment = Habilita reflexos da lua e do sol em coisas translúcidas. §aCUSTO DE PERFORMANCE:§r Baixo
         option.WATER_BACKGROUND_SPECULAR.comment = Habilita reflexos do céu e névoa em coisas translúcidas. §aCUSTO DE PERFORMANCE:§r Baixo para Médio
-        option.FAKE_REFRACTION_EFFECT.comment = Habilita refração em coisas translúcidas. §bO Que é Isso?§r Olhe para a água e você vai perceber a refração da luz distorcendo as coisas dentro dela. §aCUSTO DE PERFORMANCE:§r Baixo
+        option.Refraction.comment = Habilita refração em coisas translúcidas. §bO Que é Isso?§r Olhe para a água e você vai perceber a refração da luz distorcendo as coisas dentro dela. §aCUSTO DE PERFORMANCE:§r Baixo
         option.Dirt_Amount.comment = Ajusta quanta sujeira tem na água. Isso controla quanta névoa tem dentro da água.
         option.Water_Top_Layer.comment = Ajusta a coordenada Y que oceano deve estar no mundo.
         

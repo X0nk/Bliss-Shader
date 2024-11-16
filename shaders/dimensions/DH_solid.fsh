@@ -2,7 +2,6 @@
 
 
 varying vec4 pos;
-varying vec4 localPos;
 varying vec4 gcolor;
 varying vec2 lightmapCoords;
 varying vec4 normals_and_materials;
@@ -11,7 +10,6 @@ flat varying float EMISSIVE;
 flat varying int dh_material_id;
 
 uniform float far;
-uniform float nightVision;
 // uniform int hideGUI;
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
@@ -55,7 +53,6 @@ float encodeVec2(float x,float y){
 
 uniform mat4 gbufferProjection;
 uniform mat4 gbufferProjectionInverse;
-uniform vec3 cameraPosition;
 
 vec3 toScreenSpace(vec3 p) {
 	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
@@ -98,48 +95,7 @@ float densityAtPos(in vec3 pos){
 
 	return mix(xy.r,xy.g, f.y);
 }
-
-// https://gitlab.com/jeseibel/distant-horizons-core/-/blob/main/core/src/main/resources/shaders/flat_shaded.frag?ref_type=heads
-// Property of Distant Horizons [mod]
-
-const int noiseSteps = 4;
-const float noiseIntensity = 10.0;
-const int noiseDropoff = 1024;
-
-float rand(float co) { return fract(sin(co*(91.3458)) * 47453.5453); }
-float rand(vec2 co) { return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453); }
-float rand(vec3 co) { return rand(co.xy + rand(co.z)); }
-
-vec3 quantize(const in vec3 val, const in int stepSize) {
-    return floor(val * stepSize) / stepSize;
-}
-
-vec4 applyNoise(in vec4 fragColor, const in vec3 viewPos, const in float viewDist) {
-    // vec3 vertexNormal = normalize(cross(dFdy(vPos.xyz), dFdx(vPos.xyz)));
-    // // This bit of code is required to fix the vertex position problem cus of floats in the verted world position varuable
-    // vec3 fixedVPos = vPos.xyz + vertexNormal * 0.001;
-
-    float noiseAmplification = noiseIntensity * 0.01;
-    float lum = (fragColor.r + fragColor.g + fragColor.b) / 3.0;
-    noiseAmplification = (1.0 - pow(lum * 2.0 - 1.0, 2.0)) * noiseAmplification; // Lessen the effect on depending on how dark the object is, equasion for this is -(2x-1)^{2}+1
-    noiseAmplification *= fragColor.a; // The effect would lessen on transparent objects
-
-    // Random value for each position
-    float randomValue = rand(quantize(viewPos, noiseSteps))
-    * 2.0 * noiseAmplification - noiseAmplification;
-
-    // Modifies the color
-    // A value of 0 on the randomValue will result in the original color, while a value of 1 will result in a fully bright color
-    vec3 newCol = fragColor.rgb + (1.0 - fragColor.rgb) * randomValue;
-    newCol = clamp(newCol, 0.0, 1.0);
-
-    if (noiseDropoff != 0) {
-        float distF = min(viewDist / noiseDropoff, 1.0);
-        newCol = mix(newCol, fragColor.rgb, distF); // The further away it gets, the less noise gets applied
-    }
-
-    return vec4(newCol,1.0);
-}
+uniform vec3 cameraPosition;
 
 /* RENDERTARGETS:1,7,8 */
 void main() {
@@ -151,7 +107,7 @@ void main() {
 			float maxOverdrawDistance = OVERDRAW_MAX_DISTANCE;
 		#endif
 
-        if(clamp(1.0-length(localPos.xyz)/clamp(far - 32.0,32.0,maxOverdrawDistance),0.0,1.0) > 0.0 ){
+        if(clamp(1.0-length(pos.xyz)/clamp(far - 32.0,32.0,maxOverdrawDistance),0.0,1.0) > 0.0 ){
             discard;
             return;
         }
@@ -164,14 +120,11 @@ void main() {
     // PackLightmaps.y *= 1.05;
     PackLightmaps = min(max(PackLightmaps,0.0)*1.05,1.0);
     
-    vec4 data1 = clamp( encode(viewToWorld(normals), PackLightmaps), 0.0, 1.0);
+    vec4 data1 = clamp( encode(normals, PackLightmaps), 0.0, 1.0);
     
     // alpha is material masks, set it to 0.65 to make a DH LODs mask. 
-	#ifdef DH_NOISE_TEXTURE
-		vec4 Albedo = applyNoise(gcolor, localPos.rgb+cameraPosition, length(localPos.xyz));
-	#else
-		vec4 Albedo = vec4(gcolor.rgb, 1.0);
-	#endif
+    vec4 Albedo = vec4(gcolor.rgb, 1.0);
+
     // vec3 worldPos = mat3(gbufferModelViewInverse)*pos.xyz + cameraPosition;
     // worldPos = (worldPos*vec3(1.0,1./48.,1.0)/4) ;
     // worldPos = floor(worldPos * 4.0 + 0.001) / 32.0;

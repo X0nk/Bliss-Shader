@@ -69,20 +69,20 @@ void main() {
             minimumBrightness = 10.0;
         #endif
 
-	    // float autoBrightnessAdjust = mix(minimumBrightness, 100.0, clamp(exp(-10.0*exposure),0.0,1.0));
+	    float autoBrightnessAdjust = mix(minimumBrightness, 100.0, clamp(exp(-10.0*exposure),0.0,1.0));
 
         #ifdef DISABLE_VANILLA_EMISSIVES
             vec3 emissiveColor = vec3(0.0);
             Albedo.a = 0.0;
         #else
-            vec3 emissiveColor =  Albedo.rgb * color.a ;//* autoBrightnessAdjust;
+            vec3 emissiveColor =  Albedo.rgb * color.a * autoBrightnessAdjust;
         #endif
         
 	    gl_FragData[0] = vec4(emissiveColor*0.1, Albedo.a * sqrt(color.a));
     #endif
 
     #ifdef ENCHANT_GLINT
-	    // float autoBrightnessAdjust = mix(0.1, 100.0, clamp(exp(-10.0*exposure),0.0,1.0));
+	    float autoBrightnessAdjust = mix(0.1, 100.0, clamp(exp(-10.0*exposure),0.0,1.0));
 
         Albedo.rgb = clamp(Albedo.rgb ,0.0,1.0); // for safety
 
@@ -90,7 +90,7 @@ void main() {
             vec3 GlintColor = vec3(0.0);
             Albedo.a = 0.0;
         #else
-            vec3 GlintColor = Albedo.rgb * Emissive_Brightness;
+            vec3 GlintColor = Albedo.rgb * autoBrightnessAdjust * Emissive_Brightness;
         #endif
 
 
