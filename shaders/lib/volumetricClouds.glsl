@@ -375,7 +375,7 @@ vec4 GetVolumetricClouds(
 	float totalAbsorbance = 1.0;
 	vec4 cloudColor = vec4(color, totalAbsorbance);
 
-	float cloudheight = CloudLayer0_tallness;
+	float cloudheight = 100.0;
 	float minHeight = CloudLayer0_height;
 	float maxHeight = cloudheight + minHeight;
 
@@ -435,7 +435,7 @@ vec4 GetVolumetricClouds(
 		vec4 largeCumulusClouds = cloudColor;
 
 		#ifdef CloudLayer1
-			cloudheight = CloudLayer1_tallness;
+			cloudheight = 200.0;
 			minHeight = CloudLayer1_height;
 			maxHeight = cloudheight + minHeight;
 
