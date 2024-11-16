@@ -289,7 +289,7 @@ void main() {
 	float expFunc = 0.5+0.5*tanh(log(L));
 	
 	// float targetExposure = 1.0/log(L+1.05);
-	float targetExposure = (EXPOSURE_DARKENING * 0.35)/log(L+1.0 + EXPOSURE_BRIGHTENING * 0.05);
+	float targetExposure = 0.35/log(L+1.05); // mine 
 	// float targetExposure = 0.18/log2(L*2.5+1.045)*0.62; // choc original
 
 	avgL2 = clamp(mix(avgB,texelFetch2D(colortex4,ivec2(10,37),0).b,0.985),0.00003051757,65000.0);
