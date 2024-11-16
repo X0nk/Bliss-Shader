@@ -63,7 +63,23 @@ void main() {
 
     vec4 viewPos = gl_ModelViewMatrix * vPos;
 	localPos = gbufferModelViewInverse * viewPos;
-    gl_Position = dhProjection * viewPos;
+
+	#ifdef PLANET_CURVATURE
+		vec4 worldPos = localPos;
+
+		float curvature = length(worldPos) / (16*8);
+		worldPos.y -= curvature*curvature * CURVATURE_AMOUNT;
+
+		worldPos = gbufferModelView * worldPos;
+
+    	gl_Position = dhProjection * worldPos;
+	#else
+    	gl_Position = dhProjection * viewPos;
+	#endif
+
+
+
+
 
 
 	#ifdef TAA_UPSCALING
