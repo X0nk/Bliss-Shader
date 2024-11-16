@@ -47,8 +47,8 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 	if(LayerIndex == LARGECUMULUS_LAYER){
 		coverage = dailyWeatherParams0.y;
 		
-		largeCloud = texture2D(noisetex, (samplePos.zx + cloud_movement*2.0)/10000.0).b;
-		smallCloud = texture2D(noisetex, (samplePos.zx - cloud_movement*2.0)/2500.0).b;
+		largeCloud = texture2D(noisetex, (samplePos.zx + cloud_movement*2.0)/10000.0 * CloudLayer1_scale).b;
+		smallCloud = texture2D(noisetex, (samplePos.zx - cloud_movement*2.0)/2500.0 * CloudLayer1_scale).b;
 		
 		smallCloud = abs(largeCloud* -0.7) + smallCloud;
 
@@ -60,8 +60,8 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 	if(LayerIndex == SMALLCUMULUS_LAYER){
 		coverage = dailyWeatherParams0.x;
 
-		largeCloud = texture2D(noisetex, (samplePos.xz + cloud_movement)/5000.0).b;
-		smallCloud = 1.0-texture2D(noisetex, (samplePos.xz - cloud_movement)/500.0).r;
+		largeCloud = texture2D(noisetex, (samplePos.xz + cloud_movement)/5000.0 * CloudLayer0_scale).b;
+		smallCloud = 1.0-texture2D(noisetex, (samplePos.xz - cloud_movement)/500.0 * CloudLayer0_scale).r;
 
 		smallCloud = abs(largeCloud-0.6) + smallCloud*smallCloud;
 
@@ -98,18 +98,18 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
  		float erosion = 0.0;
 
 		if(LayerIndex == SMALLCUMULUS_LAYER){
-			erosion += (1.0-densityAtPos(samplePos * 200.0)) * sqrt(1.0-shape);
+			erosion += (1.0-densityAtPos(samplePos * 200.0 * CloudLayer0_scale)) * sqrt(1.0-shape);
 
 			float falloff = 1.0 - clamp((maxHeight - position.y)/100.0,0.0,1.0);
-			erosion += abs(densityAtPos(samplePos * 600.0) - falloff) * 0.75 * (1.0-shape) * (1.0-falloff*0.25);
+			erosion += abs(densityAtPos(samplePos * 600.0 * CloudLayer0_scale) - falloff) * 0.75 * (1.0-shape) * (1.0-falloff*0.25);
 
 			erosion = erosion*erosion*erosion*erosion;
 		}
 		if(LayerIndex == LARGECUMULUS_LAYER){
-			erosion += (1.0 - densityAtPos(samplePos * 100.0)) * sqrt(1.0-shape);
+			erosion += (1.0 - densityAtPos(samplePos * 100.0 * CloudLayer1_scale)) * sqrt(1.0-shape);
 
 			float falloff = 1.0 - clamp((maxHeight - position.y)/200.0,0.0,1.0);
-			erosion += abs(densityAtPos(samplePos * 450.0) - falloff) * 0.75 * (1.0-shape) * (1.0-falloff*0.5);
+			erosion += abs(densityAtPos(samplePos * 450.0 * CloudLayer1_scale) - falloff) * 0.75 * (1.0-shape) * (1.0-falloff*0.5);
 
 			erosion = erosion*erosion*erosion*erosion;
 		}
@@ -375,7 +375,7 @@ vec4 GetVolumetricClouds(
 	float totalAbsorbance = 1.0;
 	vec4 cloudColor = vec4(color, totalAbsorbance);
 
-	float cloudheight = CloudLayer0_tallness;
+	float cloudheight = CloudLayer0_tallness / CloudLayer0_scale;
 	float minHeight = CloudLayer0_height;
 	float maxHeight = cloudheight + minHeight;
 
@@ -435,7 +435,7 @@ vec4 GetVolumetricClouds(
 		vec4 largeCumulusClouds = cloudColor;
 
 		#ifdef CloudLayer1
-			cloudheight = CloudLayer1_tallness;
+			cloudheight = CloudLayer1_tallness/CloudLayer1_scale;
 			minHeight = CloudLayer1_height;
 			maxHeight = cloudheight + minHeight;
 
