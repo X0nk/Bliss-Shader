@@ -68,7 +68,7 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
 
 
             float waterDrops = texture2D(noisetex, (texcoord - vec2(0.0, scale.z)) * scale.xy).r ;
-            if(isEyeInWater == 1) waterDrops = waterDrops*waterDrops * 0.3;
+            if(isEyeInWater == 1) waterDrops = 0.0;
             if(isEyeInWater == 0 && exitWater > 0.0) waterDrops = sqrt(min(max(waterDrops - (1.0-sqrt(exitWater))*0.7,0.0) * (1.0 + exitWater),1.0)) * 0.3;
 
             // apply distortion effects for exiting water and under water

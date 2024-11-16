@@ -384,7 +384,7 @@ vec4 GetVolumetricClouds(
 	#if defined DISTANT_HORIZONS
 		float maxdist = dhFarPlane;
 	#else
-		float maxdist = far + 16*5.0;
+		float maxdist = far*4.0;
 	#endif
 
    	float lViewPosM = length(viewPos) < maxdist ? length(viewPos) - 1.0 : 100000000.0;
