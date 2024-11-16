@@ -313,7 +313,7 @@ void main() {
 			// medium
 	
 			// low
-			if(entityId == ENTITY_SSS_WEAK || entityId == ENTITY_PLAYER) SSSAMOUNT = 0.3;
+			if(entityId == ENTITY_SSS_WEAK || entityId == ENTITY_PLAYER) SSSAMOUNT = 0.4;
 		#endif
 	#endif
 
