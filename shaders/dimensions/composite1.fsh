@@ -220,6 +220,15 @@ vec2 decodeVec2(float a){
 #define DEFERRED_BACKGROUND_REFLECTION
 #define DEFERRED_ROUGH_REFLECTION
 
+#ifdef DEFERRED_SPECULAR
+#endif
+#ifdef DEFERRED_ENVIORNMENT_REFLECTION
+#endif
+#ifdef DEFERRED_BACKGROUND_REFLECTION
+#endif
+#ifdef DEFERRED_ROUGH_REFLECTION
+#endif
+
 #include "/lib/specular.glsl"
 
 
