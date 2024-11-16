@@ -1353,14 +1353,24 @@ void main() {
 			float skylight = 1.0;
 		
 			#if indirect_effect == 0 || indirect_effect == 1 || indirect_effect == 2
-				float SkylightDir = (slopednormal / dot(abs(slopednormal),vec3(1.0))).y*1.5;
-				if(isGrass) SkylightDir = 1.5;
+				// float SkylightDir = (slopednormal / dot(abs(slopednormal),vec3(1.0))).y *1.5;
+				// if(isGrass) SkylightDir = 1.5;
 
-				skylight = max(pow((FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.2 + (1-lightmap.y)*0.8);
+				// skylight = max(pow((FlatNormals).y*0.5+0.5,0.1) + SkylightDir, 0.2 + (1-lightmap.y)*0.8);
 
-				#if indirect_effect == 1
-					skylight =  min(skylight, mix(0.95, 2.5, pow(1-pow(1-SSAO_SSS.x, 0.5),2.0)	));
-				#endif
+				// #if indirect_effect == 1
+				// 	skylight =  min(skylight, mix(0.95, 2.5, pow(1-pow(1-SSAO_SSS.x, 0.5),2.0)	));
+				// #endif
+
+				float SkylightDir = (slopednormal / dot(abs(slopednormal),vec3(1.0))).y;
+				
+				if(isGrass) SkylightDir = 1.0;
+				
+				SkylightDir = clamp(SkylightDir*0.7+0.3, 0.0, pow(1-pow(1-SSAO_SSS.x, 0.5),2.0) * 0.7 + 0.3);
+				
+
+				skylight =  mix(0.2 + 2.3*(1.0-lightmap.y), 2.5, SkylightDir);
+
 			#endif
 
 			#if indirect_effect == 3 || indirect_effect == 4
@@ -1487,7 +1497,7 @@ void main() {
 		#ifdef OVERWORLD_SHADER
 			// Direct_lighting = max(shadowColor*NdotL, SSSColor);
 			#ifdef AO_in_sunlight
-				Direct_lighting = shadowColor*NdotL*(AO*0.7+0.3) + SSSColor;
+				Direct_lighting = (shadowColor*NdotL + SSSColor) * (AO*0.7+0.3);
 			#else
 				Direct_lighting = shadowColor*NdotL + SSSColor;
 			#endif
