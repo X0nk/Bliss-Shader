@@ -344,7 +344,7 @@ vec3 specularReflections(
 
 	bool isMetal = f0 > 229.5/255.0;
 
-	// #ifndef FORWARD_RENDERED_SPECULAR
+	// #ifndef FORWARD_SPECULAR
 		// // underwater, convert from f0 air, to ior, then back to f0 water
 		// if(!isMetal || isWater){
 		// 	f0 = 2.0 / (1.0 - sqrt(f0)) - 1.0;
@@ -368,9 +368,9 @@ vec3 specularReflections(
 
 	float shlickFresnel = shlickFresnelRoughness(dot(-normalize(viewDir), vec3(0.0,0.0,1.0)), roughness);
 
-	// #if defined FORWARD_RENDERED_SPECULAR && defined SNELLS_WINDOW
-		// if(isEyeInWater == 1) shlickFresnel = mix(shlickFresnel, 1.0, min(max(0.97 - (1-shlickFresnel),0.0)/(1-0.97),1.0));
-	// #endif
+	#if defined FORWARD_SPECULAR && defined SNELLS_WINDOW
+		if(isEyeInWater == 1) shlickFresnel = mix(shlickFresnel, 1.0, min(max(0.98 - (1.0-shlickFresnel),0.0)/(1-0.98),1.0));
+	#endif
 
 	// F0 <  230 dialectrics
 	// F0 >= 230 hardcoded metal f0
