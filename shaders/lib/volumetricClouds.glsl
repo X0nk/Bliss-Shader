@@ -33,8 +33,8 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 		
 		coverage = dailyWeatherParams0.z;
 
-		largeCloud = texture2D(noisetex, (position.xz + cloud_movement)/100000.).b;
-		smallCloud = 1.0 - texture2D(noisetex, (position.xz - cloud_movement)/7500. - vec2(1.0-largeCloud, -largeCloud)/5.0).b;
+		largeCloud = texture2D(noisetex, (position.xz + cloud_movement)/100000. * CloudLayer2_scale).b;
+		smallCloud = 1.0 - texture2D(noisetex, ((position.xz - cloud_movement)/7500. - vec2(1.0-largeCloud, -largeCloud)/5.0) * CloudLayer2_scale).b;
 
 		smallCloud = largeCloud + smallCloud * 0.4 * clamp(1.5-largeCloud,0.0,1.0);
 		
