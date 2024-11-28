@@ -1,4 +1,5 @@
 option.SHADER_VERSION_LABEL = Bliss In-Dev Commit Number
+    prefix.SHADER_VERSION_LABEL = COMMIT #
 
 # if you're here to translate, this is a joke, these don't do what they say
 profile.QUALITY=质量
@@ -11,10 +12,13 @@ option.sun_illuminance = 阳光照度
 option.moon_illuminance = 月光照度
 option.MOONPHASE_BASED_MOONLIGHT = 月相亮度水平
 
+screen.Mod_support = 支持的 Mod
+
 option.RESOURCEPACK_SKY = 资源包天空
     value.RESOURCEPACK_SKY.0 = 别用这个
     value.RESOURCEPACK_SKY.1 = 天空 + 光影日月
     value.RESOURCEPACK_SKY.2 = 完整天空
+    value.RESOURCEPACK_SKY.3 = 光影天空 + 资源包日月
 
 screen.Waving_Stuff = 摇晃相关
     option.WAVY_PLANTS = 植物摇晃
@@ -26,6 +30,7 @@ screen.Direct_Light = 直接照明
         option.TRANSLUCENT_COLORED_SHADOWS = 半透明彩色阴影
         option.SCREENSPACE_CONTACT_SHADOWS = 屏幕空间阴影
         option.RENDER_ENTITY_SHADOWS = 实体阴影
+        option.RENDER_PLAYER_SHADOWS = 玩家阴影
         option.shadowMapResolution = 阴影分辨率
         option.shadowDistance = 阴影距离
             value.shadowDistance.32.0 = 2 区块
@@ -88,16 +93,27 @@ screen.Direct_Light = 直接照明
         option.Max_Shadow_Filter_Radius = 最大阴影过滤半径
         option.Max_Filter_Depth = 最大过滤深度
 
-    screen.LPV = FloodFill
-        option.LPV_ENABLED = FloodFill
+    screen.LPV = FloodFill - §c需要 IRIS 模组§r
+        option.LPV_ENABLED = 启用
         option.LPV_SIZE = LPV 规模
             value.LPV_SIZE.6 = 小 [64]
             value.LPV_SIZE.7 = 中 [128]
             value.LPV_SIZE.8 = 大 [256]
+        option.LPV_SATURATION = 光照饱和度
+            suffix.LPV_SATURATION=%
+        option.LPV_TINT_SATURATION = 色调饱和度
+            suffix.LPV_TINT_SATURATION=%
+        option.LPV_NORMAL_STRENGTH = 法线强度
+            suffix.LPV_NORMAL_STRENGTH = %
+            value.LPV_NORMAL_STRENGTH.0 = 关闭
         option.LPV_NORMAL_OFFSET = 法线偏移 (Normal-Offset)
         option.LPV_ENTITY_LIGHTS = 实体光源
         option.LPV_REDSTONE_LIGHTS = 红石光源
         option.LPV_COLORED_CANDLES = 彩色蜡烛
+        option.LPV_NOSHADOW_HACK = Iris <= 1.7.0 修复
+        option.LPV_VL_FOG_ILLUMINATION = 光照蔓延
+        option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS =光照蔓延亮度
+            suffix.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS=%
 
 screen.Subsurface_Scattering = 次表面散射 (SSS)
     option.LabSSS_Curve = LabSSS 曲线
@@ -200,6 +216,7 @@ screen.Clouds = 云层设置
     option.CloudLayer2_height   = 高度
 
 screen.DAILY_WEATHER = 周期循环的天气设置
+option.CHOOSE_RANDOM_WEATHER_PROFILE = 随机天气
     screen.DAY0_WEATHER = 第 0 天的天气
         option.DAY0_l0_coverage = 小积云覆盖率
         option.DAY0_l0_density = 小积云密度
@@ -365,6 +382,9 @@ screen.Climate = 气候
         option.DARKFOREST_R = 红色比重
         option.DARKFOREST_G = 绿色比重
         option.DARKFOREST_B = 蓝色比重
+    
+    option.SNOW_STORMS = 暴风雪
+    option.SAND_STORMS = 沙尘暴
 
 screen.World = 世界
     screen.Water = 水体设置
@@ -372,12 +392,15 @@ screen.World = 世界
         option.SCREENSPACE_REFLECTIONS = 屏幕空间反射 (SSR)
         option.SSR_STEPS = SSR 采样值
         option.WATER_SUN_SPECULAR = 日月反射
+        option.Vanilla_like_water=原版水体样式
         option.WATER_BACKGROUND_SPECULAR = 天空/雾气反射
         option.Refraction = 折射 (水体/玻璃)
         option.Dirt_Amount = 水体浑浊程度
         option.Water_Top_Layer = 海平面 Y 轴坐标
         option.WATER_WAVE_STRENGTH = 水波强度
         option.SNELLS_WINDOW = 斯涅尔窗 (Snell's Window)
+        option.WATER_WAVE_SPEED=水体摇晃速度
+        option.LARGE_WAVE_DISPLACEMENT = 大波浪
         
         screen.Water_fog_color = 水雾设置
             option.Dirt_Scatter_R = 红色扩散 (污物)
@@ -398,6 +421,9 @@ screen.Post_Processing = 后期处理
     screen.Purkinje_effect = 柏金赫现象设置
     option.SHARPENING = 锐化强度
     option.BLOOM_STRENGTH = 泛光强度
+    option.CAMERA_GRIDLINES = 相机参考线
+    option.MOTION_BLUR = 动态模糊
+    option.MOTION_BLUR_STRENGTH = 动态模糊强度
     screen.TAA_OPTIONS = 抗锯齿设置
         option.SCREENSHOT_MODE = 截图模式
         option.TAA = 时间性抗锯齿 (TAA)
@@ -423,7 +449,7 @@ screen.Post_Processing = 后期处理
 		option.HIGHLIGHTS_GRADE_MUL = 亮部 - 亮度
 
 
-screen.LabResource_Pack_SupportPBR = Lab PBR
+screen.Resource_Pack_Support = 资源包
     screen.Reflections = 高光反射
         option.Specular_Reflections = 高光反射
         option.Screen_Space_Reflections = 屏幕空间反射 (SSR)
@@ -532,6 +558,17 @@ screen.Ambient_light.comment = 配置和遮蔽处的照明相关的设置.
     screen.Ambient_Colors.comment = 配置阴影区域的照明颜色.
     screen.Torch_Colors.comment = 配置火把或其它可放置光源的颜色.
 
+    option.LPV_SIZE.comment = Configures the size (in blocks) of the volume for colored lighting.
+    option.LPV_SATURATION.comment = 配置彩色光照的强度。
+    option.LPV_TINT_SATURATION.comment = 配置透明方块对光照的着色强度。
+    option.LPV_NORMAL_STRENGTH.comment = 配置表面法线对光线方向的影响程度。
+    option.LPV_ENTITY_LIGHTS.comment = 允许实体发出光照。
+    option.LPV_REDSTONE_LIGHTS.comment = 允许红石发出光照。
+    option.LPV_COLORED_CANDLES.comment = 允许彩色蜡烛发出匹配的彩色光照。
+    option.LPV_NOSHADOW_HACK.comment = Iris 模组 1.7.0 及更低版本的修复！允许在下界和末地使用 FloodFill，但会禁用实体和掉落物的光照。
+    option.LPV_VL_FOG_ILLUMINATION.comment = 允许光线照亮周围的空气。
+    option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS.comment = 配置照亮周围空气的亮度。
+
 screen.Resource_Pack_Support.comment = 由遵循 LabPBR 格式的资源包提供部分信息的小部分效果.
     screen.Reflections.comment = 配置由 LabPBR 格式的资源包所提供信息的反射.
         option.Specular_Reflections.comment = LabPBR 资源包所有反射的开关. 本选项同时启用太阳反射, 同时允许以下其它设置启用. §a性能消耗水平:§r 低.
@@ -589,6 +626,7 @@ screen.Clouds.comment = 配置和光线步进体积云相关的设置.
     option.CLOUDS_QUALITY.comment = 配置体积云分辨率. §a性能消耗水平:§r 高.
     option.CLOUDS_SHADOWS.comment = 从云层或雾气投射到地面的阴影的开关. §a性能消耗水平:§r 低偏中.
     option.Daily_Weather.comment = 按周期循环的天气功能开关. 有八种天气预设, 每天光影会循环启用它们. 启用本选项后, 不能改变任何云层覆盖率设置. §a性能消耗水平:§r 低.
+    option.CHOOSE_RANDOM_WEATHER_PROFILE.comment = §b这啥?§r 开启后，光影将随机选择以下几天的天气。如果关闭此选项，光影将按日期顺序选择天气。
     option.Cloud_Speed.comment = 配置日常时间云层的移动速度.
     option.Rain_coverage.comment = 配置雨天时云层的覆盖率.
 
@@ -642,7 +680,7 @@ screen.Post_Processing.comment = 配置所有后处理效果设置, 从抗锯齿
     screen.TAA_OPTIONS.comment = 配置和抗锯齿相关的设置.
         option.SCREENSHOT_MODE.comment = 开启帧数积累以获得少噪点高质量的图像. §b这啥?§r 将已发生的帧叠加到生成的下一帧上, 类似于长曝光图像.
         option.TAA.comment = 时间性抗锯齿 (TAA) 开关. 这可以去除大部分内容的锯齿状边缘, 软化图像, 并有助于去除许多效果产生的噪点. 但会导致拖影, 因为它使用过去的帧来获取世界额外信息. §a性能消耗水平:§r 低.
-        option.BLEND_FACTOR.comment = 配置历史帧使用比重. 更高的数值意味着依赖更少的历史帧, 所以可能会看起来很闪烁和多噪点. 较低的数值意味着以来更多的历史帧, 所以可能会看起来更少噪点但是更多拖影和显得有点脏.
+        option.BLEND_FACTOR.comment = 配置历史帧使用比重. 更高的数值意味着依赖更少的历史帧, 所以可能会看起来很闪烁和多噪点. 较低的数值意味着依赖更多的历史帧, 所以可能会看起来更少噪点但是更多拖影和显得有点脏.
         option.TAA_UPSCALING.comment = 时间性升分辨率. 升分辨率时, 可以从低分辨率的图像中保留大多数质量. 因此与常规升分辨率相比, 可以开启一个看起来很高的分辨率的同时也能有更好的性能.
         option.SCALE_FACTOR.comment = 配置以原有分辨率的多大一部分来开始升分辨率. 不推荐低于0.5, 只把它作为一个选项, 因为它很有趣. :P
 	screen.COLOR_GRADING.comment = 高级调色选项.
@@ -679,6 +717,28 @@ option.SNELLS_WINDOW.comment = §b这啥?§r 这是在水下看到的黑色反�
 option.entityShadowDistanceMul.comment = §b这啥?§r 配置实体阴影的生效距离. 如果想保留实体阴影开启又想提高有巨量实体的区域的性能, 本选项会十分有用.
 
 screen.DISTANT_HORIZONS_SETTINGS = §2Distant Horizons §f设置
+option.DH_OVERDRAW_PREVENTION=防止过度绘制
+option.OVERDRAW_MAX_DISTANCE = 防止过度绘制的最大距离
+    value.OVERDRAW_MAX_DISTANCE.0 = 无限制
+    value.OVERDRAW_MAX_DISTANCE.32 = 2 区块
+    value.OVERDRAW_MAX_DISTANCE.48 = 3 区块
+    value.OVERDRAW_MAX_DISTANCE.64 = 4 区块
+    value.OVERDRAW_MAX_DISTANCE.80 = 5 区块
+    value.OVERDRAW_MAX_DISTANCE.96 = 6 区块
+    value.OVERDRAW_MAX_DISTANCE.112 = 7 区块
+    value.OVERDRAW_MAX_DISTANCE.128 = 8 区块
+    value.OVERDRAW_MAX_DISTANCE.144 = 9 区块
+    value.OVERDRAW_MAX_DISTANCE.160 = 10 区块
+    value.OVERDRAW_MAX_DISTANCE.176 = 11 区块
+    value.OVERDRAW_MAX_DISTANCE.192 = 12 区块
+    value.OVERDRAW_MAX_DISTANCE.208 = 13 区块
+    value.OVERDRAW_MAX_DISTANCE.224 = 14 区块
+    value.OVERDRAW_MAX_DISTANCE.240 = 15 区块
+    value.OVERDRAW_MAX_DISTANCE.256 = 16 区块
+
+option.DH_AMBIENT_OCCLUSION = LOD 区块上的环境光遮蔽
+option.DH_SUBSURFACE_SCATTERING = LOD 区块上的次表面散射
+option.DH_SCREENSPACE_REFLECTIONS = LOD 区块上的屏幕空间反射
 
 option.DH_KNOWN_ISSUES =DH 支持已知问题
 value.DH_KNOWN_ISSUES.0 = §c 点击此处文本循环查看已知问题列表
@@ -716,9 +776,6 @@ option.TRANSLUCENT_COLORED_SHADOWS.comment = §b这啥?§r 本选项的效果可
     option.OLD_LIGHTLEAK_FIX=旧版阳光泄露修复
 
 
-#World
-        option.Vanilla_like_water=原版水体样式
-        option.WATER_WAVE_SPEED=水体摇晃速度
 
 #Ambient_light
     option.HANDHELD_LIGHT_RANGE=手持光源范围
@@ -754,9 +811,10 @@ option.TRANSLUCENT_COLORED_SHADOWS.comment = §b这啥?§r 本选项的效果可
         option.Purkinje_Multiplier=柏金赫现象倍率
 
     screen.GAMEPLAY_EFFECTS=游玩效果设置
-        option.MOTION_AMOUNT=Motion Amount
+        option.MOTION_AMOUNT=效果强度
         option.DAMAGE_TAKEN_EFFECT=受伤效果
         option.LOW_HEALTH_EFFECT=低生命值效果
+        option.WATER_ON_CAMERA_EFFECT=镜头上的水迹效果
 
 #Clouds
 option.CLOUD_SHADOW_STRENGTH=云影强度
@@ -806,14 +864,25 @@ option.CLOUD_SHADOW_STRENGTH=云影强度
     option.Glass_Tint=玻璃色调
     option.Glass_Tint.comment=背景通过混合玻璃本身的颜色获得强烈的色调.
     option.LIGHTNING_FLASH=闪电闪烁
+    option.DISABLE_ENCHANT_GLINT=禁用附魔光效
+    option.DISABLE_VANILLA_EMISSIVES=禁用原版发光效果
+    option.PARTICLE_RENDERING_FIX=粒子效果渲染修复
+    option.TRANSLUCENT_ENTITIES=半透明实体
+    option.LIGHTING_EFFECTS_BLUR_FILTER=光照效果模糊滤镜
     option.HURT_AND_DEATH_EFFECT=死伤效果
-    option.LIT_PARTICLE_BRIGHTNESS=提高粒子亮度
-    option.PLANET_GROUND_BRIGHTNESS=行星地表亮度
-    option.BLOOMY_PARTICLES=泛光粒子
-    option.ORIGINAL_CHOCAPIC_SKY=原始 Chocapic 天空
-    option.BIOME_TINT_WATER=群系色调水体
+    screen.EXPERIMENTAL_STUFF=实验性内容
+        option.LIT_PARTICLE_BRIGHTNESS=提高粒子亮度
+        option.PLANET_GROUND_BRIGHTNESS=行星地表亮度
+        option.BLOOMY_PARTICLES=泛光粒子
+        option.ORIGINAL_CHOCAPIC_SKY=原始 Chocapic 天空
+        option.BIOME_TINT_WATER=群系色调水体
+        option.CLOUDS_INTERSECT_TERRAIN=云层与地形相交
     option.CLOUDS_INFRONT_OF_WORLD=云层在世界前渲染
-    option.SELECT_BOX=选择框
+    screen.selection_box_outline=选择框轮廓
+        option.SELECT_BOX=选择框
+        option.SELECT_BOX_COL_R=选择框 - 红色
+        option.SELECT_BOX_COL_G=选择框 - 绿色
+        option.SELECT_BOX_COL_B=选择框 - 蓝色
     option.DENOISE_SSS_AND_SSAO=对 SSS和 SSAOO 降噪
     option.WATER_CAUSTICS_BRIGHTNESS=水体焦散线亮度
     option.HYPER_DETAILED_WAVES=超细节水波
@@ -823,6 +892,3 @@ option.CLOUD_SHADOW_STRENGTH=云影强度
 #Climate
     screen.Seasons=季节
         suffix.Season_Length=MC日
-
-#DH settings
-    option.DH_OVERDRAW_PREVENTION=防止过度绘制
