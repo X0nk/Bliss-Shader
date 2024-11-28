@@ -111,8 +111,8 @@ screen.Direct_Light = 直接照明
         option.LPV_REDSTONE_LIGHTS = 红石光源
         option.LPV_COLORED_CANDLES = 彩色蜡烛
         option.LPV_NOSHADOW_HACK = Iris <= 1.7.0 修复
-        option.LPV_VL_FOG_ILLUMINATION = 雾气光照蔓延
-        option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS =雾气光照蔓延亮度
+        option.LPV_VL_FOG_ILLUMINATION = 光照蔓延
+        option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS =光照蔓延亮度
             suffix.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS=%
 
 screen.Subsurface_Scattering = 次表面散射 (SSS)
@@ -566,8 +566,8 @@ screen.Ambient_light.comment = 配置和遮蔽处的照明相关的设置.
     option.LPV_REDSTONE_LIGHTS.comment = 允许红石发出光照。
     option.LPV_COLORED_CANDLES.comment = 允许彩色蜡烛发出匹配的彩色光照。
     option.LPV_NOSHADOW_HACK.comment = Iris 模组 1.7.0 及更低版本的修复！允许在下界和末地使用 FloodFill，但会禁用实体和掉落物的光照。
-    option.LPV_VL_FOG_ILLUMINATION.comment = 允许彩色光线照亮周围的雾气。
-    option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS.comment = 配置照亮雾气的亮度。
+    option.LPV_VL_FOG_ILLUMINATION.comment = 允许光线照亮周围的空气。
+    option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS.comment = 配置照亮周围空气的亮度。
 
 screen.Resource_Pack_Support.comment = 由遵循 LabPBR 格式的资源包提供部分信息的小部分效果.
     screen.Reflections.comment = 配置由 LabPBR 格式的资源包所提供信息的反射.
