@@ -62,7 +62,7 @@ void main() {
         uint mixMask = 0xFFFF;
         vec3 tintColor = vec3(1.0);
 
-        if (blockId == BLOCK_SSS_WEAK || blockId == BLOCK_SSS_WEAK_3) {
+        if (blockId == BLOCK_SSS_WEAK || blockId == BLOCK_SSS_WEAK_3 || blockId == BLOCK_SSS_STRONG) {
             mixWeight = 1.0;
         }
 
