@@ -179,9 +179,9 @@ void main() {
 	// as the day counter changes, switch to a different set of stored values.
 	
 	#ifdef CHOOSE_RANDOM_WEATHER_PROFILE
-		int dayCounter = int(clamp(hash11(float(mod(worldDay, 1000))) * 10.0, 0,10));
+		int dayCounter = int(clamp(hash11(float(mod(worldDay & 0xFFFF, 1000))) * 10.0, 0,10));
 	#else
-		int dayCounter = int(mod(worldDay, 10));
+		int dayCounter = int(mod(worldDay & 0xFFFF, 10));
 	#endif
 	
 
