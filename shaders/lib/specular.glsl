@@ -1,31 +1,3 @@
-// uniform int framemod8;
-
-// const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
-// 									vec2(-1.,3.)/8.,
-// 									vec2(5.0,1.)/8.,
-// 									vec2(-3,-5.)/8.,
-// 									vec2(-5.,5.)/8.,
-// 									vec2(-7.,-1.)/8.,
-// 									vec2(3,7.)/8.,
-// 									vec2(7.,-7.)/8.);
-
-vec3 lerp(vec3 X, vec3 Y, float A){
-	return X * (1.0 - A) + Y * A;
-}
-
-float lerp(float X, float Y, float A){
-	return X * (1.0 - A) + Y * A;
-}
-
-float square(float x){
-  return x*x;
-}
-
-
-
-// vec3 toClipSpace3(vec3 viewSpacePosition) {
-//     return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
-// }
 float invLinZ (float lindepth){
 	return -((2.0*near/lindepth)-far-near)/(far-near);
 }
@@ -120,22 +92,10 @@ float shlickFresnelRoughness(float XdotN, float roughness){
 
 	float shlickFresnel = clamp(1.0 + XdotN,0.0,1.0);
 
-	// shlickFresnel = pow(1.0-pow(1.0-shlickFresnel, mix(1.0,2.1,roughness)),	mix(5.0,3.0,roughness));
-	// shlickFresnel = mix(0.0, mix(1.0,0.065,1-pow(1-roughness,3.5)), shlickFresnel);
-
-
-	// float curves = 1.0-exp(-1.3*roughness);
-	// float brightness = 1.0-exp(-4.0*roughness);
-	
 	float curves = exp(-4.0*pow(1-(roughness),2.5));
 	float brightness = exp(-3.0*pow(1-sqrt(roughness),3.50));
 
-
 	shlickFresnel = pow(1.0-pow(1.0-shlickFresnel, mix(1.0, 1.9, curves)),mix(5.0, 2.6, curves));
-
-
-
-
 	shlickFresnel = mix(0.0, mix(1.0,0.065,  brightness) , clamp(shlickFresnel,0.0,1.0));
 	
 	return shlickFresnel;
@@ -159,15 +119,13 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
 
 	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) + stepv*(dither-0.5);
 	
-	#ifndef FORWARD_SPECULAR
+	#ifdef DEFERRED_SPECULAR
 		spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
 	#endif
 
 	float minZ = spos.z;
 	float maxZ = spos.z;
 	
-
-
   	for (int i = 0; i <= int(quality); i++) {
 
 		float sp = invLinZ(sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4.0),0).a/65000.0));
@@ -344,14 +302,6 @@ vec3 specularReflections(
 
 	bool isMetal = f0 > 229.5/255.0;
 
-	// #ifndef FORWARD_SPECULAR
-		// // underwater, convert from f0 air, to ior, then back to f0 water
-		// if(!isMetal || isWater){
-		// 	f0 = 2.0 / (1.0 - sqrt(f0)) - 1.0;
-		// 	f0 = clamp(pow((1.33 - f0) / (1.33 + f0), 2.0),0.0,1.0);
-		// }
-	// #endif
-
 	// get reflected vector
 	mat3 basis = CoordBase(normal);
 	vec3 viewDir = -playerPos*basis;
@@ -397,6 +347,8 @@ vec3 specularReflections(
 					vec3 backgroundReflection = volumetricsFromTex(reflectedVector_L, colortex4, roughness).rgb / 1200.0;
 				#else
 					vec3 backgroundReflection = skyCloudsFromTex(reflectedVector_L, colortex4).rgb / 1200.0;
+					
+					if(isEyeInWater == 1) backgroundReflection *= exp(-vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B) * 15.0)*2;
 				#endif
 			#endif
 
@@ -411,6 +363,7 @@ vec3 specularReflections(
 
 			// composite all the different reflections together
 			#if defined DEFERRED_BACKGROUND_REFLECTION || defined FORWARD_BACKGROUND_REFLECTION
+
 				specularReflections = mix(DarkenedDiffuseLighting, backgroundReflection, lightmap);
 			#endif
 
@@ -432,154 +385,3 @@ vec3 specularReflections(
 
 	return specularReflections;
 }
-/*
-void DoSpecularReflections(
-	inout vec3 Output,
-
-	vec3 FragPos, // toScreenspace(vec3(screenUV, depth)
-	vec3 WorldPos,
-    vec3 LightPos, // should be in world space
-    vec2 Noise, // x = bluenoise z = interleaved gradient noise
-
-	vec3 Normal, // normals in world space
-	float Roughness, // red channel of specular texture _S
-	float F0, // green channel of specular texture _S
-
-	vec3 Albedo, 
-	vec3 Diffuse, // should contain the light color and NdotL. and maybe shadows.
-
-    float Lightmap, // in anything other than world0, this should be 1.0;
-    bool Hand // mask for the hand
-){
-	vec3 Final_Reflection = Output;
-	vec3 Background_Reflection = Output;
-	vec3 Lightsource_Reflection = vec3(0.0);
-	vec4 SS_Reflections = vec4(0.0);
-	float reflectLength = 0.0;
-
-	Lightmap = clamp((Lightmap-0.8)*7.0, 0.0,1.0);
-	
-	Roughness = 1.0 - Roughness; Roughness *= Roughness;
-	F0 = F0 == 0.0 ? 0.02 : F0;
-	
-	// F0 = 230.0/255.0;
-	// Roughness = 0.0;
-
-		// F0 = 230.0/255.0;
-	bool isMetal = F0 > 229.5/255.0;
-
-	// underwater, convert from f0 air, to ior, then back to f0 water
-	// if(!isMetal){
-	// 	F0 = 2.0 / (1.0 - sqrt(F0)) - 1.0;
-	// 	F0 = clamp(pow((1.33 - F0) / (1.33 + F0), 2.0),0.0,1.0);
-	// }
-	// Roughness = 0.0;
-
-	mat3 Basis = CoordBase(Normal);
-	vec3 ViewDir = -WorldPos*Basis;
-
-	#ifdef Rough_reflections
-		vec3 SamplePoints = SampleVNDFGGX(ViewDir, Roughness, Noise.xy);
-		// vec3 SamplePoints = SampleVNDFGGX(ViewDir, vec2(0.1), Noise.x);
-		if(Hand) SamplePoints = vec3(0.0,0.0,1.0);
-	#else
-		vec3 SamplePoints = vec3(0.0,0.0,1.0);
-	#endif
-	
-
-	vec3 Ln = reflect(-ViewDir, SamplePoints);
-	vec3 L = Basis * Ln;
-
-	float Fresnel = pow(clamp(1.0 + dot(-Ln, SamplePoints),0.0,1.0),5.0); // Schlick's approximation
-	// F0 <  230 dialectrics
-	// F0 >= 230 hardcoded metal f0
-	// F0 == 255 use albedo for f0
-	Albedo = F0 == 1.0 ? sqrt(Albedo) : Albedo;
-
-	vec3 metalAlbedoTint = isMetal ? Albedo : vec3(1.0);
-	// metalAlbedoTint = vec3(1.0);
-	// get F0 values for hardcoded metals.
-	vec3 hardCodedMetalsF0 = F0 == 1.0 ? Albedo : HCM_F0[int(max(F0*255.0 - 229.5,0.0))];
-	
-	vec3 reflectance = isMetal ? hardCodedMetalsF0 : vec3(F0);
-	
-	vec3 f0 = (reflectance + (1.0-reflectance) * Fresnel) * metalAlbedoTint;
-	
-	// reflectance = mix(vec3(F0), vec3(1.0), Fresnel);
-
-	// vec3 reflectance =  mix(R0, vec3(1.0), Fresnel); // ensure that when the angle is 0 that the correct F0 is used.
-	
-	// #ifdef Rough_reflections
-	// 	if(Hand) Fresnel = Fresnel * pow(1.0-Roughness,F0 > 229.5/255.0 ? 1.0 : 3.0);
-	// #else
-	// 	Fresnel = Fresnel * pow(1.0-Roughness,3.0);
-	// #endif
-
-    bool hasReflections = Roughness_Threshold == 1.0 ? true : F0 * (1.0 - Roughness * Roughness_Threshold) > 0.01;
-
-	// mulitply all reflections by the albedo if it is a metal.
-	// vec3 Metals = F0 > 229.5/255.0 ? normalize(Albedo+1e-7) * (dot(Albedo,vec3(0.21, 0.72, 0.07)) * 0.7 + 0.3) : vec3(1.0);
-	// vec3 Metals = F0 > 229.5/255.0 ? Albedo : vec3(1.0);
-
-	// --------------- BACKGROUND REFLECTIONS
-	// apply background reflections to the final color. make sure it does not exist based on the lightmap
-	#ifdef Sky_reflection
-
-		#ifdef OVERWORLD_SHADER
-			if(hasReflections) Background_Reflection = (skyCloudsFromTex(L, colortex4).rgb / 1200.0)  ;
-		#else
-			if(hasReflections) Background_Reflection = (volumetricsFromTex(L, colortex4, sqrt(Roughness) * 6.0).rgb / 1200.0) ;
-		#endif
-
-		// take fresnel and lightmap levels into account and write to the final color
-		// the minimum color being the output is for when the background reflection color is close to dark, it will fallback to a dimmed diffuse
-		// Final_Reflection = mix(Output, Background_Reflection, Lightmap * reflectance);
-		Final_Reflection = mix(Output, mix(isMetal ? vec3(0.0) : Output, Background_Reflection, f0 * Lightmap), Lightmap);
-		// Final_Reflection = Background_Reflection * reflectance;
-	#endif
-
-	// --------------- SCREENSPACE REFLECTIONS
-	// apply screenspace reflections to the final color and mask out background reflections.
-	#ifdef Screen_Space_Reflections
-		if(hasReflections){
-			
-			float SSR_Quality =reflection_quality;// mix(6.0, reflection_quality, Fresnel); // Scale quality with fresnel
-
-			vec3 RaytracePos = rayTraceSpeculars(mat3(gbufferModelView) * L, FragPos,  Noise.y, float(SSR_Quality), Hand, reflectLength);
-			float LOD = clamp(pow(reflectLength, pow(1.0-sqrt(Roughness),5.0) * 3.0) * 6.0, 0.0, 6.0); // use higher LOD as the reflection goes on, to blur it. this helps denoise a little.
-			// float LOD = clamp((1-pow(clamp(1.0-reflectLength,0,1),5.0)) * 6.0, 0.0, 6.0); // use higher LOD as the reflection goes on, to blur it. this helps denoise a little.
-			
-			if(Roughness <= 0.0) LOD = 0.0;
-
-			// LOD = 0.0;
-
-			if (RaytracePos.z < 1.0){
-				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(RaytracePos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
-				previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
-				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
-		
-				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0) {
-					SS_Reflections.a = 1.0;
-					SS_Reflections.rgb = texture2DLod(colortex5, previousPosition.xy, LOD).rgb;
-				}
-			}
-			// make sure it takes the fresnel into account for SSR.
-			SS_Reflections.rgb = mix(isMetal ? vec3(0.0) : Output, SS_Reflections.rgb, f0);
-		
-			// occlude the background with the SSR and write to the final color.
-			Final_Reflection = mix(Final_Reflection, SS_Reflections.rgb, SS_Reflections.a);
-		}
-	#endif
-
-	// --------------- LIGHTSOURCE REFLECTIONS
-	// slap the main lightsource reflections to the final color.
-	#ifdef LIGHTSOURCE_REFLECTION
-		Lightsource_Reflection = Diffuse * GGX(Normal, -WorldPos, LightPos, Roughness, reflectance, metalAlbedoTint) * Sun_specular_Strength;
-		Final_Reflection += Lightsource_Reflection;
-	#endif
-	
-	Output = Final_Reflection;
-
-	// Output = exp(-100 * (reflectLength*reflectLength*reflectLength)) * vec3(1.0);
-}
-*/

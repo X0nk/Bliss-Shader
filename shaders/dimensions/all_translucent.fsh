@@ -35,6 +35,9 @@ uniform vec4 entityColor;
 
 
 flat varying float HELD_ITEM_BRIGHTNESS;
+#if defined ENTITIES && defined IS_IRIS
+	flat varying int NAMETAG;
+#endif
 
 uniform sampler2D noisetex;
 uniform sampler2D depthtex1;
@@ -45,6 +48,7 @@ uniform sampler2D depthtex0;
 #endif
 uniform sampler2D colortex7;
 uniform sampler2D colortex12;
+uniform sampler2D colortex13;
 uniform sampler2D colortex14;
 uniform sampler2D colortex5;
 uniform sampler2D colortex3;
@@ -101,6 +105,8 @@ uniform float moonIntensity;
 uniform float sunIntensity;
 uniform vec3 sunColor;
 uniform vec3 nsunColor;
+
+uniform float waterEnteredAltitude;
 
 #include "/lib/util.glsl"
 #include "/lib/Shadow_Params.glsl"
@@ -180,13 +186,16 @@ float blueNoise(){
 #define PW_POINTS 2 //[2 4 6 8 16 32]
 
 varying vec3 viewVector;
-vec3 getParallaxDisplacement(vec3 posxz) {
+vec3 getParallaxDisplacement(vec3 playerPos) {
 
-	vec3 parallaxPos = posxz;
-	vec2 vec = viewVector.xy * (1.0 / float(PW_POINTS)) * 22.0 * PW_DEPTH;
-	// float waterHeight = (1.0 - (getWaterHeightmap(posxz.xz)*0.5+0.5)) * 2.0 - 1.0;
-	float waterHeight = getWaterHeightmap(posxz.xz) * 2.0;
-	parallaxPos.xz -= waterHeight * vec;
+	float waterHeight = getWaterHeightmap(-playerPos.xz) ;
+	waterHeight = exp(-20*sqrt(waterHeight));
+	// waterHeight *= 2.0;
+	
+	vec3 parallaxPos = playerPos;
+
+	parallaxPos.xz += (viewVector.xy / -viewVector.z) * waterHeight;
+	// parallaxPos.xz -= (viewVec.xy / viewVec.z) * waterHeight * 0.5;
 
 	return parallaxPos;
 }
@@ -516,8 +525,13 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	normal = applyBump(tbnMatrix, NormalTex.xyz, 1.0);
 
 	// TangentNormal = clamp(TangentNormal + (blueNoise()*2.0-1.0)*0.005,-1.0,1.0);
+	float nameTagMask = 0.0;
 
-	gl_FragData[2] = vec4(encodeVec2(TangentNormal*0.5+0.5), encodeVec2(GLASS_TINT_COLORS.rg), encodeVec2(GLASS_TINT_COLORS.ba), 1.0);
+	#if defined ENTITIES && defined IS_IRIS
+		if(NAMETAG > 0) nameTagMask = 0.1;
+	#endif
+
+	gl_FragData[2] = vec4(encodeVec2(TangentNormal*0.5+0.5), encodeVec2(GLASS_TINT_COLORS.rg), encodeVec2(GLASS_TINT_COLORS.ba), encodeVec2(0.0, nameTagMask));
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// SPECULARS /////////////////////////////////////
@@ -559,6 +573,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	#ifdef OVERWORLD_SHADER
 		vec3 DirectLightColor = lightCol.rgb/2400.0;
+
+		if(isEyeInWater == 1){
+	  		float distanceFromWaterSurface = max(-(feetPlayerPos.y + (cameraPosition.y - waterEnteredAltitude)),0.0) ;
+			DirectLightColor *= exp(-vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B) * distanceFromWaterSurface);
+		}
+
 		float NdotL = clamp(dot(normal, normalize(WsunVec*mat3(gbufferModelViewInverse))),0.0,1.0); NdotL = clamp((-15 + NdotL*255.0) / 240.0  ,0.0,1.0);
 		float Shadows = 1.0;
 
@@ -595,18 +615,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	#ifdef END_SHADER
-		// float vortexBounds = clamp(vortexBoundRange - length(feetPlayerPos+cameraPosition), 0.0,1.0);
-        // vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds);
-
-
-		// float lightningflash = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
-		// vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
-
-		// float NdotL = clamp(dot(worldSpaceNormal, normalize(-lightPos))*0.5+0.5,0.0,1.0);
-		
-		// NdotL *= NdotL;
-
-		// Direct_lighting = lightColors * endFogPhase(lightPos) * NdotL;
 
 		float vortexBounds = clamp(vortexBoundRange - length(feetPlayerPos+cameraPosition), 0.0,1.0);
         vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds);
@@ -650,6 +658,17 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, exposure, feetPlayerPos, lpvPos);
 	
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
+
+	// vec4 vlBehingTranslucents = texture2D(colortex13, gl_FragCoord.xy*texelSize * VL_RENDER_RESOLUTION).rgba;
+   
+    // vec3 totEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);// dirtEpsilon*dirtAmount + waterEpsilon;
+	// vec3 scatterCoef = Dirt_Amount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / 3.14;
+
+    // vec3 transmittance = exp(-totEpsilon * vlBehingTranslucents.a*50);
+    // FinalColor *= transmittance;
+
+	// FinalColor = FinalColor * vlBehingTranslucents.a +vlBehingTranslucents.rgb ;
+
 
 	#if EMISSIVE_TYPE == 2 || EMISSIVE_TYPE == 3
 		Emission(FinalColor, Albedo, SpecularTex.b, exposure);
@@ -711,9 +730,17 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#else
 		gl_FragData[0].rgb = FinalColor*0.1;
 	#endif
+
+
 	
 	#if defined DISTANT_HORIZONS && defined DH_OVERDRAW_PREVENTION && !defined HAND
-		bool WATER = texture2D(colortex7, gl_FragCoord.xy*texelSize).a > 0.0 && length(feetPlayerPos) > far-16*4 && texture2D(depthtex1, gl_FragCoord.xy*texelSize).x >= 1.0;
+		#if OVERDRAW_MAX_DISTANCE == 0
+			float maxOverdrawDistance = far;
+		#else
+			float maxOverdrawDistance = OVERDRAW_MAX_DISTANCE;
+		#endif
+
+		bool WATER = texture2D(colortex7, gl_FragCoord.xy*texelSize).a > 0.0 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance) && texture2D(depthtex1, gl_FragCoord.xy*texelSize).x >= 1.0;
 
 		if(WATER) gl_FragData[0].a = 0.0;
 	#endif
@@ -735,10 +762,22 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0].rgb = Direct_lighting * 0.1;
 	#endif
 
-	// gl_FragData[3].a = clamp(lightmap.y,0.0,1.0);
+	// gl_FragData[0] = vec4(tbnMatrix * viewPos,1);
 	
 	gl_FragData[3] = vec4(encodeVec2(lightmap.x, lightmap.y), 1, 1, 1);
 
-
+	#if defined ENTITIES && defined IS_IRIS
+		if(NAMETAG > 0) {
+			//  WHY DO THEY HAVE TO AHVE LIGHTING AAAAAAUGHAUHGUAHG
+			#ifndef OVERWORLD_SHADER
+				lightmap.y = 0.0;
+			#endif
+			
+			vec3 nameTagLighting = Albedo.rgb * max(max(lightmap.y*lightmap.y*lightmap.y , lightmap.x*lightmap.x*lightmap.x), 0.025);
+			
+			// in vanilla they have a special blending mode/no blending, or something. i cannot change the buffer blend mode without changing the rest of the entities :/
+			gl_FragData[0] = vec4(nameTagLighting.rgb * 0.1, UnchangedAlpha  * 0.75);
+		}
+	#endif
 }
 }

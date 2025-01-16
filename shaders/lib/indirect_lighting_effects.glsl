@@ -92,50 +92,6 @@ vec4 BilateralUpscale_SSAO(sampler2D tex, sampler2D depth, vec2 coord, float ref
 	return RESULT / SUM;
 }
 
-float ScreenSpace_SSS(
-	vec3 viewPos, vec3 normal, bool hand, bool leaves, float noise
-){
-	if(hand) return 0.0;
-	int samples = 7;
-	float occlusion = 0.0; 
-	float sss = 0.0;
-
-
-	float dist = 1.0 + clamp(viewPos.z*viewPos.z/50.0,0,5); // shrink sample size as distance increases
-	float mulfov2 = gbufferProjection[1][1]/(3 * dist);
-
-	float maxR2_2 = viewPos.z*viewPos.z*mulfov2*2.*2./50.0;
-
-	float dist3 = clamp(1-exp( viewPos.z*viewPos.z / -50),0,1);
-	if(leaves) maxR2_2 = mix(10, maxR2_2, dist3);
-	
-
-	vec2 acc = -(TAA_Offset*(texelSize/2))*RENDER_SCALE ;
-
-	int n = 0;
-	for (int i = 0; i < samples; i++) {
-		
-		vec2 sampleOffset = SpiralSample(i, 7, 8, noise) * 0.2 * mulfov2;
-
-		ivec2 offset = ivec2(gl_FragCoord.xy + sampleOffset*vec2(viewWidth,viewHeight*aspectRatio)*RENDER_SCALE);
-
-		if (offset.x >= 0 && offset.y >= 0 && offset.x < viewWidth*RENDER_SCALE.x && offset.y < viewHeight*RENDER_SCALE.y ) {
-			vec3 t0 = toScreenSpace(vec3(offset*texelSize+acc+0.5*texelSize, texelFetch2D(depthtex1, offset,0).x) * vec3(1.0/RENDER_SCALE, 1.0) );
-			vec3 vec = (t0.xyz - viewPos);
-			float dsquared = dot(vec, vec);
-			
-			if (dsquared > 1e-5){
-				if(dsquared > maxR2_2){
-					float NdotV = 1.0 - clamp(dot(vec*dsquared, normalize(normal)),0.,1.);
-					sss += max((NdotV - (1.0-NdotV)) * clamp(1.0-maxR2_2/dsquared,0.0,1.0) ,0.0);
-				}
-				n += 1;
-			}
-		}
-	}
-	return max(1.0 - sss/n, 0.0);
-}
-
 ////////////////////////////////////////////////////////////////////
 /////////////////////////////	RTAO/SSGI 	////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -177,51 +133,7 @@ vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 	}
   return vec3(1.1);
 }
-// vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 
-// 	vec3 clipPosition = toClipSpace3(position);
-// 	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ?
-// 	                   (-near -position.z) / dir.z : far*sqrt(3.);
-// 	vec3 direction = normalize(toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
-// 	direction.xy = normalize(direction.xy);
-
-// 	//get at which length the ray intersects with the edge of the screen
-// 	vec3 maxLengths = (step(0.0,direction)-clipPosition) / direction;
-// 	float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z);
-
-// 	vec3 stepv = (direction * mult) / quality*vec3(RENDER_SCALE,1.0);
-// 	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0);
-
-// 	spos.xy += TAA_Offset*texelSize*0.5*RENDER_SCALE ;
-	
-// 	spos += stepv*dither;
-
-// 	float minZ = spos.z;
-// 	float maxZ = spos.z;
-
-// 	for(int i = 0; i < int(quality); i++){
-// 		if (spos.x < 0.0 || spos.y < 0.0 || spos.z < 0.0 || spos.x > 1.0 || spos.y > 1.0 || spos.z > 1.0) return vec3(1.1);
-
-// 		#ifdef UseQuarterResDepth
-// 			float sp = invLinZ(sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4),0).w/65000.0));
-// 		#else
-// 			float sp = texelFetch2D(depthtex1,ivec2(spos.xy/ texelSize),0).r;
-// 		#endif
-
-// 		float currZ = linZ(spos.z);
-// 		float nextZ = linZ(sp);
-
-// 		if(nextZ < currZ && (sp <= max(minZ,maxZ) && sp >= min(minZ,maxZ))) return vec3(spos.xy/RENDER_SCALE,sp);
-		
-// 		float biasamount = 0.00005;
-
-// 		minZ = maxZ - biasamount / currZ;
-// 		maxZ += stepv.z;
-
-// 		spos += stepv;
-// 	}
-//   return vec3(1.1);
-// }
 float convertHandDepth_3(in float depth, bool hand) {
     if(!hand) return depth;
 	
@@ -229,6 +141,7 @@ float convertHandDepth_3(in float depth, bool hand) {
     ndcDepth /= MC_HAND_DEPTH;
     return ndcDepth * 0.5 + 0.5;
 }
+
 vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes, bool hand){
 	float dist = 1.0 + clamp(position.z*position.z,0,2); // shrink sample size as distance increases
 
@@ -305,9 +218,13 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) + stepv*(noise-0.5);
 	spos.xy += TAA_Offset*texelSize*0.5*RENDER_SCALE;
 	
+    float ascribeAmount = 255.0 * 1.0 * (1.0 / viewHeight) * gbufferProjectionInverse[1].y;
+
 	float minZ = spos.z;
 	float maxZ = spos.z;
 	CURVE = 0.0; 
+
+	bool intersected = false;
   	for(int i = 0; i < iterations; i++){
 		if (spos.x < 0.0 || spos.y < 0.0 || spos.z < 0.0 || spos.x > 1.0 || spos.y > 1.0 || spos.z > 1.0) return vec3(1.1);
 		
@@ -324,11 +241,11 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 		
 		float biasamount = 0.00005;
 
-		minZ = maxZ-biasamount / currZ;
+		minZ = maxZ;
 		maxZ += stepv.z;
 
 		spos += stepv;
-		
+
 		CURVE += 1.0/iterations;
 	}
 	return vec3(1.1);
@@ -384,7 +301,7 @@ vec3 ApplySSRT(
 			#endif
 		#else
 			#ifdef OVERWORLD_SHADER
-				skycontribution = unchangedIndirect  * (max(rayDir.y,pow(1.0-lightmap,2))*0.95+0.05);
+				skycontribution = unchangedIndirect;//  * (max(rayDir.y,pow(1.0-lightmap,2))*0.95+0.05);
 			#endif
 		#endif
 

@@ -91,17 +91,17 @@ void main() {
 
 	// gl_Position = toClipSpace3(position);
 
-	normals_and_materials = vec4(normalize(gl_Normal), 1.0);
+	normals_and_materials = vec4(mat3(gbufferModelView) * gl_Normal, 1.0);
 
     gcolor = gl_Color;
 	lightmapCoords = gl_MultiTexCoord1.xy;
-
 
 
 	lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
 	lightCol.a = float(sunElevation > 1e-5)*2.0 - 1.0;
 
 	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+	
 	#ifdef OVERWORLD_SHADER
 		#if defined Daily_Weather
 			dailyWeatherParams0 = vec4((texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0)/2.0, 0.0);
@@ -112,10 +112,6 @@ void main() {
 
 	WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
 	WsunVec2 = lightCol.a * normalize(sunPosition);
-	
-
-
-
 
 
 	#ifdef TAA_UPSCALING

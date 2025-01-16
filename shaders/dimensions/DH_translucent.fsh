@@ -161,21 +161,6 @@ uniform int framemod8;
 
 #include "/lib/TAA_jitter.glsl"
 
-
-
-// float DH_ld(float dist) {
-//     return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
-// }
-// float DH_invLinZ (float lindepth){
-// 	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
-// }
-
-// float linearizeDepthFast(const in float depth, const in float near, const in float far) {
-//     return (near * far) / (depth * (near - far) + far);
-// }
-
-// uniform float far;
-
 vec3 rayTrace(vec3 dir, vec3 position,float dither, float fresnel, bool inwater){
 
     float quality = mix(5,SSR_STEPS,fresnel);
@@ -204,12 +189,11 @@ vec3 rayTrace(vec3 dir, vec3 position,float dither, float fresnel, bool inwater)
 		// float sp = DH_inv_ld(sqrt(texelFetch2D(colortex12,ivec2(spos.xy/texelSize/4),0).a/65000.0));
 		float sp = DH_inv_ld(sqrt(texelFetch2D(colortex12,ivec2(spos.xy/texelSize/4),0).a/64000.0));
 
-        if(sp <= max(maxZ,minZ) && sp >= min(maxZ,minZ)) return vec3(spos.xy/RENDER_SCALE,sp);
-
+        if(sp < max(minZ,maxZ) && sp > min(minZ,maxZ)) return vec3(spos.xy/RENDER_SCALE,sp);
         spos += stepv;
 
 		//small bias
-		minZ = maxZ-0.0000035/DH_ld(spos.z);
+		minZ = maxZ-0.00005/DH_ld(spos.z);
 
 		maxZ += stepv.z;
     }
@@ -290,7 +274,11 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
     float material = 0.7;
     if(iswater) material = 1.0;
 
-    vec3 normals = normals_and_materials.xyz;
+    vec3 normals = normalize(normals_and_materials.xyz);
+    if (!gl_FrontFacing) normals = -normals;
+
+   vec3 worldSpaceNormals =  mat3(gbufferModelViewInverse) * normals;
+
     vec3 viewPos = pos.xyz;
     vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
     float transition = exp(-25* pow(clamp(1.0 - length(playerPos)/(far-8),0.0,1.0),2));
@@ -305,18 +293,22 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
         if(length(playerPos) < clamp(far-16*4, 16, maxOverdrawDistance) ){ discard; return;}
     #endif
 
-    if(iswater && abs(normals.y) > 0.0){
-	    vec3 posxz = playerPos+cameraPosition;
+	vec3 waterNormals = worldSpaceNormals;
 
+    if(iswater && abs(worldSpaceNormals.y) > 0.1){
+	    vec3 posxz = playerPos+cameraPosition;
+		
 		vec3 bump = normalize(getWaveNormal(posxz, true));
 
 		float bumpmult = 10.0 * WATER_WAVE_STRENGTH;
+
 		bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 
-        normals.xz = bump.xy;
+        waterNormals.xz = bump.xy;
     }
+
+	normals = worldToView(waterNormals);
     
-    normals = worldToView(normals);
 
     gl_FragData[0] = gcolor;
     // float UnchangedAlpha = gl_FragData[0].a;
@@ -346,7 +338,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
     #ifdef OVERWORLD_SHADER
 		vec3 DirectLightColor = lightCol.rgb/2400.0;
 
-    	float NdotL = clamp(dot(normals, normalize(WsunVec2)),0.0,1.0); 
+    	float NdotL = clamp(dot(worldSpaceNormals, WsunVec),0.0,1.0); 
         NdotL = clamp((-15 + NdotL*255.0) / 240.0  ,0.0,1.0);
 
         float Shadows = 1.0;
@@ -383,12 +375,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
     	Direct_lighting = DirectLightColor * NdotL * Shadows;
 
-    	vec3 AmbientLightColor = averageSkyCol_Clouds/900.0;
+    	vec3 AmbientLightColor = averageSkyCol_Clouds/900.0 ;
 
-    	vec3 ambientcoefs = normals_and_materials.xyz / dot(abs(normals_and_materials.xyz), vec3(1.0));
+    	vec3 ambientcoefs = worldSpaceNormals.xyz / dot(abs(worldSpaceNormals.xyz), vec3(1.0));
     	float SkylightDir = ambientcoefs.y*1.5;
     
-    	float skylight = max(pow(viewToWorld(normals_and_materials.xyz).y*0.5+0.5,0.1) + SkylightDir, 0.2);
+    	float skylight = max(pow(worldSpaceNormals.y*0.5+0.5,0.1) + SkylightDir, 0.2);
     	AmbientLightColor *= skylight;
     #endif
 	
@@ -407,7 +399,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		vec3 BackgroundReflection = FinalColor; 
 		vec3 SunReflection = vec3(0.0);
 		
-        float roughness = 0.035;
+        float roughness = 0.0;
 		float f0 = 0.02;
 		// f0 = 0.9;
 
@@ -440,21 +432,19 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
             SunReflection = (DirectLightColor * Shadows) * GGX(normalize(normals), -normalize(viewPos), normalize(WsunVec2), roughness, f0) * (1.0-Reflections.a);
         #endif
 
-		Reflections_Final = mix(BackgroundReflection, Reflections.rgb, Reflections.a) * fresnel;
+		Reflections_Final = mix(FinalColor, mix(BackgroundReflection, Reflections.rgb, Reflections.a), fresnel);
 		Reflections_Final += SunReflection;
 
-		//correct alpha channel with fresnel
-		float alpha0 = gl_FragData[0].a;
-
-		gl_FragData[0].a = -gl_FragData[0].a * fresnel + gl_FragData[0].a + fresnel;
-
-		// prevent reflections from being darkened by buffer blending
-		gl_FragData[0].rgb = clamp(FinalColor / gl_FragData[0].a*alpha0*(1.0-fresnel) * 0.1		+	Reflections_Final / gl_FragData[0].a * 0.1,0.0,65100.0);
+		gl_FragData[0].a = gl_FragData[0].a + (1.0-gl_FragData[0].a) * fresnel;
+	
+		gl_FragData[0].rgb = clamp(Reflections_Final / gl_FragData[0].a * 0.1,0.0,65000.0);
 
 		if (gl_FragData[0].r > 65000.) gl_FragData[0].rgba = vec4(0.0);
 	#else
 		gl_FragData[0].rgb = FinalColor*0.1;
 	#endif
+	
+		// gl_FragData[0].rgb = normals*0.1;
     
     #ifdef DH_OVERDRAW_PREVENTION
         float distancefade = min(max(1.0 - length(playerPos)/clamp(far-16*4, 16, maxOverdrawDistance),0.0)*5,1.0);

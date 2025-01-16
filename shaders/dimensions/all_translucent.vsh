@@ -46,6 +46,9 @@ uniform mat4 gbufferModelView;
 varying vec3 viewVector;
 
 flat varying int glass;
+#if defined ENTITIES && defined IS_IRIS
+	flat varying int NAMETAG;
+#endif
 
 attribute vec4 at_tangent;
 attribute vec4 mc_Entity;
@@ -140,6 +143,7 @@ void main() {
 		float curvature = length(worldpos) / (16*8);
 		worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
 	#endif
+
 	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 	
  	gl_Position = toClipSpace3(position);
@@ -169,6 +173,11 @@ void main() {
 
 	// translucent blocks
 	if (mc_Entity.x >= 301 && mc_Entity.x <= 321) mat = 0.7;
+
+	#if defined ENTITIES && defined IS_IRIS
+		NAMETAG = 0;
+		if (entityId == 1600) NAMETAG = 1;
+	#endif
 	
 	tangent = vec4(normalize(gl_NormalMatrix *at_tangent.rgb),at_tangent.w);
 
@@ -212,7 +221,12 @@ void main() {
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
 	#ifdef TAA
-		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+		#if defined ENTITIES && defined IS_IRIS
+		// remove jitter for nametags lol
+			if (entityId != 1600) gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+		#else
+			gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+		#endif
 	#endif
 
 	#if DOF_QUALITY == 5

@@ -197,6 +197,7 @@ vec2 SpiralSample(
 
     return vec2(x, y);
 }
+
 vec2 CleanSample(
 	int samples, float totalSamples, float noise
 ){
@@ -250,21 +251,21 @@ float convertHandDepth_2(in float depth, bool hand) {
 }
 
 vec2 SSAO(
-	vec3 viewPos, vec3 normal, bool hand, bool leaves, float noise
+	vec3 viewPos, vec3 normal, vec3 flatnormal, bool hand, bool leaves, float noise
 ){
-	int samples = 7;
+	int samples = 14;
 	float occlusion = 0.0; 
 	float sss = 0.0;
+	float THING = 0.0;
 
-	vec3 normalizedNormals = normalize(normal);
 	vec2 jitterOffsets = TAA_Offset*texelSize*0.5 * RENDER_SCALE - texelSize*0.5;
 
 	// scale the offset radius down as distance increases.
 	float linearViewDistance = length(viewPos);
 	float distanceScale = hand ? 30.0 : mix(40.0, 10.0, pow(clamp(1.0 - linearViewDistance/50.0,0.0,1.0),2.0));
-	float depthCancelation = (linearViewDistance*linearViewDistance) / distanceScale * 0.5;
-	
-	float leaf = leaves ? -0.5 : 0.0;
+	float depthCancelation = (linearViewDistance*linearViewDistance) / distanceScale ;
+
+	// float leaf = leaves ? -0.5 : 0.0;
 
 	int n = 0;
 	for (int i = 0; i < samples; i++) {
@@ -287,22 +288,33 @@ vec2 SSAO(
 			vec3 viewPosDiff = offsetViewPos - viewPos;
 			float viewPosDiffSquared = dot(viewPosDiff, viewPosDiff);
 			
+			float threshHold = max(1.0 - viewPosDiffSquared/depthCancelation, 0.0);
+
 			if (viewPosDiffSquared > 1e-5){
-				if(viewPosDiffSquared < depthCancelation){
-					float NdotV = clamp(dot(viewPosDiff*inversesqrt(viewPosDiffSquared), normalizedNormals),0.0,1.0);
-					occlusion += NdotV * clamp(1.0-(viewPosDiffSquared/depthCancelation),0.0,1.0);
-				}
+				n += 1;
+				float preAo = 1.0 - clamp(dot(normalize(viewPosDiff), flatnormal)*25.0,0.0,1.0);
+				occlusion += max(0.0, dot(normalize(viewPosDiff), normal) - preAo) * threshHold;
 				
 				#ifdef Ambient_SSS
-					sss += clamp(0.0 - dot(viewPosDiff, normalizedNormals),0.0,1.0) * exp(-10.0 * occlusion);
+					#ifdef OLD_INDIRECT_SSS
+						sss += clamp(-dot(normalize(viewPosDiff), flatnormal),0.0,1.0) * exp(-10*occlusion);
+					#else
+						sss += clamp(-dot(normalize(viewPosDiff), flatnormal) - occlusion/n,0.0,1.0) * 0.25
+						+ min(-normalize(mat3(gbufferModelViewInverse) * viewPosDiff).y - occlusion/n,1.0) * threshHold;
+						// + min(-dot(normalize(mat3(gbufferModelViewInverse) * viewPosDiff),clamp(normalize(WsunVec),-vec3(0.35,1.0,0.35),vec3(0.35,1.0,0.35))) - occlusion/n,1.0) * threshHold;
+					#endif
 				#endif
 
-				n += 1;
 			}
 		}
 	}
-	return max(1.0 - vec2(occlusion*AO_Strength, sss)/n, 0.0);
+
+	float finaalAO = max(1.0 - occlusion*AO_Strength/n, 0.0);
+	float finalSSS = sss/n;
+
+	return vec2(finaalAO, finalSSS);
 }
+
 
 float ScreenSpace_SSS(
 	vec3 viewPos, vec3 normal, bool hand, bool leaves, float noise
@@ -343,11 +355,83 @@ float ScreenSpace_SSS(
 			
 			if (viewPosDiffSquared > 1e-5){
 				sss += clamp(leaf - dot(viewPosDiff, normalizedNormals),0.0,1.0);
+				// sss += -(normalize(mat3(gbufferModelViewInverse)*viewPosDiff) + occlusion/n) * threshHold;
 				n += 1;
 			}
 		}
 	}
 	return max(1.0 - sss/n, 0.0);
+}
+
+vec2 spiralSampling(
+	int samples, float totalSamples, float noise
+){
+
+	// this will be used to make 1 full rotation of the spiral. the mulitplication is so it does nearly a single rotation, instead of going past where it started
+	float variance = noise * 0.897;
+
+	// for every sample input, it will have variance applied to it.
+	float variedSamples = float(samples) + variance;
+	
+	// for every sample, the sample position must change its distance from the origin.
+	// otherwise, you will just have a circle.
+    float spiralShape = variedSamples / (totalSamples + variance);
+
+	float shape = 2.26;
+    float theta = variedSamples * (PI * shape);
+
+	float x =  cos(theta) * spiralShape;
+	float y =  sin(theta) * spiralShape;
+
+    return vec2(x, y);
+}
+
+// vec3 getViewPos(in vec2 uv, in float depth, in mat4 inverseProj ){
+
+// }
+float getNoise(in vec2 fragCoord){
+	return fract(0.75487765 * fragCoord.x + 0.56984026 * fragCoord.y);
+}
+float calculateSSAO(
+	vec2 fragCoord, vec2 uv, vec3 viewPos, vec3 normal, in mat4 inverseProj
+){
+// SETTINGS
+int SAMPLES = 50;
+float RADIUS = 0.0005;
+vec2 SCALE_RADIUS = vec2(1280.0, 720.0 * aspectRatio);
+
+float linearViewDistance = length(viewPos);
+float distanceScale = mix(40.0, 1.0, pow(clamp(1.0 - linearViewDistance/50.0,0.0,1.0),2.0));
+float depthCancelation = (linearViewDistance*linearViewDistance) / distanceScale;
+
+float noise = getNoise(fragCoord);
+float average = 0.0;
+float occlusion = 0.0;
+
+for (int i = 0; i < SAMPLES; i++) {
+vec2 offsets = (spiralSampling(i, float(SAMPLES - 1), noise) / distanceScale) * RADIUS * SCALE_RADIUS;
+vec2 offsetUV = uv + offsets;
+
+if (offsetUV.x >= 0 && offsetUV.y >= 0  && offsetUV.x <= 1.0 && offsetUV.y <= 1.0 ) {
+float sampleDepth = texture(depthtex0, offsetUV).x;
+// vec3 offsetViewPos = getViewPos(offsetUV, sampleDepth, inverseProj);
+vec3 offsetViewPos = toScreenSpace(vec3(offsetUV, sampleDepth));
+vec3 viewPosDiff = offsetViewPos - viewPos;
+
+float viewPosDiffSquared = dot(viewPosDiff, viewPosDiff);
+float threshHold = max(1.0 - viewPosDiffSquared/depthCancelation, 0.0);
+if (viewPosDiffSquared > 1e-5){
+occlusion += max(0.0, dot(normalize(viewPosDiff), normal)) * threshHold;
+average += 1.0;
+}
+
+}
+
+}
+
+float finalAO = max(1.0 - occlusion / average, 0.0);
+finalAO = finalAO*finalAO*finalAO*finalAO;
+return finalAO;
 }
 
 vec4 encode (vec3 n, vec2 lightmaps){
@@ -469,7 +553,8 @@ void main() {
 	float noise = R2_dither();
 	vec2 texcoord = gl_FragCoord.xy*texelSize;
 
-	float z = texture2D(depthtex1,texcoord).x;
+	float z = texture(depthtex1,texcoord).x;
+	// float z = texelFetch2D(depthtex1,ivec2(gl_FragCoord.xy),0).x;
 
 	#ifdef DISTANT_HORIZONS
 		float DH_depth1 = texture2D(dhDepthTex1,texcoord).x;
@@ -534,8 +619,12 @@ void main() {
 		if(z >= 1.0) FlatNormals = normal;
 
 
-		vec2 SSAO_SSS = SSAO(viewPos, worldToView(FlatNormals), hand, isLeaf, noise);
+		vec2 SSAO_SSS = SSAO(viewPos, worldToView(normal),worldToView(FlatNormals), hand, isLeaf, noise);
+		#ifndef OLD_INDIRECT_SSS
+			SSAO_SSS.y = clamp(SSAO_SSS.y + 0.5 * lightmap.y*lightmap.y,0.0,1.0);
+		#endif
 
+		// SSAO_SSS.y = clamp(SSAO_SSS.y + 0.5,0.0,1.0);
 		if(swappedDepth >= 1.0) SSAO_SSS = vec2(1.0,0.0);
 
 		gl_FragData[1].xy = SSAO_SSS;

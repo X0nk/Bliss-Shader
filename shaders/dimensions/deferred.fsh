@@ -44,8 +44,9 @@ uniform vec3 sunPosition;
 uniform vec3 cameraPosition;
 // uniform float far;
 uniform ivec2 eyeBrightnessSmooth;
+// uniform ivec2 eyeBrightness;
 uniform float caveDetection;
-
+uniform int isEyeInWater;
 
 vec4 lightCol = vec4(lightSourceColor, float(sunElevation > 1e-5)*2-1.);
 
@@ -53,6 +54,7 @@ vec4 lightCol = vec4(lightSourceColor, float(sunElevation > 1e-5)*2-1.);
 #include "/lib/ROBOBO_sky.glsl"
 #include "/lib/sky_gradient.glsl"
 #include "/lib/Shadow_Params.glsl"
+#include "/lib/waterBump.glsl"
 
 vec3 WsunVec = mat3(gbufferModelViewInverse)*sunVec;
 // vec3 WsunVec = normalize(LightDir);
@@ -94,6 +96,7 @@ vec3 toScreenSpace(vec3 p) {
 uniform float near;
 uniform float dhFarPlane;
 uniform float dhNearPlane;
+
 
 #include "/lib/DistantHorizons_projections.glsl"
 

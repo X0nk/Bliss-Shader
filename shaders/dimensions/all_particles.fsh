@@ -63,6 +63,8 @@ uniform vec2 texelSize;
 uniform ivec2 eyeBrightnessSmooth;
 uniform float rainStrength;
 uniform float nightVision;
+uniform float waterEnteredAltitude;
+
 
 flat varying float HELD_ITEM_BRIGHTNESS;
 
@@ -433,6 +435,10 @@ void main() {
 				Shadows *= GetCloudShadow(feetPlayerPos+cameraPosition, WsunVec);
 			#endif
 
+			if(isEyeInWater == 1){
+	  			float distanceFromWaterSurface = max(-(feetPlayerPos.y + (cameraPosition.y - waterEnteredAltitude)),0.0) ;
+				directLightColor *= exp(-vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B) * distanceFromWaterSurface);
+			}
 			Direct_lighting = directLightColor * Shadows;
 
 			// #ifndef LINES

@@ -191,6 +191,11 @@ void main() {
 
 	gl_Position = ftransform();
 
+	#if defined ENTITIES && defined IS_IRIS
+		// force out of frustum
+		if (entityId == 1599) gl_Position.z -= 10000;
+	#endif
+
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
 
     /////// ----- COLOR STUFF ----- ///////
@@ -300,7 +305,7 @@ void main() {
 		mc_Entity.x == BLOCK_AMETHYST_BUD_MEDIUM || mc_Entity.x == BLOCK_AMETHYST_BUD_LARGE || mc_Entity.x == BLOCK_AMETHYST_CLUSTER ||
 		mc_Entity.x == BLOCK_BAMBOO || mc_Entity.x == BLOCK_SAPLING || mc_Entity.x == BLOCK_VINE
 	) {
-		SSSAMOUNT = 0.0;
+		SSSAMOUNT = 0.5;
 	}
 	// low
 	#ifdef MISC_BLOCK_SSS

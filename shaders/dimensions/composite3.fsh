@@ -389,9 +389,7 @@ vec4 VLTemporalFiltering(vec3 viewPos, bool depthCheck, out float DEBUG){
 	vec2 velocity = previousPosition.xy - texcoord/RENDER_SCALE;
 	previousPosition.xy = texcoord + velocity;
 
-  // vec4 currentFrame = texture2D_bicubic(colortex0, VLtexCoord);
-  vec4 currentFrame = texture2D(colortex0, VLtexCoord );
-  // vec4 currentFrame = texelFetch2D(colortex0, ivec2(VLtexCoord/texelSize),0);
+  vec4 currentFrame = texture2D(colortex0, VLtexCoord);
 
   if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0) return currentFrame;
   
@@ -406,35 +404,21 @@ vec4 VLTemporalFiltering(vec3 viewPos, bool depthCheck, out float DEBUG){
 
 	vec4 colMax = max(currentFrame,max(col1,max(col2,max(col3, max(col4, max(col5, max(col6, max(col7, col8))))))));
 	vec4 colMin = min(currentFrame,min(col1,min(col2,min(col3, min(col4, min(col5, min(col6, min(col7, col8))))))));
-	
-  // colMin = 0.5 * (colMin + min(currentFrame,min(col5,min(col6,min(col7,col8)))));
-  // colMax = 0.5 * (colMax + max(currentFrame,max(col5,max(col6,max(col7,col8)))));
-
-  // vec4 col0 = texture(colortex0, VLtexCoord + vec2( texelSize.x,	 		 0.0));
-  // vec4 col1 = texture(colortex0, VLtexCoord + vec2( 0.0,			 texelSize.y));
-  // vec4 col2 = texture(colortex0, VLtexCoord + vec2(-texelSize.x,	 		 0.0));
-  // vec4 col3 = texture(colortex0, VLtexCoord + vec2( 0.0,			-texelSize.y));
-
-  // vec4 colMin = min(currentFrame, min(col0, min(col1, min(col2, col3))));
-  // vec4 colMax = max(currentFrame, max(col0, max(col1, max(col2, col3))));
 
   vec4 frameHistory = texture2D(colortex10, previousPosition.xy);
   vec4 clampedFrameHistory = clamp(frameHistory, colMin, colMax);
   
   float blendingFactor = 0.1;
-	// if((min(max(clampedFrameHistory.a - frameHistory.a,0.0) / 0.0000001, 1.0)) > 0.0) blendingFactor = 1.0;
-  
-	// if(abs(clampedFrameHistory.a-frameHistory.a) > 0.1 && abs(currentFrame.a-frameHistory.a) > 0.1) blendingFactor = 1.0;
 
-  // if(abs(currentFrame.a - frameHistory.a) > 0.6) blendingFactor = 1.0;
   if(abs(clampedFrameHistory.a  - frameHistory.a) > 0.1) blendingFactor = 1.0;
-  // blendingFactor = clamp(blendingFactor + abs(clampedFrameHistory.a - frameHistory.a),0.0,1.0);
 
   // DEBUG = abs(clampedFrameHistory.a - frameHistory.a) > 0.1 ? 0. : 1.0;
   // DEBUG = clamp(abs(clampedFrameHistory.a - frameHistory.a),0.0,1.0);
   
   return clamp(mix(clampedFrameHistory, currentFrame, blendingFactor),0.0,65000.0);
 }
+
+uniform float waterEnteredAltitude;
 
 void main() {
   /* RENDERTARGETS:7,3,10 */
@@ -468,8 +452,12 @@ void main() {
 
 	vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE, z, DH_depth0);
 	vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
+
 	vec3 playerPos_normalized = normVec(playerPos);
 	vec3 playerPos222 = mat3(gbufferModelViewInverse) * toScreenSpace_DH(texcoord/RENDER_SCALE, 1.0,1.0) + gbufferModelViewInverse[3].xyz ;
+
+	vec3 viewPos_alt = toScreenSpace(vec3(texcoord/RENDER_SCALE, z2));
+	vec3 playerPos_alt = mat3(gbufferModelViewInverse) * viewPos_alt + gbufferModelViewInverse[3].xyz;
 
   float linearDistance = length(playerPos);
   float linearDistance_cylinder = length(playerPos.xz);
@@ -484,10 +472,14 @@ void main() {
 	////// --------------- UNPACK TRANSLUCENT GBUFFERS --------------- //////
 	vec4 data = texelFetch2D(colortex11,ivec2(texcoord/texelSize),0).rgba;
 	vec4 unpack0 = vec4(decodeVec2(data.r),decodeVec2(data.g)) ;
-	vec4 unpack1 = vec4(decodeVec2(data.b),0,0) ;
+	vec4 unpack1 = vec4(decodeVec2(data.b),decodeVec2(data.a)) ;
 	
 	vec4 albedo = vec4(unpack0.ba,unpack1.rg);
 	vec2 tangentNormals = unpack0.xy*2.0-1.0;
+  
+	bool nameTagMask = abs(unpack1.a - 0.1) < 0.01;
+  float nametagbackground = nameTagMask ? 0.25 : 1.0;
+
   if(albedo.a < 0.01) tangentNormals = vec2(0.0);
 
 
@@ -522,7 +514,7 @@ void main() {
   // #endif
   // vec4 temporallyFilteredVL = vl;
 
-  // vec4 temporallyFilteredVL = texture2D(colortex10, texcoord*VL_RENDER_RESOLUTION);
+  // temporallyFilteredVL = texture2D(colortex0, texcoord*VL_RENDER_RESOLUTION);
 
 
   float bloomyFogMult = 1.0;
@@ -542,11 +534,11 @@ void main() {
   vec4 TranslucentShader = texture2D(colortex2, texcoord);
   // color = vec3(texcoord-0.5,0.0) * mat3(gbufferModelViewInverse);
   // apply block breaking effect.
-  if(albedo.a > 0.01 && !isWater && TranslucentShader.a <= 0.0 && !isEntity) color = mix(color*6.0, color, luma(albedo.rgb)) * albedo.rgb;
+  // if(albedo.a > 0.01 && !isWater && TranslucentShader.a <= 0.0 && !isEntity) color = mix(color*6.0, color, luma(albedo.rgb)) * albedo.rgb;
 
   ////// --------------- BLEND TRANSLUCENT GBUFFERS 
   //////////// and do border fog on opaque and translucents
-
+  
   #if defined BorderFog
     #ifdef DISTANT_HORIZONS
     	float fog = smoothstep(1.0, 0.0, min(max(1.0 - linearDistance_cylinder / dhRenderDistance,0.0)*3.0,1.0)   );
@@ -571,17 +563,20 @@ void main() {
     float fog = 0.0;
   #endif
 	
+    
+
   if (TranslucentShader.a > 0.0){
     #ifdef Glass_Tint
-      if(!isWater) color *= mix(normalize(albedo.rgb+1e-7), vec3(1.0), max(fog, min(max(0.1-albedo.a,0.0) * 10.0,1.0))) ;
+      // if(!isWater) color *= mix(normalize(albedo.rgb+1e-7), vec3(1.0), max(fog, min(max(0.1-albedo.a,0.0) * 10.0,1.0))) ;
     #endif
 
-    #ifdef BorderFog
-      TranslucentShader = mix(TranslucentShader, vec4(0.0), fog);
-    #endif
-    
+    // #ifdef BorderFog
+    //   TranslucentShader = mix(TranslucentShader, vec4(0.0), fog);
+    // #endif
+
+
     color *= (1.0-TranslucentShader.a);
-    color += TranslucentShader.rgb*10.0; 
+    color += TranslucentShader.rgb*10.0 ; 
   }
 
 ////// --------------- VARIOUS FOG EFFECTS (behind volumetric fog)
@@ -611,36 +606,40 @@ void main() {
 
 ////// --------------- underwater fog
   if (isEyeInWater == 1){
-    float dirtAmount = Dirt_Amount;
-    vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
-    vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
-    vec3 totEpsilon = dirtEpsilon*dirtAmount + waterEpsilon;
-		vec3 scatterCoef = dirtAmount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / 3.14;
+    // float dirtAmount = Dirt_Amount;
+    // vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
+    // vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
+    vec3 totEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);// dirtEpsilon*dirtAmount + waterEpsilon;
+		vec3 scatterCoef = Dirt_Amount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / 3.14;
 
-    vec3 absorption = exp(-2.0 * totEpsilon * linearDistance);
-    vec3 fixedAbsorption = exp(-30.0 * totEpsilon) ;
-    vec3 finalAbsorption =  (absorption + fixedAbsorption * 5.0 * (1.0 + nightVision*10));   
-    // vec3 finalAbsorption =  absorption;   
+	  float distanceFromWaterSurface = normalize(playerPos).y + 1.0 + (cameraPosition.y - waterEnteredAltitude)/waterEnteredAltitude;
+    distanceFromWaterSurface = clamp(distanceFromWaterSurface, 0.0,1.0);
 
-    linearDistance = length(vec3(playerPos.x,max(-playerPos.y,0.0),playerPos.z));
+    vec3 transmittance = exp(-totEpsilon * linearDistance);
+    color.rgb *= transmittance;
 
-    // in vanilla, the water fog has a max distance of ~7 chunks
-    float fogfade =  max(1.0 - linearDistance / min(far, 16.0*7.0), 0.0);
-    fogfade *= fogfade;
-    // fogfade = exp(-5.0* (1.0-fogfade));
+    vec3 transmittance2 = exp(-totEpsilon * 25.0);
+    float fogfade = 1.0 - max((1.0 - linearDistance / min(far, 16.0*7.0) ),0);
+    color.rgb += (transmittance2 * scatterCoef) * fogfade;
 
-    color.rgb = mix(fixedAbsorption, color.rgb * finalAbsorption, fogfade);
-    // color.rgb = color.rgb * finalAbsorption;
-
-    bloomyFogMult *= 0.4;
+    
+    bloomyFogMult *= 0.5;
   }
 
 ////// --------------- BLEND FOG INTO SCENE
 //////////// apply VL fog over opaque and translucents
 
   bloomyFogMult *= temporallyFilteredVL.a;
-  color *= temporallyFilteredVL.a;
-  color += temporallyFilteredVL.rgb;
+  
+	#if defined IS_IRIS
+    color *= min(temporallyFilteredVL.a + (1-nametagbackground),1.0);
+    color += temporallyFilteredVL.rgb * nametagbackground;
+  #else
+    color *= temporallyFilteredVL.a ;
+    color += temporallyFilteredVL.rgb ;
+  #endif
+
+  // color.rgb = vec3(nameTagMask);
   
 ////// --------------- VARIOUS FOG EFFECTS (in front of volumetric fog)
 //////////// blindness, nightvision, liquid fogs and misc fogs
@@ -690,6 +689,7 @@ void main() {
 // color.rgb = vec3(DEBUG);
   gl_FragData[0].r = bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);
+
   // gl_FragData[1].rgb =  vec3(tangentNormals.xy,0.0) * 0.1  ;
   // gl_FragData[1].rgb =  vec3(1.0) * ld(    (data.a > 0.0 ? data.a : texture2D(depthtex0, texcoord).x   )              )   ;
   // gl_FragData[1].rgb = gl_FragData[1].rgb * (1.0-TranslucentShader.a) + TranslucentShader.rgb*10.0;

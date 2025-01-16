@@ -82,7 +82,7 @@ void main() {
 	lightCol.a = float(sunElevation > 1e-5)*2.0 - 1.0;
 	WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition) ;
 
-	refractedSunVec = refract(WsunVec, -vec3(0.0,1.0,0.0), 1.0/1.33333);
+	refractedSunVec = refract(lightCol.a*WsunVec, -vec3(0.0,1.0,0.0), 1.0/1.33333);
 
 	#if defined LPV_VL_FOG_ILLUMINATION && defined IS_LPV_ENABLED
 		exposure = texelFetch2D(colortex4,ivec2(10,37),0).r;

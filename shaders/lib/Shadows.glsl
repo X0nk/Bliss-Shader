@@ -23,7 +23,7 @@ void GriAndEminShadowFix(
 	// stop lightleaking by zooming up, centered on blocks
 	vec2 scale = vec2(0.5); scale.y *= 0.5;
 	vec3 zoomShadow =  scale.y - scale.x * fract(WorldPos + cameraPosition + Bias*scale.y*0.1);
-	if(SkyLightmap < 0.1 && isEyeInWater != 1 && VanillaAO > 0.0) Bias = zoomShadow;
+	if(SkyLightmap < 0.1 && isEyeInWater != 1) Bias = zoomShadow;
 
 	WorldPos += Bias;
 }
