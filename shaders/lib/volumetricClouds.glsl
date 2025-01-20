@@ -31,7 +31,7 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 
 	if(LayerIndex == ALTOSTRATUS_LAYER){
 		
-		coverage = dailyWeatherParams0.z;
+		coverage = mix(dailyWeatherParams0.z, 1.5, rainStrength);
 
 		largeCloud = texture2D(noisetex, (position.xz + cloud_movement)/100000. * CloudLayer2_scale).b;
 		smallCloud = 1.0 - texture2D(noisetex, ((position.xz - cloud_movement)/7500. - vec2(1.0-largeCloud, -largeCloud)/5.0) * CloudLayer2_scale).b;
@@ -45,7 +45,7 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 		return shape;
 	}
 	if(LayerIndex == LARGECUMULUS_LAYER){
-		coverage = dailyWeatherParams0.y;
+		coverage = mix(dailyWeatherParams0.y, 1.5, rainStrength);
 		
 		largeCloud = texture2D(noisetex, (samplePos.zx + cloud_movement*2.0)/10000.0 * CloudLayer1_scale).b;
 		smallCloud = texture2D(noisetex, (samplePos.zx - cloud_movement*2.0)/2500.0 * CloudLayer1_scale).b;
@@ -58,7 +58,7 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 
 	}
 	if(LayerIndex == SMALLCUMULUS_LAYER){
-		coverage = dailyWeatherParams0.x;
+		coverage = mix(dailyWeatherParams0.x, 1.5, rainStrength);
 
 		largeCloud = texture2D(noisetex, (samplePos.xz + cloud_movement)/5000.0 * CloudLayer0_scale).b;
 		smallCloud = 1.0-texture2D(noisetex, (samplePos.xz - cloud_movement)/500.0 * CloudLayer0_scale).r;
@@ -245,7 +245,7 @@ vec4 raymarchCloud(
 	float distanceFactor = length(rayDirection);
 	
 	if(LayerIndex == ALTOSTRATUS_LAYER){
-		float density = dailyWeatherParams1.z;
+		float density = mix(dailyWeatherParams1.z,0.05,rainStrength);
 		
 		bool ifAboveOrBelowPlane = max(mix(-1.0, 1.0, clamp(cameraPosition.y - minHeight,0.0,1.0)) * normalize(rayDirection).y,0.0) > 0.0;
 
@@ -277,9 +277,9 @@ vec4 raymarchCloud(
 	}
 
 	if(LayerIndex < ALTOSTRATUS_LAYER){
-		float density = dailyWeatherParams1.x;
+		float density = mix(dailyWeatherParams1.x,1.0,rainStrength);
 
-		if(LayerIndex == LARGECUMULUS_LAYER) density = dailyWeatherParams1.y;
+		if(LayerIndex == LARGECUMULUS_LAYER) density = mix(dailyWeatherParams1.y,0.2,rainStrength);
 		
 		float skylightOcclusion = 1.0;
 		#if defined CloudLayer1 && defined CloudLayer0
