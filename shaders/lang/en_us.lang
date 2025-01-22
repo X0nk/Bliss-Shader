@@ -22,6 +22,7 @@ option.RESOURCEPACK_SKY = Resource Pack Sky
 
 screen.Waving_Stuff = Waving Stuff
     option.WAVY_PLANTS = Waving Plants
+    option.WAVY_FLOWERS_CROPS = Waving Flowers and Crops
     option.WAVY_STRENGTH = Waving Strength
     option.WAVY_SPEED = Waving Speed
 
@@ -65,8 +66,8 @@ screen.Direct_Light = Direct Light
             value.shadowDistance.8192.0 = 512 Chunks
 
         option.OPTIMIZED_SHADOW_DISTANCE = Max Shadow Bounds
-            value.OPTIMIZED_SHADOW_DISTANCE.-1.0 = Un-Optimized
-            value.OPTIMIZED_SHADOW_DISTANCE.1.0 = Optimized
+            value.OPTIMIZED_SHADOW_DISTANCE.-1 = Un-Optimized
+            value.OPTIMIZED_SHADOW_DISTANCE.1 = Optimized
         option.entityShadowDistanceMul = Entity Shadow Distance
             value.entityShadowDistanceMul.0.01 = 1% of Shadow Distance
             value.entityShadowDistanceMul.0.02 = 2% of Shadow Distance
@@ -110,9 +111,16 @@ screen.Direct_Light = Direct Light
         option.LPV_REDSTONE_LIGHTS = Redstone Lights
         option.LPV_COLORED_CANDLES = Colored Candles
         option.LPV_NOSHADOW_HACK = Iris <= 1.7.0 Fix
+        option.LPV_RANGE = LPV Range
         option.LPV_VL_FOG_ILLUMINATION = Fog Light Propagation
         option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS = Fog Light Propagation Brightness
             suffix.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS=%
+        screen.BLOCK_SHADOWS = Block Light Shadow
+            option.LPV_SHADOWS = LPV Shadow
+            option.LPV_SHADOWS_LIGHT_COUNT = LPV Shadow Light Intensity
+            option.LPV_COLOR_SHADOWS = LPV Colored Shadow
+            option.LPV_SHADOWS_LIGHT_MULT = LPV Light Mult
+            option.LPV_HAND_SHADOWS = LPV Hand Shadow
 
 screen.Subsurface_Scattering = Sub-Surface Scattering
     option.LabSSS_Curve = LabSSS Curve
@@ -125,7 +133,6 @@ screen.Subsurface_Scattering = Sub-Surface Scattering
         value.SSS_TYPE.1 = Hardcoded only
         value.SSS_TYPE.2 = Hardcoded + LabSSS
         value.SSS_TYPE.3 = LabSSS only
-
 
 screen.Ambient_light = Ambient Light
     option.AO_Strength = AO Multiplier
@@ -408,6 +415,7 @@ screen.World = World
             option.Water_Absorb_G = Absorb Green (water)
             option.Water_Absorb_B = Absorb Blue (water)
 
+        option.STAR_DENSITY = Star Density
 
 screen.Post_Processing = Post Processing
     screen.Tonemapping = Tone-Map/Color Settings
@@ -663,6 +671,7 @@ screen.Climate.comment = Configure settings related to the climate, like seasona
 
 screen.Waving_Stuff.comment = Configure settings related to waving things.
     option.WAVY_PLANTS.comment = Toggle waving plants. §aPERFORMANCE COST:§r very low
+    option.WAVY_FLOWERS_CROPS.comment = Disable this if 3D flowers and crops in some RPs are broke by waving plants.
     option.WAVY_STRENGTH.comment = Configure the amount the plants wave.
     option.WAVY_SPEED.comment = Configure the speed the plants wave.
 

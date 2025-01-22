@@ -22,6 +22,7 @@ option.NORMAL_STRENGTH = 法线强度
 
 screen.Waving_Stuff = 摇晃相关
     option.WAVY_PLANTS = 植物摇晃
+    option.WAVY_FLOWERS_CROPS = 花/作物摇晃
     option.WAVY_STRENGTH = 摇晃强度
     option.WAVY_SPEED = 摇晃速度
 
@@ -445,6 +446,8 @@ screen.World = 世界
             option.sky_coefficientMieG = 天空米氏系数-绿色比重
             option.sky_coefficientMieB = 天空米氏系数-蓝色比重
 
+        option.STAR_DENSITY = 星星密度
+
 screen.Post_Processing = 后处理
     screen.Tonemapping = 色调映射/色彩设置
     screen.Exposure = 曝光
@@ -698,6 +701,7 @@ screen.Climate.comment = 配置和气候相关的设置, 例如四季颜色, 周
 
 screen.Waving_Stuff.comment = 配置和摇摆相关的设置.
     option.WAVY_PLANTS.comment = 植物摇摆开关. §a性能消耗水平:§r 非常低.
+    option.WAVY_FLOWERS_CROPS.comment = 花, 作物等方块摇摆开关, 如果使用3D资源包导致方块摇摆异常可以禁用此选项.
     option.WAVY_STRENGTH.comment = 配置摇摆效果强度.
     option.WAVY_SPEED.comment = 配置植物摇摆速度.
 
