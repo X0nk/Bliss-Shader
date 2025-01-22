@@ -3,6 +3,7 @@
 #ifdef IS_LPV_ENABLED
 	#extension GL_ARB_explicit_attrib_location: enable
 	#extension GL_ARB_shader_image_load_store: enable
+	#extension GL_ARB_shading_language_packing : enable
 #endif
 
 #define RENDER_SHADOW
@@ -43,6 +44,10 @@ uniform vec3 shadowLightVec;
 uniform float shadowMaxProj;
 attribute vec4 mc_midTexCoord;
 varying vec4 color;
+#ifdef LPV_SHADOWS
+	varying vec3 worldPos;
+	flat varying vec3 worldNormal;
+#endif
 
 attribute vec4 mc_Entity;
 uniform int blockEntityId;
@@ -59,6 +64,11 @@ uniform int entityId;
 	#else
 		attribute vec3 at_midBlock;
 	#endif
+
+	#ifdef LPV_ENTITY_LIGHTS
+		uniform usampler1D texBlockData;
+	#endif
+
     uniform int currentRenderedItemId;
 	uniform int renderStage;
 
@@ -198,9 +208,18 @@ void main() {
 	// 	}
 	// #endif
 
-	// #if defined IS_LPV_ENABLED || defined WAVY_PLANTS  || !defined PLANET_CURVATURE
+	// #if defined IS_LPV_ENABLED || defined WAVY_PLANTS || defined WAVY_FLOWERS_CROPS || !defined PLANET_CURVATURE
 		vec3 playerpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
 	// #endif
+
+	#ifdef LPV_SHADOWS
+		#ifdef WAVY_PLANTS || WAVY_FLOWERS_CROPS
+			worldPos = playerpos;
+		#else
+			worldPos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
+		#endif
+		worldNormal = mat3(shadowModelViewInverse) * gl_NormalMatrix * gl_Normal;
+	#endif
 
 	#if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
 		PopulateShadowVoxel(playerpos);
@@ -235,7 +254,11 @@ void main() {
 		if(	
 			(
 				// these wave off of the ground. the area connected to the ground does not wave.
-				(InterpolateFromBase && (blockId == BLOCK_GRASS_TALL_LOWER || blockId == BLOCK_GROUND_WAVING || blockId == BLOCK_GRASS_SHORT || blockId == BLOCK_SAPLING || blockId == BLOCK_GROUND_WAVING_VERTICAL)) 
+				#ifdef WAVY_FLOWERS_CROPS
+					(InterpolateFromBase && (blockId == BLOCK_GRASS_TALL_LOWER || blockId == BLOCK_GRASS_SHORT || blockId == BLOCK_GROUND_WAVING || blockId == BLOCK_SAPLING || blockId == BLOCK_GROUND_WAVING_VERTICAL)) 
+				#else
+					(InterpolateFromBase && (blockId == BLOCK_GRASS_TALL_LOWER || blockId == BLOCK_GRASS_SHORT || blockId == BLOCK_SAPLING || blockId == BLOCK_GROUND_WAVING_VERTICAL)) 
+				#endif
 
 				// these wave off of the ceiling. the area connected to the ceiling does not wave.
 				|| (!InterpolateFromBase && (blockId == BLOCK_VINE_OTHER))
