@@ -15,7 +15,7 @@ float densityAtPosFog(in vec3 pos){
 
 float cloudVol(in vec3 pos, float maxDistance ){
 	
-	float fogYstart = FOG_START_HEIGHT+3;
+	float fogYstart = FOG_START_HEIGHT+120;
 	vec3 samplePos = pos*vec3(1.0,1./24.,1.0);
 	vec3 samplePos2 = pos*vec3(1.0,1./48.,1.0);
 	
@@ -44,7 +44,7 @@ float cloudVol(in vec3 pos, float maxDistance ){
 
 	FogDensities(medium_gradientFog, cloudyFog, rainyFog, maxDistance, dailyWeatherParams0.a, dailyWeatherParams1.a);
 
-	return uniformFog + medium_gradientFog + cloudyFog;
+	return uniformFog + medium_gradientFog + cloudyFog + rainyFog;
 }
 
 float phaseRayleigh(float cosTheta) {
@@ -202,6 +202,10 @@ vec4 GetVolumetricFog(
 			vec3 sh = vec3(1.0);
 			if (abs(shadowPos.x) < 1.0-0.5/2048. && abs(shadowPos.y) < 1.0-0.5/2048){
 				shadowPos = shadowPos*vec3(0.5,0.5,0.5/6.0)+0.5;
+
+				#ifdef LPV_SHADOWS
+						shadowPos.xy *= 0.8;
+				#endif
 
 				#ifdef TRANSLUCENT_COLORED_SHADOWS
 					sh = vec3(shadow2D(shadowtex0, shadowPos).x);
