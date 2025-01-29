@@ -33,15 +33,9 @@ vec3 doBlockLightLighting(
     float lightmapLight = 1.0-sqrt(1.0-lightmap);
     lightmapLight *= lightmapLight;
 
-    float lightmapCurve = mix(lightmapLight, 2.0, lightmapBrightspot);
-
-    // lightmapCurve = lightmap*lightmap;
-
-    // float lightmapCurve = (exp(-15.0 * (1.0-lightmap))*10.0 + lightmap*pow(1.0-pow(1.0-lightmap,2.0),2.0))*0.5;
-    // float lightmapCurve = (pow(min(max(lightmap-0.6, 0.0) * 2.5,1.0),4.0) * 10.0 + lightmap*pow(1.0-pow(1.0-lightmap,2.0),2.0))*0.5;
-    // float lightmapCurve = pow(1.0-pow(1.0-lightmap,2.0),2.0);
+    float lightmapCurve = mix(lightmapLight, 2.5, lightmapBrightspot);
+    vec3 blockLight = lightmapCurve * lightColor;
     
-    vec3 blockLight = lightColor * lightmapCurve;
     
     #if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
         vec4 lpvSample = SampleLpvLinear(lpvPos);

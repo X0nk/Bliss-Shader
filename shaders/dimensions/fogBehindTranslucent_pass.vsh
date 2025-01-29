@@ -23,6 +23,7 @@ flat varying float exposure;
 uniform float sunElevation;
 uniform vec2 texelSize;
 uniform vec3 sunPosition;
+uniform vec3 moonPosition;
 uniform mat4 gbufferModelViewInverse;
 uniform int frameCounter;
 
@@ -80,8 +81,13 @@ void main() {
 
 
 	lightCol.a = float(sunElevation > 1e-5)*2.0 - 1.0;
-	WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
-	// WsunVec = normalize(LightDir);
+	WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
+
+	vec3 moonVec = normalize(mat3(gbufferModelViewInverse) * moonPosition);
+	vec3 WmoonVec = moonVec;
+	if(dot(-moonVec, WsunVec) < 0.9999) WmoonVec = -moonVec;
+
+	WsunVec = mix(WmoonVec, WsunVec, clamp(lightCol.a,0,1));
 	
 	refractedSunVec = refract(WsunVec, -vec3(0.0,1.0,0.0), 1.0/1.33333);
 

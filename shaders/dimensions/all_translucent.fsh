@@ -89,7 +89,6 @@ uniform float skyIntensity;
 uniform ivec2 eyeBrightnessSmooth;
 uniform float nightVision;
 
-
 uniform int frameCounter;
 uniform float frameTimeCounter;
 uniform vec2 texelSize;
@@ -99,7 +98,6 @@ uniform float viewHeight;
 
 uniform mat4 gbufferPreviousModelView;
 uniform vec3 previousCameraPosition;
-
 
 uniform float moonIntensity;
 uniform float sunIntensity;
@@ -114,7 +112,6 @@ uniform float waterEnteredAltitude;
 #include "/lib/projections.glsl"
 #include "/lib/sky_gradient.glsl"
 #include "/lib/waterBump.glsl"
-
 
 #ifdef OVERWORLD_SHADER
 	flat varying float Flashing;
@@ -155,11 +152,13 @@ float interleaved_gradientNoise_temporal(){
 		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
 	#endif
 }
+
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy;
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 	return noise;
 }
+
 float R2_dither(){
 	vec2 coord = gl_FragCoord.xy ;
 
@@ -170,6 +169,7 @@ float R2_dither(){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
+
 float blueNoise(){
 	#ifdef TAA
   		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
@@ -178,28 +178,22 @@ float blueNoise(){
 	#endif
 }
 
-
 #include "/lib/TAA_jitter.glsl"
 
-
-#define PW_DEPTH 1.5 //[0.5 1.0 1.5 2.0 2.5 3.0]
-#define PW_POINTS 2 //[2 4 6 8 16 32]
-
 varying vec3 viewVector;
-vec3 getParallaxDisplacement(vec3 playerPos) {
+vec3 getParallaxDisplacement(vec3 waterPos, vec3 playerPos) {
 
-	float waterHeight = getWaterHeightmap(-playerPos.xz) ;
+	float waterHeight = getWaterHeightmap(waterPos.xy) ;
 	waterHeight = exp(-20*sqrt(waterHeight));
-	// waterHeight *= 2.0;
+	// waterHeight *= 5.0;
 	
-	vec3 parallaxPos = playerPos;
+	vec3 parallaxPos = waterPos;
 
-	parallaxPos.xz += (viewVector.xy / -viewVector.z) * waterHeight;
-	// parallaxPos.xz -= (viewVec.xy / viewVec.z) * waterHeight * 0.5;
+	parallaxPos.xy += (viewVector.xy / -viewVector.z) * waterHeight;
+	// parallaxPos.xz -= (viewVector.xy / viewVector.z) * waterHeight;
 
 	return parallaxPos;
 }
-
 
 vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
 	float bumpmult = puddle_values;
@@ -244,6 +238,7 @@ vec3 worldToView(vec3 worldPos) {
     pos = gbufferModelView * pos;
     return pos.xyz;
 }
+
 vec4 encode (vec3 n, vec2 lightmaps){
 	n.xy = n.xy / dot(abs(n), vec3(1.0));
 	n.xy = n.z <= 0.0 ? (1.0 - abs(n.yx)) * sign(n.xy) : n.xy;
@@ -258,10 +253,10 @@ float encodeVec2(vec2 a){
     vec2 temp = floor( a * 255. );
 	return temp.x*constant1.x+temp.y*constant1.y;
 }
+
 float encodeVec2(float x,float y){
     return encodeVec2(vec2(x,y));
 }
-
 
 float ld(float dist) {
     return (2.0 * near) / (far + near - dist * (far - near));
@@ -397,7 +392,6 @@ uniform vec3 eyePosition;
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 
-
 /* RENDERTARGETS:2,7,11,14 */
 
 
@@ -426,10 +420,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	// 0.9 = entity mask
 	// 0.8 = reflective entities
 	// 0.7 = reflective blocks
-	// 0.1 = hand mask
+	// 0.3 = hand mask
 
 	#ifdef HAND
-		MATERIALS = 0.1;
+		MATERIALS = 0.3;
 	#endif
 
 	// bool isHand = abs(MATERIALS - 0.1) < 0.01;
@@ -504,13 +498,22 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	#ifndef HAND
 		if (isWater){
-			vec3 posxz = (mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz) + cameraPosition;
+			vec3 playerPos = (mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz);
+			vec3 waterPos = playerPos;
+
+			vec3 flowDir = normalize(worldSpaceNormal*10.0) * frameTimeCounter * 2.0 * WATER_WAVE_SPEED;
 			
+			vec2 newPos = 			playerPos.xy + cameraPosition.xy + abs(flowDir.xz);
+			newPos = mix(newPos, 	playerPos.zy + cameraPosition.zy + abs(flowDir.zx), clamp(abs(worldSpaceNormal.x),0,1));
+			newPos = mix(newPos, 	playerPos.xz + cameraPosition.xz, clamp(abs(worldSpaceNormal.y),0,1));
+			waterPos.xy = newPos;
+
 			// make the waves flow in the direction the water faces, except for perfectly up facing parts.
-			if(abs(worldSpaceNormal.y) < 0.9995) posxz.xz -= posxz.y + normalize(worldSpaceNormal.xz*10.0) * frameTimeCounter * 3.0 * WATER_WAVE_SPEED;
+			// if(abs(worldSpaceNormal.y) < 0.9995) posxz.xz -= posxz.y + normalize(worldSpaceNormal.xz*10.0) * frameTimeCounter * 3.0 * WATER_WAVE_SPEED;
 		
-			posxz.xyz = getParallaxDisplacement(posxz);
-			vec3 bump = normalize(getWaveNormal(posxz, false));
+			waterPos.xyz = getParallaxDisplacement(waterPos, playerPos);
+			
+			vec3 bump = normalize(getWaveNormal(waterPos, playerPos, false));
 
 			float bumpmult = 10.0 * WATER_WAVE_STRENGTH;
 			bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
@@ -601,12 +604,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		vec3 AmbientLightColor = averageSkyCol_Clouds/900.0;
 
-		vec3 ambientcoefs = worldSpaceNormal / dot(abs(worldSpaceNormal), vec3(1.0));
-		float SkylightDir = ambientcoefs.y*1.5;
-		
-		float skylight = max(pow(viewToWorld(flatnormal).y*0.5+0.5,0.1) + SkylightDir, 0.2);
+		vec3 indirectNormal = worldSpaceNormal / dot(abs(worldSpaceNormal),vec3(1.0));
+		float SkylightDir = clamp(indirectNormal.y*0.7+0.3,0.0,1.0);
+
+		float skylight = mix(0.2 + 2.3*(1.0-lightmap.y), 2.5, SkylightDir);
 		AmbientLightColor *= skylight;
-		
+
 		Indirect_lighting = doIndirectLighting(AmbientLightColor, MinimumLightColor, lightmap.y);
 	#endif
 
@@ -659,17 +662,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
 
-	// vec4 vlBehingTranslucents = texture2D(colortex13, gl_FragCoord.xy*texelSize * VL_RENDER_RESOLUTION).rgba;
-   
-    // vec3 totEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);// dirtEpsilon*dirtAmount + waterEpsilon;
-	// vec3 scatterCoef = Dirt_Amount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / 3.14;
-
-    // vec3 transmittance = exp(-totEpsilon * vlBehingTranslucents.a*50);
-    // FinalColor *= transmittance;
-
-	// FinalColor = FinalColor * vlBehingTranslucents.a +vlBehingTranslucents.rgb ;
-
-
 	#if EMISSIVE_TYPE == 2 || EMISSIVE_TYPE == 3
 		Emission(FinalColor, Albedo, SpecularTex.b, exposure);
 	#endif
@@ -696,8 +688,11 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		if(SpecularTex.r > 0.0 && SpecularTex.g <= 1.0) specularValues = SpecularTex.rg;
 		
 		float f0 = isReflective ? max(specularValues.g, harcodedF0) : specularValues.g;
+		bool isHand = false;
+
 
 		#ifdef HAND
+			isHand = true;
 			f0 = max(specularValues.g, harcodedF0);
 		#endif
 
@@ -711,13 +706,13 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			float reflectance = 0.0;
 
 			#if !defined OVERWORLD_SHADER
-			
 				vec3 WsunVec = vec3(0.0);
 				vec3 DirectLightColor = WsunVec;
 				float Shadows = 0.0;
 			#endif
-
-			vec3 specularReflections = specularReflections(viewPos, normalize(feetPlayerPos), WsunVec, vec3(blueNoise(), vec2(interleaved_gradientNoise_temporal())), viewToWorld(normal), roughness, f0, Albedo, FinalColor*gl_FragData[0].a, DirectLightColor * Shadows, lightmap.y, false, reflectance);
+			
+			
+			vec3 specularReflections = specularReflections(viewPos, normalize(feetPlayerPos), WsunVec, vec3(blueNoise(), vec2(interleaved_gradientNoise_temporal())), viewToWorld(normal), roughness, f0, Albedo, FinalColor*gl_FragData[0].a, DirectLightColor * Shadows, lightmap.y, isHand, reflectance);
 			
 			gl_FragData[0].a = gl_FragData[0].a + (1.0-gl_FragData[0].a) * reflectance;
 		
@@ -731,7 +726,13 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0].rgb = FinalColor*0.1;
 	#endif
 
-
+	#if defined ENTITIES
+		// do not allow specular to be very visible in these regions on entities
+		// this helps with specular on slimes, and entities with skin overlays like piglins/players
+    	if (!gl_FrontFacing) {
+			gl_FragData[0] = vec4(FinalColor*0.1, UnchangedAlpha);
+		}
+	#endif
 	
 	#if defined DISTANT_HORIZONS && defined DH_OVERDRAW_PREVENTION && !defined HAND
 		#if OVERDRAW_MAX_DISTANCE == 0
@@ -745,9 +746,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		if(WATER) gl_FragData[0].a = 0.0;
 	#endif
 
-	#ifndef HAND
-		gl_FragData[1] = vec4(Albedo, MATERIALS);
-	#endif
+	gl_FragData[1] = vec4(Albedo, MATERIALS);
+
 	#if DEBUG_VIEW == debug_DH_WATER_BLENDING
 		if(gl_FragCoord.x*texelSize.x < 0.47) gl_FragData[0] = vec4(0.0);
 	#endif
@@ -762,8 +762,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0].rgb = Direct_lighting * 0.1;
 	#endif
 
-	// gl_FragData[0] = vec4(tbnMatrix * viewPos,1);
-	
 	gl_FragData[3] = vec4(encodeVec2(lightmap.x, lightmap.y), 1, 1, 1);
 
 	#if defined ENTITIES && defined IS_IRIS

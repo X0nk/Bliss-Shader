@@ -296,9 +296,9 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	vec3 waterNormals = worldSpaceNormals;
 
     if(iswater && abs(worldSpaceNormals.y) > 0.1){
-	    vec3 posxz = playerPos+cameraPosition;
-		
-		vec3 bump = normalize(getWaveNormal(posxz, true));
+	    vec3 waterPos = (playerPos+cameraPosition).xzy;
+
+		vec3 bump = normalize(getWaveNormal(waterPos, playerPos, true));
 
 		float bumpmult = 10.0 * WATER_WAVE_STRENGTH;
 
@@ -458,7 +458,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
     #if DEBUG_VIEW == debug_DH_WATER_BLENDING
         if(gl_FragCoord.x*texelSize.x > 0.53) gl_FragData[0] = vec4(0.0);
     #endif
-
+   
     gl_FragData[1] = vec4(Albedo, material);
 }
 }

@@ -249,7 +249,7 @@ void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, float lineardista
   Texcoord = mix(Texcoord, UnalteredTexcoord,  min(max(0.1-DistortedAlpha,0.0) * 1000.0,1.0)); // remove distortion on non-translucents
 }
 
-vec3 doRefractionEffect( inout vec2 texcoord, vec2 normal, float linearDistance){
+vec3 doRefractionEffect( inout vec2 texcoord, vec2 normal, float linearDistance, bool isReflectiveEntity){
   
   // make the tangent space normals match the directions of the texcoord UV, this greatly improves the refraction effect.
   vec2 UVNormal = vec2(normal.x,-normal.y);
@@ -257,6 +257,8 @@ vec3 doRefractionEffect( inout vec2 texcoord, vec2 normal, float linearDistance)
   float refractionMult = 0.3 / (1.0 + linearDistance);
   float diffractionMult = 0.035;
   float smudgeMult = 1.0;
+
+  if(isReflectiveEntity) refractionMult *= 0.5;
 
   // for diffraction, i wanted to know *when* normals were at an angle, not what the
   float clampValue = 0.2;
@@ -272,11 +274,18 @@ vec3 doRefractionEffect( inout vec2 texcoord, vec2 normal, float linearDistance)
   
   vec2 refractedUV = texcoord - (UVNormal + directionalSmudge)*refractionMult;
   
+
+  #ifdef FAKE_DISPERSION_EFFECT
+    refractionMult *= min(  decodeVec2(texelFetch2D(colortex11, ivec2((texcoord - ((UVNormal + abberationOffset) + directionalSmudge)*refractionMult)/texelSize),0).b).g,
+                            decodeVec2(texelFetch2D(colortex11, ivec2((texcoord + ((UVNormal + abberationOffset) + directionalSmudge)*refractionMult)/texelSize),0).b).g  ) > 0.0 ? 1.0 : 0.0;
+  #else
+    refractionMult *= decodeVec2(texelFetch2D(colortex11, ivec2(refractedUV/texelSize),0).b).g > 0.0 ? 1.0 : 0.0;
+  #endif
+  
   // a max bound around screen edges and edges of the refracted screen
   vec2 vignetteSides = clamp(min((1.0 - refractedUV)/0.05, refractedUV/0.05)+0.5,0.0,1.0);
   float vignette = vignetteSides.x*vignetteSides.y;
-
-  refractionMult *= decodeVec2(texelFetch2D(colortex11, ivec2(refractedUV/texelSize),0).b).g > 0.0 ? 1.0 : 0.0;
+  refractionMult *= vignette;
 
   vec3 color = vec3(0.0);
 
@@ -292,11 +301,12 @@ vec3 doRefractionEffect( inout vec2 texcoord, vec2 normal, float linearDistance)
     color.b = texelFetch2D(colortex3, ivec2(refractedUV/texelSize),0).b;
   
   #else
-    refractedUV = clamp(texcoord - UVNormal,0.0,1.0);
+    refractedUV = clamp(texcoord - (UVNormal + directionalSmudge)*refractionMult,0,1);
     color = texture2D(colortex3, refractedUV).rgb;
   #endif
 
-  // texcoord = texcoord - (UVNormal+directionalSmudge)*refractionMult*vignette;
+  texcoord = texcoord - (UVNormal + directionalSmudge)*refractionMult;
+
   return color;
 }
 
@@ -526,7 +536,7 @@ void main() {
   #ifdef FAKE_REFRACTION_EFFECT
     // ApplyDistortion(refractedCoord, tangentNormals, linearDistance, isEntity);
     // vec3 color = texture2D(colortex3, refractedCoord).rgb;
-    vec3 color = doRefractionEffect(refractedCoord, tangentNormals.xy, linearDistance);
+    vec3 color = doRefractionEffect(refractedCoord, tangentNormals.xy, linearDistance, isReflectiveEntity);
   #else
     // vec3 color = texture2D(colortex3, refractedCoord).rgb;
     vec3 color = texelFetch2D(colortex3, ivec2(refractedCoord/texelSize),0).rgb;
@@ -534,7 +544,7 @@ void main() {
   vec4 TranslucentShader = texture2D(colortex2, texcoord);
   // color = vec3(texcoord-0.5,0.0) * mat3(gbufferModelViewInverse);
   // apply block breaking effect.
-  // if(albedo.a > 0.01 && !isWater && TranslucentShader.a <= 0.0 && !isEntity) color = mix(color*6.0, color, luma(albedo.rgb)) * albedo.rgb;
+  if(albedo.a > 0.01 && !isWater && TranslucentShader.a <= 0.0 && !isEntity) color = mix(color*6.0, color, luma(albedo.rgb)) * albedo.rgb;
 
   ////// --------------- BLEND TRANSLUCENT GBUFFERS 
   //////////// and do border fog on opaque and translucents
@@ -562,18 +572,15 @@ void main() {
   #else
     float fog = 0.0;
   #endif
-	
-    
 
   if (TranslucentShader.a > 0.0){
     #ifdef Glass_Tint
-      // if(!isWater) color *= mix(normalize(albedo.rgb+1e-7), vec3(1.0), max(fog, min(max(0.1-albedo.a,0.0) * 10.0,1.0))) ;
+      if(!isWater) color *= mix(normalize(albedo.rgb+1e-7), vec3(1.0), max(fog, min(max(0.1-albedo.a,0.0) * 10.0,1.0))) ;
     #endif
 
-    // #ifdef BorderFog
-    //   TranslucentShader = mix(TranslucentShader, vec4(0.0), fog);
-    // #endif
-
+    #ifdef BorderFog
+      TranslucentShader = mix(TranslucentShader, vec4(0.0), fog);
+    #endif
 
     color *= (1.0-TranslucentShader.a);
     color += TranslucentShader.rgb*10.0 ; 

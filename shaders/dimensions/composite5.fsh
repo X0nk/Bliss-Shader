@@ -57,9 +57,6 @@ uniform sampler2D colortex1;
 uniform sampler2D colortex3;
 uniform sampler2D colortex5;
 uniform sampler2D colortex6;
-uniform sampler2D colortex10;
-uniform sampler2D colortex12;
-uniform sampler2D colortex14;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 
@@ -70,6 +67,7 @@ uniform float viewWidth;
 
 uniform vec3 previousCameraPosition;
 uniform mat4 gbufferPreviousModelView;
+uniform mat4 gbufferPreviousModelViewInverse;
 
 uniform int hideGUI;
 
@@ -262,7 +260,7 @@ vec3 FastCatmulRom(sampler2D colorTex, vec2 texcoord, vec4 rtMetrics, float shar
 
 }
 
-vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth, bool hand)
+vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth)
 {
 	vec2 du = vec2(texelSize.x*2., 0.0);
 	vec2 dv = vec2(0.0, texelSize.y*2.);
@@ -272,14 +270,6 @@ vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth, bool hand)
 	vec3 dmc = vec3(texcoord,0.) + vec3( 0.0, 0.0, 					texture2D(depth, texcoord).x);
 	vec3 dbl = vec3(texcoord,0.) + vec3(-texelSize.x, texelSize.y, 	texture2D(depth, texcoord + dv - du).x);
 	vec3 dbr = vec3(texcoord,0.) + vec3( texelSize.x, texelSize.y, 	texture2D(depth, texcoord + dv + du).x);
-	
-	if(hand){
-		convertHandDepth(dtl.z);
-		convertHandDepth(dtr.z);
-		convertHandDepth(dmc.z);
-		convertHandDepth(dbl.z);
-		convertHandDepth(dbr.z);
-	}
 
 	vec3 dmin = dmc;
 	dmin = dmin.z > dtr.z ? dtr : dmin;
@@ -294,7 +284,7 @@ vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth, bool hand)
 	return dmin;
 }
 
-vec3 closestToCamera5taps_DH(vec2 texcoord, sampler2D depth, sampler2D dhDepth, bool depthCheck, bool hand)
+vec3 closestToCamera5taps_DH(vec2 texcoord, sampler2D depth, sampler2D dhDepth, bool depthCheck)
 {
 	vec2 du = vec2(texelSize.x*2., 0.0);
 	vec2 dv = vec2(0.0, texelSize.y*2.);
@@ -310,14 +300,6 @@ vec3 closestToCamera5taps_DH(vec2 texcoord, sampler2D depth, sampler2D dhDepth, 
 	dmc += vec3( 0.0, 0.0, 				   		depthCheck ? texture2D(dhDepth, texcoord).x				:	texture2D(depth, texcoord).x);
 	dbl += vec3(-texelSize.x, texelSize.y, 		depthCheck ? texture2D(dhDepth, texcoord + dv - du).x	:	texture2D(depth, texcoord + dv - du).x);
 	dbr += vec3( texelSize.x, texelSize.y, 		depthCheck ? texture2D(dhDepth, texcoord + dv + du).x	:	texture2D(depth, texcoord + dv + du).x);
-
-	if(hand){
-		convertHandDepth(dtl.z);
-		convertHandDepth(dtr.z);
-		convertHandDepth(dmc.z);
-		convertHandDepth(dbl.z);
-		convertHandDepth(dbr.z);
-	}
 	
 	vec3 dmin = dmc;
 	dmin = dmin.z > dtr.z ? dtr : dmin;
@@ -332,24 +314,6 @@ vec3 closestToCamera5taps_DH(vec2 texcoord, sampler2D depth, sampler2D dhDepth, 
 	return dmin;
 }
 
-vec3 RGB2YCoCg(vec3 RGB)
-{
-    vec3 o;
-    o.x =  0.25*RGB.r + 0.5*RGB.g + 0.25*RGB.b;
-    o.y =  0.5*RGB.r - 0.5*RGB.b;
-    o.z = -0.25*RGB.r + 0.5*RGB.g - 0.25*RGB.b;
-    return o;
-}
-
-vec3 YCoCg2RGB(vec3 YCoCg)
-{
-    vec3 o;
-    o.r = YCoCg.x + YCoCg.y - YCoCg.z;
-    o.g = YCoCg.x + YCoCg.z;
-    o.b = YCoCg.x - YCoCg.y - YCoCg.z;
-    return o;
-}
-
 vec4 computeTAA(vec2 texcoord, bool hand){
 
 	vec2 jitter = offsets[framemod8]*texelSize*0.5;
@@ -359,15 +323,16 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	//use velocity from the nearest texel from camera in a 3x3 box in order to improve edge quality in motion	
 	#ifdef DISTANT_HORIZONS
 		bool depthCheck = texture2D(depthtex0,adjTC).x >= 1.0;
-		vec3 closestToCamera = closestToCamera5taps_DH(adjTC, depthtex0, dhDepthTex, depthCheck, hand);
+		vec3 closestToCamera = closestToCamera5taps_DH(adjTC, depthtex0, dhDepthTex, depthCheck);
 		vec3 viewPos = toScreenSpace_DH_special(closestToCamera, depthCheck);
 	#else
-		vec3 closestToCamera = closestToCamera5taps(adjTC, depthtex0, hand);
+		vec3 closestToCamera = closestToCamera5taps(adjTC, depthtex0);
 		vec3 viewPos = toScreenSpace(closestToCamera);
 	#endif
 	
 	vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
 	vec3 previousPosition = mat3(gbufferPreviousModelView) * playerPos + gbufferPreviousModelView[3].xyz;
+	
 	#ifdef DISTANT_HORIZONS
 		previousPosition = toClipSpace3Prev_DH(previousPosition, depthCheck);
 	#else
@@ -375,7 +340,9 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	#endif
 
 	vec2 velocity = previousPosition.xy - closestToCamera.xy;
-	previousPosition.xy = texcoord + velocity;
+	
+	previousPosition.xy = texcoord + (hand ? vec2(0.0) : velocity);
+	
 	// sample current frame, and make sure it is de-jittered
 	// vec3 currentFrame = smoothfilter(colortex3, adjTC + jitter).rgb;
 	vec3 currentFrame = texelFetch2D(colortex3, ivec2((adjTC + jitter)/texelSize), 0).rgb;
@@ -416,12 +383,11 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	vec3 clampedframeHistory = clamp(frameHistory, colMin, colMax);
 
 	float blendingFactor = BLEND_FACTOR;
+	
 	if(hand) blendingFactor = clamp(length(velocity/texelSize),blendingFactor,1.0);
 	
 	////// Increases blending factor when far from AABB, reduces ghosting
 	blendingFactor = clamp(blendingFactor + luma(abs(clampedframeHistory - frameHistory)/clampedframeHistory),0.0,1.0);
-	
-  	// if(luma(abs(clampedframeHistory  - frameHistory)) > 0.01) blendingFactor = 1.0;
 	
 	////// Blend current pixel with clamped history, apply fast tonemap beforehand to reduce flickering
 	vec3 finalResult = invTonemap(mix(tonemap(clampedframeHistory), tonemap(currentFrame), blendingFactor));
@@ -451,13 +417,10 @@ void main() {
 		vec2 taauTC = clamp(texcoord*RENDER_SCALE, vec2(0.0), RENDER_SCALE - texelSize*2.0);
 		
 		float dataUnpacked = decodeVec2(texelFetch2D(colortex1,ivec2(gl_FragCoord.xy*RENDER_SCALE),0).w).y; 
+		
 		bool hand = abs(dataUnpacked-0.75) < 0.01 && texture2D(depthtex1,taauTC).x < 1.0;
 		
-		// vec4 color = TAA_hq(hand);
-		
 		vec4 color = computeTAA(smoothfilterUV(texcoord), hand);
-
-		// gl_FragData[0] = clamp(color, 0.0, 65000.0);
 
 		#ifdef SCREENSHOT_MODE
 			gl_FragData[0] = clamp(color, 0.0, 65000.0);

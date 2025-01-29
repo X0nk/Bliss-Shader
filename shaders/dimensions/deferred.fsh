@@ -38,6 +38,7 @@ uniform mat4 gbufferPreviousProjection;
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;
 uniform mat4 shadowModelView;
+uniform mat4 shadowModelViewI;
 uniform mat4 shadowProjection;
 uniform float sunElevation;
 uniform vec3 sunPosition;
@@ -314,7 +315,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec4 volumetricClouds = GetVolumetricClouds(viewPos, vec2(noise, 1.0-noise), WsunVec, suncol*2.5, skyGroundCol/30.0);
 
 	float atmosphereAlpha = 1.0;
-	vec4 volumetricFog = GetVolumetricFog(viewPos,  vec2(noise, 1.0-noise), suncol*2.5, skyGroundCol/30.0, averageSkyCol_Clouds*5.0, atmosphereAlpha, volumetricClouds.rgb);
+	vec4 volumetricFog = GetVolumetricFog(viewPos, WsunVec,   vec2(noise, 1.0-noise), suncol*2.5, skyGroundCol/30.0, averageSkyCol_Clouds*5.0, atmosphereAlpha, volumetricClouds.rgb);
 
 	sky = sky * volumetricClouds.a + volumetricClouds.rgb / 5.0;
 	sky = sky * volumetricFog.a + volumetricFog.rgb / 5.0;

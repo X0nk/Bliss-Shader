@@ -253,7 +253,7 @@ float convertHandDepth_2(in float depth, bool hand) {
 vec2 SSAO(
 	vec3 viewPos, vec3 normal, vec3 flatnormal, bool hand, bool leaves, float noise
 ){
-	int samples = 14;
+	int samples = 7;
 	float occlusion = 0.0; 
 	float sss = 0.0;
 	float THING = 0.0;
@@ -264,8 +264,6 @@ vec2 SSAO(
 	float linearViewDistance = length(viewPos);
 	float distanceScale = hand ? 30.0 : mix(40.0, 10.0, pow(clamp(1.0 - linearViewDistance/50.0,0.0,1.0),2.0));
 	float depthCancelation = (linearViewDistance*linearViewDistance) / distanceScale ;
-
-	// float leaf = leaves ? -0.5 : 0.0;
 
 	int n = 0;
 	for (int i = 0; i < samples; i++) {
@@ -299,139 +297,17 @@ vec2 SSAO(
 					#ifdef OLD_INDIRECT_SSS
 						sss += clamp(-dot(normalize(viewPosDiff), flatnormal),0.0,1.0) * exp(-10*occlusion);
 					#else
-						sss += clamp(-dot(normalize(viewPosDiff), flatnormal) - occlusion/n,0.0,1.0) * 0.25
-						+ min(-normalize(mat3(gbufferModelViewInverse) * viewPosDiff).y - occlusion/n,1.0) * threshHold;
-						// + min(-dot(normalize(mat3(gbufferModelViewInverse) * viewPosDiff),clamp(normalize(WsunVec),-vec3(0.35,1.0,0.35),vec3(0.35,1.0,0.35))) - occlusion/n,1.0) * threshHold;
+						sss += clamp(-dot(normalize(viewPosDiff), flatnormal) - occlusion/n,0.0,1.0) * 0.25 + (normalize(mat3(gbufferModelViewInverse) * -viewPosDiff).y - occlusion/n) * threshHold;
 					#endif
 				#endif
 
 			}
 		}
 	}
-
 	float finaalAO = max(1.0 - occlusion*AO_Strength/n, 0.0);
 	float finalSSS = sss/n;
 
 	return vec2(finaalAO, finalSSS);
-}
-
-
-float ScreenSpace_SSS(
-	vec3 viewPos, vec3 normal, bool hand, bool leaves, float noise
-){
-	int samples = 7;
-	float occlusion = 0.0; 
-	float sss = 0.0;
-
-	vec3 normalizedNormals = normalize(normal);
-	vec2 jitterOffsets = TAA_Offset*texelSize*0.5 * RENDER_SCALE - texelSize*0.5;
-
-	// scale the offset radius down as distance increases.
-	float linearViewDistance = length(viewPos);
-	float distanceScale = hand ? 30.0 : mix(40.0, 10.0, pow(clamp(1.0 - linearViewDistance/50.0,0.0,1.0),2.0));
-
-	float leaf = leaves ? -0.5 : 0.0;
-
-	int n = 0;
-	for (int i = 0; i < samples; i++) {
-		
-		vec2 offsets = CleanSample(i, samples - 1, noise) / distanceScale;
-
-		ivec2 offsetUV = ivec2(gl_FragCoord.xy + offsets*vec2(viewWidth, viewHeight*aspectRatio)*RENDER_SCALE);
-
-		if (offsetUV.x >= 0 && offsetUV.y >= 0 && offsetUV.x < viewWidth*RENDER_SCALE.x && offsetUV.y < viewHeight*RENDER_SCALE.y ) {
-			
-			float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, offsetUV, 0).x, hand);
-
-			#ifdef DISTANT_HORIZONS
-				float sampleDHDepth = texelFetch2D(dhDepthTex1, offsetUV, 0).x;
-				vec3 offsetViewPos = toScreenSpace_DH((offsetUV*texelSize - jitterOffsets) * (1.0/RENDER_SCALE), sampleDepth, sampleDHDepth);
-			#else
-				vec3 offsetViewPos = toScreenSpace(vec3((offsetUV*texelSize - jitterOffsets) * (1.0/RENDER_SCALE), sampleDepth));
-			#endif
-
-			vec3 viewPosDiff = offsetViewPos - viewPos;
-			float viewPosDiffSquared = dot(viewPosDiff, viewPosDiff);
-			
-			if (viewPosDiffSquared > 1e-5){
-				sss += clamp(leaf - dot(viewPosDiff, normalizedNormals),0.0,1.0);
-				// sss += -(normalize(mat3(gbufferModelViewInverse)*viewPosDiff) + occlusion/n) * threshHold;
-				n += 1;
-			}
-		}
-	}
-	return max(1.0 - sss/n, 0.0);
-}
-
-vec2 spiralSampling(
-	int samples, float totalSamples, float noise
-){
-
-	// this will be used to make 1 full rotation of the spiral. the mulitplication is so it does nearly a single rotation, instead of going past where it started
-	float variance = noise * 0.897;
-
-	// for every sample input, it will have variance applied to it.
-	float variedSamples = float(samples) + variance;
-	
-	// for every sample, the sample position must change its distance from the origin.
-	// otherwise, you will just have a circle.
-    float spiralShape = variedSamples / (totalSamples + variance);
-
-	float shape = 2.26;
-    float theta = variedSamples * (PI * shape);
-
-	float x =  cos(theta) * spiralShape;
-	float y =  sin(theta) * spiralShape;
-
-    return vec2(x, y);
-}
-
-// vec3 getViewPos(in vec2 uv, in float depth, in mat4 inverseProj ){
-
-// }
-float getNoise(in vec2 fragCoord){
-	return fract(0.75487765 * fragCoord.x + 0.56984026 * fragCoord.y);
-}
-float calculateSSAO(
-	vec2 fragCoord, vec2 uv, vec3 viewPos, vec3 normal, in mat4 inverseProj
-){
-// SETTINGS
-int SAMPLES = 50;
-float RADIUS = 0.0005;
-vec2 SCALE_RADIUS = vec2(1280.0, 720.0 * aspectRatio);
-
-float linearViewDistance = length(viewPos);
-float distanceScale = mix(40.0, 1.0, pow(clamp(1.0 - linearViewDistance/50.0,0.0,1.0),2.0));
-float depthCancelation = (linearViewDistance*linearViewDistance) / distanceScale;
-
-float noise = getNoise(fragCoord);
-float average = 0.0;
-float occlusion = 0.0;
-
-for (int i = 0; i < SAMPLES; i++) {
-vec2 offsets = (spiralSampling(i, float(SAMPLES - 1), noise) / distanceScale) * RADIUS * SCALE_RADIUS;
-vec2 offsetUV = uv + offsets;
-
-if (offsetUV.x >= 0 && offsetUV.y >= 0  && offsetUV.x <= 1.0 && offsetUV.y <= 1.0 ) {
-float sampleDepth = texture(depthtex0, offsetUV).x;
-// vec3 offsetViewPos = getViewPos(offsetUV, sampleDepth, inverseProj);
-vec3 offsetViewPos = toScreenSpace(vec3(offsetUV, sampleDepth));
-vec3 viewPosDiff = offsetViewPos - viewPos;
-
-float viewPosDiffSquared = dot(viewPosDiff, viewPosDiff);
-float threshHold = max(1.0 - viewPosDiffSquared/depthCancelation, 0.0);
-if (viewPosDiffSquared > 1e-5){
-occlusion += max(0.0, dot(normalize(viewPosDiff), normal)) * threshHold;
-average += 1.0;
-}
-
-}
-
-}
-
-float finalAO = max(1.0 - occlusion / average, 0.0);
-finalAO = finalAO*finalAO*finalAO*finalAO;
-return finalAO;
 }
 
 vec4 encode (vec3 n, vec2 lightmaps){
@@ -448,99 +324,13 @@ float encodeVec2(vec2 a){
     vec2 temp = floor( a * 255. );
 	return temp.x*constant1.x+temp.y*constant1.y;
 }
+
 float encodeVec2(float x,float y){
     return encodeVec2(vec2(x,y));
 }
 
-// #include "/lib/indirect_lighting_effects.glsl"
-
-vec3 toClipSpace3Prev(vec3 viewSpacePosition) {
-    return projMAD(gbufferPreviousProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
-}
-
-vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth, bool hand)
-{
-	vec2 du = vec2(texelSize.x*2., 0.0);
-	vec2 dv = vec2(0.0, texelSize.y*2.);
-
-	vec3 dtl = vec3(texcoord,0.) + vec3(-texelSize, 				texture2D(depth, texcoord - dv - du).x);
-	vec3 dtr = vec3(texcoord,0.) + vec3( texelSize.x, -texelSize.y, texture2D(depth, texcoord - dv + du).x);
-	vec3 dmc = vec3(texcoord,0.) + vec3( 0.0, 0.0, 					texture2D(depth, texcoord).x);
-	vec3 dbl = vec3(texcoord,0.) + vec3(-texelSize.x, texelSize.y, 	texture2D(depth, texcoord + dv - du).x);
-	vec3 dbr = vec3(texcoord,0.) + vec3( texelSize.x, texelSize.y, 	texture2D(depth, texcoord + dv + du).x);
-	
-	if(hand){
-		convertHandDepth(dtl.z);
-		convertHandDepth(dtr.z);
-		convertHandDepth(dmc.z);
-		convertHandDepth(dbl.z);
-		convertHandDepth(dbr.z);
-	}
-
-	vec3 dmin = dmc;
-	dmin = dmin.z > dtr.z ? dtr : dmin;
-	dmin = dmin.z > dtl.z ? dtl : dmin;
-	dmin = dmin.z > dbl.z ? dbl : dmin;
-	dmin = dmin.z > dbr.z ? dbr : dmin;
-	
-	#ifdef TAA_UPSCALING
-		dmin.xy = dmin.xy/RENDER_SCALE;
-	#endif
-
-	return dmin;
-}
-
 float ld(float dist) {
     return (2.0 * near) / (far + near - dist * (far - near));
-}
-float sampleDepth(sampler2D depthTex, vec2 texcoord, bool hand){
-	// return texture2D(depthTex, texcoord).r;
-	return convertHandDepth_2(texture2D(depthTex, texcoord).r, hand);
-}
-
-flat varying vec3 zMults;
-
-vec4 BilateralUpscale_VLFOG(sampler2D tex, sampler2D depth, vec2 coord, float referenceDepth){
-	ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
-	ivec2 posDepth  = ivec2(coord*VL_RENDER_RESOLUTION) * scaling;
-	ivec2 posColor  = ivec2(coord*VL_RENDER_RESOLUTION);
- 	ivec2 pos = ivec2(gl_FragCoord.xy*texelSize + 1);
-
-	ivec2 getRadius[5] = ivec2[](
-    	ivec2(-1,-1),
-	 	ivec2( 1, 1),
-		ivec2(-1, 1),
-		ivec2( 1,-1),
-		ivec2( 0, 0)
-  	);
-
-	#ifdef DISTANT_HORIZONS
-		float diffThreshold = 0.01;
-	#else
-		float diffThreshold = zMults.x;
-	#endif
-
-	vec4 RESULT = vec4(0.0);
-	float SUM = 0.0;
-
-	for (int i = 0; i < 4; i++) {
-		
-		ivec2 radius = getRadius[i];
-
-		#ifdef DISTANT_HORIZONS
-			float offsetDepth = sqrt(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling,0).a/65000.0);
-		#else
-			float offsetDepth = ld(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling, 0).r);
-		#endif
-
-		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
-		
-		RESULT += texelFetch2D(tex, posColor + radius + pos, 0) * EDGES;
-		
-   		SUM += EDGES;
-	}
-
-	return RESULT / SUM;
 }
 
 

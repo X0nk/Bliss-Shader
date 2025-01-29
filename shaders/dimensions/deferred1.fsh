@@ -1,6 +1,7 @@
 #include "/lib/settings.glsl"
 
 uniform sampler2D colortex4;
+uniform sampler2D colortex1;
 uniform sampler2D colortex12;
 
 uniform vec2 texelSize;
@@ -30,6 +31,17 @@ float DH_invLinZ (float lindepth){
 float linearizeDepthFast(const in float depth, const in float near, const in float far) {
     return (near * far) / (depth * (near - far) + far);
 }
+
+void convertHandDepth(inout float depth) {
+    float ndcDepth = depth * 2.0 - 1.0;
+    ndcDepth /= MC_HAND_DEPTH;
+    depth = ndcDepth * 0.5 + 0.5;
+}
+vec2 decodeVec2(float a){
+    const vec2 constant1 = 65535. / vec2( 256., 65536.);
+    const float constant2 = 256. / 255.;
+    return fract( a * constant1 ) * constant2 ;
+}
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -39,9 +51,13 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 void main() {
 /* RENDERTARGETS:4,12 */
 	vec3 oldTex = texelFetch2D(colortex4, ivec2(gl_FragCoord.xy), 0).xyz;
-
 	float newTex = texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy*4), 0).x;
-	
+
+	float dataUnpacked = decodeVec2(texelFetch2D(colortex1,ivec2(gl_FragCoord.xy*4),0).w).y; 
+	bool hand = abs(dataUnpacked-0.75) < 0.01;
+
+	if(hand) convertHandDepth(newTex);
+
 	#ifdef DISTANT_HORIZONS
     	float QuarterResDepth = texelFetch2D(dhDepthTex, ivec2(gl_FragCoord.xy*4), 0).x;
 		if(newTex >= 1.0) newTex = sqrt(QuarterResDepth);

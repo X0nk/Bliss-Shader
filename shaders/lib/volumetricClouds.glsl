@@ -186,6 +186,7 @@ float getCloudScattering(
 		}else{
 			shadowRayPosition = rayPosition + sunVector * (1.0 + i + dither)*20.0;
 		}
+		
 		// float fadeddensity = density * pow(clamp((shadowRayPosition.y - minHeight)/(max(maxHeight-minHeight,1.0)*0.25),0.0,1.0),2.0);
 
 		shadow += getCloudShape(LayerIndex, LOD, shadowRayPosition, minHeight, maxHeight) * density;	
@@ -394,10 +395,10 @@ vec4 GetVolumetricClouds(
 	vec4 NormPlayerPos = normalize(gbufferModelViewInverse * vec4(viewPos, 1.0) + vec4(gbufferModelViewInverse[3].xyz,0.0));
 
 	vec3 signedSunVec = sunVector;
-	vec3 unignedSunVec = sunVector * (float(sunElevation > 1e-5)*2.0-1.0);
+	vec3 unignedSunVec = sunVector;// * (float(sunElevation > 1e-5)*2.0-1.0);
 	float SdotV = dot(unignedSunVec, NormPlayerPos.xyz);
 
-	NormPlayerPos.y += 0.025*heightRelativeToClouds;
+	// NormPlayerPos.y += 0.025*heightRelativeToClouds;
 
 	int maxSamples = 15;
 	int minSamples = 10;

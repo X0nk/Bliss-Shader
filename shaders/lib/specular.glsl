@@ -129,7 +129,9 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
   	for (int i = 0; i <= int(quality); i++) {
 
 		float sp = invLinZ(sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4.0),0).a/65000.0));
-
+		
+		// if(hand) convertHandDepth(sp);
+		
 		float currZ = linZ(spos.z);
 		float nextZ = linZ(sp);
 
@@ -173,14 +175,15 @@ vec4 screenSpaceReflections(
 
 	float LOD = mix(0.0, 6.0*(1.0-exp(-15.0*sqrt(roughness))), 1.0-pow(1.0-reflectionLength,5.0));
 	// float LOD = mix(0.0, 6.0*pow(roughness,0.1), 1.0-pow(1.0-reflectionLength,5.0));
-
 	// float LOD = clamp(pow(reflectionLength, pow(1.0-sqrt(roughness),5.0) * 3.0) * 6.0, 0.0, 6.0*pow(roughness,0.1));
 
-	
-	vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(raytracePos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
+	vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(raytracePos) + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
 	previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
 	previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
-
+	
+	// fix UV pos dragging behind due to hand not having a good previous frame position.
+	previousPosition.xy = isHand ? raytracePos.xy : previousPosition.xy;
+	
 	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0) {
 		reflection.a = 1.0;
 		
@@ -297,9 +300,10 @@ vec3 specularReflections(
 
 	f0 = f0 == 0.0 ? 0.02 : f0;
 
+// 	if(isHand){
 	// f0 = 0.9;
 	// roughness = 0.0;
-
+// }
 	bool isMetal = f0 > 229.5/255.0;
 
 	// get reflected vector
@@ -312,9 +316,11 @@ vec3 specularReflections(
 
 		// get reflectance and f0/HCM values
 		// float shlickFresnel = pow(clamp(1.0 + dot(-reflectedVector, samplePoints),0.0,1.0),5.0);
+		if(isHand) reflectedVector_L = reflect(playerPos, normal);
 	#else
 		vec3 reflectedVector_L = reflect(playerPos, normal);
 	#endif
+
 
 	float shlickFresnel = shlickFresnelRoughness(dot(-normalize(viewDir), vec3(0.0,0.0,1.0)), roughness);
 
@@ -342,6 +348,7 @@ vec3 specularReflections(
 
 	#if defined DEFERRED_BACKGROUND_REFLECTION || defined FORWARD_BACKGROUND_REFLECTION || defined DEFERRED_ENVIORNMENT_REFLECTION || defined FORWARD_ENVIORNMENT_REFLECTION
 		if(reflectionVisibilty < 1.0){
+			
 			#if defined DEFERRED_BACKGROUND_REFLECTION || defined FORWARD_BACKGROUND_REFLECTION
 				#if !defined OVERWORLD_SHADER && !defined FORWARD_SPECULAR
 					vec3 backgroundReflection = volumetricsFromTex(reflectedVector_L, colortex4, roughness).rgb / 1200.0;
@@ -363,7 +370,6 @@ vec3 specularReflections(
 
 			// composite all the different reflections together
 			#if defined DEFERRED_BACKGROUND_REFLECTION || defined FORWARD_BACKGROUND_REFLECTION
-
 				specularReflections = mix(DarkenedDiffuseLighting, backgroundReflection, lightmap);
 			#endif
 

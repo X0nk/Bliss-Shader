@@ -449,7 +449,7 @@ void main() {
 				vec4 VolumetricClouds = GetVolumetricClouds(viewPos1, vec2(noise_1, noise_2), WsunVec, directLightColor, indirectLightColor);
 
 				float atmosphereAlpha = 1.0;
-				vec4 VolumetricFog = GetVolumetricFog(viewPos1, vec2(noise_1, noise_2), directLightColor, indirectLightColor, indirectLightColor_dynamic, atmosphereAlpha, VolumetricClouds.rgb);
+				vec4 VolumetricFog = GetVolumetricFog(viewPos1, WsunVec,  vec2(noise_1, noise_2), directLightColor, indirectLightColor, indirectLightColor_dynamic, atmosphereAlpha, VolumetricClouds.rgb);
 				
 				finalVolumetrics.rgb += VolumetricClouds.rgb;
 			#endif

@@ -55,6 +55,7 @@ attribute vec4 mc_Entity;
 
 
 uniform vec3 sunPosition;
+uniform vec3 moonPosition;
 uniform vec3 cameraPosition;
 uniform float sunElevation;
 
@@ -207,8 +208,15 @@ void main() {
 	
 		averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 	
-		WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
-		// WsunVec = normalize(LightDir);
+		// WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
+		
+		WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
+		vec3 moonVec = normalize(mat3(gbufferModelViewInverse) * moonPosition);
+		vec3 WmoonVec = moonVec;
+		if(dot(-moonVec, WsunVec) < 0.9999) WmoonVec = -moonVec;
+
+		WsunVec = mix(WmoonVec, WsunVec, clamp(lightCol.a,0,1));
+
 	
 		#if defined Daily_Weather
 			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb / 1500.0, 0.0);
