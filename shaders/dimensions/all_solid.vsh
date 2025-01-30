@@ -225,10 +225,13 @@ void main() {
 
 
 	#ifdef MC_NORMAL_MAP
-		tangent = vec4(normalize(gl_NormalMatrix * at_tangent.rgb), at_tangent.w);
+		vec3 alterTangent = at_tangent.rgb;
+
+		tangent = vec4(normalize(gl_NormalMatrix * alterTangent.rgb), at_tangent.w);
 	#endif
 
 	normalMat = vec4(normalize(gl_NormalMatrix * gl_Normal), 1.0);
+	
 	FlatNormals = normalMat.xyz;
 
 	blockID = mc_Entity.x ;
@@ -239,10 +242,10 @@ void main() {
 	PORTAL = 0;
 	SIGN = 0;
 
-	#ifdef WORLD
+	#if defined WORLD && !defined HAND
 		if(blockEntityId == BLOCK_SIGN) SIGN = 1;
 
-		if(blockEntityId == BLOCK_END_PORTAL) PORTAL = 1;
+		if(blockEntityId == BLOCK_END_PORTAL || blockEntityId == 187) PORTAL = 1;
 	#endif
 	
 	NameTags = 0;

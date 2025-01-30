@@ -1195,7 +1195,7 @@ void main() {
 				thingy = pow(thingy,3.5);
 				thingy = 1-pow(1-thingy,5);
 
-				if(LabSSS > 0.0) Indirect_lighting = Indirect_lighting + Indirect_SSS * ambientColor;
+				Indirect_lighting = Indirect_lighting + Indirect_SSS * ambientColor;
 				// Indirect_lighting = max(Indirect_lighting, Indirect_SSS * ambientColor);
 				// Indirect_lighting += Indirect_SSS * ambientColor;
 
@@ -1345,7 +1345,7 @@ void main() {
 	#endif
 	#if DEBUG_VIEW == debug_FILTERED_STUFF
 		if(hideGUI == 0){
-
+			float value = SSAO_SSS.y;
 			value = pow(value,3.5);
 			value = 1-pow(1-value,5);
 

@@ -384,9 +384,11 @@ vec3 invTonemap(vec3 col){
 }
 
 vec4 VLTemporalFiltering(vec3 viewPos, bool depthCheck, out float DEBUG){
-  vec2 texcoord = ((gl_FragCoord.xy)*2.0 + 0.5)*texelSize/2.0;
+  // vec2 texcoord = ((gl_FragCoord.xy)*2.0 + 0.5)*texelSize/2.0 ;
+  vec2 texcoord = gl_FragCoord.xy*texelSize;
 
   vec2 VLtexCoord = texcoord * VL_RENDER_RESOLUTION;
+  
 
 	// vec3 closestToCamera = closestToCamera5taps(texcoord, depthtex0);
 	// vec3 viewPos_5tap = toScreenSpace(closestToCamera);
@@ -396,7 +398,7 @@ vec4 VLTemporalFiltering(vec3 viewPos, bool depthCheck, out float DEBUG){
 	vec3 previousPosition = mat3(gbufferPreviousModelView) * playerPos + gbufferPreviousModelView[3].xyz;
 	previousPosition = toClipSpace3Prev(previousPosition);
 
-	vec2 velocity = previousPosition.xy - texcoord/RENDER_SCALE;
+	vec2 velocity = previousPosition.xy - texcoord;
 	previousPosition.xy = texcoord + velocity;
 
   vec4 currentFrame = texture2D(colortex0, VLtexCoord);
@@ -415,7 +417,7 @@ vec4 VLTemporalFiltering(vec3 viewPos, bool depthCheck, out float DEBUG){
 	vec4 colMax = max(currentFrame,max(col1,max(col2,max(col3, max(col4, max(col5, max(col6, max(col7, col8))))))));
 	vec4 colMin = min(currentFrame,min(col1,min(col2,min(col3, min(col4, min(col5, min(col6, min(col7, col8))))))));
 
-  vec4 frameHistory = texture2D(colortex10, previousPosition.xy);
+  vec4 frameHistory = texture2D(colortex10, previousPosition.xy*RENDER_SCALE);
   vec4 clampedFrameHistory = clamp(frameHistory, colMin, colMax);
   
   float blendingFactor = 0.1;

@@ -292,6 +292,12 @@ vec4 texture2D_POMSwitch(
 
 uniform vec3 eyePosition;
 
+void convertHandDepth(inout float depth) {
+    float ndcDepth = depth * 2.0 - 1.0;
+    ndcDepth /= MC_HAND_DEPTH;
+    depth = ndcDepth * 0.5 + 0.5;
+}
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -305,6 +311,12 @@ uniform vec3 eyePosition;
 #endif
 
 void main() {
+		
+	vec3 FragCoord = gl_FragCoord.xyz;
+
+	#ifdef HAND
+		convertHandDepth(FragCoord.z);
+	#endif
 	
 	bool ifPOM = false;
 
@@ -317,15 +329,15 @@ void main() {
 	vec3 normal = normalMat.xyz;
 
 	#ifdef MC_NORMAL_MAP
-		vec3 tangent2 = normalize(cross(tangent.rgb,normal)*tangent.w);
-		mat3 tbnMatrix = mat3(tangent.x, tangent2.x, normal.x,
-							  tangent.y, tangent2.y, normal.y,
-							  tangent.z, tangent2.z, normal.z);
+		vec3 binormal = normalize(cross(tangent.rgb,normal)*tangent.w);
+		mat3 tbnMatrix = mat3(tangent.x, binormal.x, normal.x,
+							  tangent.y, binormal.y, normal.y,
+							  tangent.z, binormal.z, normal.z);
 	#endif
 
 	vec2 tempOffset = offsets[framemod8];
 
-	vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
+	vec3 fragpos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
 	vec3 playerpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz;
 	vec3 worldpos = playerpos + cameraPosition;
 
@@ -350,19 +362,6 @@ void main() {
 	
 	float lightmap = clamp( (lmtexcoord.w-0.9) * 10.0,0.,1.);
 
-	// float rainfall = 1.0;
-	// float Puddle_shape = 0.0;
-	
-	// #if defined Puddles && defined WORLD && !defined ENTITIES && !defined HAND
-	// 	// rainfall = rainStrength * noPuddleAreas * lightmap;
-
-	// 	// Puddle_shape = clamp(lightmap - exp(-15.0 * pow(texture2D(noisetex, worldpos.xz * (0.020 * Puddle_Size)	).b,5.0)),0.0,1.0);
-	// 	// Puddle_shape *= clamp( viewToWorld(normal).y*0.5+0.5,0.0,1.0);
-	// 	// Puddle_shape *= rainStrength * noPuddleAreas ;
-
-	// #endif
-
-	
 	vec2 adjustedTexCoord = lmtexcoord.xy;
 
 #if defined POM && defined WORLD && !defined ENTITIES && !defined HAND
@@ -429,17 +428,68 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 	float textureLOD = bias();
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD) * color;
-	// Albedo.rgb = vec3(1.0) * min(max(exp(-15.0 * pow(1.0-luma(Albedo.rgb),3.0)) - 0.2,0.0)*5.0,1.0);
 	#if defined HAND
 		if (Albedo.a < 0.1) discard;
 	#endif
 
 	if(LIGHTNING > 0) Albedo = vec4(1);
 
-	// float ENDPORTAL_EFFECT = 0.0;
-	// #ifndef ENTITIES
-	// 	ENDPORTAL_EFFECT = PORTAL > 0 ? EndPortalEffect(Albedo, fragpos, worldpos, tbnMatrix) : 0;
-	// #endif
+	#if  defined WORLD && !defined ENTITIES && !defined HAND
+	float endPortalEmission = 0.0;
+	if(PORTAL > 0) {
+		float steps = 20;
+
+		vec3 color = vec3(0.0);
+		float absorbance = 1.0;
+
+		vec3 worldSpaceNormal = viewToWorld(normal);
+
+		vec3 viewVec = normalize(tbnMatrix*fragpos);
+		vec3 correctedViewVec = viewVec;
+		if(PORTAL > 0){
+		correctedViewVec.xy = mix(correctedViewVec.xy, vec2( viewVec.y,-viewVec.x), clamp( worldSpaceNormal.y,0,1));
+		correctedViewVec.xy = mix(correctedViewVec.xy, vec2(-viewVec.y, viewVec.x), clamp(-worldSpaceNormal.x,0,1)); 
+		correctedViewVec.xy = mix(correctedViewVec.xy, vec2(-viewVec.y, viewVec.x), clamp(-worldSpaceNormal.z,0,1));
+		}
+		correctedViewVec.z = mix(correctedViewVec.z, -correctedViewVec.z, clamp(length(vec3(worldSpaceNormal.xz, clamp(-worldSpaceNormal.y,0,1))),0,1)); 
+		
+		vec2 correctedWorldPos = playerpos.xz + cameraPosition.xz;
+		correctedWorldPos = mix(correctedWorldPos,	vec2(-playerpos.x,playerpos.z)	+	vec2(-cameraPosition.x,cameraPosition.z),	clamp(-worldSpaceNormal.y,0,1));
+		correctedWorldPos = mix(correctedWorldPos,	vec2( playerpos.z,playerpos.y)	+	vec2( cameraPosition.z,cameraPosition.y),	clamp( worldSpaceNormal.x,0,1));
+		correctedWorldPos = mix(correctedWorldPos,	vec2(-playerpos.z,playerpos.y)	+	vec2(-cameraPosition.z,cameraPosition.y),	clamp(-worldSpaceNormal.x,0,1));
+		correctedWorldPos = mix(correctedWorldPos,	vec2( playerpos.x,playerpos.y)	+	vec2( cameraPosition.x,cameraPosition.y),	clamp(-worldSpaceNormal.z,0,1));
+		correctedWorldPos = mix(correctedWorldPos,	vec2(-playerpos.x,playerpos.y)	+	vec2(-cameraPosition.x,cameraPosition.y),	clamp( worldSpaceNormal.z,0,1));
+
+
+		vec2 rayDir = ((correctedViewVec.xy) / -correctedViewVec.z) / steps * 5.0 ;
+	
+		vec2 uv = correctedWorldPos + rayDir * blueNoise();
+		uv += rayDir * 10.0;
+
+		vec2 animation = vec2(frameTimeCounter, -frameTimeCounter)*0.01;
+		
+		for (int i = 0; i < int(steps); i++) {
+			
+			float verticalGradient = (i + blueNoise())/steps ;
+			float verticalGradient2 = exp(-7*(1-verticalGradient*verticalGradient));
+		
+			float density = max(max(verticalGradient - texture2D(noisetex, uv/256.0 + animation.xy).b*0.5,0.0) - (1.0-texture2D(noisetex, uv/32.0 + animation.xx).r) * (0.4 + 0.1 * (texture2D(noisetex, uv/10.0 - animation.yy).b)),0.0);
+		
+			float volumeCoeff = exp(-density*(i+1));
+			
+			vec3 lighting =  vec3(0.5,0.75,1.0) * 0.1 * exp(-10*density) + vec3(0.2,0.7,1.0) * verticalGradient2 * 2.0;
+			color += (lighting - lighting * volumeCoeff) * absorbance;;
+
+			absorbance *= volumeCoeff;
+			endPortalEmission += verticalGradient*verticalGradient ;
+			uv += rayDir;
+		}
+
+		Albedo.rgb = clamp(color,0,1);
+		endPortalEmission = clamp(endPortalEmission/steps * 1.0,0.0,254.0/255.0);
+		
+	}
+	#endif
 	
 	#ifdef WhiteWorld
 		Albedo.rgb = vec3(0.5);
@@ -539,6 +589,10 @@ void main() {
 
 		#if EMISSIVE_TYPE == 3		
 			gl_FragData[1].a = SpecularTex.a;
+		#endif
+		
+		#if  defined WORLD && !defined ENTITIES && !defined HAND
+			if(PORTAL > 0) gl_FragData[1].a = endPortalEmission;
 		#endif
 
 		#if SSS_TYPE == 0
