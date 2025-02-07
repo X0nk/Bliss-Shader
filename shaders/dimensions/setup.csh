@@ -524,8 +524,8 @@ void main() {
         }
 
         if (blockId == BLOCK_FURNACE_LIT) {
-            lightColor = vec3(0.8, 0.7, 0.1);
-            lightRange = 13.0;
+            lightColor = vec3(0.7, 0.4, 0.2);
+            lightRange = 15.0;
         }
 
         if (blockId == BLOCK_GLOW_LICHEN || blockId == ITEM_GLOW_LICHEN) {
@@ -555,11 +555,11 @@ void main() {
         }
 
         if (blockId == BLOCK_LAVA) {
-            lightColor = vec3(0.659, 0.302, 0.106);
+            lightColor = vec3(0.439, 0.201, 0.071);
             lightRange = 15.0;
         }
         else if (blockId == ITEM_LAVA_BUCKET) {
-            lightColor = vec3(0.659, 0.302, 0.106);
+            lightColor = vec3(0.439, 0.201, 0.071);
             lightRange = 8.0;
         }
 
@@ -910,9 +910,11 @@ void main() {
                 mixWeight = 1.0;
                 break;
             case BLOCK_NETHER_PORTAL:
-                lightColor = vec3(0.502, 0.165, 0.831);
-                tintColor = vec3(0.502, 0.165, 0.831);
-                lightRange = 11.0;
+                // lightColor = vec3(0.502, 0.165, 0.831);
+                // tintColor = vec3(0.502, 0.165, 0.831);
+                lightColor = vec3(NETHER_PORTAL_R, NETHER_PORTAL_G, NETHER_PORTAL_B);
+                tintColor = vec3(NETHER_PORTAL_R, NETHER_PORTAL_G, NETHER_PORTAL_B);
+                lightRange = NETHER_PORTAL_RANGE;
                 mixWeight = 1.0;
                 break;
             case BLOCK_SLIME:
@@ -1132,6 +1134,12 @@ void main() {
             mixWeight = 1.0;
         }
 
+	#ifdef EMISSIVE_ORE
+        	if (blockId == 266) {
+            		lightColor = vec3(EMISSIVE_ORE_R, EMISSIVE_ORE_G, EMISSIVE_ORE_B);
+            		lightRange = EMISSIVE_ORE_RANGE;
+        	}
+	#endif
 
         // hack to increase light (if set)
         if (lightRange > 0.0) lightRange += 1.0;

@@ -25,10 +25,11 @@ flat varying float exposure;
 	flat varying vec4 lightCol;
 	flat varying vec3 WsunVec;
 
-	#if defined Daily_Weather
+	#ifdef Daily_Weather
 		flat varying vec4 dailyWeatherParams0;
 		flat varying vec4 dailyWeatherParams1;
 	#endif
+
 #endif
 
 varying vec4 normalMat;
@@ -45,12 +46,16 @@ uniform mat4 gbufferModelView;
 varying vec3 viewVector;
 
 flat varying int glass;
+#if defined ENTITIES && defined IS_IRIS
+	flat varying int NAMETAG;
+#endif
 
 attribute vec4 at_tangent;
 attribute vec4 mc_Entity;
 
 
 uniform vec3 sunPosition;
+uniform vec3 moonPosition;
 uniform vec3 cameraPosition;
 uniform float sunElevation;
 
@@ -132,6 +137,16 @@ void main() {
     		position = mat3(gbufferModelView) * (displacedPos - cameraPosition) + gbufferModelView[3].xyz;
 		}
 	#endif
+	
+	// vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
+   	vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
+	#ifdef PLANET_CURVATURE
+		float curvature = length(worldpos) / (16*8);
+		worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
+	#endif
+
+	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
+	
  	gl_Position = toClipSpace3(position);
 
 	HELD_ITEM_BRIGHTNESS = 0.0;
@@ -149,7 +164,6 @@ void main() {
 	// water mask
 	if(mc_Entity.x == 8.0) {
     	mat = 1.0;
-    	gl_Position.z -= 1e-4;
   	}
 
 	// translucent entities
@@ -160,6 +174,11 @@ void main() {
 
 	// translucent blocks
 	if (mc_Entity.x >= 301 && mc_Entity.x <= 321) mat = 0.7;
+
+	#if defined ENTITIES && defined IS_IRIS
+		NAMETAG = 0;
+		if (entityId == 1600) NAMETAG = 1;
+	#endif
 	
 	tangent = vec4(normalize(gl_NormalMatrix *at_tangent.rgb),at_tangent.w);
 
@@ -189,12 +208,19 @@ void main() {
 	
 		averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 	
-		WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
-		// WsunVec = normalize(LightDir);
+		// WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
+		
+		WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
+		vec3 moonVec = normalize(mat3(gbufferModelViewInverse) * moonPosition);
+		vec3 WmoonVec = moonVec;
+		if(dot(-moonVec, WsunVec) < 0.9999) WmoonVec = -moonVec;
+
+		WsunVec = mix(WmoonVec, WsunVec, clamp(lightCol.a,0,1));
+
 	
 		#if defined Daily_Weather
-			dailyWeatherParams0 = vec4((texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0)/2.0, 0.0);
-			dailyWeatherParams1 = vec4((texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0)/2.0, 0.0);
+			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb / 1500.0, 0.0);
+			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb / 1500.0, 0.0);
 		#endif
 
 	#endif
@@ -203,7 +229,12 @@ void main() {
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
 	#ifdef TAA
-		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+		#if defined ENTITIES && defined IS_IRIS
+		// remove jitter for nametags lol
+			if (entityId != 1600) gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+		#else
+			gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+		#endif
 	#endif
 
 	#if DOF_QUALITY == 5

@@ -29,6 +29,12 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
     #include "/lib/lpv_buffer.glsl"
     #include "/lib/voxel_common.glsl"
 
+	#ifdef LPV_SHADOWS
+		#include "/lib/cube/lightData.glsl"
+		shared bool lightSharedData[10*10*10];
+		uniform usampler1D texCloseLights;
+	#endif
+
     int sumOf(ivec3 vec) {return vec.x + vec.y + vec.z;}
 
     int getSharedIndex(ivec3 pos) {
@@ -61,6 +67,20 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
         lpvSharedData[i] = GetLpvValue(imgCoordOffset + pos);
         voxelSharedData[i] = GetVoxelBlock(pos);
+        #ifdef LPV_SHADOWS
+			lightSharedData[i] = false;
+			for (int l = 0; l < LPV_SHADOWS_LIGHT_COUNT; l++) {
+				float dist; ivec3 lpos; uint id;
+				if (getLightData(texelFetch(texCloseLights, l, 0).r, dist, lpos, id)) {
+					if (length(vec3(pos) - vec3(lpos - 15 + int(LpvSize / 2))) < 1.5 && dist < 13) {
+						lightSharedData[i] = true;
+						break;
+					}
+				} else {
+					break;
+				}
+			}
+		#endif
     }
 
     vec4 sampleShared(ivec3 pos, int mask_index) {
@@ -125,7 +145,8 @@ void main() {
         uint mixMask = 0xFFFF;
     
         // Decode light data for current voxel
-        uint blockId = voxelSharedData[getSharedIndex(ivec3(gl_LocalInvocationID) + 1)];
+        int index = getSharedIndex(ivec3(gl_LocalInvocationID) + 1);
+        uint blockId = voxelSharedData[index];
 
         if (blockId > 0u) {
             uvec2 blockData = imageLoad(imgBlockData, int(blockId)).rg;
@@ -148,6 +169,9 @@ void main() {
         if (lightRange > 0.0) {
             vec3 hsv = RgbToHsv(lightColor);
             hsv.z = exp2(lightRange) - 1.0;
+            #ifdef LPV_SHADOWS
+                if (lightSharedData[index]) hsv.z *= LPV_SHADOWS_LIGHT_MULT;
+            #endif
             lightValue.rgb += HsvToRgb(hsv);
         }
 

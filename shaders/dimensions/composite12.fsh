@@ -13,6 +13,7 @@ uniform float viewWidth;
 uniform float aspectRatio;
 
 uniform float frameTimeCounter;
+uniform int frameCounter;
 
 uniform int hideGUI;
 
@@ -91,15 +92,15 @@ vec3 luminanceCurve(vec3 color){
 
 vec3 colorGrading(vec3 color) {
 	float grade_luma = dot(color, vec3(1.0 / 3.0));
-  float shadows_amount = saturate(-6.0 * grade_luma + 2.75);
+	float shadows_amount = saturate(-6.0 * grade_luma + 2.75);
 	float mids_amount = saturate(-abs(6.0 * grade_luma - 3.0) + 1.25);
 	float highlights_amount = saturate(6.0 * grade_luma - 3.25);
 
-	vec3 graded_shadows = color * SHADOWS_TARGET * SHADOWS_GRADE_MUL * 1.7320508076;
-	vec3 graded_mids = color * MIDS_TARGET * MIDS_GRADE_MUL * 1.7320508076;
-	vec3 graded_highlights = color * HIGHLIGHTS_TARGET * HIGHLIGHTS_GRADE_MUL * 1.7320508076;
+	vec3 graded_shadows = color * SHADOWS_TARGET * SHADOWS_GRADE_MUL;
+	vec3 graded_mids = color * MIDS_TARGET * MIDS_GRADE_MUL;
+	vec3 graded_highlights = color * HIGHLIGHTS_TARGET * HIGHLIGHTS_GRADE_MUL;
 
-	return saturate(graded_shadows * shadows_amount + graded_mids * mids_amount + graded_highlights * highlights_amount);
+	return saturate((graded_shadows * shadows_amount + graded_mids * mids_amount + graded_highlights * highlights_amount) * 1.7320508076);
 }
 
 vec3 contrastAdaptiveSharpening(vec3 color, vec2 texcoord){
@@ -129,16 +130,46 @@ vec3 saturationAndCrosstalk(vec3 color){
 
 	vec3 lumaColDiff = color - luminance;
 
-	color = color + lumaColDiff*(-luminance*CROSSTALK + SATURATION);
-  
+	color = color + lumaColDiff * (SATURATION - luminance * CROSSTALK);
+
+  return color;
+}
+
+float interleaved_gradientNoise(){
+	vec2 coord = gl_FragCoord.xy;
+	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
+	return noise;
+}
+float blueNoise(){
+  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+}
+
+vec3 chromaticAberration(vec2 UV){
+  float noise = blueNoise() - 0.5;
+
+  vec2 centeredUV = (texcoord - 0.5);
+  // not stretched by aspect ratio; circular by choice :) it makes most the abberation on the left/right of the screen.
+  float vignette = 1.0 - clamp(1.0 - length(centeredUV * vec2(aspectRatio,1.0)) / 200.0,0.0,1.0);
+
+  float aberrationStrength = CHROMATIC_ABERRATION_STRENGTH * vignette;
+
+  vec3 color = vec3(0.0);
+  color.r = texture2D(colortex7, (centeredUV - (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).r;
+  color.g = texture2D(colortex7, texcoord).g;
+  color.b = texture2D(colortex7, (centeredUV + (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).b;
+
   return color;
 }
 
 void main() {
 
   /* DRAWBUFFERS:7 */
-
-	vec3 color = texture2D(colortex7,texcoord).rgb;
+  
+  #ifdef CHROMATIC_ABERRATION
+	  vec3 color = chromaticAberration(texcoord);
+  #else
+	  vec3 color = texture2D(colortex7,texcoord).rgb;
+  #endif
 
 	#ifdef CONTRAST_ADAPTATIVE_SHARPENING
     color = contrastAdaptiveSharpening(color, texcoord);
@@ -153,6 +184,6 @@ void main() {
   #ifdef COLOR_GRADING_ENABLED
 	  color = colorGrading(color);
   #endif
-
+  
 	gl_FragData[0].rgb = clamp(int8Dither(color, texcoord),0.0,1.0);
 }

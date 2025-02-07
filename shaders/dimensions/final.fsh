@@ -1,14 +1,18 @@
 #include "/lib/settings.glsl"
 
 uniform sampler2D colortex7;
+uniform sampler2D colortex5;
+uniform sampler2D colortex6;
 uniform sampler2D colortex14;
 uniform sampler2D depthtex0;
+uniform sampler2D depthtex1;
 uniform sampler2D depthtex2;
 uniform sampler2D noisetex;
 
 varying vec2 texcoord;
 uniform vec2 texelSize;
 uniform float frameTimeCounter;
+uniform int frameCounter;
 uniform float viewHeight;
 uniform float viewWidth;
 uniform float aspectRatio;
@@ -19,11 +23,26 @@ uniform int hideGUI;
 #include "/lib/color_dither.glsl"
 #include "/lib/res_params.glsl"
 
+#if DEBUG_VIEW == debug_LIGHTS && defined LPV_SHADOWS
+  uniform usampler1D texCloseLights;
+  uniform usampler3D texSortLights;
 
+  #include "/lib/text.glsl"
+  #include "/lib/cube/lightData.glsl"
+#endif
+
+uniform float near;
+uniform float far;
+float ld(float dist) {
+    return (2.0 * near) / (far + near - dist * (far - near));
+}
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy;
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 	return noise;
+}
+float blueNoise(){
+  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
 
 #include "/lib/gameplay_effects.glsl"
@@ -53,14 +72,20 @@ uniform mat4 gbufferPreviousModelView;
 
 #include "/lib/util.glsl"
 #include "/lib/projections.glsl"
+vec3 tonemap(vec3 col){
+	return col/(1+luma(col));
+}
+vec3 invTonemap(vec3 col){
+	return col/(1-luma(col));
+}
 
-vec3 doMotionBlur(vec2 texcoord, float depth, float noise){
+vec3 doMotionBlur(vec2 texcoord, float depth, float noise, bool hand){
   
   float samples = 4.0;
   vec3 color = vec3(0.0);
 
   float blurMult = 1.0;
-  if(depth < 0.56) blurMult = 0.0;
+  if(hand) blurMult = 0.0;
 
 	vec3 viewPos = toScreenSpace(vec3(texcoord, depth));
 	viewPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
@@ -71,8 +96,9 @@ vec3 doMotionBlur(vec2 texcoord, float depth, float noise){
 	vec2 velocity = texcoord - previousPosition.xy;
   
   // thank you Capt Tatsu for letting me use these
-  velocity = (velocity / (1.0 + length(velocity))) * 0.05 * blurMult * MOTION_BLUR_STRENGTH;
+  velocity = (velocity / (1.0 + length(velocity)) ) * 0.05 * blurMult * MOTION_BLUR_STRENGTH;
   texcoord = texcoord - velocity*(samples*0.5 + noise);
+
   vec2 screenEdges = 2.0/vec2(viewWidth, viewHeight);
 
 	for (int i = 0; i < int(samples); i++) {
@@ -81,23 +107,53 @@ vec3 doMotionBlur(vec2 texcoord, float depth, float noise){
     color += texture2D(colortex7, clamp(texcoord, screenEdges, 1.0-screenEdges)).rgb;
 
   }
-  // return vec3(texcoord,0.0);
+
   return color / samples;
+}
+
+float convertHandDepth_2(in float depth, bool hand) {
+	  if(!hand) return depth;
+
+    float ndcDepth = depth * 2.0 - 1.0;
+    ndcDepth /= MC_HAND_DEPTH;
+    return ndcDepth * 0.5 + 0.5;
 }
 
 uniform sampler2D shadowcolor1;
 
+float doVignette( in vec2 texcoord, in float noise){
+
+  float vignette = 1.0-clamp(1.0-length(texcoord-0.5),0.0,1.0);
+  
+  // vignette = pow(1.0-pow(1.0-vignette,3),5);
+  vignette *= vignette*vignette;
+  vignette = 1.0-vignette;
+  vignette *= vignette*vignette*vignette*vignette;
+  
+  // stop banding
+  vignette = vignette + vignette*(noise-0.5)*0.01;
+  
+  return mix(1.0, vignette, VIGNETTE_STRENGTH);
+}
+
 void main() {
   
-  float depth = texture2D(depthtex0,texcoord*RENDER_SCALE).r;
-  float noise = interleaved_gradientNoise();
+  float noise = blueNoise();
 
   #ifdef MOTION_BLUR
-    vec3 COLOR = doMotionBlur(texcoord, depth, noise);
+    float depth = texture2D(depthtex0, texcoord*RENDER_SCALE).r;
+    bool hand = depth < 0.56;
+    float depth2 = convertHandDepth_2(depth, hand);
+
+    vec3 COLOR = doMotionBlur(texcoord, depth2, noise, hand);
   #else
     vec3 COLOR = texture2D(colortex7,texcoord).rgb;
   #endif
-
+  
+  #ifdef VIGNETTE
+    COLOR *= doVignette(texcoord, noise);
+  #endif
+  
   #if defined LOW_HEALTH_EFFECT || defined DAMAGE_TAKEN_EFFECT || defined WATER_ON_CAMERA_EFFECT  
     // for making the fun, more fun
     applyGameplayEffects(COLOR, texcoord, noise);
@@ -107,11 +163,62 @@ void main() {
     doCameraGridLines(COLOR, texcoord);
   #endif
 
+  #if DEBUG_VIEW == debug_LIGHTS && defined LPV_SHADOWS
+    beginText(ivec2(gl_FragCoord.xy * 0.25), ivec2(0, viewHeight*0.25));
+    for (int i = 0; i < LPV_SHADOWS_LIGHT_COUNT; i++) {
+      uint data = texelFetch(texCloseLights, i, 0).r;
+      printString((_L, _i, _g, _h, _t, _space));
+      printInt(i);
+      float dist;
+      ivec3 pos;
+      uint id;
+      if (!getLightData(data, dist, pos, id)) {
+        printString((_colon, _space, _n, _u, _l, _l));
+      } else {
+        printString((_colon, _space, _d, _colon, _space));
+        printFloat(dist);
+        printString((_comma, _space, _x, _colon, _space));
+        printInt(pos.x - 15);
+        printString((_comma, _space, _y, _colon, _space));
+        printInt(pos.y - 15);
+        printString((_comma, _space, _z, _colon, _space));
+        printInt(pos.z - 15);
+        printString((_comma, _space, _i, _d, _colon, _space));
+        printInt(int(id));
+      }
+      printLine();
+    }
+    endText(COLOR);
+
+    int curLight = int(frameTimeCounter * 2.0) % LPV_SHADOWS_LIGHT_COUNT;
+    ivec3 coords = ivec3((texcoord - vec2(0.75, 0)) * vec2(4.0, 2.0) * textureSize(texSortLights, 0).xy, curLight);
+    if(texcoord.x > 0.75 && texcoord.y < 0.5) {
+      COLOR.rgb = vec3(texelFetch(texSortLights, coords, 0).rgb / 4294967295.0);
+    }
+
+    beginText(ivec2(gl_FragCoord.xy * 0.25), ivec2(viewWidth *  0.19, viewHeight * 0.135));
+    printString((_L, _i, _g, _h, _t, _colon, _space));
+    printInt(curLight);
+    endText(COLOR);
+
+    vec2 shadowUV = texcoord * vec2(4.0, 2.0);
+    if(shadowUV.x < 1.0 && shadowUV.y < 1.0)COLOR = texture2D(shadowcolor1,shadowUV).rgb;
+  #endif
+
   #if DEBUG_VIEW == debug_SHADOWMAP
+    vec2 shadowUV = texcoord * vec2(2.0, 1.0) ;
 
-  vec2 shadowUV = texcoord * vec2(2.0, 1.0);
+    // shadowUV -= vec2(0.5,0.0);
+    // float zoom = 0.1;
+    // shadowUV = ((shadowUV-0.5) - (shadowUV-0.5)*zoom) + 0.5;
 
-  if(shadowUV.x < 1.0 && shadowUV.y < 1.0 && hideGUI == 1)COLOR = texture2D(shadowcolor1,shadowUV).rgb;
+    if(shadowUV.x < 1.0 && shadowUV.y < 1.0 && hideGUI == 1) COLOR = texture2D(shadowcolor1,shadowUV).rgb;
+  #endif
+  #if DEBUG_VIEW == debug_DEPTHTEX0
+    COLOR = vec3(ld(texture2D(depthtex0, texcoord*RENDER_SCALE).r));
+  #endif
+  #if DEBUG_VIEW == debug_DEPTHTEX1
+    COLOR = vec3(ld(texture2D(depthtex1, texcoord*RENDER_SCALE).r));
   #endif
 
 
