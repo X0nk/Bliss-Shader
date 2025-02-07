@@ -1,3 +1,7 @@
+# Bliss-BSPT is an edited shader of Bliss-unstable-development by WATERFORCE99 #
+# Bliss-BSPT contains codes from Fayer3's blocklight2 & emissive-ores fork of Bliss #
+# Any re-editing or re-distribution is strictly prohibited #
+
 # Bliss
 <img src="https://github.com/X0nk/Bliss-Shader/assets/122314734/873c788c-5a48-46c0-9fb5-eac57b4ffa27" width="100%" height="100%">
 I always loved chocapic's shaders, and how customizeable it was. But i wanted MORE.
@@ -10,8 +14,7 @@ i wanted to emphasize a varying scene, where the lighting isn't always the same 
 + Null, for doing a huge amount of work creating the voxel floodfill colored lighting
 + Emin, and Gri573, for teaching me how to stop alot of light leaking
 + RRe36 and Sixthsurge, for the great ideas to steal
-### [You can contact me on discord, by joining the shaderLabs discord server and using the "bliss-xonk" channel](https://discord.com/invite/RpzWN9S)
-### [Want to support me? Consider donating](https://ko-fi.com/xonkdev)
+### [Want to support me? donate on my patreon](https://www.patreon.com/Xonkmoney)
 
 # IN-DEVELOPMENT VERSIONS AND RELEASE VERSIONS
 `In-development versions` are the very latest versions, and are released regularly to be tested by anyone. **Please report any issues you find.**
