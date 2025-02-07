@@ -54,14 +54,18 @@ float getWaterHeightmap(vec2 posxz) {
 	return (heightSum / 60.0) * WavesLarge;
 }
 
-vec3 getWaveNormal(vec3 posxz, bool isLOD){
+vec3 getWaveNormal(vec3 waterPos, vec3 playerpos, bool isLOD){
 
 	// vary the normal's "smooth" factor as distance changes, to avoid noise from too much details.
 	// float range = pow(clamp(1.0 - length(posxz - cameraPosition)/(32*4),0.0,1.0),2.0);
 	// float deltaPos = mix(0.5, 0.1, range);
 	
-	float range = min(length(posxz - cameraPosition) / (16*14.0), 3.0);
+	float range = min(length(playerpos) / (16*12.0), 3.0) ;
 	float deltaPos = range + 0.15;
+
+	// float range = 1-max(1.0-length(playerpos) / (16.0*16.0) ,0.0) ;
+	// range = (1.0-pow(1.0-pow(range,2.0),2.0)) * 3.0;
+	// float deltaPos = range + 0.15;
 
 	// float normalMult = 1.0 * WATER_WAVE_STRENGTH;
 
@@ -75,7 +79,7 @@ vec3 getWaveNormal(vec3 posxz, bool isLOD){
 		deltaPos = 0.025;
 	#endif
 	
-	vec2 coord = posxz.xz;
+	vec2 coord = waterPos.xy;
 
 	float h0 = getWaterHeightmap(coord);
 	float h1 = getWaterHeightmap(coord + vec2(deltaPos,0.0));
