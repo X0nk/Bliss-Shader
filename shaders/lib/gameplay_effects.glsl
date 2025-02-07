@@ -63,16 +63,15 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
     #if defined WATER_ON_CAMERA_EFFECT
         if(exitWater > 0.0){
             vec3 scale = vec3(1.0,1.0,0.0);
-            scale.xy = (isEyeInWater == 1 ? vec2(0.3) : vec2(0.5, 0.25 + (exitWater*exitWater)*0.25 ) ) * vec2(aspectRatio,1.0);
+            scale.xy = (isEyeInWater == 1 ? vec2(0.3) : vec2(0.5, 0.25 + (exitWater*exitWater)*0.25 )) * vec2(aspectRatio,1.0);
             scale.z = isEyeInWater == 1 ? 0.0 : exitWater;
 
-
             float waterDrops = texture2D(noisetex, (texcoord - vec2(0.0, scale.z)) * scale.xy).r ;
-            if(isEyeInWater == 1) waterDrops = waterDrops*waterDrops * 0.3;
+            if(isEyeInWater == 1) waterDrops *= WATER_DISTORTION_AMOUNT;
             if(isEyeInWater == 0 && exitWater > 0.0) waterDrops = sqrt(min(max(waterDrops - (1.0-sqrt(exitWater))*0.7,0.0) * (1.0 + exitWater),1.0)) * 0.3;
 
             // apply distortion effects for exiting water and under water
-            distortmask = max(distortmask, waterDrops);
+            distortmask = max(0.0, waterDrops);
         }
     #endif
 
