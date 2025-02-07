@@ -70,11 +70,17 @@ return x/(1.0+x);
 vec3 ACESFilm( vec3 x )
 {
 		x*=0.9;
+    // float a = 2.51f;
+    // float b = 0.03f;
+    // float c = 2.43f;
+    // float d = 0.59f;
+    // float e = 0.14f;
+    // slower rate to bright color
     float a = 2.51f;
     float b = 0.03f;
     float c = 2.43f;
-    float d = 0.59f;
-    float e = 0.14f;
+    float d = 0.95f;
+    float e = 0.12f;
 		return (x*(a*x+b))/(x*(c*x+d)+e);
 }
 
@@ -220,111 +226,77 @@ vec3 Full_Reinhard_Edit(vec3 C){
 // https://iolite-engine.com/blog_posts/minimal_agx_implementation
 // Mean error^2: 3.6705141e-06
 vec3 agxDefaultContrastApprox( vec3 x ) {
-	vec3 x2 = x * x;
-	vec3 x4 = x2 * x2;
-
-	return + 15.5 * x4 * x2
-		- 40.14 * x4 * x
-		+ 31.96 * x4
-		- 6.868 * x2 * x
-		+ 0.4298 * x2
-		+ 0.1191 * x
-		- 0.00232;
+	return x*(+0.1241
+                 +x*(+0.2079
+                 +x*(-5.9293
+                 +x*(+30.3768
+                 +x*(-38.9015
+                 +x*(+15.1221))))));
 }
 
-vec3 agxLook(vec3 val) {
-  const vec3 lw = vec3(0.2126, 0.7152, 0.0722);
-  float luma = dot(val, lw);
-  
-  // Default
-  vec3 offset = vec3(0.0);
-  vec3 slope = vec3(1.0);
-  vec3 power = vec3(1.0);
-  float sat = 1.25;
- 
-  // ASC CDL
-  val = pow(val * slope + offset, power);
-  return luma + sat * (val - luma);
-}
-vec3 ToneMap_AgX( vec3 color ) {
-	// AgX constants
-	const mat3 AgXInsetMatrix = mat3(
-		vec3( 0.856627153315983, 0.137318972929847, 0.11189821299995 ),
-		vec3( 0.0951212405381588, 0.761241990602591, 0.0767994186031903 ),
-		vec3( 0.0482516061458583, 0.101439036467562, 0.811302368396859 )
-	);
-	// explicit AgXOutsetMatrix generated from Filaments AgXOutsetMatrixInv
-	const mat3 AgXOutsetMatrix = mat3(
-		vec3( 1.1271005818144368, - 0.1413297634984383, - 0.14132976349843826 ),
-		vec3( - 0.11060664309660323, 1.157823702216272, - 0.11060664309660294 ),
-		vec3( - 0.016493938717834573, - 0.016493938717834257, 1.2519364065950405 )
-	);
-
-	// LOG2_MIN      = -10.0
-	// LOG2_MAX      =  +6.5
-	// MIDDLE_GRAY   =  0.18
-	const float AgxMinEv = - 12.47393;  // log2( pow( 2, LOG2_MIN ) * MIDDLE_GRAY )
-	const float AgxMaxEv = 4.026069;    // log2( pow( 2, LOG2_MAX ) * MIDDLE_GRAY )
-
-	color = AgXInsetMatrix * color;
+vec3 ToneMap_AgX_Opt( vec3 color ) {
+	mat3 i = mat3(0.8566, 0.1373,  0.1119, 0.0951, 0.7612, 0.0768, 0.0483, 0.1014, 0.8113);
 
 	// Log2 encoding
-    color = clamp(log2(color), AgxMinEv, AgxMaxEv);
-    color = (color - AgxMinEv) / (AgxMaxEv - AgxMinEv);
+	color = (clamp(log2(i * color), -12.4739, 4.0261) +12.4739) / 16.5;
 
 	// Apply sigmoid
-	color = agxDefaultContrastApprox( color );
+	color = agxDefaultContrastApprox(color);
 
 	// Apply AgX look
-	color = agxLook(color);
+	color = mix(vec3(dot(color, vec3(0.2126,0.7152,0.0722))), pow(color, vec3(1.0)), 1.25);
 
-	color = AgXOutsetMatrix * color;
+  	// Eotf
+  	mat3 o = mat3(1.1271, -0.1413, -0.1413, -0.1106, 1.1578, -0.1106, -0.0165, -0.0165, 1.2519);
 
 	// Linearize
-	color = pow( max( vec3( 0.0 ), color ), vec3( 2.2 ) );
+	color = pow(max(vec3(0.0), o * color), vec3(2.2));
 
 	// Gamut mapping. Simple clamp for now.
-	color = clamp( color, 0.0, 1.0 );
-
+	color = clamp(color, 0.0, 1.0);
+  
 	return color;
 }
-vec3 ToneMap_AgX_minimal( vec3 color ) {
-	// AgX constants from Benjamin Wrensch ( I HATE THE BRIGHTS GOING TO WHITE )
-    const mat3 AgXInsetMatrix = mat3(
-        0.842479062253094, 0.0423282422610123, 0.0423756549057051,
-        0.0784335999999992,  0.878468636469772,  0.0784336,
-        0.0792237451477643, 0.0791661274605434, 0.879142973793104);
-
-    const mat3 AgXOutsetMatrix = mat3(
-        1.19687900512017, -0.0528968517574562, -0.0529716355144438,
-        -0.0980208811401368, 1.15190312990417, -0.0980434501171241,
-        -0.0990297440797205, -0.0989611768448433, 1.15107367264116);
-
-	// LOG2_MIN      = -10.0
-	// LOG2_MAX      =  +6.5
-	// MIDDLE_GRAY   =  0.18
-	const float AgxMinEv = - 12.47393;  // log2( pow( 2, LOG2_MIN ) * MIDDLE_GRAY )
-	const float AgxMaxEv = 4.026069;    // log2( pow( 2, LOG2_MAX ) * MIDDLE_GRAY )
-
-	color = AgXInsetMatrix * color;
+vec3 ToneMap_AgX_minimal_Opt( vec3 color ) {
+	mat3 i = mat3(0.8425, 0.0423, 0.0424, 0.0784, 0.8785, 0.0784, 0.0792, 0.0792, 0.8791);
 
 	// Log2 encoding
-    color = clamp(log2(color), AgxMinEv, AgxMaxEv);
-    color = (color - AgxMinEv) / (AgxMaxEv - AgxMinEv);
+	color = (clamp(log2(i * color), -12.4739, 4.0261) +12.4739) / 16.5;
 
 	// Apply sigmoid
-	color = agxDefaultContrastApprox( color );
+	color = agxDefaultContrastApprox(color);
 
 	// Apply AgX look
-	color = agxLook(color);
+	color = mix(vec3(dot(color, vec3(0.2126,0.7152,0.0722))), pow(color, vec3(1.0)), 1.25);
 
-	color = AgXOutsetMatrix * color;
-
+  	// Eotf
+  	mat3 o = mat3(1.1969, -0.0529, -0.0530, -0.0980, 1.1519, -0.0980, -0.0990, -0.0990, 1.1511);
+  
 	// Linearize
-    color = pow(color, vec3(2.2));
+	color = pow(o * color, vec3(2.2));
 
 	// Gamut mapping. Simple clamp for now.
-	color = clamp( color, 0.0, 1.0 );
+	color = clamp(color, 0.0, 1.0);
+  
+	return color;
+}
+vec3 ToneMap_AgX_minimal_WF99( vec3 color ) {
+	mat3 i = mat3(0.8425, 0.0423, 0.0424, 0.0784, 0.8785, 0.0784, 0.0792, 0.0792, 0.8791);
 
+	// Log2 encoding
+	color = (clamp(log2(i * color), -12.4739, 4.0261) +12.4739) / 16.5;
+
+	// Apply sigmoid
+	color = agxDefaultContrastApprox(color);
+
+	// Apply AgX look
+	color = mix(vec3(dot(color, vec3(0.2126,0.7152,0.0722))), pow(color, vec3(1.175)), 0.99);
+
+  	// Eotf
+  	mat3 o = mat3(1.1969, -0.0529, -0.0530, -0.0980, 1.1519, -0.0980, -0.0990, -0.0990, 1.1511);
+  
+	// Linearize
+	color = pow(o * color, vec3(2.2));
+  
 	return color;
 }
