@@ -20,9 +20,11 @@ float triNoise2d(vec2 pos, float speed) {
 	float rz = 0.0;
 	pos *= mm2(pos.x * 0.06);
 	vec2 bp = pos;
+	float sp = Time * speed / 60.0;
+	mat2 rot = mm2(sp);
 	for (float i = 0.0; i < 5.0; i++ ) {
 		vec2 dg = tri2(bp * 1.85) * 0.75;
-		dg *= mm2(Time * speed / 60.0);
+		dg *= rot;
 		pos -= dg / z2;
 
 		bp *= 1.3;
@@ -56,7 +58,7 @@ vec4 aurora(vec3 dir, float dither) {
 		float rzt = triNoise2d(aurPos, speed);
 		vec4 innerColor = vec4(0.0, 0.0, 0.0, rzt);
 
-		innerColor.rgb = rzt * mix(upperColor, lowerColor, smoothstep(0.0, 1.0, amp));
+		innerColor.rgb = rzt * mix(lowerColor, upperColor, smoothstep(0.0, 1.0, amp));
 		avgColor =  mix(avgColor, innerColor, 0.5);
 		outerColor += avgColor * exp2(-(amp * 24) * 0.065 - 2.5) * smoothstep(0.0, 5.0, (amp * 24)) * 24 / aurStep;
 	}
