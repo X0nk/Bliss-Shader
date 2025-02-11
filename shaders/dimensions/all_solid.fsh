@@ -577,9 +577,9 @@ void main() {
 		SpecularTex.r = max(SpecularTex.r, rainfall);
 		SpecularTex.g = max(SpecularTex.g, max(Puddle_shape*0.02,0.02));
 
-		if ((blockID == 266 ||
-		blockID == BLOCK_REDSTONE_ORE_LIT ||
-		blockID == BLOCK_DEEPSLATE_REDSTONE_ORE_LIT) && alphaTestRef < 0.05) {
+		#define EXCEPTIONAL_BLOCK(id) (id == 266 || id == BLOCK_REDSTONE_ORE_LIT || id == BLOCK_DEEPSLATE_REDSTONE_ORE_LIT)
+
+		if (EXCEPTIONAL_BLOCK(blockID) && alphaTestRef < 0.05) {
 			float smax = max(max(Albedo.r,Albedo.g),Albedo.b);
 			float smin = min(min(Albedo.r,Albedo.g),Albedo.b);
 			float s = (smax - smin) / smax;
@@ -590,31 +590,16 @@ void main() {
 
 		#if EMISSIVE_TYPE == 0
 			gl_FragData[1].a = 0.0;
-		#endif
 
-		#if EMISSIVE_TYPE == 1
-			if (blockID == 266 ||
-				blockID == BLOCK_REDSTONE_ORE_LIT ||
-				blockID == BLOCK_DEEPSLATE_REDSTONE_ORE_LIT) {
-				gl_FragData[1].a = SpecularTex.a;
-			} else {
-				gl_FragData[1].a = EMISSIVE;
-			}
-		#endif
+		#elif EMISSIVE_TYPE == 1 || EMISSIVE_TYPE == 2
+			bool useSpecular = EXCEPTIONAL_BLOCK(blockID);
+			#if EMISSIVE_TYPE == 2
+				useSpecular = (SpecularTex.a <= 0.0) && useSpecular;
+			#endif
+    
+			gl_FragData[1].a = useSpecular ? SpecularTex.a : EMISSIVE;
 
-		#if EMISSIVE_TYPE == 2
-			gl_FragData[1].a = SpecularTex.a;
-			if (SpecularTex.a <= 0.0)
-				if (blockID == 266 ||
-					blockID == BLOCK_REDSTONE_ORE_LIT ||
-					blockID == BLOCK_DEEPSLATE_REDSTONE_ORE_LIT) {
-					gl_FragData[1].a = SpecularTex.a;
-				} else {
-					gl_FragData[1].a = EMISSIVE;
-				}
-		#endif
-
-		#if EMISSIVE_TYPE == 3		
+		#elif EMISSIVE_TYPE == 3
 			gl_FragData[1].a = SpecularTex.a;
 		#endif
 
