@@ -28,30 +28,35 @@ mat3 CoordBase(vec3 n){
     return mat3(x,y,n);
 }
 
-vec2 R2_Sample(int n){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha * n);
+vec2 Hammersley(int i, int N) {
+    uint bits = uint(i);
+    bits = (bits << 16u) | (bits >> 16u);
+    bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+    bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+    bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+    bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+    return vec2(float(i)/float(N), float(bits) * 2.3283064365386963e-10);
 }
 
 float fma(float a,float b,float c){
- return a * b + c;
+	return a * b + c;
 }
 
 vec3 SampleVNDFGGX(
-    vec3 viewerDirection, // Direction pointing towards the viewer, oriented such that +Z corresponds to the surface normal
-    float alpha, // Roughness parameter along X and Y of the distribution
-    vec2 xy // Pair of uniformly distributed numbers in [0, 1)
+	vec3 viewerDirection, // Direction pointing towards the viewer, oriented such that +Z corresponds to the surface normal
+	float alpha, // Roughness parameter along X and Y of the distribution
+	vec2 xy // Pair of uniformly distributed numbers in [0, 1])
 ) {
 
-    // Transform viewer direction to the hemisphere configuration
-    viewerDirection = normalize(vec3( alpha * 0.5 * viewerDirection.xy, viewerDirection.z));
+	// Transform viewer direction to the hemisphere configuration
+	viewerDirection = normalize(vec3( alpha * 0.5 * viewerDirection.xy, viewerDirection.z));
 
-    // Sample a reflection direction off the hemisphere
-    const float tau = 6.2831853; // 2 * pi
-    float phi = tau * xy.x;
+	// Sample a reflection direction off the hemisphere
+	const float tau = 6.2831853; // 2 * pi
+	float phi = tau * xy.x;
 
-    float cosTheta = fma(1.0 - xy.y, 1.0 + viewerDirection.z, -viewerDirection.z);
-    float sinTheta = sqrt(clamp(1.0 - cosTheta * cosTheta, 0.0, 1.0));
+	float cosTheta = fma(1.0 - xy.y, 1.0 + viewerDirection.z, -viewerDirection.z);
+	float sinTheta = sqrt(clamp(1.0 - cosTheta * cosTheta, 0.0, 1.0));
 
 	sinTheta = clamp(sinTheta,0.0,1.0);
 	cosTheta = clamp(cosTheta,sinTheta*0.5,1.0);
@@ -59,33 +64,31 @@ vec3 SampleVNDFGGX(
 	
 	vec3 reflected = vec3(vec2(cos(phi), sin(phi)) * sinTheta, cosTheta);
 
-    // Evaluate halfway direction
-    // This gives the normal on the hemisphere
-    vec3 halfway = reflected + viewerDirection;
+	// Evaluate halfway direction
+	// This gives the normal on the hemisphere
+	vec3 halfway = reflected + viewerDirection;
 
-    // Transform the halfway direction back to hemiellispoid configuation
-    // This gives the final sampled normal
-    return normalize(vec3(alpha * halfway.xy, halfway.z));
+	// Transform the halfway direction back to hemiellispoid configuation
+	// This gives the final sampled normal
+	return normalize(vec3(alpha * halfway.xy, halfway.z));
 }
 
 vec3 GGX(vec3 n, vec3 v, vec3 l, float r, vec3 f0, vec3 metalAlbedoTint) {
-  r = max(pow(r,2.5), 0.0001);
+	r = max(r * r, 0.0001);
 
-  vec3 h = normalize(l + v);
-  float hn = inversesqrt(dot(h, h));
+	vec3 h = normalize(l + v);
+	float dotLH = clamp(dot(h, l), 0.0, 1.0);
+	float dotNH = clamp(dot(n, h), 0.0, 1.0);
+	float dotNL = clamp(dot(n, l), 0.0, 1.0);
+    
+	float denom = dotNH * (r - 1.0) + 1.0;
+	denom = 3.141592653589793 * denom * denom;
+	float D = r / denom;
 
-  float dotLH = clamp(dot(h,l)*hn,0.,1.);
-  float dotNH = clamp(dot(h,n)*hn,0.,1.) ;
-  float dotNL = clamp(dot(n,l),0.,1.);
-  float dotNHsq = dotNH*dotNH;
+	vec3 F = (f0 + (1. - f0) * exp2((-5.55473*dotLH-6.98316)*dotLH)) * metalAlbedoTint;
+	float k2 = .25 * r;
 
-  float denom = dotNHsq * r - dotNHsq + 1.;
-  float D = r / (3.141592653589793 * denom * denom);
-
-  vec3 F = (f0 + (1. - f0) * exp2((-5.55473*dotLH-6.98316)*dotLH)) * metalAlbedoTint;
-  float k2 = .25 * r;
-
-  return dotNL * D * F / (dotLH*dotLH*(1.0-k2)+k2);
+	return dotNL * D * F / (dotLH*dotLH*(1.0-k2)+k2);
 }
 
 float shlickFresnelRoughness(float XdotN, float roughness){
@@ -103,11 +106,12 @@ float shlickFresnelRoughness(float XdotN, float roughness){
 
 vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, bool hand, inout float reflectionLength, float fresnel){
 
-	float biasAmount = 0.00005;//mix(0.00035, 0.00005, pow(fresnel,0.01));
+	float biasAmount = mix(0.0001, 0.00002, fresnel);
 
 	vec3 clipPosition = toClipSpace3(position);
-	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ?
-	                   (-near -position.z) / dir.z : far*sqrt(3.);
+	float rayLength = ((position.z + dir.z * far * sqrt(3)) > -near)
+					? (-near - position.z) / dir.z
+					: far * sqrt(3);
 	vec3 direction = normalize(toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
 	direction.xy = normalize(direction.xy);
 
@@ -129,13 +133,10 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
   	for (int i = 0; i <= int(quality); i++) {
 
 		float sp = invLinZ(sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4.0),0).a/65000.0));
-		
-		// if(hand) convertHandDepth(sp);
-		
+				
 		float currZ = linZ(spos.z);
 		float nextZ = linZ(sp);
 
-		// if(abs(nextZ-currZ) < mix(0.005,0.5,currZ*currZ) && sp < max(minZ,maxZ) && sp > min(minZ,maxZ)) return vec3(spos.xy/RENDER_SCALE,sp);
 		if(sp < max(minZ,maxZ) && sp > min(minZ,maxZ)) return vec3(spos.xy/RENDER_SCALE,sp);
 
 		minZ = maxZ-biasAmount / currZ;
@@ -269,8 +270,8 @@ vec3 specularReflections(
 
 	in vec3 viewPos, // toScreenspace(vec3(screenUV, depth)
 	in vec3 playerPos, // normalized
-    in vec3 lightPos, // should be in world space
-    in vec3 noise, // x = bluenoise y = interleaved gradient noise
+	in vec3 lightPos, // should be in world space
+	in vec3 noise, // x = bluenoise y = interleaved gradient noise
 
 	in vec3 normal, // normals in world space
 	in float roughness, // red channel of specular texture _S
@@ -279,8 +280,8 @@ vec3 specularReflections(
 	in vec3 diffuseLighting, 
 	in vec3 lightColor, // should contain the light's color and shadows.
 
-    in float lightmap, // in anything other than world0, this should be 1.0;
-    in bool isHand // mask for the hand
+	in float lightmap, // in anything other than world0, this should be 1.0;
+	in bool isHand // mask for the hand
 
 	#ifdef FORWARD_SPECULAR
 	, inout float reflectanceForAlpha
