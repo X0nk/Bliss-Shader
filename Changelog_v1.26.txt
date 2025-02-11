@@ -1,3 +1,25 @@
+2025-2-10 v1.2.6
+1. Add moving effect on underwater distortion.
+~ gameplay_effect 为水下失真增加动态效果
+2. Greatly optimize the code of hq ssgi to improve pref and fix an issue.
+~ indirect_lighting 再次优化光线追踪代码，大幅提高高质量ssgi性能并修复了一个微小错误（+3fps），微微提升rtgi/ssgi性能（+0.5fps）
+3. Optimize code related to emissive ore.
+~ all_solid.fsh 简化了发光矿物的代码
+4. Fix an issue with rain puddle.
+~ shaders 修复了关于下雨群系判断的重大错误
+
+2025-2-9 v1.2.5
+1. Upload the whole shader to github.
+将项目上传至Github
+2. Tweak the light contribution of the aurora.
+~ climate_settings 调整极光的照明补偿效果
+3. Optimize code for indirect lighting to improve RT perf.
+~ indirect_lighting_effects 优化代码提升光追性能，rtgi/ssgi（+0.5fps），hq ssgi（+1fps）
+4. Fix aurora light setting mistake, delet unused code, overall optimize.
+~ aurora/ settings 修复了极光颜色设置颠倒的问题，删除未使用的代码，微微提升性能
+5. Optimize the layout of setting screen.
+~ shaders 微微优化了设置界面布局
+
 2025-2-7 v1.2.4
 1. Add aurora with simple control, should be improved in the future.
 ~ aurora/composite1/settings/shaders 新增了nimitz的极光，将来会持续优化
@@ -156,12 +178,10 @@ Fix and issue of v_cloud with TAAU 修复了使用TAAU时体积云过度绘制�
 7. 汉化更新
 
 ToDo List
-1. 为水下增加水面波纹的日月反射高光效果
-2. 水下失真效果重做使其具有动效
-3. 还原陷入细雪时的特效
-4. 雨雪可见度调节
-6. 为所有选项增加描述
-7. 重做英语文件
-8. 改进整体品质
-9. 涟漪效果
-10. 镜头炫光效果
+1. 还原陷入细雪时的特效
+2. 雨雪可见度调节
+3. 为所有选项增加描述
+4. 重做英语文件
+5. 改进整体品质
+6. 涟漪效果
+7. 镜头炫光效果
