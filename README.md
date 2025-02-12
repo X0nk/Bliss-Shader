@@ -1,5 +1,5 @@
 # Bliss-BSPT is an edited shader of Bliss-unstable-development by WATERFORCE99 #
-# Bliss-BSPT contains codes from Fayer3's blocklight2 & emissive-ores fork. Any re-editing or re-distribution is strictly prohibited #
+# Bliss-BSPT contains codes from Fayer3's blocklight2 fork. Any re-editing or re-distribution is strictly prohibited #
 Bliss-BSPT is a highly customized fork of Bliss which featuring aurora and many other stuffs
 which make Bliss not only looks better but perform better at the same time.
 many bugs are fixed as well.
