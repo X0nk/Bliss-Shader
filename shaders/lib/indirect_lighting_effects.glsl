@@ -4,13 +4,10 @@ vec2 R2_samples(int n){
 }
 
 vec3 cosineHemisphereSample(vec2 Xi){
-    float theta = 2.0 * 3.14159265359 * Xi.y;
+	float theta = 6.28318530718 * Xi.y;
 
-    float r = sqrt(Xi.x);
-    float x = r * cos(theta);
-    float y = r * sin(theta);
-
-    return vec3(x, y, sqrt(clamp(1.0 - Xi.x,0.,1.)));
+	float r = sqrt(Xi.x);
+	return vec3(r * cos(theta), r * sin(theta), sqrt(1.0 - Xi.x));
 }
 
 vec3 TangentToWorld(vec3 N, vec3 H){
@@ -98,10 +95,10 @@ vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 	direction.xy = normalize(direction.xy);
 
 	//get at which length the ray intersects with the edge of the screen
-	vec3 maxLengths = (step(0.,direction) - clipPosition) / direction;
+	vec3 maxLengths = (step(0.0,direction) - clipPosition) / direction;
 	float mult = maxLengths.y;
 
-	float biasdist =  1 + clamp(position.z * position.z / 50.0, 0, 3); // shrink sample size as distance increases
+	float biasdist =  1 + clamp(position.z * position.z / 50.0, 0, 2); // shrink sample size as distance increases
 
 	vec3 stepv = direction * mult / quality * vec3(RENDER_SCALE, 1.0) / biasdist;
 	lowp vec3 spos = clipPosition * vec3(RENDER_SCALE,1.0) ;
@@ -119,7 +116,7 @@ vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 		#endif
 		float currZ = linZ(spos.z);
 
-		float hit = step(sp, currZ); // hit = 1 if sp < currZ, else 0
+		float hit = step(sp, currZ);
 		float dist = abs(sp - currZ) / currZ;
 		vec3 result = mix(vec3(1.1), vec3(spos.xy, invLinZ(sp)) / vec3(RENDER_SCALE, 1.0), hit * step(dist, biasdist * 0.05));
 		if (result.z < 1.0){
@@ -140,7 +137,7 @@ float convertHandDepth_3(in float depth, bool hand) {
 }
 
 vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes, bool hand){
-	float dist = 1 + clamp(position.z*position.z,0,3); // shrink sample size as distance increases
+	float dist = 1 + clamp(position.z*position.z,0,2); // shrink sample size as distance increases
 
 	float stepSize = stepsizes / dist;
 	int maxSteps = STEPS;
@@ -166,7 +163,7 @@ vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes, bool hand){
 	
 	spos += stepv;
 	
-	float distancered = 1.0 + clamp(position.z * position.z / 50.0, 0, 3); // shrink sample size as distance increases
+	float distancered = 1.0 + clamp(position.z * position.z / 50.0, 0, 2); // shrink sample size as distance increases
 
   	for(int i = 0; i < iterations; i++){
 		if (spos.x < 0.0 || spos.y < 0.0 || spos.z < 0.0 || spos.x > 1.0 || spos.y > 1.0 || spos.z > 1.0) return vec3(1.1);
@@ -182,7 +179,7 @@ vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes, bool hand){
 		
 		if( sp < currZ) {
 			float dist = abs(sp-currZ)/currZ;
-			if (dist <= mix(0.5, 0.1, clamp(position.z*position.z - 0.1,0,1))) return vec3(spos.xy, invLinZ(sp))/vec3(RENDER_SCALE,1.0);
+			if (dist <= mix(0.3, 0.05, clamp(position.z*position.z - 0.1,0,1))) return vec3(spos.xy, invLinZ(sp))/vec3(RENDER_SCALE,1.0);
 		}
 	}
 	return vec3(1.1);
@@ -273,6 +270,7 @@ vec3 ApplySSRT(
 	vec3 skycontribution2 = unchangedIndirect;
 	float CURVE = 1.0;
 	vec3 bouncedLight = vec3(0.0);
+
 	for (int i = 0; i < nrays; i++){
 		int seed = (frameCounter%40000) * nrays + i;
 		vec2 ij = fract(R2_samples(seed) + noise.xy);
@@ -284,12 +282,14 @@ vec3 ApplySSRT(
 			vec3 rayHit = RT_alternate(mat3(gbufferModelView) * rayDir, viewPos, noise.z, 10.0, isLOD, CURVE);  // choc sspt 
 
 			CURVE = 1.0 - pow(1.0-pow(1.0 - CURVE, 2.0), 5.0);
-			CURVE = mix(CURVE, 1.0, clamp(viewPos.z / far, 0.0, 1.0));
+			CURVE = mix(CURVE, 1.0, clamp(length(viewPos.z) / far, 0.0, 1.0));
 		#endif
 
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
 			#ifdef OVERWORLD_SHADER
-				skycontribution = doIndirectLighting(skyCloudsFromTex(rayDir, colortex4).rgb/1200.0, minimumLightColor, lightmap) + blockLightColor;
+				skycontribution = doIndirectLighting(skyCloudsFromTex(rayDir, colortex4).rgb/1200.0, minimumLightColor, lightmap);
+				skycontribution = mix(vec3(luma(skycontribution)), skycontribution, 0.5);
+				skycontribution += blockLightColor;
 			#else
 				skycontribution = volumetricsFromTex(rayDir, colortex4, 6).rgb / 1200.0 + blockLightColor;
 			#endif
@@ -324,7 +324,7 @@ vec3 ApplySSRT(
 			occlusion2 += skycontribution2 * CURVE;
 		}
 	}
-	// return unchangedIndirect * CURVE;
+
 	if(isLOD) return max(radiance/nrays, 0.0);
 
 	#ifdef SKY_CONTRIBUTION_IN_SSRT
