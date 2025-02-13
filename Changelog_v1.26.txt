@@ -1,3 +1,13 @@
+2025-2-13 v1.2.7
+1. Add a simple low-pass denoise to skylight ssrt.
+~ indirect_lighting 为天空光SSRT补偿增加了低通滤波处理降低噪点
+2. Adjust block specular while rain, may tweak as futher feedback.
+~ all_solid 调整了雨天方块反光的强度，会根据反馈进一步修改
+4. Fix rainfog missing.
+~ shaders 修复了雨雾消失的问题
+5. Fix ore emission issue.
+~ all_solid 修复了硬编码发光矿物的问题，改进了代码
+
 2025-2-10 v1.2.6
 1. Add moving effect on underwater distortion.
 ~ gameplay_effect 为水下失真增加动态效果
