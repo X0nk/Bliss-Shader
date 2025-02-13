@@ -368,7 +368,7 @@ void main() {
 		rainfall = rainStrength * noPuddleAreas * lightmap;
 
 		Puddle_shape = clamp(lightmap - exp(-15.0 * pow(texture2D(noisetex, worldpos.xz * (0.020 * Puddle_Size)	).b,5.0)),0.0,1.0);
-		Puddle_shape *= clamp( viewToWorld(normal).y*0.5+0.5,0.0,1.0);
+		Puddle_shape *= clamp(viewToWorld(normal).y*0.5+0.5,0.0,1.0);
 		Puddle_shape *= rainStrength * noPuddleAreas ;
 
 	#endif
@@ -580,9 +580,7 @@ void main() {
 		#define EXCEPTIONAL_BLOCK(id) (id == 266 || id == BLOCK_REDSTONE_ORE_LIT || id == BLOCK_DEEPSLATE_REDSTONE_ORE_LIT)
 
 		if (EXCEPTIONAL_BLOCK(blockID) && alphaTestRef < 0.05) {
-			float smax = max(max(Albedo.r,Albedo.g),Albedo.b);
-			float smin = min(min(Albedo.r,Albedo.g),Albedo.b);
-			float s = (smax - smin) / smax;
+			float s = 1 - min(min(Albedo.r,Albedo.g),Albedo.b) / max(max(Albedo.r,Albedo.g),Albedo.b);
 			SpecularTex.a = s > 0.1 ? pow(s, 1.5) * 0.9999 : 1.0;
 		}
 
@@ -591,13 +589,15 @@ void main() {
 		#if EMISSIVE_TYPE == 0
 			gl_FragData[1].a = 0.0;
 
-		#elif EMISSIVE_TYPE == 1 || EMISSIVE_TYPE == 2
-			bool useSpecular = EXCEPTIONAL_BLOCK(blockID);
-			#if EMISSIVE_TYPE == 2
-				useSpecular = (SpecularTex.a <= 0.0) && useSpecular;
-			#endif
-    
-			gl_FragData[1].a = useSpecular ? SpecularTex.a : EMISSIVE;
+		#elif EMISSIVE_TYPE == 1
+			gl_FragData[1].a = EMISSIVE;
+			if EXCEPTIONAL_BLOCK(blockID)
+			gl_FragData[1].a = SpecularTex.a;
+
+		#elif EMISSIVE_TYPE == 2
+			gl_FragData[1].a = SpecularTex.a;
+			if(!EXCEPTIONAL_BLOCK(blockID) && SpecularTex.a <= 0.0)
+			gl_FragData[1].a = EMISSIVE;
 
 		#elif EMISSIVE_TYPE == 3
 			gl_FragData[1].a = SpecularTex.a;
