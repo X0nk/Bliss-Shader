@@ -1,8 +1,20 @@
+2025-2-14 v1.2.8
+1. Add extra erosion and density to v cloud to make cloud fancier.(not applied)
+~ volumetricClouds 添加更多侵蚀效果与层数使体积云更具细节，外形更蓬松，并尽可能保持性能(尚未实装)
+2. Improve the water distortion effect.
+~ gameplay_effect 优化相机覆水效果
+3. Slightly improve how aurora light react to cloud.
+~ deferred.vsh 稍稍调整了极光颜色对云层的影响
+4. Fix bug with season.
+~ climate_settings 删除了冬季降雪，修复四季选项
+5. Remove abandoned code and settings, readding setting that still functional
+~ shaders/ settings 移除了无效代码与设置，还原了个别仍具功能的选项
+
 2025-2-13 v1.2.7
 1. Add a simple low-pass denoise to skylight ssrt.
 ~ indirect_lighting 为天空光SSRT补偿增加了低通滤波处理降低噪点
 2. Adjust block specular while rain, may tweak as futher feedback.
-~ all_solid 调整了雨天方块反光的强度，会根据反馈进一步修改
+~ composite1 调整了雨天方块反光的强度，会根据反馈进一步修改
 4. Fix rainfog missing.
 ~ shaders 修复了雨雾消失的问题
 5. Fix ore emission issue.
