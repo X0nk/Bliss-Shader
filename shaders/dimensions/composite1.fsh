@@ -603,8 +603,6 @@ vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, floa
 	float scatterDepth = max(1.0 - Scattering/density, 0.0);
 	scatterDepth *= exp(-7.0 * (1.0-scatterDepth));
 
-	
-
 	vec3 absorbColor = exp(max(luma(albedo) - albedo*vec3(1.0,1.1,1.2), 0.0) * -20.0 * sss_absorbance_multiplier);
 	vec3 scatter =  scatterDepth * mix(absorbColor, vec3(1.0), scatterDepth) * (1-min(max((1-Density)-0.9, 0.0)/(1.0-0.9),1.0));	
 	
@@ -640,14 +638,10 @@ void applyPuddles(
 ){
 	vec3 unchangedNormals = normals;
 
-
-
 	float halfWet = min(wetnessAmount,1.0);
 	float fullWet = clamp(wetnessAmount - 2.0,0.0,1.0);
-	// halfWet = 0.0;
- 	// fullWet = 0.0;
-	float noise = texture2D(noisetex, worldPos.xz * 0.02).b;
 
+	float noise = texture2D(noisetex, worldPos.xz * 0.02).b;
 
 	float lightmapMax = min(max(lightmap - 0.9,0.0) * 10.0,1.0) ;
 	float lightmapMin = min(max(lightmap - 0.8,0.0) * 5.0,1.0) ;
@@ -655,13 +649,13 @@ void applyPuddles(
 	lightmap = pow(1.0-pow(1.0-lightmap,3.0),2.0);
 	
 	float puddles = max(halfWet - noise,0.0);
-	puddles = clamp(halfWet - exp(-25.0 * puddles*puddles*puddles*puddles*puddles),0.0,1.0);
+	puddles = clamp(halfWet - exp(-25.0 * puddles * puddles * puddles * puddles * puddles),0.0,1.0);
 	
 	float wetnessStages = mix(puddles, 1.0, fullWet) * lightmap;
 	if(isWater) wetnessStages = 0.0;
 
 	normals = mix(normals, flatNormals, puddles * lightmap * clamp(flatNormals.y,0.0,1.0));
-	roughness = mix(roughness, 1.0, wetnessStages);
+	roughness = mix(roughness, 1.0, wetnessStages * (1.0 - roughness));
 
 	if(f0 < 229.5/255.0 ) albedo = pow(albedo * (1.0 - 0.08*wetnessStages), vec3(1.0 + 0.7*wetnessStages));
 
@@ -1182,10 +1176,10 @@ void main() {
 
 
 	////////////////////////////////////////////////////////////////////////////////
-	/////////////////////////	SUB SURFACE SCATTERING	////////////////////////////
+	///////////////////////// SUB SURFACE SCATTERING	/////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 	
-	/////////////////////////////	SKY SSS		/////////////////////////////
+	/////////////////////////////	SKY SSS /////////////////////////////
 		#if defined Ambient_SSS && defined OVERWORLD_SHADER && indirect_effect == 1
 			if (!hand){
 				vec3 ambientColor = AmbientLightColor * ambientsss_brightness * ambient_brightness * 3.0;
@@ -1283,11 +1277,11 @@ void main() {
 					// Background += drawSun(dot(WmoonVec, feetPlayerPos_normalized),0, moonLightCol,vec3(0.0));
 				#endif
 
-				// Render aurora
-				Background += drawAurora(feetPlayerPos_normalized, noise) * aurMult;
-
 				Background *= atmosphereGround;
 			#endif
+
+			// Render aurora
+			Background += drawAurora(feetPlayerPos_normalized, noise) * aurMult;
 
 			vec3 Sky = skyFromTex(feetPlayerPos_normalized, colortex4)/1200.0 * Sky_Brightness;
 			Background += Sky;
