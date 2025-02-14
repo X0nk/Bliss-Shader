@@ -67,7 +67,7 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
 		scale.xy = (isEyeInWater == 1 ? vec2(0.3) : vec2(0.5, 0.25 + (exitWater*exitWater)*0.25 )) * vec2(aspectRatio,1.0);
 		scale.z = isEyeInWater == 1 ? 0.0 : exitWater;
 
-		vec2 motion = 0.04 * vec2(sin(Time * 0.06), cos(Time * 0.06));
+		vec2 motion = isEyeInWater == 1 ? 0.04 * vec2(sin(Time * 0.06), cos(Time * 0.06)) : vec2(0.0);
 		vec2 distortedTexCoord = texcoord - vec2(0.0, scale.z) + motion;
 		distortedTexCoord *= scale.xy;
 	
