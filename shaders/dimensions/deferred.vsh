@@ -147,7 +147,7 @@ void main() {
 		vec3 pos = vec3(0.0,1.0,0.0);
 		pos.xy += normalize(sample3x3[i]) * vec2(0.3183,0.9000);
 
-		averageSkyCol_Clouds += 1.5 * (skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.0);
+		averageSkyCol_Clouds += mix(1.5 * (skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.0), aurOffset, 0.05);
 		averageSkyCol += 1.5 * (skyFromTex(pos,colortex4).rgb/maxIT/150.0);
    	}
 	
@@ -157,7 +157,7 @@ void main() {
 
 
 	vec3 minimumlight =  vec3(0.02) * 0.2 * MIN_LIGHT_AMOUNT + nightVision * 0.05;
-	averageSkyCol_Clouds = max(normalize(averageSkyCol_Clouds + 1e-6) * min(luma(averageSkyCol_Clouds) * 3.0,2.5),0.0) + aurOffset;
+	averageSkyCol_Clouds = max(normalize(averageSkyCol_Clouds + 1e-6) * min(luma(averageSkyCol_Clouds) * 3.0,2.5),0.0);
 	averageSkyCol = max(averageSkyCol * PLANET_GROUND_BRIGHTNESS,0.0) + max(minimumlight, 0.02 * 0.2);
 
 ////////////////////////////////////////
