@@ -2,7 +2,7 @@ float invLinZ (float lindepth){
 	return -((2.0*near/lindepth)-far-near)/(far-near);
 }
 float linZ(float depth) {
-    return (2.0 * near) / (far + near - depth * (far - near));
+	return (2.0 * near) / (far + near - depth * (far - near));
 	// l = (2*n)/(f+n-d(f-n))
 	// f+n-d(f-n) = 2n/l
 	// -d(f-n) = ((2n/l)-f-n)
@@ -10,32 +10,32 @@ float linZ(float depth) {
 
 }
 
-void frisvad(in vec3 n, out vec3 f, out vec3 r){
-    if(n.z < -0.9) {
-        f = vec3(0.,-1,0);
-        r = vec3(-1, 0, 0);
-    } else {
-    	float a = 1./(1.+n.z);
-    	float b = -n.x*n.y*a;
-    	f = vec3(1. - n.x*n.x*a, b, -n.x) ;
-    	r = vec3(b, 1. - n.y*n.y*a , -n.y);
-    }
+void frisvad(in vec3 n, out vec3 f, out vec3 r) {
+	if(n.z < -0.9) {
+		f = vec3(0.,-1,0);
+		r = vec3(-1, 0, 0);
+	} else {
+		float a = 1./(1.+n.z);
+		float b = -n.x*n.y*a;
+		f = vec3(1. - n.x*n.x*a, b, -n.x) ;
+		r = vec3(b, 1. - n.y*n.y*a , -n.y);
+	}
 }
 
 mat3 CoordBase(vec3 n){
 	vec3 x,y;
-    frisvad(n,x,y);
-    return mat3(x,y,n);
+	frisvad(n,x,y);
+	return mat3(x,y,n);
 }
 
 vec2 Hammersley(int i, int N) {
-    uint bits = uint(i);
-    bits = (bits << 16u) | (bits >> 16u);
-    bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
-    bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
-    bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
-    bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
-    return vec2(float(i)/float(N), float(bits) * 2.3283064365386963e-10);
+	uint bits = uint(i);
+	bits = (bits << 16u) | (bits >> 16u);
+	bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+	bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+	bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+	bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+	return vec2(float(i)/float(N), float(bits) * 2.3283064365386963e-10);
 }
 
 float fma(float a,float b,float c){

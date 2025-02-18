@@ -16,11 +16,11 @@ float b = (exp(d1)-a)*150./128.0;
 
 vec4 BiasShadowProjection(in vec4 projectedShadowSpacePosition) {
   
-  float distortFactor = log(length(projectedShadowSpacePosition.xy)*b+a)*k;
-  projectedShadowSpacePosition.xy /= distortFactor;
-  return projectedShadowSpacePosition;
+	float distortFactor = log(length(projectedShadowSpacePosition.xy)*b+a)*k;
+	projectedShadowSpacePosition.xy /= distortFactor;
+	return projectedShadowSpacePosition;
 }
 
-float calcDistort(vec2 worldpos){
-  return 1.0/(log(length(worldpos)*b+a)*k);
+float calcDistort(vec2 worldpos) {
+	return 1.0/(log(length(worldpos)*b+a)*k);
 }

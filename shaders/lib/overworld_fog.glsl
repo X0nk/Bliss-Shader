@@ -32,11 +32,11 @@ float cloudVol(in vec3 pos, float maxDistance ){
 		fog_erosion = 1.0 - densityAtPosFog(samplePos2 * 200.0 - vec3(min(max(fog_shape - 0.6 ,0.0) * 2.0 ,1.0)*200.0));
 	}
 	
-	float cloudyFog = max(min(max(fog_shape - 0.6 ,0.0) * 2.0 ,1.0) - fog_erosion * 0.4	, 0.0)	*	exp(-0.05 * max(pos.y - (fogYstart+20),0.0));
+	float cloudyFog = max(min(max(fog_shape - 0.6 ,0.0) * 2.0 ,1.0) - fog_erosion * 0.4	, 0.0) * exp(-0.05 * max(pos.y - (fogYstart+20),0.0));
 	float rainyFog = (low_gradientFog * 0.5 + exp2(-0.06 * max(pos.y - fogYstart,0.0))) * rainStrength * noPuddleAreas;
 	
 	if(sandStorm > 0.0 || snowStorm > 0.0){
-		float IntenseFogs = pow(1.0 - densityAtPosFog( (samplePos2  - vec3(frameTimeCounter,0,frameTimeCounter)*15.0) * 100.0),2.0) * mix(1.0, high_gradientFog, snowStorm);
+		float IntenseFogs = pow(1.0 - densityAtPosFog((samplePos2  - vec3(frameTimeCounter,0,frameTimeCounter)*15.0) * 100.0),2.0) * mix(1.0, high_gradientFog, snowStorm);
 		cloudyFog = mix(cloudyFog, IntenseFogs, sandStorm+snowStorm);
 
 		medium_gradientFog = 1.0;
@@ -201,9 +201,6 @@ vec4 GetVolumetricFog(
 					sh = vec3(shadow2D(shadow, shadowPos).x);
 				#endif
 			}
-			#ifdef RAYMARCH_CLOUDS_WITH_FOG
-				vec3 sh_forClouds = sh;
-			#endif
 
 			#ifdef VL_CLOUDS_SHADOWS
 				sh *= GetCloudShadow(progressW, sunVector);

@@ -71,11 +71,11 @@ vec3 LightSourcePosition(vec3 worldPos, vec3 cameraPos, float vortexBounds){
 	// this is static so it can just sit in one place
 	vec3 vortexPos = worldPos - vec3(0.0,200.0,0.0);
 
-    vec3 lightningPos = worldPos - cameraPos - ManualLightPos;
+	vec3 lightningPos = worldPos - cameraPos - ManualLightPos;
     
 	// snap-to coordinates in worldspace.
 	float cellSize = 200.0;
-    lightningPos += fract(cameraPos/cellSize)*cellSize - cellSize*0.5;
+	lightningPos += fract(cameraPos/cellSize)*cellSize - cellSize*0.5;
 
 	// make the position offset to random places (RNG.xyz from non-clearing buffer).
 	vec3 randomOffset = (texelFetch2D(colortex4,ivec2(2,1),0).xyz / 150.0) * 2.0 - 1.0;
@@ -83,8 +83,8 @@ vec3 LightSourcePosition(vec3 worldPos, vec3 cameraPos, float vortexBounds){
 	
 	#ifdef THE_ORB
 		cellSize = 200.0;
-    	vec3 orbpos = worldPos - cameraPos - ManualLightPos;// - vec3(sin(frameTimeCounter), cos(frameTimeCounter), cos(frameTimeCounter))*100;
-    	orbpos += fract(cameraPos/cellSize)*cellSize - cellSize*0.5;
+		vec3 orbpos = worldPos - cameraPos - ManualLightPos;// - vec3(sin(frameTimeCounter), cos(frameTimeCounter), cos(frameTimeCounter))*100;
+		orbpos += fract(cameraPos/cellSize)*cellSize - cellSize*0.5;
 
 		return orbpos;
 	#else
@@ -112,31 +112,31 @@ void SwirlAroundOrigin(inout vec3 alteredOrigin, vec3 origin){
 	float radiance = 2.39996 + alteredOrigin.y/1.5 + frameTimeCounter/50;
 	mat2 rotationMatrix  = mat2(vec2(cos(radiance),  -sin(radiance)),  vec2(sin(radiance),  cos(radiance)));
 
-    // make the swirl only happen within a radius
-    float SwirlBounds = clamp(sqrt(length(vec3(origin.x, origin.y-100,origin.z)) / 200.0 - 1.0)  ,0.0,1.0);
+	// make the swirl only happen within a radius
+	float SwirlBounds = clamp(sqrt(length(vec3(origin.x, origin.y-100,origin.z)) / 200.0 - 1.0)  ,0.0,1.0);
     
-    alteredOrigin.xz = mix(alteredOrigin.xz * rotationMatrix, alteredOrigin.xz, SwirlBounds);
+	alteredOrigin.xz = mix(alteredOrigin.xz * rotationMatrix, alteredOrigin.xz, SwirlBounds);
 }
 
 // control where the fog volume should and should not be using a sphere.
 void VolumeBounds(inout float Volume, vec3 Origin){
 
-    vec3 Origin2 = (Origin - vec3(0,100,0));
+	vec3 Origin2 = (Origin - vec3(0,100,0));
 	Origin2.y *= 0.8;
-    float Center1 = length(Origin2);
+	float Center1 = length(Origin2);
 
-    float Bounds = max(1.0 - Center1 / 75.0, 0.0) * 5.0;
+	float Bounds = max(1.0 - Center1 / 75.0, 0.0) * 5.0;
 
 
-    float radius = 150.0;
-    float thickness = 50.0 * radius;
-    float Torus =  (thickness - clamp( pow( length( vec2(length(Origin.xz) - radius, Origin2.y) ),2.0) - radius, 0.0, thickness) ) / thickness;
+	float radius = 150.0;
+	float thickness = 50.0 * radius;
+	float Torus =  (thickness - clamp( pow( length( vec2(length(Origin.xz) - radius, Origin2.y) ),2.0) - radius, 0.0, thickness) ) / thickness;
 	
 	Origin2.xz *= 0.5;
 	Origin2.y -= 100;
 
 	float orb = clamp((1.0 - length(Origin2) / 15.0) * 1.0,0.0,1.0);
-    Volume = max(Volume - Bounds - Torus, 0);
+	Volume = max(Volume - Bounds - Torus, 0);
 	
 }
 
@@ -151,16 +151,16 @@ float fogShape(in vec3 pos){
 	float voidZone = max(exp2(-1.0 * sqrt(max(pos.y - -60,0.0))) ,0.0) ;
 
 	// swirly swirly :DDDDDDDDDDD
-    SwirlAroundOrigin(samplePos, pos);
+	SwirlAroundOrigin(samplePos, pos);
 	
 	float noise = densityAtPosFog(samplePos * 12.0);
-    float erosion = 1.0-densityAtPosFog((samplePos - frameTimeCounter/20) * (124 + (1-noise)*7));
+	float erosion = 1.0-densityAtPosFog((samplePos - frameTimeCounter/20) * (124 + (1-noise)*7));
     
 
 	float clumpyFog = max(exp(noise * -mix(10,4,vortexBounds))*mix(2,1,vortexBounds) - erosion*0.3, 0.0);
     
 	// apply limts
-    VolumeBounds(clumpyFog, pos);
+	VolumeBounds(clumpyFog, pos);
 
 
 	return clumpyFog + voidZone;
@@ -168,24 +168,24 @@ float fogShape(in vec3 pos){
 
 float endFogPhase(vec3 LightPos){
 
-    // float mie = exp(length(LightPos) / -150);
-    // mie *= mie;
-    // mie *= mie;
-    // mie *= 100;
+	// float mie = exp(length(LightPos) / -150);
+	// mie *= mie;
+	// mie *= mie;
+	// mie *= 100;
 
-    // float mie = 1.0 - clamp(1.0 - length(LightPos) / 100.0,0.0,1.0);
-    float mie = exp(length(LightPos) / -50.0);
+	// float mie = 1.0 - clamp(1.0 - length(LightPos) / 100.0,0.0,1.0);
+	float mie = exp(length(LightPos) / -50.0);
 
-    return (mie*10.0)*(mie*10.0);
+	return (mie*10.0)*(mie*10.0);
 }
 
 vec3 LightSourceColors(float vortexBounds, float lightningflash){
 
-    // vec3 vortexColor = vec3(0.7,0.88,1.0); 
-    // vec3 lightningColor = vec3(ORB_R,ORB_G,ORB_B);
+	// vec3 vortexColor = vec3(0.7,0.88,1.0); 
+	// vec3 lightningColor = vec3(ORB_R,ORB_G,ORB_B);
 
-    vec3 vortexColor = vec3(END_VORTEX_R, END_VORTEX_G, END_VORTEX_B);
-    vec3 lightningColor = vec3(END_LIGHTNING_R, END_LIGHTNING_G, END_LIGHTNING_B) * lightningflash;
+	vec3 vortexColor = vec3(END_VORTEX_R, END_VORTEX_G, END_VORTEX_B);
+	vec3 lightningColor = vec3(END_LIGHTNING_R, END_LIGHTNING_G, END_LIGHTNING_B) * lightningflash;
 
 	#ifdef THE_ORB
 		return vec3(ORB_R, ORB_G, ORB_B) * ORB_ColMult;
@@ -196,7 +196,7 @@ vec3 LightSourceColors(float vortexBounds, float lightningflash){
 
 vec3 LightSourceLighting(vec3 startPos, vec3 lightPos, float noise, float density, vec3 lightColor, float vortexBound){
 
-    float phase = endFogPhase(lightPos);
+	float phase = endFogPhase(lightPos);
 	float shadow = 0.0;
 
 	for (int j = 0; j < 3; j++){
@@ -204,16 +204,15 @@ vec3 LightSourceLighting(vec3 startPos, vec3 lightPos, float noise, float densit
 		shadow += fogShape(shadowSamplePos);
 	}
 
-
-    vec3 finalLighting = lightColor * phase * exp(-7.0 * shadow) ;
+	vec3 finalLighting = lightColor * phase * exp(-7.0 * shadow) ;
 	finalLighting += lightColor * phase*phase * (1.0 - exp( -shadow * vec3(0.6,2.0,2))) * (1.0 - exp(-density*density));
 
 	return finalLighting;
 }
-//Mie phase function
+// Mie phase function
 float phaseEND(float x, float g){
-    float gg = g * g;
-    return (gg * -0.25 + 0.25) * pow(-2.0 * (g * x) + (gg + 1.0), -1.5) / 3.14;
+	float gg = g * g;
+	return (gg * -0.25 + 0.25) * pow(-2.0 * (g * x) + (gg + 1.0), -1.5) / 3.14;
 }
 vec4 GetVolumetricFog(
 	vec3 viewPosition,
@@ -270,7 +269,7 @@ vec4 GetVolumetricFog(
 
 			// determine where the vortex area ends and chaotic lightning area begins.
 			float vortexBounds = clamp(vortexBoundRange - length(progressW), 0.0,1.0);
-        	vec3 lightPosition = LightSourcePosition(progressW, cameraPosition, vortexBounds);
+			vec3 lightPosition = LightSourcePosition(progressW, cameraPosition, vortexBounds);
 			vec3 lightColors = LightSourceColors(vortexBounds, lightningflash) * 0.25;
 
 			float volumeDensity = fogShape(progressW);
@@ -290,7 +289,7 @@ vec4 GetVolumetricFog(
 			vec3 stormLighting = indirect + lightsources;
 			
 			color += (stormLighting - stormLighting*volumeCoeff) * absorbance;
-        	absorbance *= volumeCoeff;
+			absorbance *= volumeCoeff;
 
 		//------ HAZE EFFECT
 			// dont make haze contrube to absorbance.
@@ -302,7 +301,7 @@ vec4 GetVolumetricFog(
 		// // determine where the vortex area ends and chaotic lightning area begins.
 		// float vortexBounds = clamp(vortexBoundRange - length(progressW), 0.0,1.0);
 
-        // vec3 lightPosition = LightSourcePosition(progressW, cameraPosition, vortexBounds);
+	// vec3 lightPosition = LightSourcePosition(progressW, cameraPosition, vortexBounds);
 		// vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
 
 		// volumeDensity += max(1.0 - length(vec3(lightPosition.x,lightPosition.y*2,lightPosition.z))/50,0.0) * vortexBounds;
@@ -341,14 +340,14 @@ vec4 GetVolumetricFog(
 }
 
 float GetEndFogShadow(vec3 WorldPos, vec3 LightPos){
-    float Shadow = 0.0;
+	float Shadow = 0.0;
 
 	for (int i=0; i < 3; i++){
 
-	    // vec3 shadowSamplePos = WorldPos - LightPos * (pow(i,0.75)*0.25); 
-	    vec3 shadowSamplePos = WorldPos - LightPos * (0.01 + pow(i,0.75)*0.25); 
-	    Shadow += fogShape(shadowSamplePos)*END_STORM_DENSTIY;
-    }
+	// vec3 shadowSamplePos = WorldPos - LightPos * (pow(i,0.75)*0.25); 
+	vec3 shadowSamplePos = WorldPos - LightPos * (0.01 + pow(i,0.75)*0.25); 
+	Shadow += fogShape(shadowSamplePos)*END_STORM_DENSTIY;
+	}
 
 	return clamp(exp2(Shadow * -10.0),0.0,1.0);
 }

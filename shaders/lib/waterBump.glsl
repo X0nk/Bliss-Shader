@@ -5,18 +5,17 @@ float waterCaustics(vec3 worldPos, vec3 sunVec) {
 
 	float heightSum = 0.0;
 	float movement = frameTimeCounter*0.035 * WATER_WAVE_SPEED;
-	// movement = 0.0;
 
 	float radiance = 2.39996;
 	mat2 rotationMatrix  = mat2(vec2(cos(radiance),  -sin(radiance)),  vec2(sin(radiance),  cos(radiance)));
-	
+
 	vec2 wave_size[3] = vec2[](
-		vec2(48.,12.),
-		vec2(12.,48.),
-		vec2(32.,32.)
+		vec2(48,12),
+		vec2(12,48),
+		vec2(32,32)
 	);
 
-	float WavesLarge = max(texture2D(noisetex, pos / 600.0 ).b,0.1);
+	float WavesLarge = max(texture2D(noisetex, pos / 600.0).b,0.1);
 
 	for (int i = 0; i < 3; i++){
 		pos = rotationMatrix * pos;
@@ -29,12 +28,11 @@ float waterCaustics(vec3 worldPos, vec3 sunVec) {
 }
 
 float getWaterHeightmap(vec2 posxz) {
-	
+
 	vec2 pos = posxz;
 	float heightSum = 0.0;
 	float movement = frameTimeCounter*0.035 * WATER_WAVE_SPEED;
-	// movement = 0.0;
-	
+
 	float radiance = 2.39996;
 	mat2 rotationMatrix  = mat2(vec2(cos(radiance),  -sin(radiance)),  vec2(sin(radiance),  cos(radiance)));
 
@@ -78,7 +76,7 @@ vec3 getWaveNormal(vec3 waterPos, vec3 playerpos, bool isLOD){
 	#ifdef HYPER_DETAILED_WAVES
 		deltaPos = 0.025;
 	#endif
-	
+
 	vec2 coord = waterPos.xy;
 
 	float h0 = getWaterHeightmap(coord);
