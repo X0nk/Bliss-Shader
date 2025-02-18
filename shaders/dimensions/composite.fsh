@@ -453,7 +453,7 @@ void main() {
 	#ifdef BASIC_SHADOW_FILTER
 		if (LabSSS > 0.0 && NdotL < 0.001){  
 			minshadowfilt = 50;
-		//  maxshadowfilt = 50;
+		// maxshadowfilt = 50;
 		 }
 	#endif
 

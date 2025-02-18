@@ -15,17 +15,17 @@ Read the terms of modification and sharing before changing something below pleas
 
 
 #ifdef HAND
-#undef POM
+	#undef POM
 #endif
 
 #ifndef USE_LUMINANCE_AS_HEIGHTMAP
-#ifndef MC_NORMAL_MAP
-#undef POM
-#endif
+	#ifndef MC_NORMAL_MAP
+		#undef POM
+	#endif
 #endif
 
 #ifdef POM
-#define MC_NORMAL_MAP
+	#define MC_NORMAL_MAP
 #endif
 
 
@@ -362,7 +362,7 @@ void main() {
 				// these wave off of the air. they wave uniformly
 				|| (mc_Entity.x == BLOCK_GRASS_TALL_UPPER || mc_Entity.x == BLOCK_AIR_WAVING)
 
-			) && length(position.xyz) < 96.0
+			) && length(position.xyz) < 64.0
 		){
 			vec3 UnalteredWorldpos = worldpos;
 

@@ -1,7 +1,8 @@
 #include "/lib/settings.glsl"
+#include "/lib/ripples.glsl"
 
 // #if defined END_SHADER || defined NETHER_SHADER
-// 	#undef IS_LPV_ENABLED
+	// #undef IS_LPV_ENABLED
 // #endif
 
 #ifdef IS_LPV_ENABLED
@@ -14,6 +15,7 @@
 varying vec4 lmtexcoord;
 varying vec4 color;
 uniform vec4 entityColor;
+uniform float noPuddleAreas;
 
 #ifdef OVERWORLD_SHADER
 	const bool shadowHardwareFiltering = true;
@@ -31,7 +33,6 @@ uniform vec4 entityColor;
 	flat varying vec3 averageSkyCol_Clouds;
 	flat varying vec4 lightCol;
 #endif
-
 
 
 flat varying float HELD_ITEM_BRIGHTNESS;
@@ -226,40 +227,40 @@ vec2 CleanSample(
 }
 
 vec3 viewToWorld(vec3 viewPos) {
-    vec4 pos;
-    pos.xyz = viewPos;
-    pos.w = 0.0;
-    pos = gbufferModelViewInverse * pos ;
-    return pos.xyz;
+	vec4 pos;
+	pos.xyz = viewPos;
+	pos.w = 0.0;
+	pos = gbufferModelViewInverse * pos ;
+	return pos.xyz;
 }
 
 vec3 worldToView(vec3 worldPos) {
-    vec4 pos = vec4(worldPos, 0.0);
-    pos = gbufferModelView * pos;
-    return pos.xyz;
+	vec4 pos = vec4(worldPos, 0.0);
+	pos = gbufferModelView * pos;
+	return pos.xyz;
 }
 
 vec4 encode (vec3 n, vec2 lightmaps){
 	n.xy = n.xy / dot(abs(n), vec3(1.0));
 	n.xy = n.z <= 0.0 ? (1.0 - abs(n.yx)) * sign(n.xy) : n.xy;
-    vec2 encn = clamp(n.xy * 0.5 + 0.5,-1.0,1.0);
+	vec2 encn = clamp(n.xy * 0.5 + 0.5,-1.0,1.0);
 	
-    return vec4(encn,vec2(lightmaps.x,lightmaps.y));
+	return vec4(encn,vec2(lightmaps.x,lightmaps.y));
 }
 
 //encoding by jodie
 float encodeVec2(vec2 a){
-    const vec2 constant1 = vec2( 1., 256.) / 65535.;
-    vec2 temp = floor( a * 255. );
+	const vec2 constant1 = vec2( 1., 256.) / 65535.;
+	vec2 temp = floor( a * 255. );
 	return temp.x*constant1.x+temp.y*constant1.y;
 }
 
 float encodeVec2(float x,float y){
-    return encodeVec2(vec2(x,y));
+	return encodeVec2(vec2(x,y));
 }
 
 float ld(float dist) {
-    return (2.0 * near) / (far + near - dist * (far - near));
+	return (2.0 * near) / (far + near - dist * (far - near));
 }
 
 uniform float dhFarPlane;
@@ -369,7 +370,7 @@ void Emission(
 	float exposure
 ){
 	// float autoBrightnessAdjust = mix(5.0, 100.0, clamp(exp(-10.0*exposure),0.0,1.0));
-	if( Emission < 254.5/255.0) Lighting = mix(Lighting, Albedo * 5.0 * Emissive_Brightness, pow(Emission, Emissive_Curve)); // old method.... idk why
+	if(Emission < 254.5/255.0) Lighting = mix(Lighting, Albedo * 5.0 * Emissive_Brightness, pow(Emission, Emissive_Curve)); // old method.... idk why
 }
 
 uniform vec3 eyePosition;
@@ -505,11 +506,11 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			vec3 playerPos = (mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz);
 			vec3 waterPos = playerPos;
 
-			vec3 flowDir = normalize(worldSpaceNormal*10.0) * frameTimeCounter * 2.0 * WATER_WAVE_SPEED;
+			vec3 flowDir = normalize(worldSpaceNormal*10.0) * frameTimeCounter * 2.0 * WATER_WAVE_SPEED * (1 + 0.5 * rainStrength);
 			
-			vec2 newPos = 			playerPos.xy + cameraPosition.xy + abs(flowDir.xz);
-			newPos = mix(newPos, 	playerPos.zy + cameraPosition.zy + abs(flowDir.zx), clamp(abs(worldSpaceNormal.x),0,1));
-			newPos = mix(newPos, 	playerPos.xz + cameraPosition.xz, clamp(abs(worldSpaceNormal.y),0,1));
+			vec2 newPos = playerPos.xy + cameraPosition.xy + abs(flowDir.xz);
+			newPos = mix(newPos, playerPos.zy + cameraPosition.zy + abs(flowDir.zx), clamp(abs(worldSpaceNormal.x),0,1));
+			newPos = mix(newPos, playerPos.xz + cameraPosition.xz, clamp(abs(worldSpaceNormal.y),0,1));
 			waterPos.xy = newPos;
 
 			// make the waves flow in the direction the water faces, except for perfectly up facing parts.
@@ -518,6 +519,16 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			waterPos.xyz = getParallaxDisplacement(waterPos, playerPos);
 			
 			vec3 bump = normalize(getWaveNormal(waterPos, playerPos, false));
+
+			#ifdef RAIN_RIPPLES
+				float applyRipple = smoothstep(0.9, 1.0, (lmtexcoord.zw).y) * rainStrength * noPuddleAreas;
+			#else
+				float applyRipple = 0.0;
+			#endif
+
+			vec2 uv = (feetPlayerPos + cameraPosition).xz * 4.0;
+			vec3 rippleNormal = drawRipples(uv, frameTimeCounter) * applyRipple;
+			bump = normalize(bump * (1 + 0.5 * rainStrength) + rippleNormal * 0.1);
 
 			float bumpmult = 10.0 * WATER_WAVE_STRENGTH;
 			bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
@@ -770,7 +781,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	#if defined ENTITIES && defined IS_IRIS
 		if(NAMETAG > 0) {
-			//  WHY DO THEY HAVE TO AHVE LIGHTING AAAAAAUGHAUHGUAHG
+			// WHY DO THEY HAVE TO AHVE LIGHTING AAAAAAUGHAUHGUAHG
 			#ifndef OVERWORLD_SHADER
 				lightmap.y = 0.0;
 			#endif
@@ -781,5 +792,5 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			gl_FragData[0] = vec4(nameTagLighting.rgb * 0.1, UnchangedAlpha  * 0.75);
 		}
 	#endif
-}
+	}
 }

@@ -8,17 +8,17 @@
 flat varying int NameTags;
 
 #ifdef HAND
-#undef POM
+	#undef POM
 #endif
 
 #ifndef USE_LUMINANCE_AS_HEIGHTMAP
-#ifndef MC_NORMAL_MAP
-#undef POM
-#endif
+	#ifndef MC_NORMAL_MAP
+		#undef POM
+	#endif
 #endif
 
 #ifdef POM
-#define MC_NORMAL_MAP
+	#define MC_NORMAL_MAP
 #endif
 
 
@@ -63,8 +63,6 @@ varying vec4 normalMat;
 
 uniform sampler2D specular;
 
-
-
 uniform sampler2D texture;
 uniform sampler2D colortex1;//albedo(rgb),material(alpha) RGBA16
 uniform float frameTimeCounter;
@@ -97,9 +95,6 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 uniform float noPuddleAreas;
 uniform float nightVision;
 
-// float interleaved_gradientNoise(){
-// 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
-// }
 
 float interleaved_gradientNoise_temporal(){
 	#ifdef TAA
@@ -132,45 +127,45 @@ float blueNoise(){
 }
 
 mat3 inverseMatrix(mat3 m) {
-  float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
-  float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];
-  float a20 = m[2][0], a21 = m[2][1], a22 = m[2][2];
+	float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
+	float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];
+	float a20 = m[2][0], a21 = m[2][1], a22 = m[2][2];
 
-  float b01 = a22 * a11 - a12 * a21;
-  float b11 = -a22 * a10 + a12 * a20;
-  float b21 = a21 * a10 - a11 * a20;
+	float b01 = a22 * a11 - a12 * a21;
+	float b11 = -a22 * a10 + a12 * a20;
+	float b21 = a21 * a10 - a11 * a20;
 
-  float det = a00 * b01 + a01 * b11 + a02 * b21;
+	float det = a00 * b01 + a01 * b11 + a02 * b21;
 
-  return mat3(b01, (-a22 * a01 + a02 * a21), (a12 * a01 - a02 * a11),
-              b11, (a22 * a00 - a02 * a20), (-a12 * a00 + a02 * a10),
-              b21, (-a21 * a00 + a01 * a20), (a11 * a00 - a01 * a10)) / det;
+	return mat3(b01, (-a22 * a01 + a02 * a21), (a12 * a01 - a02 * a11),
+				b11, (a22 * a00 - a02 * a20), (-a12 * a00 + a02 * a10),
+				b21, (-a21 * a00 + a01 * a20), (a11 * a00 - a01 * a10)) / det;
 }
 
 vec3 viewToWorld(vec3 viewPosition) {
-    vec4 pos;
-    pos.xyz = viewPosition;
-    pos.w = 0.0;
-    pos = gbufferModelViewInverse * pos;
-    return pos.xyz;
+	vec4 pos;
+	pos.xyz = viewPosition;
+	pos.w = 0.0;
+	pos = gbufferModelViewInverse * pos;
+	return pos.xyz;
 }
 vec3 worldToView(vec3 worldPos) {
-    vec4 pos = vec4(worldPos, 0.0);
-    pos = gbufferModelView * pos;
-    return pos.xyz;
+	vec4 pos = vec4(worldPos, 0.0);
+	pos = gbufferModelView * pos;
+	return pos.xyz;
 }
 vec4 encode (vec3 n, vec2 lightmaps){
 	n.xy = n.xy / dot(abs(n), vec3(1.0));
 	n.xy = n.z <= 0.0 ? (1.0 - abs(n.yx)) * sign(n.xy) : n.xy;
-    vec2 encn = clamp(n.xy * 0.5 + 0.5,-1.0,1.0);
+	vec2 encn = clamp(n.xy * 0.5 + 0.5,-1.0,1.0);
 	
-    return vec4(encn,vec2(lightmaps.x,lightmaps.y));
+	return vec4(encn,vec2(lightmaps.x,lightmaps.y));
 }
 
 //encoding by jodie
 float encodeVec2(vec2 a){
-    const vec2 constant1 = vec2( 1., 256.) / 65535.;
-    vec2 temp = floor( a * 255. );
+	const vec2 constant1 = vec2( 1., 256.) / 65535.;
+	vec2 temp = floor( a * 255. );
 	return temp.x*constant1.x+temp.y*constant1.y;
 }
 float encodeVec2(float x,float y){
@@ -191,12 +186,12 @@ float encodeVec2(float x,float y){
 
 vec3 toScreenSpace(vec3 p) {
 	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
-    vec3 p3 = p * 2. - 1.;
-    vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
-    return fragposition.xyz / fragposition.w;
+	vec3 p3 = p * 2. - 1.;
+	vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
+	return fragposition.xyz / fragposition.w;
 }
 vec3 toClipSpace3(vec3 viewSpacePosition) {
-    return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+	return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 }
 
 #ifdef POM
@@ -222,13 +217,13 @@ vec3 toLinear(vec3 sRGB){
 
 
 const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
-									vec2(-1.,3.)/8.,
-									vec2(5.0,1.)/8.,
-									vec2(-3,-5.)/8.,
-									vec2(-5.,5.)/8.,
-									vec2(-7.,-1.)/8.,
-									vec2(3,7.)/8.,
-									vec2(7.,-7.)/8.);
+							vec2(-1.,3.)/8.,
+							vec2(5.0,1.)/8.,
+							vec2(-3,-5.)/8.,
+							vec2(-5.,5.)/8.,
+							vec2(-7.,-1.)/8.,
+							vec2(3,7.)/8.,
+							vec2(7.,-7.)/8.);
 
 
 uniform float near;
@@ -359,7 +354,7 @@ void main() {
 		#endif
 	#endif
 	
-	float lightmap = clamp( (lmtexcoord.w-0.9) * 10.0,0.,1.);
+	float lightmap = clamp((lmtexcoord.w-0.9) * 10.0,0.,1.);
 
 	float rainfall = 0.0;
 	float Puddle_shape = 0.0;
@@ -367,7 +362,7 @@ void main() {
 	#if defined Puddles && defined WORLD && !defined ENTITIES && !defined HAND
 		rainfall = rainStrength * noPuddleAreas * lightmap;
 
-		Puddle_shape = clamp(lightmap - exp(-15.0 * pow(texture2D(noisetex, worldpos.xz * (0.020 * Puddle_Size)	).b,5.0)),0.0,1.0);
+		Puddle_shape = clamp(lightmap - exp(-15.0 * pow(texture2D(noisetex, worldpos.xz * (0.020 * Puddle_Size)).b,5.0)),0.0,1.0);
 		Puddle_shape *= clamp(viewToWorld(normal).y*0.5+0.5,0.0,1.0);
 		Puddle_shape *= rainStrength * noPuddleAreas ;
 
@@ -457,18 +452,18 @@ void main() {
 		vec3 viewVec = normalize(tbnMatrix*fragpos);
 		vec3 correctedViewVec = viewVec;
 		if(PORTAL > 0){
-		correctedViewVec.xy = mix(correctedViewVec.xy, vec2( viewVec.y,-viewVec.x), clamp( worldSpaceNormal.y,0,1));
-		correctedViewVec.xy = mix(correctedViewVec.xy, vec2(-viewVec.y, viewVec.x), clamp(-worldSpaceNormal.x,0,1)); 
-		correctedViewVec.xy = mix(correctedViewVec.xy, vec2(-viewVec.y, viewVec.x), clamp(-worldSpaceNormal.z,0,1));
+			correctedViewVec.xy = mix(correctedViewVec.xy, vec2( viewVec.y,-viewVec.x), clamp( worldSpaceNormal.y,0,1));
+			correctedViewVec.xy = mix(correctedViewVec.xy, vec2(-viewVec.y, viewVec.x), clamp(-worldSpaceNormal.x,0,1)); 
+			correctedViewVec.xy = mix(correctedViewVec.xy, vec2(-viewVec.y, viewVec.x), clamp(-worldSpaceNormal.z,0,1));
 		}
 		correctedViewVec.z = mix(correctedViewVec.z, -correctedViewVec.z, clamp(length(vec3(worldSpaceNormal.xz, clamp(-worldSpaceNormal.y,0,1))),0,1)); 
 		
 		vec2 correctedWorldPos = playerpos.xz + cameraPosition.xz;
-		correctedWorldPos = mix(correctedWorldPos,	vec2(-playerpos.x,playerpos.z)	+	vec2(-cameraPosition.x,cameraPosition.z),	clamp(-worldSpaceNormal.y,0,1));
-		correctedWorldPos = mix(correctedWorldPos,	vec2( playerpos.z,playerpos.y)	+	vec2( cameraPosition.z,cameraPosition.y),	clamp( worldSpaceNormal.x,0,1));
-		correctedWorldPos = mix(correctedWorldPos,	vec2(-playerpos.z,playerpos.y)	+	vec2(-cameraPosition.z,cameraPosition.y),	clamp(-worldSpaceNormal.x,0,1));
-		correctedWorldPos = mix(correctedWorldPos,	vec2( playerpos.x,playerpos.y)	+	vec2( cameraPosition.x,cameraPosition.y),	clamp(-worldSpaceNormal.z,0,1));
-		correctedWorldPos = mix(correctedWorldPos,	vec2(-playerpos.x,playerpos.y)	+	vec2(-cameraPosition.x,cameraPosition.y),	clamp( worldSpaceNormal.z,0,1));
+		correctedWorldPos = mix(correctedWorldPos, vec2(-playerpos.x,playerpos.z) + vec2(-cameraPosition.x,cameraPosition.z), clamp(-worldSpaceNormal.y,0,1));
+		correctedWorldPos = mix(correctedWorldPos, vec2( playerpos.z,playerpos.y) + vec2( cameraPosition.z,cameraPosition.y), clamp( worldSpaceNormal.x,0,1));
+		correctedWorldPos = mix(correctedWorldPos, vec2(-playerpos.z,playerpos.y) + vec2(-cameraPosition.z,cameraPosition.y), clamp(-worldSpaceNormal.x,0,1));
+		correctedWorldPos = mix(correctedWorldPos, vec2( playerpos.x,playerpos.y) + vec2( cameraPosition.x,cameraPosition.y), clamp(-worldSpaceNormal.z,0,1));
+		correctedWorldPos = mix(correctedWorldPos, vec2(-playerpos.x,playerpos.y) + vec2(-cameraPosition.x,cameraPosition.y), clamp( worldSpaceNormal.z,0,1));
 		vec2 rayDir = ((correctedViewVec.xy) / -correctedViewVec.z) / steps * 5.0 ;
 	
 		vec2 uv = correctedWorldPos + rayDir * blueNoise();
@@ -655,5 +650,4 @@ void main() {
 
 		gl_FragData[2] = vec4(viewToWorld(FlatNormals) * 0.5 + 0.5, VanillaAO);	
 	#endif
-	
 }
