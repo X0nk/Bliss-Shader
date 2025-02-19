@@ -108,6 +108,6 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
 			color = mix(color, distortedColorLuma, sqrt(CriticalDamageTaken));
 		#endif
 
-	if(isDead) color = distortedColorLuma * 0.35
-	#endif;
+	if(isDead) color = distortedColorLuma * 0.35;
+	#endif
 }
