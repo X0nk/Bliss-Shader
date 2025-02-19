@@ -93,20 +93,21 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
 //////////////////////// APPLY COLOR EFFECTS /////////////////////
 	#if defined LOW_HEALTH_EFFECT || defined DAMAGE_TAKEN_EFFECT
 		vec3 distortedColorLuma =  vec3(1.0, 0.0, 0.0) * dot(distortedColor, vec3(0.21, 0.72, 0.07));
-    
-	#ifdef LOW_HEALTH_EFFECT
-		float colorLuma = dot(color, vec3(0.21, 0.72, 0.07));
+   
+		#ifdef LOW_HEALTH_EFFECT
+			float colorLuma = dot(color, vec3(0.21, 0.72, 0.07));
 
-		vec3 LumaRedEdges = mix(vec3(colorLuma), vec3(1.0, 0.3, 0.3) * distortedColorLuma.r, vignette);
+			vec3 LumaRedEdges = mix(vec3(colorLuma), vec3(1.0, 0.3, 0.3) * distortedColorLuma.r, vignette);
 
-		// apply color effects for when you are at low health
-		color = mix(color, LumaRedEdges, mix(vignette * threeHeart, oneHeart, oneHeart));
-	#endif
+			// apply color effects for when you are at low health
+			color = mix(color, LumaRedEdges, mix(vignette * threeHeart, oneHeart, oneHeart));
+		#endif
 
-	#ifdef DAMAGE_TAKEN_EFFECT
-		color = mix(color, distortedColorLuma, vignette * sqrt(min(MinorDamageTaken,1.0)));
-		color = mix(color, distortedColorLuma, sqrt(CriticalDamageTaken));
-	#endif
+		#ifdef DAMAGE_TAKEN_EFFECT
+			color = mix(color, distortedColorLuma, vignette * sqrt(min(MinorDamageTaken,1.0)));
+			color = mix(color, distortedColorLuma, sqrt(CriticalDamageTaken));
+		#endif
 
-	if(isDead) color = distortedColorLuma * 0.35;
+	if(isDead) color = distortedColorLuma * 0.35
+	#endif;
 }
