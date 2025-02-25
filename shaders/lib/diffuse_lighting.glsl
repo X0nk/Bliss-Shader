@@ -92,7 +92,7 @@ uniform float centerDepthSmooth;
 vec3 calculateFlashlight(in vec2 texcoord, in vec3 viewPos, in vec3 albedo, in vec3 normal, out vec4 flashLightSpecularData, bool hand){
 
 	vec3 shiftedViewPos = viewPos + vec3(-0.25, 0.2, 0.0);
-	vec3 shiftedPlayerPos = mat3(gbufferModelViewInverse) * shiftedViewPos; + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition) * 3.0;
+	vec3 shiftedPlayerPos = mat3(gbufferModelViewInverse) * shiftedViewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition) * 3.0;
 	shiftedViewPos = mat3(gbufferPreviousModelView) * shiftedPlayerPos + gbufferPreviousModelView[3].xyz;
 	vec2 scaledViewPos = shiftedViewPos.xy / max(-shiftedViewPos.z - 0.5, 1e-7);
 	float linearDistance = length(shiftedPlayerPos);

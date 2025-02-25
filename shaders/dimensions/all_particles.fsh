@@ -70,8 +70,8 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 uniform mat4 gbufferPreviousModelView;
 uniform vec3 previousCameraPosition;
 
-
 #include "/lib/util.glsl"
+#include "/lib/projections.glsl"
 
 #ifdef OVERWORLD_SHADER
 	#ifdef Daily_Weather
@@ -87,6 +87,7 @@ uniform vec3 previousCameraPosition;
 	#include "/lib/volumetricClouds.glsl"
 #endif
 
+
 #ifdef IS_LPV_ENABLED
 	uniform int heldItemId;
 	uniform int heldItemId2;
@@ -97,7 +98,6 @@ uniform vec3 previousCameraPosition;
 	#include "/lib/lpv_render.glsl"
 #endif
 
-#include "/lib/projections.glsl"
 #include "/lib/diffuse_lighting.glsl"
 #include "/lib/sky_gradient.glsl"
 
