@@ -1,6 +1,6 @@
 # Bliss-BSPT #
-<img src="https://github.com/X0nk/Bliss-Shader/assets/122314734/873c788c-5a48-46c0-9fb5-eac57b4ffa27" width="100%" height="100%">
 Bliss-BSPT is an edited shader based on Bliss-unstable-development by X0nk.<br>
+<img src="https://github.com/X0nk/Bliss-Shader/assets/122314734/873c788c-5a48-46c0-9fb5-eac57b4ffa27" width="100%" height="100%">
 The original Bliss is a great shader and it's even better when X0nk made unstable development version of it.<br>
 But it's also kinda broken with tons of bugs, so I decided to fix them myself and merge code from FAYER3's blocklight2 fork.<br>
 I called it BSPT which refers to "block shadow path tracing" at that time, <br>
