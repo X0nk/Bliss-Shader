@@ -299,38 +299,21 @@ vec4 GetVolumetricFog(
 			color += (hazeLighting - hazeLighting*exp(-hazeDensity*dd*dL)) * absorbance;
 
 
-		// // determine where the vortex area ends and chaotic lightning area begins.
-		// float vortexBounds = clamp(vortexBoundRange - length(progressW), 0.0,1.0);
+		#if defined FLASHLIGHT && defined FLASHLIGHT_FOG_ILLUMINATION
+			vec3 shiftedViewPos = mat3(gbufferModelView)*(progressW-cameraPosition) + vec3(-0.25, 0.2, 0.0);
+			vec3 shiftedPlayerPos = mat3(gbufferModelViewInverse) * shiftedViewPos;
+			vec2 scaledViewPos = shiftedViewPos.xy / max(-shiftedViewPos.z - 0.5, 1e-7);
+			float linearDistance = length(shiftedPlayerPos);
+			float shiftedLinearDistance = length(scaledViewPos);
 
-        // vec3 lightPosition = LightSourcePosition(progressW, cameraPosition, vortexBounds);
-		// vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
+			float lightFalloff = 1.0 - clamp(1.0-linearDistance/FLASHLIGHT_RANGE, -0.999,1.0);
+			lightFalloff = max(exp(-30.0 * lightFalloff),0.0);
+			float projectedCircle = clamp(1.0 - shiftedLinearDistance*FLASHLIGHT_SIZE,0.0,1.0);
 
-		// volumeDensity += max(1.0 - length(vec3(lightPosition.x,lightPosition.y*2,lightPosition.z))/50,0.0) * vortexBounds;
-		
-		// float clearArea =  1.0-min(max(1.0 - length(progressW - cameraPosition) / 100,0.0),1.0);
-		// float density = min(volumeDensity * clearArea, END_STORM_DENSTIY);
+			vec3 flashlightGlow = vec3(FLASHLIGHT_R,FLASHLIGHT_G,FLASHLIGHT_B) * lightFalloff * projectedCircle * 0.5;
 
-		// ///// ----- air lighting, the haze
-		// 	float distanceFog =  max(1.0 - length(progressW - cameraPosition) / max(far, 32.0 * 13.0),0.0);
-		// 	float hazeDensity = min(exp2(distanceFog * -25)+0.0005,1.0);
-		// 	vec3 hazeColor = vec3(0.3,0.75,1.0) * 0.3;
-		// 	color += (hazeColor - hazeColor*exp(-hazeDensity*dd*dL)) * absorbance;
-
-		// ///// ----- main lighting
-		// 	vec3 voidLighting = vec3(1.0,0.0,0.8) * 0.1 * (1-exp(volumeDensity * -25)) * max(exp2(-1 * sqrt(max(progressW.y - -60,0.0))),0.0) ;
-
-		// 	vec3 ambient = vec3(0.5,0.75,1.0) * 0.2  * (exp((volumeDensity*volumeDensity) * -50) * 0.9 + 0.1);
-		// 	float shadows = 0;
-		// 	vec3 lightsources = LightSourceLighting(progressW, lightPosition, dither2, volumeDensity, lightColors, vortexBounds);
-		// 	vec3 lighting = lightsources + ambient + voidLighting;
-
-		// 	#ifdef THE_ORB
-		// 		density += min(50.0*max(1.0 - length(lightPosition)/10,0.0),1.0);
-		// 	#endif
-
-		// ///// ----- blend
-		// 	color += (lighting - lighting*exp(-(density)*dd*dL)) * absorbance;
-        // 	absorbance *= exp(-max(density,hazeDensity)*dd*dL);
+			color += (flashlightGlow - flashlightGlow * exp(-max(stormDensity,0.005)*dd*dL)) * absorbance;
+		#endif
 
 		//------ LPV FOG EFFECT
 			#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT

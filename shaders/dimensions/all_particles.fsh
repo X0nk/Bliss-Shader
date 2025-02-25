@@ -47,13 +47,12 @@ uniform sampler2D colortex4;
 	uniform sampler3D texLpv2;
 #endif
 
-
-uniform mat4 gbufferProjectionInverse;
-uniform mat4 gbufferModelViewInverse;
-uniform mat4 gbufferModelView;
-uniform mat4 shadowModelView;
-uniform mat4 shadowProjection;
-uniform vec3 cameraPosition;
+// uniform mat4 gbufferProjectionInverse;
+// uniform mat4 gbufferModelViewInverse;
+// uniform mat4 gbufferModelView;
+// uniform mat4 shadowModelView;
+// uniform mat4 shadowProjection;
+// uniform vec3 cameraPosition;
 
 uniform float frameTimeCounter;
 #include "/lib/Shadow_Params.glsl"
@@ -68,6 +67,8 @@ uniform float waterEnteredAltitude;
 
 flat varying float HELD_ITEM_BRIGHTNESS;
 
+uniform mat4 gbufferPreviousModelView;
+uniform vec3 previousCameraPosition;
 
 
 #include "/lib/util.glsl"
@@ -96,6 +97,7 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 	#include "/lib/lpv_render.glsl"
 #endif
 
+#include "/lib/projections.glsl"
 #include "/lib/diffuse_lighting.glsl"
 #include "/lib/sky_gradient.glsl"
 
@@ -105,12 +107,12 @@ vec3 toLinear(vec3 sRGB){
 
 // #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 
-vec3 toScreenSpace(vec3 p) {
-	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
-    vec3 p3 = p * 2. - 1.;
-    vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
-    return fragposition.xyz / fragposition.w;
-}
+// vec3 toScreenSpace(vec3 p) {
+// 	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
+//     vec3 p3 = p * 2. - 1.;
+//     vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
+//     return fragposition.xyz / fragposition.w;
+// }
 
 uniform int framemod8;
 
@@ -284,6 +286,7 @@ void main() {
 	vec2 adjustedTexCoord = lmtexcoord.xy;
 	#ifdef POM
 		vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(0.0));
+
 		vec3 worldpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz + cameraPosition;
 
 		vec3 normal = normalMat.xyz;

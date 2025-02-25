@@ -25,6 +25,17 @@ flat varying float centerDepth;
 
 uniform sampler2D noisetex;
 
+uniform sampler2D colortex1;
+
+vec2 decodeVec2(float a){
+    const vec2 constant1 = 65535. / vec2( 256., 65536.);
+    const float constant2 = 256. / 255.;
+    return fract( a * constant1 ) * constant2 ;
+}
+vec3 toLinear(vec3 sRGB){
+	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
+}
+
 uniform float frameTime;
 uniform int frameCounter;
 uniform float frameTimeCounter;
@@ -42,6 +53,7 @@ uniform mat4 shadowModelViewI;
 uniform mat4 shadowProjection;
 uniform float sunElevation;
 uniform vec3 sunPosition;
+uniform vec3 moonPosition;
 uniform vec3 cameraPosition;
 // uniform float far;
 uniform ivec2 eyeBrightnessSmooth;
@@ -254,15 +266,29 @@ float mixhistory = 0.06;
 	#else
 		if (gl_FragCoord.x > 6. && gl_FragCoord.x < 7.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 		gl_FragData[0] = vec4(lightSourceColor,1.0);
+
 		if (gl_FragCoord.x > 8. && gl_FragCoord.x < 9.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 		gl_FragData[0] = vec4(sunColor,1.0);
+
 		if (gl_FragCoord.x > 9. && gl_FragCoord.x < 10.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 		gl_FragData[0] = vec4(moonColor,1.0);
-		// if (gl_FragCoord.x > 16. && gl_FragCoord.x < 17.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-		// gl_FragData[0] = vec4(rayleighAborbance,1.0);
 	#endif
-	
 
+	#if defined FLASHLIGHT && defined FLASHLIGHT_BOUNCED_INDIRECT
+		// sample center pixel of albedo color, and interpolate it overtime.
+		if (gl_FragCoord.x > 15 && gl_FragCoord.x < 16 && gl_FragCoord.y > 2 && gl_FragCoord.y < 3){
+			
+			mixhistory = 0.01;
+
+			vec3 data = texelFetch2D(colortex1, ivec2(0.5/texelSize), 0).rgb;
+			vec3 decodeAlbedo = vec3(decodeVec2(data.x).x,decodeVec2(data.y).x, decodeVec2(data.z).x);
+			vec3 albedo = toLinear(decodeAlbedo);
+			
+			albedo = normalize(albedo + 1e-7) * (dot(albedo,vec3(0.21, 0.72, 0.07))*0.5+0.5);
+			
+			gl_FragData[0] = vec4(albedo,1.0);
+		}
+	#endif
 ////////////////////////////////
 /// --- ATMOSPHERE IMAGE --- ///
 ////////////////////////////////
@@ -301,7 +327,12 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec3 viewPos = mat3(gbufferModelView)*viewVector*1024.0;
 	float noise = interleaved_gradientNoise_temporal();
 
-	WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition + gbufferModelViewInverse[3].xyz) ;// * ( float(sunElevation > 1e-5)*2.0-1.0 );
+	WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition + gbufferModelViewInverse[3].xyz);// * ( float(sunElevation > 1e-5)*2.0-1.0 );
+	vec3 WmoonVec = normalize(mat3(gbufferModelViewInverse) * moonPosition + gbufferModelViewInverse[3].xyz);// * ( );
+
+	if(dot(-WmoonVec, WsunVec) < 0.9999) WmoonVec = -WmoonVec;
+
+	WsunVec = mix(WmoonVec, WsunVec, clamp(float(sunElevation > 1e-5)*2.0-1.0 ,0,1));
 
 	vec3 sky = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150.0;	
 	sky = mix(averageSkyCol_Clouds * AmbientLightTint * 0.25, sky,  pow(clamp(viewVector.y+1.0,0.0,1.0),5.0));

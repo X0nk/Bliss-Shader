@@ -1,5 +1,7 @@
 #include "/lib/settings.glsl"
 
+#undef FLASHLIGHT_BOUNCED_INDIRECT
+
 // #if defined END_SHADER || defined NETHER_SHADER
 // 	#undef IS_LPV_ENABLED
 // #endif
@@ -33,7 +35,6 @@ uniform vec4 entityColor;
 #endif
 
 
-
 flat varying float HELD_ITEM_BRIGHTNESS;
 #if defined ENTITIES && defined IS_IRIS
 	flat varying int NAMETAG;
@@ -46,6 +47,7 @@ uniform sampler2D depthtex0;
 #ifdef DISTANT_HORIZONS
 	uniform sampler2D dhDepthTex1;
 #endif
+
 uniform sampler2D colortex7;
 uniform sampler2D colortex12;
 uniform sampler2D colortex13;
@@ -400,16 +402,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	
 	vec3 FragCoord = gl_FragCoord.xyz;
 
-	#ifdef HAND
-		convertHandDepth(FragCoord.z);
-	#endif
-
 	vec2 tempOffset = offsets[framemod8];
 
 	vec3 viewPos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
 
+
 	vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
-	
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// MATERIAL MASKS ////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -660,6 +658,11 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, exposure, feetPlayerPos, lpvPos);
 	
+	vec4 flashLightSpecularData = vec4(0.0);
+	#ifdef FLASHLIGHT
+		Indirect_lighting += calculateFlashlight(FragCoord.xy*texelSize/RENDER_SCALE, viewPos, vec3(0.0), viewToWorld(normalize(normal)), flashLightSpecularData, false);
+	#endif
+
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
 
 	#if EMISSIVE_TYPE == 2 || EMISSIVE_TYPE == 3
@@ -712,7 +715,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			#endif
 			
 			
-			vec3 specularReflections = specularReflections(viewPos, normalize(feetPlayerPos), WsunVec, vec3(blueNoise(), vec2(interleaved_gradientNoise_temporal())), viewToWorld(normal), roughness, f0, Albedo, FinalColor*gl_FragData[0].a, DirectLightColor * Shadows, lightmap.y, isHand, reflectance);
+			vec3 specularReflections = specularReflections(viewPos, normalize(feetPlayerPos), WsunVec, vec3(blueNoise(), vec2(interleaved_gradientNoise_temporal())), viewToWorld(normal), roughness, f0, Albedo, FinalColor*gl_FragData[0].a, DirectLightColor * Shadows, lightmap.y, isHand, reflectance, flashLightSpecularData);
 			
 			gl_FragData[0].a = gl_FragData[0].a + (1.0-gl_FragData[0].a) * reflectance;
 		

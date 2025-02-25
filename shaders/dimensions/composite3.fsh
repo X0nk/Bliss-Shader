@@ -13,7 +13,6 @@ uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 
-	// const bool colortex4MipmapEnabled = true;
 #ifdef DISTANT_HORIZONS
 uniform sampler2D dhDepthTex;
 uniform sampler2D dhDepthTex1;
@@ -80,19 +79,21 @@ uniform float caveDetection;
 
 uniform float eyeAltitude;
 
-
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
 float ld(float depth) {
     return 1.0 / (zMults.y - depth * zMults.z);		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
 }
+
 float luma(vec3 color) {
 	return dot(color,vec3(0.21, 0.72, 0.07));
 }
+
 vec3 toLinear(vec3 sRGB){
 	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
 }
+
 vec3 toScreenSpace(vec3 p) {
 	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
     vec3 playerPos = p * 2. - 1.;
@@ -102,7 +103,6 @@ vec3 toScreenSpace(vec3 p) {
 
 #include "/lib/DistantHorizons_projections.glsl"
 
-
 float interleaved_gradientNoise_temporal(){
 	#ifdef TAA
 		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887 * frameCounter);
@@ -110,11 +110,13 @@ float interleaved_gradientNoise_temporal(){
 		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
 	#endif
 }
+
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy;
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 	return noise;
 }
+
 float R2_dither(){
 	vec2 coord = gl_FragCoord.xy ;
 
@@ -125,6 +127,7 @@ float R2_dither(){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
+
 float blueNoise(){
 	#ifdef TAA
   		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
@@ -132,9 +135,11 @@ float blueNoise(){
 		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
 	#endif
 }
+
 vec4 blueNoise(vec2 coord){
   return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
 }
+
 vec3 normVec (vec3 vec){
 	return vec*inversesqrt(dot(vec,vec));
 }
@@ -142,66 +147,19 @@ vec3 normVec (vec3 vec){
 float DH_ld(float dist) {
     return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
 }
+
 float DH_inv_ld (float lindepth){
 	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
 }
+
 float linearizeDepthFast(const in float depth, const in float near, const in float far) {
     return (near * far) / (depth * (near - far) + far);
 }
+
 vec2 decodeVec2(float a){
     const vec2 constant1 = 65535. / vec2( 256., 65536.);
     const float constant2 = 256. / 255.;
     return fract( a * constant1 ) * constant2 ;
-}
-vec4 BilateralUpscale(sampler2D tex, sampler2D tex2, sampler2D depth, vec2 coord, float referenceDepth, inout float CLOUDALPHA){
-	ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
-	ivec2 posDepth  = ivec2(coord*VL_RENDER_RESOLUTION) * scaling;
-	ivec2 posColor  = ivec2(coord*VL_RENDER_RESOLUTION);
- 	ivec2 pos = ivec2(gl_FragCoord.xy*texelSize + 1);
-
-	ivec2 getRadius[5] = ivec2[](
-    ivec2(-1,-1),
-	 	ivec2( 1, 1),
-		ivec2(-1, 1),
-		ivec2( 1,-1),
-		ivec2( 0, 0)
-  );
-
-	#ifdef DISTANT_HORIZONS
-		float diffThreshold = 0.01;
-	#else
-		float diffThreshold = zMults.x;
-	#endif
-
-	vec4 RESULT = vec4(0.0);
-	float SUM = 0.0;
-
-	for (int i = 0; i < 5; i++) {
-		
-		ivec2 radius = getRadius[i];
-
-		#ifdef DISTANT_HORIZONS
-			float offsetDepth = sqrt(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling,0).a/65000.0);
-		#else
-			float offsetDepth = ld(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling, 0).r);
-		#endif
-
-		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
-		
-		RESULT += texelFetch2D(tex, posColor + radius + pos, 0) * EDGES;
-
-    #if defined OVERWORLD_SHADER && defined CLOUDS_INTERSECT_TERRAIN
-	    CLOUDALPHA += texelFetch2D(tex2, posColor + radius + pos, 0).x * EDGES;
-    #endif
-		
-    SUM += EDGES;
-	}
-
-  #if defined OVERWORLD_SHADER && defined CLOUDS_INTERSECT_TERRAIN
-   CLOUDALPHA = CLOUDALPHA / SUM;
-  #endif
-
-	return RESULT / SUM;
 }
 
 vec3 decode (vec2 encn){
@@ -213,40 +171,18 @@ vec3 decode (vec2 encn){
     return clamp(normalize(n.xyz),-1.0,1.0);
 }
 
-
 vec3 worldToView(vec3 worldPos) {
     vec4 pos = vec4(worldPos, 0.0);
     pos = gbufferModelView * pos;
     return pos.xyz;
 }
+
 vec3 viewToWorld(vec3 viewPosition) {
     vec4 pos;
     pos.xyz = viewPosition;
     pos.w = 0.0;
     pos = gbufferModelViewInverse * pos;
     return pos.xyz;
-}
-
-/// thanks stackoverflow https://stackoverflow.com/questions/944713/help-with-pixel-shader-effect-for-brightness-and-contrast#3027595
-void applyContrast(inout vec3 color, float contrast){
-  color = ((color - 0.5) * max(contrast, 0.0)) + 0.5;
-}
-
-void ApplyDistortion(inout vec2 Texcoord, vec2 TangentNormals, float lineardistance, bool isTranslucentEntity){
-
-  vec2 UnalteredTexcoord = Texcoord;
-  
-  float refractionStrength = isTranslucentEntity ? 0.25 : 1.0 ;
-
-  // Texcoord = abs(Texcoord + (TangentNormals * clamp((ld(depths.x) - ld(depths.y)) * 0.5,0.0,0.15)) * RENDER_SCALE * refractionStrength );
-  // Texcoord = abs(Texcoord + (TangentNormals * mix(0.01, 0.1, pow(clamp(1.0-lineardistance/(32*4),0.0,1.0),2))) * RENDER_SCALE * refractionStrength );
-  Texcoord = abs(Texcoord + TangentNormals * RENDER_SCALE * 0.1 );
-
-  float DistortedAlpha = decodeVec2(texture2D(colortex11,Texcoord).b).g;
-  // float DistortedAlpha = decodeVec2(texelFetch2D(colortex11,ivec2(Texcoord/texelSize),0).b).g;
-  // float DistortedAlpha = texelFetch2D(colortex2,ivec2(Texcoord/texelSize),0).a;
-  
-  Texcoord = mix(Texcoord, UnalteredTexcoord,  min(max(0.1-DistortedAlpha,0.0) * 1000.0,1.0)); // remove distortion on non-translucents
 }
 
 vec3 doRefractionEffect( inout vec2 texcoord, vec2 normal, float linearDistance, bool isReflectiveEntity){
@@ -376,12 +312,6 @@ vec3 toScreenSpace_DH_special(vec3 POS, bool depthCheck ) {
 
     return viewPos.xyz;
 }
-vec3 tonemap(vec3 col){
-	return col/(1+luma(col));
-}
-vec3 invTonemap(vec3 col){
-	return col/(1-luma(col));
-}
 
 vec4 VLTemporalFiltering(vec3 viewPos, bool depthCheck, out float DEBUG){
   // vec2 texcoord = ((gl_FragCoord.xy)*2.0 + 0.5)*texelSize/2.0 ;
@@ -494,7 +424,6 @@ void main() {
 
   if(albedo.a < 0.01) tangentNormals = vec2(0.0);
 
-
 	////// --------------- UNPACK MISC --------------- //////
 	// 1.0 = water mask
 	// 0.9 = entity mask
@@ -509,25 +438,18 @@ void main() {
 
   ////// --------------- get volumetrics
 
-
   #if defined OVERWORLD_SHADER && defined CLOUDS_INTERSECT_TERRAIN 
     float cloudAlpha = 0.0;
   #else
     float cloudAlpha = 1.0;
   #endif
+
   float DEBUG = 0.0;
-  vec4 temporallyFilteredVL = VLTemporalFiltering(viewPos, z >= 1.0,DEBUG);
+
+  vec4 temporallyFilteredVL = VLTemporalFiltering(viewPos, z >= 1.0, DEBUG);
   gl_FragData[2] = temporallyFilteredVL;
   
-  // #ifdef DISTANT_HORIZONS
-  //   vec4 vl = BilateralUpscale(colortex0, colortex14, colortex12, gl_FragCoord.xy - 1.5, sqrt(texture2D(colortex12,texcoord).a/65000.0), cloudAlpha);
-  // #else
-  //   vec4 vl = BilateralUpscale(colortex0, colortex14, depthtex0, gl_FragCoord.xy - 1.5, frDepth,cloudAlpha);
-  // #endif
-  // vec4 temporallyFilteredVL = vl;
-
   // temporallyFilteredVL = texture2D(colortex0, texcoord*VL_RENDER_RESOLUTION);
-
 
   float bloomyFogMult = 1.0;
 
@@ -647,8 +569,6 @@ void main() {
     color *= temporallyFilteredVL.a ;
     color += temporallyFilteredVL.rgb ;
   #endif
-
-  // color.rgb = vec3(nameTagMask);
   
 ////// --------------- VARIOUS FOG EFFECTS (in front of volumetric fog)
 //////////// blindness, nightvision, liquid fogs and misc fogs
@@ -679,23 +599,22 @@ void main() {
   
 ////// --------------- FINALIZE
   #ifdef display_LUT
-
-    // if(hideGUI == 0){
-      vec3 thingy = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy/150),0).rgb /1200.0;
+      float zoomLevel = 1.0;
+      vec3 thingy = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy/zoomLevel),0).rgb /1200.0;
 
       if(luma(thingy) > 0.0){
         color.rgb =  thingy;
-      //   // vl.a = 1.0;
+        bloomyFogMult = 1.0;
       }
-    // }
+
     #if defined OVERWORLD_SHADER
-    
       if( hideGUI == 1) color.rgb = skyCloudsFromTex(playerPos_normalized, colortex4).rgb/1200.0;
     #else
       if( hideGUI == 1) color.rgb = volumetricsFromTex(playerPos_normalized, colortex4, 0.0).rgb/1200.0;
     #endif
+
   #endif
-// color.rgb = vec3(DEBUG);
+  // color.rgb = testThing.rgb;
   gl_FragData[0].r = bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);
 
