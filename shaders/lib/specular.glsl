@@ -180,42 +180,40 @@ vec4 screenSpaceReflections(
 	vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(raytracePos) + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
 	previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
 	previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
-	
+
 	// fix UV pos dragging behind due to hand not having a good previous frame position.
 	previousPosition.xy = isHand ? raytracePos.xy : previousPosition.xy;
-	
-	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.y < 1.0) {
-		reflection.a = 1.0;
-		
-		#ifdef FORWARD_RENDERED_SPECULAR
-			// vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
-			// vec2 resScale = vec2(1920.,1080.)/clampedRes;
-			// vec2 bloomTileUV = (((previousPosition.xy/texelSize)*2.0 + 0.5)*texelSize/2.0) / clampedRes*vec2(1920.,1080.);
-			// reflection.rgb = texture2D(colortex6, bloomTileUV / 4.0).rgb;
-			reflection.rgb = texture2D(colortex5, previousPosition.xy).rgb;
-		#else
-			reflection.rgb = texture2DLod(colortex5, previousPosition.xy, LOD).rgb;
-		#endif
 
-	}
+	previousPosition.xy = clamp(previousPosition.xy, 0.0, 1.0);
+	reflection.a = 1.0;
+		
+	#ifdef FORWARD_RENDERED_SPECULAR
+		// vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
+		// vec2 resScale = vec2(1920.,1080.)/clampedRes;
+		// vec2 bloomTileUV = (((previousPosition.xy/texelSize)*2.0 + 0.5)*texelSize/2.0) / clampedRes*vec2(1920.,1080.);
+		// reflection.rgb = texture2D(colortex6, bloomTileUV / 4.0).rgb;
+		reflection.rgb = texture2D(colortex5, previousPosition.xy).rgb;
+	#else
+		reflection.rgb = texture2DLod(colortex5, previousPosition.xy, LOD).rgb;
+	#endif
 
 	// reflection.rgb = vec3(LOD/6);
 
-// vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
-// vec2 resScale = vec2(1920.,1080.)/clampedRes;
-// vec2 bloomTileUV = (((previousPosition.xy/texelSize)*2.0 + 0.5)*texelSize/2.0) / clampedRes*vec2(1920.,1080.);
+	// vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
+	// vec2 resScale = vec2(1920.,1080.)/clampedRes;
+	// vec2 bloomTileUV = (((previousPosition.xy/texelSize)*2.0 + 0.5)*texelSize/2.0) / clampedRes*vec2(1920.,1080.);
 
-// vec2 bloomTileoffsetUV[6] = vec2[](
-//  	bloomTileUV / 4.,
-//  	bloomTileUV / 8.   + vec2(0.25*resScale.x+2.5*texelSize.x, 		.0),
-//  	bloomTileUV / 16.  + vec2(0.375*resScale.x+4.5*texelSize.x, 	.0),
-//  	bloomTileUV / 32.  + vec2(0.4375*resScale.x+6.5*texelSize.x, 	.0),
-//  	bloomTileUV / 64.  + vec2(0.46875*resScale.x+8.5*texelSize.x,  	.0),
-//  	bloomTileUV / 128. + vec2(0.484375*resScale.x+10.5*texelSize.x,	.0)
-// );
-// // reflectLength = pow(1-pow(1-reflectLength,2),5) * 6;
-// reflectLength = (exp(-4*(1-reflectLength))) * 6;
-// Reflections.rgb = texture2D(colortex6, bloomTileoffsetUV[0]).rgb;
+	// vec2 bloomTileoffsetUV[6] = vec2[](
+	// bloomTileUV / 4.,
+	// bloomTileUV / 8.   + vec2(0.25*resScale.x+2.5*texelSize.x, 		.0),
+	// bloomTileUV / 16.  + vec2(0.375*resScale.x+4.5*texelSize.x, 	.0),
+	// bloomTileUV / 32.  + vec2(0.4375*resScale.x+6.5*texelSize.x, 	.0),
+	// bloomTileUV / 64.  + vec2(0.46875*resScale.x+8.5*texelSize.x,  	.0),
+	// bloomTileUV / 128. + vec2(0.484375*resScale.x+10.5*texelSize.x,	.0)
+	// );
+	// reflectLength = pow(1-pow(1-reflectLength,2),5) * 6;
+	// reflectLength = (exp(-4*(1-reflectLength))) * 6;
+	// Reflections.rgb = texture2D(colortex6, bloomTileoffsetUV[0]).rgb;
 
 	return reflection;
 }
@@ -300,10 +298,10 @@ vec3 specularReflections(
 
 	f0 = f0 == 0.0 ? 0.02 : f0;
 
-// 	if(isHand){
-	// f0 = 0.9;
-	// roughness = 0.0;
-// }
+	// if(isHand){
+		// f0 = 0.9;
+		// roughness = 0.0;
+	// }
 	bool isMetal = f0 > 229.5/255.0;
 
 	// get reflected vector

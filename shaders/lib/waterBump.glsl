@@ -87,7 +87,7 @@ vec3 getWaveNormal(vec3 waterPos, vec3 playerpos, bool isLOD){
 	float xDelta = (h1-h0)/deltaPos;
 	float yDelta = (h3-h0)/deltaPos;
 
-	vec3 wave = normalize(vec3(xDelta, yDelta,	1.0-pow(abs(xDelta+yDelta),2.0)));
+	vec3 wave = normalize(vec3(xDelta, yDelta, 1.0-pow(abs(xDelta+yDelta),2.0)));
 
 	return wave;
 }

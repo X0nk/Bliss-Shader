@@ -11,26 +11,26 @@ vec3 cosineHemisphereSample(vec2 Xi){
 }
 
 vec3 TangentToWorld(vec3 N, vec3 H){
-    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
-    vec3 T = normalize(cross(UpVector, N));
-    vec3 B = cross(N, T);
+	vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+	vec3 T = normalize(cross(UpVector, N));
+	vec3 B = cross(N, T);
 
-    return vec3((T * H.x) + (B * H.y) + (N * H.z));
+	return vec3((T * H.x) + (B * H.y) + (N * H.z));
 }
 vec2 SpiralSample(
 	int samples, int totalSamples, float rotation, float Xi
 ){
 	Xi = max(Xi,0.0015);
-	
-    float alpha = float(samples + Xi) * (1.0 / float(totalSamples));
-	
-    float theta = (2.0 *3.14159265359) * alpha * rotation;
 
-    float r = sqrt(Xi);
+	float alpha = float(samples + Xi) * (1.0 / float(totalSamples));
+
+	float theta = (2.0 *3.14159265359) * alpha * rotation;
+
+	float r = sqrt(Xi);
 	float x = r * sin(theta);
 	float y = r * cos(theta);
 
-    return vec2(x, y);
+	return vec2(x, y);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -88,7 +88,7 @@ vec2 texelSizeInv = 1.0 / texelSize;
 
 vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 	vec3 clipPosition = toClipSpace3(position);
-	float rayLength = ((position.z + dir.z * far*sqrt(3)) > -near)
+	float rayLength = ((position.z + dir.z * far * sqrt(3)) > -near)
 					? (-near - position.z) / dir.z
 					: far * sqrt(3);
 	vec3 direction = normalize(toClipSpace3(position + dir * rayLength) - clipPosition);  //convert to clip space
@@ -125,76 +125,19 @@ vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 		}
 		spos += stepv;
 	}
-return vec3(1.1);
-}
-
-float convertHandDepth_3(in float depth, bool hand) {
-	if(!hand) return depth;
-	
-	float ndcDepth = depth * 2.0 - 1.0;
-	ndcDepth /= MC_HAND_DEPTH;
-	return ndcDepth * 0.5 + 0.5;
-}
-
-vec3 RT(vec3 dir, vec3 position, float noise, float stepsizes, bool hand){
-	float dist = 1 + clamp(position.z*position.z,0,2); // shrink sample size as distance increases
-
-	float stepSize = stepsizes / dist;
-	int maxSteps = STEPS;
-	vec3 clipPosition = toClipSpace3(position);
-	float rayLength = ((position.z + dir.z * sqrt(3) * far) > -sqrt(3) * near) 
-					? (-sqrt(3) * near - position.z) / dir.z : sqrt(3) * far;
-	vec3 end = toClipSpace3(position + dir * rayLength) ;
-	vec3 direction = end - clipPosition ;  //convert to clip space
-
-	float len = max(abs(direction.x) * texelSizeInv.x,abs(direction.y) * texelSizeInv.y) / stepSize;
-	//get at which length the ray intersects with the edge of the screen
-	vec3 maxLengths = (step(0.0, direction) - clipPosition) / direction;
-	
-	float mult = min(min(maxLengths.x,maxLengths.y), maxLengths.z) * 2000.0;
-
-	vec3 stepv = direction / len;
-
-	int iterations = min(int(min(len, mult * len)-2), maxSteps);
-	
-	//Do one iteration for closest texel (good contact shadows)
-	lowp vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) ;
-	spos.xy += TAA_Offset*texelSize*0.5*RENDER_SCALE;
-	
-	spos += stepv;
-	
-	float distancered = 1.0 + clamp(position.z * position.z / 50.0, 0, 2); // shrink sample size as distance increases
-
-  	for(int i = 0; i < iterations; i++){
-		if (spos.x < 0.0 || spos.y < 0.0 || spos.z < 0.0 || spos.x > 1.0 || spos.y > 1.0 || spos.z > 1.0) return vec3(1.1);
-		
-		spos += stepv*noise;
-		#ifdef UseQuarterResDepth
-			float sp = sqrt(texelFetch2D(colortex4,ivec2(spos.xy * texelSizeInv/4),0).w/65000.0);
-		#else
-			float sp = linZ(texelFetch2D(depthtex1,ivec2(spos.xy * texelSizeInv),0).r);
-		#endif
-		
-		float currZ = linZ(spos.z);
-		
-		if( sp < currZ) {
-			float dist = abs(sp-currZ)/currZ;
-			if (dist <= mix(0.3, 0.05, clamp(position.z*position.z - 0.1,0,1))) return vec3(spos.xy, invLinZ(sp))/vec3(RENDER_SCALE,1.0);
-		}
-	}
 	return vec3(1.1);
 }
 
-vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool hand, inout float CURVE ){
+vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool hand, inout float CURVE){
 
 	vec3 worldpos = mat3(gbufferModelViewInverse) * position;
 
-	float dist = 1.0 + length(worldpos) / far; // step length as distance increases
+	float dist = 1.0 + 2.0 * length(worldpos) / far; // step length as distance increases
 	float stepSize = stepsizes / dist;
 
 	int maxSteps = STEPS;
 	vec3 clipPosition = toClipSpace3(position);
-	float rayLength = ((position.z + dir.z * sqrt(3) * far) > -sqrt(3) * near)
+	float rayLength = ((position.z + dir.z * far * sqrt(3)) > -sqrt(3) * near)
 					? (-sqrt(3) * near - position.z) / dir.z
 					: sqrt(3) * far;
 	vec3 end = toClipSpace3(position+dir*rayLength) ;
@@ -219,10 +162,8 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 	CURVE = 0.0; 
 
 	bool intersected = false;
-  	for(int i = 0; i < iterations; i++){
-		if (any(lessThan(spos, vec3(0.0))) || any(greaterThan(spos, vec3(1.0)))) {
-		return vec3(1.1);
-		}
+  	for(int i = 0; i < iterations; i++) {
+		if (any(lessThan(spos, vec3(0.0))) || any(greaterThan(spos, vec3(1.0)))) return vec3(1.1);
 
 		#ifdef UseQuarterResDepth
 			float sp = invLinZ(sqrt(texelFetch2D(colortex4,ivec2(spos.xy * texelSizeInv/4),0).w/65000.0));
@@ -263,11 +204,12 @@ vec3 ApplySSRT(
 
 	vec3 radiance = vec3(0.0);
 	vec3 occlusion = vec3(0.0);
-	vec3 skycontribution = unchangedIndirect;
+	vec3 skycontribution = vec3(0.0);
 
 	vec3 radiance2 = vec3(0.0);
 	vec3 occlusion2 = vec3(0.0);
-	vec3 skycontribution2 = unchangedIndirect;
+	vec3 skycontribution2 = vec3(0.0);
+
 	float CURVE = 1.0;
 	vec3 bouncedLight = vec3(0.0);
 
@@ -288,8 +230,7 @@ vec3 ApplySSRT(
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
 			#ifdef OVERWORLD_SHADER
 				skycontribution = doIndirectLighting(skyCloudsFromTex(rayDir, colortex4).rgb/1200.0, minimumLightColor, lightmap);
-				skycontribution = mix(vec3(luma(skycontribution)), skycontribution, 0.5);
-				skycontribution += blockLightColor;
+				skycontribution = mix(skycontribution, vec3(luma(skycontribution)), 0.25) + blockLightColor;
 			#else
 				skycontribution = volumetricsFromTex(rayDir, colortex4, 6).rgb / 1200.0 + blockLightColor;
 			#endif
@@ -304,19 +245,19 @@ vec3 ApplySSRT(
 
 		if (rayHit.z < 1.0){
 			#if indirect_effect == 3
-				if (rayHit.x > 0.0 && rayHit.y > 0.0 && rayHit.x < 1.0 && rayHit.y < 1.0)
-					bouncedLight = texture2D(colortex5, rayHit.xy).rgb * GI_Strength * CURVE;
-			#endif
+				rayHit.xy = clamp(rayHit.xy, 0.0, 1.0);
+				bouncedLight = texture2D(colortex5, rayHit.xy).rgb;
 
-			#if indirect_effect == 4
+			#elif indirect_effect == 4
 				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
 				previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
 				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
 
-				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.y < 1.0)
-					bouncedLight = texture2D(colortex5, previousPosition.xy).rgb * GI_Strength * CURVE;
+				previousPosition.xy = clamp(previousPosition.xy, 0.0, 1.0);
+				bouncedLight = texture2D(colortex5, previousPosition.xy).rgb;
 			#endif
 
+			bouncedLight *= CURVE * GI_Strength;
 			radiance += bouncedLight;
 			radiance2 += bouncedLight;
 
@@ -324,8 +265,6 @@ vec3 ApplySSRT(
 			occlusion2 += skycontribution2 * CURVE;
 		}
 	}
-
-	if(isLOD) return max(radiance/nrays, 0.0);
 
 	#ifdef SKY_CONTRIBUTION_IN_SSRT
 		return max((radiance - occlusion)/nrays,0.0);
