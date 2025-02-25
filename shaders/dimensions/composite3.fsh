@@ -401,7 +401,7 @@ vec4 VLTemporalFiltering(vec3 viewPos, bool depthCheck, out float DEBUG){
 	vec2 velocity = previousPosition.xy - texcoord;
 	previousPosition.xy = texcoord + velocity;
 
-  vec4 currentFrame = texture2D(colortex0, VLtexCoord);
+	vec4 currentFrame = texture2D(colortex0, VLtexCoord);
 
 	if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0) return currentFrame;
   
@@ -445,7 +445,7 @@ void main() {
 	float swappedDepth = z;
 
 	#ifdef DISTANT_HORIZONS
-    float DH_depth0 = texture2D(dhDepthTex,texcoord).x;
+		float DH_depth0 = texture2D(dhDepthTex,texcoord).x;
 		float depthOpaque = z;
 		float depthOpaqueL = linearizeDepthFast(depthOpaque, near, farPlane);
 		
@@ -457,7 +457,6 @@ void main() {
 		}
 
 		swappedDepth = depthOpaque;
-
 	#else
 		float DH_depth0 = 0.0;
 	#endif
@@ -601,13 +600,11 @@ void main() {
 
 		cavefogCol *= 1.0-pow(1.0-pow(1.0 - max(1.0 - linearDistance/far,0.0),2.0),CaveFogFallOff);
 		cavefogCol *= exp(-7.0*clamp(normalize(playerPos_normalized).y*0.5+0.5,0.0,1.0)) * 0.999 + 0.001;
-
 		cavefogCol *= 0.3;
 
 		float skyhole = pow(clamp(1.0-pow(max(playerPos_normalized.y - 0.6,0.0)*5.0,2.0),0.0,1.0),2);
 
 		color.rgb = mix(color.rgb + cavefogCol * caveDetection, cavefogCol, z >= 1.0 ? skyhole * caveDetection : 0.0);
-      
 	}
 #endif
 
@@ -653,7 +650,7 @@ void main() {
 
 ////// --------------- bloomy rain effect
 	#ifdef OVERWORLD_SHADER
-		float rainDrops =  clamp(texture2D(colortex9,texcoord).a, 0.0, 1.0) * RAINDROP_SIZE; 
+		float rainDrops =  clamp(texture2D(colortex9,texcoord).a, 0.0, 1.0) * RAIN_VISIBILITY; 
 		if(rainDrops > 0.0) bloomyFogMult *= clamp(1.0 - pow(rainDrops*5.0,2),0.0,1.0);
 	#endif
   
@@ -698,5 +695,4 @@ void main() {
 	// gl_FragData[1].rgb =  vec3(1.0) * ld((data.a > 0.0 ? data.a : texture2D(depthtex0, texcoord).x))   ;
 	// gl_FragData[1].rgb = gl_FragData[1].rgb * (1.0-TranslucentShader.a) + TranslucentShader.rgb*10.0;
 	// gl_FragData[1].rgb = 1-(texcoord.x > 0.5 ? vec3(TranslucentShader.a) : vec3(data.a));
-
 }

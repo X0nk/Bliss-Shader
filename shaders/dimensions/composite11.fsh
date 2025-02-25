@@ -31,7 +31,7 @@ uniform float aspectRatio;
 uniform float far;
 uniform float rainStrength;
 uniform float screenBrightness;
-uniform vec4 Moon_Weather_properties; // R = cloud coverage 		G = fog density
+uniform vec4 Moon_Weather_properties; // R = cloud coverage	G = fog density
 uniform int hideGUI;
 
 uniform int framemod8;
@@ -51,10 +51,10 @@ float cdist(vec2 coord) {
 	return max(abs(coord.s-0.5),abs(coord.t-0.5))*2.0;
 }
 float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+	return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
 float ld(float depth) {
-    return (2.0 * near) / (far + near - depth * (far - near));		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
+	return (2.0 * near) / (far + near - depth * (far - near));		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
 }
 
 // uniform float viewWidth;
@@ -63,13 +63,13 @@ float ld(float depth) {
 // uniform sampler2D depthtex0;
 
 #ifdef DISTANT_HORIZONS
-uniform sampler2D dhDepthTex;
+	uniform sampler2D dhDepthTex;
 #endif
 uniform float dhNearPlane;
 uniform float dhFarPlane;
 
 float linearizeDepthFast(const in float depth, const in float near, const in float far) {
-    return (near * far) / (depth * (near - far) + far);
+	return (near * far) / (depth * (near - far) + far);
 }
 
 float bloomWeight(){
@@ -140,22 +140,22 @@ vec4 texture2D_bicubic(sampler2D tex, vec2 uv)
 	vec2 iuv = floor( uv );
 	vec2 fuv = fract( uv );
 
-    float g0x = g0(fuv.x);
-    float g1x = g1(fuv.x);
-    float h0x = h0(fuv.x);
-    float h1x = h1(fuv.x);
-    float h0y = h0(fuv.y);
-    float h1y = h1(fuv.y);
+	float g0x = g0(fuv.x);
+	float g1x = g1(fuv.x);
+	float h0x = h0(fuv.x);
+	float h1x = h1(fuv.x);
+	float h0y = h0(fuv.y);
+	float h1y = h1(fuv.y);
 
 	vec2 p0 = (vec2(iuv.x + h0x, iuv.y + h0y) - 0.5) * texelSize.xy;
 	vec2 p1 = (vec2(iuv.x + h1x, iuv.y + h0y) - 0.5) * texelSize.xy;
 	vec2 p2 = (vec2(iuv.x + h0x, iuv.y + h1y) - 0.5) * texelSize.xy;
 	vec2 p3 = (vec2(iuv.x + h1x, iuv.y + h1y) - 0.5) * texelSize.xy;
 
-    return g0(fuv.y) * (g0x * texture2D(tex, p0)  +
-                        g1x * texture2D(tex, p1)) +
-           g1(fuv.y) * (g0x * texture2D(tex, p2)  +
-                        g1x * texture2D(tex, p3));
+	return g0(fuv.y) * (g0x * texture2D(tex, p0) +
+			g1x * texture2D(tex, p1)) +
+			g1(fuv.y) * (g0x * texture2D(tex, p2) +
+			g1x * texture2D(tex, p3));
 }
 
 // vec3 lenseFlare(vec2 UV){
@@ -203,8 +203,8 @@ void main() {
 		#endif
 		// float noise = blueNoise()*6.28318530718;
 		// mat2 noiseM = mat2( cos( noise ), -sin( noise ),
-	    //                    sin( noise ), cos( noise )
-	    //                      );
+		// 				sin( noise ), cos( noise )
+		// 				);
 		vec3 bcolor = vec3(0.);
 		float nb = 0.0;
 		vec2 bcoord = vec2(0.0);
@@ -255,49 +255,48 @@ void main() {
 
 	col = mix(lum * vec3(Purkinje_R, Purkinje_G, Purkinje_B) * Purkinje_Multiplier, col, rodCurve);
 
-	#ifndef USE_ACES_COLORSPACE_APPROXIMATION
-		col = LinearTosRGB(TONEMAP(col));
-	#else
+	#ifdef USE_ACES_COLORSPACE_APPROXIMATION
 		col = col * ACESInputMat;
 		col = TONEMAP(col);
-
 		col = LinearTosRGB(clamp(col * ACESOutputMat, 0.0, 1.0));
+	#else
+		col = LinearTosRGB(TONEMAP(col));
 	#endif
 
 	gl_FragData[0].rgb = clamp(int8Dither(col,texcoord),0.0,1.0);
 	
 	#if DOF_QUALITY == 5
 		#if FOCUS_LASER_COLOR == 0 // Red
-		vec3 laserColor = vec3(25, 0, 0);
+			vec3 laserColor = vec3(25, 0, 0);
 		#elif FOCUS_LASER_COLOR == 1 // Green
-		vec3 laserColor = vec3(0, 25, 0);
+			vec3 laserColor = vec3(0, 25, 0);
 		#elif FOCUS_LASER_COLOR == 2 // Blue
-		vec3 laserColor = vec3(0, 0, 25);
+			vec3 laserColor = vec3(0, 0, 25);
 		#elif FOCUS_LASER_COLOR == 3 // Pink
-		vec3 laserColor = vec3(25, 10, 15);
+			vec3 laserColor = vec3(25, 10, 15);
 		#elif FOCUS_LASER_COLOR == 4 // Yellow
-		vec3 laserColor = vec3(25, 25, 0);
+			vec3 laserColor = vec3(25, 25, 0);
 		#elif FOCUS_LASER_COLOR == 5 // White
-		vec3 laserColor = vec3(25);
+			vec3 laserColor = vec3(25);
 		#endif
 		float depth = texture(depthtex0, texcoord).r;
-		
+
 		#ifdef DISTANT_HORIZONS
-		float _near = near;
-		float _far = far*4.0;
+			float _near = near;
+			float _far = far*4.0;
 
-		if (depth >= 1.0) {
-			depth = texture2D(dhDepthTex, texcoord).x;
-			_near = dhNearPlane;
-			_far = dhFarPlane;
-		}
+			if (depth >= 1.0) {
+				depth = texture2D(dhDepthTex, texcoord).x;
+				_near = dhNearPlane;
+				_far = dhFarPlane;
+			}
 
-		depth = linearizeDepthFast(depth, _near, _far);
+			depth = linearizeDepthFast(depth, _near, _far);
 		#else
-		depth = linearizeDepthFast(depth, near, far);
+			depth = linearizeDepthFast(depth, near, far);
 		#endif
 
 		// focus = gl_FragCoord.x * 0.1;
-		if( hideGUI < 1) gl_FragData[0].rgb += laserColor * pow( clamp( 	 1.0-abs(focus-abs(depth))		,0,1),25) ;
+		if( hideGUI < 1) gl_FragData[0].rgb += laserColor * pow(clamp(1.0-abs(focus-abs(depth)),0,1),25) ;
 	#endif
 }

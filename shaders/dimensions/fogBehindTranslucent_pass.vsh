@@ -6,10 +6,10 @@ flat varying vec4 lightCol;
 flat varying vec3 averageSkyCol;
 flat varying vec3 averageSkyCol_Clouds;
 
-	#ifdef Daily_Weather
-		flat varying vec4 dailyWeatherParams0;
-		flat varying vec4 dailyWeatherParams1;
-	#endif
+#ifdef Daily_Weather
+	flat varying vec4 dailyWeatherParams0;
+	flat varying vec4 dailyWeatherParams1;
+#endif
 
 
 flat varying vec3 WsunVec;
@@ -26,7 +26,6 @@ uniform vec3 sunPosition;
 uniform vec3 moonPosition;
 uniform mat4 gbufferModelViewInverse;
 uniform int frameCounter;
-
 
 
 //////////////////////////////VOID MAIN//////////////////////////////

@@ -243,7 +243,7 @@ void waterVolumetrics_notoverworld(inout vec3 inColor, vec3 rayStart, vec3 rayEn
 
 		vec3 progressW = start.xyz+cameraPosition+dVWorld;
 
-		vec3 ambientMul = exp(-max(estEndDepth * d,0.0) * waterCoefs );
+		vec3 ambientMul = exp(-max(estEndDepth * d,0.0) * waterCoefs);
 		vec3 Indirectlight = ambientMul*ambient;
 
 		vec3 light = Indirectlight * scatterCoef;

@@ -6,7 +6,6 @@ uniform float frameTimeCounter;
 #include "/lib/Shadow_Params.glsl"
 
 
-
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec3 averageSkyCol;
 
@@ -61,23 +60,22 @@ vec3 sunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
 float luma(vec3 color) {
 	return dot(color,vec3(0.21, 0.72, 0.07));
 }
-vec3 rodSample(vec2 Xi)
-{
+vec3 rodSample(vec2 Xi) {
 	float r = sqrt(1.0f - Xi.x*Xi.y);
-    float phi = 2 * 3.14159265359 * Xi.y;
+	float phi = 2 * 3.14159265359 * Xi.y;
 
-    return normalize(vec3(cos(phi) * r, sin(phi) * r, Xi.x)).xzy;
+	return normalize(vec3(cos(phi) * r, sin(phi) * r, Xi.x)).xzy;
 }
 //Low discrepancy 2D sequence, integration error is as low as sobol but easier to compute : http://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
-vec2 R2_samples(int n){
+vec2 R2_samples(int n) {
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha * n);
 }
-float tanh(float x){
+float tanh(float x) {
 	return (exp(x) - exp(-x))/(exp(x) + exp(-x));
 }
 float ld(float depth) {
-    return (2.0 * near) / (far + near - depth * (far - near));		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
+	return (2.0 * near) / (far + near - depth * (far - near)); // (-depth * (far - near)) = (2.0 * near)/ld - far - near
 }
 
 uniform float nightVision;
@@ -101,12 +99,11 @@ void getWeatherParams(
 	weatherParams1 = vec4(layer0_density, layer1_density, layer2_density, cloudyFog_density);
 }
 
-float hash11(float p)
-{
-    p = fract(p * .1031);
-    p *= p + 33.33;
-    p *= p + p;
-    return fract(p);
+float hash11(float p) {
+	p = fract(p * .1031);
+	p *= p + 33.33;
+	p *= p + p;
+	return fract(p);
 }
 
 void main() {
@@ -126,7 +123,7 @@ void main() {
 
 	vec2 sample3x3[9] = vec2[](
 
-     	vec2(-1.0, -0.3),
+		vec2(-1.0, -0.3),
 		vec2( 0.0,  0.0),
 		vec2( 1.0, -0.3),
 
@@ -147,7 +144,7 @@ void main() {
 		vec3 pos = vec3(0.0,1.0,0.0);
 		pos.xy += normalize(sample3x3[i]) * vec2(0.3183,0.9000);
 
-		averageSkyCol_Clouds += mix(1.5 * (skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.0), aurOffset, 0.05);
+		averageSkyCol_Clouds += mix(1.5 * (skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.0), aurOffset, 0.1);
 		averageSkyCol += 1.5 * (skyFromTex(pos,colortex4).rgb/maxIT/150.0);
    	}
 	
@@ -156,9 +153,9 @@ void main() {
 	// averageSkyCol_Clouds = max(normalize(averageSkyCol_Clouds) * min(luma(averageSkyCol_Clouds) * 3.0,2.5) * (1.0-rainStrength*0.7), minimumlight);
 
 
-	vec3 minimumlight =  vec3(0.02) * 0.2 * MIN_LIGHT_AMOUNT + nightVision * 0.05;
+	vec3 minimumlight =  vec3(0.004) * MIN_LIGHT_AMOUNT + nightVision * 0.05;
 	averageSkyCol_Clouds = max(normalize(averageSkyCol_Clouds + 1e-6) * min(luma(averageSkyCol_Clouds) * 3.0,2.5),0.0);
-	averageSkyCol = max(averageSkyCol * PLANET_GROUND_BRIGHTNESS,0.0) + max(minimumlight, 0.02 * 0.2);
+	averageSkyCol = max(averageSkyCol * PLANET_GROUND_BRIGHTNESS,0.0) + max(minimumlight, 0.004);
 
 ////////////////////////////////////////
 /// --- SUNLIGHT/MOONLIGHT STUFF --- ///
@@ -196,17 +193,17 @@ void main() {
 	
 
 	vec4 weatherParameters_A[10] = vec4[](
-		vec4( DAY0_l0_coverage, DAY0_l1_coverage, DAY0_l2_coverage, DAY0_ufog_density),
-		vec4( DAY1_l0_coverage, DAY1_l1_coverage, DAY1_l2_coverage, DAY1_ufog_density),
-		vec4( DAY2_l0_coverage, DAY2_l1_coverage, DAY2_l2_coverage, DAY2_ufog_density),
-		vec4( DAY3_l0_coverage, DAY3_l1_coverage, DAY3_l2_coverage, DAY3_ufog_density),
-		vec4( DAY4_l0_coverage, DAY4_l1_coverage, DAY4_l2_coverage, DAY4_ufog_density),
+		vec4(DAY0_l0_coverage, DAY0_l1_coverage, DAY0_l2_coverage, DAY0_ufog_density),
+		vec4(DAY1_l0_coverage, DAY1_l1_coverage, DAY1_l2_coverage, DAY1_ufog_density),
+		vec4(DAY2_l0_coverage, DAY2_l1_coverage, DAY2_l2_coverage, DAY2_ufog_density),
+		vec4(DAY3_l0_coverage, DAY3_l1_coverage, DAY3_l2_coverage, DAY3_ufog_density),
+		vec4(DAY4_l0_coverage, DAY4_l1_coverage, DAY4_l2_coverage, DAY4_ufog_density),
 		
-		vec4( DAY5_l0_coverage, DAY5_l1_coverage, DAY5_l2_coverage, DAY5_ufog_density),
-		vec4( DAY6_l0_coverage, DAY6_l1_coverage, DAY6_l2_coverage, DAY6_ufog_density),
-		vec4( DAY7_l0_coverage, DAY7_l1_coverage, DAY7_l2_coverage, DAY7_ufog_density),
-		vec4( DAY8_l0_coverage, DAY8_l1_coverage, DAY8_l2_coverage, DAY8_ufog_density),
-		vec4( DAY9_l0_coverage, DAY9_l1_coverage, DAY9_l2_coverage, DAY9_ufog_density)
+		vec4(DAY5_l0_coverage, DAY5_l1_coverage, DAY5_l2_coverage, DAY5_ufog_density),
+		vec4(DAY6_l0_coverage, DAY6_l1_coverage, DAY6_l2_coverage, DAY6_ufog_density),
+		vec4(DAY7_l0_coverage, DAY7_l1_coverage, DAY7_l2_coverage, DAY7_ufog_density),
+		vec4(DAY8_l0_coverage, DAY8_l1_coverage, DAY8_l2_coverage, DAY8_ufog_density),
+		vec4(DAY9_l0_coverage, DAY9_l1_coverage, DAY9_l2_coverage, DAY9_ufog_density)
 	);
 
 	vec4 weatherParameters_B[10] = vec4[](
@@ -223,19 +220,20 @@ void main() {
 		vec4(DAY9_l0_density, DAY9_l1_density, DAY9_l2_density, DAY9_cfog_density)
 	);
 
-
+	for (int i = 0; i < 10; i++) {
+		weatherParameters_A[i] *= vec4(CloudLayer0_coverage, CloudLayer1_coverage, CloudLayer2_coverage, 1.0);
+		weatherParameters_B[i] *= vec4(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density, 1.0);
+	}
 
 	CurrentFrame_dailyWeatherParams0 = weatherParameters_A[dayCounter];
 	CurrentFrame_dailyWeatherParams1 = weatherParameters_B[dayCounter];
 
 	vec4 rainyWeatherParameters_A[3] = vec4[](
-		// vec4(DAY0_l0_coverage, DAY0_l1_coverage, DAY0_l2_coverage, DAY0_ufog_density),
 		vec4(1.3,0.0,0.0,0.0),
 		vec4(0.5,0.0,0.0,0.0),
 		vec4(0.0,0.0,0.0,0.0)
 	);
 	vec4 rainyWeatherParameters_B[3] = vec4[](
-		// vec4(DAY7_l0_density, DAY7_l1_density, DAY7_l2_density, DAY7_cfog_density),
 		vec4(0.1,0.0,0.0,0.0),
 		vec4(0.1,0.0,0.0,0.0),
 		vec4(0.0,0.0,0.0,0.0)
@@ -245,8 +243,8 @@ void main() {
 		// CurrentFrame_dailyWeatherParams0 = rainyWeatherParameters_A[worldDay%2];
 		// CurrentFrame_dailyWeatherParams1 = rainyWeatherParameters_B[worldDay%2];
 	// } else {
-	// 	CurrentFrame_dailyWeatherParams0 =  vec4(0.5,0.0,0.0,0.0);
-	// 	CurrentFrame_dailyWeatherParams1 = 	vec4(0.1,0.5,0.0,0.0);
+		// CurrentFrame_dailyWeatherParams0 =  vec4(0.5,0.0,0.0,0.0);
+		// CurrentFrame_dailyWeatherParams1 = vec4(0.1,0.5,0.0,0.0);
 	// }
 
 	#if defined Daily_Weather
@@ -273,11 +271,11 @@ void main() {
 	const int maxITexp = 50;
 	float w = 0.0;
 	for (int i = 0; i < maxITexp; i++){
-			vec2 ij = R2_samples((frameCounter%2000)*maxITexp+i);
-			vec2 tc = 0.5 + (ij-0.5) * 0.7;
-			vec3 sp = texture2D(colortex6, tc/16. * resScale+vec2(0.375*resScale.x+4.5*texelSize.x,.0)).rgb;
-			avgExp += log(sqrt(luma(sp)));
-			avgB += log(min(dot(sp,vec3(0.07,0.22,0.71)),8e-2));
+		vec2 ij = R2_samples((frameCounter%2000)*maxITexp+i);
+		vec2 tc = 0.5 + (ij-0.5) * 0.7;
+		vec3 sp = texture2D(colortex6, tc/16. * resScale+vec2(0.375*resScale.x+4.5*texelSize.x,.0)).rgb;
+		avgExp += log(sqrt(luma(sp)));
+		avgB += log(min(dot(sp,vec3(0.07,0.22,0.71)),8e-2));
 	}
 
 	avgExp = exp(avgExp/maxITexp);
@@ -308,7 +306,7 @@ void main() {
 	rodExposure = targetrodExposure;
 
 	#ifndef AUTO_EXPOSURE
-	 exposure = Manual_exposure_value;
-	 rodExposure = clamp(log(Manual_exposure_value*2.0+1.0)-0.1,0.0,2.0);
+	 	exposure = Manual_exposure_value;
+	 	rodExposure = clamp(log(Manual_exposure_value*2.0+1.0)-0.1,0.0,2.0);
 	#endif
 }

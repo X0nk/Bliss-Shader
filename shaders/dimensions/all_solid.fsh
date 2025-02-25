@@ -4,6 +4,7 @@
 #include "/lib/blocks.glsl"
 #include "/lib/entities.glsl"
 #include "/lib/items.glsl"
+#include "/lib/ripples.glsl"
 
 flat varying int NameTags;
 
@@ -29,7 +30,7 @@ const float maxcoord = 1.0-mincoord;
 
 const float MAX_OCCLUSION_DISTANCE = MAX_DIST;
 const float MIX_OCCLUSION_DISTANCE = MAX_DIST*0.9;
-const int   MAX_OCCLUSION_POINTS   = MAX_ITERATIONS;
+const int MAX_OCCLUSION_POINTS = MAX_ITERATIONS;
 
 uniform vec2 texelSize;
 uniform int framemod8;
@@ -43,7 +44,6 @@ vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
 // #endif
 
 #include "/lib/res_params.glsl"
-varying vec4 lmtexcoord;
 
 varying vec4 color;
 
@@ -72,7 +72,6 @@ uniform mat4 gbufferModelView;
 uniform mat4 gbufferProjection;
 uniform mat4 gbufferModelViewInverse;
 uniform vec3 cameraPosition;
-uniform float rainStrength;
 uniform sampler2D noisetex;//depth
 uniform sampler2D depthtex0;
 uniform float alphaTestRef;
@@ -92,7 +91,6 @@ flat varying int SIGN;
 
 
 flat varying float HELD_ITEM_BRIGHTNESS;
-uniform float noPuddleAreas;
 uniform float nightVision;
 
 
@@ -108,6 +106,7 @@ float interleaved_gradientNoise(){
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 	return noise;
 }
+
 float R2_dither(){
 	vec2 coord = gl_FragCoord.xy ;
 
@@ -154,6 +153,7 @@ vec3 worldToView(vec3 worldPos) {
 	pos = gbufferModelView * pos;
 	return pos.xyz;
 }
+
 vec4 encode (vec3 n, vec2 lightmaps){
 	n.xy = n.xy / dot(abs(n), vec3(1.0));
 	n.xy = n.z <= 0.0 ? (1.0 - abs(n.yx)) * sign(n.xy) : n.xy;
@@ -190,26 +190,19 @@ vec3 toScreenSpace(vec3 p) {
 	vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
 	return fragposition.xyz / fragposition.w;
 }
+
 vec3 toClipSpace3(vec3 viewSpacePosition) {
 	return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 }
 
 #ifdef POM
-	vec4 readNormal(in vec2 coord)
-	{
+	vec4 readNormal(in vec2 coord) {
 		return texture2DGradARB(normals,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
 	}
-	vec4 readTexture(in vec2 coord)
-	{
+	vec4 readTexture(in vec2 coord) {
 		return texture2DGradARB(texture,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
 	}
 #endif
-
-
-float luma(vec3 color) {
-	return dot(color,vec3(0.21, 0.72, 0.07));
-}
-
 
 vec3 toLinear(vec3 sRGB){
 	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
@@ -230,42 +223,13 @@ uniform float near;
 
 
 float ld(float dist) {
-    return (2.0 * near) / (far + near - dist * (far - near));
+	return (2.0 * near) / (far + near - dist * (far - near));
 }
 
 
 vec4 readNoise(in vec2 coord){
 	// return texture2D(noisetex,coord*vtexcoordam.pq+vtexcoord.st);
-		return texture2DGradARB(noisetex,coord*vtexcoordam.pq + vtexcoordam.st,dcdx,dcdy);
-}
-float EndPortalEffect(
-	inout vec4 ALBEDO,
-	vec3 FragPos,
-	vec3 WorldPos,
-	mat3 tbnMatrix
-){	
-
-	int maxdist = 25;
-	int quality = 35;
-
-	vec3 viewVec = normalize(tbnMatrix*FragPos);
-	if ( viewVec.z < 0.0 && length(FragPos) < maxdist) {
-		float endportalGLow = 0.0;
-		float Depth = 0.3;
-		vec3 interval = (viewVec.xyz /-viewVec.z/quality*Depth) * (0.7 + (blueNoise()-0.5)*0.1);
-
-		vec3 coord = vec3(WorldPos.xz , 1.0);
-		coord += interval;
-
-		for (int loopCount = 0; (loopCount < quality) && (1.0 - Depth + Depth * ( 1.0-readNoise(coord.st).r - readNoise(-coord.st*3).b*0.2 ) ) < coord.p  && coord.p >= 0.0; ++loopCount) {
-			coord = coord+interval ; 
-			endportalGLow += (0.3/quality);
-		}
-
-  		ALBEDO.rgb = vec3(0.5,0.75,1.0) * sqrt(endportalGLow);
-
-		return clamp(pow(endportalGLow*3.5,3),0,1);
-	}
+	return texture2DGradARB(noisetex,coord*vtexcoordam.pq + vtexcoordam.st,dcdx,dcdy);
 }
 
 float bias(){
@@ -288,9 +252,9 @@ vec4 texture2D_POMSwitch(
 
 uniform vec3 eyePosition;
 void convertHandDepth(inout float depth) {
-    float ndcDepth = depth * 2.0 - 1.0;
-    ndcDepth /= MC_HAND_DEPTH;
-    depth = ndcDepth * 0.5 + 0.5;
+	float ndcDepth = depth * 2.0 - 1.0;
+	ndcDepth /= MC_HAND_DEPTH;
+	depth = ndcDepth * 0.5 + 0.5;
 }
 
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -332,8 +296,8 @@ void main() {
 	vec2 tempOffset = offsets[framemod8];
 
 	vec3 fragpos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
-	vec3 playerpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz;
-	vec3 worldpos = playerpos + cameraPosition;
+	vec3 playerPos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz;
+	vec3 worldPos = playerPos + cameraPosition;
 
 	float torchlightmap = lmtexcoord.z;
 
@@ -344,95 +308,92 @@ void main() {
 			vec3 playerCamPos = cameraPosition;
 		#endif
 
-		// if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(worldpos-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
+		// if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(worldPos-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
 		if(HELD_ITEM_BRIGHTNESS > 0.0){ 
-			float pointLight = clamp(1.0-length(worldpos-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0,1.0);
+			float pointLight = clamp(1.0-length(worldPos-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0,1.0);
 			torchlightmap = mix(torchlightmap, HELD_ITEM_BRIGHTNESS, pointLight*pointLight);
 		}
 		#ifdef HAND
 			torchlightmap *= 0.9;
 		#endif
 	#endif
-	
-	float lightmap = clamp((lmtexcoord.w-0.9) * 10.0,0.,1.);
 
 	float rainfall = 0.0;
 	float Puddle_shape = 0.0;
 	
 	#if defined Puddles && defined WORLD && !defined ENTITIES && !defined HAND
-		rainfall = rainStrength * noPuddleAreas * lightmap;
+		rainfall = isRain * lightmap;
 
-		Puddle_shape = clamp(lightmap - exp(-15.0 * pow(texture2D(noisetex, worldpos.xz * (0.020 * Puddle_Size)).b,5.0)),0.0,1.0);
-		Puddle_shape *= clamp(viewToWorld(normal).y*0.5+0.5,0.0,1.0);
-		Puddle_shape *= rainStrength * noPuddleAreas ;
+		Puddle_shape = clamp(lightmap - exp(-15.0 * pow(texture2D(noisetex, worldPos.xz * (0.020 * Puddle_Size)).b,5.0)),0.0,1.0);
+		Puddle_shape *= clamp(viewToWorld(normal).y*0.5+0.5,0.0,1.0) * isRain;
 
 	#endif
 
 	
 	vec2 adjustedTexCoord = lmtexcoord.xy;
 
-#if defined POM && defined WORLD && !defined ENTITIES && !defined HAND
-	// vec2 tempOffset=offsets[framemod8];
-	adjustedTexCoord = fract(vtexcoord.st)*vtexcoordam.pq+vtexcoordam.st;
-	// vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
-	vec3 viewVector = normalize(tbnMatrix*fragpos);
-	float dist = length(playerpos);
+	#if defined POM && defined WORLD && !defined ENTITIES && !defined HAND
+		// vec2 tempOffset=offsets[framemod8];
+		adjustedTexCoord = fract(vtexcoord.st)*vtexcoordam.pq+vtexcoordam.st;
+		// vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
+		vec3 viewVector = normalize(tbnMatrix*fragpos);
+		float dist = length(playerPos);
 
-	float falloff = min(max(1.0-dist/MAX_OCCLUSION_DISTANCE,0.0) * 2.0,1.0);
+		float falloff = min(max(1.0-dist/MAX_OCCLUSION_DISTANCE,0.0) * 2.0,1.0);
 
-	falloff = pow(1.0-pow(1.0-falloff,1.0),2.0);
+		falloff = pow(1.0-pow(1.0-falloff,1.0),2.0);
 
-	// falloff =  1;
+		// falloff =  1;
 
-	float maxdist = MAX_OCCLUSION_DISTANCE;
-	if(!ifPOM) maxdist = 0.0;
+		float maxdist = MAX_OCCLUSION_DISTANCE;
+		if(!ifPOM) maxdist = 0.0;
 
-	gl_FragDepth = gl_FragCoord.z;
-	if (falloff > 0.0) {
+		gl_FragDepth = gl_FragCoord.z;
+		if (falloff > 0.0) {
 
-		float depthmap = readNormal(vtexcoord.st).a;
-		float used_POM_DEPTH = 1.0;
-		float pomdepth = POM_DEPTH*falloff;
+			float depthmap = readNormal(vtexcoord.st).a;
+			float used_POM_DEPTH = 1.0;
+			float pomdepth = POM_DEPTH*falloff;
 
- 		if ( viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
-			float noise = blueNoise();
-			#ifdef Adaptive_Step_length
-				vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * pomdepth) * clamp(1.0-pow(depthmap,2),0.1,1.0);
-				used_POM_DEPTH = 1.0;
-			#else
-				vec3 interval = viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS*pomdepth;
-			#endif
-			vec3 coord = vec3(vtexcoord.st , 1.0);
+ 			if (viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
+				float noise = blueNoise();
+				#ifdef Adaptive_Step_length
+					vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * pomdepth) * clamp(1.0-pow(depthmap,2),0.1,1.0);
+					used_POM_DEPTH = 1.0;
+				#else
+					vec3 interval = viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS*pomdepth;
+				#endif
+				vec3 coord = vec3(vtexcoord.st , 1.0);
 
-			coord += interval * noise * used_POM_DEPTH;
+				coord += interval * noise * used_POM_DEPTH;
 
-			float sumVec = noise;
-			for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - pomdepth + pomdepth * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
-				coord = coord + interval  * used_POM_DEPTH; 
-				sumVec += used_POM_DEPTH; 
-			}
-	
-			if (coord.t < mincoord) {
-				if (readTexture(vec2(coord.s,mincoord)).a == 0.0) {
-					coord.t = mincoord;
-					discard;
+				float sumVec = noise;
+				for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - pomdepth + pomdepth * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
+					coord = coord + interval  * used_POM_DEPTH; 
+					sumVec += used_POM_DEPTH; 
 				}
-			}
-			
-			adjustedTexCoord = mix(fract(coord.st)*vtexcoordam.pq+vtexcoordam.st, adjustedTexCoord, max(dist-MIX_OCCLUSION_DISTANCE,0.0)/(MAX_OCCLUSION_DISTANCE-MIX_OCCLUSION_DISTANCE));
-
-			vec3 truePos = fragpos + sumVec*inverseMatrix(tbnMatrix)*interval;
-
-			gl_FragDepth = toClipSpace3(truePos).z;
-		}
-	}
-#endif
-	if(!ifPOM) adjustedTexCoord = lmtexcoord.xy;
 	
+				if (coord.t < mincoord) {
+					if (readTexture(vec2(coord.s,mincoord)).a == 0.0) {
+						coord.t = mincoord;
+						discard;
+					}
+				}
+			
+				adjustedTexCoord = mix(fract(coord.st)*vtexcoordam.pq+vtexcoordam.st, adjustedTexCoord, max(dist-MIX_OCCLUSION_DISTANCE,0.0)/(MAX_OCCLUSION_DISTANCE-MIX_OCCLUSION_DISTANCE));
+
+				vec3 truePos = fragpos + sumVec*inverseMatrix(tbnMatrix)*interval;
+
+				gl_FragDepth = toClipSpace3(truePos).z;
+			}
+		}
+	#endif
+	if(!ifPOM) adjustedTexCoord = lmtexcoord.xy;
 
 	//////////////////////////////// 				////////////////////////////////
 	////////////////////////////////	ALBEDO		////////////////////////////////
-	//////////////////////////////// 				//////////////////////////////// 
+	//////////////////////////////// 				////////////////////////////////
+
 	float textureLOD = bias();
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD) * color;
 	#if defined HAND
@@ -441,55 +402,53 @@ void main() {
 
 	if(LIGHTNING > 0) Albedo = vec4(1);
 
-#ifdef FANCY_END_PORTAL
-	#if defined WORLD && !defined ENTITIES && !defined HAND
-	float endPortalEmission = 0.0;
-	if(PORTAL > 0) {
-		float steps = 20;
-		vec3 color = vec3(0.0);
-		float absorbance = 1.0;
-		vec3 worldSpaceNormal = viewToWorld(normal);
-		vec3 viewVec = normalize(tbnMatrix*fragpos);
-		vec3 correctedViewVec = viewVec;
-		if(PORTAL > 0){
+	#ifdef FANCY_END_PORTAL
+		#if defined WORLD && !defined ENTITIES && !defined HAND
+		float endPortalEmission = 0.0;
+		if(PORTAL > 0) {
+			float steps = 20;
+			vec3 color = vec3(0.0);
+			float absorbance = 1.0;
+			vec3 worldSpaceNormal = viewToWorld(normal);
+			vec3 viewVec = normalize(tbnMatrix*fragpos);
+			vec3 correctedViewVec = viewVec;
 			correctedViewVec.xy = mix(correctedViewVec.xy, vec2( viewVec.y,-viewVec.x), clamp( worldSpaceNormal.y,0,1));
 			correctedViewVec.xy = mix(correctedViewVec.xy, vec2(-viewVec.y, viewVec.x), clamp(-worldSpaceNormal.x,0,1)); 
 			correctedViewVec.xy = mix(correctedViewVec.xy, vec2(-viewVec.y, viewVec.x), clamp(-worldSpaceNormal.z,0,1));
-		}
-		correctedViewVec.z = mix(correctedViewVec.z, -correctedViewVec.z, clamp(length(vec3(worldSpaceNormal.xz, clamp(-worldSpaceNormal.y,0,1))),0,1)); 
+			correctedViewVec.z = mix(correctedViewVec.z, -correctedViewVec.z, clamp(length(vec3(worldSpaceNormal.xz, clamp(-worldSpaceNormal.y,0,1))),0,1)); 
 		
-		vec2 correctedWorldPos = playerpos.xz + cameraPosition.xz;
-		correctedWorldPos = mix(correctedWorldPos, vec2(-playerpos.x,playerpos.z) + vec2(-cameraPosition.x,cameraPosition.z), clamp(-worldSpaceNormal.y,0,1));
-		correctedWorldPos = mix(correctedWorldPos, vec2( playerpos.z,playerpos.y) + vec2( cameraPosition.z,cameraPosition.y), clamp( worldSpaceNormal.x,0,1));
-		correctedWorldPos = mix(correctedWorldPos, vec2(-playerpos.z,playerpos.y) + vec2(-cameraPosition.z,cameraPosition.y), clamp(-worldSpaceNormal.x,0,1));
-		correctedWorldPos = mix(correctedWorldPos, vec2( playerpos.x,playerpos.y) + vec2( cameraPosition.x,cameraPosition.y), clamp(-worldSpaceNormal.z,0,1));
-		correctedWorldPos = mix(correctedWorldPos, vec2(-playerpos.x,playerpos.y) + vec2(-cameraPosition.x,cameraPosition.y), clamp( worldSpaceNormal.z,0,1));
-		vec2 rayDir = ((correctedViewVec.xy) / -correctedViewVec.z) / steps * 5.0 ;
+			vec2 correctedWorldPos = worldPos.xz;
+			correctedWorldPos = mix(correctedWorldPos, vec2(-playerPos.x,playerPos.z) + vec2(-cameraPosition.x,cameraPosition.z), clamp(-worldSpaceNormal.y,0,1));
+			correctedWorldPos = mix(correctedWorldPos, vec2( playerPos.z,playerPos.y) + vec2( cameraPosition.z,cameraPosition.y), clamp( worldSpaceNormal.x,0,1));
+			correctedWorldPos = mix(correctedWorldPos, vec2(-playerPos.z,playerPos.y) + vec2(-cameraPosition.z,cameraPosition.y), clamp(-worldSpaceNormal.x,0,1));
+			correctedWorldPos = mix(correctedWorldPos, vec2( playerPos.x,playerPos.y) + vec2( cameraPosition.x,cameraPosition.y), clamp(-worldSpaceNormal.z,0,1));
+			correctedWorldPos = mix(correctedWorldPos, vec2(-playerPos.x,playerPos.y) + vec2(-cameraPosition.x,cameraPosition.y), clamp( worldSpaceNormal.z,0,1));
+			vec2 rayDir = ((correctedViewVec.xy) / -correctedViewVec.z) / steps * 5.0 ;
 	
-		vec2 uv = correctedWorldPos + rayDir * blueNoise();
-		uv += rayDir * 10.0;
-		vec2 animation = vec2(frameTimeCounter, -frameTimeCounter)*0.01;
+			vec2 uv = correctedWorldPos + rayDir * blueNoise();
+			uv += rayDir * 10.0;
+			vec2 animation = vec2(frameTimeCounter, -frameTimeCounter)*0.01;
 		
-		for (int i = 0; i < int(steps); i++) {
+			for (int i = 0; i < int(steps); i++) {
 			
-			float verticalGradient = (i + blueNoise())/steps ;
-			float verticalGradient2 = exp(-7*(1-verticalGradient*verticalGradient));
+				float verticalGradient = (i + blueNoise())/steps ;
+				float verticalGradient2 = exp(-7*(1-verticalGradient*verticalGradient));
 		
-			float density = max(max(verticalGradient - texture2D(noisetex, uv/256.0 + animation.xy).b*0.5,0.0) - (1.0-texture2D(noisetex, uv/32.0 + animation.xx).r) * (0.4 + 0.1 * (texture2D(noisetex, uv/10.0 - animation.yy).b)),0.0);
+				float density = max(max(verticalGradient - texture2D(noisetex, uv/256.0 + animation.xy).b*0.5,0.0) - (1.0-texture2D(noisetex, uv/32.0 + animation.xx).r) * (0.4 + 0.1 * (texture2D(noisetex, uv/10.0 - animation.yy).b)),0.0);
 		
-			float volumeCoeff = exp(-density*(i+1));
+				float volumeCoeff = exp(-density*(i+1));
 			
-			vec3 lighting =  vec3(0.5,0.75,1.0) * 0.1 * exp(-10*density) + vec3(0.2,0.7,1.0) * verticalGradient2 * 2.0;
-			color += (lighting - lighting * volumeCoeff) * absorbance;;
-			absorbance *= volumeCoeff;
-			endPortalEmission += verticalGradient*verticalGradient ;
-			uv += rayDir;
+				vec3 lighting =  vec3(0.5,0.75,1.0) * 0.1 * exp(-10*density) + vec3(END_FOG_R, END_FOG_G, END_FOG_B) * verticalGradient2 * 2.0;
+				color += (lighting - lighting * volumeCoeff) * absorbance;;
+				absorbance *= volumeCoeff;
+				endPortalEmission += verticalGradient*verticalGradient ;
+				uv += rayDir;
+			}
+			Albedo.rgb = clamp(color,0,1);
+			endPortalEmission = clamp(endPortalEmission/steps * 1.0,0.0,254.0/255.0);		
 		}
-		Albedo.rgb = clamp(color,0,1);
-		endPortalEmission = clamp(endPortalEmission/steps * 1.0,0.0,254.0/255.0);		
-	}
+		#endif
 	#endif
-#endif
 	
 	#ifdef WhiteWorld
 		Albedo.rgb = vec3(0.5);
@@ -498,7 +457,7 @@ void main() {
 		
 	#ifdef AEROCHROME_MODE
 		float gray = dot(Albedo.rgb, vec3(0.2, 1.0, 0.07));
-		if (
+		if(
 			blockID == BLOCK_AMETHYST_BUD_MEDIUM || blockID == BLOCK_AMETHYST_BUD_LARGE || blockID == BLOCK_AMETHYST_CLUSTER 
 			|| blockID == BLOCK_SSS_STRONG || blockID == BLOCK_SSS_WEAK
 			|| blockID == BLOCK_GLOW_LICHEN || blockID == BLOCK_SNOW_LAYERS
@@ -513,25 +472,24 @@ void main() {
 			Albedo.rgb = mix(Albedo.rgb, aerochrome_color, strength);
 		}
 		#ifdef AEROCHROME_WOOL_ENABLED
-			else if (blockID == BLOCK_SSS_WEAK_2 || blockID == BLOCK_CARPET) {
+			else if(blockID == BLOCK_SSS_WEAK_2 || blockID == BLOCK_CARPET) {
 			// Wool
 				Albedo.rgb = mix(Albedo.rgb, aerochrome_color, 0.3);
 			}
 		#endif
-		else if(blockID == BLOCK_WATER || (blockID >= 300 && blockID < 400))
-		{
+		else if(blockID == BLOCK_WATER || (blockID >= 300 && blockID < 400)) {
 		// IR Absorbsive? Dark.
 			Albedo.rgb = mix(Albedo.rgb, vec3(0.01, 0.08, 0.15), 0.5);
 		}
 	#endif
 
 	#ifdef WORLD
-		if (Albedo.a > 0.1) Albedo.a = normalMat.a;
+		if(Albedo.a > 0.1) Albedo.a = normalMat.a;
 		else Albedo.a = 0.0;
 	#endif
 
 	#ifdef HAND
-		if (Albedo.a > 0.1){
+		if(Albedo.a > 0.1){
 			Albedo.a = 0.75;
 			gl_FragData[3] = vec4(0.0);
 		} else {
@@ -541,7 +499,6 @@ void main() {
 	#if defined PARTICLE_RENDERING_FIX && (defined ENTITIES || defined BLOCKENTITIES)
 		gl_FragData[3] = vec4(0.0);
 	#endif
-
 	
 	//////////////////////////////// 				////////////////////////////////
 	////////////////////////////////	NORMAL	////////////////////////////////
@@ -549,17 +506,21 @@ void main() {
 
 	#if defined WORLD && defined MC_NORMAL_MAP
 		vec4 NormalTex = texture2D_POMSwitch(normals, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM,textureLOD).xyzw;
-		
+
 		#ifdef MATERIAL_AO
 			Albedo.rgb *= NormalTex.b*0.5+0.5;
 		#endif
 
 		float Heightmap = 1.0 - NormalTex.w;
-
 		NormalTex.xy = NormalTex.xy * 2.0-1.0;
 		NormalTex.z = sqrt(max(1.0 - dot(NormalTex.xy, NormalTex.xy), 0.0));
 
-		normal = applyBump(tbnMatrix, NormalTex.xyz,  1.0-Puddle_shape);
+		#ifdef GROUND_RIPPLES
+			vec3 rippleNormal = drawRipples(worldPos.xz * 10.0, frameTimeCounter * 2.0) * applyRipple * clamp(1 - length(worldPos) / 32, 0, 1) * 0.2;
+			NormalTex.xyz = normalize(NormalTex.xyz + rippleNormal);
+		#endif
+
+		normal = applyBump(tbnMatrix, NormalTex.xyz, 1.0-Puddle_shape);
 	#endif
 	
 	//////////////////////////////// 				////////////////////////////////
@@ -574,7 +535,7 @@ void main() {
 
 		#define EXCEPTIONAL_BLOCK(id) (id == 266 || id == BLOCK_REDSTONE_ORE_LIT || id == BLOCK_DEEPSLATE_REDSTONE_ORE_LIT)
 
-		if (EXCEPTIONAL_BLOCK(blockID) && alphaTestRef < 0.05) {
+		if(EXCEPTIONAL_BLOCK(blockID) && alphaTestRef < 0.05) {
 			float s = 1 - min(min(Albedo.r,Albedo.g),Albedo.b) / max(max(Albedo.r,Albedo.g),Albedo.b);
 			SpecularTex.a = s > 0.1 ? pow(s, 1.5) * 0.9999 : 1.0;
 		}

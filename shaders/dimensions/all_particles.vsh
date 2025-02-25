@@ -52,11 +52,8 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 vec4 toClipSpace3(vec3 viewSpacePosition) {
-    return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
-}		
-
-
-
+	return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
+}
 
 #ifdef DAMAGE_BLOCK_EFFECT
 	varying vec4 vtexcoordam; // .st for add, .pq for mul
@@ -76,15 +73,13 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-	
-#ifdef DAMAGE_BLOCK_EFFECT
-	WsunVec2 = (float(sunElevation > 1e-5)*2.0 - 1.0)*normalize(mat3(gbufferModelViewInverse) * sunPosition);
-#endif
 	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
 	vec2 lmcoord = gl_MultiTexCoord1.xy / 240.0;
 	lmtexcoord.zw = lmcoord;
 
 	#ifdef DAMAGE_BLOCK_EFFECT
+		WsunVec2 = (float(sunElevation > 1e-5)*2.0 - 1.0)*normalize(mat3(gbufferModelViewInverse) * sunPosition);
+
 		vec2 midcoord = (gl_TextureMatrix[0] *  mc_midTexCoord).st;
 		vec2 texcoordminusmid = lmtexcoord.xy-midcoord;
 		vtexcoordam.pq  = abs(texcoordminusmid)*2;
@@ -121,6 +116,13 @@ void main() {
 		gl_Position = toClipSpace3(position);
 	#else
 		gl_Position = ftransform();
+
+		#ifdef TAA_UPSCALING
+			gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
+		#endif
+		#ifdef TAA
+			gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+		#endif
 	#endif
 
 
@@ -131,7 +133,7 @@ void main() {
 	
 	#ifdef LINES
 		SELECTION_BOX = 0;
-		if(dot(color.rgb,vec3(0.33333))	 < 0.00001) SELECTION_BOX = 1;
+		if(dot(color.rgb,vec3(0.33333)) < 0.00001) SELECTION_BOX = 1;
 	#endif
 	
 	#ifdef OVERWORLD_SHADER
@@ -145,15 +147,5 @@ void main() {
 			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb / 1500.0, 0.0);
 			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb / 1500.0, 0.0);
 		#endif
-	#endif
-	
-
-	#ifndef WEATHER
-	#ifdef TAA_UPSCALING
-		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
-	#endif
-	#ifdef TAA
-		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
-	#endif
 	#endif
 }

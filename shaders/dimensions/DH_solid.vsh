@@ -26,7 +26,6 @@ uniform float far;
 #include "/lib/TAA_jitter.glsl"
 
 
-
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;
 
@@ -37,7 +36,7 @@ uniform vec3 cameraPosition;
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 vec4 toClipSpace3(vec3 viewSpacePosition) {
-    return vec4(projMAD(dhProjection, viewSpacePosition),-viewSpacePosition.z);
+	return vec4(projMAD(dhProjection, viewSpacePosition),-viewSpacePosition.z);
 }
 
 #define SEASONS_VSH
@@ -56,12 +55,12 @@ void main() {
 
 	// gl_Position = toClipSpace3(position);
 	
-    vec4 vPos = gl_Vertex;
+	vec4 vPos = gl_Vertex;
 
-    vec3 cameraOffset = fract(cameraPosition);
-    vPos.xyz = floor(vPos.xyz + cameraOffset + 0.5) - cameraOffset;
+	vec3 cameraOffset = fract(cameraPosition);
+	vPos.xyz = floor(vPos.xyz + cameraOffset + 0.5) - cameraOffset;
 
-    vec4 viewPos = gl_ModelViewMatrix * vPos;
+	vec4 viewPos = gl_ModelViewMatrix * vPos;
 	localPos = gbufferModelViewInverse * viewPos;
 
 	#ifdef PLANET_CURVATURE
@@ -72,27 +71,23 @@ void main() {
 
 		worldPos = gbufferModelView * worldPos;
 
-    	gl_Position = dhProjection * worldPos;
+		gl_Position = dhProjection * worldPos;
 	#else
-    	gl_Position = dhProjection * viewPos;
+		gl_Position = dhProjection * viewPos;
 	#endif
-
-
-
-
 
 
 	#ifdef TAA_UPSCALING
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
 	
-    #ifdef TAA
+	#ifdef TAA
 		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
 	#endif
 	
 	lightmapCoords = (gl_TextureMatrix[1] * gl_MultiTexCoord1).xy;
     
-    gcolor = gl_Color;
+	gcolor = gl_Color;
 	
 
 	EMISSIVE = 0.0;
@@ -121,11 +116,11 @@ void main() {
 		jitter.x *= DOF_ANAMORPHIC_RATIO;
 
 		#if MANUAL_FOCUS == -2
-		float focusMul = 0;
+			float focusMul = 0;
 		#elif MANUAL_FOCUS == -1
-		float focusMul = gl_Position.z + (far / 3.0) - mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
+			float focusMul = gl_Position.z + (far / 3.0) - mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
 		#else
-		float focusMul = gl_Position.z + (far / 3.0) - MANUAL_FOCUS;
+			float focusMul = gl_Position.z + (far / 3.0) - MANUAL_FOCUS;
 		#endif
 
 		vec2 totalOffset = (jitter * JITTER_STRENGTH) * focusMul * 1e-2;

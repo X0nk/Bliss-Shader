@@ -46,6 +46,7 @@ uniform ivec2 eyeBrightnessSmooth;
 // uniform ivec2 eyeBrightness;
 uniform float caveDetection;
 uniform int isEyeInWater;
+uniform float nightVision;
 
 vec4 lightCol = vec4(lightSourceColor, float(sunElevation > 1e-5)*2-1.);
 
@@ -59,11 +60,11 @@ vec3 WsunVec = mat3(gbufferModelViewInverse)*sunVec;
 // vec3 WsunVec = normalize(LightDir);
 
 vec3 toShadowSpaceProjected(vec3 p3){
-    p3 = mat3(gbufferModelViewInverse) * p3 + gbufferModelViewInverse[3].xyz;
-    p3 = mat3(shadowModelView) * p3 + shadowModelView[3].xyz;
-    p3 = diagonal3(shadowProjection) * p3 + shadowProjection[3].xyz;
+	p3 = mat3(gbufferModelViewInverse) * p3 + gbufferModelViewInverse[3].xyz;
+	p3 = mat3(shadowModelView) * p3 + shadowModelView[3].xyz;
+	p3 = diagonal3(shadowProjection) * p3 + shadowProjection[3].xyz;
 
-    return p3;
+	return p3;
 }
 float interleaved_gradientNoise_temporal(){
 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y) + 1.0/1.6180339887 * frameCounter);
@@ -78,7 +79,7 @@ float R2_dither(){
 	return fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter) ;
 }
 float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+	return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
 
 #define DHVLFOG
@@ -87,9 +88,9 @@ float blueNoise(){
 
 vec3 toScreenSpace(vec3 p) {
 	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
-    vec3 feetPlayerPos = p * 2. - 1.;
-    vec4 viewPos = iProjDiag * feetPlayerPos.xyzz + gbufferProjectionInverse[3];
-    return viewPos.xyz / viewPos.w;
+	vec3 feetPlayerPos = p * 2. - 1.;
+	vec4 viewPos = iProjDiag * feetPlayerPos.xyzz + gbufferProjectionInverse[3];
+	return viewPos.xyz / viewPos.w;
 }
 
 uniform float near;
@@ -101,13 +102,13 @@ uniform float dhNearPlane;
 
 vec3 DH_toScreenSpace(vec3 p) {
 	vec4 iProjDiag = vec4(dhProjectionInverse[0].x, dhProjectionInverse[1].y, dhProjectionInverse[2].zw);
-    vec3 feetPlayerPos = p * 2. - 1.;
-    vec4 viewPos = iProjDiag * feetPlayerPos.xyzz + dhProjectionInverse[3];
-    return viewPos.xyz / viewPos.w;
+	vec3 feetPlayerPos = p * 2. - 1.;
+	vec4 viewPos = iProjDiag * feetPlayerPos.xyzz + dhProjectionInverse[3];
+	return viewPos.xyz / viewPos.w;
 }
 
 vec3 DH_toClipSpace3(vec3 viewSpacePosition) {
-    return projMAD(dhProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+	return projMAD(dhProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 }
 
 // float DH_ld(float dist) {
@@ -118,14 +119,14 @@ vec3 DH_toClipSpace3(vec3 viewSpacePosition) {
 // }
 
 float DH_ld(float dist) {
-    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+	return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
 }
 float DH_inv_ld (float lindepth){
 	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
 }
 
 float linearizeDepthFast(const in float depth, const in float near, const in float far) {
-    return (near * far) / (depth * (near - far) + far);
+	return (near * far) / (depth * (near - far) + far);
 }
 float invLinZ (float lindepth){
 	return -((2.0*near/lindepth)-far-near)/(far-near);
@@ -178,12 +179,11 @@ float invLinZ (float lindepth){
 	#include "/lib/end_fog.glsl"
 #endif
 
-vec3 rodSample(vec2 Xi)
-{
+vec3 rodSample(vec2 Xi){
 	float r = sqrt(1.0f - Xi.x*Xi.y);
-    float phi = 2 * 3.14159265359 * Xi.y;
+	float phi = 2 * 3.14159265359 * Xi.y;
 
-    return normalize(vec3(cos(phi) * r, sin(phi) * r, Xi.x)).xzy;
+	return normalize(vec3(cos(phi) * r, sin(phi) * r, Xi.x)).xzy;
 }
 //Low discrepancy 2D sequence, integration error is as low as sobol but easier to compute : http://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
 vec2 R2_samples(float n){
@@ -334,9 +334,9 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 
 	 	vec3 BackgroundColor = vec3(0.0);
 
-		vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*256.,  noise, 1.0-noise);
+		vec4 VL_Fog = GetVolumetricFog(mat3(gbufferModelView)*viewVector*256., noise, 1.0-noise);
 
-		BackgroundColor += VL_Fog.rgb;
+		BackgroundColor += VL_Fog.rgb + vec3(0.5,0.75,1.0) * nightVision;
 
 	  	gl_FragData[0] = vec4(BackgroundColor*8.0, 1.0);
 

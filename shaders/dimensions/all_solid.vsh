@@ -1,4 +1,3 @@
-
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/bokeh.glsl"
@@ -62,7 +61,6 @@ uniform int heldItemId2;
 flat varying float HELD_ITEM_BRIGHTNESS;
 
 
-
 flat varying int NameTags;
 
 uniform int frameCounter;
@@ -93,72 +91,42 @@ uniform int framemod8;
 
 #include "/lib/TAA_jitter.glsl"
 
-
 							
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 vec4 toClipSpace3(vec3 viewSpacePosition) {
-    return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
+	return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
 }
 
 vec2 calcWave(in vec3 pos) {
-
-    float magnitude = abs(sin(dot(vec4(frameTimeCounter, pos),vec4(1.0,0.005,0.005,0.005)))*0.5+0.72)*0.013;
+	float magnitude = abs(sin(dot(vec4(frameTimeCounter, pos),vec4(1.0,0.005,0.005,0.005)))*0.5+0.72)*0.013;
 	vec2 ret = (sin(pi2wt*vec2(0.0063,0.0015)*4. - pos.xz + pos.y*0.05)+0.1)*magnitude;
-
-    return ret;
+	return ret;
 }
 
 vec3 calcMovePlants(in vec3 pos) {
-    vec2 move1 = calcWave(pos );
+	vec2 move1 = calcWave(pos );
 	float move1y = -length(move1);
-   return vec3(move1.x,move1y,move1.y)*5.*WAVY_STRENGTH;
+	return vec3(move1.x,move1y,move1.y)*5.*WAVY_STRENGTH;
 }
 
 vec3 calcWaveLeaves(in vec3 pos, in float fm, in float mm, in float ma, in float f0, in float f1, in float f2, in float f3, in float f4, in float f5) {
-
-    float magnitude = abs(sin(dot(vec4(frameTimeCounter, pos),vec4(1.0,0.005,0.005,0.005)))*0.5+0.72)*0.013;
+	float magnitude = abs(sin(dot(vec4(frameTimeCounter, pos),vec4(1.0,0.005,0.005,0.005)))*0.5+0.72)*0.013;
 	vec3 ret = (sin(pi2wt*vec3(0.0063,0.0224,0.0015)*1.5 - pos))*magnitude;
-
-    return ret;
+	return ret;
 }
 
 vec3 calcMoveLeaves(in vec3 pos, in float f0, in float f1, in float f2, in float f3, in float f4, in float f5, in vec3 amp1, in vec3 amp2) {
-    vec3 move1 = calcWaveLeaves(pos      , 0.0054, 0.0400, 0.0400, 0.0127, 0.0089, 0.0114, 0.0063, 0.0224, 0.0015) * amp1;
-    return move1*5.*WAVY_STRENGTH;
+	vec3 move1 = calcWaveLeaves(pos      , 0.0054, 0.0400, 0.0400, 0.0127, 0.0089, 0.0114, 0.0063, 0.0224, 0.0015) * amp1;
+	return move1*5.*WAVY_STRENGTH;
 }
-vec3 srgbToLinear2(vec3 srgb){
-    return mix(
-        srgb / 12.92,
-        pow(.947867 * srgb + .0521327, vec3(2.4) ),
-        step( .04045, srgb )
-    );
-}
-vec3 blackbody2(float Temp)
-{
-    float t = pow(Temp, -1.5);
-    float lt = log(Temp);
-
-    vec3 col = vec3(0.0);
-         col.x = 220000.0 * t + 0.58039215686;
-         col.y = 0.39231372549 * lt - 2.44549019608;
-         col.y = Temp > 6500. ? 138039.215686 * t + 0.72156862745 : col.y;
-         col.z = 0.76078431372 * lt - 5.68078431373;
-         col = clamp(col,0.0,1.0);
-         col = Temp < 1000. ? col * Temp * 0.001 : col;
-
-    return srgbToLinear2(col);
-}
-// float luma(vec3 color) {
-// 	return dot(color,vec3(0.21, 0.72, 0.07));
-// }
 
 #define SEASONS_VSH
 #include "/lib/climate_settings.glsl"
 
 
 uniform sampler2D noisetex;//depth
-float densityAtPos(in vec3 pos){
+float densityAtPos(in vec3 pos) {
 	pos /= 18.;
 	pos.xz *= 0.5;
 	vec3 p = floor(pos);
@@ -171,16 +139,15 @@ float densityAtPos(in vec3 pos){
 
 	return mix(xy.r,xy.g, f.y);
 }
-float luma(vec3 color) {
-	return dot(color,vec3(0.21, 0.72, 0.07));
-}
+
 vec3 viewToWorld(vec3 viewPos) {
-    vec4 pos;
-    pos.xyz = viewPos;
-    pos.w = 0.0;
-    pos = gbufferModelViewInverse * pos;
-    return pos.xyz;
+	vec4 pos;
+	pos.xyz = viewPos;
+	pos.w = 0.0;
+	pos = gbufferModelViewInverse * pos;
+	return pos.xyz;
 }
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -223,7 +190,6 @@ void main() {
 	lmtexcoord.zw = lmcoord;
 
 
-
 	#ifdef MC_NORMAL_MAP
 		vec3 alterTangent = at_tangent.rgb;
 
@@ -250,19 +216,19 @@ void main() {
 	
 	NameTags = 0;
 
-#ifdef ENTITIES
+	#ifdef ENTITIES
 
-	// disallow POM to work on item frames.
-	if(entityId == ENTITY_ITEM_FRAME) SIGN = 1;
+		// disallow POM to work on item frames.
+		if(entityId == ENTITY_ITEM_FRAME) SIGN = 1;
 
 
-	// try and single out nametag text and then discard nametag background
-	// if( dot(gl_Color.rgb, vec3(1.0/3.0)) < 1.0) NameTags = 1;
-	// if(gl_Color.a < 1.0) NameTags = 1;
-	// if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
-	if(entityId == ENTITY_SSS_MEDIUM || entityId == ENTITY_SSS_WEAK || entityId == ENTITY_PLAYER || entityId == 2468) normalMat.a = 0.45;
+		// try and single out nametag text and then discard nametag background
+		// if( dot(gl_Color.rgb, vec3(1.0/3.0)) < 1.0) NameTags = 1;
+		// if(gl_Color.a < 1.0) NameTags = 1;
+		// if(gl_Color.a >= 0.24 && gl_Color.a <= 0.25 ) gl_Position = vec4(10,10,10,1);
+		if(entityId == ENTITY_SSS_MEDIUM || entityId == ENTITY_SSS_WEAK || entityId == ENTITY_PLAYER || entityId == 2468) normalMat.a = 0.45;
 	
-#endif
+	#endif
 
 	if(mc_Entity.x == BLOCK_AIR_WAVING) normalMat.a = 0.55;
 
@@ -346,33 +312,30 @@ void main() {
 	#ifdef WAVY_PLANTS
 		// also use normal, so up/down facing geometry does not get detatched from its model parts.
 		bool InterpolateFromBase = gl_MultiTexCoord0.t < max(mc_midTexCoord.t, abs(viewToWorld(FlatNormals).y));
+		if((
+			// these wave off of the ground. the area connected to the ground does not wave.
+			(InterpolateFromBase && (mc_Entity.x == BLOCK_GRASS_TALL_LOWER || mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_SAPLING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL))
 
-		if(	
-			(
-				// these wave off of the ground. the area connected to the ground does not wave.
-				#ifdef WAVY_FLOWERS_CROPS
-					(InterpolateFromBase && (mc_Entity.x == BLOCK_GRASS_TALL_LOWER || mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_SAPLING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL))
-				#else
-					(InterpolateFromBase && (mc_Entity.x == BLOCK_GRASS_TALL_LOWER || mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_SAPLING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL))
-				#endif
+			// these wave off of the ceiling. the area connected to the ceiling does not wave.
+			|| (!InterpolateFromBase && (mc_Entity.x == BLOCK_VINE_OTHER))
 
-				// these wave off of the ceiling. the area connected to the ceiling does not wave.
-				|| (!InterpolateFromBase && (mc_Entity.x == 17))
+			// these wave off of the air. they wave uniformly
+			|| (mc_Entity.x == BLOCK_GRASS_TALL_UPPER || mc_Entity.x == BLOCK_AIR_WAVING)
 
-				// these wave off of the air. they wave uniformly
-				|| (mc_Entity.x == BLOCK_GRASS_TALL_UPPER || mc_Entity.x == BLOCK_AIR_WAVING)
+			#ifndef RP_MODEL_FIX
+				|| (InterpolateFromBase && (mc_Entity.x == BLOCK_GROUND_WAVING)) || (mc_Entity.x == BLOCK_CAVE_VINE_BERRIES)
+			#endif
 
-			) && length(position.xyz) < 64.0
-		){
+		) && length(position.xyz) < 64.0) {
+
 			vec3 UnalteredWorldpos = worldpos;
 
 			// apply displacement for waving plant blocks
 			worldpos += calcMovePlants(worldpos + cameraPosition) * max(lmtexcoord.w,0.5);
 
-
 			// apply displacement for waving leaf blocks specifically, overwriting the other waving mode. these wave off of the air. they wave uniformly
-			if(mc_Entity.x == BLOCK_AIR_WAVING) worldpos = UnalteredWorldpos + calcMoveLeaves(worldpos + cameraPosition, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*lmtexcoord.w;
-		
+			if(mc_Entity.x == BLOCK_AIR_WAVING || mc_Entity.x == BLOCK_CAVE_VINE_BERRIES) worldpos = UnalteredWorldpos + calcMoveLeaves(worldpos + cameraPosition, 0.0040, 0.0064, 0.0043, 0.0035, 0.0037, 0.0041, vec3(1.0,0.2,1.0), vec3(0.5,0.1,0.5))*lmtexcoord.w;
+
 		}
 	#endif
 	
@@ -393,23 +356,24 @@ void main() {
 	#ifdef TAA_UPSCALING
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
+
 	#ifdef TAA
 		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
 	#endif
 
 
-#if DOF_QUALITY == 5
+	#if DOF_QUALITY == 5
 		vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);
 		jitter = rotate(radians(float(frameCounter))) * jitter;
 		jitter.y *= aspectRatio;
 		jitter.x *= DOF_ANAMORPHIC_RATIO;
 
 		#if MANUAL_FOCUS == -2
-		float focusMul = 0;
+			float focusMul = 0;
 		#elif MANUAL_FOCUS == -1
-		float focusMul = gl_Position.z - mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
+			float focusMul = gl_Position.z - mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
 		#else
-		float focusMul = gl_Position.z - MANUAL_FOCUS;
+			float focusMul = gl_Position.z - MANUAL_FOCUS;
 		#endif
 
 		vec2 totalOffset = (jitter * JITTER_STRENGTH) * focusMul * 1e-2;

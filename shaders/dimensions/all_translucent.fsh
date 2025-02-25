@@ -12,10 +12,8 @@
 
 #include "/lib/res_params.glsl"
 
-varying vec4 lmtexcoord;
 varying vec4 color;
 uniform vec4 entityColor;
-uniform float noPuddleAreas;
 
 #ifdef OVERWORLD_SHADER
 	const bool shadowHardwareFiltering = true;
@@ -71,7 +69,7 @@ varying vec4 normalMat;
 varying vec3 binormal;
 varying vec3 flatnormal;
 #ifdef LARGE_WAVE_DISPLACEMENT
-varying vec3 shitnormal;
+	varying vec3 shitnormal;
 #endif
 
 
@@ -84,7 +82,6 @@ uniform float near;
 uniform float sunElevation;
 
 uniform int isEyeInWater;
-uniform float rainStrength;
 uniform float skyIntensityNight;
 uniform float skyIntensity;
 uniform ivec2 eyeBrightnessSmooth;
@@ -128,7 +125,6 @@ uniform float waterEnteredAltitude;
 
 	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
-
 #endif
 
 #ifdef END_SHADER
@@ -503,14 +499,15 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	#ifndef HAND
 		if (isWater){
-			vec3 playerPos = (mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz);
+			vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
+			vec3 worldPos = playerPos + cameraPosition;
 			vec3 waterPos = playerPos;
 
-			vec3 flowDir = normalize(worldSpaceNormal*10.0) * frameTimeCounter * 2.0 * WATER_WAVE_SPEED * (1 + 0.5 * rainStrength);
+			vec3 flowDir = normalize(worldSpaceNormal*10.0) * frameTimeCounter * WATER_WAVE_SPEED * (2.0 + rainStrength);
 			
-			vec2 newPos = playerPos.xy + cameraPosition.xy + abs(flowDir.xz);
-			newPos = mix(newPos, playerPos.zy + cameraPosition.zy + abs(flowDir.zx), clamp(abs(worldSpaceNormal.x),0,1));
-			newPos = mix(newPos, playerPos.xz + cameraPosition.xz, clamp(abs(worldSpaceNormal.y),0,1));
+			vec2 newPos = worldPos.xy + abs(flowDir.xz);
+			newPos = mix(newPos, worldPos.zy + abs(flowDir.zx), clamp(abs(worldSpaceNormal.x),0,1));
+			newPos = mix(newPos, worldPos.xz, clamp(abs(worldSpaceNormal.y),0,1));
 			waterPos.xy = newPos;
 
 			// make the waves flow in the direction the water faces, except for perfectly up facing parts.
@@ -520,17 +517,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			
 			vec3 bump = normalize(getWaveNormal(waterPos, playerPos, false));
 
-			#ifdef RAIN_RIPPLES
-				float applyRipple = smoothstep(0.9, 1.0, (lmtexcoord.zw).y) * rainStrength * noPuddleAreas;
-			#else
-				float applyRipple = 0.0;
+			#ifdef WATER_RIPPLES
+				vec3 rippleNormal = drawRipples(worldPos.xz * 5.0, frameTimeCounter) * applyRipple * clamp(1 - length(worldPos) / 128, 0, 1) * 0.2;
+				bump = normalize(bump + rippleNormal);
 			#endif
 
-			vec2 uv = (feetPlayerPos + cameraPosition).xz * 4.0;
-			vec3 rippleNormal = drawRipples(uv, frameTimeCounter) * applyRipple;
-			bump = normalize(bump * (1 + 0.5 * rainStrength) + rippleNormal * 0.1);
-
-			float bumpmult = 10.0 * WATER_WAVE_STRENGTH;
+			float bumpmult = WATER_WAVE_STRENGTH * (10.0 + 5.0 * rainStrength);
 			bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 
 			NormalTex.xyz = bump;

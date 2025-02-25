@@ -20,17 +20,17 @@ uniform int framemod8;
 
 
 void main() {
-    gl_Position = ftransform();
+	gl_Position = ftransform();
 
 	#ifdef TAA_UPSCALING
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
-    #ifdef TAA
+	#ifdef TAA
 		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
 	#endif
 	
-    pos = gl_ModelViewMatrix * gl_Vertex;
-    gcolor = gl_Color;
+	pos = gl_ModelViewMatrix * gl_Vertex;
+	gcolor = gl_Color;
 	
 	#if DOF_QUALITY == 5
 		vec2 jitter = clamp(jitter_offsets[frameCounter % 64], -1.0, 1.0);
