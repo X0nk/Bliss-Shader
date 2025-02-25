@@ -392,7 +392,7 @@ vec3 specularReflections(
 		specularReflections += lightSourceReflection;
 	#endif
 
-	#if defined FLASHLIGHT_SPECULAR
+	#if defined FLASHLIGHT_SPECULAR && (defined DEFERRED_SPECULAR || defined FORWARD_SPECULAR)
 		vec3 flashLightReflection = vec3(FLASHLIGHT_R,FLASHLIGHT_G,FLASHLIGHT_B) * flashLight_stuff.a * GGX(normal, -flashLight_stuff.xyz, -flashLight_stuff.xyz, roughness, reflectance, metalAlbedoTint);
 		specularReflections += flashLightReflection;
 	#endif

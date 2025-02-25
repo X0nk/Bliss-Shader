@@ -99,10 +99,10 @@ vec3 calculateFlashlight(in vec2 texcoord, in vec3 viewPos, in vec3 albedo, in v
 	float shiftedLinearDistance = length(scaledViewPos);
 
 	float lightFalloff = 1.0 - clamp(1.0-linearDistance/FLASHLIGHT_RANGE, -0.999,1.0);
-	lightFalloff = max(exp(-10.0 * lightFalloff),0.0);
+	lightFalloff = max(exp(-10.0 * FLASHLIGHT_BRIGHTNESS_FALLOFF_MULT * lightFalloff),0.0);
 
 	#if defined FLASHLIGHT_SPECULAR && (defined DEFERRED_SPECULAR || defined FORWARD_SPECULAR)
-		float flashLightSpecular = lightFalloff * exp2(-7.0*shiftedLinearDistance*shiftedLinearDistance);
+		float flashLightSpecular = lightFalloff * exp2(-7.0*shiftedLinearDistance*shiftedLinearDistance) * FLASHLIGHT_BRIGHTNESS_MULT;
 		flashLightSpecularData = vec4(normalize(shiftedPlayerPos), flashLightSpecular);	
 	#endif
 
@@ -111,7 +111,7 @@ vec3 calculateFlashlight(in vec2 texcoord, in vec3 viewPos, in vec3 albedo, in v
 	float lenseShape = (pow(abs(pow(abs(projectedCircle-1.0),2.0)*2.0 - 0.5),2.0) + lenseDirt*0.2) * 10.0;
 	
 	float offsetNdotL = clamp(dot(-normal, normalize(shiftedPlayerPos)),0,1);
-	vec3 flashlightDiffuse = vec3(1.0) * lightFalloff * offsetNdotL * pow(1.0-pow(1.0-projectedCircle,2),2) * lenseShape;
+	vec3 flashlightDiffuse = vec3(1.0) * lightFalloff * offsetNdotL * pow(1.0-pow(1.0-projectedCircle,2),2) * lenseShape * FLASHLIGHT_BRIGHTNESS_MULT;
 	
 	if(hand){
 		flashlightDiffuse = vec3(0.0);
