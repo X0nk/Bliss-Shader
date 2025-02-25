@@ -288,6 +288,9 @@ vec3 specularReflections(
 	#else
 	, bool isWater
 	#endif
+	
+	,in vec4 flashLight_stuff
+
 ){
 	#ifdef FORWARD_RENDERED_SPECULAR
 		lightmap = pow(min(max(lightmap-0.6,0.0)*2.5,1.0),2.0);
@@ -316,7 +319,7 @@ vec3 specularReflections(
 
 		// get reflectance and f0/HCM values
 		// float shlickFresnel = pow(clamp(1.0 + dot(-reflectedVector, samplePoints),0.0,1.0),5.0);
-		if(isHand) reflectedVector_L = reflect(playerPos, normal);
+		reflectedVector_L = isHand ? reflect(playerPos, normal) : reflectedVector_L;
 	#else
 		vec3 reflectedVector_L = reflect(playerPos, normal);
 	#endif
@@ -387,6 +390,11 @@ vec3 specularReflections(
 	#if defined OVERWORLD_SHADER
 		vec3 lightSourceReflection = Sun_specular_Strength * lightColor * GGX(normal, -playerPos, lightPos, roughness, reflectance, metalAlbedoTint);
 		specularReflections += lightSourceReflection;
+	#endif
+
+	#if defined FLASHLIGHT_SPECULAR
+		vec3 flashLightReflection = vec3(FLASHLIGHT_R,FLASHLIGHT_G,FLASHLIGHT_B) * flashLight_stuff.a * GGX(normal, -flashLight_stuff.xyz, -flashLight_stuff.xyz, roughness, reflectance, metalAlbedoTint);
+		specularReflections += flashLightReflection;
 	#endif
 
 	return specularReflections;
