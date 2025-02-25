@@ -1,32 +1,15 @@
-# Bliss-BSPT is an edited shader of Bliss-unstable-development by WATERFORCE99 #
-# Bliss-BSPT contains codes from Fayer3's blocklight2 fork. Any re-editing or re-distribution is strictly prohibited #
-Bliss-BSPT is a highly customized fork of Bliss featuring aurora, ripples and many other stuffs
-which make Bliss not only looks better but perform better.
-Many bugs are fixed as well.
-
-# Bliss
+# Bliss-BSPT #
 <img src="https://github.com/X0nk/Bliss-Shader/assets/122314734/873c788c-5a48-46c0-9fb5-eac57b4ffa27" width="100%" height="100%">
-I always loved chocapic's shaders, and how customizeable it was. But i wanted MORE.
-i eventually started tweaking the shader, adding settings, breaking stuff, and after a while wanted to impose my own visual style onto the shader.
-i wanted to emphasize a varying scene, where the lighting isn't always the same whenever or wherever you are.
+Bliss-BSPT is an edited shader based on Bliss-unstable-development by X0nk.
+The original Bliss is a great shader and it's even better when X0nk made unstable development version of it.
+But it's also kinda broken with tons of bugs, so I decided to fix them myself and merge code from FAYER3's blocklight2 fork.
+I called it BSPT which refers to "block shadow path tracing" at that time,
+but as I start to change things, add new stuffs like aurora and ripples, improve the performance, the block shadow part becomes less important.
+So it's not matter why it called BSPT today, I just what to make a super Bliss loved by everyone.
 
-### SPECIAL THANKS:
-+ Chocapic13, for the base shader
-+ WoMspace, for spending alot of time creating a DOF overhaul
-+ Null, for doing a huge amount of work creating the voxel floodfill colored lighting
-+ Emin, and Gri573, for teaching me how to stop alot of light leaking
-+ RRe36 and Sixthsurge, for the great ideas to steal
-### [Want to support me? donate on my patreon](https://www.patreon.com/Xonkmoney)
-
-# IN-DEVELOPMENT VERSIONS AND RELEASE VERSIONS
-`In-development versions` are the very latest versions, and are released regularly to be tested by anyone. **Please report any issues you find.**
-
-`Release versions` are uploaded when the in-development version is stable enough, and has enough changes to warrant a release. These are the versions uploaded to Modrinth or Curseforge. The release versions are not the very latest version.
-### Download the latest `in-development` version:
+### HOW TO DOWNLOAD:
  - locate the `green "code" button` on this page. this button is NOT in the `releases` page.
  - click the `green "code" button` and select `"download zip"`.
  - once the zip file finishes downloading, install it like a normal shader. you do NOT need to unzip/extract/decompress.
-### Download the latest `release` version:
- - locate the `"Releases"` tab on the right side of this page.
- - find the release version you want to download. locate the files attactched to it, and download the file named similar to `"Bliss_(version)_chocapic13_shaders_edit.zip"`
- - once the zip file finishes downloading, install it like a normal shader. you do NOT need to unzip/extract/decompress.
+
+# BSPT contains code from FAYER3's fork. Any re-editing & re-distribution is prohibited. #
