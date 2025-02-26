@@ -1,3 +1,9 @@
+2025-2-27 v1.36
+1. Merge flashlight & DH TAA jitter update from X0nk.
+~ xxx 整合X0nk的最新更新，内容包括手电筒功能与DH下的抖动TAA实现
+2. Fix tiny issue with POM & make flashlight working under RTGI/SSGI.
+~ all_particle/ composite1 修复了视差的细微问题，并使手电筒在RTGI/SSGI下也能正常工作
+
 2025-2-26 v1.35
 1. Improve rain and snow code to make them easier to be seen.
 ~ all_particle 优化雨雪可见度
