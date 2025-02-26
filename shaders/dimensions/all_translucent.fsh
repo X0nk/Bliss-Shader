@@ -1,6 +1,8 @@
 #include "/lib/settings.glsl"
 #include "/lib/ripples.glsl"
 
+#undef FLASHLIGHT_BOUNCED_INDIRECT
+
 // #if defined END_SHADER || defined NETHER_SHADER
 	// #undef IS_LPV_ENABLED
 // #endif
@@ -45,6 +47,7 @@ uniform sampler2D depthtex0;
 #ifdef DISTANT_HORIZONS
 	uniform sampler2D dhDepthTex1;
 #endif
+
 uniform sampler2D colortex7;
 uniform sampler2D colortex12;
 uniform sampler2D colortex13;
@@ -140,6 +143,21 @@ uniform float waterEnteredAltitude;
 	#include "/lib/lpv_render.glsl"
 #endif
 
+#define FORWARD_SPECULAR
+#define FORWARD_ENVIORNMENT_REFLECTION
+#define FORWARD_BACKGROUND_REFLECTION
+#define FORWARD_ROUGH_REFLECTION
+
+#ifdef FORWARD_SPECULAR
+#endif
+#ifdef FORWARD_ENVIORNMENT_REFLECTION
+#endif
+#ifdef FORWARD_BACKGROUND_REFLECTION
+#endif
+#ifdef FORWARD_ROUGH_REFLECTION
+#endif
+
+#include "/lib/specular.glsl"
 #include "/lib/diffuse_lighting.glsl"
 
 float interleaved_gradientNoise_temporal(){
@@ -371,22 +389,6 @@ void Emission(
 
 uniform vec3 eyePosition;
 
-#define FORWARD_SPECULAR
-#define FORWARD_ENVIORNMENT_REFLECTION
-#define FORWARD_BACKGROUND_REFLECTION
-#define FORWARD_ROUGH_REFLECTION
-
-#ifdef FORWARD_SPECULAR
-#endif
-#ifdef FORWARD_ENVIORNMENT_REFLECTION
-#endif
-#ifdef FORWARD_BACKGROUND_REFLECTION
-#endif
-#ifdef FORWARD_ROUGH_REFLECTION
-#endif
-
-#include "/lib/specular.glsl"
-
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -400,10 +402,6 @@ void main() {
 if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	{
 	
 	vec3 FragCoord = gl_FragCoord.xyz;
-
-	#ifdef HAND
-		convertHandDepth(FragCoord.z);
-	#endif
 
 	vec2 tempOffset = offsets[framemod8];
 
@@ -547,8 +545,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 //////////////////////////////// SPECULARS /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-
 	vec3 SpecularTex = texture2D(specular, lmtexcoord.xy, Texture_MipMap_Bias).rga;
+
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// DIFFUSE LIGHTING //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -665,8 +663,13 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		const vec3 lpvPos = vec3(0.0);
 	#endif
 
-	Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, exposure, feetPlayerPos, lpvPos, worldSpaceNormal);
-	
+	Indirect_lighting += doBlockLightLighting(vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, exposure, feetPlayerPos, lpvPos, worldSpaceNormal);
+
+	vec4 flashLightSpecularData = vec4(0.0);
+	#ifdef FLASHLIGHT
+		Indirect_lighting += calculateFlashlight(FragCoord.xy*texelSize/RENDER_SCALE, viewPos, vec3(0.0), viewToWorld(normalize(normal)), flashLightSpecularData, false);
+	#endif
+
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
 
 	#if EMISSIVE_TYPE == 2 || EMISSIVE_TYPE == 3
@@ -717,9 +720,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 				vec3 DirectLightColor = WsunVec;
 				float Shadows = 0.0;
 			#endif
-			
-			
-			vec3 specularReflections = specularReflections(viewPos, normalize(feetPlayerPos), WsunVec, vec3(blueNoise(), vec2(interleaved_gradientNoise_temporal())), viewToWorld(normal), roughness, f0, Albedo, FinalColor*gl_FragData[0].a, DirectLightColor * Shadows, lightmap.y, isHand, reflectance);
+
+			vec3 specularReflections = specularReflections(viewPos, normalize(feetPlayerPos), WsunVec, vec3(blueNoise(), vec2(interleaved_gradientNoise_temporal())), viewToWorld(normal), roughness, f0, Albedo, FinalColor*gl_FragData[0].a, DirectLightColor * Shadows, lightmap.y, isHand, reflectance, flashLightSpecularData);
 			
 			gl_FragData[0].a = gl_FragData[0].a + (1.0-gl_FragData[0].a) * reflectance;
 		

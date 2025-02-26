@@ -13,11 +13,9 @@ uniform sampler2D colortex4;
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec4 lightCol;
 
-#ifdef OVERWORLD_SHADER
-	#ifdef Daily_Weather
+#if defined OVERWORLD_SHADER && defined Daily_Weather
 		flat varying vec4 dailyWeatherParams0;
 		flat varying vec4 dailyWeatherParams1;
-	#endif
 #endif
 
 varying mat4 normalmatrix;
@@ -35,17 +33,17 @@ uniform vec2 texelSize;
 uniform int framemod8;
 
 #if DOF_QUALITY == 5
-uniform int hideGUI;
-uniform int frameCounter;
-uniform float aspectRatio;
-uniform float screenBrightness;
-uniform float far;
-#include "/lib/bokeh.glsl"
+	uniform int hideGUI;
+	uniform int frameCounter;
+	uniform float aspectRatio;
+	uniform float screenBrightness;
+	uniform float far;
+	#include "/lib/bokeh.glsl"
 #endif
 
-
+uniform int framemod4_DH;
+#define DH_TAA_OVERRIDE
 #include "/lib/TAA_jitter.glsl"
-
 
 
 uniform vec3 cameraPosition;
@@ -100,11 +98,9 @@ void main() {
 
 	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 	
-	#ifdef OVERWORLD_SHADER
-		#if defined Daily_Weather
+	#if defined OVERWORLD_SHADER && defined Daily_Weather
 			dailyWeatherParams0 = vec4((texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0)/2.0, 0.0);
 			dailyWeatherParams1 = vec4((texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0)/2.0, 0.0);
-		#endif
 	#endif
 
 
@@ -115,8 +111,8 @@ void main() {
 	#ifdef TAA_UPSCALING
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
-	#ifdef TAA
-		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+	#if defined TAA && defined DH_TAA_JITTER
+		gl_Position.xy += offsets[framemod4_DH] * gl_Position.w*texelSize;
 	#endif
 
 	#if DOF_QUALITY == 5

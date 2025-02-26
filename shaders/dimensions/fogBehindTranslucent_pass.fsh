@@ -48,6 +48,9 @@ uniform ivec2 eyeBrightnessSmooth;
 uniform float eyeAltitude;
 uniform float caveDetection;
 
+uniform mat4 gbufferPreviousModelView;
+uniform vec3 previousCameraPosition;
+
 #define DHVLFOG
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
@@ -444,7 +447,7 @@ void main() {
 
 		indirectLightColor_dynamic += MIN_LIGHT_AMOUNT * 0.02 * 0.2 + nightVision*0.02;
 
-		indirectLightColor_dynamic += vec3(TORCH_R,TORCH_G,TORCH_B)	* pow(1.0-sqrt(1.0-clamp(lightmap.x,0.0,1.0)),2.0) ;
+		indirectLightColor_dynamic += vec3(TORCH_R,TORCH_G,TORCH_B) * pow(1.0-sqrt(1.0-clamp(lightmap.x,0.0,1.0)),2.0) * TORCH_AMOUNT;
 
 		vec4 finalVolumetrics = vec4(0.0,0.0,0.0,1.0);
 

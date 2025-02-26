@@ -63,7 +63,6 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 	varying vec4 tangent;
 	attribute vec4 at_tangent;
 	varying vec4 normalMat;
-	flat varying vec3 WsunVec2;
 #endif
 
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -78,8 +77,6 @@ void main() {
 	lmtexcoord.zw = lmcoord;
 
 	#ifdef DAMAGE_BLOCK_EFFECT
-		WsunVec2 = (float(sunElevation > 1e-5)*2.0 - 1.0)*normalize(mat3(gbufferModelViewInverse) * sunPosition);
-
 		vec2 midcoord = (gl_TextureMatrix[0] *  mc_midTexCoord).st;
 		vec2 texcoordminusmid = lmtexcoord.xy-midcoord;
 		vtexcoordam.pq  = abs(texcoordminusmid)*2;

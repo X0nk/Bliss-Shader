@@ -47,15 +47,6 @@ uniform sampler2D colortex4;
 	uniform sampler3D texLpv2;
 #endif
 
-
-uniform mat4 gbufferProjectionInverse;
-uniform mat4 gbufferModelViewInverse;
-uniform mat4 gbufferModelView;
-uniform mat4 shadowModelView;
-uniform mat4 shadowProjection;
-uniform vec3 cameraPosition;
-uniform vec3 previousCameraPosition;
-
 uniform float frameTimeCounter;
 #include "/lib/Shadow_Params.glsl"
 
@@ -69,8 +60,11 @@ uniform float waterEnteredAltitude;
 
 flat varying float HELD_ITEM_BRIGHTNESS;
 
+uniform mat4 gbufferPreviousModelView;
+uniform vec3 previousCameraPosition;
 
 #include "/lib/util.glsl"
+#include "/lib/projections.glsl"
 
 #ifdef OVERWORLD_SHADER
 	#ifdef Daily_Weather
@@ -105,13 +99,6 @@ vec3 toLinear(vec3 sRGB){
 
 // #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 
-vec3 toScreenSpace(vec3 p) {
-	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
-	vec3 p3 = p * 2. - 1.;
-	vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
-	return fragposition.xyz / fragposition.w;
-}
-
 uniform int framemod8;
 
 #include "/lib/TAA_jitter.glsl"
@@ -136,107 +123,99 @@ float encodeVec2(float x,float y){
 
 // #undef BASIC_SHADOW_FILTER
 #ifdef OVERWORLD_SHADER
-float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDistFade){
+	float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDistFade){
 
-	if(maxDistFade <= 0.0) return 1.0;
+		if(maxDistFade <= 0.0) return 1.0;
 
-	// setup shadow projection
-	vec3 projectedShadowPosition = mat3(shadowModelView) * playerPos + shadowModelView[3].xyz;
-	projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
+		// setup shadow projection
+		vec3 projectedShadowPosition = mat3(shadowModelView) * playerPos + shadowModelView[3].xyz;
+		projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
-	// un-distort
-	#ifdef DISTORT_SHADOWMAP
-		float distortFactor = calcDistort(projectedShadowPosition.xy);
-		projectedShadowPosition.xy *= distortFactor;
-	#else
-		float distortFactor = 1.0;
-	#endif
+		// un-distort
+		#ifdef DISTORT_SHADOWMAP
+			float distortFactor = calcDistort(projectedShadowPosition.xy);
+			projectedShadowPosition.xy *= distortFactor;
+		#else
+			float distortFactor = 1.0;
+		#endif
 
-	// hamburger
-	projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
+		// hamburger
+		projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
 
-	#ifdef LPV_SHADOWS
-		projectedShadowPosition.xy *= 0.8;
-	#endif
+		#ifdef LPV_SHADOWS
+			projectedShadowPosition.xy *= 0.8;
+		#endif
 
-	float shadowmap = 0.0;
-	vec3 translucentTint = vec3(0.0);
+		float shadowmap = 0.0;
+		vec3 translucentTint = vec3(0.0);
 
-	#ifdef TRANSLUCENT_COLORED_SHADOWS
+		#ifdef TRANSLUCENT_COLORED_SHADOWS
 
-		// determine when opaque shadows are overlapping translucent shadows by getting the difference of opaque depth and translucent depth
-		float shadowDepthDiff = pow(clamp((shadow2D(shadowtex1, projectedShadowPosition).x - projectedShadowPosition.z) * 2.0,0.0,1.0),2.0);
+			// determine when opaque shadows are overlapping translucent shadows by getting the difference of opaque depth and translucent depth
+			float shadowDepthDiff = pow(clamp((shadow2D(shadowtex1, projectedShadowPosition).x - projectedShadowPosition.z) * 2.0,0.0,1.0),2.0);
 
-		// get opaque shadow data to get opaque data from translucent shadows.
-		float opaqueShadow = shadow2D(shadowtex0, projectedShadowPosition).x;
-		shadowmap += max(opaqueShadow, shadowDepthDiff);
+			// get opaque shadow data to get opaque data from translucent shadows.
+			float opaqueShadow = shadow2D(shadowtex0, projectedShadowPosition).x;
+			shadowmap += max(opaqueShadow, shadowDepthDiff);
 
-		// get translucent shadow data
-		vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
+			// get translucent shadow data
+			vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
 
-		// this curve simply looked the nicest. it has no other meaning.
-		float shadowAlpha = pow(1.0 - pow(translucentShadow.a,5.0),0.2);
+			// this curve simply looked the nicest. it has no other meaning.
+			float shadowAlpha = pow(1.0 - pow(translucentShadow.a,5.0),0.2);
 
-		// normalize the color to remove luminance, and keep the hue. remove all opaque color.
-		// mulitply shadow alpha to shadow color, but only on surfaces facing the lightsource. this is a tradeoff to protect subsurface scattering's colored shadow tint from shadow bias on the back of the caster.
-		translucentShadow.rgb = max(normalize(translucentShadow.rgb + 0.0001), max(opaqueShadow, 1.0-shadowAlpha)) * shadowAlpha;
+			// normalize the color to remove luminance, and keep the hue. remove all opaque color.
+			// mulitply shadow alpha to shadow color, but only on surfaces facing the lightsource. this is a tradeoff to protect subsurface scattering's colored shadow tint from shadow bias on the back of the caster.
+			translucentShadow.rgb = max(normalize(translucentShadow.rgb + 0.0001), max(opaqueShadow, 1.0-shadowAlpha)) * shadowAlpha;
 
-		// make it such that full alpha areas that arent in a shadow have a value of 1.0 instead of 0.0
-		translucentTint += mix(translucentShadow.rgb, vec3(1.0),  opaqueShadow*shadowDepthDiff);
+			// make it such that full alpha areas that arent in a shadow have a value of 1.0 instead of 0.0
+			translucentTint += mix(translucentShadow.rgb, vec3(1.0),  opaqueShadow*shadowDepthDiff);
 
-	#else
-		shadowmap += shadow2D(shadow, projectedShadowPosition).x;
-	#endif
+		#else
+			shadowmap += shadow2D(shadow, projectedShadowPosition).x;
+		#endif
 
-	#ifdef TRANSLUCENT_COLORED_SHADOWS
-		// tint the lightsource color with the translucent shadow color
-		directLightColor *= mix(vec3(1.0), translucentTint.rgb, maxDistFade);
-	#endif
+		#ifdef TRANSLUCENT_COLORED_SHADOWS
+			// tint the lightsource color with the translucent shadow color
+			directLightColor *= mix(vec3(1.0), translucentTint.rgb, maxDistFade);
+		#endif
 
-	return mix(1.0, shadowmap, maxDistFade);
-}
+		return mix(1.0, shadowmap, maxDistFade);
+	}
 #endif
 
 #if defined DAMAGE_BLOCK_EFFECT && defined POM
-#extension GL_ARB_shader_texture_lod : enable
+	#extension GL_ARB_shader_texture_lod : enable
 
-mat3 inverseMatrix(mat3 m) {
-	float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
-	float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];
-	float a20 = m[2][0], a21 = m[2][1], a22 = m[2][2];
+	mat3 inverseMatrix(mat3 m) {
+		float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
+		float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];
+		float a20 = m[2][0], a21 = m[2][1], a22 = m[2][2];
 
-	float b01 = a22 * a11 - a12 * a21;
-	float b11 = -a22 * a10 + a12 * a20;
-	float b21 = a21 * a10 - a11 * a20;
+		float b01 = a22 * a11 - a12 * a21;
+		float b11 = -a22 * a10 + a12 * a20;
+		float b21 = a21 * a10 - a11 * a20;
 
-	float det = a00 * b01 + a01 * b11 + a02 * b21;
+		float det = a00 * b01 + a01 * b11 + a02 * b21;
 
-	return mat3(b01, (-a22 * a01 + a02 * a21), (a12 * a01 - a02 * a11),
-				b11, (a22 * a00 - a02 * a20), (-a12 * a00 + a02 * a10),
-				b21, (-a21 * a00 + a01 * a20), (a11 * a00 - a01 * a10)) / det;
-}
+		return mat3(b01, (-a22 * a01 + a02 * a21), (a12 * a01 - a02 * a11),
+					b11, (a22 * a00 - a02 * a20), (-a12 * a00 + a02 * a10),
+					b21, (-a21 * a00 + a01 * a20), (a11 * a00 - a01 * a10)) / det;
+	}
 
-const float MAX_OCCLUSION_DISTANCE = MAX_DIST;
-const float MIX_OCCLUSION_DISTANCE = MAX_DIST*0.9;
-const int MAX_OCCLUSION_POINTS = MAX_ITERATIONS;
+	const float MAX_OCCLUSION_DISTANCE = MAX_DIST;
+	const float MIX_OCCLUSION_DISTANCE = MAX_DIST*0.9;
+	const int MAX_OCCLUSION_POINTS = MAX_ITERATIONS;
 
-varying vec4 vtexcoordam; // .st for add, .pq for mul
-varying vec4 vtexcoord;
+	varying vec4 vtexcoordam; // .st for add, .pq for mul
+	varying vec4 vtexcoord;
 
-vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
-vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
+	vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
+	vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
 
+	#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
+	#define projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
-#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
-
-uniform mat4 gbufferProjection;
-
-vec3 toClipSpace3(vec3 viewSpacePosition) {
-	return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
-}
-
-flat varying vec3 WsunVec2;
 	const float mincoord = 1.0/4096.0;
 	const float maxcoord = 1.0-mincoord;
 
@@ -300,8 +279,6 @@ void main() {
 		float dist = length(fragpos);
 
 		float maxdist = MAX_OCCLUSION_DISTANCE;
-
-		// float depth  = gl_FragCoord.z;
 		if (dist < maxdist) {
 
 			float depthmap = readNormal(vtexcoord.st).a;
@@ -333,10 +310,6 @@ void main() {
 				}
 
 				adjustedTexCoord = mix(fract(coord.st)*vtexcoordam.pq+vtexcoordam.st, adjustedTexCoord, max(dist-MIX_OCCLUSION_DISTANCE,0.0)/(MAX_OCCLUSION_DISTANCE-MIX_OCCLUSION_DISTANCE));
-
-				// vec3 truePos = fragpos + sumVec*inverseMatrix(tbnMatrix)*interval;
-
-				// depth = toClipSpace3(truePos).z;
 			}
 		}
 
