@@ -577,58 +577,50 @@ vec4 BilateralUpscale_VLFOG(sampler2D tex, sampler2D depth, vec2 coord, float re
 }
 
 #ifdef OVERWORLD_SHADER
+	vec3 ComputeShadowMap_COLOR(in vec3 projectedShadowPosition, float distortFactor, float noise, float shadowBlockerDepth, float NdotL, float maxDistFade, vec3 directLightColor, inout float tShadow, inout vec3 tintedSunlight, bool isSSS, inout float shadowDebug) {
+		float backface = NdotL <= 0.0 ? 1.0 : 0.0;
+		vec3 shadowColor = vec3(0.0);
+		vec3 translucentTint = vec3(0.0);
+		float tShadowAccum = 0.0;
 
-vec3 ComputeShadowMap_COLOR(in vec3 projectedShadowPosition, float distortFactor, float noise, float shadowBlockerDepth, float NdotL, float maxDistFade, vec3 directLightColor, inout float FUNNYSHADOW, inout vec3 tintedSunlight, bool isSSS ,inout float shadowDebug){
-
-	// if(maxDistFade <= 0.0) return 1.0;
-	float backface = NdotL <= 0.0 ? 1.0 : 0.0;
-
-	vec3 shadowColor = vec3(0.0);
-	vec3 translucentTint = vec3(0.0);
-
-	#ifdef BASIC_SHADOW_FILTER
-		int samples = SHADOW_FILTER_SAMPLE_COUNT;
-		float rdMul = (shadowBlockerDepth*distortFactor*d0*k/shadowMapResolution) * 0.3;
-		
-		for(int i = 0; i < samples; i++){
-			vec2 offsetS = CleanSample(i, samples - 1, noise) * rdMul;
-			projectedShadowPosition.xy += offsetS;
-		}
-	#else
 		int samples = 1;
-	#endif
+		float rdMul = 0.0;
 
-	#ifdef TRANSLUCENT_COLORED_SHADOWS
-		float opaqueShadow = shadow2D(shadowtex0, projectedShadowPosition).x;
-		float opaqueShadowT = shadow2D(shadowtex1, projectedShadowPosition).x;
-		vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
+		#ifdef BASIC_SHADOW_FILTER
+			samples = SHADOW_FILTER_SAMPLE_COUNT;
+			rdMul = (shadowBlockerDepth * distortFactor * d0 * k / shadowMapResolution) * 0.3;
+		#endif
 
-		float shadowAlpha = pow(1.0-pow(1.0-translucentShadow.a,2.0),5.0);
-		translucentShadow.rgb = normalize(translucentShadow.rgb*translucentShadow.rgb + 0.0001) * (1.0-shadowAlpha);
+		vec3 samplePos = projectedShadowPosition;
+		for (int i = 0; i < samples; i++) {
+			#ifdef BASIC_SHADOW_FILTER
+				samplePos.xy += CleanSample(i, samples - 1, noise) * rdMul;
+			#endif
 
-		// translucentTint += mix(translucentShadow.rgb * mix(opaqueShadowT, 1.0, backface), vec3(1.0), max(opaqueShadow, backface * (shadowAlpha < 1.0 ? 0.0 : 1.0)));
-		
-		shadowColor += directLightColor * mix(translucentShadow.rgb * opaqueShadowT, vec3(1.0), opaqueShadow);
-		
-		translucentTint += mix(translucentShadow.rgb, vec3(1.0), max(opaqueShadow, backface * (shadowAlpha < 1.0 ? 0.0 : 1.0)));
-		FUNNYSHADOW += ((1.0-shadowAlpha) * opaqueShadowT)/samples;
-	#else
-		shadowColor += directLightColor * shadow2D(shadow, projectedShadowPosition).x;
-	#endif
+			#ifdef TRANSLUCENT_COLORED_SHADOWS
+				float opaqueShadow = shadow2D(shadowtex0, samplePos).x;
+				float opaqueShadowT = shadow2D(shadowtex1, samplePos).x;
+				vec4 translucentShadow = texture2D(shadowcolor0, samplePos.xy);
 
-	#ifdef debug_SHADOWMAP
-		shadowDebug = shadow2D(shadow, projectedShadowPosition).x;
-	#endif
-	// #ifdef TRANSLUCENT_COLORED_SHADOWS
-		// directLightColor *= mix(vec3(1.0), translucentTint.rgb / samples, maxDistFade);
+				float shadowAlpha = pow(translucentShadow.a * (2.0 - translucentShadow.a), 5.0);
+				translucentShadow.rgb = normalize(translucentShadow.rgb * translucentShadow.rgb + 0.0001) * (1.0 - shadowAlpha);
+
+				shadowColor += directLightColor * mix(translucentShadow.rgb * opaqueShadowT, vec3(1.0), opaqueShadow);
+				translucentTint += mix(translucentShadow.rgb, vec3(1.0), max(opaqueShadow, backface * step(1.0, shadowAlpha)));
+				tShadowAccum += (1.0 - shadowAlpha) * opaqueShadowT;
+			#else
+				shadowColor += directLightColor * shadow2D(shadow, samplePos).x;
+			#endif
+		}
+
+		#ifdef debug_SHADOWMAP
+			shadowDebug = shadow2D(shadow, projectedShadowPosition).x;
+		#endif
+
+		tShadow += tShadowAccum / samples;
 		tintedSunlight *= translucentTint.rgb / samples;
-	// #endif
-
-	return mix(directLightColor, shadowColor.rgb / samples, maxDistFade);
-	// return 1.0;
-	// return mix(1.0, shadow / samples, maxDistFade);
-}
-
+		return mix(directLightColor, shadowColor.rgb / samples, maxDistFade);
+	}
 #endif
 
 float CustomPhase(float LightPos){
