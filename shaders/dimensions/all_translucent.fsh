@@ -516,7 +516,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			vec3 bump = normalize(getWaveNormal(waterPos, playerPos, false));
 
 			#ifdef WATER_RIPPLES
-				vec3 rippleNormal = drawRipples(worldPos.xz * 5.0, frameTimeCounter) * applyRipple * clamp(1 - length(worldPos) / 128, 0, 1) * 0.2;
+				vec3 rippleNormal = drawRipples(worldPos.xz * 5.0, frameTimeCounter) * applyRipple * 0.2;
 				bump = normalize(bump + rippleNormal);
 			#endif
 

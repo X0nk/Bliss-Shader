@@ -516,7 +516,7 @@ void main() {
 		NormalTex.z = sqrt(max(1.0 - dot(NormalTex.xy, NormalTex.xy), 0.0));
 
 		#ifdef GROUND_RIPPLES
-			vec3 rippleNormal = drawRipples(worldPos.xz * 10.0, frameTimeCounter * 2.0) * applyRipple * clamp(1 - length(worldPos) / 32, 0, 1) * 0.2;
+			vec3 rippleNormal = drawRipples(worldPos.xz * 10.0, frameTimeCounter * 2.0) * applyRipple * 0.2;
 			NormalTex.xyz = normalize(NormalTex.xyz + rippleNormal);
 		#endif
 
