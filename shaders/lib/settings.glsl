@@ -1,4 +1,4 @@
-#define SHADER_VERSION_LABEL 1.36 // [1.36]
+#define SHADER_VERSION_LABEL 1.37 // [1.37]
 
 #define saturate(x) clamp(x,0.0,1.0)
 
