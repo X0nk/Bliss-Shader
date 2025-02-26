@@ -197,44 +197,36 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 #endif
 
 #if defined DAMAGE_BLOCK_EFFECT && defined POM
-#extension GL_ARB_shader_texture_lod : enable
+	#extension GL_ARB_shader_texture_lod : enable
+	
+	mat3 inverseMatrix(mat3 m) {
+	  float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
+	  float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];
+	  float a20 = m[2][0], a21 = m[2][1], a22 = m[2][2];
+	
+	  float b01 = a22 * a11 - a12 * a21;
+	  float b11 = -a22 * a10 + a12 * a20;
+	  float b21 = a21 * a10 - a11 * a20;
+	
+	  float det = a00 * b01 + a01 * b11 + a02 * b21;
+	
+	  return mat3(b01, (-a22 * a01 + a02 * a21), (a12 * a01 - a02 * a11),
+	              b11, (a22 * a00 - a02 * a20), (-a12 * a00 + a02 * a10),
+	              b21, (-a21 * a00 + a01 * a20), (a11 * a00 - a01 * a10)) / det;
+	}
+	const float MAX_OCCLUSION_DISTANCE = MAX_DIST;
+	const float MIX_OCCLUSION_DISTANCE = MAX_DIST*0.9;
+	const int   MAX_OCCLUSION_POINTS   = MAX_ITERATIONS;
+	
+	varying vec4 vtexcoordam; // .st for add, .pq for mul
+	varying vec4 vtexcoord;
+	
+	vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
+	vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
+	
+	#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
+	#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
-mat3 inverseMatrix(mat3 m) {
-  float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
-  float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];
-  float a20 = m[2][0], a21 = m[2][1], a22 = m[2][2];
-
-  float b01 = a22 * a11 - a12 * a21;
-  float b11 = -a22 * a10 + a12 * a20;
-  float b21 = a21 * a10 - a11 * a20;
-
-  float det = a00 * b01 + a01 * b11 + a02 * b21;
-
-  return mat3(b01, (-a22 * a01 + a02 * a21), (a12 * a01 - a02 * a11),
-              b11, (a22 * a00 - a02 * a20), (-a12 * a00 + a02 * a10),
-              b21, (-a21 * a00 + a01 * a20), (a11 * a00 - a01 * a10)) / det;
-}
-const float MAX_OCCLUSION_DISTANCE = MAX_DIST;
-const float MIX_OCCLUSION_DISTANCE = MAX_DIST*0.9;
-const int   MAX_OCCLUSION_POINTS   = MAX_ITERATIONS;
-
-varying vec4 vtexcoordam; // .st for add, .pq for mul
-varying vec4 vtexcoord;
-
-vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
-vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
-
-
-#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
-
-uniform mat4 gbufferProjection;
-
-vec3 toClipSpace3(vec3 viewSpacePosition) {
-    return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
-}
-
-flat varying vec3 WsunVec2;
 	const float mincoord = 1.0/4096.0;
 	const float maxcoord = 1.0-mincoord;
 
@@ -301,8 +293,6 @@ void main() {
 		float dist = length(fragpos);
 
 		float maxdist = MAX_OCCLUSION_DISTANCE;
-
-		// float depth  = gl_FragCoord.z;
 		if (dist < maxdist) {
 
 			float depthmap = readNormal(vtexcoord.st).a;
@@ -334,10 +324,6 @@ void main() {
 				}
 
 				adjustedTexCoord = mix(fract(coord.st)*vtexcoordam.pq+vtexcoordam.st, adjustedTexCoord, max(dist-MIX_OCCLUSION_DISTANCE,0.0)/(MAX_OCCLUSION_DISTANCE-MIX_OCCLUSION_DISTANCE));
-
-				// vec3 truePos = fragpos + sumVec*inverseMatrix(tbnMatrix)*interval;
-
-				// depth = toClipSpace3(truePos).z;
 			}
 		}
 
