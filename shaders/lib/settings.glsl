@@ -770,8 +770,11 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 #define DH_AMBIENT_OCCLUSION
 #define DH_SUBSURFACE_SCATTERING
 #define DH_SCREENSPACE_REFLECTIONS
-#define DH_NOISE_TEXTURE
 #define DH_TAA_JITTER
+#define DH_NOISE_TEXTURE
+#define NOISE_RESOLUTION 12 // [1 2 3 4 5 6 7 8 12 14 16 24 32 48 64]
+#define NOISE_INTENSITY 12.0 // [1.0 2.0 3.0 4.0 6.0 8.0 10.0 12.0 14.0 16.0 18.0 20.0 22.0 24.0 32.0 48.0 64.0]
+#define NOISE_DROPOFF 1024 // [128 256 512 768 1024 1536 2048 3072 4096 8192]
 
 ///////////////////////////////////////////
 // ----- FLOODFILL [LPV] SETTINGS ----- //

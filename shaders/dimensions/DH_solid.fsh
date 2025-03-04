@@ -102,9 +102,11 @@ float densityAtPos(in vec3 pos){
 // https://gitlab.com/jeseibel/distant-horizons-core/-/blob/main/core/src/main/resources/shaders/flat_shaded.frag?ref_type=heads
 // Property of Distant Horizons [mod]
 
-const int noiseSteps = 4;
-const float noiseIntensity = 10.0;
-const int noiseDropoff = 1024;
+// --- NOISE SETTINGS ---
+const int noiseSteps = NOISE_RESOLUTION;
+const float noiseIntensity = NOISE_INTENSITY;
+const int noiseDropoff = NOISE_DROPOFF;
+// ----------------------
 
 float rand(float co) { return fract(sin(co*(91.3458)) * 47453.5453); }
 float rand(vec2 co) { return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453); }
