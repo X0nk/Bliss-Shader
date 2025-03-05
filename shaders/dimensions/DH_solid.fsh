@@ -11,7 +11,6 @@ flat varying float EMISSIVE;
 flat varying int dh_material_id;
 
 uniform float far;
-uniform float nightVision;
 // uniform int hideGUI;
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;

@@ -45,21 +45,9 @@ uniform float frameTimeCounter;
 uniform float rainStrength;
 uniform int frameCounter;
 
-
-uniform mat4 gbufferModelViewInverse;
-uniform mat4 gbufferModelView;
-
-
-uniform vec3 cameraPosition;
-uniform mat4 gbufferProjection;
-uniform mat4 gbufferProjectionInverse;
-
 uniform vec3 previousCameraPosition;
-uniform mat4 gbufferPreviousProjection;
 uniform mat4 gbufferPreviousModelView;
 
-uniform mat4 shadowModelView;
-uniform mat4 shadowProjection;
 uniform float viewWidth;
 uniform float aspectRatio;
 uniform float viewHeight;
@@ -70,59 +58,51 @@ uniform float dhFarPlane;
 uniform float dhNearPlane;
 
 #define ffstep(x,y) clamp((y - x) * 1e35,0.0,1.0)
-#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
-vec3 toScreenSpace(vec3 p) {
-	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
-    vec3 p3 = p * 2. - 1.;
-    vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
-    return fragposition.xyz / fragposition.w;
-}
 
+#include "/lib/projections.glsl"
 
 vec3 worldToView(vec3 worldPos) {
-    vec4 pos = vec4(worldPos, 0.0);
-    pos = gbufferModelView * pos;
-    return pos.xyz;
+	vec4 pos = vec4(worldPos, 0.0);
+	pos = gbufferModelView * pos;
+	return pos.xyz;
 }
 
-vec2 tapLocation(int sampleNumber,int nb, float nbRot,float jitter,float distort)
-{
-    float alpha = (sampleNumber+jitter)/nb;
-    float angle = jitter*6.28+alpha * nbRot * 6.28;
-    float sin_v, cos_v;
+vec2 tapLocation(int sampleNumber,int nb, float nbRot,float jitter,float distort){
+	float alpha = (sampleNumber+jitter)/nb;
+	float angle = jitter*6.28+alpha * nbRot * 6.28;
+	float sin_v, cos_v;
 
 	sin_v = sin(angle);
 	cos_v = cos(angle);
 
-    return vec2(cos_v, sin_v)*alpha;
+	return vec2(cos_v, sin_v)*alpha;
 }
+
 vec2 tapLocation2(int sampleNumber, int nb, float jitter){
-    float alpha = (sampleNumber+jitter)/nb;
-    float angle = jitter*6.28 + alpha * 84.0 * 6.28;
+	float alpha = (sampleNumber+jitter)/nb;
+	float angle = jitter*6.28 + alpha * 84.0 * 6.28;
 
-    float sin_v, cos_v;
+	float sin_v, cos_v;
 
 	sin_v = sin(angle);
 	cos_v = cos(angle);
 
-    return vec2(cos_v, sin_v)*sqrt(alpha);
+	return vec2(cos_v, sin_v)*sqrt(alpha);
 }
 
 vec3 decode (vec2 encn){
-    vec3 n = vec3(0.0);
-    encn = encn * 2.0 - 1.0;
-    n.xy = abs(encn);
-    n.z = 1.0 - n.x - n.y;
-    n.xy = n.z <= 0.0 ? (1.0 - n.yx) * sign(encn) : encn;
-    return clamp(normalize(n.xyz),-1.0,1.0);
+	vec3 n = vec3(0.0);
+	encn = encn * 2.0 - 1.0;
+	n.xy = abs(encn);
+	n.z = 1.0 - n.x - n.y;
+	n.xy = n.z <= 0.0 ? (1.0 - n.yx) * sign(encn) : encn;
+	return clamp(normalize(n.xyz),-1.0,1.0);
 }
 vec2 decodeVec2(float a){
-    const vec2 constant1 = 65535. / vec2( 256., 65536.);
-    const float constant2 = 256. / 255.;
-    return fract( a * constant1 ) * constant2 ;
+	const vec2 constant1 = 65535. / vec2( 256., 65536.);
+	const float constant2 = 256. / 255.;
+	return fract( a * constant1 ) * constant2 ;
 }
-
 
 float interleaved_gradientNoise_temporal(){
 	vec2 coord = gl_FragCoord.xy;
@@ -133,11 +113,13 @@ float interleaved_gradientNoise_temporal(){
 
 	return fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 }
+
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy;
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 	return noise;
 }
+
 float R2_dither(){
 	vec2 coord = gl_FragCoord.xy ;
 
@@ -148,6 +130,7 @@ float R2_dither(){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
+
 float blueNoise(){
 	#ifdef TAA
   		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
@@ -155,27 +138,22 @@ float blueNoise(){
 		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
 	#endif
 }
+
 vec4 blueNoise(vec2 coord){
   return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
 }
+
 vec2 R2_samples(int n){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha * n);
 }
 
-
-
-
-
-
-
-
 vec3 viewToWorld(vec3 viewPos) {
-    vec4 pos;
-    pos.xyz = viewPos;
-    pos.w = 0.0;
-    pos = gbufferModelViewInverse * pos;
-    return pos.xyz;
+	vec4 pos;
+	pos.xyz = viewPos;
+	pos.w = 0.0;
+	pos = gbufferModelViewInverse * pos;
+	return pos.xyz;
 }
 
 #include "/lib/Shadow_Params.glsl"
@@ -187,15 +165,15 @@ vec2 SpiralSample(
 ){
 	Xi = max(Xi,0.0015);
 	
-    float alpha = float(samples + Xi) * (1.0 / float(totalSamples));
+	float alpha = float(samples + Xi) * (1.0 / float(totalSamples));
 	
-    float theta = (2.0 *3.14159265359) * alpha * rotation;
+	float theta = (2.0 *3.14159265359) * alpha * rotation;
 
-    float r = sqrt(Xi);
+	float r = sqrt(Xi);
 	float x = r * sin(theta);
 	float y = r * cos(theta);
 
-    return vec2(x, y);
+	return vec2(x, y);
 }
 
 vec2 CleanSample(
@@ -210,15 +188,15 @@ vec2 CleanSample(
 	
 	// for every sample, the sample position must change its distance from the origin.
 	// otherwise, you will just have a circle.
-    float spiralShape = variedSamples / (totalSamples + variance);
+	float spiralShape = variedSamples / (totalSamples + variance);
 
 	float shape = 2.26;
-    float theta = variedSamples * (PI * shape);
+	float theta = variedSamples * (PI * shape);
 
 	float x =  cos(theta) * spiralShape;
 	float y =  sin(theta) * spiralShape;
 
-    return vec2(x, y);
+	return vec2(x, y);
 }
 
 
@@ -226,28 +204,28 @@ vec2 CleanSample(
 #include "/lib/DistantHorizons_projections.glsl"
 
 float DH_ld(float dist) {
-    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+	return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
 }
 float DH_inv_ld (float lindepth){
 	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
 }
 
 float linearizeDepthFast(const in float depth, const in float near, const in float far) {
-    return (near * far) / (depth * (near - far) + far);
+	return (near * far) / (depth * (near - far) + far);
 }
 
 void convertHandDepth(inout float depth) {
-    float ndcDepth = depth * 2.0 - 1.0;
-    ndcDepth /= MC_HAND_DEPTH;
-    depth = ndcDepth * 0.5 + 0.5;
+	float ndcDepth = depth * 2.0 - 1.0;
+	ndcDepth /= MC_HAND_DEPTH;
+	depth = ndcDepth * 0.5 + 0.5;
 }
 
 float convertHandDepth_2(in float depth, bool hand) {
-    if(!hand) return depth;
+	if(!hand) return depth;
 	
 	float ndcDepth = depth * 2.0 - 1.0;
-    ndcDepth /= MC_HAND_DEPTH;
-    return ndcDepth * 0.5 + 0.5;
+	ndcDepth /= MC_HAND_DEPTH;
+	return ndcDepth * 0.5 + 0.5;
 }
 
 vec2 SSAO(

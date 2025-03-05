@@ -12,11 +12,7 @@
 #include "/lib/util.glsl"
 #include "/lib/res_params.glsl"
 
-#define diagonal3_old(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD_old(m, v) (diagonal3_old(m) * (v) + (m)[3].xyz)
-
 const bool colortex5MipmapEnabled = true;
-uniform float nightVision;
 
 #ifdef OVERWORLD_SHADER
 	const bool shadowHardwareFiltering = true;
@@ -35,7 +31,7 @@ uniform float nightVision;
 	#if Sun_specular_Strength != 0
 		#define LIGHTSOURCE_REFLECTION
 	#endif
-	
+
 	#include "/lib/lightning_stuff.glsl"
 #endif
 
@@ -981,7 +977,7 @@ void main() {
 		if(!hand) GriAndEminShadowFix(shadowPlayerPos, FlatNormals, vanilla_AO, lightmap.y);
 
 		vec3 projectedShadowPosition = mat3(shadowModelView) * shadowPlayerPos + shadowModelView[3].xyz;
-		projectedShadowPosition = diagonal3_old(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
+		projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
 		#if OPTIMIZED_SHADOW_DISTANCE > 0
 

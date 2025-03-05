@@ -96,8 +96,6 @@ float blueNoise(){
 }
 
 #define DHVLFOG
-// #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-// #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
 vec3 toScreenSpace(vec3 p) {
 	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
@@ -113,16 +111,6 @@ uniform float dhNearPlane;
 
 #include "/lib/DistantHorizons_projections.glsl"
 
-vec3 DH_toScreenSpace(vec3 p) {
-	vec4 iProjDiag = vec4(dhProjectionInverse[0].x, dhProjectionInverse[1].y, dhProjectionInverse[2].zw);
-	vec3 feetPlayerPos = p * 2. - 1.;
-	vec4 viewPos = iProjDiag * feetPlayerPos.xyzz + dhProjectionInverse[3];
-	return viewPos.xyz / viewPos.w;
-}
-
-vec3 DH_toClipSpace3(vec3 viewSpacePosition) {
-	return projMAD(dhProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
-}
 
 // float DH_ld(float dist) {
 //     return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));

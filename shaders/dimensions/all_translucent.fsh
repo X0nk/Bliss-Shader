@@ -88,7 +88,6 @@ uniform int isEyeInWater;
 uniform float skyIntensityNight;
 uniform float skyIntensity;
 uniform ivec2 eyeBrightnessSmooth;
-uniform float nightVision;
 
 uniform int frameCounter;
 uniform float frameTimeCounter;
@@ -282,100 +281,96 @@ uniform float dhFarPlane;
 #include "/lib/DistantHorizons_projections.glsl"
 
 
-
-
 // #undef BASIC_SHADOW_FILTER
 
 #ifdef OVERWORLD_SHADER
-float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDistFade, float noise){
+	float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDistFade, float noise){
 
-	if(maxDistFade <= 0.0) return 1.0;
+		if(maxDistFade <= 0.0) return 1.0;
 
-	// setup shadow projection
-	vec3 projectedShadowPosition = mat3(shadowModelView) * playerPos + shadowModelView[3].xyz;
-	projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
+		// setup shadow projection
+		vec3 projectedShadowPosition = mat3(shadowModelView) * playerPos + shadowModelView[3].xyz;
+		projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
-	// un-distort
-	#ifdef DISTORT_SHADOWMAP
-		float distortFactor = calcDistort(projectedShadowPosition.xy);
-		projectedShadowPosition.xy *= distortFactor;
-	#else
+		// un-distort
 		float distortFactor = 1.0;
-	#endif
 
-	// hamburger
-	projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
-
-	#ifdef LPV_SHADOWS
-		projectedShadowPosition.xy *= 0.8;
-	#endif
-
-	float shadowmap = 0.0;
-	vec3 translucentTint = vec3(0.0);
-
-	#ifndef HAND
-		projectedShadowPosition.z -= 0.0001;
-	#endif
-
-	#if defined ENTITIES
-		projectedShadowPosition.z -= 0.0002;
-	#endif
-
-	#ifdef BASIC_SHADOW_FILTER
-		int samples = int(SHADOW_FILTER_SAMPLE_COUNT * 0.5);
-		float rdMul = 14.0*distortFactor*d0*k/shadowMapResolution;
-
-		for(int i = 0; i < samples; i++){
-			vec2 offsetS = CleanSample(i, samples - 1, noise) * 0.3;
-			projectedShadowPosition.xy += rdMul*offsetS;
-	#else
-		int samples = 1;
-	#endif
-	
-
-		#ifdef TRANSLUCENT_COLORED_SHADOWS
-
-			// determine when opaque shadows are overlapping translucent shadows by getting the difference of opaque depth and translucent depth
-			float shadowDepthDiff = pow(clamp((shadow2D(shadowtex1, projectedShadowPosition).x - projectedShadowPosition.z) * 2.0,0.0,1.0),2.0);
-
-			// get opaque shadow data to get opaque data from translucent shadows.
-			float opaqueShadow = shadow2D(shadowtex0, projectedShadowPosition).x;
-			shadowmap += max(opaqueShadow, shadowDepthDiff);
-
-			// get translucent shadow data
-			vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
-
-			// this curve simply looked the nicest. it has no other meaning.
-			float shadowAlpha = pow(1.0 - pow(translucentShadow.a,5.0),0.2);
-
-			// normalize the color to remove luminance, and keep the hue. remove all opaque color.
-			// mulitply shadow alpha to shadow color, but only on surfaces facing the lightsource. this is a tradeoff to protect subsurface scattering's colored shadow tint from shadow bias on the back of the caster.
-			translucentShadow.rgb = max(normalize(translucentShadow.rgb + 0.0001), max(opaqueShadow, 1.0-shadowAlpha)) * shadowAlpha;
-
-			// make it such that full alpha areas that arent in a shadow have a value of 1.0 instead of 0.0
-			translucentTint += mix(translucentShadow.rgb, vec3(1.0),  opaqueShadow*shadowDepthDiff);
-
-		#else
-			shadowmap += shadow2D(shadow, projectedShadowPosition).x;
+		#ifdef DISTORT_SHADOWMAP
+			distortFactor = calcDistort(projectedShadowPosition.xy);
+			projectedShadowPosition.xy *= distortFactor;
 		#endif
 
-	#ifdef BASIC_SHADOW_FILTER
+		// hamburger
+		projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
+
+		#ifdef LPV_SHADOWS
+			projectedShadowPosition.xy *= 0.8;
+		#endif
+
+		float shadowmap = 0.0;
+		vec3 translucentTint = vec3(0.0);
+
+		#ifndef HAND
+			projectedShadowPosition.z -= 0.0001;
+		#endif
+
+		#if defined ENTITIES
+			projectedShadowPosition.z -= 0.0002;
+		#endif
+
+		int samples = 1;
+		float rdMul = 0.0;
+
+		#ifdef BASIC_SHADOW_FILTER
+			samples = int(SHADOW_FILTER_SAMPLE_COUNT * 0.5);
+			rdMul = 14.0*distortFactor*d0*k/shadowMapResolution;
+		#endif
+
+		for(int i = 0; i < samples; i++){
+			#ifdef BASIC_SHADOW_FILTER
+				vec2 offsetS = CleanSample(i, samples - 1, noise) * 0.3;
+				projectedShadowPosition.xy += rdMul*offsetS;
+			#endif
+
+			#ifdef TRANSLUCENT_COLORED_SHADOWS
+
+				// determine when opaque shadows are overlapping translucent shadows by getting the difference of opaque depth and translucent depth
+				float shadowDepthDiff = pow(clamp((shadow2D(shadowtex1, projectedShadowPosition).x - projectedShadowPosition.z) * 2.0,0.0,1.0),2.0);
+
+				// get opaque shadow data to get opaque data from translucent shadows.
+				float opaqueShadow = shadow2D(shadowtex0, projectedShadowPosition).x;
+				shadowmap += max(opaqueShadow, shadowDepthDiff);
+
+				// get translucent shadow data
+				vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
+
+				// this curve simply looked the nicest. it has no other meaning.
+				float shadowAlpha = pow(1.0 - pow(translucentShadow.a,5.0),0.2);
+
+				// normalize the color to remove luminance, and keep the hue. remove all opaque color.
+				// mulitply shadow alpha to shadow color, but only on surfaces facing the lightsource. this is a tradeoff to protect subsurface scattering's colored shadow tint from shadow bias on the back of the caster.
+				translucentShadow.rgb = max(normalize(translucentShadow.rgb + 0.0001), max(opaqueShadow, 1.0-shadowAlpha)) * shadowAlpha;
+
+				// make it such that full alpha areas that arent in a shadow have a value of 1.0 instead of 0.0
+				translucentTint += mix(translucentShadow.rgb, vec3(1.0),  opaqueShadow*shadowDepthDiff);
+			#else
+				shadowmap += shadow2D(shadow, projectedShadowPosition).x;
+			#endif
 		}
-	#endif
 
-	#ifdef TRANSLUCENT_COLORED_SHADOWS
-		// tint the lightsource color with the translucent shadow color
-		directLightColor *= mix(vec3(1.0), translucentTint.rgb / samples, maxDistFade);
-	#endif
+		#ifdef TRANSLUCENT_COLORED_SHADOWS
+			// tint the lightsource color with the translucent shadow color
+			directLightColor *= mix(vec3(1.0), translucentTint.rgb / samples, maxDistFade);
+		#endif
 
-	return mix(1.0, shadowmap / samples, maxDistFade);
-}
+		return mix(1.0, shadowmap / samples, maxDistFade);
+	}
 #endif
 
 void convertHandDepth(inout float depth) {
-    float ndcDepth = depth * 2.0 - 1.0;
-    ndcDepth /= MC_HAND_DEPTH;
-    depth = ndcDepth * 0.5 + 0.5;
+	float ndcDepth = depth * 2.0 - 1.0;
+	ndcDepth /= MC_HAND_DEPTH;
+	depth = ndcDepth * 0.5 + 0.5;
 }
 void Emission(
 	inout vec3 Lighting,
@@ -516,7 +511,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			vec3 bump = normalize(getWaveNormal(waterPos, playerPos, false));
 
 			#ifdef WATER_RIPPLES
-				vec3 rippleNormal = drawRipples(worldPos.xz * 5.0, frameTimeCounter) * applyRipple * 0.2;
+				vec3 rippleNormal = drawRipples(worldPos.xz * 5.0, frameTimeCounter) * applyRipple * 0.25 * clamp(1.0 - length(playerPos) / 128.0, 0.0, 1.0);
 				bump = normalize(bump + rippleNormal);
 			#endif
 

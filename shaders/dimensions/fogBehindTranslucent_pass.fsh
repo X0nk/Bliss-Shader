@@ -2,7 +2,6 @@
 // #if defined END_SHADER || defined NETHER_SHADER
 	#undef IS_LPV_ENABLED
 // #endif
-uniform float nightVision;
 
 flat varying vec4 lightCol;
 flat varying vec3 averageSkyCol;
@@ -52,8 +51,6 @@ uniform mat4 gbufferPreviousModelView;
 uniform vec3 previousCameraPosition;
 
 #define DHVLFOG
-#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
@@ -414,7 +411,7 @@ void main() {
 			if(iswater){
 				vec2 data = texelFetch2D(colortex11,ivec2(tc/texelSize),0).gb;
 				vec3 wateralbedo = vec3(decodeVec2(data.x),decodeVec2(data.y).r);
-				vec3 scatterCoef = dirtAmount * mix(vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B), normalize(wateralbedo.rgb+1e-7) / 3.14, 0.5);
+				scatterCoef = dirtAmount * (normalize(wateralbedo.rgb+1e-7) * 0.5 + 0.5) / 3.14;
 			}
 		#endif
 		

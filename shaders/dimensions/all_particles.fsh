@@ -54,7 +54,6 @@ uniform vec2 texelSize;
 
 uniform ivec2 eyeBrightnessSmooth;
 uniform float rainStrength;
-uniform float nightVision;
 uniform float waterEnteredAltitude;
 
 
@@ -212,9 +211,6 @@ float encodeVec2(float x,float y){
 
 	vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
 	vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
-
-	#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-	#define projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
 	const float mincoord = 1.0/4096.0;
 	const float maxcoord = 1.0-mincoord;

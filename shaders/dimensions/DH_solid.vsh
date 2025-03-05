@@ -9,7 +9,6 @@ varying vec4 normals_and_materials;
 flat varying float SSSAMOUNT;
 flat varying float EMISSIVE;
 flat varying int dh_material_id;
-uniform float nightVision;
 
 uniform vec2 texelSize;
 uniform int framemod8;
@@ -36,7 +35,7 @@ uniform mat4 dhProjection;
 uniform vec3 cameraPosition;
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+#define projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 vec4 toClipSpace3(vec3 viewSpacePosition) {
 	return vec4(projMAD(dhProjection, viewSpacePosition),-viewSpacePosition.z);
 }

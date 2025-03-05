@@ -39,7 +39,7 @@ uniform mat4 gbufferProjection;
 // flat varying vec2 TAA_Offset;
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+#define projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
 
 vec3 toScreenSpace(vec3 p) {
@@ -68,7 +68,6 @@ float interleaved_gradientNoise(){
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 	return noise;
 }
-
 
 
 #include "/lib/TAA_jitter.glsl"

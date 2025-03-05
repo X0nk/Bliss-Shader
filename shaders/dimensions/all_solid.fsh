@@ -91,7 +91,6 @@ flat varying int SIGN;
 
 
 flat varying float HELD_ITEM_BRIGHTNESS;
-uniform float nightVision;
 
 
 float interleaved_gradientNoise_temporal(){
@@ -182,7 +181,7 @@ float encodeVec2(float x,float y){
 
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+#define projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
 vec3 toScreenSpace(vec3 p) {
 	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
@@ -516,7 +515,7 @@ void main() {
 		NormalTex.z = sqrt(max(1.0 - dot(NormalTex.xy, NormalTex.xy), 0.0));
 
 		#ifdef GROUND_RIPPLES
-			vec3 rippleNormal = drawRipples(worldPos.xz * 10.0, frameTimeCounter * 2.0) * applyRipple * 0.2;
+			vec3 rippleNormal = drawRipples(worldPos.xz * 10.0, frameTimeCounter * 2.0) * applyRipple * 0.1 * clamp(1.0 - length(playerPos) / 16.0, 0.0, 1.0);
 			NormalTex.xyz = normalize(NormalTex.xyz + rippleNormal);
 		#endif
 

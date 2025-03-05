@@ -38,7 +38,6 @@ uniform vec2 texelSize;
 uniform sampler2D colortex4;
 uniform float viewHeight;
 uniform float viewWidth;
-uniform float nightVision;
 uniform vec3 sunVec;
 uniform float frameTimeCounter;
 uniform int frameCounter;
@@ -80,7 +79,7 @@ uniform float caveDetection;
 uniform float eyeAltitude;
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+#define projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
 float ld(float depth) {
 	return 1.0 / (zMults.y - depth * zMults.z);		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
@@ -511,7 +510,7 @@ void main() {
 	}
 
 ////// --------------- VARIOUS FOG EFFECTS (behind volumetric fog)
-//////////// blindness, nightvision, liquid fogs and misc fogs
+//////////// blindness, liquid fogs and misc fogs
 
 #if defined OVERWORLD_SHADER && defined CAVE_FOG
 	if (isEyeInWater == 0 && eyeAltitude < 1500){
@@ -568,7 +567,7 @@ void main() {
 	#endif
   
 ////// --------------- VARIOUS FOG EFFECTS (in front of volumetric fog)
-//////////// blindness, nightvision, liquid fogs and misc fogs
+//////////// blindness, liquid fogs and misc fogs
 
 ////// --------------- bloomy rain effect
 	#ifdef OVERWORLD_SHADER
@@ -589,7 +588,7 @@ void main() {
 	}
 
 ////// --------------- blindness
-	color.rgb *= mix(1.0,clamp( exp(pow(linearDistance*(blindness*0.2),2) * -5),0.,1.), blindness);
+	color.rgb *= mix(1.0,clamp(exp(pow(linearDistance*(blindness*0.2),2) * -5),0.,1.), blindness);
 
 //////// --------------- darkness effect
 	color.rgb *= mix(1.0, (1.0-darknessLightFactor*2.0) * clamp(1.0-pow(length(viewPos)*(darknessFactor*0.07),2.0),0.0,1.0), darknessFactor);

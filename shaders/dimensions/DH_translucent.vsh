@@ -48,7 +48,7 @@ uniform int framemod4_DH;
 
 uniform vec3 cameraPosition;
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+#define projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 vec4 toClipSpace3(vec3 viewSpacePosition) {
 	return vec4(projMAD(dhProjection, viewSpacePosition),-viewSpacePosition.z);
 }

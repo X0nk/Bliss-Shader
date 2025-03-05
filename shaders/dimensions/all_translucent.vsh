@@ -38,7 +38,7 @@ varying vec4 tangent;
 varying vec3 flatnormal;
 
 #ifdef LARGE_WAVE_DISPLACEMENT
-varying vec3 shitnormal;
+	varying vec3 shitnormal;
 #endif
 
 uniform mat4 gbufferModelViewInverse;
@@ -80,16 +80,16 @@ uniform int framemod8;
 
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+#define projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
 vec4 toClipSpace3(vec3 viewSpacePosition) {
-    return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
+	return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
 }
-
 
 float getWave (vec3 pos, float range){
 	return pow(1.0-texture2D(noisetex, (pos.xz + frameTimeCounter * WATER_WAVE_SPEED)/150.0).b,2) * WATER_WAVE_STRENGTH / range;
 }
+
 vec3 getWaveNormal(vec3 posxz, float range){
 
 	float deltaPos = 0.5;
@@ -100,7 +100,6 @@ vec3 getWaveNormal(vec3 posxz, float range){
 	float h1 = getWave(coord - vec3(deltaPos,0.0,0.0),range);
 	float h3 = getWave(coord - vec3(0.0,0.0,deltaPos),range);
 
-
 	float xDelta = (h1-h0)/deltaPos*1.5;
 	float yDelta = (h3-h0)/deltaPos*1.5;
 
@@ -108,6 +107,7 @@ vec3 getWaveNormal(vec3 posxz, float range){
 
 	return wave;
 }
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -137,7 +137,7 @@ void main() {
     		position = mat3(gbufferModelView) * (displacedPos - cameraPosition) + gbufferModelView[3].xyz;
 		}
 	#endif
-	
+
 	// vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
    	vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
 	#ifdef PLANET_CURVATURE
@@ -146,15 +146,15 @@ void main() {
 	#endif
 
 	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
-	
+
  	gl_Position = toClipSpace3(position);
 
 	HELD_ITEM_BRIGHTNESS = 0.0;
-	
+
 	#ifdef Hand_Held_lights
 		if(heldItemId > 999 || heldItemId2 > 999) HELD_ITEM_BRIGHTNESS = 0.9;
 	#endif
-	
+
 	// 1.0 = water mask
 	// 0.9 = entity mask
 	// 0.8 = reflective entities
@@ -163,7 +163,7 @@ void main() {
 
 	// water mask
 	if(mc_Entity.x == 8.0) {
-    	mat = 1.0;
+    		mat = 1.0;
   	}
 
 	// translucent entities
@@ -179,18 +179,18 @@ void main() {
 		NAMETAG = 0;
 		if (entityId == 1600) NAMETAG = 1;
 	#endif
-	
+
 	tangent = vec4(normalize(gl_NormalMatrix *at_tangent.rgb),at_tangent.w);
 
 	normalMat = vec4(normalize(gl_NormalMatrix * gl_Normal), 1.0);
 	normalMat.a = mat;
 
-	vec3 tangent2 = normalize( gl_NormalMatrix *at_tangent.rgb);
+	vec3 tangent2 = normalize(gl_NormalMatrix *at_tangent.rgb);
 	binormal = normalize(cross(tangent2.rgb,normalMat.xyz)*at_tangent.w);
 
 	mat3 tbnMatrix = mat3(tangent2.x, binormal.x, normalMat.x,
-								  tangent2.y, binormal.y, normalMat.y,
-						     	  tangent2.z, binormal.z, normalMat.z);
+						tangent2.y, binormal.y, normalMat.y,
+						tangent2.z, binormal.z, normalMat.z);
 	
 	flatnormal = normalMat.xyz;
 
@@ -244,11 +244,11 @@ void main() {
 		jitter.x *= DOF_ANAMORPHIC_RATIO;
 
 		#if MANUAL_FOCUS == -2
-		float focusMul = 0;
+			float focusMul = 0;
 		#elif MANUAL_FOCUS == -1
-		float focusMul = gl_Position.z - mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
+			float focusMul = gl_Position.z - mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
 		#else
-		float focusMul = gl_Position.z - MANUAL_FOCUS;
+			float focusMul = gl_Position.z - MANUAL_FOCUS;
 		#endif
 
 		vec2 totalOffset = (jitter * JITTER_STRENGTH) * focusMul * 1e-2;
