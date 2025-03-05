@@ -1,8 +1,3 @@
-vec2 R2_samples(int n){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha * n);
-}
-
 vec3 cosineHemisphereSample(vec2 Xi){
 	float theta = 6.28318530718 * Xi.y;
 

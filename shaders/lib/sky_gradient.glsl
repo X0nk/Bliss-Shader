@@ -1,5 +1,3 @@
-#define ffstep(x,y) clamp((y - x) * 1e35,0.0,1.0)
-
 vec3 drawSun(float cosY, float sunInt,vec3 nsunlight, vec3 inColor){
 
 	// return nsunlight * min(max(cosY-0.9994,0.0)/(1.0-0.9994),1.0) * 100.0;
@@ -40,8 +38,6 @@ vec3 drawMoon(vec3 PlayerPos, vec3 WorldSunVec, vec3 Color, inout vec3 occludeSt
 }
 
 const float pi = 3.141592653589793238462643383279502884197169;
-
-
 
 float w0(float a){
 	return (1.0/6.0)*(a*(a*(-a + 3.0) - 3.0) + 1.0);
