@@ -24,3 +24,7 @@ i wanted to emphasize a varying scene, where the lighting isn't always the same 
  - locate the `"Releases"` tab on the right side of this page.
  - find the release version you want to download. locate the files attactched to it, and download the file named similar to `"Bliss_(version)_chocapic13_shaders_edit.zip"`
  - once the zip file finishes downloading, install it like a normal shader. you do NOT need to unzip/extract/decompress.
+
+<br>
+
+## [Contribution Guidelines](./CONTRIBUTION_GUIDELINES.md)
