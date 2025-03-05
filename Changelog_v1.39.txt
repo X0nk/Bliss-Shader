@@ -1,3 +1,25 @@
+2025-3-5 v1.39
+1. Reduce periodic motion of water distortion.
+~ gameplay_effect 降低水下失真运动效果的周期性
+2. Adjust biome tint water.
+~ fogBehindTranslucent_pass 调整群系水体色调
+3. Improve setting menu.
+~ settings/ shader 优化设置菜单
+4. Simplified the code.
+~ xxx 简化代码
+5. Add new tonemap.
+~ color transforms 添加新的tonemap预设
+
+2025-3-4 v1.38
+1. Improve RT perf & quality
+~ indirect_lighting 优化光追性能及质量
+2. Improve CHS/ENG lang quality.
+~ zh_cn/ us_en 优化简中/英语质量
+3. Fix an issue with translucent colored shadow.
+~ composite 1 修复了一个有关彩色阴影的bug
+4. Improve TAA quality
+~ composite5.vsh/ deferred2.vsh 提升了TAA的质量
+
 2025-2-27 v1.36
 1. Merge flashlight & DH TAA jitter update from X0nk.
 ~ xxx 整合X0nk的最新更新，内容包括手电筒功能与DH下的抖动TAA实现
