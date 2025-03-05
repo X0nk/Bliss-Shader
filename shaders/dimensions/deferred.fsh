@@ -1,4 +1,5 @@
 #include "/lib/settings.glsl"
+#include "/lib/util.glsl"
 
 #define ReflectedFog
 
@@ -21,8 +22,6 @@ flat varying float rodExposure;
 flat varying float avgL2;
 flat varying float centerDepth;
 
-uniform sampler2D noisetex;
-
 uniform sampler2D colortex1;
 
 vec2 decodeVec2(float a){
@@ -36,7 +35,6 @@ vec3 toLinear(vec3 sRGB){
 }
 
 uniform float frameTime;
-uniform int frameCounter;
 uniform float frameTimeCounter;
 uniform float rainStrength;
 uniform float eyeAltitude;
@@ -63,7 +61,6 @@ uniform float nightVision;
 
 vec4 lightCol = vec4(lightSourceColor, float(sunElevation > 1e-5)*2-1.);
 
-#include "/lib/util.glsl"
 #include "/lib/ROBOBO_sky.glsl"
 #include "/lib/sky_gradient.glsl"
 #include "/lib/Shadow_Params.glsl"
@@ -78,21 +75,6 @@ vec3 toShadowSpaceProjected(vec3 p3){
 	p3 = diagonal3(shadowProjection) * p3 + shadowProjection[3].xyz;
 
 	return p3;
-}
-float interleaved_gradientNoise_temporal(){
-	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y) + 1.0/1.6180339887 * frameCounter);
-}
-float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
-}
-float R2_dither(){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter) ;
-}
-float blueNoise(){
-	return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
 
 #define DHVLFOG
@@ -185,11 +167,6 @@ vec3 rodSample(vec2 Xi){
 	float phi = 2 * 3.14159265359 * Xi.y;
 
 	return normalize(vec3(cos(phi) * r, sin(phi) * r, Xi.x)).xzy;
-}
-//Low discrepancy 2D sequence, integration error is as low as sobol but easier to compute : http://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
-vec2 R2_samples(float n){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha * n);
 }
 
 uniform float dayChangeSmooth;

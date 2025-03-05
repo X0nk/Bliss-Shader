@@ -1,4 +1,5 @@
 #include "/lib/settings.glsl"
+#include "/lib/util.glsl"
 
 #ifndef DH_AMBIENT_OCCLUSION
 	#undef DISTANT_HORIZONS
@@ -37,13 +38,10 @@ uniform sampler2D shadow;
 	uniform sampler2D shadowtex1;
 #endif
 
-
-uniform sampler2D noisetex;
 uniform vec3 sunVec;
 uniform vec2 texelSize;
 uniform float frameTimeCounter;
 uniform float rainStrength;
-uniform int frameCounter;
 
 uniform vec3 previousCameraPosition;
 uniform mat4 gbufferPreviousModelView;
@@ -56,8 +54,6 @@ uniform float viewHeight;
 uniform float near;
 uniform float dhFarPlane;
 uniform float dhNearPlane;
-
-#define ffstep(x,y) clamp((y - x) * 1e35,0.0,1.0)
 
 #include "/lib/projections.glsl"
 
@@ -104,48 +100,8 @@ vec2 decodeVec2(float a){
 	return fract( a * constant1 ) * constant2 ;
 }
 
-float interleaved_gradientNoise_temporal(){
-	vec2 coord = gl_FragCoord.xy;
-	
-	#ifdef TAA
-		coord += (frameCounter*9)%40000;
-	#endif
-
-	return fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-}
-
-float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
-}
-
-float R2_dither(){
-	vec2 coord = gl_FragCoord.xy ;
-
-	#ifdef TAA
-		coord += (frameCounter*2)%40000;
-	#endif
-	
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
-}
-
-float blueNoise(){
-	#ifdef TAA
-  		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
-	#else
-		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
-	#endif
-}
-
 vec4 blueNoise(vec2 coord){
-  return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
-}
-
-vec2 R2_samples(int n){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha * n);
+	return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
 }
 
 vec3 viewToWorld(vec3 viewPos) {
@@ -159,7 +115,6 @@ vec3 viewToWorld(vec3 viewPos) {
 #include "/lib/Shadow_Params.glsl"
 
 
-const float PI = 3.141592653589793238462643383279502884197169;
 vec2 SpiralSample(
 	int samples, int totalSamples, float rotation, float Xi
 ){
@@ -198,8 +153,6 @@ vec2 CleanSample(
 
 	return vec2(x, y);
 }
-
-
 
 #include "/lib/DistantHorizons_projections.glsl"
 
@@ -278,7 +231,6 @@ vec2 SSAO(
 						sss += clamp(-dot(normalize(viewPosDiff), flatnormal) - occlusion/n,0.0,1.0) * 0.25 + (normalize(mat3(gbufferModelViewInverse) * -viewPosDiff).y - occlusion/n) * threshHold;
 					#endif
 				#endif
-
 			}
 		}
 	}
@@ -291,24 +243,24 @@ vec2 SSAO(
 vec4 encode (vec3 n, vec2 lightmaps){
 	n.xy = n.xy / dot(abs(n), vec3(1.0));
 	n.xy = n.z <= 0.0 ? (1.0 - abs(n.yx)) * sign(n.xy) : n.xy;
-    vec2 encn = clamp(n.xy * 0.5 + 0.5,-1.0,1.0);
+	vec2 encn = clamp(n.xy * 0.5 + 0.5,-1.0,1.0);
 	
-    return vec4(encn,vec2(lightmaps.x,lightmaps.y));
+	return vec4(encn,vec2(lightmaps.x,lightmaps.y));
 }
 
 //encoding by jodie
 float encodeVec2(vec2 a){
-    const vec2 constant1 = vec2( 1., 256.) / 65535.;
-    vec2 temp = floor( a * 255. );
+	const vec2 constant1 = vec2( 1., 256.) / 65535.;
+	vec2 temp = floor( a * 255. );
 	return temp.x*constant1.x+temp.y*constant1.y;
 }
 
 float encodeVec2(float x,float y){
-    return encodeVec2(vec2(x,y));
+	return encodeVec2(vec2(x,y));
 }
 
 float ld(float dist) {
-    return (2.0 * near) / (far + near - dist * (far - near));
+	return (2.0 * near) / (far + near - dist * (far - near));
 }
 
 
@@ -331,7 +283,6 @@ void main() {
 		float DH_depth1 = 1.0;
 		float swappedDepth = z;
 	#endif
-	
 
 	vec4 SHADOWDATA = vec4(0.0);
 
@@ -341,9 +292,7 @@ void main() {
 	vec3 normal = mat3(gbufferModelViewInverse) * clamp(worldToView( decode(dataUnpacked0.yw) ),-1.,1.);
 	vec2 lightmap = dataUnpacked1.yz;
 
-
 	gl_FragData[1] = vec4(0.0,0.0,0.0, texture2D(colortex14,floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize).a);
-
 
 	// bool lightningBolt = abs(dataUnpacked1.w-0.5) <0.01;
 	bool isLeaf = abs(dataUnpacked1.w-0.55) <0.01;
@@ -352,7 +301,6 @@ void main() {
 	bool entities = abs(dataUnpacked1.w-0.45) < 0.01;	
 	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
 	// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
-
 
 	if(hand){
 		convertHandDepth(z);
@@ -365,27 +313,25 @@ void main() {
 		float depth = z;
 
 		#ifdef DISTANT_HORIZONS
-		    float _near = near;
-		    float _far = far*4.0;
-		    if (depth >= 1.0) {
-		        depth = DH_depth1;
-		        _near = dhNearPlane;
-		        _far = dhFarPlane;
+			float _near = near;
+			float _far = far*4.0;
+			if (depth >= 1.0) {
+				depth = DH_depth1;
+				_near = dhNearPlane;
+				_far = dhFarPlane;
 		    }
 
-		    depth = linearizeDepthFast(depth, _near, _far);
-		    depth = depth / dhFarPlane;
+			depth = linearizeDepthFast(depth, _near, _far);
+			depth = depth / dhFarPlane;
 		#endif
 
 		if(depth < 1.0)
-    		gl_FragData[2] = vec4(vec3(0.0), depth * depth * 65000.0);
+			gl_FragData[2] = vec4(vec3(0.0), depth * depth * 65000.0);
 		else
 			gl_FragData[2] = vec4(vec3(0.0), 65000.0);
 
-
 		vec3 FlatNormals = normalize(texture2D(colortex15,texcoord).rgb * 2.0 - 1.0);
 		if(z >= 1.0) FlatNormals = normal;
-
 
 		vec2 SSAO_SSS = SSAO(viewPos, worldToView(normal),worldToView(FlatNormals), hand, isLeaf, noise);
 		#ifndef OLD_INDIRECT_SSS
@@ -400,8 +346,6 @@ void main() {
 		vec2 SSAO_SSS = vec2(1.0,0.0);
 	#endif
 
-
-
 	/*------------- VOLUMETRICS BEHIND TRANSLUCENTS PASS-THROUGH -------------*/
 	// colortex10 is the history buffer used in reprojection of volumetrics, i can just hijack that.
 	gl_FragData[3] = texture2D(colortex10, texcoord);
@@ -412,9 +356,6 @@ void main() {
 	// 	// gl_FragData[3].rgb += VL.rgb * gl_FragData[3].a;
 	// 	// gl_FragData[3].a *= VL.a; 
 	// }
-
-
-
 
 #ifdef OVERWORLD_SHADER
 	float SpecularTex = texture2D(colortex8,texcoord).z;
@@ -431,12 +372,11 @@ void main() {
 	#ifdef BASIC_SHADOW_FILTER
 		if (LabSSS > 0.0 && NdotL < 0.001){  
 			minshadowfilt = 50;
-		// maxshadowfilt = 50;
+			// maxshadowfilt = 50;
 		 }
 	#endif
 
 	if (z < 1.0){
-
 		gl_FragData[0] = vec4(minshadowfilt, 0.1, 0.0, 0.0);
 
 		#ifdef Variable_Penumbra_Shadows

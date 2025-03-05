@@ -1,4 +1,5 @@
 #include "/lib/settings.glsl"
+#include "/lib/util.glsl"
 
 flat varying vec3 zMults;
 
@@ -9,7 +10,6 @@ flat varying vec3 WsunVec;
 	flat varying vec3 skyGroundColor;
 #endif
 
-uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 
@@ -40,7 +40,6 @@ uniform float viewHeight;
 uniform float viewWidth;
 uniform vec3 sunVec;
 uniform float frameTimeCounter;
-uniform int frameCounter;
 uniform float far;
 uniform float near;
 uniform float farPlane;
@@ -101,39 +100,6 @@ vec3 toScreenSpace(vec3 p) {
 }
 
 #include "/lib/DistantHorizons_projections.glsl"
-
-float interleaved_gradientNoise_temporal(){
-	#ifdef TAA
-		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887 * frameCounter);
-	#else
-		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
-	#endif
-}
-
-float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
-}
-
-float R2_dither(){
-	vec2 coord = gl_FragCoord.xy ;
-
-	#ifdef TAA
-		coord +=  (frameCounter%40000) * 2.0;
-	#endif
-	
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
-}
-
-float blueNoise(){
-	#ifdef TAA
-  		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
-	#else
-		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
-	#endif
-}
 
 vec4 blueNoise(vec2 coord){
 	return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;

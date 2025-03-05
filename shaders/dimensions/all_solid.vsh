@@ -13,14 +13,8 @@ Read the terms of modification and sharing before changing something below pleas
 */
 
 
-#ifdef HAND
+#if defined HAND || !defined MC_NORMAL_MAP
 	#undef POM
-#endif
-
-#ifndef USE_LUMINANCE_AS_HEIGHTMAP
-	#ifndef MC_NORMAL_MAP
-		#undef POM
-	#endif
 #endif
 
 #ifdef POM
@@ -168,8 +162,6 @@ void main() {
 
 	VanillaAO = 1.0 - clamp(color.a,0,1);
 	if (color.a < 0.3) color.a = 1.0; // fix vanilla ao on some custom block models.
-	
-
 
     /////// ----- RANDOM STUFF ----- ///////
 	// gl_TextureMatrix[0] for animated things like charged creepers

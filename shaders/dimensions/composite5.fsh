@@ -1,5 +1,6 @@
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
+#include "/lib/util.glsl"
 
 /*
 const int colortex0Format = RGBA16F;				// low res clouds (deferred->composite2) + low res VL (composite5->composite15)
@@ -75,7 +76,6 @@ uniform int hideGUI;
 	uniform float CriticalDamageTaken;
 #endif
 
-#include "/lib/util.glsl"
 #include "/lib/projections.glsl"
 
 

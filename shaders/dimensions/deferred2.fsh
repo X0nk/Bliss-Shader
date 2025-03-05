@@ -1,4 +1,5 @@
 #include "/lib/settings.glsl"
+#include "/lib/util.glsl"
 //Computes volumetric clouds at variable resolution (default 1/4 res)
 
 
@@ -18,7 +19,6 @@ uniform sampler2D dhDepthTex1;
 
 
 // uniform sampler2D colortex4;
-uniform sampler2D noisetex;
 
 uniform sampler2D colortex12;
 
@@ -28,7 +28,6 @@ uniform vec3 sunVec;
 uniform vec2 texelSize;
 uniform float frameTimeCounter;
 uniform float rainStrength;
-uniform int frameCounter;
 uniform int framemod8;
 uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferModelViewInverse;
@@ -41,44 +40,14 @@ uniform mat4 gbufferProjection;
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
-
 vec3 toScreenSpace(vec3 p) {
 	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
-    vec3 p3 = p * 2. - 1.;
-    vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
-    return fragposition.xyz / fragposition.w;
+	vec3 p3 = p * 2. - 1.;
+	vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
+	return fragposition.xyz / fragposition.w;
 }
-
 
 #include "/lib/DistantHorizons_projections.glsl"
-
-float R2_dither(){
-	#ifdef TAA
-	vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
-	#else
-
-	vec2 coord = gl_FragCoord.xy;
-	#endif
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
-}
-float interleaved_gradientNoise(){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	vec2 coord = vec2(alpha.x * gl_FragCoord.x,alpha.y * gl_FragCoord.y)+ 1.0/1.6180339887 * frameCounter;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
-}
-
-
-#include "/lib/TAA_jitter.glsl"
-
-float blueNoise(){
-  #ifdef TAA
-  	return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
-  #else
- 	return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a);
-  #endif
-}
 
 
 vec3 normVec (vec3 vec){
@@ -88,7 +57,7 @@ uniform float far;
 
 
 float ld(float dist) {
-    return (2.0 * near) / (far + near - dist * (far - near));
+	return (2.0 * near) / (far + near - dist * (far - near));
 }
 
 uniform int dhRenderDistance;
@@ -111,11 +80,6 @@ uniform float eyeAltitude;
 
 
 #include "/lib/volumetricClouds.glsl"
-
-
-
-
-
 
 
 //////////////////////////////VOID MAIN//////////////////////////////

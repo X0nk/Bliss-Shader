@@ -1,8 +1,8 @@
 #include "/lib/settings.glsl"
-#include "/lib/util.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/color_transforms.glsl"
 #include "/lib/projections.glsl"
+#include "/lib/util.glsl"
 
 #ifdef OVERWORLD_SHADER
 	#define WATER_SUN_SPECULAR
@@ -13,7 +13,6 @@
 uniform vec2 texelSize;
 // uniform int moonPhase;
 uniform float frameTimeCounter;
-uniform sampler2D noisetex;
 
 const bool shadowHardwareFiltering = true;
 uniform sampler2DShadow shadow;
@@ -58,10 +57,6 @@ uniform mat4 gbufferPreviousModelView;
 // uniform mat4 shadowModelViewInverse;
 // uniform mat4 shadowProjection;
 // uniform mat4 shadowProjectionInverse;
-
-
-uniform int frameCounter;
-
 
 // uniform sampler2D colortex4;
 flat varying vec3 averageSkyCol_Clouds;
@@ -190,29 +185,6 @@ vec3 rayTrace(vec3 dir, vec3 position,float dither, float fresnel, bool inwater)
 		maxZ += stepv.z;
 	}
 	return vec3(1.1);
-}
-
-float interleaved_gradientNoise_temporal(){
-	#ifdef TAA
-		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887 * frameCounter);
-	#else
-		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
-	#endif
-}
-float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
-}
-float R2_dither(){
-	vec2 coord = gl_FragCoord.xy ;
-
-	#ifdef TAA
-		coord += + (frameCounter%40000) * 2.0;
-	#endif
-	
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
 
 vec3 viewToWorld(vec3 viewPos) {

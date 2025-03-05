@@ -1,4 +1,5 @@
 #include "/lib/settings.glsl"
+#include "/lib/util.glsl"
 
 // uniform int dhRenderDistance;
 
@@ -19,10 +20,8 @@ uniform vec3 sunPosition;
 uniform float sunElevation;
 
 uniform sampler2D colortex4;
-uniform int frameCounter;
 uniform float frameTimeCounter;
 
-#include "/lib/util.glsl"
 #include "/lib/res_params.glsl"
 
 #include "/lib/Shadow_Params.glsl"

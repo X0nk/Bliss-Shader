@@ -105,23 +105,23 @@ vec3 colorGrading(vec3 color) {
 
 vec3 contrastAdaptiveSharpening(vec3 color, vec2 texcoord){
 
-  //Weights : 1 in the center, 0.5 middle, 0.25 corners
-  vec3 albedoCurrent1 = texture2D(colortex7, texcoord + vec2(texelSize.x,texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
-  vec3 albedoCurrent2 = texture2D(colortex7, texcoord + vec2(texelSize.x,-texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
-  vec3 albedoCurrent3 = texture2D(colortex7, texcoord + vec2(-texelSize.x,-texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
-  vec3 albedoCurrent4 = texture2D(colortex7, texcoord + vec2(-texelSize.x,texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
+	//Weights : 1 in the center, 0.5 middle, 0.25 corners
+	vec3 albedoCurrent1 = texture2D(colortex7, texcoord + vec2(texelSize.x,texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
+	vec3 albedoCurrent2 = texture2D(colortex7, texcoord + vec2(texelSize.x,-texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
+	vec3 albedoCurrent3 = texture2D(colortex7, texcoord + vec2(-texelSize.x,-texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
+	vec3 albedoCurrent4 = texture2D(colortex7, texcoord + vec2(-texelSize.x,texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
  
-  vec3 m1 = -0.5/3.5*color + albedoCurrent1/3.5 + albedoCurrent2/3.5 + albedoCurrent3/3.5 + albedoCurrent4/3.5;
+	vec3 m1 = -0.5/3.5*color + albedoCurrent1/3.5 + albedoCurrent2/3.5 + albedoCurrent3/3.5 + albedoCurrent4/3.5;
   
-  vec3 std = abs(color - m1) + abs(albedoCurrent1 - m1) + abs(albedoCurrent2 - m1) +
-  abs(albedoCurrent3 - m1) + abs(albedoCurrent3 - m1) + abs(albedoCurrent4 - m1);
+	vec3 std = abs(color - m1) + abs(albedoCurrent1 - m1) + abs(albedoCurrent2 - m1) +
+	abs(albedoCurrent3 - m1) + abs(albedoCurrent3 - m1) + abs(albedoCurrent4 - m1);
 
-  float contrast = 1.0 - luma(std)/5.0;
+	float contrast = 1.0 - luma(std)/5.0;
 
-  color = color*(1.0+(SHARPENING+UPSCALING_SHARPNENING)*contrast) -
-  (SHARPENING+UPSCALING_SHARPNENING)/(1.0-0.5/3.5)*contrast*(m1 - 0.5/3.5*color); 
+	color = color*(1.0+(SHARPENING+UPSCALING_SHARPNENING)*contrast) -
+	(SHARPENING+UPSCALING_SHARPNENING)/(1.0-0.5/3.5)*contrast*(m1 - 0.5/3.5*color); 
 
-  return color;
+	return color;
 }
 
 vec3 saturationAndCrosstalk(vec3 color){
@@ -132,33 +132,28 @@ vec3 saturationAndCrosstalk(vec3 color){
 
 	color = color + lumaColDiff * (SATURATION - luminance * CROSSTALK);
 
-  return color;
+	return color;
 }
 
-float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
-}
 float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+	return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
 
 vec3 chromaticAberration(vec2 UV){
-  float noise = blueNoise() - 0.5;
+	float noise = blueNoise() - 0.5;
 
-  vec2 centeredUV = (texcoord - 0.5);
-  // not stretched by aspect ratio; circular by choice :) it makes most the abberation on the left/right of the screen.
-  float vignette = 1.0 - clamp(1.0 - length(centeredUV * vec2(aspectRatio,1.0)) / 200.0,0.0,1.0);
+	vec2 centeredUV = (texcoord - 0.5);
+	// not stretched by aspect ratio; circular by choice :) it makes most the abberation on the left/right of the screen.
+	float vignette = 1.0 - clamp(1.0 - length(centeredUV * vec2(aspectRatio,1.0)) / 200.0,0.0,1.0);
 
-  float aberrationStrength = CHROMATIC_ABERRATION_STRENGTH * vignette;
+	float aberrationStrength = CHROMATIC_ABERRATION_STRENGTH * vignette;
 
-  vec3 color = vec3(0.0);
-  color.r = texture2D(colortex7, (centeredUV - (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).r;
-  color.g = texture2D(colortex7, texcoord).g;
-  color.b = texture2D(colortex7, (centeredUV + (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).b;
+	vec3 color = vec3(0.0);
+	color.r = texture2D(colortex7, (centeredUV - (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).r;
+	color.g = texture2D(colortex7, texcoord).g;
+	color.b = texture2D(colortex7, (centeredUV + (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).b;
 
-  return color;
+	return color;
 }
 
 void main() {

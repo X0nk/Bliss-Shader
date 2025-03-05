@@ -1,5 +1,6 @@
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
+#include "/lib/util.glsl"
 
 // uniform int dhRenderDistance;
 uniform float frameTimeCounter;
@@ -44,7 +45,6 @@ uniform float eyeAltitude;
 uniform float near;
 // uniform float far;
 uniform float frameTime;
-uniform int frameCounter;
 uniform float rainStrength;
 
 // uniform int worldTime;
@@ -53,27 +53,24 @@ vec3 sunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
 // vec3 sunVec = normalize(LightDir);
 
 #include "/lib/sky_gradient.glsl"
-#include "/lib/util.glsl"
 #include "/lib/ROBOBO_sky.glsl"
 #include "/lib/climate_settings.glsl"
 
 float luma(vec3 color) {
 	return dot(color,vec3(0.21, 0.72, 0.07));
 }
+
 vec3 rodSample(vec2 Xi) {
 	float r = sqrt(1.0f - Xi.x*Xi.y);
 	float phi = 2 * 3.14159265359 * Xi.y;
 
 	return normalize(vec3(cos(phi) * r, sin(phi) * r, Xi.x)).xzy;
 }
-//Low discrepancy 2D sequence, integration error is as low as sobol but easier to compute : http://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
-vec2 R2_samples(int n) {
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha * n);
-}
+
 float tanh(float x) {
 	return (exp(x) - exp(-x))/(exp(x) + exp(-x));
 }
+
 float ld(float depth) {
 	return (2.0 * near) / (far + near - depth * (far - near)); // (-depth * (far - near)) = (2.0 * near)/ld - far - near
 }

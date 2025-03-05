@@ -38,7 +38,6 @@ flat varying float exposure;
 uniform int isEyeInWater;
 
 uniform sampler2D texture;
-uniform sampler2D noisetex;
 uniform sampler2D colortex4;
 
 #ifdef IS_LPV_ENABLED
@@ -82,7 +81,6 @@ uniform vec3 previousCameraPosition;
 #ifdef IS_LPV_ENABLED
 	uniform int heldItemId;
 	uniform int heldItemId2;
-	uniform int frameCounter;
 
 	#include "/lib/hsv.glsl"
 	#include "/lib/lpv_common.glsl"

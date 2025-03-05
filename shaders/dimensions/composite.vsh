@@ -1,11 +1,10 @@
 #include "/lib/settings.glsl"
+#include "/lib/util.glsl"
 
 flat varying vec2 TAA_Offset;
 flat varying vec3 WsunVec;
 
 uniform sampler2D colortex4;
-
-uniform int frameCounter;
 
 uniform float sunElevation;
 uniform vec3 sunPosition;
@@ -17,7 +16,6 @@ flat varying vec3 zMults;
 uniform float far;
 uniform float near;
 
-#include "/lib/util.glsl"
 #include "/lib/res_params.glsl"
 
 uniform int framemod8;

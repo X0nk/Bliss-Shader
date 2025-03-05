@@ -1,6 +1,6 @@
 #include "/lib/settings.glsl"
-#include "/lib/util.glsl"
 #include "/lib/res_params.glsl"
+#include "/lib/util.glsl"
 
 flat varying vec4 lightCol;
 flat varying vec3 averageSkyCol;
@@ -15,9 +15,6 @@ flat varying vec3 averageSkyCol_Clouds;
 		flat varying vec4 dailyWeatherParams1;
 	#endif
 
-
-
-
 flat varying vec3 WsunVec;
 flat varying vec3 refractedSunVec;
 
@@ -29,8 +26,6 @@ uniform float sunElevation;
 uniform vec3 sunPosition;
 uniform vec3 moonPosition;
 uniform mat4 gbufferModelViewInverse;
-uniform int frameCounter;
-
 
 flat varying vec2 TAA_Offset;
 uniform int framemod8;

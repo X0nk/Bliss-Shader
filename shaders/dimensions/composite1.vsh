@@ -1,5 +1,6 @@
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
+#include "/lib/util.glsl"
 
 #ifdef END_SHADER
 	flat varying float Flashing;
@@ -34,15 +35,11 @@ uniform vec3 moonPosition;
 
 uniform float rainStrength;
 uniform float sunElevation;
-uniform int frameCounter;
 uniform float frameTimeCounter;
 
 uniform int framemod8;
 #include "/lib/TAA_jitter.glsl"
 
-
-
-#include "/lib/util.glsl"
 #include "/lib/Shadow_Params.glsl"
 
 void main() {

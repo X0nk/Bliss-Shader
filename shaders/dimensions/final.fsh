@@ -1,4 +1,5 @@
 #include "/lib/settings.glsl"
+#include "/lib/util.glsl"
 
 uniform sampler2D colortex7;
 uniform sampler2D colortex5;
@@ -7,12 +8,10 @@ uniform sampler2D colortex14;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 uniform sampler2D depthtex2;
-uniform sampler2D noisetex;
 
 varying vec2 texcoord;
 uniform vec2 texelSize;
 uniform float frameTimeCounter;
-uniform int frameCounter;
 uniform float viewHeight;
 uniform float viewWidth;
 uniform float aspectRatio;
@@ -33,16 +32,9 @@ uniform int hideGUI;
 
 uniform float near;
 uniform float far;
+
 float ld(float dist) {
 	return (2.0 * near) / (far + near - dist * (far - near));
-}
-float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
-}
-float blueNoise(){
-	return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
 
 #include "/lib/gameplay_effects.glsl"
@@ -65,13 +57,10 @@ void doCameraGridLines(inout vec3 color, vec2 UV){
 }
 
 uniform vec3 previousCameraPosition;
-// uniform vec3 cameraPosition;
 uniform mat4 gbufferPreviousModelView;
-// uniform mat4 gbufferModelViewInverse;
-// uniform mat4 gbufferModelView;
 
-#include "/lib/util.glsl"
 #include "/lib/projections.glsl"
+
 vec3 tonemap(vec3 col){
 	return col/(1+luma(col));
 }

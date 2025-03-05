@@ -17,7 +17,6 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 	const vec2 LpvBlockSkyFalloff = vec2(0.96, 0.96);
 	const ivec3 lpvFlatten = ivec3(1, 10, 100);
 
-	uniform int frameCounter;
 	uniform vec3 cameraPosition;
 	uniform vec3 previousCameraPosition;
 

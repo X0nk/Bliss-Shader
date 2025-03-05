@@ -1,6 +1,6 @@
 #include "/lib/settings.glsl"
-#include "/lib/util.glsl"
 #include "/lib/res_params.glsl"
+#include "/lib/util.glsl"
 
 flat varying vec4 lightCol;
 flat varying vec3 averageSkyCol;
@@ -25,8 +25,6 @@ uniform vec2 texelSize;
 uniform vec3 sunPosition;
 uniform vec3 moonPosition;
 uniform mat4 gbufferModelViewInverse;
-uniform int frameCounter;
-
 
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////

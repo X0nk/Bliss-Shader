@@ -4,18 +4,14 @@
 #include "/lib/blocks.glsl"
 #include "/lib/entities.glsl"
 #include "/lib/items.glsl"
+#include "/lib/util.glsl"
+#include "/lib/projections.glsl"
 #include "/lib/ripples.glsl"
 
 flat varying int NameTags;
 
-#ifdef HAND
+#if defined HAND || !defined MC_NORMAL_MAP
 	#undef POM
-#endif
-
-#ifndef USE_LUMINANCE_AS_HEIGHTMAP
-	#ifndef MC_NORMAL_MAP
-		#undef POM
-	#endif
 #endif
 
 #ifdef POM
@@ -66,16 +62,8 @@ uniform sampler2D specular;
 uniform sampler2D texture;
 uniform sampler2D colortex1;//albedo(rgb),material(alpha) RGBA16
 uniform float frameTimeCounter;
-uniform int frameCounter;
-uniform mat4 gbufferProjectionInverse;
-uniform mat4 gbufferModelView;
-uniform mat4 gbufferProjection;
-uniform mat4 gbufferModelViewInverse;
-uniform vec3 cameraPosition;
-uniform sampler2D noisetex;//depth
 uniform sampler2D depthtex0;
 uniform float alphaTestRef;
-
 
 uniform vec4 entityColor;
 
@@ -89,40 +77,8 @@ flat varying int LIGHTNING;
 flat varying int PORTAL;
 flat varying int SIGN;
 
-
 flat varying float HELD_ITEM_BRIGHTNESS;
 
-
-float interleaved_gradientNoise_temporal(){
-	#ifdef TAA
-		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887 * frameCounter);
-	#else
-		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
-	#endif
-}
-float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
-}
-
-float R2_dither(){
-	vec2 coord = gl_FragCoord.xy ;
-
-	#ifdef TAA
-		coord += + (frameCounter%40000) * 2.0;
-	#endif
-	
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
-}
-float blueNoise(){
-	#ifdef TAA
-  		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
-	#else
-		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
-	#endif
-}
 
 mat3 inverseMatrix(mat3 m) {
 	float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
@@ -178,21 +134,6 @@ float encodeVec2(float x,float y){
 		return normalize(bump*tbnMatrix);
 	}
 #endif
-
-
-#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
-
-vec3 toScreenSpace(vec3 p) {
-	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
-	vec3 p3 = p * 2. - 1.;
-	vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
-	return fragposition.xyz / fragposition.w;
-}
-
-vec3 toClipSpace3(vec3 viewSpacePosition) {
-	return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
-}
 
 #ifdef POM
 	vec4 readNormal(in vec2 coord) {

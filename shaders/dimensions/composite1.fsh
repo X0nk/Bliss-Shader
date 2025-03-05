@@ -1,4 +1,5 @@
 #include "/lib/settings.glsl"
+#include "/lib/util.glsl"
 
 // #if defined END_SHADER || defined NETHER_SHADER
 	// #undef IS_LPV_ENABLED
@@ -9,7 +10,6 @@
 	#extension GL_ARB_shading_language_packing: enable
 #endif
 
-#include "/lib/util.glsl"
 #include "/lib/res_params.glsl"
 
 const bool colortex5MipmapEnabled = true;
@@ -48,7 +48,6 @@ const bool colortex5MipmapEnabled = true;
 #endif
 
 uniform int hideGUI;
-uniform sampler2D noisetex; //noise
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 uniform sampler2D depthtex2;
@@ -104,7 +103,6 @@ uniform float aspectRatio;
 uniform float eyeAltitude;
 flat varying vec2 TAA_Offset;
 
-uniform int frameCounter;
 uniform float frameTimeCounter;
 
 uniform float rainStrength;
@@ -242,31 +240,6 @@ vec3 fp10Dither(vec3 color,float dither){
 	return color + dither*exp2(-mantissaBits)*exp2(exponent);
 }
 
-float interleaved_gradientNoise_temporal(){
-	#ifdef TAA
-		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887 * frameCounter);
-	#else
-		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
-	#endif
-}
-
-float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
-}
-
-float R2_dither(){
-	vec2 coord = gl_FragCoord.xy ;
-
-	#ifdef TAA
-		coord += (frameCounter%40000) * 2.0;
-	#endif
-	
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
-}
-
 float R2_dither2(){
 	vec2 coord = gl_FragCoord.xy ;
 
@@ -276,14 +249,6 @@ float R2_dither2(){
 	
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
-}
-
-float blueNoise(){
-	#ifdef TAA
-  		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
-	#else
-		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
-	#endif
 }
 
 vec4 blueNoise(vec2 coord){
@@ -438,7 +403,7 @@ float SSRT_FlashLight_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, floa
 			if(depthCheck) samplePos = texture2D(dhDepthTex1, screenPos.xy).x;
 		#endif
 
-		if(samplePos < screenPos.z){// && (samplePos <= max(minZ,maxZ) && samplePos >= min(minZ,maxZ))){
+		if(samplePos < screenPos.z){// && (samplePos <= max(minZ,maxZ) && samplePos >= min(minZ,maxZ))
 			// vec2 linearZ = vec2(swapperlinZ(screenPos.z, _near, _far), swapperlinZ(samplePos, _near, _far));
 			// float calcthreshold = abs(linearZ.x - linearZ.y) / linearZ.x;
 
@@ -477,10 +442,6 @@ void BilateralUpscale_REUSE_Z(sampler2D tex1, sampler2D tex2, sampler2D depth, v
 	 	ivec2( 1,-1),
 		ivec2( 1, 1),
 		ivec2(-1, 1)
-		// ivec2( 0, 1),
-	 	// ivec2( 0,-1),
-		// ivec2(-1, 0),
-		// ivec2( 1, 0)
   	);
 
 	#ifdef DISTANT_HORIZONS
@@ -531,22 +492,21 @@ void BilateralUpscale_REUSE_Z(sampler2D tex1, sampler2D tex2, sampler2D depth, v
 
 vec4 BilateralUpscale_VLFOG(sampler2D tex, sampler2D depth, vec2 coord, float referenceDepth){
 	ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
-	ivec2 posDepth  = ivec2(coord*VL_RENDER_RESOLUTION) * scaling;
-	ivec2 posColor  = ivec2(coord*VL_RENDER_RESOLUTION);
+	ivec2 posDepth = ivec2(coord*VL_RENDER_RESOLUTION) * scaling;
+	ivec2 posColor = ivec2(coord*VL_RENDER_RESOLUTION);
  	ivec2 pos = ivec2(gl_FragCoord.xy*texelSize + 1);
 
 	ivec2 getRadius[5] = ivec2[](
-    		ivec2(-1,-1),
+    	ivec2(-1,-1),
 	 	ivec2( 1, 1),
 		ivec2(-1, 1),
 		ivec2( 1,-1),
 		ivec2( 0, 0)
-  );
+	);
 
+	float diffThreshold = zMults.x;
 	#ifdef DISTANT_HORIZONS
-		float diffThreshold = 0.01;
-	#else
-		float diffThreshold = zMults.x;
+		diffThreshold = 0.01;
 	#endif
 
 	vec4 RESULT = vec4(0.0);
@@ -568,7 +528,6 @@ vec4 BilateralUpscale_VLFOG(sampler2D tex, sampler2D depth, vec2 coord, float re
 		
    		SUM += EDGES;
 	}
-
 	return RESULT / SUM;
 }
 
@@ -629,7 +588,7 @@ float CustomPhase(float LightPos){
 }
 
 vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, float lightPos, float shadows, float distantSSS){
-	
+
 	// Density = 1.0;
 	Scattering *= sss_density_multiplier;
 
@@ -717,10 +676,9 @@ void main() {
 		float noise_2 = R2_dither();
 		vec2 bnoise = blueNoise(gl_FragCoord.xy).rg;
 
+		int seed = 600;
 		#ifdef TAA
-			int seed = (frameCounter*5)%40000;
-		#else
-			int seed = 600;
+			seed = (frameCounter*5)%40000;
 		#endif
 
 		vec2 r2_sequence = R2_samples(seed).xy;
@@ -795,7 +753,6 @@ void main() {
 			FlatNormals = normal;
 			slopednormal = normal;
 		}
-
 
 	////// --------------- MASKS/BOOLEANS --------------- //////
 		// 1.0-0.8 ???
@@ -1029,6 +986,7 @@ void main() {
 		// #endif
 		
 	////////////////////////////////	SUN SSS		////////////////////////////////
+	
 		#if SSS_TYPE != 0
 
 			float sunSSS_density = LabSSS;

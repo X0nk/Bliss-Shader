@@ -1,5 +1,5 @@
 #include "/lib/settings.glsl"
-
+#include "/lib/util.glsl"
 
 varying vec4 pos;
 varying vec4 localPos;
@@ -63,25 +63,7 @@ vec3 toScreenSpace(vec3 p) {
 	return viewPos.xyz / viewPos.w;
 }
 
-uniform sampler2D noisetex;
-uniform int frameCounter;
 uniform float frameTimeCounter;
-float blueNoise(){
-	return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
-}
-float interleaved_gradientNoise_temporal(){
-	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
-}
-float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
-}
-float R2_dither(){
-	vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
-}
 
 //3D noise from 2d texture
 float densityAtPos(in vec3 pos){

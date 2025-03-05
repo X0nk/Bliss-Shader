@@ -1,4 +1,6 @@
 #include "/lib/settings.glsl"
+#include "/lib/util.glsl"
+
 // #if defined END_SHADER || defined NETHER_SHADER
 	#undef IS_LPV_ENABLED
 // #endif
@@ -9,7 +11,6 @@ flat varying vec3 averageSkyCol_Clouds;
 flat varying float exposure;
 
 // uniform int dhRenderDistance;
-uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 #ifdef DISTANT_HORIZONS
@@ -34,7 +35,6 @@ uniform float dhFarPlane;
 uniform float dhNearPlane;
 uniform float near;
 
-uniform int frameCounter;
 uniform float frameTimeCounter;
 
 // varying vec2 texcoord;
@@ -119,6 +119,7 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 	uniform sampler2D colortex4;
 	#include "/lib/nether_fog.glsl"
 #endif
+
 #ifdef END_SHADER
 	uniform sampler2D colortex4;
 	#include "/lib/end_fog.glsl"
@@ -127,22 +128,6 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 #include "/lib/diffuse_lighting.glsl"
 
 #define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
-
-float interleaved_gradientNoise(){
-	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+ 1.0/1.6180339887 * frameCounter);
-}
-float blueNoise(){
-	return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a+ 1.0/1.6180339887 * frameCounter );
-}
-float R2_dither(){
-  	#ifdef TAA
-		vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
-	#else
-		vec2 coord = gl_FragCoord.xy;
-	#endif
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
-}
 
 void waterVolumetrics_notoverworld(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estEndDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient){
 	inColor *= exp(-rayLength * waterCoefs);	//No need to take the integrated value
@@ -189,10 +174,6 @@ void waterVolumetrics_notoverworld(inout vec3 inColor, vec3 rayStart, vec3 rayEn
 
 vec4 blueNoise(vec2 coord){
   return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
-}
-vec2 R2_samples(int n){
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha * n);
 }
 
 float fogPhase2(float lightPoint){

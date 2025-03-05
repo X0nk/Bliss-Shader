@@ -1,10 +1,9 @@
-#include "/lib/util.glsl"
 #include "/lib/res_params.glsl"
+#include "/lib/util.glsl"
 
 varying vec2 texcoord;
 flat varying float tempOffsets;
 uniform sampler2D colortex4;
-uniform int frameCounter;
 
 uniform int framemod8;
 #include "/lib/TAA_jitter.glsl"
