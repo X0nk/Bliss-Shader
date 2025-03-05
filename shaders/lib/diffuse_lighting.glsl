@@ -1,3 +1,5 @@
+uniform float nightVision;
+
 #ifdef IS_LPV_ENABLED
 	vec3 GetHandLight(const in int itemId, const in vec3 playerPos, const in vec3 normal) {
 		vec3 lightFinal = vec3(0.0);

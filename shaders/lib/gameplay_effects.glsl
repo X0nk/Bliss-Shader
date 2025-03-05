@@ -1,13 +1,13 @@
 #ifdef IS_IRIS
-    uniform float currentPlayerHealth;
-    uniform float maxPlayerHealth;
-    uniform float oneHeart;
-    uniform float threeHeart;
+	uniform float currentPlayerHealth;
+	uniform float maxPlayerHealth;
+	uniform float oneHeart;
+	uniform float threeHeart;
 
-    uniform float CriticalDamageTaken;
-    uniform float MinorDamageTaken;
+	uniform float CriticalDamageTaken;
+	uniform float MinorDamageTaken;
 #else
-    uniform bool isDead;
+	uniform bool isDead;
 #endif
 
 uniform float exitWater;
@@ -48,7 +48,7 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
 
 //////////////////////// DAMAGE DISTORTION /////////////////////
 	#if defined LOW_HEALTH_EFFECT || defined DAMAGE_TAKEN_EFFECT   
-		float heartBeat = (pow(sin(frameTimeCounter * 15)*0.5+0.5,2.0)*0.2 + 0.1) ;
+		float heartBeat = pow(sin(frameTimeCounter * 15) * 0.5 + 0.5,2.0) * 0.2 + 0.1;
         
 		// apply low health distortion effects
 		float damageDistortion = vignette * noise * heartBeat * threeHeart;
@@ -61,23 +61,29 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
 	#endif
 
 //////////////////////// WATER DISTORTION /////////////////////
-	#if defined WATER_ON_CAMERA_EFFECT
+	#ifdef WATER_ON_CAMERA_EFFECT
 		if(exitWater > 0.0){
-		vec3 scale = vec3(1.0,1.0,0.0);
-		scale.xy = (isEyeInWater == 1 ? vec2(0.3) : vec2(0.5, 0.25 + (exitWater*exitWater)*0.25 )) * vec2(aspectRatio,1.0);
-		scale.z = isEyeInWater == 1 ? 0.0 : exitWater;
+			vec3 scale = vec3(1.0,1.0,0.0);
+			vec2 motion = vec2(0.0);
+			if(isEyeInWater == 1){
+				scale.xy = vec2(0.3);
+				motion = vec2(sin(frameTimeCounter * 1.4 + texcoord.x * 5.0) * 0.02 + cos(frameTimeCounter * 1.8) * 0.015, sin(frameTimeCounter * 1.6 - texcoord.y * 4.0) * 0.018 + cos(frameTimeCounter * 2.0) * 0.016);
+			}
+			if(isEyeInWater == 0){
+				scale.xy = vec2(0.5, 0.25 + (exitWater * exitWater)*0.25) * vec2(aspectRatio, 1.0);
+				scale.z = exitWater;
+			}
+			scale.xy *= vec2(aspectRatio, 1.0);
+			vec2 distortedTexCoord = texcoord - vec2(0.0, scale.z) + motion;
+			distortedTexCoord *= scale.xy;
 
-		vec2 motion = isEyeInWater == 1 ? 0.04 * vec2(sin(Time * 0.06), cos(Time * 0.06)) : vec2(0.0);
-		vec2 distortedTexCoord = texcoord - vec2(0.0, scale.z) + motion;
-		distortedTexCoord *= scale.xy;
-	
-		float waterDrops = texture2D(noisetex, distortedTexCoord).r ;
-		if(isEyeInWater == 1) waterDrops= waterDrops * waterDrops * WATER_DISTORTION_AMOUNT;
-		if(isEyeInWater == 0 && exitWater > 0.0) waterDrops = sqrt(min(max(waterDrops - (1.0-sqrt(exitWater))*0.7,0.0) * (1.0 + exitWater),1.0)) * 0.3;
+			float waterDrops = texture2D(noisetex, distortedTexCoord).r;
+			if(isEyeInWater == 1) waterDrops *= waterDrops * WATER_DISTORTION_AMOUNT;
+			if(isEyeInWater == 0) waterDrops = sqrt(min(max(waterDrops - (1.0 - sqrt(exitWater)) * 0.7, 0.0) * (1.0 + exitWater), 1.0)) * 0.3;
 
-		// apply distortion effects for exiting water and under water
-		distortmask = max(0.0, waterDrops);
-	}
+			// apply distortion effects for exiting water and under water
+			distortmask = max(0.0, waterDrops);
+		}
 	#endif
 
 //////////////////////// APPLY DISTORTION /////////////////////

@@ -15,10 +15,10 @@ float densityAtPos(in vec3 pos){
 	
 	//The y channel has an offset to avoid using two textures fetches
 	vec2 xy1 = texture2D(noisetex, coord).yx;
-	vec2 xy2 = texture2D(noisetex, coord * 2).yx;
+	vec2 xy2 = texture2D(noisetex, coord * 2.5).yx;
 
 	//Strengthen the vertical detail
-	float vn = texture2D(noisetex, vec2(coord.x, pos.y / 50.0)).r;
+	float vn = texture2D(noisetex, vec2(coord.x, pos.y / 100.0)).r;
 	vn = vn * vn;
 
 	float density = mix(xy1.r, xy1.g, f.y) + mix(xy2.r, xy2.g, f.y) * 0.5;
@@ -56,7 +56,7 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 		largeCloud = texture2D(noisetex, (samplePos.zx + cloud_movement*2.5)/15000.0 * CloudLayer1_scale).b;
 		smallCloud = texture2D(noisetex, (samplePos.zx - cloud_movement*2.5)/3000.0 * CloudLayer1_scale).b;
 		
-		smallCloud = abs(largeCloud* -0.7) + smallCloud;
+		smallCloud += abs(largeCloud* -0.7);
 
 		float val = coverage;
 		shape = min(max((val - smallCloud) * 1.2,0.0)/sqrt(val),1.0);
@@ -67,7 +67,7 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 		largeCloud = texture2D(noisetex, (samplePos.xz + cloud_movement)/5000.0 * CloudLayer0_scale).b;
 		smallCloud = 1.0-texture2D(noisetex, (samplePos.xz - cloud_movement)/1000.0 * CloudLayer0_scale).r;
 
-		smallCloud = abs(largeCloud-0.6) + smallCloud*smallCloud;
+		smallCloud = abs(largeCloud-0.6) + smallCloud * smallCloud;
 
 		float val = coverage;
 		shape = min(max(val - smallCloud,0.0)/sqrt(val),1.0);
@@ -81,7 +81,7 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 	topShape = min(exp(-0.5 * (1.0-topShape)), 1.0-pow(1.0-topShape,5.0));
 
 	// round out the bottom part slightly
-	float bottomShape = smoothstep(0.0, 0.2, (position.y - minHeight) / (maxHeight - minHeight));
+	float bottomShape = smoothstep(0.0, 0.25, (position.y - minHeight) / (maxHeight - minHeight));
 
 	shape = max((shape - 1.0) + topShape * bottomShape,0.0);
 
@@ -92,7 +92,7 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 		if (LOD < 1) return max(shape - 0.27 * ERODE_AMOUNT,0.0);
 
 		samplePos.xz -= cloud_movement/4.0;
-		samplePos.xz += pow(max(position.y - (minHeight+20.0), 0.0) / (max(maxHeight-minHeight,1.0)*0.20), 1.5);
+		samplePos.xz += pow(max(position.y - (minHeight + 20.0), 0.0) / (max(maxHeight-minHeight, 1.0) * 0.20), 1.5);
 
 		float erosionParam = sqrt(1.0-shape);
 
@@ -107,22 +107,21 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 			erosion += (1.0 - densityAtPos(samplePos * 100.0 * CloudLayer1_scale)) * erosionParam;
 
 			float falloff = 1.0 - clamp((maxHeight - position.y)/200.0,0.0,1.0);
-			erosion += abs(densityAtPos(samplePos * 450.0 * CloudLayer1_scale) - falloff) * 0.75 * (1.0-shape) * (1.0-falloff*0.5);
+			erosion += abs(densityAtPos(samplePos * 450.0 * CloudLayer1_scale) - falloff) * 0.75 * (1.0 - shape) * (1.0 - falloff * 0.5);
 
-			erosion = erosion*erosion*erosion*erosion;
+			erosion = erosion * erosion * erosion * erosion;
 		}
 		if(LayerIndex == SMALLCUMULUS_LAYER){
 			erosion += (1.0-densityAtPos(samplePos * 200.0 * CloudLayer0_scale)) * erosionParam;
 
 			float falloff = 1.0 - clamp((maxHeight - position.y)/100.0,0.0,1.0);
-			erosion += abs(densityAtPos(samplePos * 600.0 * CloudLayer0_scale) - falloff) * 0.75 * (1.0-shape) * (1.0-falloff*0.5);
+			erosion += abs(densityAtPos(samplePos * 600.0 * CloudLayer0_scale) - falloff) * 0.75 * (1.0 - shape) * (1.0 - falloff * 0.5);
 
-			erosion = erosion*erosion*erosion*erosion;
+			erosion = erosion * erosion * erosion * erosion;
 		}
-		return max(shape - erosion * ERODE_AMOUNT,0.0);
-
-	} else return 0.0;
-
+		return max(shape - erosion * ERODE_AMOUNT, 0.0);
+	}
+	else return 0.0;
 }
 
 float getPlanetShadow(vec3 playerPos, vec3 WsunVec){
@@ -185,7 +184,6 @@ float getCloudScattering(
 	vec3 shadowRayPosition = vec3(0.0);
 
 	for (int i = 0; i < samples; i++){
-
 		if(LayerIndex == ALTOSTRATUS_LAYER){
 			shadowRayPosition = rayPosition + sunVector * (1.0 + i * dither) / (pow(abs(sunVector.y*0.5),3.0) * 0.995 + 0.005);
 		}else{
@@ -196,7 +194,6 @@ float getCloudScattering(
 
 		shadow += getCloudShape(LayerIndex, LOD, shadowRayPosition, minHeight, maxHeight) * density;	
 	}
-
 	return shadow;
 }
 
@@ -250,7 +247,7 @@ vec4 raymarchCloud(
 	
 	if(LayerIndex == ALTOSTRATUS_LAYER){
 		float density = mix(dailyWeatherParams1.z,0.5,rainStrength);
-		
+
 		bool ifAboveOrBelowPlane = max(mix(-1.0, 1.0, clamp(cameraPosition.y - minHeight,0.0,1.0)) * normalize(rayDirection).y,0.0) > 0.0;
 
 		// check if the ray staring position is going farther than the reference distance, if yes, dont begin marching. this is to check for intersections with the world.
@@ -324,7 +321,7 @@ vec4 raymarchCloud(
 						}
 					#endif
 					// altostratus layer -> all cumulus layers
-					#if defined CloudLayer2
+					#ifdef CloudLayer2
 						vec3 shadowStartPos = rayPosition + sunVector / abs(sunVector.y) * max(CloudLayer2_height - rayPosition.y, 0.0);
 						sunShadowMask += getCloudShape(ALTOSTRATUS_LAYER, 0, shadowStartPos, CloudLayer2_height, CloudLayer2_height) * dailyWeatherParams1.z * (1.0-abs(sunVector.y));
 					#endif
@@ -341,17 +338,15 @@ vec4 raymarchCloud(
 			}
 			rayPosition += rayDirection;
 		}
-
 		return vec4(color, totalAbsorbance);
 	}
-
 }
 
 vec3 getRayOrigin(
 	vec3 rayStartPos,
 	vec3 cameraPos,
 	float dither,
-	
+
 	float minHeight,
 	float maxHeight
 ){
@@ -363,7 +358,7 @@ vec3 getRayOrigin(
 	// orient the ray to be a flat plane facing up/down
 	// vec3 position = rayStartPos*dither + cameraPos + (rayStartPos/abs(rayStartPos.y)) * flip;
 	vec3 position = rayStartPos*dither + cameraPos + (rayStartPos/length(rayStartPos/cloudDist)) * flip;
-	
+
 	return position;
 }
 // uniform float dhFarPlane;
@@ -382,13 +377,13 @@ vec4 GetVolumetricClouds(
 	float totalAbsorbance = 1.0;
 	vec4 cloudColor = vec4(color, totalAbsorbance);
 
-	float cloudheight = CloudLayer0_tallness / CloudLayer0_scale;
+	float cloudheight = CloudLayer0_tallness;
 	float minHeight = CloudLayer0_height;
 	float maxHeight = cloudheight + minHeight;
 
 	float heightRelativeToClouds = clamp(1.0 - max(cameraPosition.y - minHeight,0.0) / 100.0 ,0.0,1.0);
 
-	#if defined DISTANT_HORIZONS
+	#ifdef DISTANT_HORIZONS
 		float maxdist = dhFarPlane - 16.0;
 	#else
 		float maxdist = far + 16.0*5.0;
@@ -406,7 +401,6 @@ vec4 GetVolumetricClouds(
 	int maxSamples = 15;
 	int minSamples = 10;
 	int samples = int(clamp(maxSamples / sqrt(exp2(NormPlayerPos.y)),0.0, minSamples));
-	// int samples = 30;
    
    	///------- setup the ray
 	vec3 cloudDist = vec3(1.0); cloudDist.xz *= 25.0;
@@ -421,16 +415,9 @@ vec4 GetVolumetricClouds(
 	
 	vec3 distanceEstimation = normalize(NormPlayerPos.xyz * (cloudheight/abs(NormPlayerPos.y)/samples));
 
-	// terrible fake rayleigh scattering
-	// vec3 rC = vec3(sky_coefficientRayleighR*1e-6, sky_coefficientRayleighG*1e-5, sky_coefficientRayleighB*1e-5)*3.0;
-	// vec3 rayleighScatter = exp(-10000.0 * rC * exp(abs(distanceEstimation.y) * -5.0));
-	// sunMultiScattering *= rayleighScatter;
-	// sunScattering *= rayleighScatter;
-
 	float distanceFade = 1.0 - clamp(exp2(pow(abs(distanceEstimation.y),1.5) * -100.0),0.0,1.0)*heightRelativeToClouds;
 	distanceFade = 1.0;
 
-// - pow(1.0-clamp(signedSunVec.y,0.0,1.0),5.0)
 	skyScattering *= mix(1.0, 2.0, distanceFade);
 	sunScattering *= distanceFade;
 	sunMultiScattering *= distanceFade;

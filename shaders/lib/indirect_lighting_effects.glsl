@@ -11,26 +11,10 @@ vec3 cosineHemisphereSample(vec2 Xi){
 }
 
 vec3 TangentToWorld(vec3 N, vec3 H){
-	vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
-	vec3 T = normalize(cross(UpVector, N));
+	vec3 T = normalize(cross(abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0), N));
 	vec3 B = cross(N, T);
 
 	return vec3((T * H.x) + (B * H.y) + (N * H.z));
-}
-vec2 SpiralSample(
-	int samples, int totalSamples, float rotation, float Xi
-){
-	Xi = max(Xi,0.0015);
-
-	float alpha = float(samples + Xi) * (1.0 / float(totalSamples));
-
-	float theta = (2.0 *3.14159265359) * alpha * rotation;
-
-	float r = sqrt(Xi);
-	float x = r * sin(theta);
-	float y = r * cos(theta);
-
-	return vec2(x, y);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -103,14 +87,14 @@ vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 	vec3 stepv = direction * mult / quality * vec3(RENDER_SCALE, 1.0) / biasdist;
 	lowp vec3 spos = clipPosition * vec3(RENDER_SCALE,1.0) ;
 
-	spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
+	spos.xy += TAA_Offset * texelSize * 0.5 / RENDER_SCALE;
 
 	spos += stepv * dither;
 
 	int maxIterations = int(quality * clamp(1.0 - position.z / far, 0.1, 1.0));
 	for(int i = 0; i < maxIterations; i++){
 		#ifdef UseQuarterResDepth
-			float sp = sqrt(texelFetch2D(colortex4, ivec2(spos.xy * texelSizeInv/ 4), 0).w/ 65000.0);
+			float sp = sqrt(texelFetch2D(colortex4, ivec2(spos.xy * texelSizeInv / 4), 0).w / 65000.0);
 		#else
 			float sp = linZ(texelFetch2D(depthtex1, ivec2(spos.xy * texelSizeInv), 0).r);
 		#endif
@@ -128,7 +112,7 @@ vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 	return vec3(1.1);
 }
 
-vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool hand, inout float CURVE){
+vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool isLOD, inout float CURVE){
 
 	vec3 worldpos = mat3(gbufferModelViewInverse) * position;
 
@@ -140,48 +124,47 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 	float rayLength = ((position.z + dir.z * far * sqrt(3)) > -sqrt(3) * near)
 					? (-sqrt(3) * near - position.z) / dir.z
 					: sqrt(3) * far;
-	vec3 end = toClipSpace3(position+dir*rayLength) ;
-	vec3 direction = end-clipPosition ;  //convert to clip space
+	vec3 end = toClipSpace3(position + dir * rayLength) ;
+	vec3 direction = end - clipPosition ;  //convert to clip space
 
-	float len = max(abs(direction.x) * texelSizeInv.x,abs(direction.y) * texelSizeInv.y) / stepSize;
+	float len = max(abs(direction.x) * texelSizeInv.x, abs(direction.y) * texelSizeInv.y) / stepSize;
 
 	//get at which length the ray intersects with the edge of the screen
 	vec3 maxLengths = (step(0.0,direction)-clipPosition) / direction;
 	float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z)*2000.0;
 
-	vec3 stepv = direction/len;
+	vec3 stepv = direction / len;
 
 	int iterations = min(int(min(len, mult*len)-2), maxSteps);
 
-	lowp vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) + stepv*(noise-0.5);
-	spos.xy += TAA_Offset*texelSize*0.5*RENDER_SCALE;
+	lowp vec3 spos = clipPosition * vec3(RENDER_SCALE, 1.0) + stepv * (noise - 0.5);
+	spos.xy += TAA_Offset * texelSize * 0.5 * RENDER_SCALE;
 
 	float biasamount = 0.00005;
 	float minZ = spos.z;
 	float maxZ = spos.z;
 	CURVE = 0.0; 
 
-	bool intersected = false;
   	for(int i = 0; i < iterations; i++) {
-		if (any(lessThan(spos, vec3(0.0))) || any(greaterThan(spos, vec3(1.0)))) return vec3(1.1);
+		if (any(lessThan(spos, vec3(0.0))) || any(greaterThan(spos, vec3(1.0)))) break;
 
 		#ifdef UseQuarterResDepth
-			float sp = invLinZ(sqrt(texelFetch2D(colortex4,ivec2(spos.xy * texelSizeInv/4),0).w/65000.0));
+			float sp = invLinZ(sqrt(texelFetch2D(colortex4, ivec2(spos.xy * texelSizeInv/4),0).w / 65000.0));
 		#else
-			float sp = texelFetch2D(depthtex1,ivec2(spos.xy * texelSizeInv),0).r;
+			float sp = texelFetch2D(depthtex1, ivec2(spos.xy * texelSizeInv),0).r;
 		#endif
 
 		float currZ = linZ(spos.z);
 		float nextZ = linZ(sp);
 
-		if(nextZ < currZ && (sp <= max(minZ,maxZ) && sp >= min(minZ,maxZ))) return vec3(spos.xy/RENDER_SCALE,sp);
+		if(nextZ < currZ && (sp <= max(minZ, maxZ) && sp >= min(minZ, maxZ))) return vec3(spos.xy / RENDER_SCALE, sp);
 		
 		minZ = maxZ - biasamount / currZ;
 		maxZ += stepv.z;
 
 		spos += stepv;
 
-		CURVE += 1.0/ float(iterations);
+		CURVE += 1.0 / float(iterations);
 	}
 	return vec3(1.1);
 }
@@ -216,27 +199,27 @@ vec3 ApplySSRT(
 	for (int i = 0; i < nrays; i++){
 		int seed = (frameCounter%40000) * nrays + i;
 		vec2 ij = fract(R2_samples(seed) + noise.xy);
-		vec3 rayDir = TangentToWorld(normal, normalize(cosineHemisphereSample(ij)));
+		lowp vec3 rayDir = TangentToWorld(normal, normalize(cosineHemisphereSample(ij)));
 
-		#ifdef HQ_SSGI
-			vec3 rayHit = rayTrace_GI(mat3(gbufferModelView) * rayDir, viewPos, noise.z, 50.0); // ssr rt
-		#else
+		#if indirect_effect == 3
 			vec3 rayHit = RT_alternate(mat3(gbufferModelView) * rayDir, viewPos, noise.z, 10.0, isLOD, CURVE);  // choc sspt 
 
 			CURVE = 1.0 - pow(1.0-pow(1.0 - CURVE, 2.0), 5.0);
 			CURVE = mix(CURVE, 1.0, clamp(length(viewPos.z) / far, 0.0, 1.0));
+		#elif indirect_effect == 4
+			vec3 rayHit = rayTrace_GI(mat3(gbufferModelView) * rayDir, viewPos, noise.z, 50.0); // ssr rt
 		#endif
 
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
 			#ifdef OVERWORLD_SHADER
 				skycontribution = doIndirectLighting(skyCloudsFromTex(rayDir, colortex4).rgb/1200.0, minimumLightColor, lightmap);
-				skycontribution = mix(skycontribution, vec3(luma(skycontribution)), 0.25) + blockLightColor;
 			#else
-				skycontribution = volumetricsFromTex(rayDir, colortex4, 6).rgb / 1200.0 + blockLightColor;
+				skycontribution = volumetricsFromTex(rayDir, colortex4, 6).rgb / 1200.0;
 			#endif
+			skycontribution = mix(skycontribution, vec3(luma(skycontribution)), 0.25) + blockLightColor;
 		#else
 			#ifdef OVERWORLD_SHADER
-				skycontribution = unchangedIndirect;//  * (max(rayDir.y,pow(1.0-lightmap,2))*0.95+0.05);
+				skycontribution = unchangedIndirect;// * (max(rayDir.y,pow(1.0-lightmap,2)) * 0.95 + 0.05);
 			#endif
 		#endif
 

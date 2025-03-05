@@ -145,9 +145,8 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
 		spos += stepv;
 
 		reflectionLength += 1.0 / quality;
-
   	}
-  return vec3(1.1);
+	return vec3(1.1);
 }
 
 vec4 screenSpaceReflections(

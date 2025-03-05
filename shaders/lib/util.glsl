@@ -183,3 +183,13 @@ float HaltonSeq2(int index){
 	}
 	return r;
 }
+
+float hammersley(int i, int N) {
+	float b = 0.0;
+	float inv = 0.5;
+	for (int j = 0; j < 16; j++) {
+		b += float((i >> j) & 1) * inv;
+		inv /= 2.0;
+	}
+	return b;
+}

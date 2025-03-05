@@ -14,57 +14,55 @@
 		uniform int worldDay;  
 		uniform float noPuddleAreas;
 
-	    void YearCycleColor (
-	        inout vec3 FinalColor,
-	        vec3 glcolor,
+		void YearCycleColor (
+			inout vec3 FinalColor,
+			vec3 glcolor,
 
 			bool isLeaves,
 			bool isPlants
-	    ){
-	    	// colors for things that arent leaves and using the tint index.
-	    	vec3 SummerCol = vec3(Summer_R, Summer_G, Summer_B);
-	    	vec3 AutumnCol = vec3(Fall_R, Fall_G, Fall_B);
-	    	vec3 WinterCol = vec3(Winter_R, Winter_G, Winter_B) ;
-	    	vec3 SpringCol = vec3(Spring_R, Spring_G, Spring_B);
-			
+		){
+			// colors for things that arent leaves and using the tint index.
+			vec3 SummerCol = vec3(Summer_R, Summer_G, Summer_B);
+			vec3 AutumnCol = vec3(Fall_R, Fall_G, Fall_B);
+			vec3 WinterCol = vec3(Winter_R, Winter_G, Winter_B) ;
+			vec3 SpringCol = vec3(Spring_R, Spring_G, Spring_B);
 
 			// decide if you want to replace biome colors or tint them.
-			
 			SummerCol *= glcolor;
 			AutumnCol *= glcolor;
 			WinterCol *= glcolor;
 			SpringCol *= glcolor;
 
-	    	// do leaf colors different because thats cool and i like it
-	    	if(isLeaves) {
-			SummerCol = vec3(Summer_Leaf_R, Summer_Leaf_G, Summer_Leaf_B);
-			AutumnCol = vec3(Fall_Leaf_R, Fall_Leaf_G, Fall_Leaf_B);
-			WinterCol = vec3(Winter_Leaf_R, Winter_Leaf_G, Winter_Leaf_B);
-			SpringCol = vec3(Spring_Leaf_R, Spring_Leaf_G, Spring_Leaf_B);
+			// do leaf colors different because thats cool and i like it
+			if(isLeaves) {
+				SummerCol = vec3(Summer_Leaf_R, Summer_Leaf_G, Summer_Leaf_B);
+				AutumnCol = vec3(Fall_Leaf_R, Fall_Leaf_G, Fall_Leaf_B);
+				WinterCol = vec3(Winter_Leaf_R, Winter_Leaf_G, Winter_Leaf_B);
+				SpringCol = vec3(Spring_Leaf_R, Spring_Leaf_G, Spring_Leaf_B);
 
-			SummerCol *= glcolor;
-			AutumnCol *= glcolor;
-			WinterCol *= glcolor;
-			SpringCol *= glcolor;
-	    	}
+				SummerCol *= glcolor;
+				AutumnCol *= glcolor;
+				WinterCol *= glcolor;
+				SpringCol *= glcolor;
+	    		}
 
 			// length of each season in minecraft days
-	    	int SeasonLength = Season_Length; 
+			int SeasonLength = Season_Length; 
 
 			// loop the year. multiply the season length by the 4 seasons to create a years time.
-	    	float YearLoop = mod(worldDay + Start_Season * SeasonLength, SeasonLength * 4);
+			float YearLoop = mod(worldDay + Start_Season * SeasonLength, SeasonLength * 4);
 
-	    	// the time schedule for each season
-	    	float SummerTime = clamp(YearLoop, 0, SeasonLength) / SeasonLength;
-	    	float AutumnTime = clamp(YearLoop - SeasonLength, 0, SeasonLength) / SeasonLength;
-	    	float WinterTime = clamp(YearLoop - SeasonLength*2, 0, SeasonLength) / SeasonLength;
-	    	float SpringTime = clamp(YearLoop - SeasonLength*3, 0, SeasonLength) / SeasonLength;
+			// the time schedule for each season
+			float SummerTime = clamp(YearLoop, 0, SeasonLength) / SeasonLength;
+			float AutumnTime = clamp(YearLoop - SeasonLength, 0, SeasonLength) / SeasonLength;
+			float WinterTime = clamp(YearLoop - SeasonLength*2, 0, SeasonLength) / SeasonLength;
+			float SpringTime = clamp(YearLoop - SeasonLength*3, 0, SeasonLength) / SeasonLength;
 
-	    	// lerp all season colors together
-	    	vec3 SummerToFall = mix(SummerCol, AutumnCol, SummerTime);
-	    	vec3 FallToWinter = mix(SummerToFall, WinterCol, AutumnTime);
-	    	vec3 WinterToSpring = mix(FallToWinter, SpringCol, WinterTime);
-	    	vec3 SpringToSummer = mix(WinterToSpring, SummerCol, SpringTime);
+			// lerp all season colors together
+			vec3 SummerToFall = mix(SummerCol, AutumnCol, SummerTime);
+			vec3 FallToWinter = mix(SummerToFall, WinterCol, AutumnTime);
+			vec3 WinterToSpring = mix(FallToWinter, SpringCol, WinterTime);
+			vec3 SpringToSummer = mix(WinterToSpring, SummerCol, SpringTime);
 
 			// make it so that you only have access to parts of the texture that use the tint index
 			#ifdef DH_SEASONS
@@ -73,61 +71,53 @@
 				bool IsTintIndex = floor(dot(glcolor,vec3(0.5))) < 1.0;  
 			#endif
 
-	    	// multiply final color by the final lerped color, because it contains all the other colors.
+			// multiply final color by the final lerped color, because it contains all the other colors.
 			if(IsTintIndex) FinalColor = SpringToSummer;
-
-			// #ifdef Snowy_Winter
-				// this is to make snow only exist in winter
-				// float FallToWinter_snowfall = mix(0.0, 1.0, AutumnTime);
-				// float WinterToSpring_snowfall = mix(FallToWinter_snowfall, 0.0, WinterTime);
-				// SnowySeason = clamp(pow(sin(WinterToSpring_snowfall*SeasonLength)*0.5+0.5,5),0,1)  * WinterToSpring_snowfall * noPuddleAreas;
-			// #else
-				// SnowySeason = 0.0;
-			// #endif
-	    }
+		}
 	#endif
 #endif
 
-	vec3 getSeasonColor(int worldDay) {
+vec3 getSeasonColor(int worldDay) {
 
-		// length of each season in minecraft days
-		// for example, at 1, a season is 1 day long
-		int SeasonLength = 1; 
+	// length of each season in minecraft days
+	// for example, at 1, a season is 1 day long
+	int SeasonLength = 1; 
 
-		// loop the year. multiply the season length by the 4 seasons to create a years time.
-		float YearLoop = mod(worldDay + SeasonLength, SeasonLength * 4);
+	// loop the year. multiply the season length by the 4 seasons to create a years time.
+	float YearLoop = mod(worldDay + SeasonLength, SeasonLength * 4);
 
-	    	// the time schedule for each season
-		float SummerTime = clamp(YearLoop, 0, SeasonLength) / SeasonLength;
-		float AutumnTime = clamp(YearLoop - SeasonLength, 0, SeasonLength) / SeasonLength;
-		float WinterTime = clamp(YearLoop - SeasonLength*2, 0, SeasonLength) / SeasonLength;
-		float SpringTime = clamp(YearLoop - SeasonLength*3, 0, SeasonLength) / SeasonLength;
+    	// the time schedule for each season
+	float SummerTime = clamp(YearLoop, 0, SeasonLength) / SeasonLength;
+	float AutumnTime = clamp(YearLoop - SeasonLength, 0, SeasonLength) / SeasonLength;
+	float WinterTime = clamp(YearLoop - SeasonLength*2, 0, SeasonLength) / SeasonLength;
+	float SpringTime = clamp(YearLoop - SeasonLength*3, 0, SeasonLength) / SeasonLength;
 
-	    	// colors for things
-		vec3 SummerCol = vec3(Summer_R, Summer_G, Summer_B);
-		vec3 AutumnCol = vec3(Fall_R, Fall_G, Fall_B);
-		vec3 WinterCol = vec3(Winter_R, Winter_G, Winter_B);
-		vec3 SpringCol = vec3(Spring_R, Spring_G, Spring_B);
+	// colors for things
+	vec3 SummerCol = vec3(Summer_R, Summer_G, Summer_B);
+	vec3 AutumnCol = vec3(Fall_R, Fall_G, Fall_B);
+	vec3 WinterCol = vec3(Winter_R, Winter_G, Winter_B);
+	vec3 SpringCol = vec3(Spring_R, Spring_G, Spring_B);
 
-	    	// lerp all season colors together
-		vec3 SummerToFall =   mix(SummerCol, AutumnCol, SummerTime);
-		vec3 FallToWinter =   mix(SummerToFall, WinterCol, AutumnTime);
-		vec3 WinterToSpring = mix(FallToWinter, SpringCol, WinterTime);
-		vec3 SpringToSummer = mix(WinterToSpring, SummerCol, SpringTime);
+	// lerp all season colors together
+	vec3 SummerToFall =   mix(SummerCol, AutumnCol, SummerTime);
+	vec3 FallToWinter =   mix(SummerToFall, WinterCol, AutumnTime);
+	vec3 WinterToSpring = mix(FallToWinter, SpringCol, WinterTime);
+	vec3 SpringToSummer = mix(WinterToSpring, SummerCol, SpringTime);
 
-	    	// return the final color of the year, because it contains all the other colors, at some point.
-		return SpringToSummer;
-	    }
+	// return the final color of the year, because it contains all the other colors, at some point.
+	return SpringToSummer;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// BIOME SPECIFICS /////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-	uniform float isJungles;
-	uniform float isSwamps;
-	uniform float isDarkForests;
-	uniform float isSnowy;
-	uniform float sandStorm;
-	uniform float snowStorm;
+uniform float isJungles;
+uniform float isSwamps;
+uniform float isDarkForests;
+uniform float isSnowy;
+uniform float sandStorm;
+uniform float snowStorm;
 
 #ifdef PER_BIOME_ENVIRONMENT
 

@@ -31,6 +31,6 @@ vec3 GetLpvBlockLight(const in vec4 lpvSample) {
 }
 
 float GetLpvSkyLight(const in vec4 lpvSample) {
-	float skyLight = saturate(lpvSample.a);
+	float skyLight = clamp(lpvSample.a, 0.0, 1.0);
 	return skyLight*skyLight;
 }

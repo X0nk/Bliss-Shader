@@ -53,8 +53,7 @@ vec3 sky_density(float centerDistance) {
 	vec2 rayleighMie = exp(centerDistance * -sky_inverseScaleHeights + sky_scaledPlanetRadius);
 
 	// Ozone distribution curve by Sergeant Sarcasm - https://www.desmos.com/calculator/j0wozszdwa
-	float ozone = exp(-max(0.0, (35000.0 - centerDistance) - sky_planetRadius) * (1.0 / 5000.0))
-	            * exp(-max(0.0, (centerDistance - 35000.0) - sky_planetRadius) * (1.0 / 15000.0));
+	float ozone = exp(-max(0.0, (35000.0 - centerDistance) - sky_planetRadius) * (1.0 / 5000.0)) * exp(-max(0.0, (centerDistance - 35000.0) - sky_planetRadius) * (1.0 / 15000.0));
 	return vec3(rayleighMie, ozone);
 }
 
@@ -72,9 +71,9 @@ vec3 sky_airmass(vec3 position, vec3 direction, float rayLength, const float ste
 }
 vec3 sky_airmass(vec3 position, vec3 direction, const float steps) {
 	float rayLength = dot(position, direction);
-	      rayLength = rayLength * rayLength + sky_atmosphereRadiusSquared - dot(position, position);
-		  if (rayLength < 0.0) return vec3(0.0);
-	      rayLength = sqrt(rayLength) - dot(position, direction);
+	rayLength = rayLength * rayLength + sky_atmosphereRadiusSquared - dot(position, position);
+	if (rayLength < 0.0) return vec3(0.0);
+	rayLength = sqrt(rayLength) - dot(position, direction);
 
 	return sky_airmass(position, direction, rayLength, steps);
 }
@@ -89,7 +88,6 @@ vec3 sky_opticalDepth(vec3 position, vec3 direction, const float steps) {
 vec3 sky_transmittance(vec3 position, vec3 direction, const float steps) {
 	return exp(-sky_opticalDepth(position, direction, steps) * rLOG2);
 }
-
 
 
 vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 sunVector, vec3 moonVector, out vec2 pid, out vec3 transmittance, const int iSteps, float noise) {
@@ -121,8 +119,8 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 	vec2 phaseSun = sky_phase(dot(viewVector, sunVector), 0.8);
 	vec2 phaseMoon = sky_phase(dot(viewVector, moonVector), 0.8) ;
 
-	vec3 scatteringSun     = vec3(0.0);
-	vec3 scatteringMoon    = vec3(0.0);
+	vec3 scatteringSun = vec3(0.0);
+	vec3 scatteringMoon = vec3(0.0);
 	vec3 scatteringAmbient = vec3(0.0);
 
 	transmittance = vec3(1.0);
@@ -130,35 +128,34 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 	float high_sun = clamp(pow(sunVector.y+0.6,5),0.0,1.0) * 3.0; // make sunrise less blue, and allow sunset to be bluer
 	float low_sun = clamp(((1.0-abs(sunVector.y))*3.) - high_sun,1.0,2.0) ;
 
-
 	for (int i = 0; i < iSteps; ++i, position += increment) {
 		vec3 density = sky_density(length(position));
 		if (density.y > 1e35) break;
-		vec3 stepAirmass      = density * stepSize ;
+		vec3 stepAirmass = density * stepSize ;
 		vec3 stepOpticalDepth = sky_coefficientsAttenuation * stepAirmass ;
 
-		vec3 stepTransmittance       = exp2(-stepOpticalDepth * rLOG2);
+		vec3 stepTransmittance = exp2(-stepOpticalDepth * rLOG2);
 		vec3 stepTransmittedFraction = clamp01((stepTransmittance - 1.0) / -stepOpticalDepth) ;
-		vec3 stepScatteringVisible   = transmittance * stepTransmittedFraction * GroundDarkening ;
-		
+		vec3 stepScatteringVisible = transmittance * stepTransmittedFraction * GroundDarkening ;
+
 		#ifdef ORIGINAL_CHOCAPIC_SKY
-			scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun) * stepScatteringVisible * sky_transmittance(position, sunVector,  jSteps) * planetGround;
+			scatteringSun += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun) * stepScatteringVisible * sky_transmittance(position, sunVector,  jSteps) * planetGround;
 		#else
-			scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun) * stepScatteringVisible * sky_transmittance(position, sunVector * 0.5 + 0.1,  jSteps) * planetGround;
+			scatteringSun += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun) * stepScatteringVisible * sky_transmittance(position, sunVector * 0.5 + 0.1,  jSteps) * planetGround;
 		#endif
 
 		scatteringMoon += sky_coefficientsScattering * (stepAirmass.xy * phaseMoon) * stepScatteringVisible * sky_transmittance(position, moonVector, jSteps) * planetGround;
-		
+
 		// Nice way to fake multiple scattering.
 		#ifdef ORIGINAL_CHOCAPIC_SKY
 			scatteringAmbient += sky_coefficientsScattering * stepAirmass.xy * stepScatteringVisible;
 		#else
 			scatteringAmbient += sky_coefficientsScattering * stepAirmass.xy * stepScatteringVisible * low_sun;
 		#endif
-		
+
 		transmittance *= stepTransmittance;
 	}
-	
+
 	vec3 scattering = scatteringAmbient * background + scatteringSun * sunColorBase + scatteringMoon*moonColorBase * 0.5;
 
 	return scattering;
