@@ -1,4 +1,4 @@
-#define SHADER_VERSION_LABEL 1.39 // [1.39]
+#define SHADER_VERSION_LABEL 1.4 // [1.4]
 
 uniform int worldTime;
 float Time = worldTime%24000;
@@ -594,6 +594,9 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 
 #define VIGNETTE
 #define VIGNETTE_STRENGTH 0.5 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
+
+#define LENS_FLARE
+#define LENS_FLARE_STRENGTH 1.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 3.0 4.0 5.0]
 
 ///////////////////////////////////////////////////////
 // ----- GAMEPLAY POST EFFECT RELATED SETTINGS ----- //

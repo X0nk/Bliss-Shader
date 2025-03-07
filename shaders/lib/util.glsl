@@ -197,6 +197,10 @@ float hammersley(int i, int N) {
 	return b;
 }
 
+float luma(vec3 color) {
+	return dot(color,vec3(0.21, 0.72, 0.07));
+}
+
 float interleaved_gradientNoise_temporal(){
 	vec2 coord = gl_FragCoord.xy;
 	

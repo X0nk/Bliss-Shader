@@ -141,7 +141,7 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool is
 	CURVE = 0.0; 
 
   	for(int i = 0; i < iterations; i++) {
-		if (any(lessThan(spos, vec3(0.0))) || any(greaterThan(spos, vec3(1.0)))) break;
+		if (any(lessThan(spos, vec3(0.0))) || any(greaterThan(spos, vec3(1.0)))) return vec3(1.1);
 
 		#ifdef UseQuarterResDepth
 			float sp = invLinZ(sqrt(texelFetch2D(colortex4, ivec2(spos.xy * texelSizeInv/4),0).w / 65000.0));
@@ -208,10 +208,10 @@ vec3 ApplySSRT(
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
 			#ifdef OVERWORLD_SHADER
 				skycontribution = doIndirectLighting(skyCloudsFromTex(rayDir, colortex4).rgb/1200.0, minimumLightColor, lightmap);
+				skycontribution = mix(skycontribution, vec3(luma(skycontribution)), 0.25) + blockLightColor;
 			#else
 				skycontribution = volumetricsFromTex(rayDir, colortex4, 6).rgb / 1200.0;
 			#endif
-			skycontribution = mix(skycontribution, vec3(luma(skycontribution)), 0.25) + blockLightColor;
 		#else
 			#ifdef OVERWORLD_SHADER
 				skycontribution = unchangedIndirect;// * (max(rayDir.y,pow(1.0-lightmap,2)) * 0.95 + 0.05);

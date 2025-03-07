@@ -3,10 +3,6 @@ vec3 toLinear(vec3 sRGB){
 	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
 }
 
-float luma(vec3 color) {
-	return dot(color,vec3(0.299, 0.587, 0.114));
-}
-
 const mat3 ACESInputMat =
 mat3(0.59719, 0.35458, 0.04823,
 	0.07600, 0.90834, 0.01566,
