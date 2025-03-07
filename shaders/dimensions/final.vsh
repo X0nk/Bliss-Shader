@@ -2,6 +2,7 @@
 
 uniform vec3 sunPosition;
 uniform mat4 gbufferModelViewInverse;
+uniform sampler2D colortex4;
 
 out vec2 texcoord;
 

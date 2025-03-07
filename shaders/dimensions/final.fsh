@@ -1,9 +1,9 @@
 #include "/lib/settings.glsl"
 #include "/lib/util.glsl"
 
-uniform sampler2D colortex7;
 uniform sampler2D colortex5;
 uniform sampler2D colortex6;
+uniform sampler2D colortex7;
 uniform sampler2D colortex14;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
