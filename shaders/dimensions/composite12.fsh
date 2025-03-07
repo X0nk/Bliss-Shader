@@ -1,4 +1,5 @@
 #include "/lib/settings.glsl"
+#include "/lib/util.glsl"
 
 varying vec2 texcoord;
 uniform vec2 texelSize;
@@ -6,14 +7,12 @@ uniform vec2 texelSize;
 uniform sampler2D colortex7;
 uniform sampler2D colortex14;
 uniform sampler2D depthtex0;
-uniform sampler2D noisetex;
 
 uniform float viewHeight;
 uniform float viewWidth;
 uniform float aspectRatio;
 
 uniform float frameTimeCounter;
-uniform int frameCounter;
 
 uniform int hideGUI;
 
@@ -133,10 +132,6 @@ vec3 saturationAndCrosstalk(vec3 color){
 	color = color + lumaColDiff * (SATURATION - luminance * CROSSTALK);
 
 	return color;
-}
-
-float blueNoise(){
-	return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
 
 vec3 chromaticAberration(vec2 UV){

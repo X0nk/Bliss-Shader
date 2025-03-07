@@ -227,7 +227,6 @@ float invertlinearDepthFast(const in float depth, const in float near, const in 
 	return ((2.0*near/depth)-far-near)/(far-near);
 }
 
-
 float triangularize(float dither){
 	float center = dither*2.0-1.0;
 	dither = center*inversesqrt(abs(center));
@@ -238,17 +237,6 @@ vec3 fp10Dither(vec3 color,float dither){
 	const vec3 mantissaBits = vec3(6.,6.,5.);
 	vec3 exponent = floor(log2(color));
 	return color + dither*exp2(-mantissaBits)*exp2(exponent);
-}
-
-float R2_dither2(){
-	vec2 coord = gl_FragCoord.xy ;
-
-	#ifdef TAA
-		coord += (frameCounter*8)%40000;
-	#endif
-	
-	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
 
 vec4 blueNoise(vec2 coord){
@@ -267,15 +255,15 @@ vec2 CleanSample(
 	
 	// for every sample, the sample position must change its distance from the origin.
 	// otherwise, you will just have a circle.
-    float spiralShape = sqrt(variedSamples / (totalSamples + variance));
+	float spiralShape = sqrt(variedSamples / (totalSamples + variance));
 
 	float shape = 2.26; // this is very important. 2.26 is very specific
-    float theta = variedSamples * (PI * shape);
+	float theta = variedSamples * (PI * shape);
 
 	float x =  cos(theta) * spiralShape;
 	float y =  sin(theta) * spiralShape;
 
-    return vec2(x, y);
+	return vec2(x, y);
 }
 
 vec3 viewToWorld(vec3 viewPos) {
@@ -361,7 +349,6 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 
 		screenPos += rayDir;
 	}
-
 	return vec2(Shadow, SSS / steps);
 }
 
@@ -410,10 +397,8 @@ float SSRT_FlashLight_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, floa
 			// if (calcthreshold < 0.035) 
 			Shadow = 0.0;
 		} 
-	
 		screenPos += rayDir;
 	}
-
 	return Shadow;
 }
 
@@ -671,7 +656,7 @@ void main() {
 		vec3 DEBUG = vec3(1.0);
 
 	////// --------------- SETUP STUFF --------------- //////
-		vec2 texcoord = (gl_FragCoord.xy*texelSize);
+		vec2 texcoord = gl_FragCoord.xy * texelSize;
 	
 		float noise_2 = R2_dither();
 		vec2 bnoise = blueNoise(gl_FragCoord.xy).rg;
@@ -1239,19 +1224,18 @@ void main() {
 
 		#ifdef OVERWORLD_SHADER
 			float atmosphereGround = 1.0 - exp2(-50.0 * pow(clamp(feetPlayerPos_normalized.y+0.025,0.0,1.0),2.0)); // darken the ground in the sky.
-			
+
 			#if RESOURCEPACK_SKY == 0 || RESOURCEPACK_SKY == 1 || RESOURCEPACK_SKY == 3
 				// vec3 orbitstar = vec3(feetPlayerPos_normalized.x,abs(feetPlayerPos_normalized.y),feetPlayerPos_normalized.z); orbitstar.x -= WsunVec.x*0.2;
 				vec3 orbitstar = normalize(mat3(gbufferModelViewInverse) * toScreenSpace(vec3(texcoord/RENDER_SCALE,1.0)));
 				float radiance = 2.39996 - worldTime * STAR_ROTATION_MULT/ 24000.0;
-				// float radiance = 2.39996 ;
-				// float radiance = 2.39996 + frameTimeCounter;
 				mat2 rotationMatrix  = mat2(vec2(cos(radiance),  -sin(radiance)),  vec2(sin(radiance),  cos(radiance)));
 				orbitstar.xy *= rotationMatrix;
 
 				Background += stars(orbitstar) * 10.0 * clamp(-unsigned_WsunVec.y*2.0,0.0,1.0);
 
 				#if !defined ambientLight_only && (RESOURCEPACK_SKY == 0 || RESOURCEPACK_SKY == 1)
+
 					Background += drawSun(dot(unsigned_WsunVec, feetPlayerPos_normalized), 0, DirectLightColor,vec3(0.0));
 
 					vec3 moonLightCol = moonCol / 2400.0;

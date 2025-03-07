@@ -8,8 +8,20 @@ uniform sampler2D colortex14;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 uniform sampler2D depthtex2;
+#ifdef DISTANT_HORIZONS
+	uniform sampler2D dhDepthTex0;
+#endif
 
-varying vec2 texcoord;
+flat in vec3 WsunVec;
+flat in vec4 dailyWeatherParams0;
+flat in vec4 dailyWeatherParams1;
+
+uniform float rainStrength;
+#define CLOUDSHADOWSONLY
+#include "/lib/volumetricClouds.glsl"
+
+in vec2 texcoord;
+
 uniform vec2 texelSize;
 uniform float frameTimeCounter;
 uniform float viewHeight;
@@ -21,6 +33,7 @@ uniform int hideGUI;
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
 #include "/lib/res_params.glsl"
+#include "/lib/lensflare.glsl"
 
 #if DEBUG_VIEW == debug_LIGHTS && defined LPV_SHADOWS
 	uniform usampler1D texCloseLights;
@@ -33,7 +46,7 @@ uniform int hideGUI;
 uniform float near;
 uniform float far;
 
-float ld(float dist) {
+float ld(float dist){
 	return (2.0 * near) / (far + near - dist * (far - near));
 }
 
@@ -80,7 +93,7 @@ vec3 doMotionBlur(vec2 texcoord, float depth, float noise, bool hand){
 	viewPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
 
 	vec3 previousPosition = mat3(gbufferPreviousModelView) * viewPos + gbufferPreviousModelView[3].xyz;
-  previousPosition = toClipSpace3(previousPosition);
+	previousPosition = toClipSpace3(previousPosition);
 
 	vec2 velocity = texcoord - previousPosition.xy;
   
@@ -108,7 +121,7 @@ float convertHandDepth_2(in float depth, bool hand) {
 
 uniform sampler2D shadowcolor1;
 
-float doVignette( in vec2 texcoord, in float noise){
+float doVignette(in vec2 texcoord, in float noise){
 
 	float vignette = 1.0-clamp(1.0-length(texcoord-0.5),0.0,1.0);
   
@@ -124,23 +137,46 @@ float doVignette( in vec2 texcoord, in float noise){
 }
 
 void main() {
-  
+
 	float noise = blueNoise();
 
+	vec3 COLOR = texture2D(colortex7,texcoord).rgb;
 	#ifdef MOTION_BLUR
 		float depth = texture2D(depthtex0, texcoord*RENDER_SCALE).r;
 		bool hand = depth < 0.56;
 		float depth2 = convertHandDepth_2(depth, hand);
 
-		vec3 COLOR = doMotionBlur(texcoord, depth2, noise, hand);
-	#else
-		vec3 COLOR = texture2D(colortex7,texcoord).rgb;
+		COLOR = doMotionBlur(texcoord, depth2, noise, hand);
 	#endif
-  
+
 	#ifdef VIGNETTE
 		COLOR *= doVignette(texcoord, noise);
 	#endif
-  
+
+	#ifdef LENS_FLARE
+		vec4 sunClipPos = gbufferProjection * gbufferModelView * vec4(WsunVec, 1.0);
+		vec3 sunNDC = sunClipPos.xyz / sunClipPos.w;
+		vec2 sunPos = sunNDC.xy * 0.5 + 0.5;
+
+		float dayTime = step(0.0, WsunVec.y);
+		float screenVis = smoothstep(0.5, 0.45, abs(sunPos.x - 0.5)) * smoothstep(0.5, 0.45, abs(sunPos.y - 0.5));
+		float depthVis = step(1.0, texture2D(depthtex0, sunPos).x);
+		#ifdef DISTANT_HORIZONS
+			depthVis *= step(1.0, texture2D(dhDepthTex0, sunPos).x);
+		#endif
+
+		float cloudVis = 1.0;
+		#if defined VOLUMETRIC_CLOUDS && (defined CloudLayer0 || defined CloudLayer1 || defined CloudLayer2)
+			float cloudShadow = GetCloudShadow(cameraPosition, WsunVec);
+			cloudVis = step(1.0, cloudShadow);
+		#endif
+
+		float sunVis = screenVis * depthVis * cloudVis * dayTime;
+
+		vec3 lf = lensflare(texcoord, sunPos) * sunVis;
+		COLOR += lf;
+	#endif
+
 	#if defined LOW_HEALTH_EFFECT || defined DAMAGE_TAKEN_EFFECT || defined WATER_ON_CAMERA_EFFECT  
 		// for making the fun, more fun
 		applyGameplayEffects(COLOR, texcoord, noise);
@@ -200,11 +236,9 @@ void main() {
 		// shadowUV = ((shadowUV-0.5) - (shadowUV-0.5)*zoom) + 0.5;
 
 		if(shadowUV.x < 1.0 && shadowUV.y < 1.0 && hideGUI == 1) COLOR = texture2D(shadowcolor1,shadowUV).rgb;
-	#endif
-	#if DEBUG_VIEW == debug_DEPTHTEX0
+	#elif DEBUG_VIEW == debug_DEPTHTEX0
 		COLOR = vec3(ld(texture2D(depthtex0, texcoord*RENDER_SCALE).r));
-	#endif
-	#if DEBUG_VIEW == debug_DEPTHTEX1
+	#elif DEBUG_VIEW == debug_DEPTHTEX1
 		COLOR = vec3(ld(texture2D(depthtex1, texcoord*RENDER_SCALE).r));
 	#endif
 

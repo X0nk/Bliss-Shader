@@ -68,7 +68,7 @@ float ld(float depth) {
 uniform float dhNearPlane;
 uniform float dhFarPlane;
 
-float linearizeDepthFast(const in float depth, const in float near, const in float far) {
+float linearizeDepthFast(const in float depth, const in float near, const in float far){
 	return (near * far) / (depth * (near - far) + far);
 }
 
@@ -79,7 +79,7 @@ float bloomWeight(){
 
 	float result = 0.0;
 
-	for ( int i = 0; i < 7; i++) {
+	for ( int i = 0; i < 7; i++){
 		result += weights[i];
 	}
 
@@ -93,48 +93,39 @@ vec3 invTonemap(vec3 col){
 uniform sampler2D colortex6;
 
 
-float w0(float a)
-{
+float w0(float a){
     return (1.0/6.0)*(a*(a*(-a + 3.0) - 3.0) + 1.0);
 }
 
-float w1(float a)
-{
+float w1(float a){
     return (1.0/6.0)*(a*a*(3.0*a - 6.0) + 4.0);
 }
 
-float w2(float a)
-{
+float w2(float a){
     return (1.0/6.0)*(a*(a*(-3.0*a + 3.0) + 3.0) + 1.0);
 }
 
-float w3(float a)
-{
+float w3(float a){
     return (1.0/6.0)*(a*a*a);
 }
 
-float g0(float a)
-{
+float g0(float a){
     return w0(a) + w1(a);
 }
 
-float g1(float a)
-{
+float g1(float a){
     return w2(a) + w3(a);
 }
 
-float h0(float a)
-{
+float h0(float a){
     return -1.0 + w1(a) / (w0(a) + w1(a));
 }
 
-float h1(float a)
-{
+float h1(float a){
     return 1.0 + w3(a) / (w2(a) + w3(a));
 }
 
-vec4 texture2D_bicubic(sampler2D tex, vec2 uv)
-{
+vec4 texture2D_bicubic(sampler2D tex, vec2 uv){
 	vec4 texelSize = vec4(texelSize,1.0/texelSize);
 	uv = uv*texelSize.zw;
 	vec2 iuv = floor( uv );

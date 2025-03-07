@@ -56,10 +56,6 @@ vec3 sunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
 #include "/lib/ROBOBO_sky.glsl"
 #include "/lib/climate_settings.glsl"
 
-float luma(vec3 color) {
-	return dot(color,vec3(0.21, 0.72, 0.07));
-}
-
 vec3 rodSample(vec2 Xi) {
 	float r = sqrt(1.0f - Xi.x*Xi.y);
 	float phi = 2 * 3.14159265359 * Xi.y;

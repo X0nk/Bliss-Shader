@@ -34,7 +34,6 @@ uniform vec4 entityColor;
 	flat varying vec4 lightCol;
 #endif
 
-
 flat varying float HELD_ITEM_BRIGHTNESS;
 #if defined ENTITIES && defined IS_IRIS
 	flat varying int NAMETAG;
@@ -70,13 +69,12 @@ varying vec4 tangent;
 varying vec4 normalMat;
 varying vec3 binormal;
 varying vec3 flatnormal;
+
 #ifdef LARGE_WAVE_DISPLACEMENT
 	varying vec3 shitnormal;
 #endif
 
-
 flat varying float exposure;
-
 
 uniform vec3 sunVec;
 uniform float near;

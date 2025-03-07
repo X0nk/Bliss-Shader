@@ -84,10 +84,6 @@ float ld(float depth) {
 	return 1.0 / (zMults.y - depth * zMults.z);		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
 }
 
-float luma(vec3 color) {
-	return dot(color,vec3(0.21, 0.72, 0.07));
-}
-
 vec3 toLinear(vec3 sRGB){
 	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
 }
