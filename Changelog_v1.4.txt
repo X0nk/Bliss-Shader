@@ -1,3 +1,7 @@
+2025-3-7 v1.4
+1. Add lensflare and sun flare effect.
+~ lensflare/ final 新增镜头炫光与更美观的太阳
+
 2025-3-5 v1.39
 1. Reduce periodic motion of water distortion.
 ~ gameplay_effect 降低水下失真运动效果的周期性
