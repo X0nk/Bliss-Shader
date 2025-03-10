@@ -173,10 +173,10 @@ screen.Fog = Fog Settings
         option.Noon_Uniform_Fog = Noon Fog Density
         option.Evening_Uniform_Fog = Evening Fog Density
         option.Night_Uniform_Fog = Night Fog Density
-        option.Morning_Cloudy_Fog = Cloudy Morning Fog Density
-        option.Noon_Cloudy_Fog = Cloudy Noon Fog Density
-        option.Evening_Cloudy_Fog = Cloudy Evening Fog Density
-        option.Night_Cloudy_Fog = Cloudy Night Fog Density
+        option.Morning_Cloudy_Fog = Morning Cloudy Fog Density
+        option.Noon_Cloudy_Fog = Noon Cloudy Fog Density
+        option.Evening_Cloudy_Fog = Evening Cloudy Fog Density
+        option.Night_Cloudy_Fog = Night Cloudy Fog Density
 
         option.PER_BIOME_ENVIRONMENT = Per Biome Environments
 

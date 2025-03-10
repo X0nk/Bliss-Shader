@@ -460,12 +460,9 @@ float SSRT_FlashLight_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, floa
 void Emission(
 	inout vec3 Lighting,
 	vec3 Albedo,
-	float Emission,
-	float exposure
+	float Emission
 ){
-	// float autoBrightnessAdjust = mix(5.0, 100.0, clamp(exp(-10.0*exposure),0.0,1.0));
-	if( Emission < 254.5/255.0) Lighting = mix(Lighting, Albedo * 5.0 * Emissive_Brightness, pow(Emission, Emissive_Curve)); // old method.... idk why
-	// if( Emission < 254.5/255.0 ) Lighting += (Albedo * Emissive_Brightness) * pow(Emission, Emissive_Curve);
+	if( Emission < 254.5/255.0) Lighting = mix(Lighting, Albedo * 5.0 * Emissive_Brightness, pow(Emission, Emissive_Curve));
 }
 
 #include "/lib/indirect_lighting_effects.glsl"
@@ -940,6 +937,7 @@ void main() {
 		#else
 			float minimumAbsorbance	= (1.0 - lightLeakFix);
 		#endif
+		
 		Absorbtion = exp(-totEpsilon * max(Vdiff, minimumAbsorbance));
 
 
@@ -1186,7 +1184,7 @@ void main() {
 		#else
 			const vec3 lpvPos = vec3(0.0);
 		#endif
-		vec3 blockLightColor = doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, exposure, feetPlayerPos, lpvPos);
+		vec3 blockLightColor = doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, feetPlayerPos, lpvPos);
 		Indirect_lighting += blockLightColor;
 
 		vec4 flashLightSpecularData = vec4(0.0);
@@ -1305,7 +1303,7 @@ void main() {
 
 		vec3 FINAL_COLOR = (Indirect_lighting + Direct_lighting) * albedo;
 
-		Emission(FINAL_COLOR, albedo, SpecularTex.a, exposure);
+		Emission(FINAL_COLOR, albedo, SpecularTex.a);
 		
 		if(lightningBolt) FINAL_COLOR = vec3(77.0, 153.0, 255.0);
 		

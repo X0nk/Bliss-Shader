@@ -67,6 +67,7 @@ float phaseCloudFog(float x, float g){
     return (gg * -0.25 + 0.25) * pow(-2.0 * (g * x) + (gg + 1.0), -1.5) / 3.14;
 }
 uniform ivec2 eyeBrightness;
+
 vec4 GetVolumetricFog(
 	in vec3 viewPosition,
 	in vec3 sunVector,
@@ -227,14 +228,31 @@ vec4 GetVolumetricFog(
 			#endif
 
 			vec3 Lightning = Iris_Lightningflash_VLfog(progressW-cameraPosition, lightningBoltPosition.xyz);
-			vec3 lighting = DirectLight + indirectLight;// * (lightLevelZero*0.99 + 0.01) + Lightning;
+			vec3 lighting = DirectLight + indirectLight;
 			
 			color += (lighting - lighting * fogVolumeCoeff) * totalAbsorbance;
 
-			#if defined FLASHLIGHT && defined FLASHLIGHT_FOG_ILLUMINATION
-				vec3 shiftedViewPos = mat3(gbufferModelView)*(progressW-cameraPosition) + vec3(-0.25, 0.2, 0.0);
-				vec3 shiftedPlayerPos = mat3(gbufferModelViewInverse) * shiftedViewPos;
-				vec2 scaledViewPos = shiftedViewPos.xy / max(-shiftedViewPos.z - 0.5, 1e-7);
+			#if defined FLASHLIGHT && defined FLASHLIGHT_FOG_ILLUMINATION && !defined VL_CLOUDS_DEFERRED
+				// vec3 shiftedViewPos = mat3(gbufferModelView)*(progressW-cameraPosition) + vec3(-0.25, 0.2, 0.0);
+				// vec3 shiftedPlayerPos = mat3(gbufferModelViewInverse) * shiftedViewPos;
+					vec3 shiftedViewPos;
+    				vec3 shiftedPlayerPos;
+					float forwardOffset;
+
+    				#ifdef VIVECRAFT
+    				    if (vivecraftIsVR) {
+							forwardOffset = 0.0;
+    				        shiftedPlayerPos = (progressW - cameraPosition) + ( vivecraftRelativeMainHandPos);
+    				        shiftedViewPos = shiftedPlayerPos * mat3(vivecraftRelativeMainHandRot);
+    				    } else
+    				#endif
+    				{
+						forwardOffset = 0.5;
+						shiftedViewPos = mat3(gbufferModelView)*(progressW-cameraPosition) + vec3(-0.25, 0.2, 0.0);
+						shiftedPlayerPos = mat3(gbufferModelViewInverse) * shiftedViewPos;
+    				}
+
+				vec2 scaledViewPos = shiftedViewPos.xy / max(-shiftedViewPos.z - forwardOffset, 1e-7);
 				float linearDistance = length(shiftedPlayerPos);
 				float shiftedLinearDistance = length(scaledViewPos);
 

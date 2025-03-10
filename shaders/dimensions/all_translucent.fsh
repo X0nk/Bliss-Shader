@@ -75,10 +75,6 @@ varying vec3 flatnormal;
 varying vec3 shitnormal;
 #endif
 
-
-flat varying float exposure;
-
-
 uniform vec3 sunVec;
 uniform float near;
 // uniform float far;
@@ -150,6 +146,7 @@ uniform float waterEnteredAltitude;
 #define FORWARD_BACKGROUND_REFLECTION
 #define FORWARD_ROUGH_REFLECTION
 
+
 #ifdef FORWARD_SPECULAR
 #endif
 #ifdef FORWARD_ENVIORNMENT_REFLECTION
@@ -200,14 +197,16 @@ float blueNoise(){
 varying vec3 viewVector;
 vec3 getParallaxDisplacement(vec3 waterPos, vec3 playerPos) {
 
-	float waterHeight = getWaterHeightmap(waterPos.xy) ;
-	waterHeight = exp(-20*sqrt(waterHeight));
-	// waterHeight *= 5.0;
+	float largeWaves = texture2D(noisetex, waterPos.xy / 600.0 ).b;
+	float largeWavesCurved = pow(1.0-pow(1.0-largeWaves,2.5),4.5);
+
+	float waterHeight = getWaterHeightmap(waterPos.xy, largeWaves, largeWavesCurved);
+	// waterHeight = exp(-20.0*sqrt(waterHeight));
+	waterHeight = exp(-7.0*exp(-7.0*waterHeight)) * 0.25;
 	
 	vec3 parallaxPos = waterPos;
 
 	parallaxPos.xy += (viewVector.xy / -viewVector.z) * waterHeight;
-	// parallaxPos.xz -= (viewVector.xy / viewVector.z) * waterHeight;
 
 	return parallaxPos;
 }
@@ -375,14 +374,13 @@ void convertHandDepth(inout float depth) {
     ndcDepth /= MC_HAND_DEPTH;
     depth = ndcDepth * 0.5 + 0.5;
 }
+
 void Emission(
 	inout vec3 Lighting,
 	vec3 Albedo,
-	float Emission,
-	float exposure
+	float Emission
 ){
-	// float autoBrightnessAdjust = mix(5.0, 100.0, clamp(exp(-10.0*exposure),0.0,1.0));
-	if( Emission < 254.5/255.0) Lighting = mix(Lighting, Albedo * 5.0 * Emissive_Brightness, pow(Emission, Emissive_Curve)); // old method.... idk why
+	if( Emission < 254.5/255.0) Lighting = mix(Lighting, Albedo * 5.0 * Emissive_Brightness, pow(Emission, Emissive_Curve));
 }
 
 uniform vec3 eyePosition;
@@ -405,7 +403,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	vec2 tempOffset = offsets[framemod8];
 
 	vec3 viewPos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
-
 
 	vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
 ////////////////////////////////////////////////////////////////////////////////
@@ -437,8 +434,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	gl_FragData[0] = texture2D(texture, lmtexcoord.xy, Texture_MipMap_Bias) * color;
 
 	float UnchangedAlpha = gl_FragData[0].a;
-
-	// gl_FragData[0].a = pow(gl_FragData[0].a,3);
 
 	#ifdef WhiteWorld
 		gl_FragData[0].rgb = vec3(0.5);
@@ -501,19 +496,16 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 			vec3 flowDir = normalize(worldSpaceNormal*10.0) * frameTimeCounter * 2.0 * WATER_WAVE_SPEED;
 			
-			vec2 newPos = 			playerPos.xy + cameraPosition.xy + abs(flowDir.xz);
-			newPos = mix(newPos, 	playerPos.zy + cameraPosition.zy + abs(flowDir.zx), clamp(abs(worldSpaceNormal.x),0,1));
-			newPos = mix(newPos, 	playerPos.xz + cameraPosition.xz, clamp(abs(worldSpaceNormal.y),0,1));
+			vec2 newPos = playerPos.xy + cameraPosition.xy + abs(flowDir.xz);
+			newPos = mix(newPos, playerPos.zy + cameraPosition.zy + abs(flowDir.zx), clamp(abs(worldSpaceNormal.x),0.0,1.0));
+			newPos = mix(newPos, playerPos.xz + cameraPosition.xz, clamp(abs(worldSpaceNormal.y),0.0,1.0));
 			waterPos.xy = newPos;
-
-			// make the waves flow in the direction the water faces, except for perfectly up facing parts.
-			// if(abs(worldSpaceNormal.y) < 0.9995) posxz.xz -= posxz.y + normalize(worldSpaceNormal.xz*10.0) * frameTimeCounter * 3.0 * WATER_WAVE_SPEED;
 		
 			waterPos.xyz = getParallaxDisplacement(waterPos, playerPos);
 			
 			vec3 bump = normalize(getWaveNormal(waterPos, playerPos, false));
 
-			float bumpmult = 10.0 * WATER_WAVE_STRENGTH;
+			float bumpmult = WATER_WAVE_STRENGTH;
 			bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 
 			NormalTex.xyz = bump;
@@ -656,7 +648,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		const vec3 lpvPos = vec3(0.0);
 	#endif
 
-	Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, exposure, feetPlayerPos, lpvPos);
+	Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, feetPlayerPos, lpvPos);
 	
 	vec4 flashLightSpecularData = vec4(0.0);
 	#ifdef FLASHLIGHT
@@ -666,7 +658,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
 
 	#if EMISSIVE_TYPE == 2 || EMISSIVE_TYPE == 3
-		Emission(FinalColor, Albedo, SpecularTex.b, exposure);
+		Emission(FinalColor, Albedo, SpecularTex.b);
 	#endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -698,7 +690,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			isHand = true;
 			f0 = max(specularValues.g, harcodedF0);
 		#endif
-
+		
 		float roughness = specularValues.r; 
 
 		if(UnchangedAlpha <= 0.0 && !isReflective) f0 = 0.0;

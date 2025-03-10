@@ -33,14 +33,16 @@ uniform float near;
 uniform float dhFarPlane;
 uniform float dhNearPlane;
 
-// uniform mat4 gbufferModelViewInverse;
-// uniform mat4 gbufferModelView;
 uniform mat4 gbufferPreviousModelView;
-// uniform mat4 gbufferProjectionInverse;
-// uniform mat4 gbufferProjection;
-// uniform mat4 gbufferPreviousProjection;
-// uniform vec3 cameraPosition;
 uniform vec3 previousCameraPosition;
+
+#if defined VIVECRAFT
+	uniform bool vivecraftIsVR;
+	uniform vec3 vivecraftRelativeMainHandPos;
+	uniform vec3 vivecraftRelativeOffHandPos;
+	uniform mat4 vivecraftRelativeMainHandRot;
+	uniform mat4 vivecraftRelativeOffHandRot;
+#endif
 
 uniform int frameCounter;
 uniform float frameTimeCounter;
@@ -275,16 +277,6 @@ vec4 waterVolumetrics(vec3 rayStart, vec3 rayEnd, float rayLength, vec2 dither, 
 
 	vec3 absorbance = vec3(1.0);
 	vec3 vL = vec3(0.0);
-
-	// float distanceFromWaterSurface = -(normalize(dVWorld).y + (cameraPosition.y - waterEnteredAltitude)/(waterEnteredAltitude/2)) * 0.5 + 0.5;
-    // distanceFromWaterSurface = clamp(distanceFromWaterSurface, 0.0,1.0);
-    // distanceFromWaterSurface = exp(-7.0*distanceFromWaterSurface*distanceFromWaterSurface);
-
-	// float distanceFromWaterSurface2 = normalize(dVWorld).y  + (cameraPosition.y - waterEnteredAltitude)/waterEnteredAltitude;
-    // distanceFromWaterSurface2 = clamp(-distanceFromWaterSurface2,0.0,1.0);
-
-    // distanceFromWaterSurface2 = exp(-7*pow(distanceFromWaterSurface2,1.5));
-
 	
 	#ifdef OVERWORLD_SHADER
 		float lowlightlevel  = clamp(eyeBrightnessSmooth.y/240.0,0.1,1.0);
@@ -293,6 +285,18 @@ vec4 waterVolumetrics(vec3 rayStart, vec3 rayEnd, float rayLength, vec2 dither, 
 		float lowlightlevel  = 1.0;
 		float phase = 0.0;
 	#endif
+
+	// float thing = -normalize(dVWorld + (cameraPosition - vec3(cameraPosition.x, waterEnteredAltitude-1.0,cameraPosition.z))).y;
+	float thing = -normalize(dVWorld).y;
+	thing = clamp(thing + 0.333,0.0,1.0);
+	thing = pow(1.0-pow(1.0-thing,2.0),2.0);
+
+	// thing = 1.0;
+
+	// thing = max(exp(-3.0*exp(-3.0*thing)),0.0);
+	thing *= 15.0;
+	
+	thing = 0.0;
 
 	float expFactor = 11.0;
 	for (int i=0;i<spCount;i++) {
@@ -344,7 +348,7 @@ vec4 waterVolumetrics(vec3 rayStart, vec3 rayEnd, float rayLength, vec2 dither, 
 
 
 		vec3 sunAbsorbance = exp(-waterCoefs * (distanceFromWaterSurface/abs(WsunVec.y)));
-		vec3 WaterAbsorbance = exp(-waterCoefs * distanceFromWaterSurface);
+		vec3 WaterAbsorbance = exp(-waterCoefs * (distanceFromWaterSurface + thing));
 
 		vec3 Directlight = lightSource * sh * phase * caustics * sunAbsorbance;
 		vec3 Indirectlight = ambient * WaterAbsorbance;
