@@ -58,7 +58,7 @@ vec3 getWaveNormal(vec3 waterPos, vec3 playerpos, bool isLOD){
 	float largeWavesCurved = pow(1.0-pow(1.0-largeWaves,2.5),4.5);
 	
 	#ifdef HYPER_DETAILED_WAVES
-		float deltaPos = mix(1.0, 0.05, largeWavesCurved);
+		float deltaPos = 0.025;
 	#else
 		float deltaPos = mix(1.0, 0.15, largeWavesCurved);
 		// reduce high frequency detail as distance increases. reduces noise on waves. why have more details than pixels?
