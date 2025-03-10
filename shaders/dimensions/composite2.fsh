@@ -290,13 +290,7 @@ vec4 waterVolumetrics(vec3 rayStart, vec3 rayEnd, float rayLength, vec2 dither, 
 	float thing = -normalize(dVWorld).y;
 	thing = clamp(thing + 0.333,0.0,1.0);
 	thing = pow(1.0-pow(1.0-thing,2.0),2.0);
-
-	// thing = 1.0;
-
-	// thing = max(exp(-3.0*exp(-3.0*thing)),0.0);
-	thing *= 15.0;
-	
-	thing = 0.0;
+	thing *= 7.0;
 
 	float expFactor = 11.0;
 	for (int i=0;i<spCount;i++) {
@@ -305,7 +299,7 @@ vec4 waterVolumetrics(vec3 rayStart, vec3 rayEnd, float rayLength, vec2 dither, 
 		
 		vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
 		
-		float distanceFromWaterSurface = max(-(progressW.y - waterEnteredAltitude),0.0);
+		float distanceFromWaterSurface = max(-(progressW.y - waterEnteredAltitude - thing),0.0);
 
 		vec3 sh = vec3(1.0);
 		#ifdef OVERWORLD_SHADER
