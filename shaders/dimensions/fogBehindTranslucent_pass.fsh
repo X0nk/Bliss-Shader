@@ -99,6 +99,7 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 		vec4 dailyWeatherParams1 = vec4(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density, 0.0);
 	#endif
 
+	#include "/lib/diffuse_lighting.glsl"
 
 	#define TIMEOFDAYFOG
 	#include "/lib/lightning_stuff.glsl"
@@ -128,7 +129,6 @@ uniform sampler2D colortex4;
 	#include "/lib/end_fog.glsl"
 #endif
 
-#include "/lib/diffuse_lighting.glsl"
 
 #define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
 

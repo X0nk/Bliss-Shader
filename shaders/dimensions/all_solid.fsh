@@ -78,6 +78,13 @@ uniform float rainStrength;
 uniform sampler2D noisetex;//depth
 uniform sampler2D depthtex0;
 
+#if defined VIVECRAFT
+	uniform bool vivecraftIsVR;
+	uniform vec3 vivecraftRelativeMainHandPos;
+	uniform vec3 vivecraftRelativeOffHandPos;
+	uniform mat4 vivecraftRelativeMainHandRot;
+	uniform mat4 vivecraftRelativeOffHandRot;
+#endif
 
 uniform vec4 entityColor;
 
@@ -350,13 +357,22 @@ void main() {
 			vec3 playerCamPos = cameraPosition;
 		#endif
 
+		#ifdef VIVECRAFT
+        	if (vivecraftIsVR) { 
+				playerCamPos = cameraPosition - vivecraftRelativeMainHandPos;
+			}
+		#endif
+
 		// if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(worldpos-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
 		if(HELD_ITEM_BRIGHTNESS > 0.0){ 
-			float pointLight = clamp(1.0-length(worldpos-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0,1.0);
-			torchlightmap = mix(torchlightmap, HELD_ITEM_BRIGHTNESS, pointLight*pointLight);
+			
+			float pointLight = 1-clamp(1.0-length(worldpos-playerCamPos)/HANDHELD_LIGHT_RANGE,-0.999,1.0);
+			
+			torchlightmap = mix(torchlightmap, HELD_ITEM_BRIGHTNESS, pointLight);
 		}
+
 		#ifdef HAND
-			torchlightmap *= 0.9;
+			// torchlightmap *= 0.9;
 		#endif
 	#endif
 	
@@ -428,6 +444,7 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 	float textureLOD = bias();
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD) * color;
+	
 	#if defined HAND
 		if (Albedo.a < 0.1) discard;
 	#endif

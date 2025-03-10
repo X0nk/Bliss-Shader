@@ -1,5 +1,5 @@
 // swap out jitter pattern to be a 4 frame pattern instead of an 8 frame halton sequence
-#if defined RESPONSIVE_TAA || defined DH_TAA_OVERRIDE
+#if (defined RESPONSIVE_TAA || defined DH_TAA_OVERRIDE) && !defined TAA_UPSCALING
 	const vec2[4] offsets = vec2[4](
 		vec2(-0.125,	-0.875),
 		vec2( 0.875,	-0.125),

@@ -184,7 +184,7 @@ vec4 screenSpaceReflections(
 	// fix UV pos dragging behind due to hand not having a good previous frame position.
 	previousPosition.xy = isHand ? raytracePos.xy : previousPosition.xy;
 	
-	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0) {
+	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.y < 1.0) {
 		reflection.a = 1.0;
 		
 		#ifdef FORWARD_RENDERED_SPECULAR
@@ -305,7 +305,7 @@ vec3 specularReflections(
 
 // 	if(isHand){
 	// f0 = 0.9;
-	// roughness = 0.0;
+	// roughness = 0.25;
 // }
 	bool isMetal = f0 > 229.5/255.0;
 

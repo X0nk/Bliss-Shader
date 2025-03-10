@@ -549,7 +549,7 @@ void main() {
     vec3 transmittance = exp(-totEpsilon * linearDistance);
     color.rgb *= transmittance;
 
-    vec3 transmittance2 = exp(-totEpsilon * 25.0);
+    vec3 transmittance2 = exp(-totEpsilon * 50.0);
     float fogfade = 1.0 - max((1.0 - linearDistance / min(far, 16.0*7.0) ),0);
     color.rgb += (transmittance2 * scatterCoef) * fogfade;
 

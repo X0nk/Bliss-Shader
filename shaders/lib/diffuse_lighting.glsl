@@ -22,7 +22,7 @@
 #endif
 
 vec3 doBlockLightLighting(
-    vec3 lightColor, float lightmap, float exposureValue,
+    vec3 lightColor, float lightmap,
     vec3 playerPos, vec3 lpvPos
 ){
     lightmap = clamp(lightmap,0.0,1.0);
@@ -65,10 +65,6 @@ vec3 doBlockLightLighting(
         #endif
     #endif
 
-    // try to make blocklight have consistent visiblity in different light levels.
-    // float autoBrightness = mix(0.5, 1.0,  clamp(exp(-10.0*exposureValue),0.0,1.0));
-    // blockLight *= autoBrightness;
-    
     return blockLight * TORCH_AMOUNT;
 }
 
@@ -89,12 +85,41 @@ vec3 doIndirectLighting(
 }
 
 uniform float centerDepthSmooth;
+
+#if defined VIVECRAFT
+	uniform bool vivecraftIsVR;
+	uniform vec3 vivecraftRelativeMainHandPos;
+	uniform vec3 vivecraftRelativeOffHandPos;
+	uniform mat4 vivecraftRelativeMainHandRot;
+	uniform mat4 vivecraftRelativeOffHandRot;
+#endif
+
 vec3 calculateFlashlight(in vec2 texcoord, in vec3 viewPos, in vec3 albedo, in vec3 normal, out vec4 flashLightSpecularData, bool hand){
 
-	vec3 shiftedViewPos = viewPos + vec3(-0.25, 0.2, 0.0);
-	vec3 shiftedPlayerPos = mat3(gbufferModelViewInverse) * shiftedViewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition) * 3.0;
-	shiftedViewPos = mat3(gbufferPreviousModelView) * shiftedPlayerPos + gbufferPreviousModelView[3].xyz;
-	vec2 scaledViewPos = shiftedViewPos.xy / max(-shiftedViewPos.z - 0.5, 1e-7);
+	// vec3 shiftedViewPos = viewPos + vec3(-0.25, 0.2, 0.0);
+	// vec3 shiftedPlayerPos = mat3(gbufferModelViewInverse) * shiftedViewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition) * 3.0;
+	// shiftedViewPos = mat3(gbufferPreviousModelView) * shiftedPlayerPos + gbufferPreviousModelView[3].xyz;
+	vec3 shiftedViewPos;
+    vec3 shiftedPlayerPos;
+	float forwardOffset;
+
+    #ifdef VIVECRAFT
+        if (vivecraftIsVR) {
+	        forwardOffset = 0.0;
+            shiftedPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz + vivecraftRelativeMainHandPos;
+            shiftedViewPos = shiftedPlayerPos * mat3(vivecraftRelativeMainHandRot);
+        } else
+    #endif
+    {
+	    forwardOffset = 0.5;
+        shiftedViewPos = viewPos + vec3(-0.25, 0.2, 0.0);
+        shiftedPlayerPos = mat3(gbufferModelViewInverse) * shiftedViewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition) * 3.0;
+        shiftedViewPos = mat3(gbufferPreviousModelView) * shiftedPlayerPos + gbufferPreviousModelView[3].xyz;
+    }
+
+    
+    
+    vec2 scaledViewPos = shiftedViewPos.xy / max(-shiftedViewPos.z - forwardOffset, 1e-7);
 	float linearDistance = length(shiftedPlayerPos);
 	float shiftedLinearDistance = length(scaledViewPos);
 
