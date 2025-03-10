@@ -290,7 +290,7 @@ uniform float dhFarPlane;
 #ifdef OVERWORLD_SHADER
 float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDistFade, float noise){
 
-	if(maxDistFade <= 0.0) return 1.0;
+	// if(maxDistFade <= 0.0) return 1.0;
 
 	// setup shadow projection
 	vec3 projectedShadowPosition = mat3(shadowModelView) * playerPos + shadowModelView[3].xyz;
@@ -365,7 +365,8 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 		directLightColor *= mix(vec3(1.0), translucentTint.rgb / samples, maxDistFade);
 	#endif
 
-	return mix(1.0, shadowmap / samples, maxDistFade);
+	return shadowmap / samples;
+	// return mix(1.0, shadowmap / samples, maxDistFade);
 }
 #endif
 
@@ -584,7 +585,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		Shadows = ComputeShadowMap(DirectLightColor, shadowPlayerPos, shadowMapFalloff, blueNoise());
 
-		Shadows = mix(LM_shadowMapFallback, Shadows, shadowMapFalloff2);
+		// Shadows = mix(LM_shadowMapFallback, Shadows, shadowMapFalloff2);
+		Shadows *= mix(LM_shadowMapFallback,1.0,shadowMapFalloff2);
 
 		#ifdef CLOUDS_SHADOWS
 			Shadows *= GetCloudShadow(feetPlayerPos+cameraPosition, WsunVec);
