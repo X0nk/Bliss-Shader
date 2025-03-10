@@ -103,7 +103,7 @@ float densityAtPos(in vec3 pos){
 // Property of Distant Horizons [mod]
 
 // --- NOISE SETTINGS ---
-const int noiseSteps = NOISE_RESOLUTION;
+// const int noiseSteps = NOISE_RESOLUTION;
 const float noiseIntensity = NOISE_INTENSITY;
 const int noiseDropoff = NOISE_DROPOFF;
 // ----------------------
@@ -128,13 +128,13 @@ vec4 applyNoise(in vec4 fragColor, const in vec3 viewPos, const in float viewDis
     
     // Mikis idea. make it such that you can control the step amount as distance increases out from where vanilla chunks end.
     // ideally, close = higher steps and far = lower steps
-    float highestSteps = 16.0;
+    float highestSteps = NOISE_RESOLUTION;
     float lowestSteps = 2.0;
-    float transitionLength = 16.0 * 16.0; // distance it takes to reach the lowest steps from the highest. measured in meters/blocks.
+    float transitionLength = 16.0 * 8.0; // distance it takes to reach the lowest steps from the highest. measured in meters/blocks.
     
     float transitionGradient = clamp((length(viewPos - cameraPosition) - (far+32.0)) / transitionLength,0.0,1.0);
-    transitionGradient = 1.0-pow(1.0-transitionGradient,2.0); // make the gradient appear smoother and less sudden when approaching low steps.
-    
+    transitionGradient = sqrt(transitionGradient);// make the gradient appear smoother and less sudden when approaching low steps.
+
     int dynamicNoiseSteps = int(mix(highestSteps, lowestSteps, transitionGradient));
 
     // Random value for each position
