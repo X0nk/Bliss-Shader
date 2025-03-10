@@ -457,9 +457,9 @@ void main() {
 		 }
 	#endif
 
-	if (z < 1.0){
+	// if (z < 1.0){
 
-		gl_FragData[0] = vec4(minshadowfilt, 0.1, 0.0, 0.0);
+		gl_FragData[0] = vec4(minshadowfilt, 0.0, 0.0, 0.0);
 
 		#ifdef Variable_Penumbra_Shadows
 			if (LabSSS > -1) {
@@ -467,6 +467,8 @@ void main() {
 				vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
 				vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos  + shadowModelView[3].xyz;
 				projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
+
+				float TEST = projectedShadowPosition.z * (0.5/6.0) + 0.5;
 				
 				//apply distortion
 				#ifdef DISTORT_SHADOWMAP
@@ -477,7 +479,7 @@ void main() {
 				#endif
 
 				//do shadows only if on shadow map
-				// if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0 || length(feetPlayerPos) < far){
+				if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0 ){
 					const float threshMul = max(2048.0/shadowMapResolution*shadowDistance/128.0,0.95);
 					float distortThresh = (sqrt(1.0-NdotL*NdotL)/NdotL+0.7)/distortFactor;
 					float diffthresh = distortThresh/6000.0*threshMul;
@@ -495,7 +497,7 @@ void main() {
 
 						// vec2 offsetS = SpiralSample(i, 7, 8, noise) * 0.5;
 						vec2 offsetS = CleanSample(i, VPS_Search_Samples - 1, noise) * 0.5;
-						
+					
 						float weight = 3.0 + (i+noise) *rdMul/SHADOW_FILTER_SAMPLE_COUNT*shadowMapResolution*distortFactor/2.7;
 						
 						float d = texelFetch2D(shadow, ivec2((projectedShadowPosition.xy+offsetS*rdMul)*shadowMapResolution),0).x;
@@ -508,21 +510,23 @@ void main() {
 						#else
 							avgDepth += max(projectedShadowPosition.z - d, 0.0)*1000.0;
 						#endif
-						
+
 						avgBlockerDepth += d * b;
 					}
-					
-					gl_FragData[0].g = avgDepth / VPS_Search_Samples;
-					gl_FragData[0].b = blockerCount / VPS_Search_Samples;
-					
-					if (blockerCount >= 0.9){
-						avgBlockerDepth /= blockerCount;
-						float ssample = max(projectedShadowPosition.z - avgBlockerDepth,0.0)*1500.0;
-						gl_FragData[0].r = clamp(ssample, scales.x, scales.y)/(scales.y)*(mult-minshadowfilt)+minshadowfilt;
-					}
-				// }
+
+						gl_FragData[0].g = avgDepth / VPS_Search_Samples;
+
+						gl_FragData[0].b = blockerCount / VPS_Search_Samples;
+
+						if (blockerCount >= 0.9){
+							avgBlockerDepth /= blockerCount;
+							float ssample = max(projectedShadowPosition.z - avgBlockerDepth,0.0)*1500.0;
+							gl_FragData[0].r = clamp(ssample, scales.x, scales.y)/(scales.y)*(mult-minshadowfilt)+minshadowfilt;
+						}
+
+				}
 			}
 		#endif
-	}
+	// }
 #endif
 }

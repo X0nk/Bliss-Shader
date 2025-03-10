@@ -626,9 +626,9 @@ vec3 ComputeShadowMap_COLOR(in vec3 projectedShadowPosition, float distortFactor
 		tintedSunlight *= translucentTint.rgb / samples;
 	// #endif
 
-	return mix(directLightColor, shadowColor.rgb / samples, maxDistFade);
-	// return 1.0;
-	// return mix(1.0, shadow / samples, maxDistFade);
+	return shadowColor.rgb / samples;
+	// return mix(directLightColor, shadowColor.rgb / samples, maxDistFade);
+
 }
 
 #endif
@@ -1071,16 +1071,16 @@ void main() {
 			
 			#ifdef SCREENSPACE_CONTACT_SHADOWS
 				vec2 SS_directLight = SSRT_Shadows(toScreenSpace_DH(texcoord/RENDER_SCALE, z, DH_depth1), isDHrange, normalize(WsunVec*mat3(gbufferModelViewInverse)), interleaved_gradientNoise_temporal(), sunSSS_density > 0.0 && shadowMapFalloff2 < 1.0, hand);
-				// Shadows = SS_directLight.r;
 
 				// combine shadowmap with a minumum shadow determined by the screenspace shadows.
 				shadowColor *= SS_directLight.r;
-				// combine shadowmap blocker depth with a minumum determined by the screenspace shadows, starting after the shadowmap ends
-				ShadowBlockerDepth = mix(SS_directLight.g, ShadowBlockerDepth, shadowMapFalloff2);
-
-				// shadowColor = vec3(SS_directLight.r*0 + 1);
-				// ShadowBlockerDepth = SS_directLight.g;
+				ShadowBlockerDepth = max(ShadowBlockerDepth, SS_directLight.g*(1.0-shadowMapFalloff2));
+				
+			#else
+				ShadowBlockerDepth = max(ShadowBlockerDepth, (1.0-shadowMapFalloff2) * 10.0);
 			#endif
+			
+				
 			#ifdef TRANSLUCENT_COLORED_SHADOWS
 				SSSColor = tintedSunlight;
 			#else
@@ -1090,11 +1090,7 @@ void main() {
 			SSSColor *= SubsurfaceScattering_sun(albedo, ShadowBlockerDepth, sunSSS_density, clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), SSS_shadow, shadowMapFalloff2);
 			
 			if(isEyeInWater != 1) SSSColor *= lightLeakFix;
-
-			#ifndef SCREENSPACE_CONTACT_SHADOWS
-				SSSColor = mix(vec3(0.0), SSSColor, shadowMapFalloff2);
-			#endif
-
+			
 			#ifdef CLOUDS_SHADOWS
 				float cloudShadows = GetCloudShadow(feetPlayerPos.xyz + cameraPosition, WsunVec);
 				shadowColor *= cloudShadows;
@@ -1289,10 +1285,8 @@ void main() {
 			
 
 			#ifdef AO_in_sunlight
-				// Direct_lighting = max(shadowColor*NdotL * (AO*0.7+0.3), SSSColor);
 				Direct_lighting = shadowColor*NdotL*(AO*0.7+0.3) + SSSColor * (1.0-NdotL);
 			#else
-				// Direct_lighting = max(shadowColor*NdotL, SSSColor);
 				Direct_lighting = shadowColor*NdotL + SSSColor * (1.0-NdotL);
 			#endif
 		#endif
