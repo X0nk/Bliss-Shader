@@ -138,11 +138,11 @@ float GetCloudShadow(vec3 playerPos, vec3 sunVector){
 
 	#ifdef CloudLayer0
 		startPosition = playerPos + sunVector / abs(sunVector.y) * max((CloudLayer0_height + 20.0) - playerPos.y, 0.0);
-		cloudShadows = getCloudShape(SMALLCUMULUS_LAYER, 0, startPosition, CloudLayer0_height, CloudLayer0_height+100.0)*dailyWeatherParams1.x;
+		cloudShadows = getCloudShape(SMALLCUMULUS_LAYER, 0, startPosition, CloudLayer0_height, CloudLayer0_height+90.0)*dailyWeatherParams1.x;
 	#endif
 	#ifdef CloudLayer1
 		startPosition = playerPos + sunVector / abs(sunVector.y) * max((CloudLayer1_height + 20.0) - playerPos.y, 0.0);
-		cloudShadows += getCloudShape(LARGECUMULUS_LAYER, 0, startPosition, CloudLayer1_height, CloudLayer1_height+100.0)*dailyWeatherParams1.y;
+		cloudShadows += getCloudShape(LARGECUMULUS_LAYER, 0, startPosition, CloudLayer1_height, CloudLayer1_height+90.0.0)*dailyWeatherParams1.y;
 	#endif
 	#ifdef CloudLayer2
 		startPosition = playerPos + sunVector / abs(sunVector.y) * max(CloudLayer2_height - playerPos.y, 0.0);
@@ -422,7 +422,7 @@ vec4 GetVolumetricClouds(
 	float SdotV = dot(unignedSunVec, NormPlayerPos.xyz);
 	
 	#ifdef SKY_GROUND
-		NormPlayerPos.y += 0.03;
+		NormPlayerPos.y += 0.03 * heightRelativeToClouds;
 	#endif
 
 	int maxSamples = 15;
