@@ -372,7 +372,7 @@ void main() {
 		}
 
 		#ifdef HAND
-			// torchlightmap *= 0.9;
+			torchlightmap *= 0.9;
 		#endif
 	#endif
 	

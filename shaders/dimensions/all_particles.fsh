@@ -374,7 +374,7 @@ void main() {
 		#endif
 		// lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length((feetPlayerPos+cameraPosition) - playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
 		if(HELD_ITEM_BRIGHTNESS > 0.0){ 
-			float pointLight = clamp(1.0-length((feetPlayerPos+cameraPosition)-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0,1.0);
+			float pointLight = clamp(1.0-(length((feetPlayerPos+cameraPosition)-playerCamPos)-1.0)/HANDHELD_LIGHT_RANGE,0.0,1.0);
 			lightmap.x = mix(lightmap.x, HELD_ITEM_BRIGHTNESS, pointLight*pointLight);
 		}
 	
@@ -402,7 +402,6 @@ void main() {
 		vec3 Torch_Color = vec3(TORCH_R,TORCH_G,TORCH_B);
 		vec3 MinimumLightColor = vec3(1.0);
 
-		if(isEyeInWater == 1) MinimumLightColor = vec3(10.0);
 		if(lightmap.x >= 0.9) Torch_Color *= LIT_PARTICLE_BRIGHTNESS;
 
 		#ifdef OVERWORLD_SHADER
