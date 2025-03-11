@@ -142,7 +142,7 @@ float GetCloudShadow(vec3 playerPos, vec3 sunVector){
 	#endif
 	#ifdef CloudLayer1
 		startPosition = playerPos + sunVector / abs(sunVector.y) * max((CloudLayer1_height + 20.0) - playerPos.y, 0.0);
-		cloudShadows += getCloudShape(LARGECUMULUS_LAYER, 0, startPosition, CloudLayer1_height, CloudLayer1_height+90.0.0)*dailyWeatherParams1.y;
+		cloudShadows += getCloudShape(LARGECUMULUS_LAYER, 0, startPosition, CloudLayer1_height, CloudLayer1_height+90.0)*dailyWeatherParams1.y;
 	#endif
 	#ifdef CloudLayer2
 		startPosition = playerPos + sunVector / abs(sunVector.y) * max(CloudLayer2_height - playerPos.y, 0.0);
@@ -236,9 +236,8 @@ vec4 raymarchCloud(
 	vec3 skyScattering,
 	float distanceFade,
 
-	float referenceDistance
-	
-	,vec3 sampledSkyCol
+	float referenceDistance,
+	vec3 sampledSkyCol
 
 ){
 	vec3 color = vec3(0.0);
@@ -386,7 +385,7 @@ vec3 getRayOrigin(
 	
 	return position;
 }
-// uniform float dhFarPlane;
+
 vec4 GetVolumetricClouds(
 	vec3 viewPos,
 	vec2 dither,
@@ -433,7 +432,7 @@ vec4 GetVolumetricClouds(
    	///------- setup the ray
 	// vec3 cloudDist = vec3(1.0); cloudDist.xz = mix(vec2(255.0), vec2(5.0), clamp(maxHeight - cameraPosition.y,0.0,1.0));
 	vec3 cloudDist = vec3(1.0);
-	cloudDist.xz = mix(vec2(255.0), vec2(5.0), clamp(cameraPosition.y - minHeight,0.0,clamp((maxHeight-15) - cameraPosition.y ,0.0,1.0)));
+	cloudDist.xz = mix(vec2(255.0), vec2(5.0), clamp(cameraPosition.y - minHeight,0.0,clamp((maxHeight-5) - cameraPosition.y ,0.0,1.0)));
 
 	// vec3 rayDirection = NormPlayerPos.xyz * (cloudheight/abs(NormPlayerPos.y)/samples);
 	vec3 rayDirection = NormPlayerPos.xyz * (cloudheight/length(NormPlayerPos.xyz/cloudDist)/samples);
