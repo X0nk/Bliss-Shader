@@ -286,7 +286,6 @@ vec4 waterVolumetrics(vec3 rayStart, vec3 rayEnd, float rayLength, vec2 dither, 
 		float phase = 0.0;
 	#endif
 
-	// float thing = -normalize(dVWorld + (cameraPosition - vec3(cameraPosition.x, waterEnteredAltitude-1.0,cameraPosition.z))).y;
 	float thing = -normalize(dVWorld).y;
 	thing = clamp(thing + 0.333,0.0,1.0);
 	thing = pow(1.0-pow(1.0-thing,2.0),2.0);
