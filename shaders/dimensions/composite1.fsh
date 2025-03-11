@@ -693,7 +693,7 @@ void applyPuddles(
 	float halfWet = min(wetnessAmount,1.0);
 	float fullWet = clamp(wetnessAmount - 2.0,0.0,1.0);
 	// halfWet = 1.0;
- 	// fullWet = 1.0;
+ 	// fullWet = 0.0;
 	float noise = texture2D(noisetex, worldPos.xz * 0.02).b;
 
 
@@ -1289,8 +1289,8 @@ void main() {
 		
 		#if defined DEFERRED_SPECULAR	
 			vec3 specularNoises = vec3(BN.xy, blueNoise());
-    		vec3 specularNormal = slopednormal;
-			if (dot(slopednormal, (feetPlayerPos_normalized)) > 0.0) specularNormal = FlatNormals;
+    		vec3 specularNormal = normal;
+			if (dot(normal, (feetPlayerPos_normalized)) > 0.0) specularNormal = FlatNormals;
 			
 			FINAL_COLOR = specularReflections(viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, specularNormal, SpecularTex.r, SpecularTex.g, albedo, FINAL_COLOR, shadowColor, lightmap.y, hand, isWater || (!isWater && isEyeInWater == 1), flashLightSpecularData);
 		#endif
