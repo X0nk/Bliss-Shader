@@ -489,7 +489,7 @@ void main() {
     #ifdef SKY_GROUND
       vec3 borderFogColor = skyGroundColor;
     #else
-      vec3 borderFogColor = skyFromTex(playerPos_normalized, colortex4)/30.0;
+      vec3 borderFogColor = skyFromTex(playerPos_normalized, colortex4)/1200.0 * Sky_Brightness;
     #endif
 
     color.rgb = mix(color.rgb, borderFogColor, fog);
