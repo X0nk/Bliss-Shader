@@ -375,7 +375,8 @@ vec3 getRayOrigin(
 	float maxHeight
 ){
 
-	vec3 cloudDist = vec3(1.0); cloudDist.xz = vec2(255.0);
+	vec3 cloudDist = vec3(1.0); 
+	cloudDist.xz = mix(vec2(255.0), vec2(5.0), clamp(cameraPos.y - minHeight ,0.0,clamp((maxHeight-15)-cameraPosition.y ,0.0,1.0)));
 	// allow passing through/above/below the plane without limits
 	float flip = mix(max(cameraPos.y - maxHeight,0.0), max(minHeight - cameraPos.y,0.0), clamp(rayStartPos.y,0.0,1.0));
 
@@ -419,6 +420,7 @@ vec4 GetVolumetricClouds(
 	vec3 signedSunVec = sunVector;
 	vec3 unignedSunVec = sunVector;// * (float(sunElevation > 1e-5)*2.0-1.0);
 	float SdotV = dot(unignedSunVec, NormPlayerPos.xyz);
+	
 	#ifdef SKY_GROUND
 		NormPlayerPos.y += 0.03;
 	#endif
@@ -429,7 +431,10 @@ vec4 GetVolumetricClouds(
 	// int samples = 30;
    
    	///------- setup the ray
-	vec3 cloudDist = vec3(1.0); cloudDist.xz = vec2(255.0);
+	// vec3 cloudDist = vec3(1.0); cloudDist.xz = mix(vec2(255.0), vec2(5.0), clamp(maxHeight - cameraPosition.y,0.0,1.0));
+	vec3 cloudDist = vec3(1.0);
+	cloudDist.xz = mix(vec2(255.0), vec2(5.0), clamp(cameraPosition.y - minHeight,0.0,clamp((maxHeight-15) - cameraPosition.y ,0.0,1.0)));
+
 	// vec3 rayDirection = NormPlayerPos.xyz * (cloudheight/abs(NormPlayerPos.y)/samples);
 	vec3 rayDirection = NormPlayerPos.xyz * (cloudheight/length(NormPlayerPos.xyz/cloudDist)/samples);
 	vec3 rayPosition = getRayOrigin(rayDirection, cameraPosition, dither.y, minHeight, maxHeight);
@@ -476,6 +481,7 @@ vec4 GetVolumetricClouds(
 			minHeight = CloudLayer1_height;
 			maxHeight = cloudheight + minHeight;
 
+			cloudDist.xz = mix(vec2(255.0), vec2(5.0), clamp(cameraPosition.y - minHeight,0.0,clamp((maxHeight-15) - cameraPosition.y ,0.0,1.0)));
 			rayDirection = NormPlayerPos.xyz * (cloudheight/length(NormPlayerPos.xyz/cloudDist)/samples);
 			rayPosition = getRayOrigin(rayDirection, cameraPosition, dither.y, minHeight, maxHeight);
 
@@ -489,7 +495,8 @@ vec4 GetVolumetricClouds(
 			cloudheight = 5.0;
 			minHeight = CloudLayer2_height;
 			maxHeight = cloudheight + minHeight;
-
+			
+			cloudDist.xz = mix(vec2(255.0), vec2(5.0), clamp(cameraPosition.y - minHeight,0.0,clamp((maxHeight-15) - cameraPosition.y ,0.0,1.0)));
 			rayDirection = NormPlayerPos.xyz * (cloudheight/length(NormPlayerPos.xyz/cloudDist));
 			rayPosition = getRayOrigin(rayDirection, cameraPosition, dither.y, minHeight, maxHeight);
 
