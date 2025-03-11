@@ -162,7 +162,7 @@ vec4 screenSpaceReflections(
 	vec4 reflection = vec4(0.0);
 	
 	float reflectionLength = 0.0;
-	float quality = 30.0f;//mix(10.0f, 30.0f, fresnel);
+	float quality = mix(10.0f, 30.0f, fresnel);
 
 	vec3 raytracePos = rayTraceSpeculars(reflectedVector, viewPos, noise, quality, isHand, reflectionLength, fresnel);
 

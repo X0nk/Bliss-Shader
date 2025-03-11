@@ -561,7 +561,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	vec3 Indirect_lighting = vec3(0.0);
 	vec3 MinimumLightColor = vec3(1.0);
-	if(isEyeInWater == 1) MinimumLightColor = vec3(10.0);
 
 	vec3 Direct_lighting = vec3(0.0);
 

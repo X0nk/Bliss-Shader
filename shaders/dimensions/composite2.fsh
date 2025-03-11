@@ -336,10 +336,7 @@ vec4 waterVolumetrics(vec3 rayStart, vec3 rayEnd, float rayLength, vec2 dither, 
 
 
 		float bubble = exp2(-10.0 * clamp(1.0 - length(d*dVWorld) / 16.0, 0.0,1.0));
-		// float caustics = mix(max(max(waterCaustics(progressW, WsunVec), phase*0.5) * mix(0.5, 200.0, bubble), phase), 1.0, lowlightlevel);
-		// float caustics = max(max(waterCaustics(progressW, WsunVec), phase*0.5) * mix(0.5, 200.0, bubble), phase);
-		float caustics = max(max(waterCaustics(progressW, WsunVec), phase*0.5) * mix(0.5, 1.5, bubble), phase) ;//* abs(WsunVec.y);
-
+		float caustics = max(max(waterCaustics(progressW, WsunVec), phase*0.5) * mix(0.5, 1.5, bubble), phase);
 
 		vec3 sunAbsorbance = exp(-waterCoefs * (distanceFromWaterSurface/abs(WsunVec.y)));
 		vec3 WaterAbsorbance = exp(-waterCoefs * (distanceFromWaterSurface + thing));
@@ -534,8 +531,8 @@ void main() {
 	vec3 directLightColor = lightCol.rgb / 2400.0;
 	vec3 indirectLightColor = averageSkyCol / 1200.0;
 	vec3 indirectLightColor_dynamic = averageSkyCol_Clouds / 1200.0;
-	
-	// indirectLightColor_dynamic += MIN_LIGHT_AMOUNT * 0.02 * 0.2 + nightVision*0.02;
+
+	// indirectLightColor_dynamic += (MIN_LIGHT_AMOUNT * 0.01 * 0.2 + nightVision*0.02);
 
 	#if defined OVERWORLD_SHADER
 		// z0 = texture2D(depthtex0, tc + jitter/VL_RENDER_RESOLUTION).x;
