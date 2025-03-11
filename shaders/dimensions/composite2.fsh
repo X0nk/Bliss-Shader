@@ -532,8 +532,6 @@ void main() {
 	vec3 indirectLightColor = averageSkyCol / 1200.0;
 	vec3 indirectLightColor_dynamic = averageSkyCol_Clouds / 1200.0;
 
-	// indirectLightColor_dynamic += (MIN_LIGHT_AMOUNT * 0.01 * 0.2 + nightVision*0.02);
-
 	#if defined OVERWORLD_SHADER
 		// z0 = texture2D(depthtex0, tc + jitter/VL_RENDER_RESOLUTION).x;
 		// viewPos0 = toScreenSpace_DH(tc/RENDER_SCALE, z0, DH_z0);

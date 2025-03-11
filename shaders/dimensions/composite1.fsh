@@ -1010,23 +1010,9 @@ void main() {
 		vec3 projectedShadowPosition = mat3(shadowModelView) * shadowPlayerPos + shadowModelView[3].xyz;
 		projectedShadowPosition = diagonal3_old(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
-		#if OPTIMIZED_SHADOW_DISTANCE > 0
+		float shadowMapFalloff = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / (shadowDistance+32.0),0.0)*5.0,1.0));
+		float shadowMapFalloff2 = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / shadowDistance,0.0)*5.0,1.0));
 
-			float shadowMapFalloff = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / (shadowDistance+16.0),0.0)*5.0,1.0));
-			float shadowMapFalloff2 = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / shadowDistance,0.0)*5.0,1.0));
-
-		#else
-			vec3 shadowEdgePos = projectedShadowPosition * vec3(0.4,0.4,0.5/6.0) + vec3(0.5,0.5,0.12);
-      		float fadeLength = max((shadowDistance/256)*30,10.0); 
-
-      		vec3 cubicRadius = clamp(   min((1.0-shadowEdgePos)*fadeLength, shadowEdgePos*fadeLength),0.0,1.0);
-      		float shadowmapFade = cubicRadius.x*cubicRadius.y*cubicRadius.z;
-
-        	shadowmapFade = 1.0 - pow(1.0-pow(shadowmapFade,1.5),3.0);
-
-			float shadowMapFalloff = shadowmapFade;
-			float shadowMapFalloff2 = shadowmapFade;
-		#endif
 
 		if(isEyeInWater == 1){
 			shadowMapFalloff = 1.0;
