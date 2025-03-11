@@ -146,7 +146,7 @@ float invLinZ (float lindepth){
 }
 #ifdef OVERWORLD_SHADER
 
-	uniform sampler2D colortex4;
+	// uniform sampler2D colortex4;
 	// uniform sampler2D colortex12;
 	// const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;

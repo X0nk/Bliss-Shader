@@ -218,6 +218,8 @@ vec3 getCloudLighting(
 	return indirectScattering + directScattering;
 }
 
+uniform sampler2D colortex4;
+
 vec4 raymarchCloud(
 	int LayerIndex,
 	float samples,
@@ -235,6 +237,9 @@ vec4 raymarchCloud(
 	float distanceFade,
 
 	float referenceDistance
+	
+	,vec3 sampledSkyCol
+
 ){
 	vec3 color = vec3(0.0);
 	float totalAbsorbance = 1.0;
@@ -244,7 +249,7 @@ vec4 raymarchCloud(
 	sunMultiScattering *= planetShadow;
 
 	float distanceFactor = length(rayDirection);
-	
+
 	if(LayerIndex == ALTOSTRATUS_LAYER){
 		float density = dailyWeatherParams1.z;
 		
@@ -269,7 +274,15 @@ vec4 raymarchCloud(
 
 			vec3 lighting = getCloudLighting(shapeWithDensity, shapeWithDensity, sunShadowMask, sunScattering, sunMultiScattering, indirectShadowMask, skyScattering, distanceFade);
 
-			float densityCoeff = exp(-distanceFactor*shapeWithDensity);
+			vec3 newPos = rayPosition - cameraPosition;
+			newPos.xz /= max(newPos.y,0.0)*0.0025 + 1.0;
+			newPos.y = min(newPos.y,0.0);
+
+			float distancefog = exp(-0.00025*length(newPos));
+			vec3 atmosphereHaze = (sampledSkyCol - sampledSkyCol * distancefog);
+			lighting = lighting * distancefog + atmosphereHaze;
+
+			float densityCoeff = exp(-distanceFactor*shapeWithDensity);			
 			color += (lighting - lighting * densityCoeff) * totalAbsorbance;
 			totalAbsorbance *= densityCoeff;
 		}
@@ -328,10 +341,19 @@ vec4 raymarchCloud(
 					
 					vec3 lighting = getCloudLighting(shapeWithDensity, shapeWithDensityFaded, sunShadowMask, sunScattering, sunMultiScattering, indirectShadowMask, skyScattering * skylightOcclusion, distanceFade);
 
+					vec3 newPos = rayPosition - cameraPosition;
+					newPos.xz /= max(newPos.y,0.0)*0.0025 + 1.0;
+					newPos.y = min(newPos.y,0.0);
+
+					float distancefog = exp(-0.00025*length(newPos));
+					vec3 atmosphereHaze = (sampledSkyCol - sampledSkyCol * distancefog);
+					lighting = lighting * distancefog + atmosphereHaze;
+
+				
 					float densityCoeff = exp(-distanceFactor*shapeWithDensityFaded);
 					color += (lighting - lighting * densityCoeff) * totalAbsorbance;
 					totalAbsorbance *= densityCoeff;
-
+					
 					// check if you can see through the cloud on the pixel before doing the next iteration
 					if (totalAbsorbance < 1e-5) break;
 				}
@@ -353,7 +375,7 @@ vec3 getRayOrigin(
 	float maxHeight
 ){
 
-	vec3 cloudDist = vec3(1.0); cloudDist.xz = vec2(25.0);
+	vec3 cloudDist = vec3(1.0); cloudDist.xz = vec2(255.0);
 	// allow passing through/above/below the plane without limits
 	float flip = mix(max(cameraPos.y - maxHeight,0.0), max(minHeight - cameraPos.y,0.0), clamp(rayStartPos.y,0.0,1.0));
 
@@ -397,8 +419,9 @@ vec4 GetVolumetricClouds(
 	vec3 signedSunVec = sunVector;
 	vec3 unignedSunVec = sunVector;// * (float(sunElevation > 1e-5)*2.0-1.0);
 	float SdotV = dot(unignedSunVec, NormPlayerPos.xyz);
-
-	// NormPlayerPos.y += 0.025*heightRelativeToClouds;
+	#ifdef SKY_GROUND
+		NormPlayerPos.y += 0.03;
+	#endif
 
 	int maxSamples = 15;
 	int minSamples = 10;
@@ -406,7 +429,7 @@ vec4 GetVolumetricClouds(
 	// int samples = 30;
    
    	///------- setup the ray
-	vec3 cloudDist = vec3(1.0); cloudDist.xz *= 25.0;
+	vec3 cloudDist = vec3(1.0); cloudDist.xz = vec2(255.0);
 	// vec3 rayDirection = NormPlayerPos.xyz * (cloudheight/abs(NormPlayerPos.y)/samples);
 	vec3 rayDirection = NormPlayerPos.xyz * (cloudheight/length(NormPlayerPos.xyz/cloudDist)/samples);
 	vec3 rayPosition = getRayOrigin(rayDirection, cameraPosition, dither.y, minHeight, maxHeight);
@@ -428,15 +451,21 @@ vec4 GetVolumetricClouds(
 	distanceFade = 1.0;
 
 // - pow(1.0-clamp(signedSunVec.y,0.0,1.0),5.0)
-	skyScattering *= mix(1.0, 2.0, distanceFade);
-	sunScattering *= distanceFade;
-	sunMultiScattering *= distanceFade;
+	skyScattering *= 2.0;
+	// sunScattering *= distanceFade;
+	// sunMultiScattering *= distanceFade;
+
+	#ifdef SKY_GROUND
+		vec3 sampledSkyCol = skyScattering * 0.5;
+	#else
+		vec3 sampledSkyCol = skyFromTex(normalize(rayPosition-cameraPosition), colortex4)/1200.0 * Sky_Brightness;
+	#endif
 
    	////-------  RENDER SMALL CUMULUS CLOUDS
 		vec4 smallCumulusClouds = cloudColor;
 
 		#ifdef CloudLayer0
-			smallCumulusClouds = raymarchCloud(SMALLCUMULUS_LAYER, samples, rayPosition, rayDirection, dither.x, minHeight, maxHeight, unignedSunVec, sunScattering, sunMultiScattering, skyScattering, distanceFade, lViewPosM);
+			smallCumulusClouds = raymarchCloud(SMALLCUMULUS_LAYER, samples, rayPosition, rayDirection, dither.x, minHeight, maxHeight, unignedSunVec, sunScattering, sunMultiScattering, skyScattering, distanceFade, lViewPosM, sampledSkyCol);
 		#endif
 
 	////------- RENDER LARGE CUMULUS CLOUDS
@@ -450,7 +479,7 @@ vec4 GetVolumetricClouds(
 			rayDirection = NormPlayerPos.xyz * (cloudheight/length(NormPlayerPos.xyz/cloudDist)/samples);
 			rayPosition = getRayOrigin(rayDirection, cameraPosition, dither.y, minHeight, maxHeight);
 
-			if(smallCumulusClouds.a > 1e-5) largeCumulusClouds = raymarchCloud(LARGECUMULUS_LAYER, samples, rayPosition, rayDirection, dither.x, minHeight, maxHeight, unignedSunVec, sunScattering, sunMultiScattering, skyScattering, distanceFade, lViewPosM);
+			if(smallCumulusClouds.a > 1e-5) largeCumulusClouds = raymarchCloud(LARGECUMULUS_LAYER, samples, rayPosition, rayDirection, dither.x, minHeight, maxHeight, unignedSunVec, sunScattering, sunMultiScattering, skyScattering, distanceFade, lViewPosM, sampledSkyCol);
 		#endif
 
    	////------- RENDER ALTOSTRATUS CLOUDS
@@ -464,7 +493,7 @@ vec4 GetVolumetricClouds(
 			rayDirection = NormPlayerPos.xyz * (cloudheight/length(NormPlayerPos.xyz/cloudDist));
 			rayPosition = getRayOrigin(rayDirection, cameraPosition, dither.y, minHeight, maxHeight);
 
-			if(smallCumulusClouds.a > 1e-5 || largeCumulusClouds.a > 1e-5) altoStratusClouds = raymarchCloud(ALTOSTRATUS_LAYER, samples, rayPosition, rayDirection, dither.x, minHeight, maxHeight, unignedSunVec, sunScattering, sunMultiScattering, skyScattering, distanceFade, lViewPosM);
+			if(smallCumulusClouds.a > 1e-5 || largeCumulusClouds.a > 1e-5) altoStratusClouds = raymarchCloud(ALTOSTRATUS_LAYER, samples, rayPosition, rayDirection, dither.x, minHeight, maxHeight, unignedSunVec, sunScattering, sunMultiScattering, skyScattering, distanceFade, lViewPosM, sampledSkyCol);
 		#endif
 
    	////------- BLEND LAYERS
