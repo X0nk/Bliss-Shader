@@ -332,6 +332,7 @@ vec4 VLTemporalFiltering(vec3 viewPos, bool depthCheck, out float DEBUG){
 	previousPosition.xy = texcoord + velocity;
 
   vec4 currentFrame = texture2D(colortex0, VLtexCoord);
+  // return currentFrame;
 
   if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0) return currentFrame;
   
