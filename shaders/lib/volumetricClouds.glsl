@@ -541,7 +541,7 @@ vec4 GetVolumetricClouds(
    	////------- BLEND LAYERS
 
 	#if defined CloudLayer0 && !defined CloudLayer1 && !defined CloudLayer2
-		cloudPlaneDistance = cloudLayer1_Distance.x;
+		cloudPlaneDistance = cloudLayer0_Distance.x;
 	#endif
 
 	#if defined CloudLayer0 && defined CloudLayer1 && !defined CloudLayer2
