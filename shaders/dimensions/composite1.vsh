@@ -5,15 +5,19 @@
 	flat varying float Flashing;
 #endif
 
-#if defined Daily_Weather
-	flat varying vec4 dailyWeatherParams0;
-	flat varying vec4 dailyWeatherParams1;
-#endif
+	#ifdef Daily_Weather
+		flat varying vec4 dailyWeatherParams0;
+		flat varying vec4 dailyWeatherParams1;
+	#endif
+
 
 flat varying vec3 WsunVec;
+flat varying vec3 WmoonVec;
 flat varying vec3 unsigned_WsunVec;
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec4 lightCol;
+flat varying vec3 moonCol;
+flat varying vec3 albedoSmooth;
 
 flat varying float exposure;
 
@@ -26,6 +30,8 @@ uniform float near;
 
 uniform mat4 gbufferModelViewInverse;
 uniform vec3 sunPosition;
+uniform vec3 moonPosition;
+
 uniform float rainStrength;
 uniform float sunElevation;
 uniform int frameCounter;
@@ -51,16 +57,30 @@ void main() {
 	lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
 	lightCol.a = float(sunElevation > 1e-5)*2.0 - 1.0;
 
+	moonCol = texelFetch2D(colortex4,ivec2(9,37),0).rgb;
+	
+	#if defined FLASHLIGHT && defined FLASHLIGHT_BOUNCED_INDIRECT
+		albedoSmooth = texelFetch2D(colortex4,ivec2(15.5,2.5),0).rgb;
+	#endif
+
 	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 
-	WsunVec = lightCol.a*normalize(mat3(gbufferModelViewInverse) * sunPosition);
 	unsigned_WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
+	
+	vec3 moonVec = normalize(mat3(gbufferModelViewInverse) * moonPosition);
+
+	WmoonVec = moonVec;
+	
+	if(dot(-moonVec, unsigned_WsunVec) < 0.9999) WmoonVec = -moonVec;
+
+	WsunVec = mix(WmoonVec, unsigned_WsunVec, clamp(lightCol.a,0,1));
+	
 
 	exposure = texelFetch2D(colortex4,ivec2(10,37),0).r;
 	
 	#if defined Daily_Weather
-		dailyWeatherParams0 = vec4((texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0)/2.0, 0.0);
-		dailyWeatherParams1 = vec4((texelFetch2D(colortex4,ivec2(2,1),0).rgb/150.0)/2.0, 0.0);
+			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb / 1500.0, 0.0);
+			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb / 1500.0, 0.0);
 	#endif
 	
 	#ifdef TAA

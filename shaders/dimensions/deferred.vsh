@@ -23,8 +23,13 @@ flat varying float rodExposure;
 flat varying float avgL2;
 flat varying float centerDepth;
 
-flat varying vec4 dailyWeatherParams0;
-flat varying vec4 dailyWeatherParams1;
+#ifdef Daily_Weather
+	flat varying vec4 dailyWeatherParams0;
+	flat varying vec4 dailyWeatherParams1;
+#endif
+uniform int hideGUI;
+flat varying vec4 CurrentFrame_dailyWeatherParams0;
+flat varying vec4 CurrentFrame_dailyWeatherParams1;
 
 uniform sampler2D colortex4;
 uniform sampler2D colortex6;
@@ -146,10 +151,13 @@ void main() {
    	}
 	
 	// maximum control of color and luminance
-	vec3 minimumlight =  vec3(0.5,0.75,1.0) * (min(MIN_LIGHT_AMOUNT,0.0025) + nightVision);
 	// vec3 minimumlight =  vec3(0.5,0.75,1.0) * nightVision;
-	averageSkyCol_Clouds = max(	normalize(averageSkyCol_Clouds) * min(luma(averageSkyCol_Clouds) * 3.0,2.5) * (1.0-rainStrength*0.7), minimumlight);
-	averageSkyCol = max(averageSkyCol * PLANET_GROUND_BRIGHTNESS, minimumlight);
+	// averageSkyCol_Clouds = max(	normalize(averageSkyCol_Clouds) * min(luma(averageSkyCol_Clouds) * 3.0,2.5) * (1.0-rainStrength*0.7), minimumlight);
+
+
+	vec3 minimumlight =  vec3(1.0) * 0.01 * MIN_LIGHT_AMOUNT + nightVision * 0.05;
+	averageSkyCol_Clouds = max(normalize(averageSkyCol_Clouds + 1e-6) * min(luma(averageSkyCol_Clouds) * 3.0,2.5),0.0);
+	averageSkyCol = max(averageSkyCol * PLANET_GROUND_BRIGHTNESS,0.0) + minimumlight;
 
 ////////////////////////////////////////
 /// --- SUNLIGHT/MOONLIGHT STUFF --- ///
@@ -165,7 +173,8 @@ void main() {
 	sunColor = sunColorBase/4000.0 * skyAbsorb;
 	moonColor = moonColorBase/4000.0;
 
-	lightSourceColor = (sunVis >= 1e-5 ? sunColor * sunVis : moonColor * moonVis) ;
+	// lightSourceColor = sunVis >= 1e-5 ? sunColor * sunVis : moonColor * moonVis;
+	lightSourceColor = sunColor * sunVis + moonColor * moonVis;
 
 #endif
 
@@ -213,8 +222,39 @@ void main() {
 		vec4(DAY9_l0_density, DAY9_l1_density, DAY9_l2_density, DAY9_cfog_density)
 	);
 
-	dailyWeatherParams0 = weatherParameters_A[dayCounter];
-	dailyWeatherParams1 = weatherParameters_B[dayCounter];
+
+
+	CurrentFrame_dailyWeatherParams0 = weatherParameters_A[dayCounter];
+	CurrentFrame_dailyWeatherParams1 = weatherParameters_B[dayCounter];
+
+	vec4 rainyWeatherParameters_A[3] = vec4[](
+		// vec4(DAY0_l0_coverage, DAY0_l1_coverage, DAY0_l2_coverage, DAY0_ufog_density),
+		vec4(1.3,0.0,0.0,0.0),
+		vec4(0.5,0.0,0.0,0.0),
+		vec4(0.0,0.0,0.0,0.0)
+	);
+	vec4 rainyWeatherParameters_B[3] = vec4[](
+		// vec4(DAY7_l0_density, DAY7_l1_density, DAY7_l2_density, DAY7_cfog_density),
+		vec4(0.1,0.0,0.0,0.0),
+		vec4(0.1,0.0,0.0,0.0),
+		vec4(0.0,0.0,0.0,0.0)
+	);
+
+	// if(hideGUI == 1){
+		// CurrentFrame_dailyWeatherParams0 = rainyWeatherParameters_A[worldDay%2];
+		// CurrentFrame_dailyWeatherParams1 = rainyWeatherParameters_B[worldDay%2];
+	// } else {
+	// 	CurrentFrame_dailyWeatherParams0 =  vec4(0.5,0.0,0.0,0.0);
+	// 	CurrentFrame_dailyWeatherParams1 = 	vec4(0.1,0.5,0.0,0.0);
+	// }
+
+	#if defined Daily_Weather
+		dailyWeatherParams0 = vec4(sqrt(texelFetch2D(colortex4,ivec2(1,1),0).rgb/ 1500.0), 0.0);
+		dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb / 1500.0, 0.0);
+		
+		dailyWeatherParams0.a = texelFetch2D(colortex4,ivec2(3,1),0).x/1500.0;
+		dailyWeatherParams1.a = texelFetch2D(colortex4,ivec2(3,1),0).y/1500.0;
+	#endif
 
 #endif
 
@@ -235,7 +275,7 @@ void main() {
 			vec2 ij = R2_samples((frameCounter%2000)*maxITexp+i);
 			vec2 tc = 0.5 + (ij-0.5) * 0.7;
 			vec3 sp = texture2D(colortex6, tc/16. * resScale+vec2(0.375*resScale.x+4.5*texelSize.x,.0)).rgb;
-			avgExp += log(luma(sp));
+			avgExp += log(sqrt(luma(sp)));
 			avgB += log(min(dot(sp,vec3(0.07,0.22,0.71)),8e-2));
 	}
 
@@ -247,13 +287,16 @@ void main() {
 	float L = max(avgBrightness,1e-8);
 	float keyVal = 1.03-2.0/(log(L*4000/150.*8./3.0+1.0)/log(10.0)+2.0);
 	float expFunc = 0.5+0.5*tanh(log(L));
-	float targetExposure = 0.18/log2(L*2.5+1.045)*0.62;
+	
+	// float targetExposure = 1.0/log(L+1.05);
+	float targetExposure = (EXPOSURE_DARKENING * 0.35)/log(L+1.0 + EXPOSURE_BRIGHTENING * 0.05);
+	// float targetExposure = 0.18/log2(L*2.5+1.045)*0.62; // choc original
 
 	avgL2 = clamp(mix(avgB,texelFetch2D(colortex4,ivec2(10,37),0).b,0.985),0.00003051757,65000.0);
 	float targetrodExposure = max(0.012/log2(avgL2+1.002)-0.1,0.0)*1.2;
 
 
-	exposure = max(targetExposure*EXPOSURE_MULTIPLIER, 0.0);
+	exposure = max(targetExposure, 0.0);
 	// exposure = mix(0.0, 1.0, min(targetExposure,1.0));
 	// exposure = 1;
 

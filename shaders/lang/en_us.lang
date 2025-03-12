@@ -173,10 +173,10 @@ screen.Fog = Fog Settings
         option.Noon_Uniform_Fog = Noon Fog Density
         option.Evening_Uniform_Fog = Evening Fog Density
         option.Night_Uniform_Fog = Night Fog Density
-        option.Morning_Cloudy_Fog = Cloudy Morning Fog Density
-        option.Noon_Cloudy_Fog = Cloudy Noon Fog Density
-        option.Evening_Cloudy_Fog = Cloudy Evening Fog Density
-        option.Night_Cloudy_Fog = Cloudy Night Fog Density
+        option.Morning_Cloudy_Fog = Morning Cloudy Fog Density
+        option.Noon_Cloudy_Fog = Noon Cloudy Fog Density
+        option.Evening_Cloudy_Fog = Evening Cloudy Fog Density
+        option.Night_Cloudy_Fog = Night Cloudy Fog Density
 
         option.PER_BIOME_ENVIRONMENT = Per Biome Environments
 
@@ -389,12 +389,14 @@ screen.World = World
         option.SSR_STEPS = SSR Quality
         option.WATER_SUN_SPECULAR = Sun/Moon Reflections
         option.WATER_BACKGROUND_SPECULAR = Sky/Fog Reflections
-        option.Refraction = Refraction In Water/Glass
+        option.FAKE_REFRACTION_EFFECT = Refraction In Water/Glass
         option.Dirt_Amount = Dirt Amount
         option.Water_Top_Layer = Ocean Y coordinate
         option.WATER_WAVE_STRENGTH = Wave Strength
         option.SNELLS_WINDOW = Snell's Window
-        
+        option.MINIMUM_WATER_ABSORBANCE = Minimum Water Absorbance
+            value.MINIMUM_WATER_ABSORBANCE.-1 = AUTO
+
         screen.Water_fog_color = Water Fog Settings
             option.Dirt_Scatter_R = Scatter Red (dirt)
             option.Dirt_Scatter_G = Scatter Green (dirt)
@@ -417,6 +419,7 @@ screen.Post_Processing = Post Processing
     screen.TAA_OPTIONS = Anti-Aliasing Settings
         option.SCREENSHOT_MODE = Screenshot Mode
         option.TAA = TAA
+        option.RESPONSIVE_TAA = Responsive TAA §a(SET BLEND FACTOR TO 0.25 WHEN THIS IS ENABLED)
         option.BLEND_FACTOR = Blend Factor
         option.TAA_UPSCALING = Temporal Upscaling
         option.SCALE_FACTOR = Scale Factor
@@ -507,7 +510,10 @@ option.AEROCHROME_MODE.comment = Infrared Film. Google "Aerochrome" to get an id
 option.AEROCHROME_PINKNESS.comment = Higher = Pink. Lower = Red
 option.AEROCHROME_WOOL_ENABLED.comment = Technically wool things should be affected but it ruins a lot of builds. Enable to be more technically correct.
 
-
+value.DIMENSION_FALLBACK_SHADER.0 = overworld shader as fallback
+value.DIMENSION_FALLBACK_SHADER.1 = nether shader as fallback
+value.DIMENSION_FALLBACK_SHADER.2 = end shader as fallback
+value.DIMENSION_FALLBACK_SHADER.3 = no shader as fallback
 
 
 
@@ -627,7 +633,7 @@ screen.World.comment = Configure settings for various things that happen in the 
         option.SSR_STEPS.comment = Configure the quality of the screen-space reflections on translucent things.  §aPERFORMANCE COST:§r medium to high
         option.WATER_SUN_SPECULAR.comment = Toggle the sun and moon reflections on translucent things. §aPERFORMANCE COST:§r low
         option.WATER_BACKGROUND_SPECULAR.comment = Toggle the sky and fog reflections on translucent things. §aPERFORMANCE COST:§r low to medium
-        option.Refraction.comment = Toggle refraction on translucent things. §bWhat is this?§r If you look at water, you can see the light refracting distorts what is in it. §aPERFORMANCE COST:§r low
+        option.FAKE_REFRACTION_EFFECT.comment = Toggle refraction on translucent things. §bWhat is this?§r If you look at water, you can see the light refracting distorts what is in it. §aPERFORMANCE COST:§r low
         option.Dirt_Amount.comment = Configure how much dirt is in water. This controls how much fog is within water.
         option.Water_Top_Layer.comment = Configure the Y coordinate at which the ocean should be in the world.
         
@@ -736,3 +742,4 @@ option.TOGGLE_VL_FOG = Toggle Volumetric Fog
 option.TOGGLE_VL_FOG.comment = one big button to just turn all the fog off.
 
 option.TRANSLUCENT_COLORED_SHADOWS.comment = §bWhat is this?§r This effect allows translucent things like stained glass to color the sunlight as it passes through it. §aPERFORMANCE COST:§r medium
+option.MINIMUM_WATER_ABSORBANCE.comment = §bWhat is this?§r This controls how "clear" the water is in shallow areas. AUTO allows water to be clear outdoors, but adjust to be at a minimum value of 7 when indoors, to make it clearly visible. §dTHIS SETTING DOES NOT IMPACT UNDER-WATER VISUALS.        

@@ -13,7 +13,6 @@
 
 varying vec4 lmtexcoord;
 varying vec4 color;
-flat varying float exposure;
 
 #ifdef LINES
 	flat varying int SELECTION_BOX;
@@ -47,13 +46,12 @@ uniform sampler2D colortex4;
 	uniform sampler3D texLpv2;
 #endif
 
-
-uniform mat4 gbufferProjectionInverse;
-uniform mat4 gbufferModelViewInverse;
-uniform mat4 gbufferModelView;
-uniform mat4 shadowModelView;
-uniform mat4 shadowProjection;
-uniform vec3 cameraPosition;
+// uniform mat4 gbufferProjectionInverse;
+// uniform mat4 gbufferModelViewInverse;
+// uniform mat4 gbufferModelView;
+// uniform mat4 shadowModelView;
+// uniform mat4 shadowProjection;
+// uniform vec3 cameraPosition;
 
 uniform float frameTimeCounter;
 #include "/lib/Shadow_Params.glsl"
@@ -62,19 +60,32 @@ uniform vec2 texelSize;
 
 uniform ivec2 eyeBrightnessSmooth;
 uniform float rainStrength;
+uniform float nightVision;
+uniform float waterEnteredAltitude;
+
+
 flat varying float HELD_ITEM_BRIGHTNESS;
 
-#ifndef OVERWORLD_SHADER
-	uniform float nightVision;
-#endif
+uniform mat4 gbufferPreviousModelView;
+uniform vec3 previousCameraPosition;
 
 #include "/lib/util.glsl"
+#include "/lib/projections.glsl"
 
 #ifdef OVERWORLD_SHADER
-	
+	#ifdef Daily_Weather
+		flat varying vec4 dailyWeatherParams0;
+		flat varying vec4 dailyWeatherParams1;
+	#else
+		vec4 dailyWeatherParams0 = vec4(CloudLayer0_coverage, CloudLayer1_coverage, CloudLayer2_coverage, 0.0);
+		vec4 dailyWeatherParams1 = vec4(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density, 0.0);
+	#endif
+
 	#define CLOUDSHADOWSONLY
+	
 	#include "/lib/volumetricClouds.glsl"
 #endif
+
 
 #ifdef IS_LPV_ENABLED
 	uniform int heldItemId;
@@ -95,12 +106,12 @@ vec3 toLinear(vec3 sRGB){
 
 // #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 
-vec3 toScreenSpace(vec3 p) {
-	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
-    vec3 p3 = p * 2. - 1.;
-    vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
-    return fragposition.xyz / fragposition.w;
-}
+// vec3 toScreenSpace(vec3 p) {
+// 	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
+//     vec3 p3 = p * 2. - 1.;
+//     vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
+//     return fragposition.xyz / fragposition.w;
+// }
 
 uniform int framemod8;
 
@@ -129,7 +140,7 @@ float encodeVec2(float x,float y){
 #ifdef OVERWORLD_SHADER
 float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDistFade){
 
-	if(maxDistFade <= 0.0) return 1.0;
+	// if(maxDistFade <= 0.0) return 1.0;
 
 	// setup shadow projection
 	vec3 projectedShadowPosition = mat3(shadowModelView) * playerPos + shadowModelView[3].xyz;
@@ -180,51 +191,44 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 		directLightColor *= mix(vec3(1.0), translucentTint.rgb, maxDistFade);
 	#endif
 
-	return mix(1.0, shadowmap, maxDistFade);
+	return shadowmap;
+	// return mix(1.0, shadowmap, maxDistFade);
 }
 #endif
 
 #if defined DAMAGE_BLOCK_EFFECT && defined POM
-#extension GL_ARB_shader_texture_lod : enable
+	#extension GL_ARB_shader_texture_lod : enable
+	
+	mat3 inverseMatrix(mat3 m) {
+	  float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
+	  float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];
+	  float a20 = m[2][0], a21 = m[2][1], a22 = m[2][2];
+	
+	  float b01 = a22 * a11 - a12 * a21;
+	  float b11 = -a22 * a10 + a12 * a20;
+	  float b21 = a21 * a10 - a11 * a20;
+	
+	  float det = a00 * b01 + a01 * b11 + a02 * b21;
+	
+	  return mat3(b01, (-a22 * a01 + a02 * a21), (a12 * a01 - a02 * a11),
+	              b11, (a22 * a00 - a02 * a20), (-a12 * a00 + a02 * a10),
+	              b21, (-a21 * a00 + a01 * a20), (a11 * a00 - a01 * a10)) / det;
+	}
+	const float MAX_OCCLUSION_DISTANCE = MAX_DIST;
+	const float MIX_OCCLUSION_DISTANCE = MAX_DIST*0.9;
+	const int   MAX_OCCLUSION_POINTS   = MAX_ITERATIONS;
+	
+	varying vec4 vtexcoordam; // .st for add, .pq for mul
+	varying vec4 vtexcoord;
+	
+	vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
+	vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
+	
+	#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
+	#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
-mat3 inverseMatrix(mat3 m) {
-  float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
-  float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];
-  float a20 = m[2][0], a21 = m[2][1], a22 = m[2][2];
-
-  float b01 = a22 * a11 - a12 * a21;
-  float b11 = -a22 * a10 + a12 * a20;
-  float b21 = a21 * a10 - a11 * a20;
-
-  float det = a00 * b01 + a01 * b11 + a02 * b21;
-
-  return mat3(b01, (-a22 * a01 + a02 * a21), (a12 * a01 - a02 * a11),
-              b11, (a22 * a00 - a02 * a20), (-a12 * a00 + a02 * a10),
-              b21, (-a21 * a00 + a01 * a20), (a11 * a00 - a01 * a10)) / det;
-}
-const float MAX_OCCLUSION_DISTANCE = MAX_DIST;
-const float MIX_OCCLUSION_DISTANCE = MAX_DIST*0.9;
-const int   MAX_OCCLUSION_POINTS   = MAX_ITERATIONS;
-
-varying vec4 vtexcoordam; // .st for add, .pq for mul
-varying vec4 vtexcoord;
-
-vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
-vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
-
-
-#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
-
-uniform mat4 gbufferProjection;
-
-vec3 toClipSpace3(vec3 viewSpacePosition) {
-    return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
-}
-
-flat varying vec3 WsunVec2;
-const float mincoord = 1.0/4096.0;
-const float maxcoord = 1.0-mincoord;
+	const float mincoord = 1.0/4096.0;
+	const float maxcoord = 1.0-mincoord;
 
 	uniform sampler2D normals;
 	varying vec4 tangent;
@@ -274,6 +278,7 @@ void main() {
 	vec2 adjustedTexCoord = lmtexcoord.xy;
 	#ifdef POM
 		vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(0.0));
+
 		vec3 worldpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz + cameraPosition;
 
 		vec3 normal = normalMat.xyz;
@@ -288,8 +293,6 @@ void main() {
 		float dist = length(fragpos);
 
 		float maxdist = MAX_OCCLUSION_DISTANCE;
-
-		// float depth  = gl_FragCoord.z;
 		if (dist < maxdist) {
 
 			float depthmap = readNormal(vtexcoord.st).a;
@@ -321,10 +324,6 @@ void main() {
 				}
 
 				adjustedTexCoord = mix(fract(coord.st)*vtexcoordam.pq+vtexcoordam.st, adjustedTexCoord, max(dist-MIX_OCCLUSION_DISTANCE,0.0)/(MAX_OCCLUSION_DISTANCE-MIX_OCCLUSION_DISTANCE));
-
-				// vec3 truePos = fragpos + sumVec*inverseMatrix(tbnMatrix)*interval;
-
-				// depth = toClipSpace3(truePos).z;
 			}
 		}
 
@@ -373,7 +372,12 @@ void main() {
 		#else
 			vec3 playerCamPos = cameraPosition;
 		#endif
-		lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length((feetPlayerPos+cameraPosition) - playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
+		// lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length((feetPlayerPos+cameraPosition) - playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
+		if(HELD_ITEM_BRIGHTNESS > 0.0){ 
+			float pointLight = clamp(1.0-(length((feetPlayerPos+cameraPosition)-playerCamPos)-1.0)/HANDHELD_LIGHT_RANGE,0.0,1.0);
+			lightmap.x = mix(lightmap.x, HELD_ITEM_BRIGHTNESS, pointLight*pointLight);
+		}
+	
 	#endif
 
 	#ifdef WEATHER
@@ -398,11 +402,10 @@ void main() {
 		vec3 Torch_Color = vec3(TORCH_R,TORCH_G,TORCH_B);
 		vec3 MinimumLightColor = vec3(1.0);
 
-		if(isEyeInWater == 1) MinimumLightColor = vec3(10.0);
 		if(lightmap.x >= 0.9) Torch_Color *= LIT_PARTICLE_BRIGHTNESS;
 
 		#ifdef OVERWORLD_SHADER
-			directLightColor =  lightCol.rgb/80.0;
+			directLightColor =  lightCol.rgb/2400.0;
 			float Shadows = 1.0;
 
 			vec3 shadowPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
@@ -414,19 +417,23 @@ void main() {
 
 			Shadows = ComputeShadowMap(directLightColor, shadowPlayerPos, shadowMapFalloff);
 
-			Shadows = mix(LM_shadowMapFallback, Shadows, shadowMapFalloff2);
+			Shadows *= mix(LM_shadowMapFallback, 1.0, shadowMapFalloff2);
 
 			#ifdef CLOUDS_SHADOWS	
-				Shadows *= GetCloudShadow(feetPlayerPos);
+				Shadows *= GetCloudShadow(feetPlayerPos+cameraPosition, WsunVec);
 			#endif
 
+			if(isEyeInWater == 1){
+	  			float distanceFromWaterSurface = max(-(feetPlayerPos.y + (cameraPosition.y - waterEnteredAltitude)),0.0) ;
+				directLightColor *= exp(-vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B) * distanceFromWaterSurface);
+			}
 			Direct_lighting = directLightColor * Shadows;
 
-			#ifndef LINES
-				Direct_lighting *= phaseg(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), 0.65)*2 + 0.5;
-			#endif
+			// #ifndef LINES
+			// 	Direct_lighting *= phaseg(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), 0.65)*2 + 0.5;
+			// #endif
 
-			AmbientLightColor = averageSkyCol_Clouds / 30.0;
+			AmbientLightColor = averageSkyCol_Clouds / 900.0;
 
 			#ifdef IS_IRIS
 				AmbientLightColor *= 2.5;
@@ -438,11 +445,11 @@ void main() {
 		#endif
 		
 		#ifdef NETHER_SHADER
-			Indirect_lighting = skyCloudsFromTexLOD2(vec3(0.0,1.0,0.0), colortex4, 6).rgb / 30.0;
+			Indirect_lighting = volumetricsFromTex(vec3(0.0,1.0,0.0), colortex4, 6).rgb / 1200.0;
 		#endif
 
 		#ifdef END_SHADER
-			Indirect_lighting = vec3(0.3,0.6,1.0) * 0.5;
+			Indirect_lighting = vec3(0.3,0.6,1.0) * 0.1;
 		#endif
 
 	///////////////////////// BLOCKLIGHT LIGHTING OR LPV LIGHTING OR FLOODFILL COLORED LIGHTING
@@ -452,7 +459,7 @@ void main() {
 			const vec3 lpvPos = vec3(0.0);
 		#endif
 
-		Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, exposure, feetPlayerPos, lpvPos);
+		Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, feetPlayerPos, lpvPos);
 
 		#ifdef LINES
 			gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * toLinear(color.rgb);
