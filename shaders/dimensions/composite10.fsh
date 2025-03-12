@@ -106,7 +106,7 @@ vec2 texcoord = ((gl_FragCoord.xy)*2.0 + 0.5)*texelSize;
     bloom += texture2D_bicubic(colortex6,texcoord/64.+vec2(0.46875*resScale.x+8.5*texelSize.x,.0)).rgb * weights[5]; //1/128 res
     bloom += texture2D_bicubic(colortex6,texcoord/128.+vec2(0.484375*resScale.x+10.5*texelSize.x,.0)).rgb * weights[6]; //1/256 res
 
-    gl_FragData[0].rgb = bloom * 2.0;
+    gl_FragData[0].rgb = bloom * 3.0;
 #endif
 
 gl_FragData[0].rgb = clamp(gl_FragData[0].rgb,0.0,65000.);

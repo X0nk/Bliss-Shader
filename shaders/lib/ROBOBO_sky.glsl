@@ -119,7 +119,7 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 	position += increment * (0.34*noise);
 
 	vec2 phaseSun = sky_phase(dot(viewVector, sunVector), 0.8);
-	vec2 phaseMoon = sky_phase(dot(viewVector, moonVector), 0.8) ;
+	vec2 phaseMoon = sky_phase(dot(viewVector, moonVector), 0.8);
 
 	vec3 scatteringSun     = vec3(0.0);
 	vec3 scatteringMoon    = vec3(0.0);
@@ -128,7 +128,7 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 	transmittance = vec3(1.0);
 
 	float high_sun = clamp(pow(sunVector.y+0.6,5),0.0,1.0) * 3.0; // make sunrise less blue, and allow sunset to be bluer
-	float low_sun = clamp(((1.0-abs(sunVector.y))*3.) - high_sun,1.0,2.0) ;
+	float low_sun = clamp(((1.0-abs(sunVector.y))*3.) - high_sun,1.0,1.8) ;
 
 
 	for (int i = 0; i < iSteps; ++i, position += increment) {
@@ -144,7 +144,7 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 		#ifdef ORIGINAL_CHOCAPIC_SKY
 			scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun) * stepScatteringVisible * sky_transmittance(position, sunVector,  jSteps) * planetGround;
 		#else
-			scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun) * stepScatteringVisible * sky_transmittance(position, sunVector,  jSteps) * planetGround;
+			scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun) * stepScatteringVisible * sky_transmittance(position, sunVector*0.5+0.1,  jSteps) * planetGround;
 		#endif
 
 		scatteringMoon += sky_coefficientsScattering * (stepAirmass.xy * phaseMoon) * stepScatteringVisible * sky_transmittance(position, moonVector, jSteps) * planetGround;
@@ -159,7 +159,7 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 		transmittance *= stepTransmittance;
 	}
 	
-	vec3 scattering = scatteringAmbient * background + scatteringSun * sunColorBase + scatteringMoon*moonColorBase * 0.5;
+	vec3 scattering = scatteringSun * sunColorBase + scatteringAmbient * background + scatteringMoon*moonColorBase	;
 
 	return scattering;
 }

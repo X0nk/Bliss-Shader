@@ -36,6 +36,7 @@ Credit to the people who inspired many changes and ideas, that you NEED to know 
 
 
 Temporal credits entry to people who added more mod support to Bliss:
+
 	MikiP98 / https://github.com/MikiP98 | Miki-Liki (Modrinth)
 	Benjamin Rühl / https://github.com/benruehl
 	ludo_silver (discord)

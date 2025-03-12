@@ -1,21 +1,14 @@
 #define ffstep(x,y) clamp((y - x) * 1e35,0.0,1.0)
 
-vec3 drawSun(float cosY, float sunInt,vec3 nsunlight, vec3 inColor){
-
-	// return nsunlight * min(max(cosY-0.9994,0.0)/(1.0-0.9994),1.0) * 100.0;
-
-	return (inColor+nsunlight/0.0008821203*pow(smoothstep(cos(0.0093084168595*3.2),cos(0.0093084168595*1.8),cosY),3.)*0.62);
-
+vec3 drawSun(float cosY, float sunInt,vec3 nsunlight,vec3 inColor){
+	return inColor+nsunlight/0.0008821203*pow(smoothstep(cos(0.0093084168595*3.2),cos(0.0093084168595*1.8),cosY),3.)*0.62;
 }
 
 vec3 drawMoon(vec3 PlayerPos, vec3 WorldSunVec, vec3 Color, inout vec3 occludeStars){
 
-	float Shape = min(max(dot(WorldSunVec,PlayerPos)-0.9994,0.0)/(1.0-0.9994),1.0);//  * clamp(-dot(WorldSunVec,PlayerPos),0,1);
-	
+	float Shape = clamp((exp(1 + -1000 * dot(WorldSunVec+PlayerPos,PlayerPos)) - 1.5),0.0,25.0);
 	occludeStars *= max(1.0-Shape*5,0.0);
 
-	return Shape * Color * 40.0;
-	/*
 	float shape2 = pow(exp(Shape * -10),0.15) * 255.0;
 
 	vec3 sunNormal = vec3(dot(WorldSunVec+PlayerPos, vec3(shape2,0,0)), dot(PlayerPos+WorldSunVec, vec3(0,shape2,0)), -dot(WorldSunVec, PlayerPos) * 15.0);
@@ -34,10 +27,8 @@ vec3 drawMoon(vec3 PlayerPos, vec3 WorldSunVec, vec3 Color, inout vec3 occludeSt
 	);
 	
 	vec3 LightDir = phase[moonPhase];
-	
 
-	return Shape * pow(clamp(dot(sunNormal,LightDir)/5,0.0,1.5),5) * Color * 10.0 + clamp(Shape * 4.0 * pow(shape2/200,2.0),0.0,1.0)*0.004;
-	*/
+	return Shape * pow(clamp(dot(sunNormal,LightDir)/5,0.0,1.5),5) * Color  + clamp(Shape * 4.0 * pow(shape2/200,2.0),0.0,1.0)*0.004;
 }
 
 const float pi = 3.141592653589793238462643383279502884197169;
@@ -143,73 +134,27 @@ vec4 texture2D_bicubic_offset(sampler2D tex, vec2 uv, float noise, float scale)
 
 vec2 sphereToCarte(vec3 dir) {
     float lonlat = clamp(atan(-dir.x, -dir.z), -pi, pi);
-    return vec2(lonlat * (0.5/pi) +0.5,	0.5*dir.y+0.5);
+    return vec2(lonlat * (0.5/pi) +0.5,0.5*dir.y+0.5);
 }
 
 vec3 skyFromTex(vec3 pos,sampler2D sampler){
-
 	vec2 p = sphereToCarte(pos);
-
-	vec2 clampUV = vec2(1.0);
-	p = clamp(p*2.0-1.0, -clampUV, clampUV)*0.5+0.5;
-
 	return texture2D(sampler,p*texelSize*256.+vec2(18.5,1.5)*texelSize).rgb;
 }
 vec3 skyFromTexLOD(vec3 pos,sampler2D sampler, float LOD){
 	vec2 p = sphereToCarte(pos);
-
 	return texture2DLod(sampler,p*texelSize*256.+vec2(18.5,1.5)*texelSize,LOD).rgb;
 }
-
 vec4 skyCloudsFromTex(vec3 pos,sampler2D sampler){
-
 	vec2 p = sphereToCarte(pos);
-
-	vec2 uv = clamp(p, 0.0, 1.0) * texelSize*256. + vec2(18.5+257.,1.5)*texelSize;
-
-	return texture2D(sampler, uv);
+	return texture2D(sampler,p*texelSize*256.+vec2(18.5+257.,1.5)*texelSize);
+}
+vec4 skyCloudsFromTexLOD(vec3 pos,sampler2D sampler, float LOD){
+	vec2 p = sphereToCarte(pos);
+	return texture2DLod(sampler,p*texelSize*256. + vec2(18.5 + 257., 1.5)*texelSize,LOD);
 }
 
-vec4 skyCloudsFromTexBLUR(vec3 pos,sampler2D sampler, float scaler){
-
+vec4 skyCloudsFromTexLOD2(vec3 pos,sampler2D sampler, float LOD){
 	vec2 p = sphereToCarte(pos);
-	vec2 scaleA = texelSize*256.;
-	vec2 scaleB = vec2(18.5+257.,1.5)*texelSize;
-	vec2 posi = p;
-	
-	vec2 uv = clamp(posi, 0.0, 1.0)*scaleA + scaleB;
-
-
-	vec4 color = texture2D(sampler, uv);
-
-	return color;
-}
-
-vec4 skyCloudsFromTexLOD(vec3 pos,sampler2D sampler, float roughness){
-	vec2 p = sphereToCarte(pos);
-
-	roughness = (1-pow(1-roughness,3));
-
-	float Y = min(max(p.y-0.5,0)*50.0,1);
-	p = mix(p, ((p-0.5) - (p-0.5)*roughness) + 0.5, Y);
-
-	// p = ((p-0.5) - (p-0.5)*roughness) + 0.5;
-
-	vec2 clampUV = vec2(1.0);
-	p = clamp(p*2.0-1.0, -clampUV, clampUV)*0.5+0.5;
-
-	vec2 uv = p*texelSize*256.+vec2(18.5+257.,1.5)*texelSize;
-
-	return texture2D(sampler, uv);
-}
-
-
-vec4 volumetricsFromTex(vec3 pos,sampler2D sampler, float LOD){
-	vec2 p = sphereToCarte(pos);
-
-	p = clamp(p, 0.0, 1.0);
-
-	vec2 uv = p*texelSize*256. + vec2(256.0 - 256.0*0.12,1.5)*texelSize;
-
-	return texture2DLod(sampler, uv, LOD);
+	return texture2DLod(sampler,p*texelSize*256. + vec2(256.0 - 256.0*0.12,1.5)*texelSize,LOD);
 }

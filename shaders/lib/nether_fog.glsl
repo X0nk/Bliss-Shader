@@ -43,7 +43,7 @@ vec4 GetVolumetricFog(
 
 	/// -------------  RAYMARCHING STUFF ------------- \\\
 
-	int SAMPLECOUNT = 16;
+	int SAMPLECOUNT = 10;
 
 	vec3 wpos = mat3(gbufferModelViewInverse) * viewPosition + gbufferModelViewInverse[3].xyz;
 	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
@@ -62,14 +62,14 @@ vec4 GetVolumetricFog(
 	vec3 color = vec3(0.0);
 	float absorbance = 1.0;
 
-	vec3 hazeColor = normalize(gl_Fog.color.rgb + 1e-6) * 0.25;
+	vec3 hazeColor = normalize(gl_Fog.color.rgb);
 
 	#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
     	float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) / 5.0;
 	#endif
 
 	for (int i = 0; i < SAMPLECOUNT; i++) {
-		float d = (pow(expFactor, float(i+dither2)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
+		float d = (pow(expFactor, float(i+dither)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
 		float dd = pow(expFactor, float(i+dither)/float(SAMPLECOUNT)) * log(expFactor) / float(SAMPLECOUNT)/(expFactor-1.0);
 		
 		progressW = gbufferModelViewInverse[3].xyz + cameraPosition + d*dVWorld;
@@ -80,7 +80,7 @@ vec4 GetVolumetricFog(
 			float plumeDensity = min(densityVol * pow(min(max(100.0-progressW.y,0.0)/30.0,1.0),4.0), pow(clamp(1.0 - length(progressW-cameraPosition)/far,0.0,1.0),5.0) * NETHER_PLUME_DENSITY);
 			float plumeVolumeCoeff = exp(-plumeDensity*dd*dL);
 
-			vec3 lighting = vec3(1.0,0.4,0.2)*0.25 * exp(-15.0*densityVol);
+			vec3 lighting = vec3(1.0,0.4,0.2) * exp(-15.0*densityVol);
 
 			color += (lighting - lighting * plumeVolumeCoeff) * absorbance;
 			absorbance *= plumeVolumeCoeff;
@@ -98,26 +98,10 @@ vec4 GetVolumetricFog(
 			float ceilingSmokeDensity = 0.001 * pow(min(max(progressW.y-40.0,0.0)/50.0,1.0),3.0);
 			float ceilingSmokeVolumeCoeff = exp(-ceilingSmokeDensity*dd*dL);
 			
-			vec3 ceilingSmoke = vec3(0.1);
+			vec3 ceilingSmoke = vec3(1.0);
 
 			color += (ceilingSmoke - ceilingSmoke*ceilingSmokeVolumeCoeff) * (absorbance*0.5+0.5);
 			absorbance *= ceilingSmokeVolumeCoeff;
-
-			#if defined FLASHLIGHT && defined FLASHLIGHT_FOG_ILLUMINATION
-				vec3 shiftedViewPos = mat3(gbufferModelView)*(progressW-cameraPosition) + vec3(-0.25, 0.2, 0.0);
-				vec3 shiftedPlayerPos = mat3(gbufferModelViewInverse) * shiftedViewPos;
-				vec2 scaledViewPos = shiftedViewPos.xy / max(-shiftedViewPos.z - 0.5, 1e-7);
-				float linearDistance = length(shiftedPlayerPos);
-				float shiftedLinearDistance = length(scaledViewPos);
-
-				float lightFalloff = 1.0 - clamp(1.0-linearDistance/FLASHLIGHT_RANGE, -0.999,1.0);
-				lightFalloff = max(exp(-30.0 * lightFalloff),0.0);
-				float projectedCircle = clamp(1.0 - shiftedLinearDistance*FLASHLIGHT_SIZE,0.0,1.0);
-
-				vec3 flashlightGlow = vec3(FLASHLIGHT_R,FLASHLIGHT_G,FLASHLIGHT_B) * lightFalloff * projectedCircle * 0.5;
-
-				color += (flashlightGlow - flashlightGlow * exp(-max(plumeDensity,0.005)*dd*dL)) * absorbance;
-			#endif
 
 		//------ LPV FOG EFFECT
 			#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT

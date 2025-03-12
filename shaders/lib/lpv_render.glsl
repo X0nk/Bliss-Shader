@@ -1,13 +1,10 @@
-// LPV block brightness scale. just 1.0/15.0
-const float LpvBlockBrightness = 0.066666;
+// LPV block brightness scale
+const float LpvBlockBrightness = 1.0;
 
 
 float lpvCurve(float values) {
-    #ifdef VANILLA_LIGHTMAP_MASK
-        return sqrt(values);
-    #else
-        return values*values;
-    #endif
+    // return values;
+    return pow(1.0 - sqrt(1.0-values), 2.0);
 }
 
 vec4 SampleLpvLinear(const in vec3 lpvPos) {
@@ -20,8 +17,6 @@ vec4 SampleLpvLinear(const in vec3 lpvPos) {
     vec3 hsv = RgbToHsv(lpvSample.rgb);
     hsv.z = lpvCurve(hsv.b) * LpvBlockSkyRange.x;
     lpvSample.rgb = HsvToRgb(hsv);
-    
-    lpvSample.rgb = clamp(lpvSample.rgb/15.0,0.0,1.0);
 
     return lpvSample;
 }

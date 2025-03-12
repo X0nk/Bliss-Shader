@@ -373,7 +373,7 @@ screen.World = 世界
         option.SSR_STEPS = SSR 采样值
         option.WATER_SUN_SPECULAR = 日月反射
         option.WATER_BACKGROUND_SPECULAR = 天空/雾气反射
-        option.FAKE_REFRACTION_EFFECT = 折射 (水体/玻璃)
+        option.Refraction = 折射 (水体/玻璃)
         option.Dirt_Amount = 水体浑浊程度
         option.Water_Top_Layer = 海平面 Y 轴坐标
         option.WATER_WAVE_STRENGTH = 水波强度
@@ -599,7 +599,7 @@ screen.World.comment = 配置多种会在主世界发生的效果, 从摇摆植�
         option.SSR_STEPS.comment = 配置半透明方块的屏幕空间反射质量.  §a性能消耗水平:§r 中偏高.
         option.WATER_SUN_SPECULAR.comment = 半透明方块的日月反射开关. §a性能消耗水平:§r 低.
         option.WATER_BACKGROUND_SPECULAR.comment = 半透明方块的天空和雾气反射开关. §a性能消耗水平:§r 低偏中.
-        option.FAKE_REFRACTION_EFFECT.comment = 半透明折射开关. §b这啥?§r 如果你观察水体, 可以看到光的折射会扭曲了水中的内容. §a性能消耗水平:§r 低.
+        option.Refraction.comment = 半透明折射开关. §b这啥?§r 如果你观察水体, 可以看到光的折射会扭曲了水中的内容. §a性能消耗水平:§r 低.
         option.Dirt_Amount.comment = 配置水中污物含量. 这可以控制水雾量.
         option.Water_Top_Layer.comment = 配置海平面在世界中的 Y 坐标.
         

@@ -13,7 +13,6 @@ uniform float viewWidth;
 uniform float aspectRatio;
 
 uniform float frameTimeCounter;
-uniform int frameCounter;
 
 uniform int hideGUI;
 
@@ -135,41 +134,11 @@ vec3 saturationAndCrosstalk(vec3 color){
   return color;
 }
 
-float interleaved_gradientNoise(){
-	vec2 coord = gl_FragCoord.xy;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
-	return noise;
-}
-float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
-}
-
-vec3 chromaticAberration(vec2 UV){
-  float noise = blueNoise() - 0.5;
-
-  vec2 centeredUV = (texcoord - 0.5);
-  // not stretched by aspect ratio; circular by choice :) it makes most the abberation on the left/right of the screen.
-  float vignette = 1.0 - clamp(1.0 - length(centeredUV * vec2(aspectRatio,1.0)) / 200.0,0.0,1.0);
-
-  float aberrationStrength = CHROMATIC_ABERRATION_STRENGTH * vignette;
-
-  vec3 color = vec3(0.0);
-  color.r = texture2D(colortex7, (centeredUV - (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).r;
-  color.g = texture2D(colortex7, texcoord).g;
-  color.b = texture2D(colortex7, (centeredUV + (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).b;
-
-  return color;
-}
-
 void main() {
 
   /* DRAWBUFFERS:7 */
-  
-  #ifdef CHROMATIC_ABERRATION
-	  vec3 color = chromaticAberration(texcoord);
-  #else
-	  vec3 color = texture2D(colortex7,texcoord).rgb;
-  #endif
+
+	vec3 color = texture2D(colortex7,texcoord).rgb;
 
 	#ifdef CONTRAST_ADAPTATIVE_SHARPENING
     color = contrastAdaptiveSharpening(color, texcoord);
@@ -184,6 +153,6 @@ void main() {
   #ifdef COLOR_GRADING_ENABLED
 	  color = colorGrading(color);
   #endif
-  
+
 	gl_FragData[0].rgb = clamp(int8Dither(color, texcoord),0.0,1.0);
 }

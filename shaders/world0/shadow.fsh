@@ -20,16 +20,7 @@ float blueNoise(){
 
 
 void main() {
-	
-	vec4 shadowColor = vec4(texture2D(tex,texcoord.xy).rgb * color.rgb,  texture2DLod(tex, texcoord.xy, 0).a);
-
-	#ifdef TRANSLUCENT_COLORED_SHADOWS
-		if(shadowColor.a > 0.9999) shadowColor.rgb = vec3(0.0);
-	#endif
-
-	gl_FragData[0] = shadowColor;
-
-	// gl_FragData[0] = vec4(texture2D(tex,texcoord.xy).rgb * color.rgb,  texture2DLod(tex, texcoord.xy, 0).a);
+	gl_FragData[0] = vec4(texture2D(tex,texcoord.xy).rgb * color.rgb,  texture2DLod(tex, texcoord.xy, 0).a);
 
   	#ifdef Stochastic_Transparent_Shadows
 		if(gl_FragData[0].a < blueNoise()) { discard; return;}

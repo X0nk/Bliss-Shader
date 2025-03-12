@@ -14,7 +14,7 @@ flat varying vec3 averageSkyCol_Clouds;
 flat varying vec4 lightCol;
 
 #ifdef OVERWORLD_SHADER
-	#ifdef Daily_Weather
+	#if defined Daily_Weather
 		flat varying vec4 dailyWeatherParams0;
 		flat varying vec4 dailyWeatherParams1;
 	#endif
@@ -44,8 +44,6 @@ uniform float far;
 #endif
 
 
-uniform int framemod4_DH;
-#define DH_TAA_OVERRIDE
 #include "/lib/TAA_jitter.glsl"
 
 
@@ -58,26 +56,11 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 }
                      
 void main() {
-    gl_Position = dhProjection * gl_ModelViewMatrix * gl_Vertex;
+    gl_Position = ftransform();
     
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-   	
-	vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
-	
-	// worldpos.y -= length(worldpos)/(16*2);
-
-	#ifdef PLANET_CURVATURE
-		float curvature = length(worldpos) / (16*8);
-		worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
-	#endif
-	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
-
-	gl_Position = toClipSpace3(position);
 	
 	pos = gl_ModelViewMatrix * gl_Vertex;
-
-	// vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-	
 	
 
     isWater = 0;
@@ -85,25 +68,26 @@ void main() {
 	    isWater = 1;
 		
 		// offset water to not look like a full cube
-    	// vec3 worldpos = mat3(gbufferModelViewInverse) * position;// + gbufferModelViewInverse[3].xyz ;
-		// worldpos.y -= 1.8/16.0;
-    	// position = mat3(gbufferModelView) * worldpos;// + gbufferModelView[3].xyz;
+    	vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz ;
+		worldpos.y -= 1.8/16.0;
+    	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 
 	}
 
-	// gl_Position = toClipSpace3(position);
+	gl_Position = toClipSpace3(position);
 
-	normals_and_materials = vec4(mat3(gbufferModelView) * gl_Normal, 1.0);
+	normals_and_materials = vec4(normalize(gl_Normal), 1.0);
 
     gcolor = gl_Color;
 	lightmapCoords = gl_MultiTexCoord1.xy;
+
+
 
 
 	lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
 	lightCol.a = float(sunElevation > 1e-5)*2.0 - 1.0;
 
 	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
-	
 	#ifdef OVERWORLD_SHADER
 		#if defined Daily_Weather
 			dailyWeatherParams0 = vec4((texelFetch2D(colortex4,ivec2(1,1),0).rgb/150.0)/2.0, 0.0);
@@ -114,13 +98,17 @@ void main() {
 
 	WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
 	WsunVec2 = lightCol.a * normalize(sunPosition);
+	
+
+
+
 
 
 	#ifdef TAA_UPSCALING
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
-    #if defined TAA && defined DH_TAA_JITTER
-		gl_Position.xy += offsets[framemod4_DH] * gl_Position.w*texelSize;
+    #ifdef TAA
+		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
 	#endif
 
 	#if DOF_QUALITY == 5
