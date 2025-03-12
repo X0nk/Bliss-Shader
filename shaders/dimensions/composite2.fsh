@@ -395,11 +395,11 @@ vec3 alterCoords(in vec3 coords, bool lighting){
 
 	float theDistance = length(coords + (lighting ? vec3(0.0) : cameraPosition));
 
-	coords.x = max(coords.x,0.0);
+	coords.x = coords.x*3;
 
 	coords.y = coords.y;
 
-	coords.z = coords.z/3;
+	coords.z = coords.z*3;
 	
 	return coords;
 }
@@ -442,7 +442,8 @@ vec4 raymarchTest(
 	// float cloudRange = mix(max(cameraPosition.y - maxHeight,0.0), max(minHeight - cameraPosition.y,0.0), clamp(rayDirection.y,0.0,1.0));
 
 
-	vec3 rayProgress = rayDirection*dither.x + cameraPosition + (rayDirection / length(alterCoords(rayDirection, false))) * 200;
+
+	vec3 rayProgress = rayDirection + cameraPosition + (rayDirection / length(alterCoords(rayDirection, false))) * 200.0;
 
 	float dL = length(rayDirection);
 	
@@ -530,11 +531,12 @@ void main() {
 	vec3 directLightColor = lightCol.rgb / 2400.0;
 	vec3 indirectLightColor = averageSkyCol / 1200.0;
 	vec3 indirectLightColor_dynamic = averageSkyCol_Clouds / 1200.0;
+	float cloudPlaneDistance = 0.0;
 
 	#if defined OVERWORLD_SHADER
 		// z0 = texture2D(depthtex0, tc + jitter/VL_RENDER_RESOLUTION).x;
 		// viewPos0 = toScreenSpace_DH(tc/RENDER_SCALE, z0, DH_z0);
-		vec4 VolumetricClouds = GetVolumetricClouds(viewPos0, BN, WsunVec, directLightColor, indirectLightColor);
+		vec4 VolumetricClouds = GetVolumetricClouds(viewPos0, BN, WsunVec, directLightColor, indirectLightColor, cloudPlaneDistance);
 		
 		#ifdef CAVE_FOG
 		
@@ -548,7 +550,7 @@ void main() {
 		float atmosphereAlpha = 1.0;
 
 		vec3 sceneColor = texelFetch2D(colortex3,ivec2(tc/texelSize),0).rgb * VolumetricClouds.a + VolumetricClouds.rgb;
-		vec4 VolumetricFog = GetVolumetricFog(viewPos0, WsunVec, BN, directLightColor, indirectLightColor, indirectLightColor_dynamic, atmosphereAlpha, VolumetricClouds.rgb);
+		vec4 VolumetricFog = GetVolumetricFog(viewPos0, WsunVec, BN, directLightColor, indirectLightColor, indirectLightColor_dynamic, atmosphereAlpha, VolumetricClouds.rgb, cloudPlaneDistance);
 
 	#endif
 	
@@ -558,7 +560,6 @@ void main() {
 
 	#if defined OVERWORLD_SHADER
 		VolumetricFog = vec4(VolumetricClouds.rgb * VolumetricFog.a  + VolumetricFog.rgb, VolumetricFog.a*VolumetricClouds.a);
-		// VolumetricFog = vec4(VolumetricClouds.rgb * VolumetricFog.a  + VolumetricFog.rgb, VolumetricFog.a*VolumetricClouds.a);
 	#endif
 
 	if (isEyeInWater == 1){
@@ -574,8 +575,10 @@ void main() {
 
 	// VolumetricFog = raymarchTest(viewPos0, BN);
 
+
 	gl_FragData[0] = clamp(VolumetricFog, 0.0, 65000.0);
-	
+	// gl_FragData[0] = clamp(vec4(vec3(cloudPlaneDistance/1000.0),0), 0.0, 65000.0);
+	// 
 
 	// vec4 currentFrame = VolumetricFog;
 	// vec4 previousFrame = texture2D(colortex10, gl_FragCoord.xy * texelSize);
