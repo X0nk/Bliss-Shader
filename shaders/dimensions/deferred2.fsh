@@ -136,10 +136,10 @@ void main() {
 		vec2 halfResTC2 = vec2(floor(gl_FragCoord.xy)/CLOUDS_QUALITY+0.5+offsets[framemod8]*CLOUDS_QUALITY*0.5);
 		
 		#ifdef CLOUDS_INTERSECT_TERRAIN
-			float depth = texture2D(depthtex0, halfResTC2*texelSize).x;
+			float depth = texelFetch2D(depthtex0, ivec2(halfResTC2), 0).x;
 
 			#ifdef DISTANT_HORIZONS
-				float DH_depth =  texture2D(dhDepthTex, halfResTC2*texelSize).x;
+				float DH_depth =  texelFetch2D(dhDepthTex, ivec2(halfResTC2),0).x;
 				vec3 viewPos = toScreenSpace_DH(halfResTC*texelSize, depth, DH_depth);
 			#else
 				vec3 viewPos = toScreenSpace(vec3(halfResTC*texelSize, depth));
