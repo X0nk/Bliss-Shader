@@ -319,7 +319,7 @@ vec4 bilateralUpsample(out float outerEdgeResults, float referenceDepth, sampler
   float edgeSum = 0.0;
   float threshold = 0.005;
 
-  vec2 UV = gl_FragCoord.xy + 1 + (ivec2(gl_FragCoord.xy + frameCounter)%2)*2;
+  vec2 UV = gl_FragCoord.xy + 2 + (ivec2(gl_FragCoord.xy + frameCounter)%2)*2;
   const ivec2 SCALE = ivec2(1.0/VL_RENDER_RESOLUTION);
   ivec2 UV_DEPTH = ivec2(UV*VL_RENDER_RESOLUTION)*SCALE;
   ivec2 UV_COLOR = ivec2(UV*VL_RENDER_RESOLUTION);
@@ -354,9 +354,7 @@ vec4 bilateralUpsample(out float outerEdgeResults, float referenceDepth, sampler
 }
 
 vec4 VLTemporalFiltering(vec3 viewPos, in float referenceDepth, sampler2D depth){
-  // workaround texture filter putting a small offset on the tex
-  float cursedOffset = (VL_RENDER_RESOLUTION < 0.3 ? 2.0 : VL_RENDER_RESOLUTION < 0.6 ? 1.0 : 0.0);
-  vec2 offsetTexcoord = (gl_FragCoord.xy + cursedOffset)*texelSize;
+  vec2 offsetTexcoord = gl_FragCoord.xy*texelSize;
   vec2 VLtexCoord = offsetTexcoord * VL_RENDER_RESOLUTION;
   
 	// get previous frames position stuff for UV
