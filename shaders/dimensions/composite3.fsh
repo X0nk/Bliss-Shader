@@ -319,7 +319,7 @@ vec4 bilateralUpsample(out float outerEdgeResults, float referenceDepth, sampler
   float edgeSum = 0.0;
   float threshold = 0.005;
 
-  vec2 UV = gl_FragCoord.xy + 2 + (ivec2(gl_FragCoord.xy + frameCounter)%2)*2;
+  vec2 UV = gl_FragCoord.xy + 1 + (ivec2(gl_FragCoord.xy + frameCounter)%2)*2;
   const ivec2 SCALE = ivec2(1.0/VL_RENDER_RESOLUTION);
   ivec2 UV_DEPTH = ivec2(UV*VL_RENDER_RESOLUTION)*SCALE;
   ivec2 UV_COLOR = ivec2(UV*VL_RENDER_RESOLUTION);
@@ -355,7 +355,7 @@ vec4 bilateralUpsample(out float outerEdgeResults, float referenceDepth, sampler
 
 vec4 VLTemporalFiltering(vec3 viewPos, in float referenceDepth, sampler2D depth){
   
-  vec2 offsetTexcoord = gl_FragCoord.xy*texelSize;
+  vec2 offsetTexcoord = (gl_FragCoord.xy )*texelSize;
 
   vec2 VLtexCoord = offsetTexcoord * VL_RENDER_RESOLUTION;
   
@@ -373,6 +373,7 @@ vec4 VLTemporalFiltering(vec3 viewPos, in float referenceDepth, sampler2D depth)
   // pass a mask to only show upsampled color around the edges of blocks. this is so it doesnt blur reprojected results.
   float outerEdgeResults = 0.0;
   vec4 upsampledCurrentFrame = bilateralUpsample(outerEdgeResults, referenceDepth, depth);
+  // return upsampledCurrentFrame;
 
   if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0) return currentFrame;
   
@@ -484,7 +485,7 @@ void main() {
   #else
     vec4 temporallyFilteredVL = VLTemporalFiltering(viewPos, frDepth, depthtex0);
   #endif
-  
+
   gl_FragData[2] = temporallyFilteredVL;
   
 

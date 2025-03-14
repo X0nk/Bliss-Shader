@@ -501,7 +501,7 @@ void main() {
 	vec2 BN = fract(r2_sequence + bnoise);
 
 	// vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize + texelSize*0.5;
-	vec2 tc = (gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize;
+	vec2 tc = (gl_FragCoord.xy - 0.5)/VL_RENDER_RESOLUTION*texelSize;
 
 	bool iswater = texture2D(colortex7,tc).a > 0.99;
 
@@ -510,7 +510,7 @@ void main() {
 	float z0 = depth < 0.56 ? convertHandDepth(depth) : depth;
 
 	#ifdef DISTANT_HORIZONS
-		float DH_z0 = texture2D(dhDepthTex,tc).x;
+		float DH_z0 = texelFetch2D(dhDepthTex, ivec2(tc/texelSize),0).x;
 	#else
 		float DH_z0 = 0.0;
 	#endif
