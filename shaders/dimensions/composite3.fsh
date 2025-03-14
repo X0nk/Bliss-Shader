@@ -354,9 +354,9 @@ vec4 bilateralUpsample(out float outerEdgeResults, float referenceDepth, sampler
 }
 
 vec4 VLTemporalFiltering(vec3 viewPos, in float referenceDepth, sampler2D depth){
-  
-  vec2 offsetTexcoord = (gl_FragCoord.xy )*texelSize;
-
+  // workaround texture filter putting a small offset on the tex
+  float cursedOffset = (VL_RENDER_RESOLUTION < 0.3 ? 2.0 : VL_RENDER_RESOLUTION < 0.6 ? 1.0 : 0.0);
+  vec2 offsetTexcoord = (gl_FragCoord.xy + cursedOffset)*texelSize;
   vec2 VLtexCoord = offsetTexcoord * VL_RENDER_RESOLUTION;
   
 	// get previous frames position stuff for UV
