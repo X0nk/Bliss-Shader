@@ -451,12 +451,12 @@ void main() {
             mixWeight = 1.0;
         }
 
-        #ifdef LPV_REDSTONE_LIGHTS
-            if (blockId == BLOCK_COMPARATOR_LIT) {
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 4.0;
-            }
-        #endif
+        //#ifdef LPV_REDSTONE_LIGHTS
+        //    if (blockId == BLOCK_COMPARATOR_LIT) {
+        //        lightColor = LightColor_RedstoneTorch;
+        //        lightRange = 4.0;
+        //    }
+        //#endif
 
         switch (blockId) {
             case BLOCK_COPPER_BULB_LIT:
@@ -646,75 +646,66 @@ void main() {
             mixWeight = 0.9;
         }
 
-        switch (blockId) {
         #ifdef LPV_REDSTONE_LIGHTS
+        switch (blockId) {
             case BLOCK_REDSTONE_WIRE_1:
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 0.5;
+                lightRange = 2.8;
                 break;
             case BLOCK_REDSTONE_WIRE_2:
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 1.0;
+                lightRange = 3.2;
                 break;
             case BLOCK_REDSTONE_WIRE_3:
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 1.5;
+                lightRange = 3.6;
                 break;
             case BLOCK_REDSTONE_WIRE_4:
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 2.0;
+                lightRange = 3.8;
                 break;
             case BLOCK_REDSTONE_WIRE_5:
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 2.5;
+                lightRange = 4.2;
                 break;
             case BLOCK_REDSTONE_WIRE_6:
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 3.0;
+                lightRange = 4.4;
                 break;
             case BLOCK_REDSTONE_WIRE_7:
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 3.5;
+                lightRange = 4.8;
                 break;
             case BLOCK_REDSTONE_WIRE_8:
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 4.0;
+                lightRange = 5.2;
                 break;
             case BLOCK_REDSTONE_WIRE_9:
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 4.5;
+                lightRange = 5.6;
                 break;
             case BLOCK_REDSTONE_WIRE_10:
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 5.0;
-                break;
-            case BLOCK_REDSTONE_WIRE_11:
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 5.5;
-                break;
-            case BLOCK_REDSTONE_WIRE_12:
-                lightColor = LightColor_RedstoneTorch;
                 lightRange = 6.0;
                 break;
+            case BLOCK_REDSTONE_WIRE_11:
+                lightRange = 6.4;
+                break;
+            case BLOCK_REDSTONE_WIRE_12:
+                lightRange = 6.8;
+                break;
             case BLOCK_REDSTONE_WIRE_13:
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 6.5;
+                lightRange = 7.2;
                 break;
             case BLOCK_REDSTONE_WIRE_14:
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 7.0;
+                lightRange = 7.6;
                 break;
             case BLOCK_REDSTONE_WIRE_15:
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 7.5;
+                lightRange = 8.0;
                 break;
 
+			case BLOCK_COMPARATOR_LIT:
             case BLOCK_REPEATER_LIT:
-                lightColor = LightColor_RedstoneTorch;
-                lightRange = 4.0;
+                lightRange = 8.0;
                 break;
+		}
+		if ((blockId >= BLOCK_REDSTONE_WIRE_1 && blockId <= BLOCK_REPEATER_LIT) || blockId == BLOCK_COMPARATOR_LIT) {
+			lightColor = vec3(1.0, LightColor_RedstoneTorch.yz);
+			mixWeight = 0.9 - lightRange / 8;
+		}
         #endif
-
+		
+		switch (blockId) {
             case BLOCK_RESPAWN_ANCHOR_4:
                 lightColor = vec3(1.0, 0.2, 1.0);
                 lightRange = 15.0;
