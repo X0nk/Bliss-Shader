@@ -211,7 +211,6 @@ void main() {
 		/*--------------------------------*/
 		float dofLodLevel = pcoc * 200.0;
 
-		// lerp between 2 frequencies 
 		vec2 dispersion = (texcoord - 0.5) * pcoc * 200.0 * DOF_DISPERSION_MULT;
 
 		for ( int i = 0; i < BOKEH_SAMPLES; i++) {
@@ -237,19 +236,27 @@ void main() {
 	vec3 bloomTile4 = texture2D_bicubic(colortex6, bloomTileUV/32.+vec2(0.4375*resScale.x+6.5*texelSize.x,.0)).rgb; //1/64 res
 	vec3 bloomTile5 = texture2D_bicubic(colortex6, bloomTileUV/64.+vec2(0.46875*resScale.x+8.5*texelSize.x,.0)).rgb; //1/128 res
 	vec3 bloomTile6 = texture2D_bicubic(colortex6, bloomTileUV/128.+vec2(0.484375*resScale.x+10.5*texelSize.x,.0)).rgb; //1/256 res
-	
-	float weights[7] = float[](     1.0,    1.0/2.0,    1.0/3.0,    1.0/5.5,    1.0/8.0,    1.0/10.0,   1.0/12.0    );
-	vec3 bloom = (bloomTile0*weights[0] + bloomTile1*weights[1] + bloomTile2*weights[2] + bloomTile3*weights[3] + bloomTile4*weights[4] + bloomTile5*weights[5] + bloomTile6*weights[6]) / bloomWeight();
-	vec3 fogBloom = (bloomTile0 + bloomTile1 + bloomTile2 + bloomTile3 + bloomTile4 + bloomTile5 + bloomTile6) / 7.0;
 
+	#ifdef OLD_BLOOM
+		vec3 bloom = (bloomTile0 + bloomTile1 + bloomTile2 + bloomTile3 + bloomTile4 + bloomTile5 + bloomTile6) / 7.0;
+		vec3 fogBloom = bloom;
+		
+		float lightScat = clamp((BLOOM_STRENGTH+3) * 0.05 * pow(exposure.a, 0.2)  ,0.0,1.0) * vignette;
+	#else
+		float weights[7] = float[](     1.0,    1.0/2.0,    1.0/3.0,    1.0/5.5,    1.0/8.0,    1.0/10.0,   1.0/12.0    );
+		vec3 bloom = (bloomTile0*weights[0] + bloomTile1*weights[1] + bloomTile2*weights[2] + bloomTile3*weights[3] + bloomTile4*weights[4] + bloomTile5*weights[5] + bloomTile6*weights[6]) / bloomWeight();
+		vec3 fogBloom = (bloomTile0 + bloomTile1 + bloomTile2 + bloomTile3 + bloomTile4 + bloomTile5 + bloomTile6) / 7.0;
+		
+		float lightScat = clamp(BLOOM_STRENGTH * 0.3,0.0,1.0) * vignette;
+	#endif
 
 	#ifdef AUTO_EXPOSURE
 		float purkinje = clamp(exposure.a*exposure.a,0.0,1.0) * clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*Purkinje_strength,0,1);
 	#else
 		float purkinje = clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*Purkinje_strength,0,1);
 	#endif	
+	
 
-	float lightScat = clamp(BLOOM_STRENGTH * 0.3,0.0,1.0) * vignette;
  	float VL_abs = texture2D(colortex7, texcoord*RENDER_SCALE).r;
 
   	VL_abs = clamp((1.0-VL_abs)*BLOOMY_FOG*0.75*(1.0+rainStrength) * (1.0-purkinje*0.3),0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
