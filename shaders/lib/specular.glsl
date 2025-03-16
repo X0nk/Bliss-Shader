@@ -304,8 +304,8 @@ vec3 specularReflections(
 	f0 = f0 == 0.0 ? 0.02 : f0;
 
 // 	if(isHand){
-	f0 = 0.9;
-	roughness = 0.25;
+	// f0 = 0.9;
+	// roughness = 0.25;
 // }
 	bool isMetal = f0 > 229.5/255.0;
 
