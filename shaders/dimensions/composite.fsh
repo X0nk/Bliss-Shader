@@ -343,7 +343,7 @@ void main() {
 	float noise = R2_dither();
 	vec2 texcoord = gl_FragCoord.xy*texelSize;
 
-	float z = texelFetch2D(depthtex0,ivec2(gl_FragCoord.xy),0).x;
+	float z = texelFetch2D(depthtex1,ivec2(gl_FragCoord.xy),0).x;
 
 	#ifdef DISTANT_HORIZONS
 		float DH_depth1 = texelFetch2D(dhDepthTex1,ivec2(gl_FragCoord.xy),0).x;
