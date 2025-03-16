@@ -210,8 +210,16 @@ void main() {
 		vec2 bcoord = vec2(0.0);
 		/*--------------------------------*/
 		float dofLodLevel = pcoc * 200.0;
+
+		// lerp between 2 frequencies 
+		vec2 dispersion = (texcoord - 0.5) * pcoc * 200.0 * DOF_DISPERSION_MULT;
+
 		for ( int i = 0; i < BOKEH_SAMPLES; i++) {
-			bcolor += texture2DLod(colortex5, texcoord.xy + bokeh_offsets[i]*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).rgb;
+			// bcolor += texture2DLod(colortex5, texcoord.xy + bokeh_offsets[i]*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).rgb;
+			
+			bcolor.r += texture2DLod(colortex5, texcoord.xy + (bokeh_offsets[i] + dispersion)*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).r;
+			bcolor.g += texture2DLod(colortex5, texcoord.xy + bokeh_offsets[i]*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).g;
+			bcolor.b += texture2DLod(colortex5, texcoord.xy + (bokeh_offsets[i] - dispersion)*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).b;
 		}
 		col = bcolor/BOKEH_SAMPLES;
 		#endif
