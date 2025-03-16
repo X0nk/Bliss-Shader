@@ -201,6 +201,9 @@ void main() {
 		#ifdef FAR_BLUR_ONLY
 			pcoc *= float(z > focus);
 		#endif
+		#ifdef REMOVE_HAND_BLUR
+			pcoc *= float(z > 0.56);
+		#endif
 		// float noise = blueNoise()*6.28318530718;
 		// mat2 noiseM = mat2( cos( noise ), -sin( noise ),
 	    //                    sin( noise ), cos( noise )
