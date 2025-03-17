@@ -1077,11 +1077,10 @@ void main() {
 			
 			if(isEyeInWater != 1) SSSColor *= lightLeakFix;
 			
-			#ifdef CLOUDS_SHADOWS
-				float cloudShadows = GetCloudShadow(feetPlayerPos.xyz + cameraPosition, WsunVec);
-				shadowColor *= cloudShadows;
-				SSSColor *= cloudShadow*cloudShadows;
-			#endif
+			float cloudShadows = GetCloudShadow(feetPlayerPos.xyz + cameraPosition, WsunVec);
+			shadowColor *= cloudShadows;
+			SSSColor *= cloudShadow*cloudShadows;
+
 		#endif
 	#endif
 
@@ -1351,16 +1350,13 @@ void main() {
 		gl_FragData[0].rgb = clamp(fp10Dither(Background, triangularize(noise_2)), 0.0, 65000.);
 	}
 
+	// water absorbtion will impact ALL light coming up from terrain underwater.
+	gl_FragData[0].rgb *= Absorbtion;
 
 	if(translucentMasks > 0.0 && isEyeInWater != 1){
-		
-		// water absorbtion will impact ALL light coming up from terrain underwater.
-		gl_FragData[0].rgb *= Absorbtion;
-		
 		vec4 vlBehingTranslucents = BilateralUpscale_VLFOG(colortex13, depthtex1, gl_FragCoord.xy - 1.5, ld(z));
 
     	gl_FragData[0].rgb = gl_FragData[0].rgb * vlBehingTranslucents.a + vlBehingTranslucents.rgb;
-
 	}
 
 	

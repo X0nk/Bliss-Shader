@@ -191,7 +191,7 @@ vec4 waterVolumetrics( vec3 rayStart, vec3 rayEnd, float estEndDepth, float estS
 	vec3 sh = vec3(1.0);
 
 	// do this outside raymarch loop, masking the water surface is good enough
-	#if defined VL_CLOUDS_SHADOWS && defined OVERWORLD_SHADER
+	#if defined OVERWORLD_SHADER
 		sh *= GetCloudShadow(wpos+cameraPosition, WsunVec);
 	#endif
 	
@@ -286,18 +286,19 @@ void main() {
 		float noise_1 = R2_dither();
 		float noise_2 = blueNoise();
 
-		float z0 = texture2D(depthtex0,tc).x;
+		float z0 = texelFetch2D(depthtex0, ivec2((floor(gl_FragCoord.xy - 0.5)/VL_RENDER_RESOLUTION*texelSize)/texelSize), 0 ).x;
 
 		#ifdef DISTANT_HORIZONS
-			float DH_z0 = texture2D(dhDepthTex,tc).x;
+			float DH_z0 = texelFetch2D(dhDepthTex, ivec2((floor(gl_FragCoord.xy - 0.5)/VL_RENDER_RESOLUTION*texelSize)/texelSize), 0 ).x;//texture2D(dhDepthTex,tc).x;
 		#else
 			float DH_z0 = 0.0;
 		#endif
 
-		float z = texture2D(depthtex1,tc).x;
+		float z = texelFetch2D(depthtex1, ivec2((floor(gl_FragCoord.xy - 0.5)/VL_RENDER_RESOLUTION*texelSize)/texelSize), 0 ).x;
 
 		#ifdef DISTANT_HORIZONS
-			float DH_z = texture2D(dhDepthTex1,tc).x;
+			// float DH_z = texture2D(dhDepthTex1,tc).x;
+			float DH_z = texelFetch2D(dhDepthTex1, ivec2((floor(gl_FragCoord.xy - 0.5)/VL_RENDER_RESOLUTION*texelSize)/texelSize), 0 ).x;//texture2D(dhDepthTex,tc).x;
 		#else
 			float DH_z = 0.0;
 		#endif
@@ -355,29 +356,32 @@ void main() {
 		vec4 finalVolumetrics = vec4(0.0,0.0,0.0,1.0);
 		float cloudPlaneDistance = 0.0;
 
-		if(!iswater){
-			#ifdef OVERWORLD_SHADER
-				vec4 VolumetricClouds = GetVolumetricClouds(viewPos1, vec2(noise_1, noise_2), WsunVec, directLightColor, indirectLightColor,cloudPlaneDistance);
+		#ifdef OVERWORLD_SHADER
+			vec4 VolumetricClouds = GetVolumetricClouds(viewPos1, vec2(noise_1, noise_2), WsunVec, directLightColor, indirectLightColor, cloudPlaneDistance);
 
-				float atmosphereAlpha = 1.0;
-				vec4 VolumetricFog = GetVolumetricFog(viewPos1, WsunVec,  vec2(noise_1, noise_2), directLightColor, indirectLightColor, indirectLightColor_dynamic, atmosphereAlpha, VolumetricClouds.rgb,cloudPlaneDistance);
-				
-				finalVolumetrics.rgb += VolumetricClouds.rgb;
-			#endif
+			float atmosphereAlpha = 1.0;
+			vec4 VolumetricFog = GetVolumetricFog(viewPos1, WsunVec,  vec2(noise_1, noise_2), directLightColor, indirectLightColor, indirectLightColor_dynamic, atmosphereAlpha, VolumetricClouds.rgb,cloudPlaneDistance);
+			
+			finalVolumetrics.rgb += VolumetricClouds.rgb;
+			finalVolumetrics.a *= VolumetricClouds.a;
+		#endif
 
-			#if defined NETHER_SHADER || defined END_SHADER
-				vec4 VolumetricFog = GetVolumetricFog(viewPos1, noise_1, noise_2);
-			#endif
+		#if defined NETHER_SHADER || defined END_SHADER
+			vec4 VolumetricFog = GetVolumetricFog(viewPos1, noise_1, noise_2);
+		#endif
 
-			finalVolumetrics.rgb = finalVolumetrics.rgb * VolumetricFog.a + VolumetricFog.rgb;
-			finalVolumetrics.a *= VolumetricFog.a;
-		}
+		finalVolumetrics.rgb = finalVolumetrics.rgb * VolumetricFog.a + VolumetricFog.rgb;
+		finalVolumetrics.a *= VolumetricFog.a;
 		
 		vec4 underwaterVlFog = vec4(0,0,0,1);
 		
 		float lightleakfix = clamp(lightmap.y + (1-caveDetection),0.0,1.0);
 
-		if(iswater && isEyeInWater != 1) finalVolumetrics = waterVolumetrics(viewPos0, viewPos1, estimatedDepth, estimatedSunDepth, Vdiff, noise_1, totEpsilon, scatterCoef, indirectLightColor_dynamic, directLightColor, dot(normalize(viewPos1), normalize(sunVec*lightCol.a)) ,lightleakfix);		
+		if(iswater && isEyeInWater != 1) {
+			vec4 underWaterFog = waterVolumetrics(viewPos0, viewPos1, estimatedDepth, estimatedSunDepth, Vdiff, noise_1, totEpsilon, scatterCoef, indirectLightColor_dynamic, directLightColor, dot(normalize(viewPos1), normalize(sunVec*lightCol.a)) ,lightleakfix); 
+			finalVolumetrics.rgb = finalVolumetrics.rgb * underWaterFog.a*underWaterFog.a + underWaterFog.rgb;
+			finalVolumetrics.a *= underWaterFog.a;
+		}
 
 		gl_FragData[0] = clamp(finalVolumetrics, 0.0, 65000.0);
 	}
