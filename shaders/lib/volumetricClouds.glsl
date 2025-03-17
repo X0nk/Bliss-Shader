@@ -148,6 +148,9 @@ float GetCloudShadow(vec3 playerPos, vec3 sunVector){
 		startPosition = playerPos + sunVector / abs(sunVector.y) * max(CloudLayer2_height - playerPos.y, 0.0);
 		cloudShadows += getCloudShape(ALTOSTRATUS_LAYER, 0, startPosition, CloudLayer2_height, CloudLayer2_height)*dailyWeatherParams1.z * (1.0-abs(WsunVec.y));
 	#endif
+	
+	cloudShadows *= CLOUD_SHADOW_STRENGTH;
+
 	#if defined CloudLayer0 || defined CloudLayer1 || defined CloudLayer2
 		totalShadow *= exp((cloudShadows*cloudShadows) * -200.0);
 	#endif
