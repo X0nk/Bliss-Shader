@@ -588,9 +588,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		// Shadows = mix(LM_shadowMapFallback, Shadows, shadowMapFalloff2);
 		Shadows *= mix(LM_shadowMapFallback,1.0,shadowMapFalloff2);
 
-		#ifdef CLOUDS_SHADOWS
-			Shadows *= GetCloudShadow(feetPlayerPos+cameraPosition, WsunVec);
-		#endif
+		Shadows *= GetCloudShadow(feetPlayerPos+cameraPosition, WsunVec);
+
 
 		Direct_lighting = DirectLightColor * NdotL * Shadows;
 
