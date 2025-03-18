@@ -602,7 +602,7 @@ void main() {
     // if(z >= 1.0) color = vec3(0,255,0);
     // else color = vec3(0.01);
 
-    color *= min(temporallyFilteredVL.a + (1-nametagbackground),1.0);
+    color *= min(temporallyFilteredVL.a + (1.0-nametagbackground),1.0);
     color += temporallyFilteredVL.rgb * nametagbackground;
   #else
     color *= temporallyFilteredVL.a ;
