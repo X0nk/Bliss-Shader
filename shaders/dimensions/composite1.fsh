@@ -1291,7 +1291,7 @@ void main() {
     		vec3 specularNormal = normal;
 			if (dot(normal, (feetPlayerPos_normalized)) > 0.0) specularNormal = FlatNormals;
 			
-			FINAL_COLOR = specularReflections(viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, specularNormal, SpecularTex.r, SpecularTex.g, albedo, FINAL_COLOR, shadowColor, lightmap.y, hand, isWater || (!isWater && isEyeInWater == 1), flashLightSpecularData);
+			FINAL_COLOR = specularReflections(viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, specularNormal, SpecularTex.r, SpecularTex.g, albedo, FINAL_COLOR, shadowColor, lightmap.y, hand, flashLightSpecularData);
 		#endif
 
 		gl_FragData[0].rgb = FINAL_COLOR;
@@ -1350,10 +1350,11 @@ void main() {
 		gl_FragData[0].rgb = clamp(fp10Dither(Background, triangularize(noise_2)), 0.0, 65000.);
 	}
 
-	// water absorbtion will impact ALL light coming up from terrain underwater.
-	gl_FragData[0].rgb *= Absorbtion;
 
 	if(translucentMasks > 0.0 && isEyeInWater != 1){
+		// water absorbtion will impact ALL light coming up from terrain underwater.
+		gl_FragData[0].rgb *= Absorbtion;
+
 		vec4 vlBehingTranslucents = BilateralUpscale_VLFOG(colortex13, depthtex1, gl_FragCoord.xy - 1.5, ld(z));
 
     	gl_FragData[0].rgb = gl_FragData[0].rgb * vlBehingTranslucents.a + vlBehingTranslucents.rgb;
