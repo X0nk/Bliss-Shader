@@ -388,7 +388,7 @@ void main() {
 		#ifndef LINES
 			gl_FragData[0].a = TEXTURE.a;
 		#else
-			gl_FragData[0].a = 1.0;
+			gl_FragData[0].a = color.a;
 		#endif
 		#ifndef BLOOMY_PARTICLES
 			gl_FragData[1].a = 0.0; // for bloomy rain and stuff
