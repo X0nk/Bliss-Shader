@@ -334,10 +334,13 @@ vec4 raymarchCloud(
 				float shapeWithDensityFaded = shape*density * pow(clamp((rayPosition.y - minHeight)/(max(maxHeight-minHeight,1.0)*0.25),0.0,1.0),2.0);
 
 
+				if(shapeWithDensityFaded > mix(0.06, 1e-5, dither)){
+					cloudPlaneDistance.x = length(rayPosition - cameraPosition); cloudPlaneDistance.y = 0.0;
+				}
+
 				// check if the pixel has visible clouds before doing work.
 				if(shapeWithDensityFaded > 1e-5){
 					
-					cloudPlaneDistance.x = length(rayPosition - cameraPosition); cloudPlaneDistance.y = 0.0;
 
 					// can add the initial cloud shape sample for a free shadow starting step :D
 					float indirectShadowMask = 1.0 - min(max(rayPosition.y - minHeight,0.0) / max(maxHeight-minHeight,1.0), 1.0);
