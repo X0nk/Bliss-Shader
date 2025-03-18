@@ -170,9 +170,11 @@ vec4 GetVolumetricFog(
 	for (int i = 0; i < SAMPLECOUNT; i++) {
 		float d = (pow(expFactor, float(i+dither.x)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
 		float dd = pow(expFactor, float(i+dither.y)/float(SAMPLECOUNT)) * log(expFactor) / float(SAMPLECOUNT)/(expFactor-1.0);
-		
-		// check if the fog intersects clouds
-		if(length(d*dVWorld) > cloudPlaneDistance) break;
+
+		#ifdef VOLUMETRIC_CLOUDS
+			// check if the fog intersects clouds
+			if(length(d*dVWorld) > cloudPlaneDistance) break;
+		#endif
 
 		progress = start.xyz + d*dV;
 		progressW = gbufferModelViewInverse[3].xyz + cameraPosition + d*dVWorld;
