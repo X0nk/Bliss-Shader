@@ -256,6 +256,13 @@ vec4 raymarchCloud(
 
 	float distanceFactor = length(rayDirection);
 
+	float densityTresholdCheck = 0.0;
+
+	if(LayerIndex == SMALLCUMULUS_LAYER) densityTresholdCheck = 0.06;
+	if(LayerIndex == LARGECUMULUS_LAYER) densityTresholdCheck = 0.02;
+	if(LayerIndex == ALTOSTRATUS_LAYER) densityTresholdCheck = 0.01;
+
+	densityTresholdCheck = mix(1e-5, densityTresholdCheck, dither);
 
 	if(LayerIndex == ALTOSTRATUS_LAYER){
 		float density = dailyWeatherParams1.z;
@@ -273,10 +280,12 @@ vec4 raymarchCloud(
 		float shape = getCloudShape(LayerIndex, 1, rayPosition, minHeight, maxHeight);
 		float shapeWithDensity = shape*density;
 
+		if(shapeWithDensity > mix(1e-5, 0.06, dither)){
+			cloudPlaneDistance.x = length(rayPosition - cameraPosition); cloudPlaneDistance.y = 0.0;
+		}
+
 		// check if the pixel has visible clouds before doing work.
 		if(shapeWithDensity > 1e-5){
-			
-			cloudPlaneDistance.x = length(rayPosition - cameraPosition); cloudPlaneDistance.y = 0.0;
 
 			// can add the initial cloud shape sample for a free shadow starting step :D
 			float sunShadowMask = (shapeWithDensity + getCloudScattering(LayerIndex, rayPosition, sunVector, dither, minHeight, maxHeight, density)) * (1.0-abs(WsunVec.y));
@@ -333,8 +342,7 @@ vec4 raymarchCloud(
 				float shapeWithDensity = shape*density;
 				float shapeWithDensityFaded = shape*density * pow(clamp((rayPosition.y - minHeight)/(max(maxHeight-minHeight,1.0)*0.25),0.0,1.0),2.0);
 
-
-				if(shapeWithDensityFaded > mix(0.06, 1e-5, dither)){
+				if(shapeWithDensityFaded > densityTresholdCheck){
 					cloudPlaneDistance.x = length(rayPosition - cameraPosition); cloudPlaneDistance.y = 0.0;
 				}
 
@@ -560,6 +568,16 @@ vec4 GetVolumetricClouds(
 		cloudPlaneDistance = mix(cloudLayer2_Distance.x, cloudLayer1_Distance.x, cloudLayer2_Distance.y);
 		cloudPlaneDistance = mix(cloudLayer0_Distance.x, cloudPlaneDistance, cloudLayer0_Distance.y);
 	#endif
+	
+	#if defined CloudLayer0 && !defined CloudLayer1 && !defined CloudLayer2
+		cloudPlaneDistance = cloudLayer0_Distance.x;
+	#endif
+	#if !defined CloudLayer0 && defined CloudLayer1 && !defined CloudLayer2
+		cloudPlaneDistance = cloudLayer1_Distance.x;
+	#endif
+	#if !defined CloudLayer0 && !defined CloudLayer1 && defined CloudLayer2
+		cloudPlaneDistance = cloudLayer2_Distance.x;
+	#endif
 
 	#ifdef CloudLayer2
 		cloudColor = altoStratusClouds;
@@ -568,8 +586,6 @@ vec4 GetVolumetricClouds(
 		cloudColor.rgb *= largeCumulusClouds.a;
 		cloudColor.rgb += largeCumulusClouds.rgb;
 		cloudColor.a *= largeCumulusClouds.a;
-
-
 	#endif
 	#ifdef CloudLayer0
 		cloudColor.rgb *= smallCumulusClouds.a;
