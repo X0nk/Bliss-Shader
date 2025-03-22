@@ -1334,7 +1334,7 @@ void main() {
 			Background += Sky;
 			
 			#if RESOURCEPACK_SKY == 1 || RESOURCEPACK_SKY == 2 || RESOURCEPACK_SKY == 3
-				vec3 resourcePackskyBox = skyboxCol * clamp(unsigned_WsunVec.y*255.0,0.01,1.0);
+				vec3 resourcePackskyBox = skyboxCol * 50.0 * clamp(unsigned_WsunVec.y*255.0,0.1,1.0);
 
 				#ifdef SKY_GROUND
 					resourcePackskyBox *= atmosphereGround;
