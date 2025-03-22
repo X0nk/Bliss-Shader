@@ -786,6 +786,8 @@ void main() {
 	
 		vec4 data = texelFetch2D(colortex1, ivec2(gl_FragCoord.xy), 0);
 
+		vec3 skyboxCol = data.rgb;
+
 		vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y)); // albedo, masks
 		vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w)); // normals, lightmaps
 		// vec4 dataUnpacked2 = vec4(decodeVec2(data.z),decodeVec2(data.w));
@@ -1299,6 +1301,7 @@ void main() {
 	}else{
 		vec3 Background = vec3(0.0);
 
+
 		#ifdef OVERWORLD_SHADER
 
 			float atmosphereGround = 1.0 - exp2(-50.0 * pow(clamp(feetPlayerPos_normalized.y+0.025,0.0,1.0),2.0)  ); // darken the ground in the sky.
@@ -1330,21 +1333,16 @@ void main() {
 			vec3 Sky = skyFromTex(feetPlayerPos_normalized, colortex4)/1200.0 * Sky_Brightness;
 			Background += Sky;
 			
-		#endif
+			#if RESOURCEPACK_SKY == 1 || RESOURCEPACK_SKY == 2 || RESOURCEPACK_SKY == 3
+				vec3 resourcePackskyBox = skyboxCol * clamp(unsigned_WsunVec.y*2.0,0.1,1.0);
 
-		// #if RESOURCEPACK_SKY == 1 || RESOURCEPACK_SKY == 2 || RESOURCEPACK_SKY == 3
-		// 	vec3 resourcePackskyBox = toLinear(texture2D(colortex10, texcoord).rgb * 5.0) * 15.0 * clamp(unsigned_WsunVec.y*2.0,0.1,1.0);
+				#ifdef SKY_GROUND
+					resourcePackskyBox *= atmosphereGround;
+				#endif
 
-		// 	#ifdef SKY_GROUND
-		// 		resourcePackskyBox *= atmosphereGround;
-		// 	#endif
+				Background += resourcePackskyBox;
+			#endif
 
-		// 	Background += resourcePackskyBox;
-		// #endif
-
-		#if defined OVERWORLD_SHADER && defined VOLUMETRIC_CLOUDS && !defined CLOUDS_INTERSECT_TERRAIN
-			vec4 Clouds = texture2D_bicubic_offset(colortex0, texcoord*CLOUDS_QUALITY, noise, RENDER_SCALE.x);
-			Background = Background * Clouds.a + Clouds.rgb;
 		#endif
 
 		gl_FragData[0].rgb = clamp(fp10Dither(Background, triangularize(noise_2)), 0.0, 65000.);
