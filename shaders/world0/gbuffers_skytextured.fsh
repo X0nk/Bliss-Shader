@@ -48,7 +48,7 @@ void main() {
 		vec3 NEWCOLOR = COLOR.rgb;
 
 		if(isSun) NEWCOLOR.rgb = COLOR.rgb * 10.0;
-		if(isMoon) NEWCOLOR.rgb = COLOR.rgb * 10.0;
+		if(isMoon) NEWCOLOR.rgb = COLOR.rgb * 5.0;
 		if(isSkyBox) NEWCOLOR.rgb = COLOR.rgb * 2.0;
 
 		NEWCOLOR.rgb = toLinear(NEWCOLOR.rgb);
