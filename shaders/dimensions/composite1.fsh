@@ -904,21 +904,7 @@ void main() {
 				AmbientLightColor = luma(AmbientLightColor) * vec3(INDIRECTLIGHT_DIFFUSE_R,INDIRECTLIGHT_DIFFUSE_G,INDIRECTLIGHT_DIFFUSE_B);
 			#endif
 			
-			
-			
 			shadowColor = DirectLightColor;
-
-
-			
-			// #ifdef PER_BIOME_ENVIRONMENT
-			// 	// BiomeSunlightColor(DirectLightColor);
-			// 	vec3 biomeDirect = DirectLightColor; 
-			// 	vec3 biomeIndirect = AmbientLightColor;
-			// 	float inBiome = BiomeVLFogColors(biomeDirect, biomeIndirect);
-
-			// 	float maxDistance = inBiome * min(max(1.0 -  length(feetPlayerPos)/(32*8),0.0)*2.0,1.0);
-			// 	DirectLightColor = mix(DirectLightColor, biomeDirect, maxDistance);
-			// #endif
 
 			bool inShadowmapBounds = false;
 		#endif
@@ -951,11 +937,6 @@ void main() {
 		#endif
 		
 		Absorbtion = exp(-totEpsilon * max(Vdiff, minimumAbsorbance));
-
-
-		// brighten up the fully absorbed parts of water when night vision activates.
-		// if( nightVision > 0.0 ) Absorbtion += exp( -50.0 * totEpsilon) * 50.0 * 7.0 * nightVision;
-		// if( nightVision > 0.0 ) Absorbtion += exp( -30.0 * totEpsilon) * 10.0 * nightVision * 10.0;
 
 		// things to note about sunlight in water
 		// sunlight gets absorbed by water on the way down to the floor, and on the way back up to your eye. im gonna ingore the latter part lol
@@ -1004,7 +985,8 @@ void main() {
 	
 	#ifdef OVERWORLD_SHADER
 
-		float LM_shadowMapFallback =  min(max(lightmap.y-0.8, 0.0) * 5.0,1.0);
+		// float LM_shadowMapFallback =  min(max(lightmap.y-0.8, 0.0) * 5.0,1.0);
+		float LM_shadowMapFallback =  min(max(lightmap.y, 0.0),1.0);
 
 		float LightningPhase = 0.0;
 		vec3 LightningFlashLighting = Iris_Lightningflash(feetPlayerPos, lightningBoltPosition.xyz, slopednormal, LightningPhase) * pow(lightmap.y,10);
@@ -1343,21 +1325,20 @@ void main() {
 
 				Background *= atmosphereGround;
 			#endif
-
-			vec3 Sky = skyFromTex(feetPlayerPos_normalized, colortex4)/1200.0 * Sky_Brightness;
-			Background += Sky;
+			
+			#ifndef ISOLATE_RESOURCEPACK_SKY
+				vec3 Sky = skyFromTex(feetPlayerPos_normalized, colortex4)/1200.0 * Sky_Brightness;
+				Background += Sky;
+			#endif
 			
 			#if RESOURCEPACK_SKY == 1 || RESOURCEPACK_SKY == 2 || RESOURCEPACK_SKY == 3
 				vec3 resourcePackskyBox = skyboxCol * 50.0 * clamp(unsigned_WsunVec.y*255.0,0.1,1.0);
 
-				#ifdef ISOLATE_RESOURCEPACK_SKY
-					Background = resourcePackskyBox;
-				#else
-					#ifdef SKY_GROUND
-						resourcePackskyBox *= atmosphereGround;
-					#endif
-					Background += resourcePackskyBox;
+				#if defined SKY_GROUND && !defined ISOLATE_RESOURCEPACK_SKY
+					resourcePackskyBox *= atmosphereGround;
 				#endif
+
+				Background += resourcePackskyBox;
 			#endif
 
 		#endif
