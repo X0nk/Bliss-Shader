@@ -129,7 +129,11 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 
 	float high_sun = clamp(pow(sunVector.y+0.6,5),0.0,1.0) * 3.0; // make sunrise less blue, and allow sunset to be bluer
 	float low_sun = clamp(((1.0-abs(sunVector.y))*3.) - high_sun,1.0,2.0) ;
-
+	
+	#if defined OVERWORLD_SHADER && defined TWILIGHT_FOREST_FLAG
+		low_sun = 1.5;
+		phaseSun = phaseSun * 3.0;
+	#endif
 
 	for (int i = 0; i < iSteps; ++i, position += increment) {
 		vec3 density = sky_density(length(position));

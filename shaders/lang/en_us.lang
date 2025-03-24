@@ -510,11 +510,6 @@ option.AEROCHROME_MODE.comment = Infrared Film. Google "Aerochrome" to get an id
 option.AEROCHROME_PINKNESS.comment = Higher = Pink. Lower = Red
 option.AEROCHROME_WOOL_ENABLED.comment = Technically wool things should be affected but it ruins a lot of builds. Enable to be more technically correct.
 
-value.DIMENSION_FALLBACK_SHADER.0 = overworld shader as fallback
-value.DIMENSION_FALLBACK_SHADER.1 = nether shader as fallback
-value.DIMENSION_FALLBACK_SHADER.2 = end shader as fallback
-value.DIMENSION_FALLBACK_SHADER.3 = no shader as fallback
-
 
 
 screen.Misc_Settings.comment = Random settings for DEBUGGING or other fun stuff.

@@ -529,12 +529,12 @@ void main() {
 	vec3 indirectLightColor = averageSkyCol / 1200.0;
 	vec3 indirectLightColor_dynamic = averageSkyCol_Clouds / 1200.0;
 	float cloudPlaneDistance = 0.0;
-
+	float THINGY = 0;
 	#if defined OVERWORLD_SHADER
 		// z0 = texture2D(depthtex0, tc + jitter/VL_RENDER_RESOLUTION).x;
 		// viewPos0 = toScreenSpace_DH(tc/RENDER_SCALE, z0, DH_z0);
 		vec4 VolumetricClouds = GetVolumetricClouds(viewPos0, BN, WsunVec, directLightColor, indirectLightColor, cloudPlaneDistance);
-		
+		THINGY = cloudPlaneDistance-length(playerPos);
 		#ifdef CAVE_FOG
 		
   	  		float skyhole = pow(clamp(1.0-pow(max(playerPos_normalized.y - 0.6,0.0)*5.0,2.0),0.0,1.0),2)* caveDetection;
@@ -575,14 +575,5 @@ void main() {
 
 
 	gl_FragData[0] = clamp(VolumetricFog, 0.0, 65000.0);
-	// gl_FragData[0] = clamp(vec4(vec3(cloudPlaneDistance/1000.0),0), 0.0, 65000.0);
-	// 
-
-	// vec4 currentFrame = VolumetricFog;
-	// vec4 previousFrame = texture2D(colortex10, gl_FragCoord.xy * texelSize);
-
-	// vec4 temporallyFilteredVL = VLTemporalFiltering(viewPos0, z0 >= 1.0, VolumetricFog);
-
-	// gl_FragData[1] = temporallyFilteredVL;
 
 }
