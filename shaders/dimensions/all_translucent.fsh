@@ -567,7 +567,13 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	#ifdef OVERWORLD_SHADER
 		vec3 DirectLightColor = lightCol.rgb/2400.0;
+		vec3 AmbientLightColor = averageSkyCol_Clouds/900.0;
 
+		#ifdef USE_CUSTOM_DIFFUSE_LIGHTING_COLORS
+			DirectLightColor = luma(DirectLightColor) * vec3(DIRECTLIGHT_DIFFUSE_R,DIRECTLIGHT_DIFFUSE_G,DIRECTLIGHT_DIFFUSE_B);
+			AmbientLightColor = luma(AmbientLightColor) * vec3(INDIRECTLIGHT_DIFFUSE_R,INDIRECTLIGHT_DIFFUSE_G,INDIRECTLIGHT_DIFFUSE_B);
+		#endif
+		
 		if(!isWater && isEyeInWater == 1){
 			float distanceFromWaterSurface = cameraPosition.y - waterEnteredAltitude;
 			float waterdepth = max(-(feetPlayerPos.y + distanceFromWaterSurface),0.0);
@@ -595,8 +601,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 
 		Direct_lighting = DirectLightColor * NdotL * Shadows;
-
-		vec3 AmbientLightColor = averageSkyCol_Clouds/900.0;
 
 		vec3 indirectNormal = worldSpaceNormal / dot(abs(worldSpaceNormal),vec3(1.0));
 		float SkylightDir = clamp(indirectNormal.y*0.7+0.3,0.0,1.0);

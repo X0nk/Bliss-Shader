@@ -140,6 +140,11 @@ vec4 GetVolumetricFog(
 	vec3 rC = vec3(sky_coefficientRayleighR*1e-6, sky_coefficientRayleighG*1e-5, sky_coefficientRayleighB*1e-5) ;
 	vec3 mC = vec3(fog_coefficientMieR*1e-6, fog_coefficientMieG*1e-6, fog_coefficientMieB*1e-6);
 	
+	#if defined EXCLUDE_WRITE_TO_LUT && defined USE_CUSTOM_FOG_LIGHTING_COLORS
+		LightColor = dot(LightColor,vec3(0.21, 0.72, 0.07)) * vec3(DIRECTLIGHT_FOG_R,DIRECTLIGHT_FOG_G,DIRECTLIGHT_FOG_B);
+		AmbientColor = dot(AmbientColor,vec3(0.21, 0.72, 0.07)) * vec3(INDIRECTLIGHT_FOG_R,INDIRECTLIGHT_FOG_G,INDIRECTLIGHT_FOG_B);
+	#endif
+
 	vec3 skyLightPhased = AmbientColor;
 	vec3 LightSourcePhased = LightColor;
 

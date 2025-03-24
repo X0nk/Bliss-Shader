@@ -510,7 +510,31 @@ option.AEROCHROME_MODE.comment = Infrared Film. Google "Aerochrome" to get an id
 option.AEROCHROME_PINKNESS.comment = Higher = Pink. Lower = Red
 option.AEROCHROME_WOOL_ENABLED.comment = Technically wool things should be affected but it ruins a lot of builds. Enable to be more technically correct.
 
-
+option.USE_CUSTOM_DIFFUSE_LIGHTING_COLORS = Custom Diffuse Colors
+option.DIRECTLIGHT_DIFFUSE_R = Sun R
+option.DIRECTLIGHT_DIFFUSE_G = Sun G
+option.DIRECTLIGHT_DIFFUSE_B = Sun B
+option.INDIRECTLIGHT_DIFFUSE_R = Ambient R
+option.INDIRECTLIGHT_DIFFUSE_G = Ambient G
+option.INDIRECTLIGHT_DIFFUSE_B = Ambient B
+option.USE_CUSTOM_CLOUD_LIGHTING_COLORS = Custom Cloud Colors
+option.DIRECTLIGHT_CLOUDS_R = Sun R
+option.DIRECTLIGHT_CLOUDS_G = Sun G
+option.DIRECTLIGHT_CLOUDS_B = Sun B
+option.INDIRECTLIGHT_CLOUDS_R = Ambient R
+option.INDIRECTLIGHT_CLOUDS_G = Ambient G
+option.INDIRECTLIGHT_CLOUDS_B = Ambient B
+option.USE_CUSTOM_FOG_LIGHTING_COLORS = Custom Fog Colors
+option.DIRECTLIGHT_FOG_R = Sun R
+option.DIRECTLIGHT_FOG_G = Sun G
+option.DIRECTLIGHT_FOG_B = Sun B
+option.INDIRECTLIGHT_FOG_R = Ambient R
+option.INDIRECTLIGHT_FOG_G = Ambient G
+option.INDIRECTLIGHT_FOG_B = Ambient B
+option.USE_CUSTOM_SKY_GROUND_LIGHTING_COLORS = Custom Sky Ground Color
+option.SKY_GROUND_R = Ground R
+option.SKY_GROUND_G = Ground G
+option.SKY_GROUND_B = Ground B
 
 screen.Misc_Settings.comment = Random settings for DEBUGGING or other fun stuff.
 screen.Sun_and_Moon_Colors.comment = Configure the color of the sun or moon.
