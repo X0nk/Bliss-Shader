@@ -259,6 +259,9 @@ vec4 texture2D_POMSwitch(
 	return texture2DGradARB(sampler, lightmapCoord, dcdxdcdy.xy, dcdxdcdy.zw);
 }
 
+float luma(vec3 color) {
+	return dot(color,vec3(0.21, 0.72, 0.07));
+}
 uniform vec3 eyePosition;
 
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -410,6 +413,14 @@ void main() {
 
 		#ifdef OVERWORLD_SHADER
 			directLightColor =  lightCol.rgb/2400.0;
+			AmbientLightColor = averageSkyCol_Clouds / 900.0;
+		
+		#ifdef USE_CUSTOM_DIFFUSE_LIGHTING_COLORS
+			directLightColor = luma(directLightColor) * vec3(DIRECTLIGHT_DIFFUSE_R,DIRECTLIGHT_DIFFUSE_G,DIRECTLIGHT_DIFFUSE_B);
+			AmbientLightColor = luma(AmbientLightColor) * vec3(INDIRECTLIGHT_DIFFUSE_R,INDIRECTLIGHT_DIFFUSE_G,INDIRECTLIGHT_DIFFUSE_B);
+		#endif
+			
+			
 			float Shadows = 1.0;
 
 			vec3 shadowPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
@@ -435,7 +446,6 @@ void main() {
 			// 	Direct_lighting *= phaseg(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), 0.65)*2 + 0.5;
 			// #endif
 
-			AmbientLightColor = averageSkyCol_Clouds / 900.0;
 
 			#ifdef IS_IRIS
 				AmbientLightColor *= 2.5;

@@ -529,14 +529,11 @@ void main() {
 	vec3 indirectLightColor = averageSkyCol / 1200.0;
 	vec3 indirectLightColor_dynamic = averageSkyCol_Clouds / 1200.0;
 	float cloudPlaneDistance = 0.0;
-	float THINGY = 0;
+
 	#if defined OVERWORLD_SHADER
-		// z0 = texture2D(depthtex0, tc + jitter/VL_RENDER_RESOLUTION).x;
-		// viewPos0 = toScreenSpace_DH(tc/RENDER_SCALE, z0, DH_z0);
 		vec4 VolumetricClouds = GetVolumetricClouds(viewPos0, BN, WsunVec, directLightColor, indirectLightColor, cloudPlaneDistance);
-		THINGY = cloudPlaneDistance-length(playerPos);
-		#ifdef CAVE_FOG
 		
+		#ifdef CAVE_FOG
   	  		float skyhole = pow(clamp(1.0-pow(max(playerPos_normalized.y - 0.6,0.0)*5.0,2.0),0.0,1.0),2)* caveDetection;
 			VolumetricClouds.rgb *= 1.0-skyhole;
 			VolumetricClouds.a = mix(VolumetricClouds.a, 1.0,  skyhole);
@@ -548,7 +545,6 @@ void main() {
 
 		vec3 sceneColor = texelFetch2D(colortex3,ivec2(tc/texelSize),0).rgb * VolumetricClouds.a + VolumetricClouds.rgb;
 		vec4 VolumetricFog = GetVolumetricFog(viewPos0, WsunVec, BN, directLightColor, indirectLightColor, indirectLightColor_dynamic, atmosphereAlpha, VolumetricClouds.rgb, cloudPlaneDistance);
-
 	#endif
 	
 	#if defined NETHER_SHADER || defined END_SHADER
@@ -560,12 +556,8 @@ void main() {
 	#endif
 
 	if (isEyeInWater == 1){
-		// vec3 underWaterFog =  waterVolumetrics(vec3(0.0), viewPos0, length(viewPos0), BN, totEpsilon, scatterCoef, indirectLightColor_dynamic, directLightColor , dot(normalize(viewPos0), normalize(sunVec* lightCol.a ) 	));
-		// VolumetricFog = vec4(underWaterFog, 1.0);
-
 		vec4 underWaterFog =  waterVolumetrics(vec3(0.0), viewPos0_water, length(viewPos0_water), BN, totEpsilon, scatterCoef, indirectLightColor_dynamic, directLightColor , dot(normalize(viewPos0_water), normalize(sunVec* lightCol.a ) 	));
-		
-		// VolumetricFog.rgb = underWaterFog.rgb;
+
 		VolumetricFog = vec4(underWaterFog.rgb, 1.0);
 	}
 

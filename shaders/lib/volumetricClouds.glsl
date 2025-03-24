@@ -432,6 +432,8 @@ vec4 GetVolumetricClouds(
 		return vec4(0.0,0.0,0.0,1.0);
 	#endif
 
+
+
 	vec3 color = vec3(0.0);
 	float totalAbsorbance = 1.0;
 	vec4 cloudColor = vec4(color, totalAbsorbance);
@@ -478,10 +480,15 @@ vec4 GetVolumetricClouds(
 	vec3 rayDirection = NormPlayerPos.xyz * (cloudheight/length(NormPlayerPos.xyz/cloudDist)/samples);
 	vec3 rayPosition = getRayOrigin(rayDirection, cameraPosition, dither.y, minHeight, maxHeight);
 	
-
+	#ifdef SKY_GROUND
+		vec3 sampledSkyCol = indirectLightCol;
+	#else
+		vec3 sampledSkyCol = skyFromTex(normalize(rayPosition-cameraPosition), colortex4)/1200.0 * Sky_Brightness;
+	#endif
 
 	// setup for getting distance
 	vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos;
+
 	#ifdef DISTANT_HORIZONS
 		float maxLength = min(length(playerPos), max(far, dhRenderDistance))/length(playerPos);
 	#else
@@ -491,12 +498,16 @@ vec4 GetVolumetricClouds(
 
 	float startDistance = length(playerPos);
 
+	#if defined EXCLUDE_WRITE_TO_LUT && defined USE_CUSTOM_CLOUD_LIGHTING_COLORS
+		directLightCol = dot(directLightCol,vec3(0.21, 0.72, 0.07)) * vec3(DIRECTLIGHT_CLOUDS_R,DIRECTLIGHT_CLOUDS_G,DIRECTLIGHT_CLOUDS_B);
+		indirectLightCol = dot(indirectLightCol,vec3(0.21, 0.72, 0.07)) * vec3(INDIRECTLIGHT_CLOUDS_R,INDIRECTLIGHT_CLOUDS_G,INDIRECTLIGHT_CLOUDS_B);
+	#endif
 
 	///------- do color stuff outside of the raymarcher loop
 	vec3 sunScattering = directLightCol * (phaseCloud(SdotV, 0.85) + phaseCloud(SdotV, 0.75)) * 3.14;
 	vec3 sunMultiScattering = directLightCol * 0.8;// * (phaseCloud(SdotV, 0.35) + phaseCloud(-SdotV, 0.35) * 0.5) * 6.28;
 	vec3 skyScattering = indirectLightCol;
-	
+
 	vec3 distanceEstimation = normalize(NormPlayerPos.xyz * (cloudheight/abs(NormPlayerPos.y)/samples));
 
 	// terrible fake rayleigh scattering
@@ -513,11 +524,6 @@ vec4 GetVolumetricClouds(
 	// sunScattering *= distanceFade;
 	// sunMultiScattering *= distanceFade;
 
-	#ifdef SKY_GROUND
-		vec3 sampledSkyCol = skyScattering * 0.5;
-	#else
-		vec3 sampledSkyCol = skyFromTex(normalize(rayPosition-cameraPosition), colortex4)/1200.0 * Sky_Brightness;
-	#endif
 
    	////-------  RENDER SMALL CUMULUS CLOUDS
 		vec4 smallCumulusClouds = cloudColor;
