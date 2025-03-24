@@ -1315,8 +1315,12 @@ void main() {
 				mat2 rotationMatrix  = mat2(vec2(cos(radiance),  -sin(radiance)),  vec2(sin(radiance),  cos(radiance)));
 				
 				orbitstar.xy *= rotationMatrix;
-
-				Background += stars(orbitstar) * 10.0 * clamp(-unsigned_WsunVec.y*2.0,0.0,1.0);
+				
+  				#if defined OVERWORLD_SHADER && defined TWILIGHT_FOREST_FLAG
+					Background += stars(orbitstar) * 100.0;
+  				#else
+					Background += stars(orbitstar) * 10.0 * clamp(-unsigned_WsunVec.y*2.0,0.0,1.0);
+				#endif
 
 				#if !defined ambientLight_only && (RESOURCEPACK_SKY == 1 || RESOURCEPACK_SKY == 0)
 					Background += drawSun(dot(unsigned_WsunVec, feetPlayerPos_normalized), 0, DirectLightColor,vec3(0.0));
@@ -1336,11 +1340,14 @@ void main() {
 			#if RESOURCEPACK_SKY == 1 || RESOURCEPACK_SKY == 2 || RESOURCEPACK_SKY == 3
 				vec3 resourcePackskyBox = skyboxCol * 50.0 * clamp(unsigned_WsunVec.y*255.0,0.1,1.0);
 
-				#ifdef SKY_GROUND
-					resourcePackskyBox *= atmosphereGround;
+				#ifdef ISOLATE_RESOURCEPACK_SKY
+					Background = resourcePackskyBox;
+				#else
+					#ifdef SKY_GROUND
+						resourcePackskyBox *= atmosphereGround;
+					#endif
+					Background += resourcePackskyBox;
 				#endif
-
-				Background += resourcePackskyBox;
 			#endif
 
 		#endif

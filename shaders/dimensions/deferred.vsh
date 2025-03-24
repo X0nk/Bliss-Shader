@@ -158,6 +158,8 @@ void main() {
 	vec3 minimumlight =  vec3(1.0) * 0.01 * MIN_LIGHT_AMOUNT + nightVision * 0.05;
 	averageSkyCol_Clouds = max(normalize(averageSkyCol_Clouds + 1e-6) * min(luma(averageSkyCol_Clouds) * 3.0,2.5),0.0);
 	averageSkyCol = max(averageSkyCol * PLANET_GROUND_BRIGHTNESS,0.0) + minimumlight;
+	
+
 
 ////////////////////////////////////////
 /// --- SUNLIGHT/MOONLIGHT STUFF --- ///
@@ -176,6 +178,11 @@ void main() {
 	// lightSourceColor = sunVis >= 1e-5 ? sunColor * sunVis : moonColor * moonVis;
 	lightSourceColor = sunColor * sunVis + moonColor * moonVis;
 
+#endif
+
+#if defined OVERWORLD_SHADER && defined TWILIGHT_FOREST_FLAG
+	lightSourceColor = vec3(0.0);
+	moonColor = vec3(0.0);
 #endif
 
 //////////////////////////////////

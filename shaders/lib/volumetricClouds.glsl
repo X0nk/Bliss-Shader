@@ -440,6 +440,11 @@ vec4 GetVolumetricClouds(
 	float minHeight = CloudLayer0_height;
 	float maxHeight = cloudheight + minHeight;
 
+	#if defined OVERWORLD_SHADER && defined AETHER_FLAG
+		minHeight = CloudLayer0_height - 350.0;
+		maxHeight = cloudheight + minHeight;
+	#endif
+
 	float heightRelativeToClouds = clamp(1.0 - max(cameraPosition.y - minHeight,0.0) / 100.0 ,0.0,1.0);
 
 	#if defined DISTANT_HORIZONS

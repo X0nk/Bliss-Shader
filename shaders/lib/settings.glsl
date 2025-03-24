@@ -741,8 +741,6 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 
 // #define OLD_INDIRECT_SSS
 
-#define DIMENSION_FALLBACK_SHADER 0 // [0 1 2 3]
-
 ///////////////////////////////////////////
 // ----- DISTANT HORIZONS SETTINGS ----- //
 ///////////////////////////////////////////
@@ -816,11 +814,14 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 #define debug_DEPTHTEX0 9
 #define debug_DEPTHTEX1 10
 #define DEBUG_VIEW debug_OFF // [debug_OFF debug_SHADOWMAP debug_NORMALS debug_SPECULAR debug_INDIRECT debug_DIRECT debug_VIEW_POSITION debug_DH_WATER_BLENDING debug_FILTERED_STUFF debug_DEPTHTEX0 debug_DEPTHTEX1]
+#define ISOLATE_RESOURCEPACK_SKY
 
 #if DEBUG_VIEW == debug_DEPTHTEX0 || DEBUG_VIEW == debug_DEPTHTEX1
 	#undef TAA
 #endif
 // fix settings
+#ifdef ISOLATE_RESOURCEPACK_SKY
+#endif
 #ifdef RESPONSIVE_TAA
 #endif
 #ifdef DH_TAA_JITTER
