@@ -132,7 +132,6 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 	
 	#if defined OVERWORLD_SHADER && defined TWILIGHT_FOREST_FLAG
 		low_sun = 1.5;
-		phaseSun = phaseSun * 3.0;
 	#endif
 
 	for (int i = 0; i < iSteps; ++i, position += increment) {

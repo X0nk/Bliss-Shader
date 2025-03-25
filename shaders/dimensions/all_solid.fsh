@@ -445,6 +445,7 @@ void main() {
 	float textureLOD = bias();
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD) * color;
 	
+	
 	#if defined HAND
 		if (Albedo.a < 0.1) discard;
 	#endif
@@ -640,16 +641,6 @@ void main() {
 	//////////////////////////////// 				////////////////////////////////
 
 	#ifdef WORLD
-		// #ifdef Puddles
-		// 	float porosity = 0.4;
-			
-		// 	#ifdef Porosity
-		// 		porosity = SpecularTex.z >= 64.5/255.0 ? 0.0 : (SpecularTex.z*255.0/64.0)*0.65;
-		// 	#endif
-
-		// 	// if(SpecularTex.g < 229.5/255.0) Albedo.rgb = mix(Albedo.rgb, vec3(0), Puddle_shape*porosity);
-		// #endif
-
 		// apply noise to lightmaps to reduce banding.
 		vec2 PackLightmaps = vec2(torchlightmap, lmtexcoord.w);
 		vec4 data1 = clamp( encode(viewToWorld(normal), PackLightmaps), 0.0, 1.0);
