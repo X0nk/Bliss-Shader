@@ -985,8 +985,7 @@ void main() {
 	
 	#ifdef OVERWORLD_SHADER
 
-		// float LM_shadowMapFallback =  min(max(lightmap.y-0.8, 0.0) * 5.0,1.0);
-		float LM_shadowMapFallback =  min(max(lightmap.y, 0.0),1.0);
+		float LM_shadowMapFallback =  clamp(lightmap.y, 0.0,1.0);
 
 		float LightningPhase = 0.0;
 		vec3 LightningFlashLighting = Iris_Lightningflash(feetPlayerPos, lightningBoltPosition.xyz, slopednormal, LightningPhase) * pow(lightmap.y,10);
