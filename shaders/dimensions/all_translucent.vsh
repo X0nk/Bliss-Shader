@@ -18,7 +18,6 @@ varying vec4 color;
 
 uniform sampler2D colortex4;
 uniform sampler2D noisetex;
-flat varying float exposure;
 
 #ifdef OVERWORLD_SHADER
 	flat varying vec3 averageSkyCol_Clouds;
@@ -200,7 +199,6 @@ void main() {
 
 
 	color = vec4(gl_Color.rgb, 1.0);
-	exposure = texelFetch2D(colortex4,ivec2(10,37),0).r;
 
 	#ifdef OVERWORLD_SHADER
 		lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;

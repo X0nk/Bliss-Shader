@@ -13,7 +13,6 @@
 
 varying vec4 lmtexcoord;
 varying vec4 color;
-flat varying float exposure;
 
 #ifdef LINES
 	flat varying int SELECTION_BOX;
@@ -35,6 +34,7 @@ flat varying float exposure;
 	flat varying vec4 lightCol;
 #endif
 
+uniform int renderStage;
 uniform int isEyeInWater;
 
 uniform sampler2D texture;
@@ -47,13 +47,12 @@ uniform sampler2D colortex4;
 	uniform sampler3D texLpv2;
 #endif
 
-
-uniform mat4 gbufferProjectionInverse;
-uniform mat4 gbufferModelViewInverse;
-uniform mat4 gbufferModelView;
-uniform mat4 shadowModelView;
-uniform mat4 shadowProjection;
-uniform vec3 cameraPosition;
+// uniform mat4 gbufferProjectionInverse;
+// uniform mat4 gbufferModelViewInverse;
+// uniform mat4 gbufferModelView;
+// uniform mat4 shadowModelView;
+// uniform mat4 shadowProjection;
+// uniform vec3 cameraPosition;
 
 uniform float frameTimeCounter;
 #include "/lib/Shadow_Params.glsl"
@@ -68,9 +67,11 @@ uniform float waterEnteredAltitude;
 
 flat varying float HELD_ITEM_BRIGHTNESS;
 
-
+uniform mat4 gbufferPreviousModelView;
+uniform vec3 previousCameraPosition;
 
 #include "/lib/util.glsl"
+#include "/lib/projections.glsl"
 
 #ifdef OVERWORLD_SHADER
 	#ifdef Daily_Weather
@@ -85,6 +86,7 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 	
 	#include "/lib/volumetricClouds.glsl"
 #endif
+
 
 #ifdef IS_LPV_ENABLED
 	uniform int heldItemId;
@@ -105,12 +107,12 @@ vec3 toLinear(vec3 sRGB){
 
 // #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 
-vec3 toScreenSpace(vec3 p) {
-	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
-    vec3 p3 = p * 2. - 1.;
-    vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
-    return fragposition.xyz / fragposition.w;
-}
+// vec3 toScreenSpace(vec3 p) {
+// 	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
+//     vec3 p3 = p * 2. - 1.;
+//     vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
+//     return fragposition.xyz / fragposition.w;
+// }
 
 uniform int framemod8;
 
@@ -139,7 +141,7 @@ float encodeVec2(float x,float y){
 #ifdef OVERWORLD_SHADER
 float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDistFade){
 
-	if(maxDistFade <= 0.0) return 1.0;
+	// if(maxDistFade <= 0.0) return 1.0;
 
 	// setup shadow projection
 	vec3 projectedShadowPosition = mat3(shadowModelView) * playerPos + shadowModelView[3].xyz;
@@ -190,49 +192,42 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 		directLightColor *= mix(vec3(1.0), translucentTint.rgb, maxDistFade);
 	#endif
 
-	return mix(1.0, shadowmap, maxDistFade);
+	return shadowmap;
+	// return mix(1.0, shadowmap, maxDistFade);
 }
 #endif
 
 #if defined DAMAGE_BLOCK_EFFECT && defined POM
-#extension GL_ARB_shader_texture_lod : enable
+	#extension GL_ARB_shader_texture_lod : enable
+	
+	mat3 inverseMatrix(mat3 m) {
+	  float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
+	  float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];
+	  float a20 = m[2][0], a21 = m[2][1], a22 = m[2][2];
+	
+	  float b01 = a22 * a11 - a12 * a21;
+	  float b11 = -a22 * a10 + a12 * a20;
+	  float b21 = a21 * a10 - a11 * a20;
+	
+	  float det = a00 * b01 + a01 * b11 + a02 * b21;
+	
+	  return mat3(b01, (-a22 * a01 + a02 * a21), (a12 * a01 - a02 * a11),
+	              b11, (a22 * a00 - a02 * a20), (-a12 * a00 + a02 * a10),
+	              b21, (-a21 * a00 + a01 * a20), (a11 * a00 - a01 * a10)) / det;
+	}
+	const float MAX_OCCLUSION_DISTANCE = MAX_DIST;
+	const float MIX_OCCLUSION_DISTANCE = MAX_DIST*0.9;
+	const int   MAX_OCCLUSION_POINTS   = MAX_ITERATIONS;
+	
+	varying vec4 vtexcoordam; // .st for add, .pq for mul
+	varying vec4 vtexcoord;
+	
+	vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
+	vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
+	
+	#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
+	#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
-mat3 inverseMatrix(mat3 m) {
-  float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
-  float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];
-  float a20 = m[2][0], a21 = m[2][1], a22 = m[2][2];
-
-  float b01 = a22 * a11 - a12 * a21;
-  float b11 = -a22 * a10 + a12 * a20;
-  float b21 = a21 * a10 - a11 * a20;
-
-  float det = a00 * b01 + a01 * b11 + a02 * b21;
-
-  return mat3(b01, (-a22 * a01 + a02 * a21), (a12 * a01 - a02 * a11),
-              b11, (a22 * a00 - a02 * a20), (-a12 * a00 + a02 * a10),
-              b21, (-a21 * a00 + a01 * a20), (a11 * a00 - a01 * a10)) / det;
-}
-const float MAX_OCCLUSION_DISTANCE = MAX_DIST;
-const float MIX_OCCLUSION_DISTANCE = MAX_DIST*0.9;
-const int   MAX_OCCLUSION_POINTS   = MAX_ITERATIONS;
-
-varying vec4 vtexcoordam; // .st for add, .pq for mul
-varying vec4 vtexcoord;
-
-vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
-vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
-
-
-#define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
-#define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
-
-uniform mat4 gbufferProjection;
-
-vec3 toClipSpace3(vec3 viewSpacePosition) {
-    return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
-}
-
-flat varying vec3 WsunVec2;
 	const float mincoord = 1.0/4096.0;
 	const float maxcoord = 1.0-mincoord;
 
@@ -264,6 +259,9 @@ vec4 texture2D_POMSwitch(
 	return texture2DGradARB(sampler, lightmapCoord, dcdxdcdy.xy, dcdxdcdy.zw);
 }
 
+float luma(vec3 color) {
+	return dot(color,vec3(0.21, 0.72, 0.07));
+}
 uniform vec3 eyePosition;
 
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -275,7 +273,7 @@ uniform vec3 eyePosition;
 #ifdef DAMAGE_BLOCK_EFFECT
 	/* RENDERTARGETS:11 */
 #else
-	/* DRAWBUFFERS:29 */
+	/* RENDERTARGETS:2,9,11 */
 #endif
 
 void main() {
@@ -284,6 +282,7 @@ void main() {
 	vec2 adjustedTexCoord = lmtexcoord.xy;
 	#ifdef POM
 		vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(0.0));
+
 		vec3 worldpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz + cameraPosition;
 
 		vec3 normal = normalMat.xyz;
@@ -298,8 +297,6 @@ void main() {
 		float dist = length(fragpos);
 
 		float maxdist = MAX_OCCLUSION_DISTANCE;
-
-		// float depth  = gl_FragCoord.z;
 		if (dist < maxdist) {
 
 			float depthmap = readNormal(vtexcoord.st).a;
@@ -331,10 +328,6 @@ void main() {
 				}
 
 				adjustedTexCoord = mix(fract(coord.st)*vtexcoordam.pq+vtexcoordam.st, adjustedTexCoord, max(dist-MIX_OCCLUSION_DISTANCE,0.0)/(MAX_OCCLUSION_DISTANCE-MIX_OCCLUSION_DISTANCE));
-
-				// vec3 truePos = fragpos + sumVec*inverseMatrix(tbnMatrix)*interval;
-
-				// depth = toClipSpace3(truePos).z;
 			}
 		}
 
@@ -351,6 +344,9 @@ void main() {
 #endif
 
 #if !defined DAMAGE_BLOCK_EFFECT
+	
+	gl_FragData[2] = vec4(0.0);
+	
 	#ifdef LINES
 		#ifndef SELECT_BOX
 			if(SELECTION_BOX > 0) discard;
@@ -385,7 +381,7 @@ void main() {
 		#endif
 		// lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length((feetPlayerPos+cameraPosition) - playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
 		if(HELD_ITEM_BRIGHTNESS > 0.0){ 
-			float pointLight = clamp(1.0-length((feetPlayerPos+cameraPosition)-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0,1.0);
+			float pointLight = clamp(1.0-(length((feetPlayerPos+cameraPosition)-playerCamPos)-1.0)/HANDHELD_LIGHT_RANGE,0.0,1.0);
 			lightmap.x = mix(lightmap.x, HELD_ITEM_BRIGHTNESS, pointLight*pointLight);
 		}
 	
@@ -399,7 +395,7 @@ void main() {
 		#ifndef LINES
 			gl_FragData[0].a = TEXTURE.a;
 		#else
-			gl_FragData[0].a = 1.0;
+			gl_FragData[0].a = color.a;
 		#endif
 		#ifndef BLOOMY_PARTICLES
 			gl_FragData[1].a = 0.0; // for bloomy rain and stuff
@@ -413,11 +409,18 @@ void main() {
 		vec3 Torch_Color = vec3(TORCH_R,TORCH_G,TORCH_B);
 		vec3 MinimumLightColor = vec3(1.0);
 
-		if(isEyeInWater == 1) MinimumLightColor = vec3(10.0);
 		if(lightmap.x >= 0.9) Torch_Color *= LIT_PARTICLE_BRIGHTNESS;
 
 		#ifdef OVERWORLD_SHADER
 			directLightColor =  lightCol.rgb/2400.0;
+			AmbientLightColor = averageSkyCol_Clouds / 900.0;
+		
+		#ifdef USE_CUSTOM_DIFFUSE_LIGHTING_COLORS
+			directLightColor = luma(directLightColor) * vec3(DIRECTLIGHT_DIFFUSE_R,DIRECTLIGHT_DIFFUSE_G,DIRECTLIGHT_DIFFUSE_B);
+			AmbientLightColor = luma(AmbientLightColor) * vec3(INDIRECTLIGHT_DIFFUSE_R,INDIRECTLIGHT_DIFFUSE_G,INDIRECTLIGHT_DIFFUSE_B);
+		#endif
+			
+			
 			float Shadows = 1.0;
 
 			vec3 shadowPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
@@ -429,11 +432,9 @@ void main() {
 
 			Shadows = ComputeShadowMap(directLightColor, shadowPlayerPos, shadowMapFalloff);
 
-			Shadows = mix(LM_shadowMapFallback, Shadows, shadowMapFalloff2);
+			Shadows *= mix(LM_shadowMapFallback, 1.0, shadowMapFalloff2);
 
-			#ifdef CLOUDS_SHADOWS	
-				Shadows *= GetCloudShadow(feetPlayerPos+cameraPosition, WsunVec);
-			#endif
+			Shadows *= GetCloudShadow(feetPlayerPos+cameraPosition, WsunVec);
 
 			if(isEyeInWater == 1){
 	  			float distanceFromWaterSurface = max(-(feetPlayerPos.y + (cameraPosition.y - waterEnteredAltitude)),0.0) ;
@@ -445,7 +446,6 @@ void main() {
 			// 	Direct_lighting *= phaseg(clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), 0.65)*2 + 0.5;
 			// #endif
 
-			AmbientLightColor = averageSkyCol_Clouds / 900.0;
 
 			#ifdef IS_IRIS
 				AmbientLightColor *= 2.5;
@@ -471,12 +471,20 @@ void main() {
 			const vec3 lpvPos = vec3(0.0);
 		#endif
 
-		Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, exposure, feetPlayerPos, lpvPos);
+		Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, feetPlayerPos, lpvPos);
 
 		#ifdef LINES
 			gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * toLinear(color.rgb);
 
 			if(SELECTION_BOX > 0) gl_FragData[0].rgba = vec4(toLinear(vec3(SELECT_BOX_COL_R, SELECT_BOX_COL_G, SELECT_BOX_COL_B)), 1.0);
+			
+			float LITEMATICA_SCHEMATIC_THING_MASK = 0.0;
+			if (renderStage == MC_RENDER_STAGE_NONE){
+				LITEMATICA_SCHEMATIC_THING_MASK = 0.1;
+				gl_FragData[0] = vec4(toLinear(color.rgb), color.a);
+			}
+
+			gl_FragData[2] = vec4(encodeVec2(vec2(0.0)), encodeVec2(vec2(0.0)), encodeVec2(vec2(0.0)), encodeVec2(0.0, LITEMATICA_SCHEMATIC_THING_MASK));
 		#else
 			gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * Albedo;
 		#endif
@@ -485,7 +493,7 @@ void main() {
 		if(TEXTURE.a < 0.7 && TEXTURE.a > 0.2) gl_FragData[0] *= clamp(1.0 - length(feetPlayerPos) / 100.0 ,0.0,1.0);
 
 		gl_FragData[0].rgb *= 0.1;
-
+		
 	#endif
 #endif
 }

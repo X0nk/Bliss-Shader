@@ -173,10 +173,10 @@ screen.Fog = Fog Settings
         option.Noon_Uniform_Fog = Noon Fog Density
         option.Evening_Uniform_Fog = Evening Fog Density
         option.Night_Uniform_Fog = Night Fog Density
-        option.Morning_Cloudy_Fog = Cloudy Morning Fog Density
-        option.Noon_Cloudy_Fog = Cloudy Noon Fog Density
-        option.Evening_Cloudy_Fog = Cloudy Evening Fog Density
-        option.Night_Cloudy_Fog = Cloudy Night Fog Density
+        option.Morning_Cloudy_Fog = Morning Cloudy Fog Density
+        option.Noon_Cloudy_Fog = Noon Cloudy Fog Density
+        option.Evening_Cloudy_Fog = Evening Cloudy Fog Density
+        option.Night_Cloudy_Fog = Night Cloudy Fog Density
 
         option.PER_BIOME_ENVIRONMENT = Per Biome Environments
 
@@ -510,12 +510,31 @@ option.AEROCHROME_MODE.comment = Infrared Film. Google "Aerochrome" to get an id
 option.AEROCHROME_PINKNESS.comment = Higher = Pink. Lower = Red
 option.AEROCHROME_WOOL_ENABLED.comment = Technically wool things should be affected but it ruins a lot of builds. Enable to be more technically correct.
 
-value.DIMENSION_FALLBACK_SHADER.0 = overworld shader as fallback
-value.DIMENSION_FALLBACK_SHADER.1 = nether shader as fallback
-value.DIMENSION_FALLBACK_SHADER.2 = end shader as fallback
-value.DIMENSION_FALLBACK_SHADER.3 = no shader as fallback
-
-
+option.USE_CUSTOM_DIFFUSE_LIGHTING_COLORS = Custom Diffuse Colors
+option.DIRECTLIGHT_DIFFUSE_R = Sun R
+option.DIRECTLIGHT_DIFFUSE_G = Sun G
+option.DIRECTLIGHT_DIFFUSE_B = Sun B
+option.INDIRECTLIGHT_DIFFUSE_R = Ambient R
+option.INDIRECTLIGHT_DIFFUSE_G = Ambient G
+option.INDIRECTLIGHT_DIFFUSE_B = Ambient B
+option.USE_CUSTOM_CLOUD_LIGHTING_COLORS = Custom Cloud Colors
+option.DIRECTLIGHT_CLOUDS_R = Sun R
+option.DIRECTLIGHT_CLOUDS_G = Sun G
+option.DIRECTLIGHT_CLOUDS_B = Sun B
+option.INDIRECTLIGHT_CLOUDS_R = Ambient R
+option.INDIRECTLIGHT_CLOUDS_G = Ambient G
+option.INDIRECTLIGHT_CLOUDS_B = Ambient B
+option.USE_CUSTOM_FOG_LIGHTING_COLORS = Custom Fog Colors
+option.DIRECTLIGHT_FOG_R = Sun R
+option.DIRECTLIGHT_FOG_G = Sun G
+option.DIRECTLIGHT_FOG_B = Sun B
+option.INDIRECTLIGHT_FOG_R = Ambient R
+option.INDIRECTLIGHT_FOG_G = Ambient G
+option.INDIRECTLIGHT_FOG_B = Ambient B
+option.USE_CUSTOM_SKY_GROUND_LIGHTING_COLORS = Custom Sky Ground Color
+option.SKY_GROUND_R = Ground R
+option.SKY_GROUND_G = Ground G
+option.SKY_GROUND_B = Ground B
 
 screen.Misc_Settings.comment = Random settings for DEBUGGING or other fun stuff.
 screen.Sun_and_Moon_Colors.comment = Configure the color of the sun or moon.
@@ -677,7 +696,7 @@ screen.Post_Processing.comment = Configure settings for all post processing effe
         option.SCREENSHOT_MODE.comment = Toggle frame accumulation to get a low noise and high quality image. §bWhat is this?§r It stacks frames that happend onto the next frame that is generated, so it is like a long exposure photo.
         option.TAA.comment = Toggle temporal anti-aliasing. This removes all jagged edges on things, softens the image, and helps remove noise for many effects. This will cause ghosting or trailing because it uses past frames for extra information on the world. §aPERFORMANCE COST:§r low
         option.BLEND_FACTOR.comment = Configure how much of frame history is used. high numbers means it relies less on frame history, so it may look flickery and noisy. low numbers rely more on frame history, so it may look less moisy, but more smudged with more trailing.
-        option.TAA_UPSCALING.comment = Toggle temporal upscaling. This retains a good amount of quality from a lower resolution image when it upscales. so you can still have a high looking resolution compared to typical upsanpling and still have better performance.
+        option.TAA_UPSCALING.comment = Toggle temporal upscaling. This retains a good amount of quality from a lower resolution image when it upscales. so you can still have a high looking resolution compared to typical upsampling and still have better performance.
         option.SCALE_FACTOR.comment = Configure from what fraction of your resolution to upscale from. Below 0.5 is not recommended at all i only have it as an option because it's funny :P
 	screen.COLOR_GRADING.comment = Advanced color grading options
 		option.LUMINANCE_CURVE.comment = Enable the tone curve. This is independent from color grading and is applied first.

@@ -48,6 +48,9 @@ uniform ivec2 eyeBrightnessSmooth;
 uniform float eyeAltitude;
 uniform float caveDetection;
 
+uniform mat4 gbufferPreviousModelView;
+uniform vec3 previousCameraPosition;
+
 #define DHVLFOG
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
@@ -96,6 +99,7 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 		vec4 dailyWeatherParams1 = vec4(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density, 0.0);
 	#endif
 
+	#include "/lib/diffuse_lighting.glsl"
 
 	#define TIMEOFDAYFOG
 	#include "/lib/lightning_stuff.glsl"
@@ -105,36 +109,32 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 	#include "/lib/volumetricClouds.glsl"
 	#include "/lib/climate_settings.glsl"
 	#include "/lib/overworld_fog.glsl"
-	
-// float fogPhase(float lightPoint){
-// 	float linear = 1.0 - clamp(lightPoint*0.5+0.5,0.0,1.0);
-// 	float linear2 = 1.0 - clamp(lightPoint,0.0,1.0);
-
-// 	float exponential = exp2(pow(linear,0.3) * -15.0 ) * 1.5;
-// 	exponential += sqrt(exp2(sqrt(linear) * -12.5));
-
-// 	return exponential;
-// }
 #endif
+
 #ifdef NETHER_SHADER
-uniform sampler2D colortex4;
+	uniform sampler2D colortex4;
 	#include "/lib/nether_fog.glsl"
 #endif
+
 #ifdef END_SHADER
-uniform sampler2D colortex4;
+	uniform sampler2D colortex4;
 	#include "/lib/end_fog.glsl"
 #endif
 
-#include "/lib/diffuse_lighting.glsl"
-
 #define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
+
+vec4 blueNoise(vec2 coord){
+  return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
+}
+
+float blueNoise(){
+  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a+ 1.0/1.6180339887 * frameCounter );
+}
 
 float interleaved_gradientNoise(){
 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+ 1.0/1.6180339887 * frameCounter);
 }
-float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a+ 1.0/1.6180339887 * frameCounter );
-}
+
 float R2_dither(){
   	#ifdef TAA
 		vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
@@ -145,53 +145,6 @@ float R2_dither(){
 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
 
-void waterVolumetrics_notoverworld(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estEndDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient){
-	inColor *= exp(-rayLength * waterCoefs);	//No need to take the integrated value
-	
-	int spCount = rayMarchSampleCount;
-	vec3 start = toShadowSpaceProjected(rayStart);
-	vec3 end = toShadowSpaceProjected(rayEnd);
-	vec3 dV = (end-start);
-	//limit ray length at 32 blocks for performance and reducing integration error
-	//you can't see above this anyway
-	float maxZ = min(rayLength,12.0)/(1e-8+rayLength);
-	dV *= maxZ;
-
-
-	rayLength *= maxZ;
-	
-	float dY = normalize(mat3(gbufferModelViewInverse) * rayEnd).y * rayLength;
-	estEndDepth *= maxZ;
-	estSunDepth *= maxZ;
-
-	vec3 wpos = mat3(gbufferModelViewInverse) * rayStart  + gbufferModelViewInverse[3].xyz;
-	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
-
-	vec3 absorbance = vec3(1.0);
-	vec3 vL = vec3(0.0);
-
-	float expFactor = 11.0;
-	for (int i=0;i<spCount;i++) {
-		float d = (pow(expFactor, float(i+dither)/float(spCount))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
-		float dd = pow(expFactor, float(i+dither)/float(spCount)) * log(expFactor) / float(spCount)/(expFactor-1.0);
-		vec3 spPos = start.xyz + dV*d;
-
-		vec3 progressW = start.xyz+cameraPosition+dVWorld;
-
-		vec3 ambientMul = exp(-max(estEndDepth * d,0.0) * waterCoefs );
-		vec3 Indirectlight = ambientMul*ambient;
-
-		vec3 light = Indirectlight * scatterCoef;
-
-		vL += (light - light * exp(-waterCoefs * dd * rayLength)) / waterCoefs * absorbance;
-		absorbance *= exp(-dd * rayLength * waterCoefs);
-	}
-	inColor += vL;
-
-}
-vec4 blueNoise(vec2 coord){
-  return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
-}
 vec2 R2_samples(int n){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha * n);
@@ -225,28 +178,27 @@ vec4 waterVolumetrics( vec3 rayStart, vec3 rayEnd, float estEndDepth, float estS
 	vec3 wpos = mat3(gbufferModelViewInverse) * rayStart  + gbufferModelViewInverse[3].xyz;
 	vec3 dVWorld = (wpos - gbufferModelViewInverse[3].xyz);
 	
-	// vec3 dVWorld = -mat3(gbufferModelViewInverse) * (rayEnd - rayStart) * maxZ;
-
-	// vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition;
-
-	
     #ifdef OVERWORLD_SHADER
 		float phase = fogPhase(VdotL) * 5.0;
 	#else
 		float phase = 1.0;
 	#endif
+
 	vec3 absorbance = vec3(1.0);
 	vec3 vL = vec3(0.0);
 	
-	// ambient = max(ambient * (normalize(wpos).y*0.3+0.7),0.0);
 	float expFactor = 11.0;
-
 	vec3 sh = vec3(1.0);
 
 	// do this outside raymarch loop, masking the water surface is good enough
-	#if defined VL_CLOUDS_SHADOWS && defined OVERWORLD_SHADER
+	#if defined OVERWORLD_SHADER
 		sh *= GetCloudShadow(wpos+cameraPosition, WsunVec);
 	#endif
+	
+	float thing = -normalize(dVWorld).y;
+	thing = clamp(thing - 0.333,0.0,1.0);
+	thing = pow(1.0-pow(1.0-thing,2.0),2.0);
+	thing *= 15.0;
 
 	for (int i=0;i<spCount;i++) {
 		float d = (pow(expFactor, float(i+dither)/float(spCount))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
@@ -285,8 +237,7 @@ vec4 waterVolumetrics( vec3 rayStart, vec3 rayEnd, float estEndDepth, float estS
 		#endif
 
 		vec3 sunAbsorbance = exp(-waterCoefs * estSunDepth * d);
-		vec3 ambientAbsorbance = exp(-waterCoefs * estEndDepth * d);
-		// vec3 WaterAbsorbance = exp(-waterCoefs * rayLength * d);
+		vec3 ambientAbsorbance = exp(-waterCoefs * (estEndDepth * d + thing));
 
 		vec3 Directlight = lightSource * sh * phase * sunAbsorbance;
 		vec3 Indirectlight = ambient * ambientAbsorbance;
@@ -300,48 +251,7 @@ vec4 waterVolumetrics( vec3 rayStart, vec3 rayEnd, float estEndDepth, float estS
 	
     return vec4(vL, dot(absorbance,vec3(0.335)));
 }
-/*
-void waterVolumetrics(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estEndDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient, vec3 lightSource, float VdotL){
-		inColor *= exp(-rayLength * waterCoefs);	//No need to take the integrated value
-		int spCount = rayMarchSampleCount;
-		vec3 start = toShadowSpaceProjected(rayStart);
-		vec3 end = toShadowSpaceProjected(rayEnd);
-		vec3 dV = (end-start);
-		//limit ray length at 32 blocks for performance and reducing integration error
-		//you can't see above this anyway
-		float maxZ = min(rayLength,32.0)/(1e-8+rayLength);
-		dV *= maxZ;
-		vec3 dVWorld = -mat3(gbufferModelViewInverse) * (rayEnd - rayStart) * maxZ;
-		rayLength *= maxZ;
-		estEndDepth *= maxZ;
-		estSunDepth *= maxZ;
-		vec3 absorbance = vec3(1.0);
-		vec3 vL = vec3(0.0);
-		float phase = phaseg(VdotL, Dirt_Mie_Phase);
-		float expFactor = 11.0;
-		vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition;
-		for (int i=0;i<spCount;i++) {
-			float d = (pow(expFactor, float(i+dither)/float(spCount))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
-			float dd = pow(expFactor, float(i+dither)/float(spCount)) * log(expFactor) / float(spCount)/(expFactor-1.0);
-			vec3 spPos = start.xyz + dV*d;
-			progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
-			//project into biased shadowmap space
-			float distortFactor = calcDistort(spPos.xy);
-			vec3 pos = vec3(spPos.xy*distortFactor, spPos.z);
-			float sh = 1.0;
-			if (abs(pos.x) < 1.0-0.5/2048. && abs(pos.y) < 1.0-0.5/2048){
-				pos = pos*vec3(0.5,0.5,0.5/6.0)+0.5;
-				sh =  shadow2D( shadow, pos).x;
-			}
-			vec3 ambientMul = exp(-estEndDepth * d * waterCoefs * 1.1);
-			vec3 sunMul = exp(-estSunDepth * d * waterCoefs);
-			vec3 light = (sh * lightSource*8./150./3.0 * phase * sunMul + ambientMul * ambient)*scatterCoef;
-			vL += (light - light * exp(-waterCoefs * dd * rayLength)) / waterCoefs *absorbance;
-			absorbance *= exp(-dd * rayLength * waterCoefs);
-		}
-		inColor += vL;
-}
-*/
+
 vec2 decodeVec2(float a){
     const vec2 constant1 = 65535. / vec2( 256., 65536.);
     const float constant2 = 256. / 255.;
@@ -376,18 +286,19 @@ void main() {
 		float noise_1 = R2_dither();
 		float noise_2 = blueNoise();
 
-		float z0 = texture2D(depthtex0,tc).x;
+		float z0 = texelFetch2D(depthtex0, ivec2((floor(gl_FragCoord.xy - 0.5)/VL_RENDER_RESOLUTION*texelSize)/texelSize), 0 ).x;
 
 		#ifdef DISTANT_HORIZONS
-			float DH_z0 = texture2D(dhDepthTex,tc).x;
+			float DH_z0 = texelFetch2D(dhDepthTex, ivec2((floor(gl_FragCoord.xy - 0.5)/VL_RENDER_RESOLUTION*texelSize)/texelSize), 0 ).x;//texture2D(dhDepthTex,tc).x;
 		#else
 			float DH_z0 = 0.0;
 		#endif
 
-		float z = texture2D(depthtex1,tc).x;
+		float z = texelFetch2D(depthtex1, ivec2((floor(gl_FragCoord.xy - 0.5)/VL_RENDER_RESOLUTION*texelSize)/texelSize), 0 ).x;
 
 		#ifdef DISTANT_HORIZONS
-			float DH_z = texture2D(dhDepthTex1,tc).x;
+			// float DH_z = texture2D(dhDepthTex1,tc).x;
+			float DH_z = texelFetch2D(dhDepthTex1, ivec2((floor(gl_FragCoord.xy - 0.5)/VL_RENDER_RESOLUTION*texelSize)/texelSize), 0 ).x;//texture2D(dhDepthTex,tc).x;
 		#else
 			float DH_z = 0.0;
 		#endif
@@ -440,33 +351,37 @@ void main() {
 
 		indirectLightColor_dynamic += MIN_LIGHT_AMOUNT * 0.02 * 0.2 + nightVision*0.02;
 
-		indirectLightColor_dynamic += vec3(TORCH_R,TORCH_G,TORCH_B)	* pow(1.0-sqrt(1.0-clamp(lightmap.x,0.0,1.0)),2.0) ;
+		indirectLightColor_dynamic += vec3(TORCH_R,TORCH_G,TORCH_B)	* pow(1.0-sqrt(1.0-clamp(lightmap.x,0.0,1.0)),2.0)  * TORCH_AMOUNT;
 
 		vec4 finalVolumetrics = vec4(0.0,0.0,0.0,1.0);
-		
-		if(!iswater){
-			#ifdef OVERWORLD_SHADER
-				vec4 VolumetricClouds = GetVolumetricClouds(viewPos1, vec2(noise_1, noise_2), WsunVec, directLightColor, indirectLightColor);
+		float cloudPlaneDistance = 0.0;
 
-				float atmosphereAlpha = 1.0;
-				vec4 VolumetricFog = GetVolumetricFog(viewPos1, WsunVec,  vec2(noise_1, noise_2), directLightColor, indirectLightColor, indirectLightColor_dynamic, atmosphereAlpha, VolumetricClouds.rgb);
-				
-				finalVolumetrics.rgb += VolumetricClouds.rgb;
-			#endif
+		#ifdef OVERWORLD_SHADER
+			vec4 VolumetricClouds = GetVolumetricClouds(viewPos1, vec2(noise_1, noise_2), WsunVec, directLightColor, indirectLightColor, cloudPlaneDistance);
 
-			#if defined NETHER_SHADER || defined END_SHADER
-				vec4 VolumetricFog = GetVolumetricFog(viewPos1, noise_1, noise_2);
-			#endif
+			float atmosphereAlpha = 1.0;
+			vec4 VolumetricFog = GetVolumetricFog(viewPos1, WsunVec,  vec2(noise_1, noise_2), directLightColor, indirectLightColor, indirectLightColor_dynamic, atmosphereAlpha, VolumetricClouds.rgb,cloudPlaneDistance);
+			
+			finalVolumetrics.rgb += VolumetricClouds.rgb;
+			finalVolumetrics.a *= VolumetricClouds.a;
+		#endif
 
-			finalVolumetrics.rgb = finalVolumetrics.rgb * VolumetricFog.a + VolumetricFog.rgb;
-			finalVolumetrics.a *= VolumetricFog.a;
-		}
+		#if defined NETHER_SHADER || defined END_SHADER
+			vec4 VolumetricFog = GetVolumetricFog(viewPos1, noise_1, noise_2);
+		#endif
+
+		finalVolumetrics.rgb = finalVolumetrics.rgb * VolumetricFog.a + VolumetricFog.rgb;
+		finalVolumetrics.a *= VolumetricFog.a;
 		
 		vec4 underwaterVlFog = vec4(0,0,0,1);
 		
 		float lightleakfix = clamp(lightmap.y + (1-caveDetection),0.0,1.0);
 
-		if(iswater && isEyeInWater != 1) finalVolumetrics = waterVolumetrics(viewPos0, viewPos1, estimatedDepth, estimatedSunDepth, Vdiff, noise_1, totEpsilon, scatterCoef, indirectLightColor_dynamic, directLightColor, dot(normalize(viewPos1), normalize(sunVec*lightCol.a)) ,lightleakfix);		
+		if(iswater && isEyeInWater != 1) {
+			vec4 underWaterFog = waterVolumetrics(viewPos0, viewPos1, estimatedDepth, estimatedSunDepth, Vdiff, noise_1, totEpsilon, scatterCoef, indirectLightColor_dynamic, directLightColor, dot(normalize(viewPos1), normalize(sunVec*lightCol.a)) ,lightleakfix); 
+			finalVolumetrics.rgb = finalVolumetrics.rgb * underWaterFog.a*underWaterFog.a + underWaterFog.rgb;
+			finalVolumetrics.a *= underWaterFog.a;
+		}
 
 		gl_FragData[0] = clamp(finalVolumetrics, 0.0, 65000.0);
 	}
