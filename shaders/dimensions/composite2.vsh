@@ -10,12 +10,7 @@ flat varying vec3 averageSkyCol_Clouds;
 	flat varying float exposure;
 #endif
 
-	#ifdef Daily_Weather
-		flat varying vec4 dailyWeatherParams0;
-		flat varying vec4 dailyWeatherParams1;
-	#endif
-
-
+#include "/lib/scene_controller.glsl"
 
 
 flat varying vec3 WsunVec;
@@ -36,17 +31,17 @@ flat varying vec2 TAA_Offset;
 uniform int framemod8;
 #include "/lib/TAA_jitter.glsl"
 
-
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-
-
 uniform float frameTimeCounter;
 #include "/lib/Shadow_Params.glsl"
 #include "/lib/sky_gradient.glsl"
+
+
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+
 void main() {
 	gl_Position = ftransform();
 
@@ -57,15 +52,8 @@ void main() {
 		lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
 		averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
 		averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
-	
-		#if defined Daily_Weather
-			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb / 1500.0, 0.0);
-			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb / 1500.0, 0.0);
-			
-			dailyWeatherParams0.a = texelFetch2D(colortex4,ivec2(3,1),0).x/1500.0;
-			dailyWeatherParams1.a = texelFetch2D(colortex4,ivec2(3,1),0).y/1500.0;
-		#endif
-	
+
+		readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
 	#endif
 
 	#ifdef NETHER_SHADER

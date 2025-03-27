@@ -638,7 +638,7 @@ void main() {
   
 ////// --------------- FINALIZE
   #ifdef display_LUT
-      float zoomLevel = 1.0;
+      float zoomLevel = 75.0;
       vec3 thingy = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy/zoomLevel),0).rgb /1200.0;
 
       if(luma(thingy) > 0.0){

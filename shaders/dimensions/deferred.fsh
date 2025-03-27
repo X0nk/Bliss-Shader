@@ -163,17 +163,7 @@ float invLinZ (float lindepth){
 	#define TIMEOFDAYFOG
 	#include "/lib/lightning_stuff.glsl"
 
-
-	#ifdef Daily_Weather
-		flat varying vec4 dailyWeatherParams0;
-		flat varying vec4 dailyWeatherParams1;
-	#else
-		vec4 dailyWeatherParams0 = vec4(CloudLayer0_coverage, CloudLayer1_coverage, CloudLayer2_coverage, 0.0);
-		vec4 dailyWeatherParams1 = vec4(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density, 0.0);
-	#endif
-
-	flat varying vec4 CurrentFrame_dailyWeatherParams0;
-	flat varying vec4 CurrentFrame_dailyWeatherParams1;
+	#include "/lib/scene_controller.glsl"
 
 
 	#define VL_CLOUDS_DEFERRED
@@ -208,6 +198,9 @@ vec2 R2_samples(float n){
 uniform float dayChangeSmooth;
 uniform bool worldTimeChangeCheck;
 
+uniform int hideGUI;
+
+
 void main() {
 /* DRAWBUFFERS:4 */
 
@@ -224,18 +217,19 @@ float mixhistory = 0.06;
 
 	// the idea is to store the 8 values, coverage + density of 3 cloud layers and 2 fog density values.
 
-	#ifdef Daily_Weather
-		ivec2 pixelPos = ivec2(0,0);
-		if (gl_FragCoord.x > 1 && gl_FragCoord.x < 4 && gl_FragCoord.y > 1 && gl_FragCoord.y < 2){
+	// #ifdef Daily_Weather
+		if (gl_FragCoord.x > 1 && gl_FragCoord.x < 4 && gl_FragCoord.y > 1 && gl_FragCoord.y < 4){
+			mixhistory = 10.0 * frameTime;
 
-			mixhistory = clamp(dayChangeSmooth*dayChangeSmooth*dayChangeSmooth*0.1, frameTime*0.1, 1.0);
-			
-			if(gl_FragCoord.x < 2) gl_FragData[0] = vec4(CurrentFrame_dailyWeatherParams0.rgb * 10.0,1.0);
-			if(gl_FragCoord.x > 2) gl_FragData[0] = vec4(CurrentFrame_dailyWeatherParams1.rgb * 10.0,1.0);
-			if(gl_FragCoord.x > 3) gl_FragData[0] = vec4(CurrentFrame_dailyWeatherParams0.a * 10.0, CurrentFrame_dailyWeatherParams1.a * 10.0, 0.0, 1.0);
-	
+			gl_FragData[0].rgb = writeSceneControllerParameters(gl_FragCoord.xy, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
 		}
-	#endif
+
+		// vec4 superSampledHistory = texture2D(colortex5, previousPosition.xy);
+		// vec3 superSampledResult = superSampledHistory.rgb * superSampledHistory.a + currentFrame;
+
+		// return vec4(superSampledResult/(superSampledHistory.a+1.0), superSampledHistory.a+1.0);
+
+	// #endif
 
 	///////////////////////////////
 	/// --- STORE COLOR LUT --- ///
@@ -432,7 +426,7 @@ vec3 frameHistory = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy),0).rgb;
 vec3 currentFrame = gl_FragData[0].rgb*150.;
 
 
-gl_FragData[0].rgb = clamp(mix(frameHistory, currentFrame, mixhistory),0.0,65000.);
+gl_FragData[0].rgb = clamp(mix(frameHistory, currentFrame, clamp(mixhistory,0.0,1.0)),0.0,65000.);
 
 //Exposure values
 if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )

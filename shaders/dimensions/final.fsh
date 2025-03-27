@@ -8,6 +8,7 @@ uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 uniform sampler2D depthtex2;
 uniform sampler2D noisetex;
+uniform sampler2D shadowcolor1;
 
 varying vec2 texcoord;
 uniform vec2 texelSize;
@@ -18,6 +19,12 @@ uniform float viewWidth;
 uniform float aspectRatio;
 
 uniform int hideGUI;
+
+uniform vec3 previousCameraPosition;
+// uniform vec3 cameraPosition;
+uniform mat4 gbufferPreviousModelView;
+// uniform mat4 gbufferModelViewInverse;
+// uniform mat4 gbufferModelView;
 
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
@@ -37,6 +44,17 @@ float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
 
+float convertHandDepth_2(in float depth, bool hand) {
+	  if(!hand) return depth;
+
+    float ndcDepth = depth * 2.0 - 1.0;
+    ndcDepth /= MC_HAND_DEPTH;
+    return ndcDepth * 0.5 + 0.5;
+}
+
+#include "/lib/util.glsl"
+#include "/lib/projections.glsl"
+
 #include "/lib/gameplay_effects.glsl"
 
 void doCameraGridLines(inout vec3 color, vec2 UV){
@@ -54,21 +72,6 @@ void doCameraGridLines(inout vec3 color, vec2 UV){
 
   if(hideGUI > 0.0) gridLines = 0.0;
   color = mix(color, vec3(1.0),  gridLines);
-}
-
-uniform vec3 previousCameraPosition;
-// uniform vec3 cameraPosition;
-uniform mat4 gbufferPreviousModelView;
-// uniform mat4 gbufferModelViewInverse;
-// uniform mat4 gbufferModelView;
-
-#include "/lib/util.glsl"
-#include "/lib/projections.glsl"
-vec3 tonemap(vec3 col){
-	return col/(1+luma(col));
-}
-vec3 invTonemap(vec3 col){
-	return col/(1-luma(col));
 }
 
 vec3 doMotionBlur(vec2 texcoord, float depth, float noise, bool hand){
@@ -103,16 +106,6 @@ vec3 doMotionBlur(vec2 texcoord, float depth, float noise, bool hand){
   return color / samples;
 }
 
-float convertHandDepth_2(in float depth, bool hand) {
-	  if(!hand) return depth;
-
-    float ndcDepth = depth * 2.0 - 1.0;
-    ndcDepth /= MC_HAND_DEPTH;
-    return ndcDepth * 0.5 + 0.5;
-}
-
-uniform sampler2D shadowcolor1;
-
 float doVignette( in vec2 texcoord, in float noise){
 
   float vignette = 1.0-clamp(1.0-length(texcoord-0.5),0.0,1.0);
@@ -142,15 +135,15 @@ void main() {
     vec3 COLOR = texture2D(colortex7,texcoord).rgb;
   #endif
   
-  #ifdef VIGNETTE
-    COLOR *= doVignette(texcoord, noise);
-  #endif
-  
   #if defined LOW_HEALTH_EFFECT || defined DAMAGE_TAKEN_EFFECT || defined WATER_ON_CAMERA_EFFECT  
     // for making the fun, more fun
     applyGameplayEffects(COLOR, texcoord, noise);
   #endif
   
+  #ifdef VIGNETTE
+    COLOR *= doVignette(texcoord, noise);
+  #endif
+
   #ifdef CAMERA_GRIDLINES
     doCameraGridLines(COLOR, texcoord);
   #endif

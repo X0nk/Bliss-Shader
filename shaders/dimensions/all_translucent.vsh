@@ -24,11 +24,7 @@ uniform sampler2D noisetex;
 	flat varying vec4 lightCol;
 	flat varying vec3 WsunVec;
 
-	#ifdef Daily_Weather
-		flat varying vec4 dailyWeatherParams0;
-		flat varying vec4 dailyWeatherParams1;
-	#endif
-
+	#include "/lib/scene_controller.glsl"
 #endif
 
 varying vec4 normalMat;
@@ -215,11 +211,7 @@ void main() {
 
 		WsunVec = mix(WmoonVec, WsunVec, clamp(lightCol.a,0,1));
 
-	
-		#if defined Daily_Weather
-			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb / 1500.0, 0.0);
-			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb / 1500.0, 0.0);
-		#endif
+		readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
 
 	#endif
 

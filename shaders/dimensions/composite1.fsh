@@ -158,14 +158,8 @@ float convertHandDepth_2(in float depth, bool hand) {
 
 #ifdef OVERWORLD_SHADER
 
-	#ifdef Daily_Weather
-		flat varying vec4 dailyWeatherParams0;
-		flat varying vec4 dailyWeatherParams1;
-	#else
-		vec4 dailyWeatherParams0 = vec4(CloudLayer0_coverage, CloudLayer1_coverage, CloudLayer2_coverage, 0.0);
-		vec4 dailyWeatherParams1 = vec4(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density, 0.0);
-	#endif
-
+	#include "/lib/scene_controller.glsl"
+	
 	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
 	#define CLOUDS_INTERSECT_TERRAIN
@@ -1346,7 +1340,7 @@ void main() {
 	}
 
 
-	if(translucentMasks > 0.0 && isEyeInWater != 1){
+	if(translucentMasks > 0.0 ){
 		// water absorbtion will impact ALL light coming up from terrain underwater.
 		gl_FragData[0].rgb *= Absorbtion;
 
