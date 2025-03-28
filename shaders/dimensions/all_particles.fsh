@@ -268,7 +268,7 @@ uniform vec3 eyePosition;
 #ifdef DAMAGE_BLOCK_EFFECT
 	/* RENDERTARGETS:11 */
 #else
-	/* RENDERTARGETS:2,9,11 */
+	/* RENDERTARGETS:2,9,11,7 */
 #endif
 
 void main() {
@@ -395,6 +395,8 @@ void main() {
 		#ifndef BLOOMY_PARTICLES
 			gl_FragData[1].a = 0.0; // for bloomy rain and stuff
 		#endif
+
+		gl_FragData[3] = vec4(0.0,0.0,0.0,0.4);
 
 		vec3 Direct_lighting = vec3(0.0);
 		vec3 directLightColor = vec3(0.0);
