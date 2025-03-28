@@ -410,6 +410,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	// 0.9 = entity mask
 	// 0.8 = reflective entities
 	// 0.7 = reflective blocks
+	// 0.4 = translucent particles
 	// 0.3 = hand mask
 
 	#ifdef HAND
