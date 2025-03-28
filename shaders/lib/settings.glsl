@@ -616,13 +616,15 @@ const vec3 aerochrome_color = mix(vec3(1.0, 0.0, 0.0), vec3(0.715, 0.303, 0.631)
 #endif
 
 #define WATER_ON_CAMERA_EFFECT
-#define POWDERSNOW_FROST_CAMERA_EFFECT
+#define ON_FIRE_DISTORT_EFFECT
 
 #ifdef LOW_HEALTH_EFFECT
 #endif
 #ifdef DAMAGE_TAKEN_EFFECT
 #endif
 #ifdef WATER_ON_CAMERA_EFFECT
+#endif
+#ifdef ON_FIRE_DISTORT_EFFECT
 #endif
 
 // #define FLASHLIGHT

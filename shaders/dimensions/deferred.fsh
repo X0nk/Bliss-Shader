@@ -216,20 +216,11 @@ float mixhistory = 0.06;
 	//////////////////////////////////////////////
 
 	// the idea is to store the 8 values, coverage + density of 3 cloud layers and 2 fog density values.
+	if (gl_FragCoord.x > 1 && gl_FragCoord.x < 4 && gl_FragCoord.y > 1 && gl_FragCoord.y < 4){
+		mixhistory = 10.0 * frameTime;
 
-	// #ifdef Daily_Weather
-		if (gl_FragCoord.x > 1 && gl_FragCoord.x < 4 && gl_FragCoord.y > 1 && gl_FragCoord.y < 4){
-			mixhistory = 10.0 * frameTime;
-
-			gl_FragData[0].rgb = writeSceneControllerParameters(gl_FragCoord.xy, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
-		}
-
-		// vec4 superSampledHistory = texture2D(colortex5, previousPosition.xy);
-		// vec3 superSampledResult = superSampledHistory.rgb * superSampledHistory.a + currentFrame;
-
-		// return vec4(superSampledResult/(superSampledHistory.a+1.0), superSampledHistory.a+1.0);
-
-	// #endif
+		gl_FragData[0].rgb = writeSceneControllerParameters(gl_FragCoord.xy, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
+	}
 
 	///////////////////////////////
 	/// --- STORE COLOR LUT --- ///
