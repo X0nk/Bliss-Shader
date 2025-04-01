@@ -318,31 +318,35 @@ vec4 bilateralUpsample(out float outerEdgeResults, float referenceDepth, sampler
   vec4 colorSum = vec4(0.0);
   float edgeSum = 0.0;
   float threshold = 0.005;
+  
+  vec2 coord = gl_FragCoord.xy - 1.5;
 
-  vec2 UV = gl_FragCoord.xy + 2 + (ivec2(gl_FragCoord.xy + frameCounter)%2)*2;
+  vec2 UV = coord;
   const ivec2 SCALE = ivec2(1.0/VL_RENDER_RESOLUTION);
   ivec2 UV_DEPTH = ivec2(UV*VL_RENDER_RESOLUTION)*SCALE;
   ivec2 UV_COLOR = ivec2(UV*VL_RENDER_RESOLUTION);
+  ivec2 UV_NOISE = ivec2(gl_FragCoord.xy*texelSize + 1);
 
-  ivec2[4] OFFSET = ivec2[4] (
-      ivec2(-2, -2),
-      ivec2(-2,  0),
-      ivec2( 0,  0),
-      ivec2( 0, -2)
+	ivec2 OFFSET[5] = ivec2[](
+    ivec2(-1,-1),
+	 	ivec2( 1, 1),
+		ivec2(-1, 1),
+		ivec2( 1,-1),
+		ivec2( 0, 0)
   );
 
-  for(int i = 0; i < 4; i++) {
+  for(int i = 0; i < 5; i++) {
 
 		#ifdef DISTANT_HORIZONS
-		  float offsetDepth = sqrt(texelFetch2D(depth, UV_DEPTH + OFFSET[i] * SCALE,0).a/65000.0);
+		  float offsetDepth = sqrt(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE,0).a/65000.0);
     #else
-      float offsetDepth = ld(texelFetch2D(depth, UV_DEPTH + OFFSET[i] * SCALE, 0).r);
+      float offsetDepth = ld(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE, 0).r);
     #endif
 
     float edgeDiff = abs(offsetDepth - referenceDepth) < threshold ? 1.0 : 1e-7;
     outerEdgeResults = max(outerEdgeResults, clamp(referenceDepth - offsetDepth,0.0,1.0));
 
-    vec4 offsetColor = texelFetch2D(colortex0, UV_COLOR + OFFSET[i], 0).rgba;
+    vec4 offsetColor = texelFetch2D(colortex0, UV_COLOR + OFFSET[i] + UV_NOISE, 0).rgba;
     colorSum += offsetColor*edgeDiff;
     edgeSum += edgeDiff;
 
@@ -371,6 +375,9 @@ vec4 VLTemporalFiltering(vec3 viewPos, in float referenceDepth, sampler2D depth)
   // pass a mask to only show upsampled color around the edges of blocks. this is so it doesnt blur reprojected results.
   float outerEdgeResults = 0.0;
   vec4 upsampledCurrentFrame = bilateralUpsample(outerEdgeResults, referenceDepth, depth);
+  // vec4 upsampledCurrentFrame = BilateralUpscale(colortex0, depth, gl_FragCoord.xy - 1.5, referenceDepth);
+
+  // return vec4(outerEdgeResults,0,0,1);
   // return upsampledCurrentFrame;
 
   if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0) return currentFrame;
