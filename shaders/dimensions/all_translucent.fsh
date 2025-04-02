@@ -488,8 +488,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
    			}
 
 			normal = mix(normalize(gl_NormalMatrix * wave.normal),  normal, PHYSICS_OCEAN_TRANSITION);
-
-		
 			Albedo = mix(Albedo, vec3(1.0), wave.foam);
 			gl_FragData[0].a = mix(1.0/255.0, 1.0, wave.foam);
 		}

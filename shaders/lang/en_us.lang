@@ -731,6 +731,9 @@ option.SKY_GROUND.comment = §bWhat is this?§r This is the dark bottom half of 
 option.SNELLS_WINDOW.comment = §bWhat is this?§r this is the dark reflective circle you see when under-water. This is an approximation of a thing that happens in reality known as "total internal reflection". §aPERFORMANCE COST:§r very very very small.
 option.entityShadowDistanceMul.comment = §bWhat is this?§r Configure how far shadows should work for entities. This is good if you want to keep entity shadows and improved performance in high entity areas.
 
+screen.PHYSICS_MOD_OCEAN = Physics Mod - §cREAD BUTTON DESCRIPTION§r
+screen.PHYSICS_MOD_OCEAN.comment = The ocean of physics mod is supported. The mod has its own settings for it located in §bgame options -> physics settings -> ocean§r
+
 screen.DISTANT_HORIZONS_SETTINGS = Distant Horizons - §cIRIS REQUIRED§r
 option.DH_OVERDRAW_PREVENTION = Overdraw prevention
 option.OVERDRAW_MAX_DISTANCE = Max distance for overdraw prevention 
