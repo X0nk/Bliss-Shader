@@ -6,6 +6,10 @@
 uniform float frameTimeCounter;
 #include "/lib/Shadow_Params.glsl"
 
+#if defined PHYSICSMOD_OCEAN_SHADER
+	#include "/lib/oceans.glsl"
+#endif
+
 /*
 !! DO NOT REMOVE !!
 This code is from Chocapic13' shaders
@@ -111,12 +115,25 @@ vec3 getWaveNormal(vec3 posxz, float range){
 
 void main() {
 
+	#if defined PHYSICSMOD_OCEAN_SHADER && defined PHYSICS_OCEAN
+    	// basic texture to determine how shallow/far away from the shore the water is
+    	physics_localWaviness = texelFetch(physics_waviness, ivec2(gl_Vertex.xz) - physics_textureOffset, 0).r;
+    	// transform gl_Vertex (since it is the raw mesh, i.e. not transformed yet)
+    	vec4 finalPosition = vec4(gl_Vertex.x, gl_Vertex.y + physics_waveHeight(gl_Vertex.xz, PHYSICS_ITERATIONS_OFFSET, physics_localWaviness, physics_gameTime), gl_Vertex.z, gl_Vertex.w);
+    	// pass this to the fragment shader to fetch the texture there for per fragment normals
+    	physics_localPosition = finalPosition.xyz;
+
+		vec3 position = mat3(gl_ModelViewMatrix) * vec3(finalPosition) + gl_ModelViewMatrix[3].xyz;
+	#else
+		vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
+	#endif
+
 	// lmtexcoord.xy = (gl_MultiTexCoord0).xy;
 	lmtexcoord.xy = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 	vec2 lmcoord = gl_MultiTexCoord1.xy / 240.0;
 	lmtexcoord.zw = lmcoord;
 
- 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
+
 
 	#ifdef LARGE_WAVE_DISPLACEMENT
 		if(mc_Entity.x == 8.0) {
@@ -184,8 +201,8 @@ void main() {
 	binormal = normalize(cross(tangent2.rgb,normalMat.xyz)*at_tangent.w);
 
 	mat3 tbnMatrix = mat3(tangent2.x, binormal.x, normalMat.x,
-								  tangent2.y, binormal.y, normalMat.y,
-						     	  tangent2.z, binormal.z, normalMat.z);
+						  tangent2.y, binormal.y, normalMat.y,
+						  tangent2.z, binormal.z, normalMat.z);
 	
 	flatnormal = normalMat.xyz;
 
