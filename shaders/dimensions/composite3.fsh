@@ -190,7 +190,7 @@ vec3 doRefractionEffect( inout vec2 texcoord, vec2 normal, float linearDistance,
   // make the tangent space normals match the directions of the texcoord UV, this greatly improves the refraction effect.
   vec2 UVNormal = vec2(normal.x,-normal.y);
   
-  float refractionMult = 0.3 / (1.0 + linearDistance*0.5);
+  float refractionMult = 0.3 / (1.0 + pow(linearDistance,0.8));
   float diffractionMult = 0.035;
   float smudgeMult = 1.0;
 
