@@ -153,6 +153,11 @@ uniform float waterEnteredAltitude;
 #include "/lib/specular.glsl"
 #include "/lib/diffuse_lighting.glsl"
 
+#if defined PHYSICSMOD_OCEAN_SHADER
+	#include "/lib/oceans.glsl"
+#endif
+
+
 float interleaved_gradientNoise_temporal(){
 	#ifdef TAA
 		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887 * frameCounter);
@@ -395,9 +400,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	
 	vec3 FragCoord = gl_FragCoord.xyz;
 
-	vec2 tempOffset = offsets[framemod8];
-
-	vec3 viewPos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
+	#ifdef TAA
+		vec2 tempOffset = offsets[framemod8];
+		vec3 viewPos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
+	#else
+		vec3 viewPos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0));
+	#endif
 
 	vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
 ////////////////////////////////////////////////////////////////////////////////
@@ -465,9 +473,31 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	vec3 normal = normalMat.xyz; // in viewSpace
 
+	#if defined PHYSICSMOD_OCEAN_SHADER && defined PHYSICS_OCEAN
+		WavePixelData wave = physics_wavePixel(physics_localPosition.xz, physics_localWaviness, physics_iterationsNormal, physics_gameTime);
+		
+		#if defined DISTANT_HORIZONS
+			float PHYSICS_OCEAN_TRANSITION = 1.0-pow(1.0-pow(1.0-clamp(1.0-length(feetPlayerPos.xz)/max(far,0.0),0,1),5),5);
+		#else
+			float PHYSICS_OCEAN_TRANSITION = 0.0;
+		#endif
+
+		if (isWater){
+			if (!gl_FrontFacing) {
+   			    wave.normal = -wave.normal;
+   			}
+
+			normal = mix(normalize(gl_NormalMatrix * wave.normal),  normal, PHYSICS_OCEAN_TRANSITION);
+
+		
+			Albedo = mix(Albedo, vec3(1.0), wave.foam);
+			gl_FragData[0].a = mix(1.0/255.0, 1.0, wave.foam);
+		}
+	#endif
+
 	#ifdef LARGE_WAVE_DISPLACEMENT
 		if (isWater){
-			normal = viewToWorld(normal) ;
+			normal = viewToWorld(normal);
 			normal.xz = shitnormal.xy;
 			normal = worldToView(normal);
 		}
@@ -485,7 +515,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	NormalTex.xy = NormalTex.xy*2.0-1.0;
 	NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0);
 
-	#ifndef HAND
+	#if !defined HAND
 		if (isWater){
 			vec3 playerPos = (mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz);
 			vec3 waterPos = playerPos;
@@ -510,11 +540,19 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	// tangent space normals for refraction
 	TangentNormal = NormalTex.xy;
+	
+	#if defined PHYSICSMOD_OCEAN_SHADER && defined PHYSICS_OCEAN
+		normal = applyBump(tbnMatrix, NormalTex.xyz, PHYSICS_OCEAN_TRANSITION);
+	#else
+		normal = applyBump(tbnMatrix, NormalTex.xyz, 1.0);
+	#endif
 
-	normal = applyBump(tbnMatrix, NormalTex.xyz, 1.0);
-	worldSpaceNormal = normalize(viewToWorld(normal).xyz);
+	worldSpaceNormal = viewToWorld(normal);
+	
+	#if defined PHYSICSMOD_OCEAN_SHADER && defined PHYSICS_OCEAN
+		if (isWater) TangentNormal = normalize(wave.normal).xz;
+	#endif
 
-	// TangentNormal = clamp(TangentNormal + (blueNoise()*2.0-1.0)*0.005,-1.0,1.0);
 	float nameTagMask = 0.0;
 
 	#if defined ENTITIES && defined IS_IRIS
@@ -678,6 +716,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		
 		// if nothing is chosen, no smoothness and no reflectance
 		vec2 specularValues = vec2(1.0, 0.0); 
+
 		
 		// hardcode specular values for select blocks like glass, water, and slime
 		if(isReflective) specularValues = vec2(1.0, harcodedF0);
@@ -707,7 +746,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 				vec3 DirectLightColor = WsunVec;
 				float Shadows = 0.0;
 			#endif
-			
 			
 			vec3 specularReflections = specularReflections(viewPos, normalize(feetPlayerPos), WsunVec, vec3(blueNoise(), vec2(interleaved_gradientNoise_temporal())), worldSpaceNormal, roughness, f0, Albedo, FinalColor*gl_FragData[0].a, DirectLightColor * Shadows, lightmap.y, isHand, isWater, reflectance, flashLightSpecularData);
 			
@@ -749,7 +787,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		if(gl_FragCoord.x*texelSize.x < 0.47) gl_FragData[0] = vec4(0.0);
 	#endif
 	#if DEBUG_VIEW == debug_NORMALS
-		gl_FragData[0].rgb = worldSpaceNormal * 0.1;
+		gl_FragData[0].rgb = vec3(worldSpaceNormal.x,worldSpaceNormal.y*0,worldSpaceNormal.z*0) * 0.1;
 		gl_FragData[0].a = 1;
 	#endif
 	#if DEBUG_VIEW == debug_INDIRECT
