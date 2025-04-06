@@ -37,7 +37,7 @@ varying vec4 tangent;
 varying vec3 flatnormal;
 
 #ifdef LARGE_WAVE_DISPLACEMENT
-varying vec3 shitnormal;
+varying vec3 largeWaveDisplacementNormal;
 #endif
 
 uniform mat4 gbufferModelViewInverse;
@@ -87,8 +87,10 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 
 
 float getWave (vec3 pos, float range){
-	return pow(1.0-texture2D(noisetex, (pos.xz + frameTimeCounter * WATER_WAVE_SPEED)/150.0).b,2) * WATER_WAVE_STRENGTH / range;
+	// return pow(1.0-texture2D(noisetex, (pos.xz + frameTimeCounter * WATER_WAVE_SPEED)/150.0).b,2.0) * WATER_WAVE_STRENGTH * range;
+	return pow(1.0-texture2D(noisetex, (pos.xz + frameTimeCounter * WATER_WAVE_SPEED)/125.0).r,5.0) * WATER_WAVE_STRENGTH * range;
 }
+
 vec3 getWaveNormal(vec3 posxz, float range){
 
 	float deltaPos = 0.5;
@@ -100,12 +102,13 @@ vec3 getWaveNormal(vec3 posxz, float range){
 	float h3 = getWave(coord - vec3(0.0,0.0,deltaPos),range);
 
 
-	float xDelta = (h1-h0)/deltaPos*1.5;
-	float yDelta = (h3-h0)/deltaPos*1.5;
+	float xDelta = (h1-h0)/deltaPos * 1.5;
+	float yDelta = (h3-h0)/deltaPos * 1.5;
 
-	vec3 wave = normalize(vec3(xDelta, yDelta,	1.0-pow(abs(xDelta+yDelta),2.0)));
+	vec3 wave = normalize(vec3(xDelta, yDelta,1.0-pow(abs(xDelta+yDelta),2.0)));
 
 	return wave;
+
 }
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -133,25 +136,28 @@ void main() {
 	vec2 lmcoord = gl_MultiTexCoord1.xy / 240.0;
 	lmtexcoord.zw = lmcoord;
 
-
-
 	#ifdef LARGE_WAVE_DISPLACEMENT
 		if(mc_Entity.x == 8.0) {
-			vec3 displacedPos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
+				
+			vec3 playerPos = mat3(gbufferModelViewInverse) * position.xyz;
+
 			#ifdef DISTANT_HORIZONS
-				float range = min(1.0 + pow(length(displacedPos - cameraPosition) / min(far,256.0),2.0), 256.0);
+				float range = pow(1-pow(1-clamp(1.0 - length(playerPos) / far, 0.0,1.0),3.0),3.0);
 			#else
-				float range = min(1.0 + pow(length(displacedPos - cameraPosition) / 256,2.0), 256.0);
+				float range = min(1.0 + pow(length(playerPos) / 256,2.0), 256.0);
 			#endif
 
-			displacedPos.y -= (1.0-getWave(displacedPos, range)) * 0.5 - 0.2;
-			shitnormal = getWaveNormal(displacedPos, range);
-    		position = mat3(gbufferModelView) * (displacedPos - cameraPosition) + gbufferModelView[3].xyz;
+			vec4 displacedVertex = vec4(gl_Vertex.x, gl_Vertex.y + (getWave(gl_Vertex.xyz + cameraPosition, range)*0.6-0.5), gl_Vertex.z, gl_Vertex.w);
+			position = mat3(gl_ModelViewMatrix) * vec3(displacedVertex) + gl_ModelViewMatrix[3].xyz;
+			
+			playerPos = mat3(gbufferModelViewInverse) * position.xyz;
+			largeWaveDisplacementNormal = getWaveNormal(playerPos + cameraPosition, range);
+
 		}
 	#endif
 	
-	// vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
    	vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
+	
 	#ifdef PLANET_CURVATURE
 		float curvature = length(worldpos) / (16*8);
 		worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
@@ -192,24 +198,24 @@ void main() {
 		if (entityId == 1600) NAMETAG = 1;
 	#endif
 	
-	tangent = vec4(normalize(gl_NormalMatrix *at_tangent.rgb),at_tangent.w);
 
-	normalMat = vec4(normalize(gl_NormalMatrix * gl_Normal), 1.0);
-	normalMat.a = mat;
 
-	vec3 tangent2 = normalize( gl_NormalMatrix *at_tangent.rgb);
-	binormal = normalize(cross(tangent2.rgb,normalMat.xyz)*at_tangent.w);
+	tangent = vec4(normalize(gl_NormalMatrix * at_tangent.rgb),at_tangent.w);
+	normalMat = vec4(normalize(gl_NormalMatrix * gl_Normal), mat);
+	binormal = normalize(cross(tangent.rgb,normalMat.xyz)*at_tangent.w);
+	mat3 tbnMatrix = mat3(tangent.x, binormal.x, normalMat.x,
+						  tangent.y, binormal.y, normalMat.y,
+						  tangent.z, binormal.z, normalMat.z);
 
-	mat3 tbnMatrix = mat3(tangent2.x, binormal.x, normalMat.x,
-						  tangent2.y, binormal.y, normalMat.y,
-						  tangent2.z, binormal.z, normalMat.z);
-	
+	if(mc_Entity.x == 8.0) {
+		largeWaveDisplacementNormal = normalize(largeWaveDisplacementNormal * tbnMatrix);
+	}else{
+		largeWaveDisplacementNormal = normalMat.xyz;
+	}
 	flatnormal = normalMat.xyz;
-
 	viewVector = position.xyz;
-	// viewVector = (gl_ModelViewMatrix * gl_Vertex).xyz;
-	viewVector = normalize(tbnMatrix * viewVector);
 
+	viewVector = normalize(tbnMatrix * viewVector);
 
 	color = vec4(gl_Color.rgb, 1.0);
 

@@ -72,7 +72,7 @@ varying vec4 normalMat;
 varying vec3 binormal;
 varying vec3 flatnormal;
 #ifdef LARGE_WAVE_DISPLACEMENT
-varying vec3 shitnormal;
+varying vec3 largeWaveDisplacementNormal;
 #endif
 
 uniform vec3 sunVec;
@@ -385,7 +385,6 @@ void Emission(
 
 uniform vec3 eyePosition;
 
-
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -487,27 +486,26 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
    			    wave.normal = -wave.normal;
    			}
 
-			normal = mix(normalize(gl_NormalMatrix * wave.normal),  normal, PHYSICS_OCEAN_TRANSITION);
+			normal = mix(normalize(gl_NormalMatrix * wave.normal), normal, PHYSICS_OCEAN_TRANSITION);
 			Albedo = mix(Albedo, vec3(1.0), wave.foam);
 			gl_FragData[0].a = mix(1.0/255.0, 1.0, wave.foam);
 		}
 	#endif
 
-	#ifdef LARGE_WAVE_DISPLACEMENT
-		if (isWater){
-			normal = viewToWorld(normal);
-			normal.xz = shitnormal.xy;
-			normal = worldToView(normal);
-		}
-	#endif
-	
 	vec3 worldSpaceNormal = viewToWorld(normal).xyz;
 	vec2 TangentNormal = vec2(0); // for refractions
 	
-	vec3 tangent2 = normalize(cross(tangent.rgb,normal)*tangent.w);
+	#ifdef LARGE_WAVE_DISPLACEMENT
+		if (isWater){
+			normal = largeWaveDisplacementNormal;
+		}
+	#endif
+
+	vec3 tangent2 = normalize(cross(tangent.rgb, normal)*tangent.w);
 	mat3 tbnMatrix = mat3(tangent.x, tangent2.x, normal.x,
 						  tangent.y, tangent2.y, normal.y,
 						  tangent.z, tangent2.z, normal.z);
+
 
 	vec3 NormalTex = vec3(texture2D(normals, lmtexcoord.xy, Texture_MipMap_Bias).xy,0.0);
 	NormalTex.xy = NormalTex.xy*2.0-1.0;
@@ -776,7 +774,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		bool WATER = texture2D(colortex7, gl_FragCoord.xy*texelSize).a > 0.0 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance) && texture2D(depthtex1, gl_FragCoord.xy*texelSize).x >= 1.0;
 
-		if(WATER) gl_FragData[0].a = 0.0;
+		if(WATER) {
+			gl_FragData[0].a = 0.0;
+			MATERIALS = 0.0;
+			}
 	#endif
 
 	gl_FragData[1] = vec4(Albedo, MATERIALS);

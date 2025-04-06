@@ -89,7 +89,7 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
 
             vec2 UV = zoomin;
 
-            float flameDistort = texture2D(noisetex,  UV * vec2(aspectRatio,1.0) - vec2(0.0,frameTimeCounter*0.3)).b * clamp(-texcoord.y*0.3+0.3,0.0,1.0) * 0.75 * exitLava;
+            float flameDistort = texture2D(noisetex,  UV * vec2(aspectRatio,1.0) - vec2(0.0,frameTimeCounter*0.3)).b * clamp(-texcoord.y*0.3+0.3,0.0,1.0) * ON_FIRE_DISTORT_EFFECT_STRENGTH * exitLava;
 
             distortmask = max(distortmask, flameDistort);
         }
