@@ -207,11 +207,13 @@ void main() {
 						  tangent.y, binormal.y, normalMat.y,
 						  tangent.z, binormal.z, normalMat.z);
 
-	if(mc_Entity.x == 8.0) {
-		largeWaveDisplacementNormal = normalize(largeWaveDisplacementNormal * tbnMatrix);
-	}else{
-		largeWaveDisplacementNormal = normalMat.xyz;
-	}
+	#ifdef LARGE_WAVE_DISPLACEMENT
+		if(mc_Entity.x == 8.0) {
+			largeWaveDisplacementNormal = normalize(largeWaveDisplacementNormal * tbnMatrix);
+		}else{
+			largeWaveDisplacementNormal = normalMat.xyz;
+		}
+	#endif
 	flatnormal = normalMat.xyz;
 	viewVector = position.xyz;
 
