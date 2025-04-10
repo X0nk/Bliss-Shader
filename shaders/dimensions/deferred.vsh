@@ -23,8 +23,6 @@ flat varying float rodExposure;
 flat varying float avgL2;
 flat varying float centerDepth;
 
-#include "/lib/scene_controller.glsl"
-
 uniform int hideGUI;
 
 uniform sampler2D colortex4;
@@ -38,16 +36,14 @@ uniform vec3 sunPosition;
 uniform vec2 texelSize;
 uniform float sunElevation;
 uniform float eyeAltitude;
+uniform float rainStrength;
+uniform float nightVision;
 uniform float near;
 // uniform float far;
 uniform float frameTime;
 uniform int frameCounter;
-uniform float rainStrength;
 
-// uniform int worldTime;
 vec3 sunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
-
-// vec3 sunVec = normalize(LightDir);
 
 #include "/lib/sky_gradient.glsl"
 #include "/lib/util.glsl"
@@ -74,28 +70,6 @@ float tanh(float x){
 float ld(float depth) {
     return (2.0 * near) / (far + near - depth * (far - near));		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
 }
-
-uniform float nightVision;
-
-uniform int worldDay;
-void getWeatherParams(
-	inout vec4 weatherParams0,
-	inout vec4 weatherParams1,
-
-	float layer0_coverage,
-	float layer1_coverage,
-	float layer2_coverage,
-	float uniformFog_density,
-
-	float layer0_density,
-	float layer1_density,
-	float layer2_density,
-	float cloudyFog_density
-){
-	weatherParams0 = vec4(layer0_coverage, layer1_coverage, layer2_coverage, uniformFog_density);
-	weatherParams1 = vec4(layer0_density, layer1_density, layer2_density, cloudyFog_density);
-}
-
 float hash11(float p)
 {
     p = fract(p * .1031);
@@ -103,6 +77,9 @@ float hash11(float p)
     p *= p + p;
     return fract(p);
 }
+
+#define USE_SCENE_CONTROLLER_SETTINGS
+#include "/lib/scene_controller.glsl"
 
 void main() {
 
@@ -188,69 +165,72 @@ void main() {
 /// --- SCENE CONTROLLER PARAMETERS --- ///
 ///////////////////////////////////////////
 
-	parameters.smallCumulus = vec2(CloudLayer0_coverage, CloudLayer0_density);
-	parameters.largeCumulus = vec2(CloudLayer1_coverage, CloudLayer1_density);
-	parameters.altostratus = vec2(CloudLayer2_coverage, CloudLayer2_density);
-	parameters.fog = vec2(1.0, 1.0);
-	
-#ifdef Daily_Weather
-	#ifdef CHOOSE_RANDOM_WEATHER_PROFILE
-		int dayCounter = int(clamp(hash11(float(mod(worldDay, 1000))) * 10.0, 0,10));
-	#else
-		int dayCounter = int(mod(worldDay, 10));
-	#endif
-	
-	//----------- cloud coverage
-	vec3 weatherProfile_cloudCoverage[10] = vec3[](
-		vec3(DAY0_l0_coverage, DAY0_l1_coverage, DAY0_l2_coverage),
-		vec3(DAY1_l0_coverage, DAY1_l1_coverage, DAY1_l2_coverage),
-		vec3(DAY2_l0_coverage, DAY2_l1_coverage, DAY2_l2_coverage),
-		vec3(DAY3_l0_coverage, DAY3_l1_coverage, DAY3_l2_coverage),
-		vec3(DAY4_l0_coverage, DAY4_l1_coverage, DAY4_l2_coverage),
-		vec3(DAY5_l0_coverage, DAY5_l1_coverage, DAY5_l2_coverage),
-		vec3(DAY6_l0_coverage, DAY6_l1_coverage, DAY6_l2_coverage),
-		vec3(DAY7_l0_coverage, DAY7_l1_coverage, DAY7_l2_coverage),
-		vec3(DAY8_l0_coverage, DAY8_l1_coverage, DAY8_l2_coverage),
-		vec3(DAY9_l0_coverage, DAY9_l1_coverage, DAY9_l2_coverage)
+	// components are split for readability/user friendliness within this function
+	applySceneControllerParameters(
+		parameters.smallCumulus.x, parameters.smallCumulus.y, 
+		parameters.largeCumulus.x, parameters.largeCumulus.y,
+		parameters.altostratus.x, parameters.altostratus.y,
+		parameters.fog.x, parameters.fog.y
 	);
 
-	//----------- cloud density
-	vec3 weatherProfile_cloudDensity[10] = vec3[](
-		vec3(DAY0_l0_density, DAY0_l1_density, DAY0_l2_density),
-		vec3(DAY1_l0_density, DAY1_l1_density, DAY1_l2_density),
-		vec3(DAY2_l0_density, DAY2_l1_density, DAY2_l2_density),
-		vec3(DAY3_l0_density, DAY3_l1_density, DAY3_l2_density),
-		vec3(DAY4_l0_density, DAY4_l1_density, DAY4_l2_density),
-		vec3(DAY5_l0_density, DAY5_l1_density, DAY5_l2_density),
-		vec3(DAY6_l0_density, DAY6_l1_density, DAY6_l2_density),
-		vec3(DAY7_l0_density, DAY7_l1_density, DAY7_l2_density),
-		vec3(DAY8_l0_density, DAY8_l1_density, DAY8_l2_density),
-		vec3(DAY9_l0_density, DAY9_l1_density, DAY9_l2_density)
-	);
-
-	vec3 getWeatherProfile_coverage = weatherProfile_cloudCoverage[dayCounter];
-	vec3 getWeatherProfile_density = weatherProfile_cloudDensity[dayCounter];
+// #ifdef Daily_Weather
+// 	#ifdef CHOOSE_RANDOM_WEATHER_PROFILE
+// 		int dayCounter = int(clamp(hash11(float(mod(worldDay, 1000))) * 10.0, 0,10));
+// 	#else
+// 		int dayCounter = int(mod(worldDay, 10));
+// 	#endif
 	
-	parameters.smallCumulus = vec2(getWeatherProfile_coverage.x, getWeatherProfile_density.x);
-	parameters.largeCumulus = vec2(getWeatherProfile_coverage.y, getWeatherProfile_density.y);
-	parameters.altostratus =  vec2(getWeatherProfile_coverage.z, getWeatherProfile_density.z);
+// 	//----------- cloud coverage
+// 	vec3 weatherProfile_cloudCoverage[10] = vec3[](
+// 		vec3(DAY0_l0_coverage, DAY0_l1_coverage, DAY0_l2_coverage),
+// 		vec3(DAY1_l0_coverage, DAY1_l1_coverage, DAY1_l2_coverage),
+// 		vec3(DAY2_l0_coverage, DAY2_l1_coverage, DAY2_l2_coverage),
+// 		vec3(DAY3_l0_coverage, DAY3_l1_coverage, DAY3_l2_coverage),
+// 		vec3(DAY4_l0_coverage, DAY4_l1_coverage, DAY4_l2_coverage),
+// 		vec3(DAY5_l0_coverage, DAY5_l1_coverage, DAY5_l2_coverage),
+// 		vec3(DAY6_l0_coverage, DAY6_l1_coverage, DAY6_l2_coverage),
+// 		vec3(DAY7_l0_coverage, DAY7_l1_coverage, DAY7_l2_coverage),
+// 		vec3(DAY8_l0_coverage, DAY8_l1_coverage, DAY8_l2_coverage),
+// 		vec3(DAY9_l0_coverage, DAY9_l1_coverage, DAY9_l2_coverage)
+// 	);
 
-	//----------- fog density
-	vec2 weatherProfile_fogDensity[10] = vec2[](
-		vec2(DAY0_ufog_density, DAY0_cfog_density),
-		vec2(DAY1_ufog_density, DAY1_cfog_density),
-		vec2(DAY2_ufog_density, DAY2_cfog_density),
-		vec2(DAY3_ufog_density, DAY3_cfog_density),
-		vec2(DAY4_ufog_density, DAY4_cfog_density),
-		vec2(DAY5_ufog_density, DAY5_cfog_density),
-		vec2(DAY6_ufog_density, DAY6_cfog_density),
-		vec2(DAY7_ufog_density, DAY7_cfog_density),
-		vec2(DAY8_ufog_density, DAY8_cfog_density),
-		vec2(DAY9_ufog_density, DAY9_cfog_density)
-	);
+// 	//----------- cloud density
+// 	vec3 weatherProfile_cloudDensity[10] = vec3[](
+// 		vec3(DAY0_l0_density, DAY0_l1_density, DAY0_l2_density),
+// 		vec3(DAY1_l0_density, DAY1_l1_density, DAY1_l2_density),
+// 		vec3(DAY2_l0_density, DAY2_l1_density, DAY2_l2_density),
+// 		vec3(DAY3_l0_density, DAY3_l1_density, DAY3_l2_density),
+// 		vec3(DAY4_l0_density, DAY4_l1_density, DAY4_l2_density),
+// 		vec3(DAY5_l0_density, DAY5_l1_density, DAY5_l2_density),
+// 		vec3(DAY6_l0_density, DAY6_l1_density, DAY6_l2_density),
+// 		vec3(DAY7_l0_density, DAY7_l1_density, DAY7_l2_density),
+// 		vec3(DAY8_l0_density, DAY8_l1_density, DAY8_l2_density),
+// 		vec3(DAY9_l0_density, DAY9_l1_density, DAY9_l2_density)
+// 	);
 
-	parameters.fog = weatherProfile_fogDensity[dayCounter];
-#endif
+// 	vec3 getWeatherProfile_coverage = weatherProfile_cloudCoverage[dayCounter];
+// 	vec3 getWeatherProfile_density = weatherProfile_cloudDensity[dayCounter];
+	
+// 	parameters.smallCumulus = vec2(getWeatherProfile_coverage.x, getWeatherProfile_density.x);
+// 	parameters.largeCumulus = vec2(getWeatherProfile_coverage.y, getWeatherProfile_density.y);
+// 	parameters.altostratus =  vec2(getWeatherProfile_coverage.z, getWeatherProfile_density.z);
+
+// 	//----------- fog density
+// 	vec2 weatherProfile_fogDensity[10] = vec2[](
+// 		vec2(DAY0_ufog_density, DAY0_cfog_density),
+// 		vec2(DAY1_ufog_density, DAY1_cfog_density),
+// 		vec2(DAY2_ufog_density, DAY2_cfog_density),
+// 		vec2(DAY3_ufog_density, DAY3_cfog_density),
+// 		vec2(DAY4_ufog_density, DAY4_cfog_density),
+// 		vec2(DAY5_ufog_density, DAY5_cfog_density),
+// 		vec2(DAY6_ufog_density, DAY6_cfog_density),
+// 		vec2(DAY7_ufog_density, DAY7_cfog_density),
+// 		vec2(DAY8_ufog_density, DAY8_cfog_density),
+// 		vec2(DAY9_ufog_density, DAY9_cfog_density)
+// 	);
+
+// 	parameters.fog = weatherProfile_fogDensity[dayCounter];
+// #endif
 
 //////////////////////////////
 /// --- EXPOSURE STUFF --- ///
