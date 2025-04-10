@@ -74,7 +74,7 @@ vec3 doIndirectLighting(
 
     // float lightmapCurve = pow(1.0-pow(1.0-lightmap,2.0),2.0);
     // float lightmapCurve = lightmap*lightmap;
-    float lightmapCurve = (pow(lightmap,15.0)*2.0 + pow(lightmap,2.5))*0.5;
+    float lightmapCurve = (pow(lightmap,15.0)*2.0 + lightmap*lightmap)*0.5;
 
     vec3 indirectLight = lightColor * lightmapCurve * ambient_brightness * 0.7; 
 
