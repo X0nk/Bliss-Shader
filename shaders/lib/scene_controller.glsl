@@ -23,10 +23,10 @@ uniform.bool.blankBool = if(VALUE <is greater/less than, or equal to> ANOTHER_VA
 uniform.bool.blankBool = if(VALUE > ANOTHE_RVALUE)
 uniform.bool.blankBool = if(VALUE < ANOTHER_VALUE)
 uniform.bool.blankBool = if(VALUE == ANOTHER_VALUE)
-uniform.bool.blankBool = if(in(biome, BIOEM_A, BIOME_B, BIOME_C))
-uniform.bool.blankBool = if(in(biome, BIOME_A))
+uniform.bool.blankBool = in(biome, BIOME_A, BIOME_B, BIOME_C)
+uniform.bool.blankBool = in(biome, BIOME_A)
 
-uniform.bool.nameWhateverYouWant_isExampleBool1 = if(in(biome, BIOME_DARK_FOREST, BIOME_DESERT, BIOME_PLAINS))
+uniform.bool.nameWhateverYouWant_isExampleBool1 = in(biome, BIOME_DARK_FOREST, BIOME_DESERT, BIOME_PLAINS)
 uniform.bool.nameWhateverYouWant_isExampleBool2 = if(nightvision > 0.0)
 uniform.bool.nameWhateverYouWant_isExampleBool3 = if(cameraPosition.x < 40.0 && cameraPosition.y > -100.0)
 uniform.bool.nameWhateverYouWant_isExampleBool4 = if(rainStrength > 0.0)
