@@ -314,7 +314,7 @@ void main() {
 	
 	// low
 	#ifdef MISC_BLOCK_SSS
-		if(mc_Entity.x == BLOCK_SSS_WEIRD || mc_Entity.x == BLOCK_GRASS) SSSAMOUNT = 0.25;
+		if(mc_Entity.x == BLOCK_SSS_WEIRD || mc_Entity.x == BLOCK_GRASS) SSSAMOUNT = 0.4;
 	#endif
 
 	#ifdef ENTITIES
