@@ -652,6 +652,8 @@ vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, floa
 	
 	#if SSS_TYPE == 3
 		scatter *= pow(Density, LabSSS_Curve);
+	#else
+		if(Density < 0.01) scatter = vec3(0.0);
 	#endif
 	
 	scatter *= 1.0 + CustomPhase(lightPos)*6.0; // ~10x brighter at the peak
