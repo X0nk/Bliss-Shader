@@ -222,9 +222,7 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 
 	float minZ = spos.z;
 	float maxZ = spos.z;
-	CURVE = 0.0; 
-
-	bool intersected = false;
+	CURVE = 0.0;
   	for(int i = 0; i < iterations; i++){
 		if (spos.x < 0.0 || spos.y < 0.0 || spos.z < 0.0 || spos.x > 1.0 || spos.y > 1.0 || spos.z > 1.0) return vec3(1.1);
 		
@@ -241,7 +239,7 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 		
 		float biasamount = 0.00005;
 
-		minZ = maxZ;
+		minZ = maxZ-biasamount / currZ;
 		maxZ += stepv.z;
 
 		spos += stepv;
@@ -301,7 +299,7 @@ vec3 ApplySSRT(
 			#endif
 		#else
 			#ifdef OVERWORLD_SHADER
-				skycontribution = unchangedIndirect;//  * (max(rayDir.y,pow(1.0-lightmap,2))*0.95+0.05);
+				skycontribution = unchangedIndirect * (max(rayDir.y,pow(1.0-lightmap,2))*0.95+0.05);
 			#endif
 		#endif
 
