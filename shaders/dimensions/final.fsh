@@ -14,6 +14,7 @@ varying vec2 texcoord;
 uniform vec2 texelSize;
 uniform float frameTimeCounter;
 uniform int frameCounter;
+uniform float frameTime;
 uniform float viewHeight;
 uniform float viewWidth;
 uniform float aspectRatio;
@@ -91,7 +92,10 @@ vec3 doMotionBlur(vec2 texcoord, float depth, float noise, bool hand){
 	vec2 velocity = texcoord - previousPosition.xy;
   
   // thank you Capt Tatsu for letting me use these
-  velocity = (velocity / (1.0 + length(velocity)) ) * 0.05 * blurMult * MOTION_BLUR_STRENGTH;
+  velocity /= 1.0 + length(velocity); // ensure the blurring stays sane where UV is beyond 1.0 or -1.0
+  velocity /= 1.0 + frameTime*1000.0; // ensure the blur radius stays roughly the same no matter the framerate
+  velocity *= blurMult * MOTION_BLUR_STRENGTH; // remove hand blur and add user control
+
   texcoord = texcoord - velocity*(samples*0.5 + noise);
 
   vec2 screenEdges = 2.0/vec2(viewWidth, viewHeight);
