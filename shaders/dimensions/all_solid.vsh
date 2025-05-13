@@ -385,8 +385,11 @@ void main() {
 	#endif
 
 	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
-
-	gl_Position = toClipSpace3(position);
+	
+	// ensure hand/entities have the same transformations as the spidereyes and enchant glint programs.
+	#if !defined ENTITIES && !defined HAND
+		gl_Position = toClipSpace3(position);
+	#endif
 #endif
 
 	#if defined Seasons && defined WORLD && !defined ENTITIES && !defined BLOCKENTITIES && !defined HAND
