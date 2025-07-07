@@ -215,7 +215,7 @@ vec3 getCloudLighting(
 	float powderEffect = 1.0-exp(-10.0*shapeFaded); powderEffect *= powderEffect; powderEffect *= 2.0;
 	vec3 directScattering = directLightCol_multi * powderEffect * exp(-3.0*sunShadowMask) + directLightCol * exp(-10.0*sunShadowMask);
 	vec3 indirectScattering = indirectLightCol * mix(1.0, exp2(-5.0*shape), indirectShadowMask*indirectShadowMask);
-	
+
 	// return indirectScattering;
 	// return directScattering;
 	return indirectScattering + directScattering;
@@ -502,7 +502,7 @@ vec4 GetVolumetricClouds(
 	///------- do color stuff outside of the raymarcher loop
 	vec3 sunScattering = directLightCol * (phaseCloud(SdotV, 0.85) + phaseCloud(SdotV, 0.75)) * 3.14;
 	vec3 sunMultiScattering = directLightCol;
-	vec3 skyScattering = indirectLightCol * 2.0;
+	vec3 skyScattering = indirectLightCol * (1.0 + pow(1.0-pow(1.0-clamp(sunVector.y,0.0,1.0),5.0),5.0));
 
    	////-------  RENDER SMALL CUMULUS CLOUDS
 		vec4 smallCumulusClouds = cloudColor;

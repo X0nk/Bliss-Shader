@@ -51,6 +51,9 @@ flat varying int glass;
 
 attribute vec4 at_tangent;
 attribute vec4 mc_Entity;
+#if defined ENTITIES
+	uniform int entityId;
+#endif
 
 
 uniform vec3 sunPosition;
@@ -118,6 +121,11 @@ vec3 getWaveNormal(vec3 posxz, float range){
 
 void main() {
 
+ 	gl_Position = ftransform();
+	#if defined ENTITIES && defined IS_IRIS
+		// force out of frustum
+		if (entityId == 1599) gl_Position.z -= 10000.0;
+	#endif
 	#if defined PHYSICSMOD_OCEAN_SHADER && defined PHYSICS_OCEAN
     	// basic texture to determine how shallow/far away from the shore the water is
     	physics_localWaviness = texelFetch(physics_waviness, ivec2(gl_Vertex.xz) - physics_textureOffset, 0).r;
@@ -165,7 +173,9 @@ void main() {
 
 	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 	
- 	gl_Position = toClipSpace3(position);
+	#if !defined ENTITIES && !defined HAND
+ 		gl_Position = toClipSpace3(position);
+	#endif
 
 	HELD_ITEM_BRIGHTNESS = 0.0;
 	
