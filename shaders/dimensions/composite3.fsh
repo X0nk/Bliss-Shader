@@ -325,7 +325,7 @@ vec4 bilateralUpsample(out float outerEdgeResults, float referenceDepth, sampler
 
   vec4 colorSum = vec4(0.0);
   float edgeSum = 0.0;
-  float threshold = 1.0;
+  float threshold = 0.005;
   
   vec2 coord = gl_FragCoord.xy - 1.5;
 
