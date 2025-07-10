@@ -102,9 +102,11 @@ float densityAtPos(in vec3 pos){
 // https://gitlab.com/jeseibel/distant-horizons-core/-/blob/main/core/src/main/resources/shaders/flat_shaded.frag?ref_type=heads
 // Property of Distant Horizons [mod]
 
-const int noiseSteps = 4;
-const float noiseIntensity = 10.0;
-const int noiseDropoff = 1024;
+// --- NOISE SETTINGS ---
+// const int noiseSteps = NOISE_RESOLUTION;
+const float noiseIntensity = NOISE_INTENSITY;
+const int noiseDropoff = NOISE_DROPOFF;
+// ----------------------
 
 float rand(float co) { return fract(sin(co*(91.3458)) * 47453.5453); }
 float rand(vec2 co) { return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453); }
@@ -123,9 +125,20 @@ vec4 applyNoise(in vec4 fragColor, const in vec3 viewPos, const in float viewDis
     float lum = (fragColor.r + fragColor.g + fragColor.b) / 3.0;
     noiseAmplification = (1.0 - pow(lum * 2.0 - 1.0, 2.0)) * noiseAmplification; // Lessen the effect on depending on how dark the object is, equasion for this is -(2x-1)^{2}+1
     noiseAmplification *= fragColor.a; // The effect would lessen on transparent objects
+    
+    // Mikis idea. make it such that you can control the step amount as distance increases out from where vanilla chunks end.
+    // ideally, close = higher steps and far = lower steps
+    float highestSteps = NOISE_RESOLUTION;
+    float lowestSteps = 2.0;
+    float transitionLength = 16.0 * 16.0; // distance it takes to reach the lowest steps from the highest. measured in meters/blocks.
+    
+    float transitionGradient = clamp((length(viewPos - cameraPosition) - (far+32.0)) / transitionLength,0.0,1.0);
+    transitionGradient = sqrt(transitionGradient);// make the gradient appear smoother and less sudden when approaching low steps.
+
+    int dynamicNoiseSteps = int(mix(highestSteps, lowestSteps, transitionGradient));
 
     // Random value for each position
-    float randomValue = rand(quantize(viewPos, noiseSteps))
+    float randomValue = rand(quantize(viewPos, dynamicNoiseSteps))
     * 2.0 * noiseAmplification - noiseAmplification;
 
     // Modifies the color

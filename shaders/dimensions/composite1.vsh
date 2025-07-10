@@ -5,11 +5,7 @@
 	flat varying float Flashing;
 #endif
 
-	#ifdef Daily_Weather
-		flat varying vec4 dailyWeatherParams0;
-		flat varying vec4 dailyWeatherParams1;
-	#endif
-
+#include "/lib/scene_controller.glsl"
 
 flat varying vec3 WsunVec;
 flat varying vec3 WmoonVec;
@@ -17,6 +13,7 @@ flat varying vec3 unsigned_WsunVec;
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec4 lightCol;
 flat varying vec3 moonCol;
+flat varying vec3 albedoSmooth;
 
 flat varying float exposure;
 
@@ -57,6 +54,10 @@ void main() {
 	lightCol.a = float(sunElevation > 1e-5)*2.0 - 1.0;
 
 	moonCol = texelFetch2D(colortex4,ivec2(9,37),0).rgb;
+	
+	#if defined FLASHLIGHT && defined FLASHLIGHT_BOUNCED_INDIRECT
+		albedoSmooth = texelFetch2D(colortex4,ivec2(15.5,2.5),0).rgb;
+	#endif
 
 	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 
@@ -72,11 +73,8 @@ void main() {
 	
 
 	exposure = texelFetch2D(colortex4,ivec2(10,37),0).r;
-	
-	#if defined Daily_Weather
-			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb / 1500.0, 0.0);
-			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb / 1500.0, 0.0);
-	#endif
+
+	readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
 	
 	#ifdef TAA
 		TAA_Offset = offsets[framemod8];

@@ -11,6 +11,8 @@
 #endif
 
 uniform float exitWater;
+uniform float enterWater;
+uniform float exitLava;
 // uniform float exitPowderSnow;
 uniform int isEyeInWater;
 
@@ -31,7 +33,6 @@ uniform int isEyeInWater;
 
 // uniform bool is_on_ground;
 // uniform bool isSpectator;
-
 
 void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
    
@@ -74,6 +75,24 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
             // apply distortion effects for exiting water and under water
             distortmask = max(distortmask, waterDrops);
         }
+        if(enterWater > 0.0){
+            vec2 zoomTC = 0.5 + (texcoord - 0.5) * (1.0 - (1.0-sqrt(1.0-enterWater)) );
+            float waterSplash = texture2D(noisetex, zoomTC * vec2(aspectRatio,1.0)).r * (1.0-enterWater);
+
+            distortmask = max(distortmask, waterSplash);
+        }
+    #endif
+    //////////////////////// HEAT DISTORTION /////////////////////
+    #if defined ON_FIRE_DISTORT_EFFECT
+      if(exitLava > 0.0){
+            vec2 zoomin = 0.5 + (texcoord - 0.5) * (1.0-pow(1.0-clamp(-texcoord.y*0.5+0.75,0.0,1.0),1.0)) * (1.0-pow(1.0-exitLava,2.0));
+
+            vec2 UV = zoomin;
+
+            float flameDistort = texture2D(noisetex,  UV * vec2(aspectRatio,1.0) - vec2(0.0,frameTimeCounter*0.3)).b * clamp(-texcoord.y*0.3+0.3,0.0,1.0) * ON_FIRE_DISTORT_EFFECT_STRENGTH * exitLava;
+
+            distortmask = max(distortmask, flameDistort);
+        }
     #endif
 
     //////////////////////// APPLY DISTORTION /////////////////////
@@ -81,10 +100,11 @@ void applyGameplayEffects(inout vec3 color, in vec2 texcoord, float noise){
     vec2 zoomUV = 0.5 + (texcoord - 0.5) * (1.0 - distortmask);
     vec3 distortedColor = texture2D(colortex7, zoomUV).rgb;
 
-    #ifdef WATER_ON_CAMERA_EFFECT
+    #if defined WATER_ON_CAMERA_EFFECT || defined ON_FIRE_DISTORT_EFFECT
         // apply the distorted water color to the scene, but revert back to before when it ends
-        if(exitWater > 0.01) color = distortedColor;
+        if(exitWater > 0.01 || exitLava > 0.01) color = distortedColor;
     #endif
+
 
     //////////////////////// APPLY COLOR EFFECTS /////////////////////
     #if defined LOW_HEALTH_EFFECT || defined DAMAGE_TAKEN_EFFECT   

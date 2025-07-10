@@ -23,13 +23,7 @@ flat varying float rodExposure;
 flat varying float avgL2;
 flat varying float centerDepth;
 
-#ifdef Daily_Weather
-	flat varying vec4 dailyWeatherParams0;
-	flat varying vec4 dailyWeatherParams1;
-#endif
 uniform int hideGUI;
-flat varying vec4 CurrentFrame_dailyWeatherParams0;
-flat varying vec4 CurrentFrame_dailyWeatherParams1;
 
 uniform sampler2D colortex4;
 uniform sampler2D colortex6;
@@ -42,16 +36,14 @@ uniform vec3 sunPosition;
 uniform vec2 texelSize;
 uniform float sunElevation;
 uniform float eyeAltitude;
+uniform float rainStrength;
+uniform float nightVision;
 uniform float near;
 // uniform float far;
 uniform float frameTime;
 uniform int frameCounter;
-uniform float rainStrength;
 
-// uniform int worldTime;
 vec3 sunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
-
-// vec3 sunVec = normalize(LightDir);
 
 #include "/lib/sky_gradient.glsl"
 #include "/lib/util.glsl"
@@ -78,28 +70,6 @@ float tanh(float x){
 float ld(float depth) {
     return (2.0 * near) / (far + near - depth * (far - near));		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
 }
-
-uniform float nightVision;
-
-uniform int worldDay;
-void getWeatherParams(
-	inout vec4 weatherParams0,
-	inout vec4 weatherParams1,
-
-	float layer0_coverage,
-	float layer1_coverage,
-	float layer2_coverage,
-	float uniformFog_density,
-
-	float layer0_density,
-	float layer1_density,
-	float layer2_density,
-	float cloudyFog_density
-){
-	weatherParams0 = vec4(layer0_coverage, layer1_coverage, layer2_coverage, uniformFog_density);
-	weatherParams1 = vec4(layer0_density, layer1_density, layer2_density, cloudyFog_density);
-}
-
 float hash11(float p)
 {
     p = fract(p * .1031);
@@ -107,6 +77,9 @@ float hash11(float p)
     p *= p + p;
     return fract(p);
 }
+
+#define USE_SCENE_CONTROLLER_SETTINGS
+#include "/lib/scene_controller.glsl"
 
 void main() {
 
@@ -140,24 +113,34 @@ void main() {
 
 	// sample in a 3x3 pattern to get a good area for average color
 	
-	int maxIT = 9;
-	// int maxIT = 20;
-	for (int i = 0; i < maxIT; i++) {
-		vec3 pos = vec3(0.0,1.0,0.0);
-		pos.xy += normalize(sample3x3[i]) * vec2(0.3183,0.9000);
+	// int maxIT = 9;
+	// for (int i = 0; i < maxIT; i++) {
+	// 	vec3 pos = vec3(0.0,1.0,0.0);
+	// 	pos.xy += normalize(sample3x3[i]) * vec2(0.3183,0.9000);
 
-		averageSkyCol_Clouds += 1.5 * (skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.0);
-		averageSkyCol += 1.5 * (skyFromTex(pos,colortex4).rgb/maxIT/150.0);
-   	}
+	// 	averageSkyCol_Clouds += skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.0;
+	// 	averageSkyCol += skyFromTex(pos,colortex4).rgb/maxIT/150.0;
+   	// }
+	float maxIT = 20.0;
+	for (int i = 0; i < int(maxIT); i++) {
+		vec2 ij = R2_samples(((i*50+1)%1000)*int(maxIT)+i) ;//* vec2(0.3183,0.9000);
+		vec3 pos = normalize(rodSample(ij)) * vec3(1.0,0.5,1.0) + vec3(0.0,0.5,0.0);
+
+		averageSkyCol_Clouds += skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.0;
+		averageSkyCol += 1.5 * skyFromTex(pos,colortex4).rgb/maxIT/150.0;
+	}
+
+	vec3 minimumlight =  vec3(1.0) * 0.01 * MIN_LIGHT_AMOUNT + nightVision * 0.05;
+
+	// luminance based reinhard is useful ouside of tonemapping too.
+	averageSkyCol_Clouds = 1.5 * (averageSkyCol_Clouds / (1.0+luma(averageSkyCol_Clouds)*0.2));
 	
-	// maximum control of color and luminance
-	// vec3 minimumlight =  vec3(0.5,0.75,1.0) * nightVision;
-	// averageSkyCol_Clouds = max(	normalize(averageSkyCol_Clouds) * min(luma(averageSkyCol_Clouds) * 3.0,2.5) * (1.0-rainStrength*0.7), minimumlight);
+	averageSkyCol = max(averageSkyCol * PLANET_GROUND_BRIGHTNESS,0.0) + minimumlight;
 
+	#ifdef USE_CUSTOM_SKY_GROUND_LIGHTING_COLORS
+		averageSkyCol = luma(averageSkyCol) * vec3(SKY_GROUND_R,SKY_GROUND_G,SKY_GROUND_B);
+	#endif
 
-	vec3 minimumlight =  vec3(0.02) * 0.2 * MIN_LIGHT_AMOUNT + nightVision * 0.05;
-	averageSkyCol_Clouds = max(normalize(averageSkyCol_Clouds + 1e-6) * min(luma(averageSkyCol_Clouds) * 3.0,2.5),0.0);
-	averageSkyCol = max(averageSkyCol * PLANET_GROUND_BRIGHTNESS,0.0) + max(minimumlight, 0.02 * 0.2);
 
 ////////////////////////////////////////
 /// --- SUNLIGHT/MOONLIGHT STUFF --- ///
@@ -178,85 +161,22 @@ void main() {
 
 #endif
 
-//////////////////////////////////
-/// --- WEATHER PARAMETERS --- ///
-//////////////////////////////////
-
-#ifdef Daily_Weather
-	// this is horrid and i hate it
-	// store 8 values that control cloud parameters.
-	// as the day counter changes, switch to a different set of stored values.
-	
-	#ifdef CHOOSE_RANDOM_WEATHER_PROFILE
-		int dayCounter = int(clamp(hash11(float(mod(worldDay, 1000))) * 10.0, 0,10));
-	#else
-		int dayCounter = int(mod(worldDay, 10));
-	#endif
-	
-
-	vec4 weatherParameters_A[10] = vec4[](
-		vec4( DAY0_l0_coverage, DAY0_l1_coverage, DAY0_l2_coverage, DAY0_ufog_density),
-		vec4( DAY1_l0_coverage, DAY1_l1_coverage, DAY1_l2_coverage, DAY1_ufog_density),
-		vec4( DAY2_l0_coverage, DAY2_l1_coverage, DAY2_l2_coverage, DAY2_ufog_density),
-		vec4( DAY3_l0_coverage, DAY3_l1_coverage, DAY3_l2_coverage, DAY3_ufog_density),
-		vec4( DAY4_l0_coverage, DAY4_l1_coverage, DAY4_l2_coverage, DAY4_ufog_density),
-		
-		vec4( DAY5_l0_coverage, DAY5_l1_coverage, DAY5_l2_coverage, DAY5_ufog_density),
-		vec4( DAY6_l0_coverage, DAY6_l1_coverage, DAY6_l2_coverage, DAY6_ufog_density),
-		vec4( DAY7_l0_coverage, DAY7_l1_coverage, DAY7_l2_coverage, DAY7_ufog_density),
-		vec4( DAY8_l0_coverage, DAY8_l1_coverage, DAY8_l2_coverage, DAY8_ufog_density),
-		vec4( DAY9_l0_coverage, DAY9_l1_coverage, DAY9_l2_coverage, DAY9_ufog_density)
-	);
-
-	vec4 weatherParameters_B[10] = vec4[](
-		vec4(DAY0_l0_density, DAY0_l1_density, DAY0_l2_density, DAY0_cfog_density),
-		vec4(DAY1_l0_density, DAY1_l1_density, DAY1_l2_density, DAY1_cfog_density),
-		vec4(DAY2_l0_density, DAY2_l1_density, DAY2_l2_density, DAY2_cfog_density),
-		vec4(DAY3_l0_density, DAY3_l1_density, DAY3_l2_density, DAY3_cfog_density),
-		vec4(DAY4_l0_density, DAY4_l1_density, DAY4_l2_density, DAY4_cfog_density),
-
-		vec4(DAY5_l0_density, DAY5_l1_density, DAY5_l2_density, DAY5_cfog_density),
-		vec4(DAY6_l0_density, DAY6_l1_density, DAY6_l2_density, DAY6_cfog_density),
-		vec4(DAY7_l0_density, DAY7_l1_density, DAY7_l2_density, DAY7_cfog_density),
-		vec4(DAY8_l0_density, DAY8_l1_density, DAY8_l2_density, DAY8_cfog_density),
-		vec4(DAY9_l0_density, DAY9_l1_density, DAY9_l2_density, DAY9_cfog_density)
-	);
-
-
-
-	CurrentFrame_dailyWeatherParams0 = weatherParameters_A[dayCounter];
-	CurrentFrame_dailyWeatherParams1 = weatherParameters_B[dayCounter];
-
-	vec4 rainyWeatherParameters_A[3] = vec4[](
-		// vec4(DAY0_l0_coverage, DAY0_l1_coverage, DAY0_l2_coverage, DAY0_ufog_density),
-		vec4(1.3,0.0,0.0,0.0),
-		vec4(0.5,0.0,0.0,0.0),
-		vec4(0.0,0.0,0.0,0.0)
-	);
-	vec4 rainyWeatherParameters_B[3] = vec4[](
-		// vec4(DAY7_l0_density, DAY7_l1_density, DAY7_l2_density, DAY7_cfog_density),
-		vec4(0.1,0.0,0.0,0.0),
-		vec4(0.1,0.0,0.0,0.0),
-		vec4(0.0,0.0,0.0,0.0)
-	);
-
-	// if(hideGUI == 1){
-		// CurrentFrame_dailyWeatherParams0 = rainyWeatherParameters_A[worldDay%2];
-		// CurrentFrame_dailyWeatherParams1 = rainyWeatherParameters_B[worldDay%2];
-	// } else {
-	// 	CurrentFrame_dailyWeatherParams0 =  vec4(0.5,0.0,0.0,0.0);
-	// 	CurrentFrame_dailyWeatherParams1 = 	vec4(0.1,0.5,0.0,0.0);
-	// }
-
-	#if defined Daily_Weather
-		dailyWeatherParams0 = vec4(sqrt(texelFetch2D(colortex4,ivec2(1,1),0).rgb/ 1500.0), 0.0);
-		dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb / 1500.0, 0.0);
-		
-		dailyWeatherParams0.a = texelFetch2D(colortex4,ivec2(3,1),0).x/1500.0;
-		dailyWeatherParams1.a = texelFetch2D(colortex4,ivec2(3,1),0).y/1500.0;
-	#endif
-
+#if defined OVERWORLD_SHADER && defined TWILIGHT_FOREST_FLAG
+	lightSourceColor = vec3(0.0);
+	moonColor = vec3(0.0);
 #endif
+
+///////////////////////////////////////////
+/// --- SCENE CONTROLLER PARAMETERS --- ///
+///////////////////////////////////////////
+
+	// components are split for readability/user friendliness within this function
+	applySceneControllerParameters(
+		parameters.smallCumulus.x, parameters.smallCumulus.y, 
+		parameters.largeCumulus.x, parameters.largeCumulus.y,
+		parameters.altostratus.x, parameters.altostratus.y,
+		parameters.fog.x, parameters.fog.y
+	);
 
 //////////////////////////////
 /// --- EXPOSURE STUFF --- ///
@@ -289,16 +209,14 @@ void main() {
 	float expFunc = 0.5+0.5*tanh(log(L));
 	
 	// float targetExposure = 1.0/log(L+1.05);
-	float targetExposure = (EXPOSURE_DARKENING * 0.35)/log(L+1.0 + EXPOSURE_BRIGHTENING * 0.05);
+	float targetExposure = (EXPOSURE_DARKENING * 0.35)/log(L + 1.0 + EXPOSURE_BRIGHTENING * 0.05);
 	// float targetExposure = 0.18/log2(L*2.5+1.045)*0.62; // choc original
 
 	avgL2 = clamp(mix(avgB,texelFetch2D(colortex4,ivec2(10,37),0).b,0.985),0.00003051757,65000.0);
 	float targetrodExposure = max(0.012/log2(avgL2+1.002)-0.1,0.0)*1.2;
 
 
-	exposure = max(targetExposure, 0.0);
-	// exposure = mix(0.0, 1.0, min(targetExposure,1.0));
-	// exposure = 1;
+	exposure = max(targetExposure*EXPOSURE_MULTIPLIER, 0.0);
 
 	float currCenterDepth = ld(texture2D(depthtex2, vec2(0.5)*RENDER_SCALE).r);
 	centerDepth = mix(sqrt(texelFetch2D(colortex4,ivec2(14,37),0).g/65000.0), currCenterDepth, clamp(DoF_Adaptation_Speed*exp(-0.016/frameTime+1.0)/(6.0+currCenterDepth*far),0.0,1.0));

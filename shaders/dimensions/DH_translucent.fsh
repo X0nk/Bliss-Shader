@@ -122,14 +122,7 @@ uniform float rainStrength;
 
 #ifdef OVERWORLD_SHADER
 
-	#ifdef Daily_Weather
-		flat varying vec4 dailyWeatherParams0;
-		flat varying vec4 dailyWeatherParams1;
-	#else
-		vec4 dailyWeatherParams0 = vec4(CloudLayer0_coverage, CloudLayer1_coverage, CloudLayer2_coverage, 0.0);
-		vec4 dailyWeatherParams1 = vec4(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density, 0.0);
-	#endif
-
+	#include "/lib/scene_controller.glsl"
 	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
 #endif
@@ -300,7 +293,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		vec3 bump = normalize(getWaveNormal(waterPos, playerPos, true));
 
-		float bumpmult = 10.0 * WATER_WAVE_STRENGTH;
+		float bumpmult = WATER_WAVE_STRENGTH;
 
 		bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 
@@ -332,7 +325,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
     // diffuse
 	vec3 Indirect_lighting = vec3(0.0);
 	// vec3 MinimumLightColor = vec3(1.0);
-	// if(isEyeInWater == 1) MinimumLightColor = vec3(10.0);
 	vec3 Direct_lighting = vec3(0.0);
 
     #ifdef OVERWORLD_SHADER
@@ -369,9 +361,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
     	    }
         #endif
 
-		#ifdef CLOUDS_SHADOWS
-			Shadows *= GetCloudShadow(playerPos + cameraPosition, WsunVec);
-		#endif
+		Shadows *= GetCloudShadow(playerPos + cameraPosition, WsunVec);
+
 
     	Direct_lighting = DirectLightColor * NdotL * Shadows;
 

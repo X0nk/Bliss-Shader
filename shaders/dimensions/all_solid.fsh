@@ -78,6 +78,13 @@ uniform float rainStrength;
 uniform sampler2D noisetex;//depth
 uniform sampler2D depthtex0;
 
+#if defined VIVECRAFT
+	uniform bool vivecraftIsVR;
+	uniform vec3 vivecraftRelativeMainHandPos;
+	uniform vec3 vivecraftRelativeOffHandPos;
+	uniform mat4 vivecraftRelativeMainHandRot;
+	uniform mat4 vivecraftRelativeOffHandRot;
+#endif
 
 uniform vec4 entityColor;
 
@@ -350,11 +357,20 @@ void main() {
 			vec3 playerCamPos = cameraPosition;
 		#endif
 
+		#ifdef VIVECRAFT
+        	if (vivecraftIsVR) { 
+				playerCamPos = cameraPosition - vivecraftRelativeMainHandPos;
+			}
+		#endif
+
 		// if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(worldpos-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
 		if(HELD_ITEM_BRIGHTNESS > 0.0){ 
-			float pointLight = clamp(1.0-length(worldpos-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0,1.0);
-			torchlightmap = mix(torchlightmap, HELD_ITEM_BRIGHTNESS, pointLight*pointLight);
+			
+			float pointLight = clamp(1.0-(length(worldpos-playerCamPos)-1)/HANDHELD_LIGHT_RANGE,0.0,1.0);
+			
+			torchlightmap = mix(torchlightmap, HELD_ITEM_BRIGHTNESS, pointLight);
 		}
+
 		#ifdef HAND
 			torchlightmap *= 0.9;
 		#endif
@@ -428,6 +444,8 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 	float textureLOD = bias();
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD) * color;
+	
+	
 	#if defined HAND
 		if (Albedo.a < 0.1) discard;
 	#endif
@@ -623,16 +641,6 @@ void main() {
 	//////////////////////////////// 				////////////////////////////////
 
 	#ifdef WORLD
-		// #ifdef Puddles
-		// 	float porosity = 0.4;
-			
-		// 	#ifdef Porosity
-		// 		porosity = SpecularTex.z >= 64.5/255.0 ? 0.0 : (SpecularTex.z*255.0/64.0)*0.65;
-		// 	#endif
-
-		// 	// if(SpecularTex.g < 229.5/255.0) Albedo.rgb = mix(Albedo.rgb, vec3(0), Puddle_shape*porosity);
-		// #endif
-
 		// apply noise to lightmaps to reduce banding.
 		vec2 PackLightmaps = vec2(torchlightmap, lmtexcoord.w);
 		vec4 data1 = clamp( encode(viewToWorld(normal), PackLightmaps), 0.0, 1.0);
