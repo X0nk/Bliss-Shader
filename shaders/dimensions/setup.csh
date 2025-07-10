@@ -651,67 +651,83 @@ void main() {
             case BLOCK_REDSTONE_WIRE_1:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 0.5;
+                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_2:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 1.0;
+                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_3:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 1.5;
+                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_4:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 2.0;
+                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_5:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 2.5;
+                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_6:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 3.0;
+                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_7:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 3.5;
+                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_8:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 4.0;
+                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_9:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 4.5;
+                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_10:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 5.0;
+                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_11:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 5.5;
+                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_12:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 6.0;
+                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_13:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 6.5;
+                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_14:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 7.0;
+                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_15:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 7.5;
+                mixWeight = 1.0;
                 break;
 
             case BLOCK_REPEATER_LIT:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 4.0;
+                mixWeight = 1.0;
                 break;
         #endif
 

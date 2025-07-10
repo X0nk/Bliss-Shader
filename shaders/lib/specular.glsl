@@ -103,48 +103,44 @@ float shlickFresnelRoughness(float XdotN, float roughness){
 
 vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, bool hand, inout float reflectionLength, float fresnel){
 
-	float biasAmount = 0.00005;//mix(0.00035, 0.00005, pow(fresnel,0.01));
+	float biasAmount = 0.000075;
 
 	vec3 clipPosition = toClipSpace3(position);
-	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ?
-	                   (-near -position.z) / dir.z : far*sqrt(3.);
-	vec3 direction = normalize(toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
-	direction.xy = normalize(direction.xy);
+
+	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ? (-near -position.z) / dir.z : far*sqrt(3.);
+	
+	vec3 direction = toClipSpace3(position + dir*rayLength) - clipPosition;  //convert to clip space
 
 	//get at which length the ray intersects with the edge of the screen
-	vec3 maxLengths = (step(0.0,direction)-clipPosition) / direction;
-	float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z);
+	vec3 maxLengths = (step(0.0, direction) - clipPosition) / direction;
+	float mult = min(min(maxLengths.x, maxLengths.y), maxLengths.z);
+	vec3 stepv = direction * mult / quality;
 
-	vec3 stepv = direction * mult / quality*vec3(RENDER_SCALE,1.0);
+	clipPosition.xy *= RENDER_SCALE;
+	stepv.xy *= RENDER_SCALE;
 
-	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) + stepv*(dither-0.5);
-	
-	#ifdef DEFERRED_SPECULAR
+	vec3 spos = clipPosition + stepv*dither;
+
+	#if defined DEFERRED_SPECULAR && defined TAA
 		spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
 	#endif
 
-	float minZ = spos.z;
+	float minZ = spos.z - 0.00025 / linZ(spos.z);
 	float maxZ = spos.z;
 	
   	for (int i = 0; i <= int(quality); i++) {
 
-		float sp = invLinZ(sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4.0),0).a/65000.0));
+		float sampleDepth = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4.0),0).a/65000.0);
+		float sp = invLinZ(sampleDepth);
 		
-		// if(hand) convertHandDepth(sp);
-		
-		float currZ = linZ(spos.z);
-		float nextZ = linZ(sp);
+		if(sp < max(minZ, maxZ) && sp > min(minZ, maxZ)) return vec3(spos.xy/RENDER_SCALE,sp);
 
-		// if(abs(nextZ-currZ) < mix(0.005,0.5,currZ*currZ) && sp < max(minZ,maxZ) && sp > min(minZ,maxZ)) return vec3(spos.xy/RENDER_SCALE,sp);
-		if(sp < max(minZ,maxZ) && sp > min(minZ,maxZ)) return vec3(spos.xy/RENDER_SCALE,sp);
-
-		minZ = maxZ-biasAmount / currZ;
+		minZ = maxZ - biasAmount / linZ(spos.z);
 		maxZ += stepv.z;
 
 		spos += stepv;
 
 		reflectionLength += 1.0 / quality;
-
   	}
   return vec3(1.1);
 }
@@ -162,7 +158,7 @@ vec4 screenSpaceReflections(
 	vec4 reflection = vec4(0.0);
 	
 	float reflectionLength = 0.0;
-	float quality = 30.0f;//mix(10.0f, 30.0f, fresnel);
+	float quality = 30.0f;
 
 	vec3 raytracePos = rayTraceSpeculars(reflectedVector, viewPos, noise, quality, isHand, reflectionLength, fresnel);
 
@@ -302,10 +298,9 @@ vec3 specularReflections(
 
 	f0 = f0 == 0.0 ? 0.02 : f0;
 
-// 	if(isHand){
-	// f0 = 0.9;
-	// roughness = 0.25;
-// }
+	// f0 = 1.0;
+	// roughness = 0.0;
+
 	bool isMetal = f0 > 229.5/255.0;
 
 	// get reflected vector

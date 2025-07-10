@@ -74,13 +74,8 @@ uniform vec3 previousCameraPosition;
 #include "/lib/projections.glsl"
 
 #ifdef OVERWORLD_SHADER
-	#ifdef Daily_Weather
-		flat varying vec4 dailyWeatherParams0;
-		flat varying vec4 dailyWeatherParams1;
-	#else
-		vec4 dailyWeatherParams0 = vec4(CloudLayer0_coverage, CloudLayer1_coverage, CloudLayer2_coverage, 0.0);
-		vec4 dailyWeatherParams1 = vec4(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density, 0.0);
-	#endif
+	
+	#include "/lib/scene_controller.glsl"
 
 	#define CLOUDSHADOWSONLY
 	
@@ -273,7 +268,7 @@ uniform vec3 eyePosition;
 #ifdef DAMAGE_BLOCK_EFFECT
 	/* RENDERTARGETS:11 */
 #else
-	/* RENDERTARGETS:2,9,11 */
+	/* RENDERTARGETS:2,9,11,7 */
 #endif
 
 void main() {
@@ -400,6 +395,8 @@ void main() {
 		#ifndef BLOOMY_PARTICLES
 			gl_FragData[1].a = 0.0; // for bloomy rain and stuff
 		#endif
+
+		gl_FragData[3] = vec4(0.0,0.0,0.0,0.4);
 
 		vec3 Direct_lighting = vec3(0.0);
 		vec3 directLightColor = vec3(0.0);

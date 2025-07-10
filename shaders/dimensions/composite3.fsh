@@ -185,63 +185,71 @@ vec3 viewToWorld(vec3 viewPosition) {
     return pos.xyz;
 }
 
-vec3 doRefractionEffect( inout vec2 texcoord, vec2 normal, float linearDistance, bool isReflectiveEntity){
+vec2 clampUV(in vec2 uv, vec2 texcoord){
+  // return uv;
+
+  // get the gradient when a refracted axis and non refracted axis go above 1.0 or below 0.0
+  // use this gradient to lerp between refracted and non refracted uv
+  // the goal of this is to stretch the uv back to normal when the refracted image exposes off screen uv
+  // emphasis on *stretch*, as i want the transition to remain looking like refraction, not a sharp cut.
   
+  float vignette = max(uv.x * texcoord.x, 0.0);
+  vignette = max(uv.y * texcoord.y, vignette);
+  vignette = max((uv.x-1.0) * (texcoord.x-1.0), vignette);
+  vignette = max((uv.y-1.0) * (texcoord.y-1.0), vignette);
+
+  vignette *= vignette*vignette*vignette*vignette;
+
+  return clamp(mix(uv, texcoord, vignette),0.0,0.9999999);
+}
+
+vec3 doRefractionEffect( inout vec2 texcoord, vec2 normal, float linearDistance, bool isReflectiveEntity){
+
   // make the tangent space normals match the directions of the texcoord UV, this greatly improves the refraction effect.
   vec2 UVNormal = vec2(normal.x,-normal.y);
-  
-  float refractionMult = 0.3 / (1.0 + linearDistance);
+
+  float refractionMult = 0.5 / (1.0 + pow(linearDistance,0.8));
   float diffractionMult = 0.035;
   float smudgeMult = 1.0;
-
   if(isReflectiveEntity) refractionMult *= 0.5;
 
-  // for diffraction, i wanted to know *when* normals were at an angle, not what the
+  // for diffraction, i wanted to know *when* normals were at an angle
   float clampValue = 0.2;
-  vec2 abberationOffset = (clamp(UVNormal,-clampValue, clampValue)/clampValue) * diffractionMult;
-
-  // return vec3(abs(abberationOffset), 0.0);
+  vec2 abberationOffset = clamp(UVNormal, -clampValue, clampValue) / clampValue * diffractionMult;
 
   #ifdef REFRACTION_SMUDGE
     vec2 directionalSmudge = abberationOffset * (blueNoise()-0.5) * smudgeMult;
   #else
     vec2 directionalSmudge = vec2(0.0);
   #endif
-  
-  vec2 refractedUV = texcoord - (UVNormal + directionalSmudge)*refractionMult;
-  
 
-  #ifdef FAKE_DISPERSION_EFFECT
-    refractionMult *= min(  decodeVec2(texelFetch2D(colortex11, ivec2((texcoord - ((UVNormal + abberationOffset) + directionalSmudge)*refractionMult)/texelSize),0).b).g,
-                            decodeVec2(texelFetch2D(colortex11, ivec2((texcoord + ((UVNormal + abberationOffset) + directionalSmudge)*refractionMult)/texelSize),0).b).g  ) > 0.0 ? 1.0 : 0.0;
-  #else
-    refractionMult *= decodeVec2(texelFetch2D(colortex11, ivec2(refractedUV/texelSize),0).b).g > 0.0 ? 1.0 : 0.0;
-  #endif
+  vec2 refractedUV_no_offset = clampUV(texcoord - (UVNormal + directionalSmudge)*refractionMult, texcoord);
+  vec2 refractedUV = refractedUV_no_offset;
   
-  // a max bound around screen edges and edges of the refracted screen
-  vec2 vignetteSides = clamp(min((1.0 - refractedUV)/0.05, refractedUV/0.05)+0.5,0.0,1.0);
-  float vignette = vignetteSides.x*vignetteSides.y;
-  refractionMult *= vignette;
+  #ifdef FAKE_DISPERSION_EFFECT
+    refractionMult *= min(  decodeVec2(texelFetch2D(colortex11, ivec2(clampUV(texcoord - ((UVNormal + abberationOffset) + directionalSmudge)*refractionMult,texcoord)/texelSize),0).b).g,
+                            decodeVec2(texelFetch2D(colortex11, ivec2(clampUV(texcoord + ((UVNormal + abberationOffset) + directionalSmudge)*refractionMult,texcoord)/texelSize),0).b).g  ) > 0.0 ? 1.0 : 0.0;
+  #else
+    refractionMult *= decodeVec2(texelFetch2D(colortex11, ivec2(refractedUV_no_offset/texelSize),0).b).g > 0.0 ? 1.0 : 0.0;
+  #endif
 
   vec3 color = vec3(0.0);
 
   #ifdef FAKE_DISPERSION_EFFECT
     //// RED
-    refractedUV = clamp(texcoord - ((UVNormal + abberationOffset) + directionalSmudge)*refractionMult ,0.0,1.0);
-    color.r = texelFetch2D(colortex3, ivec2(refractedUV/texelSize),0).r;
+    refractedUV = clampUV(texcoord - ((UVNormal + abberationOffset) + directionalSmudge)*refractionMult,texcoord);
+    color.r = texture2D(colortex3, refractedUV).r;
     //// GREEN
-    refractedUV = clamp(texcoord - (UVNormal + directionalSmudge)*refractionMult ,0,1);
-    color.g = texelFetch2D(colortex3, ivec2(refractedUV/texelSize),0).g;
+    refractedUV = clampUV(texcoord - (UVNormal + directionalSmudge)*refractionMult,texcoord);
+    color.g = texture2D(colortex3, refractedUV).g;
     //// BLUE
-    refractedUV = clamp(texcoord - ((UVNormal - abberationOffset) + directionalSmudge)*refractionMult ,0.0,1.0);
-    color.b = texelFetch2D(colortex3, ivec2(refractedUV/texelSize),0).b;
-  
+    refractedUV = clampUV(texcoord - ((UVNormal - abberationOffset) + directionalSmudge)*refractionMult,texcoord);
+    color.b = texture2D(colortex3, refractedUV).b;
   #else
-    refractedUV = clamp(texcoord - (UVNormal + directionalSmudge)*refractionMult,0,1);
-    color = texture2D(colortex3, refractedUV).rgb;
+    color = texture2D(colortex3, refractedUV_no_offset).rgb;
   #endif
 
-  texcoord = texcoord - (UVNormal + directionalSmudge)*refractionMult;
+  texcoord = refractedUV_no_offset;
 
   return color;
 }
@@ -318,31 +326,35 @@ vec4 bilateralUpsample(out float outerEdgeResults, float referenceDepth, sampler
   vec4 colorSum = vec4(0.0);
   float edgeSum = 0.0;
   float threshold = 0.005;
+  
+  vec2 coord = gl_FragCoord.xy - 1.5;
 
-  vec2 UV = gl_FragCoord.xy + 2 + (ivec2(gl_FragCoord.xy + frameCounter)%2)*2;
+  vec2 UV = coord;
   const ivec2 SCALE = ivec2(1.0/VL_RENDER_RESOLUTION);
   ivec2 UV_DEPTH = ivec2(UV*VL_RENDER_RESOLUTION)*SCALE;
   ivec2 UV_COLOR = ivec2(UV*VL_RENDER_RESOLUTION);
+  ivec2 UV_NOISE = ivec2(gl_FragCoord.xy*texelSize + 1);
 
-  ivec2[4] OFFSET = ivec2[4] (
-      ivec2(-2, -2),
-      ivec2(-2,  0),
-      ivec2( 0,  0),
-      ivec2( 0, -2)
+	ivec2 OFFSET[5] = ivec2[](
+    ivec2(-1,-1),
+	 	ivec2( 1, 1),
+		ivec2(-1, 1),
+		ivec2( 1,-1),
+		ivec2( 0, 0)
   );
 
-  for(int i = 0; i < 4; i++) {
+  for(int i = 0; i < 5; i++) {
 
 		#ifdef DISTANT_HORIZONS
-		  float offsetDepth = sqrt(texelFetch2D(depth, UV_DEPTH + OFFSET[i] * SCALE,0).a/65000.0);
+		  float offsetDepth = sqrt(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE,0).a/65000.0);
     #else
-      float offsetDepth = ld(texelFetch2D(depth, UV_DEPTH + OFFSET[i] * SCALE, 0).r);
+      float offsetDepth = ld(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE, 0).r);
     #endif
 
     float edgeDiff = abs(offsetDepth - referenceDepth) < threshold ? 1.0 : 1e-7;
     outerEdgeResults = max(outerEdgeResults, clamp(referenceDepth - offsetDepth,0.0,1.0));
 
-    vec4 offsetColor = texelFetch2D(colortex0, UV_COLOR + OFFSET[i], 0).rgba;
+    vec4 offsetColor = texelFetch2D(colortex0, UV_COLOR + OFFSET[i] + UV_NOISE, 0).rgba;
     colorSum += offsetColor*edgeDiff;
     edgeSum += edgeDiff;
 
@@ -371,6 +383,9 @@ vec4 VLTemporalFiltering(vec3 viewPos, in float referenceDepth, sampler2D depth)
   // pass a mask to only show upsampled color around the edges of blocks. this is so it doesnt blur reprojected results.
   float outerEdgeResults = 0.0;
   vec4 upsampledCurrentFrame = bilateralUpsample(outerEdgeResults, referenceDepth, depth);
+  // vec4 upsampledCurrentFrame = BilateralUpscale(colortex0, depth, gl_FragCoord.xy - 1.5, referenceDepth);
+
+  // return vec4(outerEdgeResults,0,0,1);
   // return upsampledCurrentFrame;
 
   if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0) return currentFrame;
@@ -392,6 +407,7 @@ vec4 VLTemporalFiltering(vec3 viewPos, in float referenceDepth, sampler2D depth)
 
   float blendingFactor = 0.1;
 
+  // variance
   if(abs(clampedFrameHistory.a  - frameHistory.a) > 0.1) blendingFactor = 1.0;
 
   vec4 reprojectFrame = mix(clampedFrameHistory, currentFrame, blendingFactor);
@@ -554,9 +570,9 @@ void main() {
 
       vec3 cavefogCol = vec3(CaveFogColor_R, CaveFogColor_G, CaveFogColor_B);
 
-      #ifdef PER_BIOME_ENVIRONMENT
-        BiomeFogColor(cavefogCol);
-      #endif
+      // #ifdef PER_BIOME_ENVIRONMENT
+      //   BiomeFogColor(cavefogCol);
+      // #endif
 
       cavefogCol *= 1.0-pow(1.0-pow(1.0 - max(1.0 - linearDistance/far,0.0),2.0),CaveFogFallOff);
       cavefogCol *= exp(-7.0*clamp(normalize(playerPos_normalized).y*0.5+0.5,0.0,1.0)) * 0.999 + 0.001;
@@ -596,7 +612,7 @@ void main() {
 ////// --------------- BLEND FOG INTO SCENE
 //////////// apply VL fog over opaque and translucents
 
-  bloomyFogMult *= temporallyFilteredVL.a;
+  // bloomyFogMult *= temporallyFilteredVL.a;
   
 	#if defined IS_IRIS
     // if(z >= 1.0) color = vec3(0,255,0);
@@ -647,13 +663,12 @@ void main() {
       }
 
     #if defined OVERWORLD_SHADER
-      if( hideGUI == 1) color.rgb = skyCloudsFromTex(playerPos_normalized, colortex4).rgb/1200.0;
+      if( hideGUI == 1) color.rgb = skyFromTex(playerPos_normalized, colortex4).rgb/1200.0;
     #else
       if( hideGUI == 1) color.rgb = volumetricsFromTex(playerPos_normalized, colortex4, 0.0).rgb/1200.0;
     #endif
 
   #endif
-  // color.rgb = testThing.rgb;
   gl_FragData[0].r = bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);
 

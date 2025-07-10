@@ -6,6 +6,10 @@
 uniform float frameTimeCounter;
 #include "/lib/Shadow_Params.glsl"
 
+#if defined PHYSICSMOD_OCEAN_SHADER
+	#include "/lib/oceans.glsl"
+#endif
+
 /*
 !! DO NOT REMOVE !!
 This code is from Chocapic13' shaders
@@ -24,11 +28,7 @@ uniform sampler2D noisetex;
 	flat varying vec4 lightCol;
 	flat varying vec3 WsunVec;
 
-	#ifdef Daily_Weather
-		flat varying vec4 dailyWeatherParams0;
-		flat varying vec4 dailyWeatherParams1;
-	#endif
-
+	#include "/lib/scene_controller.glsl"
 #endif
 
 varying vec4 normalMat;
@@ -37,7 +37,7 @@ varying vec4 tangent;
 varying vec3 flatnormal;
 
 #ifdef LARGE_WAVE_DISPLACEMENT
-varying vec3 shitnormal;
+varying vec3 largeWaveDisplacementNormal;
 #endif
 
 uniform mat4 gbufferModelViewInverse;
@@ -51,6 +51,9 @@ flat varying int glass;
 
 attribute vec4 at_tangent;
 attribute vec4 mc_Entity;
+#if defined ENTITIES
+	uniform int entityId;
+#endif
 
 
 uniform vec3 sunPosition;
@@ -87,8 +90,10 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 
 
 float getWave (vec3 pos, float range){
-	return pow(1.0-texture2D(noisetex, (pos.xz + frameTimeCounter * WATER_WAVE_SPEED)/150.0).b,2) * WATER_WAVE_STRENGTH / range;
+	// return pow(1.0-texture2D(noisetex, (pos.xz + frameTimeCounter * WATER_WAVE_SPEED)/150.0).b,2.0) * WATER_WAVE_STRENGTH * range;
+	return pow(1.0-texture2D(noisetex, (pos.xz + frameTimeCounter * WATER_WAVE_SPEED)/125.0).r,5.0) * WATER_WAVE_STRENGTH * range;
 }
+
 vec3 getWaveNormal(vec3 posxz, float range){
 
 	float deltaPos = 0.5;
@@ -100,12 +105,13 @@ vec3 getWaveNormal(vec3 posxz, float range){
 	float h3 = getWave(coord - vec3(0.0,0.0,deltaPos),range);
 
 
-	float xDelta = (h1-h0)/deltaPos*1.5;
-	float yDelta = (h3-h0)/deltaPos*1.5;
+	float xDelta = (h1-h0)/deltaPos * 1.5;
+	float yDelta = (h3-h0)/deltaPos * 1.5;
 
-	vec3 wave = normalize(vec3(xDelta, yDelta,	1.0-pow(abs(xDelta+yDelta),2.0)));
+	vec3 wave = normalize(vec3(xDelta, yDelta,1.0-pow(abs(xDelta+yDelta),2.0)));
 
 	return wave;
+
 }
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -115,30 +121,51 @@ vec3 getWaveNormal(vec3 posxz, float range){
 
 void main() {
 
+ 	gl_Position = ftransform();
+	#if defined ENTITIES && defined IS_IRIS
+		// force out of frustum
+		if (entityId == 1599) gl_Position.z -= 10000.0;
+	#endif
+	#if defined PHYSICSMOD_OCEAN_SHADER && defined PHYSICS_OCEAN
+    	// basic texture to determine how shallow/far away from the shore the water is
+    	physics_localWaviness = texelFetch(physics_waviness, ivec2(gl_Vertex.xz) - physics_textureOffset, 0).r;
+    	// transform gl_Vertex (since it is the raw mesh, i.e. not transformed yet)
+    	vec4 finalPosition = vec4(gl_Vertex.x, gl_Vertex.y + physics_waveHeight(gl_Vertex.xz, PHYSICS_ITERATIONS_OFFSET, physics_localWaviness, physics_gameTime), gl_Vertex.z, gl_Vertex.w);
+    	// pass this to the fragment shader to fetch the texture there for per fragment normals
+    	physics_localPosition = finalPosition.xyz;
+
+		vec3 position = mat3(gl_ModelViewMatrix) * vec3(finalPosition) + gl_ModelViewMatrix[3].xyz;
+	#else
+		vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
+	#endif
+
 	// lmtexcoord.xy = (gl_MultiTexCoord0).xy;
 	lmtexcoord.xy = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 	vec2 lmcoord = gl_MultiTexCoord1.xy / 240.0;
 	lmtexcoord.zw = lmcoord;
 
- 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-
 	#ifdef LARGE_WAVE_DISPLACEMENT
 		if(mc_Entity.x == 8.0) {
-			vec3 displacedPos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
+				
+			vec3 playerPos = mat3(gbufferModelViewInverse) * position.xyz;
+
 			#ifdef DISTANT_HORIZONS
-				float range = min(1.0 + pow(length(displacedPos - cameraPosition) / min(far,256.0),2.0), 256.0);
+				float range = pow(1-pow(1-clamp(1.0 - length(playerPos) / far, 0.0,1.0),3.0),3.0);
 			#else
-				float range = min(1.0 + pow(length(displacedPos - cameraPosition) / 256,2.0), 256.0);
+				float range = min(1.0 + pow(length(playerPos) / 256,2.0), 256.0);
 			#endif
 
-			displacedPos.y -= (1.0-getWave(displacedPos, range)) * 0.5 - 0.2;
-			shitnormal = getWaveNormal(displacedPos, range);
-    		position = mat3(gbufferModelView) * (displacedPos - cameraPosition) + gbufferModelView[3].xyz;
+			vec4 displacedVertex = vec4(gl_Vertex.x, gl_Vertex.y + (getWave(gl_Vertex.xyz + cameraPosition, range)*0.6-0.5), gl_Vertex.z, gl_Vertex.w);
+			position = mat3(gl_ModelViewMatrix) * vec3(displacedVertex) + gl_ModelViewMatrix[3].xyz;
+			
+			playerPos = mat3(gbufferModelViewInverse) * position.xyz;
+			largeWaveDisplacementNormal = getWaveNormal(playerPos + cameraPosition, range);
+
 		}
 	#endif
 	
-	// vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
    	vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
+	
 	#ifdef PLANET_CURVATURE
 		float curvature = length(worldpos) / (16*8);
 		worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
@@ -146,7 +173,9 @@ void main() {
 
 	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 	
- 	gl_Position = toClipSpace3(position);
+	#if !defined ENTITIES && !defined HAND
+ 		gl_Position = toClipSpace3(position);
+	#endif
 
 	HELD_ITEM_BRIGHTNESS = 0.0;
 	
@@ -179,24 +208,26 @@ void main() {
 		if (entityId == 1600) NAMETAG = 1;
 	#endif
 	
-	tangent = vec4(normalize(gl_NormalMatrix *at_tangent.rgb),at_tangent.w);
 
-	normalMat = vec4(normalize(gl_NormalMatrix * gl_Normal), 1.0);
-	normalMat.a = mat;
 
-	vec3 tangent2 = normalize( gl_NormalMatrix *at_tangent.rgb);
-	binormal = normalize(cross(tangent2.rgb,normalMat.xyz)*at_tangent.w);
+	tangent = vec4(normalize(gl_NormalMatrix * at_tangent.rgb),at_tangent.w);
+	normalMat = vec4(normalize(gl_NormalMatrix * gl_Normal), mat);
+	binormal = normalize(cross(tangent.rgb,normalMat.xyz)*at_tangent.w);
+	mat3 tbnMatrix = mat3(tangent.x, binormal.x, normalMat.x,
+						  tangent.y, binormal.y, normalMat.y,
+						  tangent.z, binormal.z, normalMat.z);
 
-	mat3 tbnMatrix = mat3(tangent2.x, binormal.x, normalMat.x,
-								  tangent2.y, binormal.y, normalMat.y,
-						     	  tangent2.z, binormal.z, normalMat.z);
-	
+	#ifdef LARGE_WAVE_DISPLACEMENT
+		if(mc_Entity.x == 8.0) {
+			largeWaveDisplacementNormal = normalize(largeWaveDisplacementNormal * tbnMatrix);
+		}else{
+			largeWaveDisplacementNormal = normalMat.xyz;
+		}
+	#endif
 	flatnormal = normalMat.xyz;
-
 	viewVector = position.xyz;
-	// viewVector = (gl_ModelViewMatrix * gl_Vertex).xyz;
-	viewVector = normalize(tbnMatrix * viewVector);
 
+	viewVector = normalize(tbnMatrix * viewVector);
 
 	color = vec4(gl_Color.rgb, 1.0);
 
@@ -215,11 +246,7 @@ void main() {
 
 		WsunVec = mix(WmoonVec, WsunVec, clamp(lightCol.a,0,1));
 
-	
-		#if defined Daily_Weather
-			dailyWeatherParams0 = vec4(texelFetch2D(colortex4,ivec2(1,1),0).rgb / 1500.0, 0.0);
-			dailyWeatherParams1 = vec4(texelFetch2D(colortex4,ivec2(2,1),0).rgb / 1500.0, 0.0);
-		#endif
+		readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
 
 	#endif
 
