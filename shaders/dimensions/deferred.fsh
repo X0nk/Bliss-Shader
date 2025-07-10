@@ -25,6 +25,17 @@ flat varying float centerDepth;
 
 uniform sampler2D noisetex;
 
+uniform sampler2D colortex1;
+
+vec2 decodeVec2(float a){
+    const vec2 constant1 = 65535. / vec2( 256., 65536.);
+    const float constant2 = 256. / 255.;
+    return fract( a * constant1 ) * constant2 ;
+}
+vec3 toLinear(vec3 sRGB){
+	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
+}
+
 uniform float frameTime;
 uniform int frameCounter;
 uniform float frameTimeCounter;
@@ -42,6 +53,7 @@ uniform mat4 shadowModelViewI;
 uniform mat4 shadowProjection;
 uniform float sunElevation;
 uniform vec3 sunPosition;
+uniform vec3 moonPosition;
 uniform vec3 cameraPosition;
 // uniform float far;
 uniform ivec2 eyeBrightnessSmooth;
@@ -134,7 +146,7 @@ float invLinZ (float lindepth){
 }
 #ifdef OVERWORLD_SHADER
 
-	uniform sampler2D colortex4;
+	// uniform sampler2D colortex4;
 	// uniform sampler2D colortex12;
 	// const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
@@ -151,17 +163,7 @@ float invLinZ (float lindepth){
 	#define TIMEOFDAYFOG
 	#include "/lib/lightning_stuff.glsl"
 
-
-	#ifdef Daily_Weather
-		flat varying vec4 dailyWeatherParams0;
-		flat varying vec4 dailyWeatherParams1;
-	#else
-		vec4 dailyWeatherParams0 = vec4(CloudLayer0_coverage, CloudLayer1_coverage, CloudLayer2_coverage, 0.0);
-		vec4 dailyWeatherParams1 = vec4(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density, 0.0);
-	#endif
-
-	flat varying vec4 CurrentFrame_dailyWeatherParams0;
-	flat varying vec4 CurrentFrame_dailyWeatherParams1;
+	#include "/lib/scene_controller.glsl"
 
 
 	#define VL_CLOUDS_DEFERRED
@@ -196,6 +198,9 @@ vec2 R2_samples(float n){
 uniform float dayChangeSmooth;
 uniform bool worldTimeChangeCheck;
 
+uniform int hideGUI;
+
+
 void main() {
 /* DRAWBUFFERS:4 */
 
@@ -211,19 +216,11 @@ float mixhistory = 0.06;
 	//////////////////////////////////////////////
 
 	// the idea is to store the 8 values, coverage + density of 3 cloud layers and 2 fog density values.
+	if (gl_FragCoord.x > 1 && gl_FragCoord.x < 4 && gl_FragCoord.y > 1 && gl_FragCoord.y < 4){
+		mixhistory = 10.0 * frameTime;
 
-	#ifdef Daily_Weather
-		ivec2 pixelPos = ivec2(0,0);
-		if (gl_FragCoord.x > 1 && gl_FragCoord.x < 4 && gl_FragCoord.y > 1 && gl_FragCoord.y < 2){
-
-			mixhistory = clamp(dayChangeSmooth*dayChangeSmooth*dayChangeSmooth*0.1, frameTime*0.1, 1.0);
-			
-			if(gl_FragCoord.x < 2) gl_FragData[0] = vec4(CurrentFrame_dailyWeatherParams0.rgb * 10.0,1.0);
-			if(gl_FragCoord.x > 2) gl_FragData[0] = vec4(CurrentFrame_dailyWeatherParams1.rgb * 10.0,1.0);
-			if(gl_FragCoord.x > 3) gl_FragData[0] = vec4(CurrentFrame_dailyWeatherParams0.a * 10.0, CurrentFrame_dailyWeatherParams1.a * 10.0, 0.0, 1.0);
-	
-		}
-	#endif
+		gl_FragData[0].rgb = writeSceneControllerParameters(gl_FragCoord.xy, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
+	}
 
 	///////////////////////////////
 	/// --- STORE COLOR LUT --- ///
@@ -234,13 +231,16 @@ float mixhistory = 0.06;
 	// --- the color of the atmosphere + the average color of the atmosphere.
 	vec3 skyGroundCol = skyFromTex(vec3(0, -1 ,0), colortex4).rgb;// * clamp(WsunVec.y*2.0,0.2,1.0);
 
-
 	/// --- Save light values
-	if (gl_FragCoord.x < 1. && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-	gl_FragData[0] = vec4(averageSkyCol_Clouds * AmbientLightTint,1.0);
+	if (gl_FragCoord.x < 1. && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 ){
+		gl_FragData[0] = vec4(averageSkyCol_Clouds * AmbientLightTint,1.0);
+		if(worldTimeChangeCheck) mixhistory = 1.0;
+	}
 
-	if (gl_FragCoord.x > 1. && gl_FragCoord.x < 2.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-	gl_FragData[0] = vec4((skyGroundCol/150.0) * AmbientLightTint,1.0);
+	if (gl_FragCoord.x > 1. && gl_FragCoord.x < 2.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 ){
+		gl_FragData[0] = vec4((skyGroundCol/150.0) * AmbientLightTint,1.0);
+		if(worldTimeChangeCheck) mixhistory = 1.0;
+	}
 
 	#ifdef ambientLight_only
 		if (gl_FragCoord.x > 6. && gl_FragCoord.x < 7.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
@@ -252,17 +252,37 @@ float mixhistory = 0.06;
 		if (gl_FragCoord.x > 13. && gl_FragCoord.x < 14.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 		gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);
 	#else
-		if (gl_FragCoord.x > 6. && gl_FragCoord.x < 7.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-		gl_FragData[0] = vec4(lightSourceColor,1.0);
-		if (gl_FragCoord.x > 8. && gl_FragCoord.x < 9.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-		gl_FragData[0] = vec4(sunColor,1.0);
-		if (gl_FragCoord.x > 9. && gl_FragCoord.x < 10.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-		gl_FragData[0] = vec4(moonColor,1.0);
-		// if (gl_FragCoord.x > 16. && gl_FragCoord.x < 17.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-		// gl_FragData[0] = vec4(rayleighAborbance,1.0);
-	#endif
-	
+		if (gl_FragCoord.x > 6. && gl_FragCoord.x < 7.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 ){
+			gl_FragData[0] = vec4(lightSourceColor,1.0);
+			if(worldTimeChangeCheck) mixhistory = 1.0;
+		}
 
+		if (gl_FragCoord.x > 8. && gl_FragCoord.x < 9.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 ){
+			gl_FragData[0] = vec4(sunColor,1.0);
+			if(worldTimeChangeCheck) mixhistory = 1.0;
+		}
+
+		if (gl_FragCoord.x > 9. && gl_FragCoord.x < 10.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 ){
+			gl_FragData[0] = vec4(moonColor,1.0);
+			if(worldTimeChangeCheck) mixhistory = 1.0;
+		}
+	#endif
+
+	#if defined FLASHLIGHT && defined FLASHLIGHT_BOUNCED_INDIRECT
+		// sample center pixel of albedo color, and interpolate it overtime.
+		if (gl_FragCoord.x > 15 && gl_FragCoord.x < 16 && gl_FragCoord.y > 2 && gl_FragCoord.y < 3){
+			
+			mixhistory = 0.01;
+
+			vec3 data = texelFetch2D(colortex1, ivec2(0.5/texelSize), 0).rgb;
+			vec3 decodeAlbedo = vec3(decodeVec2(data.x).x,decodeVec2(data.y).x, decodeVec2(data.z).x);
+			vec3 albedo = toLinear(decodeAlbedo);
+			
+			albedo = normalize(albedo + 1e-7) * (dot(albedo,vec3(0.21, 0.72, 0.07))*0.5+0.5);
+			
+			gl_FragData[0] = vec4(albedo,1.0);
+		}
+	#endif
 ////////////////////////////////
 /// --- ATMOSPHERE IMAGE --- ///
 ////////////////////////////////
@@ -278,11 +298,11 @@ if (gl_FragCoord.x > 18. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257){
 	
 	vec3 mC = vec3(fog_coefficientMieR*1e-6, fog_coefficientMieG*1e-6, fog_coefficientMieB*1e-6);
 	
-	sky = calculateAtmosphere((averageSkyCol*4000./2.0), viewVector, vec3(0.0,1.0,0.0), WsunVec, -WsunVec, planetSphere, skyAbsorb, 10, blueNoise());
+	sky = calculateAtmosphere((averageSkyCol*4000.0/2.0), viewVector, vec3(0.0,1.0,0.0), WsunVec, -WsunVec, planetSphere, skyAbsorb, 10, blueNoise());
 
 	// fade atmosphere conditions for rain away when you pass above the cloud plane.
-	float heightRelativeToClouds = clamp(1.0 - max(eyeAltitude - CloudLayer0_height,0.0) / 200.0 ,0.0,1.0);
-	if(rainStrength > 0.0) sky = mix(sky, 3.0 + averageSkyCol*4000 * (skyAbsorb*0.7+0.3), clamp(1.0 - exp(pow(clamp(-viewVector.y+0.9,0.0,1.0),2) * -5.0),0.0,1.0) * heightRelativeToClouds * rainStrength);
+	// float heightRelativeToClouds = clamp(1.0 - max(eyeAltitude - CloudLayer0_height,0.0) / 200.0 ,0.0,1.0);
+	// if(rainStrength > 0.0) sky = mix(sky, 3.0 + averageSkyCol*4000 * (skyAbsorb*0.7+0.3), clamp(1.0 - exp(pow(clamp(-viewVector.y+0.9,0.0,1.0),2) * -5.0),0.0,1.0) * heightRelativeToClouds * rainStrength);
 	
 	#ifdef AEROCHROME_MODE
 		sky *= vec3(0.0, 0.18, 0.35);
@@ -301,7 +321,12 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	vec3 viewPos = mat3(gbufferModelView)*viewVector*1024.0;
 	float noise = interleaved_gradientNoise_temporal();
 
-	WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition + gbufferModelViewInverse[3].xyz) ;// * ( float(sunElevation > 1e-5)*2.0-1.0 );
+	WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition + gbufferModelViewInverse[3].xyz);// * ( float(sunElevation > 1e-5)*2.0-1.0 );
+	vec3 WmoonVec = normalize(mat3(gbufferModelViewInverse) * moonPosition + gbufferModelViewInverse[3].xyz);// * ( );
+
+	if(dot(-WmoonVec, WsunVec) < 0.9999) WmoonVec = -WmoonVec;
+
+	WsunVec = mix(WmoonVec, WsunVec, clamp(float(sunElevation > 1e-5)*2.0-1.0 ,0,1));
 
 	vec3 sky = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150.0;	
 	sky = mix(averageSkyCol_Clouds * AmbientLightTint * 0.25, sky,  pow(clamp(viewVector.y+1.0,0.0,1.0),5.0));
@@ -311,11 +336,12 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	#ifdef ambientLight_only
 		suncol = vec3(0.0);
 	#endif
-	float rejection = 1.0;
-	vec4 volumetricClouds = GetVolumetricClouds(viewPos, vec2(noise, 1.0-noise), WsunVec, suncol*2.5, skyGroundCol/30.0);
+
+	float cloudPlaneDistance = 0.0;
+	vec4 volumetricClouds = GetVolumetricClouds(viewPos, vec2(noise, 1.0-noise), WsunVec, suncol*2.5, skyGroundCol/30.0, cloudPlaneDistance);
 
 	float atmosphereAlpha = 1.0;
-	vec4 volumetricFog = GetVolumetricFog(viewPos, WsunVec,   vec2(noise, 1.0-noise), suncol*2.5, skyGroundCol/30.0, averageSkyCol_Clouds*5.0, atmosphereAlpha, volumetricClouds.rgb);
+	vec4 volumetricFog = GetVolumetricFog(viewPos, WsunVec,   vec2(noise, 1.0-noise), suncol*2.5, skyGroundCol/30.0, averageSkyCol_Clouds*5.0, atmosphereAlpha, volumetricClouds.rgb, cloudPlaneDistance);
 
 	sky = sky * volumetricClouds.a + volumetricClouds.rgb / 5.0;
 	sky = sky * volumetricFog.a + volumetricFog.rgb / 5.0;
@@ -395,15 +421,12 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 
 #endif
 
-
-
-
 //Temporally accumulate sky and light values
 vec3 frameHistory = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy),0).rgb;
 vec3 currentFrame = gl_FragData[0].rgb*150.;
 
 
-gl_FragData[0].rgb = clamp(mix(frameHistory, currentFrame, mixhistory),0.0,65000.);
+gl_FragData[0].rgb = clamp(mix(frameHistory, currentFrame, clamp(mixhistory,0.0,1.0)),0.0,65000.);
 
 //Exposure values
 if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )

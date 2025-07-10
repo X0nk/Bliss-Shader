@@ -5,25 +5,21 @@ void GriAndEminShadowFix(
 	inout vec3 WorldPos,
 	vec3 FlatNormal,
 	float VanillaAO,
-	float SkyLightmap
+	float SkyLightmap,
+	float transition
 ){
+	float zoomLevel = 1.0-(transition*transition*transition*transition*0.5+0.5);
+	if(SkyLightmap < 0.1 && isEyeInWater != 1) WorldPos = WorldPos - (	fract(WorldPos+cameraPosition - WorldPos*0.0001)*zoomLevel - zoomLevel*0.5);
+}
 
-	float MinimumValue = 0.05;
+void applyShadowBias(inout vec3 projectedShadowPosition, in vec3 playerPos, in vec3 geoNormals){
 
-	// give a tiny boost to the distance mulitplier when shadowmap resolution is below 2048.0
-	// float ResMultiplier = 1.0 + (shadowDistance/8.0)*(1.0 - min(shadowMapResolution,2048)/2048.0)*0.3;
+	// Calculate the bias size according to the 1:1 ratio of one shadow texel to one full block
+	const float biasSize = (shadowDistance / shadowMapResolution*2.0) * 2.0;
 
-	// float DistanceMultiplier = max(1.0 - max(1.0 - length(WorldPos) / shadowDistance, 0.0), MinimumValue) * ResMultiplier;
-	float theDistance = max(1.0 - length(WorldPos) / shadowDistance,0.0);
-	float DistanceMultiplier =  mix(0.5, 0.05, theDistance);
-	float DistanceMultiplier2 = mix(1.0, 0.02, theDistance);
-	
-	vec3 Bias = (FlatNormal * DistanceMultiplier + WsunVec * DistanceMultiplier2);
+	float biasDistanceFactor = length(projectedShadowPosition.xy);
 
-	// stop lightleaking by zooming up, centered on blocks
-	vec2 scale = vec2(0.5); scale.y *= 0.5;
-	vec3 zoomShadow =  scale.y - scale.x * fract(WorldPos + cameraPosition + Bias*scale.y*0.1);
-	if(SkyLightmap < 0.1 && isEyeInWater != 1) Bias = zoomShadow;
+	biasDistanceFactor = 1.0 + biasDistanceFactor * ((16.0*8.0) / shadowDistance) * 0.1;
 
-	WorldPos += Bias;
+	projectedShadowPosition += (mat3(shadowModelView) * geoNormals) * biasSize * 0.15 * biasDistanceFactor;
 }
