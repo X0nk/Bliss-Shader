@@ -72,7 +72,7 @@ varying vec4 normalMat;
 varying vec3 binormal;
 varying vec3 flatnormal;
 #ifdef LARGE_WAVE_DISPLACEMENT
-varying vec3 shitnormal;
+varying vec3 largeWaveDisplacementNormal;
 #endif
 
 uniform vec3 sunVec;
@@ -114,15 +114,9 @@ uniform float waterEnteredAltitude;
 #ifdef OVERWORLD_SHADER
 	flat varying float Flashing;
 	#include "/lib/lightning_stuff.glsl"
-
-	#ifdef Daily_Weather
-		flat varying vec4 dailyWeatherParams0;
-		flat varying vec4 dailyWeatherParams1;
-	#else
-		vec4 dailyWeatherParams0 = vec4(CloudLayer0_coverage, CloudLayer1_coverage, CloudLayer2_coverage, 0.0);
-		vec4 dailyWeatherParams1 = vec4(CloudLayer0_density, CloudLayer1_density, CloudLayer2_density, 0.0);
-	#endif
-
+	
+	#include "/lib/scene_controller.glsl"
+	
 	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
 
@@ -158,6 +152,11 @@ uniform float waterEnteredAltitude;
 
 #include "/lib/specular.glsl"
 #include "/lib/diffuse_lighting.glsl"
+
+#if defined PHYSICSMOD_OCEAN_SHADER
+	#include "/lib/oceans.glsl"
+#endif
+
 
 float interleaved_gradientNoise_temporal(){
 	#ifdef TAA
@@ -218,6 +217,7 @@ vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
 	return normalize(bump*tbnMatrix);
 }
 
+
 vec2 CleanSample(
 	int samples, float totalSamples, float noise
 ){
@@ -230,7 +230,7 @@ vec2 CleanSample(
 	
 	// for every sample, the sample position must change its distance from the origin.
 	// otherwise, you will just have a circle.
-    float spiralShape = pow(variedSamples / (totalSamples + variance),0.5);
+    float spiralShape = sqrt(variedSamples / (totalSamples + variance));
 
 	float shape = 2.26; // this is very important. 2.26 is very specific
     float theta = variedSamples * (PI * shape);
@@ -288,12 +288,19 @@ uniform float dhFarPlane;
 // #undef BASIC_SHADOW_FILTER
 
 #ifdef OVERWORLD_SHADER
-float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDistFade, float noise){
+
+
+#include "/lib/Shadows.glsl"
+
+float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDistFade, float noise, in vec3 geoNormals){
 
 	// if(maxDistFade <= 0.0) return 1.0;
 
 	// setup shadow projection
 	vec3 projectedShadowPosition = mat3(shadowModelView) * playerPos + shadowModelView[3].xyz;
+
+	applyShadowBias(projectedShadowPosition, playerPos, geoNormals);
+
 	projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
 	// un-distort
@@ -303,6 +310,8 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 	#else
 		float distortFactor = 1.0;
 	#endif
+	
+	projectedShadowPosition.z += shadowProjection[3].z * 0.0012;
 
 	// hamburger
 	projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
@@ -310,21 +319,13 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 	float shadowmap = 0.0;
 	vec3 translucentTint = vec3(0.0);
 
-	#ifndef HAND
-		projectedShadowPosition.z -= 0.0001;
-	#endif
-
-	#if defined ENTITIES
-		projectedShadowPosition.z -= 0.0002;
-	#endif
-
 	#ifdef BASIC_SHADOW_FILTER
 		int samples = int(SHADOW_FILTER_SAMPLE_COUNT * 0.5);
-		float rdMul = 14.0*distortFactor*d0*k/shadowMapResolution;
+		float rdMul = (4.0*distortFactor*d0*k/shadowMapResolution) * 0.3;
 
 		for(int i = 0; i < samples; i++){
-			vec2 offsetS = CleanSample(i, samples - 1, noise) * 0.3;
-			projectedShadowPosition.xy += rdMul*offsetS;
+			vec2 offsetS = CleanSample(i, samples - 1, noise) * rdMul;
+			projectedShadowPosition.xy += offsetS;
 	#else
 		int samples = 1;
 	#endif
@@ -386,7 +387,6 @@ void Emission(
 
 uniform vec3 eyePosition;
 
-
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -401,9 +401,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	
 	vec3 FragCoord = gl_FragCoord.xyz;
 
-	vec2 tempOffset = offsets[framemod8];
-
-	vec3 viewPos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
+	#ifdef TAA
+		vec2 tempOffset = offsets[framemod8];
+		vec3 viewPos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
+	#else
+		vec3 viewPos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0));
+	#endif
 
 	vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
 ////////////////////////////////////////////////////////////////////////////////
@@ -416,6 +419,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	// 0.9 = entity mask
 	// 0.8 = reflective entities
 	// 0.7 = reflective blocks
+	// 0.4 = translucent particles
 	// 0.3 = hand mask
 
 	#ifdef HAND
@@ -437,8 +441,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	float UnchangedAlpha = gl_FragData[0].a;
 
 	#ifdef WhiteWorld
-		gl_FragData[0].rgb = vec3(0.5);
-		gl_FragData[0].a = 1.0;
+		gl_FragData[0].rgb = vec3(1.0);
+		gl_FragData[0].a = 1.0/255.0;
 	#endif
 
 	vec3 Albedo = toLinear(gl_FragData[0].rgb);
@@ -469,28 +473,48 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 ////////////////////////////////////////////////////////////////////////////////
 
 	vec3 normal = normalMat.xyz; // in viewSpace
+	vec3 geoNormals = viewToWorld(normal).xyz; // for refractions
 
-	#ifdef LARGE_WAVE_DISPLACEMENT
+	#if defined PHYSICSMOD_OCEAN_SHADER && defined PHYSICS_OCEAN
+		WavePixelData wave = physics_wavePixel(physics_localPosition.xz, physics_localWaviness, physics_iterationsNormal, physics_gameTime);
+		
+		#if defined DISTANT_HORIZONS
+			float PHYSICS_OCEAN_TRANSITION = 1.0-pow(1.0-pow(1.0-clamp(1.0-length(feetPlayerPos.xz)/max(far,0.0),0,1),5),5);
+		#else
+			float PHYSICS_OCEAN_TRANSITION = 0.0;
+		#endif
+
 		if (isWater){
-			normal = viewToWorld(normal) ;
-			normal.xz = shitnormal.xy;
-			normal = worldToView(normal);
+			if (!gl_FrontFacing) {
+   			    wave.normal = -wave.normal;
+   			}
+
+			normal = mix(normalize(gl_NormalMatrix * wave.normal), normal, PHYSICS_OCEAN_TRANSITION);
+			Albedo = mix(Albedo, vec3(1.0), wave.foam);
+			gl_FragData[0].a = mix(1.0/255.0, 1.0, wave.foam);
 		}
 	#endif
-	
+
 	vec3 worldSpaceNormal = viewToWorld(normal).xyz;
 	vec2 TangentNormal = vec2(0); // for refractions
 	
-	vec3 tangent2 = normalize(cross(tangent.rgb,normal)*tangent.w);
+	#ifdef LARGE_WAVE_DISPLACEMENT
+		if (isWater){
+			normal = largeWaveDisplacementNormal;
+		}
+	#endif
+
+	vec3 tangent2 = normalize(cross(tangent.rgb, normal)*tangent.w);
 	mat3 tbnMatrix = mat3(tangent.x, tangent2.x, normal.x,
 						  tangent.y, tangent2.y, normal.y,
 						  tangent.z, tangent2.z, normal.z);
+
 
 	vec3 NormalTex = vec3(texture2D(normals, lmtexcoord.xy, Texture_MipMap_Bias).xy,0.0);
 	NormalTex.xy = NormalTex.xy*2.0-1.0;
 	NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0);
 
-	#ifndef HAND
+	#if !defined HAND
 		if (isWater){
 			vec3 playerPos = (mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz);
 			vec3 waterPos = playerPos;
@@ -515,11 +539,19 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	// tangent space normals for refraction
 	TangentNormal = NormalTex.xy;
+	
+	#if defined PHYSICSMOD_OCEAN_SHADER && defined PHYSICS_OCEAN
+		normal = applyBump(tbnMatrix, NormalTex.xyz, PHYSICS_OCEAN_TRANSITION);
+	#else
+		normal = applyBump(tbnMatrix, NormalTex.xyz, 1.0);
+	#endif
 
-	normal = applyBump(tbnMatrix, NormalTex.xyz, 1.0);
-	worldSpaceNormal = normalize(viewToWorld(normal).xyz);
+	worldSpaceNormal = viewToWorld(normal);
+	
+	#if defined PHYSICSMOD_OCEAN_SHADER && defined PHYSICS_OCEAN
+		if (isWater) TangentNormal = normalize(wave.normal).xz;
+	#endif
 
-	// TangentNormal = clamp(TangentNormal + (blueNoise()*2.0-1.0)*0.005,-1.0,1.0);
 	float nameTagMask = 0.0;
 
 	#if defined ENTITIES && defined IS_IRIS
@@ -582,6 +614,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			DirectLightColor *= pow(waterCaustics(feetPlayerPos + cameraPosition, WsunVec)*WATER_CAUSTICS_BRIGHTNESS, WATER_CAUSTICS_POWER);
 		}
 
+		// float NdotL = clamp((-15 + dot(normal, normalize(WsunVec*mat3(gbufferModelViewInverse)))*255.0) / 240.0  ,0.0,1.0);
 		float NdotL = clamp((-15 + dot(normal, normalize(WsunVec*mat3(gbufferModelViewInverse)))*255.0) / 240.0  ,0.0,1.0);
 		float Shadows = 1.0;
 
@@ -592,7 +625,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		vec3 shadowPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
 
-		Shadows = ComputeShadowMap(DirectLightColor, shadowPlayerPos, shadowMapFalloff, blueNoise());
+		Shadows = ComputeShadowMap(DirectLightColor, shadowPlayerPos, shadowMapFalloff, blueNoise(), geoNormals);
 
 		// Shadows = mix(LM_shadowMapFallback, Shadows, shadowMapFalloff2);
 		Shadows *= mix(LM_shadowMapFallback,1.0,shadowMapFalloff2);
@@ -605,7 +638,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		vec3 indirectNormal = worldSpaceNormal / dot(abs(worldSpaceNormal),vec3(1.0));
 		float SkylightDir = clamp(indirectNormal.y*0.7+0.3,0.0,1.0);
 
-		float skylight = mix(0.2 + 2.3*(1.0-lightmap.y), 2.5, SkylightDir);
+		float skylight = mix(0.2 + 2.3*(1.0-lightmap.y), 2.5, SkylightDir)/2.5;
 		AmbientLightColor *= skylight;
 
 		Indirect_lighting = doIndirectLighting(AmbientLightColor, MinimumLightColor, lightmap.y);
@@ -683,6 +716,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		
 		// if nothing is chosen, no smoothness and no reflectance
 		vec2 specularValues = vec2(1.0, 0.0); 
+
 		
 		// hardcode specular values for select blocks like glass, water, and slime
 		if(isReflective) specularValues = vec2(1.0, harcodedF0);
@@ -712,7 +746,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 				vec3 DirectLightColor = WsunVec;
 				float Shadows = 0.0;
 			#endif
-			
 			
 			vec3 specularReflections = specularReflections(viewPos, normalize(feetPlayerPos), WsunVec, vec3(blueNoise(), vec2(interleaved_gradientNoise_temporal())), worldSpaceNormal, roughness, f0, Albedo, FinalColor*gl_FragData[0].a, DirectLightColor * Shadows, lightmap.y, isHand, isWater, reflectance, flashLightSpecularData);
 			
@@ -745,7 +778,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		bool WATER = texture2D(colortex7, gl_FragCoord.xy*texelSize).a > 0.0 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance) && texture2D(depthtex1, gl_FragCoord.xy*texelSize).x >= 1.0;
 
-		if(WATER) gl_FragData[0].a = 0.0;
+		if(WATER) {
+			gl_FragData[0].a = 0.0;
+			MATERIALS = 0.0;
+		}
 	#endif
 
 	gl_FragData[1] = vec4(Albedo, MATERIALS);
@@ -754,7 +790,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		if(gl_FragCoord.x*texelSize.x < 0.47) gl_FragData[0] = vec4(0.0);
 	#endif
 	#if DEBUG_VIEW == debug_NORMALS
-		gl_FragData[0].rgb = worldSpaceNormal * 0.1;
+		gl_FragData[0].rgb = worldSpaceNormal.xyz * 0.1;
 		gl_FragData[0].a = 1;
 	#endif
 	#if DEBUG_VIEW == debug_INDIRECT

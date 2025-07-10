@@ -18,10 +18,8 @@ Read the terms of modification and sharing before changing something below pleas
 #undef POM
 #endif
 
-#ifndef USE_LUMINANCE_AS_HEIGHTMAP
 #ifndef MC_NORMAL_MAP
 #undef POM
-#endif
 #endif
 
 #ifdef POM
@@ -90,6 +88,21 @@ uniform mat4 gbufferModelViewInverse;
 uniform vec3 cameraPosition;
 uniform vec2 texelSize;
 uniform int framemod8;
+
+#if defined HAND
+uniform mat4 gbufferPreviousModelView;
+uniform vec3 previousCameraPosition;
+
+float detectCameraMovement(){
+	// simply get the difference of modelview matrices and cameraPosition across a frame.
+	vec3 fakePos = vec3(0.5,0.5,0.0);
+	vec3 hand_playerPos = mat3(gbufferModelViewInverse) * fakePos + (cameraPosition - previousCameraPosition);
+	vec3 previousPosition = mat3(gbufferPreviousModelView) * hand_playerPos;
+	float detectMovement = 1.0 - clamp(distance(previousPosition, fakePos)/texelSize.x,0.0,1.0);
+	
+	return detectMovement;
+}
+#endif
 
 #include "/lib/TAA_jitter.glsl"
 
@@ -193,7 +206,7 @@ void main() {
 
 	#if defined ENTITIES && defined IS_IRIS
 		// force out of frustum
-		if (entityId == 1599) gl_Position.z -= 10000;
+		if (entityId == 1599) gl_Position.z -= 10000.0;
 	#endif
 
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
@@ -294,15 +307,18 @@ void main() {
     /////// ----- SSS ON BLOCKS ----- ///////
 	// strong
 	if (
-		mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL || mc_Entity.x == BLOCK_AIR_WAVING ||
-		mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_GRASS_TALL_UPPER || mc_Entity.x == BLOCK_GRASS_TALL_LOWER ||
-		mc_Entity.x == BLOCK_SSS_STRONG || mc_Entity.x == BLOCK_SAPLING 
-		/*|| (mc_Entity.x >= 410 && mc_Entity.x <= 415) || (mc_Entity.x >= 402 && mc_Entity.x <= 405) THIS IS FOR MCME NEW TREES.*/
+		mc_Entity.x == BLOCK_SSS_STRONG || mc_Entity.x == BLOCK_SAPLING || mc_Entity.x == BLOCK_AIR_WAVING
 	) {
 		SSSAMOUNT = 1.0;
 	}
 
 	// medium
+	if (
+		mc_Entity.x == BLOCK_GROUND_WAVING || mc_Entity.x == BLOCK_GROUND_WAVING_VERTICAL
+		|| mc_Entity.x == BLOCK_GRASS_SHORT || mc_Entity.x == BLOCK_GRASS_TALL_UPPER || mc_Entity.x == BLOCK_GRASS_TALL_LOWER
+	) {
+		SSSAMOUNT = 0.5;
+	}
 	if (
 		mc_Entity.x == BLOCK_SSS_WEAK || mc_Entity.x == BLOCK_SSS_WEAK_2 ||
 		mc_Entity.x == BLOCK_GLOW_LICHEN || mc_Entity.x == BLOCK_SNOW_LAYERS || mc_Entity.x == BLOCK_CARPET ||
@@ -314,7 +330,11 @@ void main() {
 	
 	// low
 	#ifdef MISC_BLOCK_SSS
-		if(mc_Entity.x == BLOCK_SSS_WEIRD || mc_Entity.x == BLOCK_GRASS) SSSAMOUNT = 0.25;
+		if(
+			mc_Entity.x == BLOCK_SSS_WEIRD || mc_Entity.x == BLOCK_GRASS
+		){
+			SSSAMOUNT = 0.5;
+		}
 	#endif
 
 	#ifdef ENTITIES
@@ -378,8 +398,11 @@ void main() {
 	#endif
 
 	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
-
-	gl_Position = toClipSpace3(position);
+	
+	// ensure hand/entities have the same transformations as the spidereyes and enchant glint programs.
+	#if !defined ENTITIES && !defined HAND
+		gl_Position = toClipSpace3(position);
+	#endif
 #endif
 
 	#if defined Seasons && defined WORLD && !defined ENTITIES && !defined BLOCKENTITIES && !defined HAND
@@ -390,7 +413,13 @@ void main() {
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
 	#ifdef TAA
-		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+		#ifdef HAND
+			// turn off jitter when camera moves.
+			// this is to hide the jitter when the same happens for TAA blend factor and the jitter becomes visible during camera movement
+			gl_Position.xy += (offsets[framemod8] * gl_Position.w*texelSize) * detectCameraMovement();
+		#else	
+			gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+		#endif
 	#endif
 
 
