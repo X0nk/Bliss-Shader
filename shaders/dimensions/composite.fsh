@@ -272,12 +272,11 @@ vec2 SSAO(
 		
 		vec2 offsets = CleanSample(i, samples - 1, noise) / distanceScale;
 
-		ivec2 offsetUV = ivec2(gl_FragCoord.xy + offsets*vec2(viewWidth, viewHeight*aspectRatio)*RENDER_SCALE);
+		ivec2 offsetUV = ivec2(clamp((gl_FragCoord.xy + offsets*vec2(viewWidth, viewHeight*aspectRatio)*RENDER_SCALE)*texelSize,screenEdges,1.0-screenEdges)/texelSize);
 
-		// if (offsetUV.x >= 0 && offsetUV.y >= 0 && offsetUV.x < viewWidth*RENDER_SCALE.x && offsetUV.y < viewHeight*RENDER_SCALE.y ) {
+		if (offsetUV.x >= 0 && offsetUV.y >= 0 && offsetUV.x < viewWidth*RENDER_SCALE.x && offsetUV.y < viewHeight*RENDER_SCALE.y ) {
 			
-			// float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, offsetUV, 0).x, hand);
-			float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, ivec2(clamp(offsetUV*texelSize,screenEdges,1.0-screenEdges)/texelSize), 0).x, hand);
+			float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, offsetUV, 0).x, hand);
 
 			#ifdef DISTANT_HORIZONS
 				float sampleDHDepth = texelFetch2D(dhDepthTex1, offsetUV, 0).x;
@@ -305,9 +304,9 @@ vec2 SSAO(
 				#endif
 
 			}
-		// }
+		}
 	}
-	float finaalAO = max(1.0 - occlusion*AO_Strength/n, 0.0);
+	float finaalAO = max(1.0 - occlusion*AO_Strength/max(n,1e-5), 0.0);
 	float finalSSS = sss/float(samples);
 
 	return vec2(finaalAO, finalSSS);
