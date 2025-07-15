@@ -85,7 +85,9 @@ uniform float eyeAltitude;
 float ld(float depth) {
     return 1.0 / (zMults.y - depth * zMults.z);		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
 }
-
+float linearize(float dist) {
+    return (2.0 * near) / (far + near - dist * (far - near));
+}
 float luma(vec3 color) {
 	return dot(color,vec3(0.21, 0.72, 0.07));
 }
@@ -327,7 +329,7 @@ vec4 bilateralUpsample(out float outerEdgeResults, float referenceDepth, sampler
   float edgeSum = 0.0;
   float threshold = 0.005;
   
-  vec2 coord = gl_FragCoord.xy - 1.5;
+  vec2 coord = gl_FragCoord.xy - 2.0;
 
   vec2 UV = coord;
   const ivec2 SCALE = ivec2(1.0/VL_RENDER_RESOLUTION);
@@ -348,11 +350,11 @@ vec4 bilateralUpsample(out float outerEdgeResults, float referenceDepth, sampler
 		#ifdef DISTANT_HORIZONS
 		  float offsetDepth = sqrt(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE,0).a/65000.0);
     #else
-      float offsetDepth = ld(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE, 0).r);
+      float offsetDepth = linearize(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE, 0).r);
     #endif
 
     float edgeDiff = abs(offsetDepth - referenceDepth) < threshold ? 1.0 : 1e-7;
-    outerEdgeResults = max(outerEdgeResults, clamp(referenceDepth - offsetDepth,0.0,1.0));
+    outerEdgeResults = max(outerEdgeResults, abs(referenceDepth - offsetDepth));
 
     vec4 offsetColor = texelFetch2D(colortex0, UV_COLOR + OFFSET[i] + UV_NOISE, 0).rgba;
     colorSum += offsetColor*edgeDiff;
@@ -360,7 +362,7 @@ vec4 bilateralUpsample(out float outerEdgeResults, float referenceDepth, sampler
 
   }
 
-  outerEdgeResults = outerEdgeResults > 0.1 ? 1.0 : 0.0;
+  outerEdgeResults = outerEdgeResults > referenceDepth*0.05 + 0.1  ? 1.0 : 0.0;
   
   return colorSum / edgeSum;
 }
@@ -427,7 +429,7 @@ void main() {
 
   float z = texelFetch2D(depthtex0, ivec2(gl_FragCoord.xy),0).x;//texture2D(depthtex0, texcoord).x;
   float z2 = texture2D(depthtex1, texcoord).x;
-  float frDepth = ld(z);
+  float frDepth = linearize(z);
 
 	float swappedDepth = z;
 
