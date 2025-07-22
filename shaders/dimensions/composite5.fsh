@@ -317,7 +317,8 @@ vec3 closestToCamera5taps_DH(vec2 texcoord, sampler2D depth, sampler2D dhDepth, 
 vec4 computeTAA(vec2 texcoord, bool hand){
 
 	vec2 jitter = offsets[framemod8]*texelSize*0.5;
-	vec2 adjTC = clamp(texcoord*RENDER_SCALE, vec2(0.0), RENDER_SCALE - texelSize*2.0);
+	vec2 adjTC = clamp(texcoord*RENDER_SCALE - texelSize*0.5, vec2(0.0), RENDER_SCALE- texelSize*1.5);
+	vec2 adjTC_noJitter = adjTC + jitter;
 
 	// get previous frames position stuff for UV	
 	//use velocity from the nearest texel from camera in a 3x3 box in order to improve edge quality in motion	
@@ -344,8 +345,11 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	previousPosition.xy = texcoord + (hand ? vec2(0.0) : velocity);
 	
 	// sample current frame, and make sure it is de-jittered
-	// vec3 currentFrame = smoothfilter(colortex3, adjTC + jitter).rgb;
-	vec3 currentFrame = texelFetch2D(colortex3, ivec2((adjTC + jitter)/texelSize), 0).rgb;
+	#ifdef TAA_UPSCALING
+		vec3 currentFrame = smoothfilter(colortex3, adjTC_noJitter).rgb;
+	#else
+		vec3 currentFrame = texelFetch2D(colortex3, ivec2(adjTC_noJitter/texelSize), 0).rgb;
+	#endif
 
 	//reject history if off-screen and early exit
 	if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0) return vec4(currentFrame, 1.0);
@@ -357,14 +361,14 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	#else
 		//Assuming the history color is a blend of the 3x3 neighborhood, we clamp the history to the min and max of each channel in the 3x3 neighborhood
 		vec3 col0 = currentFrame; // can use this because its the center sample.
-		vec3 col1 = texture2D(colortex3, adjTC + vec2( texelSize.x,	 texelSize.y)).rgb;
-		vec3 col2 = texture2D(colortex3, adjTC + vec2( texelSize.x,	-texelSize.y)).rgb;
-		vec3 col3 = texture2D(colortex3, adjTC + vec2(-texelSize.x,	-texelSize.y)).rgb;
-		vec3 col4 = texture2D(colortex3, adjTC + vec2(-texelSize.x,	 texelSize.y)).rgb;
-		vec3 col5 = texture2D(colortex3, adjTC + vec2( 0.0,			 texelSize.y)).rgb;
-		vec3 col6 = texture2D(colortex3, adjTC + vec2( 0.0,			-texelSize.y)).rgb;
-		vec3 col7 = texture2D(colortex3, adjTC + vec2(-texelSize.x,	 		 0.0)).rgb;
-		vec3 col8 = texture2D(colortex3, adjTC + vec2( texelSize.x,	 		 0.0)).rgb;
+		vec3 col1 = texture2D(colortex3, adjTC_noJitter + vec2( texelSize.x,	 texelSize.y)).rgb;
+		vec3 col2 = texture2D(colortex3, adjTC_noJitter + vec2( texelSize.x,	-texelSize.y)).rgb;
+		vec3 col3 = texture2D(colortex3, adjTC_noJitter + vec2(-texelSize.x,	-texelSize.y)).rgb;
+		vec3 col4 = texture2D(colortex3, adjTC_noJitter + vec2(-texelSize.x,	 texelSize.y)).rgb;
+		vec3 col5 = texture2D(colortex3, adjTC_noJitter + vec2( 0.0,			 texelSize.y)).rgb;
+		vec3 col6 = texture2D(colortex3, adjTC_noJitter + vec2( 0.0,			-texelSize.y)).rgb;
+		vec3 col7 = texture2D(colortex3, adjTC_noJitter + vec2(-texelSize.x,	 		 0.0)).rgb;
+		vec3 col8 = texture2D(colortex3, adjTC_noJitter + vec2( texelSize.x,	 		 0.0)).rgb;
 
 		vec3 colMax = max(col0,max(col1,max(col2,max(col3, max(col4, max(col5, max(col6, max(col7, col8))))))));
 		vec3 colMin = min(col0,min(col1,min(col2,min(col3, min(col4, min(col5, min(col6, min(col7, col8))))))));
@@ -383,8 +387,10 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	vec3 clampedframeHistory = clamp(frameHistory, colMin, colMax);
 
 	float blendingFactor = BLEND_FACTOR;
-	
-	if(hand) blendingFactor = clamp(length(velocity/texelSize),blendingFactor,1.0);
+	// reduce history usage if the camera moves to reduce artifacts in motion.
+	float cameraMovement = length(velocity/texelSize);
+	blendingFactor = clamp(cameraMovement, blendingFactor, BLEND_FACTOR_DURING_MOVEMENT);
+	if(hand) blendingFactor = clamp(cameraMovement, blendingFactor, 1.0);
 	
 	////// Increases blending factor when far from AABB, reduces ghosting
 	blendingFactor = clamp(blendingFactor + luma(abs(clampedframeHistory - frameHistory)/clampedframeHistory),0.0,1.0);
@@ -420,7 +426,7 @@ void main() {
 		
 		bool hand = abs(dataUnpacked-0.75) < 0.01 && texture2D(depthtex1,taauTC).x < 1.0;
 		
-		vec4 color = computeTAA(smoothfilterUV(texcoord), hand);
+		vec4 color = computeTAA(texcoord, hand);
 
 		#ifdef SCREENSHOT_MODE
 			gl_FragData[0] = clamp(color, 0.0, 65000.0);
