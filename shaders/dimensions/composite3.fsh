@@ -570,7 +570,11 @@ void main() {
 //////////// blindness, nightvision, liquid fogs and misc fogs
 
 #if defined OVERWORLD_SHADER && defined CAVE_FOG
-    if (isEyeInWater == 0 && eyeAltitude < 1500){
+    if (isEyeInWater == 0 && eyeAltitude < 1500
+      #if !defined CAVE_FOG_DARKEN_SKY
+      && z < 1.0
+      #endif
+    ){
 
       vec3 cavefogCol = vec3(CaveFogColor_R, CaveFogColor_G, CaveFogColor_B);
 
