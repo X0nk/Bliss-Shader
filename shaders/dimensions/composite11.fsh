@@ -181,6 +181,29 @@ vec4 texture2D_bicubic(sampler2D tex, vec2 uv)
 //   return color;
 // }
 
+vec3 srgbToLinear(vec3 srgb){
+    return mix(
+        srgb / 12.92,
+        pow(.947867 * srgb + .0521327, vec3(2.4) ),
+        step( .04045, srgb )
+    );
+}
+vec3 blackbody(float Temp)
+{
+    float t = pow(Temp, -1.5);
+    float lt = log(Temp);
+
+    vec3 WB_temp = vec3(0.0);
+         WB_temp.r = 220000.0 * t + 0.58039215686;
+         WB_temp.g = 0.39231372549 * lt - 2.44549019608;
+         WB_temp.g = Temp > 6500. ? 138039.215686 * t + 0.72156862745 : WB_temp.g;
+         WB_temp.b = 0.76078431372 * lt - 5.68078431373;
+         WB_temp = clamp(WB_temp,0,1);
+         WB_temp = Temp < 1000. ? WB_temp * Temp * 0.001 : WB_temp;
+
+    return srgbToLinear(WB_temp);
+}
+
 void main() {
   /* DRAWBUFFERS:7 */
 	float vignette = (1.5-dot(texcoord-0.5,texcoord-0.5)*2.);
@@ -272,6 +295,10 @@ void main() {
 	float rodCurve = clamp(mix(1.0, rodLum/(2.5+rodLum), purkinje),0.0,1.0);
 
 	col = mix(lum * vec3(Purkinje_R, Purkinje_G, Purkinje_B) * Purkinje_Multiplier, col, rodCurve);
+	
+	#if WHITE_BALANCE != 6500
+		col *= blackbody(WHITE_BALANCE);
+	#endif
 
 	#ifndef USE_ACES_COLORSPACE_APPROXIMATION
 		col = LinearTosRGB(TONEMAP(col));
