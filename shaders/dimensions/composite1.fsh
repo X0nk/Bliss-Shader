@@ -519,110 +519,92 @@ void Emission(
 #include "/lib/indirect_lighting_effects.glsl"
 #include "/lib/PhotonGTAO.glsl"
 
-void BilateralUpscale_REUSE_Z(sampler2D tex1, sampler2D tex2, sampler2D depth, vec2 coord, float referenceDepth, inout vec2 ambientEffects, inout vec3 filteredShadow, bool hand){
-	ivec2 scaling = ivec2(1.0);
-	ivec2 posDepth  = ivec2(coord) * scaling;
-	ivec2 posColor  = ivec2(coord);
-  	ivec2 pos = ivec2(gl_FragCoord.xy*texelSize + 1);
-
-	ivec2 getRadius[4] = ivec2[](
-		ivec2(-1,-1),
-	 	ivec2( 1,-1),
-		ivec2( 1, 1),
-		ivec2(-1, 1)
-		// ivec2( 0, 1),
-	 	// ivec2( 0,-1),
-		// ivec2(-1, 0),
-		// ivec2( 1, 0)
-  	);
-
-	#ifdef DISTANT_HORIZONS
-		float diffThreshold = 0.0005;
-	#else
-		float diffThreshold = 0.005;
-	#endif
-
+void doEdgeAwareBlur(
+	sampler2D tex1, sampler2D tex2, sampler2D depth,
+	float referenceDepth, bool hand,
+	inout vec2 ambientEffects, inout vec3 filteredShadow
+){
+	float threshold = clamp(referenceDepth*referenceDepth*0.5,0.0001,0.005);
 	vec3 shadow_RESULT = vec3(0.0);
 	vec2 ssao_RESULT = vec2(0.0);
-	float SUM = 1.0;
+	float edgeSum = 0.0;
 
-	#ifdef LIGHTING_EFFECTS_BLUR_FILTER
-		for (int i = 0; i < 4; i++) {
+	vec2 coord = gl_FragCoord.xy - 1.5;
+	ivec2 UV = ivec2(coord);
+	ivec2 UV_NOISE = ivec2(gl_FragCoord.xy*texelSize + 1);
 
-			ivec2 radius = getRadius[i];
+	ivec2 OFFSET[4] = ivec2[](
+	  ivec2(-1,-1),
+	  ivec2( 1, 1),
+	  ivec2(-1, 1),
+	  ivec2( 1,-1)
+	);
 
-			#ifdef DISTANT_HORIZONS
-				float offsetDepth = sqrt(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling,0).a/65000.0);
-			#else
-				float offsetDepth = ld(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling, 0).r);
-			#endif
-
-			float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
-
-			#ifdef Variable_Penumbra_Shadows
-				shadow_RESULT += texelFetch2D(tex1, posColor + radius + pos, 0).rgb * EDGES;
-			#endif
-
-			// #if indirect_effect == 1
-				ssao_RESULT += texelFetch2D(tex2, posColor + radius + pos, 0).rg * EDGES;
-			// #endif
-
-			SUM += EDGES;
-		}
-	#endif
-
-	#ifdef Variable_Penumbra_Shadows
-		shadow_RESULT += texture2D(tex1, gl_FragCoord.xy*texelSize).rgb;
-		filteredShadow = shadow_RESULT/SUM;
-	#endif
-	
-	// #if indirect_effect == 1
-		ssao_RESULT += texture2D(tex2, gl_FragCoord.xy*texelSize).rg;
-		ambientEffects = ssao_RESULT/SUM;
-	// #endif
-}
-
-vec4 BilateralUpscale_VLFOG(sampler2D tex, sampler2D depth, vec2 coord, float referenceDepth){
-	ivec2 scaling = ivec2(1.0/VL_RENDER_RESOLUTION);
-	ivec2 posDepth  = ivec2(coord*VL_RENDER_RESOLUTION) * scaling;
-	ivec2 posColor  = ivec2(coord*VL_RENDER_RESOLUTION);
- 	ivec2 pos = ivec2(gl_FragCoord.xy*texelSize + 1);
-
-	ivec2 getRadius[5] = ivec2[](
-    	ivec2(-1,-1),
-	 	ivec2( 1, 1),
-		ivec2(-1, 1),
-		ivec2( 1,-1),
-		ivec2( 0, 0)
-  );
-
-	#ifdef DISTANT_HORIZONS
-		float diffThreshold = 0.01;
-	#else
-		float diffThreshold = zMults.x;
-	#endif
-
-	vec4 RESULT = vec4(0.0);
-	float SUM = 0.0;
-
-	for (int i = 0; i < 4; i++) {
-		
-		ivec2 radius = getRadius[i];
-
+	for(int i = 0; i < 4; i++) {
 		#ifdef DISTANT_HORIZONS
-			float offsetDepth = sqrt(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling,0).a/65000.0);
+			float offsetDepth = sqrt(texelFetch2D(depth, UV + OFFSET[i] + UV_NOISE,0).a/65000.0);
 		#else
-			float offsetDepth = ld(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling, 0).r);
+			float offsetDepth = ld(convertHandDepth_2(texelFetch2D(depth, UV + OFFSET[i] + UV_NOISE, 0).r,hand));
 		#endif
 
-		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
-		
-		RESULT += texelFetch2D(tex, posColor + radius + pos, 0) * EDGES;
-		
-   		SUM += EDGES;
+		float edgeDiff = abs(offsetDepth - referenceDepth) < threshold ? 1.0 : 1e-7;
+
+		#ifdef Variable_Penumbra_Shadows
+			shadow_RESULT += texelFetch2D(tex1, UV + OFFSET[i] + UV_NOISE, 0).rgb*edgeDiff;
+		#endif
+		// #if indirect_effect == 1
+			ssao_RESULT += texelFetch2D(tex2, UV + OFFSET[i] + UV_NOISE, 0).rg*edgeDiff;
+		// #endif
+
+		edgeSum += edgeDiff;
+	}
+	// sample without an offset with texture filtering to get a slightly blurred sample. make sure to average without skewing the rest of the average.
+	filteredShadow = shadow_RESULT/edgeSum * 0.8 + 0.2 * texture2D(tex1, texelSize*gl_FragCoord.xy).rgb;
+	ambientEffects =   ssao_RESULT/edgeSum * 0.8 + 0.2 * texture2D(tex2, texelSize*gl_FragCoord.xy).rg;
+	// ambientEffects.x = edgeSum / 4.0;
+
+}
+
+vec4 BilateralUpscale_VLFOG(sampler2D tex, sampler2D depth, float referenceDepth){
+
+	vec4 colorSum = vec4(0.0);
+	float edgeSum = 0.0;
+
+	#ifdef DISTANT_HORIZONS
+		float threshold = referenceDepth * mix(0.5,  0.05, min(max(0.1 - referenceDepth,0)/0.1,1));
+	#else
+		float threshold = referenceDepth * 0.05;
+	#endif
+
+	vec2 coord = gl_FragCoord.xy - 1.5;
+	vec2 UV = coord;
+	const ivec2 SCALE = ivec2(1.0/VL_RENDER_RESOLUTION);
+	ivec2 UV_DEPTH = ivec2(UV*VL_RENDER_RESOLUTION)*SCALE;
+	ivec2 UV_COLOR = ivec2(UV*VL_RENDER_RESOLUTION);
+	ivec2 UV_NOISE = ivec2(gl_FragCoord.xy*texelSize + 1);
+
+	ivec2 OFFSET[5] = ivec2[](
+	  ivec2(-1,-1),
+	  ivec2( 1, 1),
+	  ivec2(-1, 1),
+	  ivec2( 1,-1),
+	  ivec2( 0, 0)
+	);
+
+	for(int i = 0; i < 4; i++) {
+		#ifdef DISTANT_HORIZONS
+			float offsetDepth = sqrt(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE,0).a/65000.0);
+		#else
+			float offsetDepth = ld(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE, 0).r);
+		#endif
+
+		float edgeDiff = abs(offsetDepth - referenceDepth) < threshold ? 1.0 : 1e-7;
+		vec4 offsetColor = texelFetch2D(tex, UV_COLOR + OFFSET[i] + UV_NOISE, 0).rgba;
+		colorSum += offsetColor*edgeDiff;
+		edgeSum += edgeDiff;
 	}
 
-	return RESULT / SUM;
+	return colorSum/edgeSum;
 }
 
 #ifdef OVERWORLD_SHADER
@@ -1032,9 +1014,9 @@ void main() {
 	////////////////////////////////////////////////////////////////////////////////////////////
 
 		#if defined DISTANT_HORIZONS && defined DH_AMBIENT_OCCLUSION
-			BilateralUpscale_REUSE_Z(colortex3,	colortex14, colortex12, gl_FragCoord.xy-1.5, DH_mixedLinearZ, SSAO_SSS, filteredShadow, hand);
+			doEdgeAwareBlur(colortex3,	colortex14, colortex12, DH_mixedLinearZ, hand, SSAO_SSS, filteredShadow);
 		#else
-			BilateralUpscale_REUSE_Z(colortex3,	colortex14, depthtex0, gl_FragCoord.xy-1.5, ld(z0), SSAO_SSS, filteredShadow, hand);
+			doEdgeAwareBlur(colortex3,	colortex14, depthtex0, ld(z0), 	hand, SSAO_SSS, filteredShadow);
 		#endif
 		
 		float ShadowBlockerDepth = filteredShadow.y;
@@ -1414,7 +1396,12 @@ void main() {
 		// water absorbtion will impact ALL light coming up from terrain underwater.
 		gl_FragData[0].rgb *= Absorbtion;
 
-		vec4 vlBehingTranslucents = BilateralUpscale_VLFOG(colortex13, depthtex1, gl_FragCoord.xy - 1.5, ld(z));
+		#ifdef DISTANT_HORIZONS
+	  		float DH_mixedLinearZ = sqrt(texelFetch2D(colortex12,ivec2(gl_FragCoord.xy),0).a/65000.0);
+			vec4 vlBehingTranslucents = BilateralUpscale_VLFOG(colortex13, colortex12, DH_mixedLinearZ);
+		#else
+			vec4 vlBehingTranslucents = BilateralUpscale_VLFOG(colortex13, depthtex1, ld(z));
+		#endif
 
     	gl_FragData[0].rgb = gl_FragData[0].rgb * vlBehingTranslucents.a + vlBehingTranslucents.rgb;
 	}
