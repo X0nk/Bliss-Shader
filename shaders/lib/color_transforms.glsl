@@ -188,6 +188,9 @@ vec3 Full_Reinhard_Edit(vec3 C){
 	return (C * (1.0 + C / (whitepoint*whitepoint))) / (lighten + C);
 }
 
+vec3 no_tonemapper(vec3 color){
+    return color;
+}
 
 // from https://iolite-engine.com/blog_posts/minimal_agx_implementation
 // MIT License
