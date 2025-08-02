@@ -159,9 +159,8 @@ vec4 screenSpaceReflections(
 	float noise,
 
 	bool isHand,
-	float roughness
-
-	,inout float skyReflect
+	float roughness,
+	inout float backgroundReflectMask
 ){
 	vec4 reflection = vec4(0.0);
 
@@ -171,6 +170,7 @@ vec4 screenSpaceReflections(
 
 	if (raytracePos.z > 1.0) return reflection;
 
+
 	// use higher LOD as the reflection goes on, to blur it. this helps denoise a little.
 	reflectionLength = min(max(reflectionLength - 0.1, 0.0)/0.9, 1.0);
 	float LOD = mix(0.0, 6.0*(1.0-exp(-15.0*sqrt(roughness))), 1.0-pow(1.0-reflectionLength,5.0));
@@ -178,11 +178,13 @@ vec4 screenSpaceReflections(
 	vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(raytracePos) + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
 	previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
 	previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
+
 	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.y < 1.0) {
-		skyReflect = raytracePos.z < 1.0 ? 0.0 : 1.0;
+		
+		if(raytracePos.z > 0.9999999) backgroundReflectMask = 1.0;
 
 		#if defined OVERWORLD_SHADER 
-			reflection.a = raytracePos.z < 1.0 ? 1.0 : (isHand || isEyeInWater == 1 ? 1.0 : 0.0);
+			reflection.a = raytracePos.z > 0.9999999 ? (isHand || isEyeInWater == 1 ? 1.0 : 0.0) : 1.0;
 		#else
 			reflection.a = 1.0;
 		#endif
@@ -301,6 +303,9 @@ vec3 specularReflections(
 
 	f0 = f0 == 0.0 ? 0.02 : f0;
 
+	// f0 = 0.1;
+	// roughness = 0.0;
+
 	bool isMetal = f0 > 229.5/255.0;
 
 	// get reflected vector
@@ -343,6 +348,8 @@ vec3 specularReflections(
 	#if defined DEFERRED_BACKGROUND_REFLECTION || defined FORWARD_BACKGROUND_REFLECTION || defined DEFERRED_ENVIORNMENT_REFLECTION || defined FORWARD_ENVIORNMENT_REFLECTION
 		if(reflectionVisibilty < 1.0){
 			
+			float backgroundReflectMask = lightmap;
+
 			#if defined DEFERRED_BACKGROUND_REFLECTION || defined FORWARD_BACKGROUND_REFLECTION
 				#if !defined OVERWORLD_SHADER && !defined FORWARD_SPECULAR
 					vec3 backgroundReflection = volumetricsFromTex(reflectedVector_L, colortex4, roughness).rgb / 1200.0;
@@ -352,7 +359,6 @@ vec3 specularReflections(
 
 				#endif
 			#endif
-			float backgroundReflectMask = lightmap;
 			#if defined DEFERRED_ENVIORNMENT_REFLECTION || defined FORWARD_ENVIORNMENT_REFLECTION
 				vec4 enviornmentReflection = screenSpaceReflections(mat3(gbufferModelView) * reflectedVector_L, viewPos, noise.z, isHand, roughness, backgroundReflectMask);
 				// darkening for metals.
