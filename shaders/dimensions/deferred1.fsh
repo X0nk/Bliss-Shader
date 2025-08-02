@@ -14,24 +14,18 @@ uniform sampler2D dhDepthTex1;
 #endif
 uniform float near;
 uniform float far;
+uniform float dhFarPlane;
+uniform float dhNearPlane;
 
 float linZ(float depth) {
     return (2.0 * near) / (far + near - depth * (far - near));
 }
-
-uniform float dhFarPlane;
-uniform float dhNearPlane;
-float DH_ld(float dist) {
-    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+float DH_linZ(float dist) {
+    return (2.0 * near) / (dhFarPlane + near - dist * (dhFarPlane - near));
 }
 float DH_invLinZ (float lindepth){
-	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
+	return -((2.0*near/lindepth)-dhFarPlane-near)/(dhFarPlane-near);
 }
-
-float linearizeDepthFast(const in float depth, const in float near, const in float far) {
-    return (near * far) / (depth * (near - far) + far);
-}
-
 void convertHandDepth(inout float depth) {
     float ndcDepth = depth * 2.0 - 1.0;
     ndcDepth /= MC_HAND_DEPTH;
@@ -60,14 +54,10 @@ void main() {
 
 	#ifdef DISTANT_HORIZONS
     	float QuarterResDepth = texelFetch2D(dhDepthTex, ivec2(gl_FragCoord.xy*4), 0).x;
-		if(newTex >= 1.0) newTex = sqrt(QuarterResDepth);
-
-   		gl_FragData[1].a = (DH_ld(QuarterResDepth)*DH_ld(QuarterResDepth))*65000.0;
+		QuarterResDepth = DH_linZ(QuarterResDepth);
+   		gl_FragData[1].a = QuarterResDepth*QuarterResDepth*65000.0;
 	#endif
 	
- 	if (newTex < 1.0)
-	   gl_FragData[0] = vec4(oldTex, linZ(newTex)*linZ(newTex)*65000.0);
- 	else
-    gl_FragData[0] = vec4(oldTex, 2.0);
-
+	newTex = linZ(newTex);
+	gl_FragData[0] = vec4(oldTex, newTex*newTex*65000.0);
 }
