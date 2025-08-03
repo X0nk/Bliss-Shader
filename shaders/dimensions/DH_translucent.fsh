@@ -88,48 +88,35 @@ vec3 DH_toScreenSpace(vec3 p) {
 vec3 DH_toClipSpace3(vec3 viewSpacePosition) {
     return projMAD(dhProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 }
-uniform float near;
+// uniform float dhNearPlane;
 float invLinZ (float lindepth){
-	return -((2.0*near/lindepth)-far-near)/(far-near);
+	return -((2.0*dhNearPlane/lindepth)-far-dhNearPlane)/(far-dhNearPlane);
 }
 float ld(float dist) {
-    return (2.0 * near) / (far + near - dist * (far - near));
+    return (2.0 * dhNearPlane) / (far + dhNearPlane - dist * (far - dhNearPlane));
 }
-
-// float DH_ld(float dist) {
-//     return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
-// }
-// float DH_invLinZ (float lindepth){
-// 	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
-// }
-
 float DH_ld(float dist) {
     return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
 }
 float DH_inv_ld (float lindepth){
 	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
 }
-
-float linearizeDepthFast(const in float depth, const in float near, const in float far) {
-    return (near * far) / (depth * (near - far) + far);
+float linearizeDepthFast(const in float depth, const in float dhNearPlane, const in float far) {
+    return (dhNearPlane * far) / (depth * (dhNearPlane - far) + far);
 }
-
-
-
 
 uniform int isEyeInWater;
 uniform float rainStrength;
 
 #ifdef OVERWORLD_SHADER
-
 	#include "/lib/scene_controller.glsl"
 	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
 #endif
-
 #ifndef OVERWORLD_SHADER
 #undef WATER_SUN_SPECULAR
 #endif
+
 float GGX(vec3 n, vec3 v, vec3 l, float r, float f0) {
   r = max(pow(r,2.5), 0.0001);
 
@@ -154,44 +141,45 @@ uniform int framemod8;
 
 #include "/lib/TAA_jitter.glsl"
 
-vec3 rayTrace(vec3 dir, vec3 position,float dither, float fresnel, bool inwater){
+vec3 doScreenSpaceReflectiom(vec3 dir, vec3 position, float dither, float quality){
 
-    float quality = mix(5,SSR_STEPS,fresnel);
-    vec3 clipPosition = DH_toClipSpace3(position);
-	float rayLength = ((position.z + dir.z * dhFarPlane*sqrt(3.)) > -dhNearPlane) ?
-       (-dhNearPlane - position.z) / dir.z : dhFarPlane*sqrt(3.);
-    vec3 direction = normalize(DH_toClipSpace3(position+dir*rayLength)-clipPosition);  //convert to clip space
-    direction.xy = normalize(direction.xy);
+	float biasAmount = 0.001;
 
-    //get at which length the ray intersects with the edge of the screen
-    vec3 maxLengths = (step(0.,direction)-clipPosition) / direction;
-    float mult = min(min(maxLengths.x,maxLengths.y),maxLengths.z);
+	vec3 clipPosition = DH_toClipSpace3(position);
 
-
-    vec3 stepv = direction * mult / quality * vec3(RENDER_SCALE,1.0);
-
-
-	vec3 spos = clipPosition*vec3(RENDER_SCALE,1.0) + stepv*dither;
-	float minZ = clipPosition.z;
-	float maxZ = spos.z+stepv.z*0.5;
+	float rayLength = ((position.z + dir.z * dhFarPlane*sqrt(3.)) > -dhNearPlane) ? (-dhNearPlane - position.z) / dir.z : dhFarPlane*sqrt(3.);
 	
-	spos.xy += offsets[framemod8]*texelSize*0.5/RENDER_SCALE;
+	vec3 direction = DH_toClipSpace3(position + dir*rayLength) - clipPosition;  //convert to clip space
 
-    for (int i = 0; i <= int(quality); i++) {
+	//get at which length the ray intersects with the edge of the screen
+	vec3 maxLengths = (step(0.0, direction) - clipPosition) / direction;
+	float mult = min(min(maxLengths.x, maxLengths.y), maxLengths.z);
+	vec3 stepv = direction * mult / quality;
 
-		// float sp = DH_inv_ld(sqrt(texelFetch2D(colortex12,ivec2(spos.xy/texelSize/4),0).a/65000.0));
-		float sp = DH_inv_ld(sqrt(texelFetch2D(colortex12,ivec2(spos.xy/texelSize/4),0).a/64000.0));
+	clipPosition.xy *= RENDER_SCALE;
+	stepv.xy *= RENDER_SCALE;
 
-        if(sp < max(minZ,maxZ) && sp > min(minZ,maxZ)) return vec3(spos.xy/RENDER_SCALE,sp);
-        spos += stepv;
+	vec3 spos = clipPosition + stepv*dither;
+	spos.xy += texelSize*0.5;
 
-		//small bias
-		minZ = maxZ-0.00005/DH_ld(spos.z);
+	float minZ = spos.z - 0.00025 / DH_ld(spos.z);
+	float maxZ = spos.z;
+	
+  	for (int i = 0; i <= int(quality); i++) {
 
+		if(spos.x < 0 || spos.x > 1 || spos.y < 0 || spos.y > 1) return vec3(1.1);
+
+		float sampleDepth = sqrt(texelFetch2D(colortex12,ivec2(spos.xy/texelSize/4),0).a/65000.0);
+		float sp = DH_inv_ld(sampleDepth);
+		
+		if(sp < max(minZ, maxZ) && sp > min(minZ, maxZ)) return vec3(spos.xy/RENDER_SCALE,sp);
+
+		minZ = maxZ - biasAmount / DH_ld(spos.z);
 		maxZ += stepv.z;
-    }
 
-    return vec3(1.1);
+		spos += stepv;
+  	}
+  return vec3(1.1);
 }
 
 float interleaved_gradientNoise_temporal(){
@@ -256,7 +244,6 @@ vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
 #define FORWARD_SPECULAR
 #define FORWARD_ENVIORNMENT_REFLECTION
 #define FORWARD_BACKGROUND_REFLECTION
-#define FORWARD_ROUGH_REFLECTION
 
 /* RENDERTARGETS:2,7 */
 void main() {
@@ -307,7 +294,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
     // float UnchangedAlpha = gl_FragData[0].a;
 
 	#ifdef WhiteWorld
-		gl_FragData[0].rgb = vec3(0.5);
+		gl_FragData[0].rgb = vec3(1.0);
 		gl_FragData[0].a = 1.0;
 	#endif
     
@@ -380,8 +367,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
     Indirect_lighting = AmbientLightColor;
-
-	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
+	float indoors = min(max(lightmapCoords.y-0.5,0.0)/0.4,1.0);
+	vec3 FinalColor = (Indirect_lighting + Direct_lighting*indoors) * Albedo;
 
     // specular
     #ifdef FORWARD_SPECULAR
@@ -389,6 +376,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		vec4 Reflections = vec4(0.0);
 		vec3 BackgroundReflection = FinalColor; 
 		vec3 SunReflection = vec3(0.0);
+		float SSR_HIT_SKY_MASK = indoors;
 		
         float roughness = 0.0;
 		float f0 = 0.02;
@@ -405,16 +393,19 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	    	if(isEyeInWater == 1) fresnel = pow(clamp(1.5 + normalDotEye,0.0,1.0), 25.0);
 	    #endif
         #if defined FORWARD_ENVIORNMENT_REFLECTION && defined DH_SCREENSPACE_REFLECTIONS
-            vec3 rtPos = rayTrace(reflectedVector, viewPos, interleaved_gradientNoise_temporal(), fresnel, false);
-            if (rtPos.z < 1.){
+            vec3 rtPos = doScreenSpaceReflectiom(reflectedVector, viewPos, interleaved_gradientNoise_temporal(), mix(5.0f, float(SSR_STEPS), fresnel));
+
+            if (rtPos.z < 0.99999){
             	vec3 previousPosition = mat3(gbufferModelViewInverse) * DH_toScreenSpace(rtPos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
             	previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
             	previousPosition.xy = projMAD(dhPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
-            	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.x < 1.0) {
-            		Reflections.a = 1.0;
-            		Reflections.rgb = texture2D(colortex5, previousPosition.xy).rgb;
+            	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.y < 1.0) {
+					Reflections.a = 1.0;
+					Reflections.rgb = texture2D(colortex5, previousPosition.xy).rgb;
             	}
-            }
+            }else{
+				if (rtPos.x > 0.0 && rtPos.y > 0.0 && rtPos.x < 1.0 && rtPos.y < 1.0) SSR_HIT_SKY_MASK = 1.0;
+			}
         #endif
 		#ifdef FORWARD_BACKGROUND_REFLECTION
             BackgroundReflection = skyCloudsFromTex(mat3(gbufferModelViewInverse) * reflectedVector, colortex4).rgb / 1200.0; 
@@ -423,8 +414,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
             SunReflection = (DirectLightColor * Shadows) * GGX(normalize(normals), -normalize(viewPos), normalize(WsunVec2), roughness, f0) * (1.0-Reflections.a);
         #endif
 
-		Reflections_Final = mix(FinalColor, mix(BackgroundReflection, Reflections.rgb, Reflections.a), fresnel);
-		Reflections_Final += SunReflection;
+		Reflections_Final = mix(FinalColor, mix(BackgroundReflection*SSR_HIT_SKY_MASK, Reflections.rgb, Reflections.a), fresnel);
+		Reflections_Final += SunReflection*indoors;
 
 		gl_FragData[0].a = gl_FragData[0].a + (1.0-gl_FragData[0].a) * fresnel;
 	

@@ -21,10 +21,10 @@ float linZ(float depth) {
     return (2.0 * near) / (far + near - depth * (far - near));
 }
 float DH_linZ(float dist) {
-    return (2.0 * near) / (dhFarPlane + near - dist * (dhFarPlane - near));
+    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
 }
 float DH_invLinZ (float lindepth){
-	return -((2.0*near/lindepth)-dhFarPlane-near)/(dhFarPlane-near);
+	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
 }
 void convertHandDepth(inout float depth) {
     float ndcDepth = depth * 2.0 - 1.0;
