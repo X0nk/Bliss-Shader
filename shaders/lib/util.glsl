@@ -125,9 +125,10 @@ vec2 rotate(vec2 x, float r){
 }
 
 vec3 cartToSphere(vec2 coord) {
+    coord.y = 1.0 - coord.y;
 	coord *= vec2(TAU, PI);
 	vec2 lon = sincos(coord.x) * sin(coord.y);
-	return vec3(lon.x, 2.0/PI*coord.y-1.0, lon.y);
+	return vec3(lon.x, cos(coord.y), lon.y);
 }
 
 vec2 sphereToCart(vec3 dir) {
