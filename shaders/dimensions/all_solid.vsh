@@ -140,28 +140,7 @@ vec3 calcMoveLeaves(in vec3 pos, in float f0, in float f1, in float f2, in float
     vec3 move1 = calcWaveLeaves(pos      , 0.0054, 0.0400, 0.0400, 0.0127, 0.0089, 0.0114, 0.0063, 0.0224, 0.0015) * amp1;
     return move1*5.*WAVY_STRENGTH;
 }
-vec3 srgbToLinear2(vec3 srgb){
-    return mix(
-        srgb / 12.92,
-        pow(.947867 * srgb + .0521327, vec3(2.4) ),
-        step( .04045, srgb )
-    );
-}
-vec3 blackbody2(float Temp)
-{
-    float t = pow(Temp, -1.5);
-    float lt = log(Temp);
 
-    vec3 col = vec3(0.0);
-         col.x = 220000.0 * t + 0.58039215686;
-         col.y = 0.39231372549 * lt - 2.44549019608;
-         col.y = Temp > 6500. ? 138039.215686 * t + 0.72156862745 : col.y;
-         col.z = 0.76078431372 * lt - 5.68078431373;
-         col = clamp(col,0.0,1.0);
-         col = Temp < 1000. ? col * Temp * 0.001 : col;
-
-    return srgbToLinear2(col);
-}
 // float luma(vec3 color) {
 // 	return dot(color,vec3(0.21, 0.72, 0.07));
 // }
@@ -413,13 +392,7 @@ void main() {
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
 	#ifdef TAA
-		#ifdef HAND
-			// turn off jitter when camera moves.
-			// this is to hide the jitter when the same happens for TAA blend factor and the jitter becomes visible during camera movement
-			gl_Position.xy += (offsets[framemod8] * gl_Position.w*texelSize) * detectCameraMovement();
-		#else	
-			gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
-		#endif
+		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
 	#endif
 
 
