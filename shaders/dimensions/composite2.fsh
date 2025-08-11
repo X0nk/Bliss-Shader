@@ -528,12 +528,14 @@ void main() {
 
 	#if defined OVERWORLD_SHADER
 		vec4 VolumetricClouds = GetVolumetricClouds(viewPos0, BN, WsunVec, directLightColor, indirectLightColor, cloudPlaneDistance);
-		
-		#ifdef CAVE_FOG
-  	  		float skyhole = pow(clamp(1.0-pow(max(playerPos_normalized.y - 0.6,0.0)*5.0,2.0),0.0,1.0),2)* caveDetection;
+	  	
+  		#if defined OVERWORLD_SHADER && defined CAVE_FOG && defined CAVE_FOG_DARKEN_SKY
+  		  if (isEyeInWater == 0 && eyeAltitude < 1500){
+  		    float skyhole = pow(clamp(1.0-pow(max(playerPos_normalized.y - 0.6,0.0)*5.0,2.0),0.0,1.0),2) * caveDetection;
 			VolumetricClouds.rgb *= 1.0-skyhole;
-			VolumetricClouds.a = mix(VolumetricClouds.a, 1.0,  skyhole);
-		#endif
+			VolumetricClouds.a = mix(VolumetricClouds.a, 1.0, skyhole);
+  		  }
+  		#endif
 	#endif
 
 	#ifdef OVERWORLD_SHADER
