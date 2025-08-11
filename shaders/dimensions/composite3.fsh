@@ -357,7 +357,7 @@ vec4 VLTemporalFiltering(vec3 viewPos, in float referenceDepth, sampler2D depth,
 
 }
 
-void blendAllFogTypes( inout vec3 color, inout float bloomyFogMult, vec4 volumetrics, float linearDistance, vec3 playerPos, vec3 cameraPosition ){
+void blendAllFogTypes( inout vec3 color, inout float bloomyFogMult, vec4 volumetrics, float linearDistance, vec3 playerPos, vec3 cameraPosition, bool isSky ){
 
   // blend cave fog
   #if defined OVERWORLD_SHADER && defined CAVE_FOG
@@ -368,7 +368,7 @@ void blendAllFogTypes( inout vec3 color, inout float bloomyFogMult, vec4 volumet
 
       #ifdef CAVE_FOG_DARKEN_SKY
         float skyhole = pow(clamp(1.0-pow(max(playerPos.y - 0.6,0.0)*5.0,2.0),0.0,1.0),2);
-        color.rgb = mix(color.rgb + cavefogCol * caveDetection, cavefogCol, skyhole * caveDetection);
+        color.rgb = mix(color.rgb + cavefogCol * caveDetection, cavefogCol, isSky ? skyhole * caveDetection : 0.0);
       #else
         color.rgb += cavefogCol * caveDetection;
       #endif
@@ -461,10 +461,11 @@ void main() {
 		}
 
 		swappedDepth = depthOpaque;
-
 	#else
 		float DH_depth0 = 0.0;
 	#endif
+
+  bool isSky = swappedDepth >= 1.0;
 
 	vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE, z, DH_depth0);
 	vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
@@ -568,7 +569,7 @@ void main() {
   #endif
 
   // blend all fog types. volumetric fog, volumetric clouds, distance based fogs for lava, powdered snow, blindness, and darkness.
-  blendAllFogTypes(color, bloomyFogMult, temporallyFilteredVL, linearDistance, playerPos_normalized, cameraPosition);
+  blendAllFogTypes(color, bloomyFogMult, temporallyFilteredVL, linearDistance, playerPos_normalized, cameraPosition, isSky);
 
 ////// --------------- FINALIZE
   #ifdef display_LUT
