@@ -351,7 +351,7 @@ vec3 specularReflections(
 			float backgroundReflectMask = lightmap;
 
 			#if defined DEFERRED_BACKGROUND_REFLECTION || defined FORWARD_BACKGROUND_REFLECTION
-				#if !defined OVERWORLD_SHADER && !defined FORWARD_SPECULAR
+				#if !defined OVERWORLD_SHADER
 					vec3 backgroundReflection = volumetricsFromTex(reflectedVector_L, colortex4, roughness).rgb / 1200.0;
 				#else
 					vec3 backgroundReflection = skyCloudsFromTex(reflectedVector_L, colortex4).rgb / 1200.0;
