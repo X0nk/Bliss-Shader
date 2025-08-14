@@ -80,9 +80,9 @@ vec4 GetVolumetricFog(
 		//------ PLUME EFFECT
 			float plumeDensity = min(densityVol * pow(min(max(100.0-progressW.y,0.0)/30.0,1.0),4.0), pow(clamp(1.0 - length(progressW-cameraPosition)/far,0.0,1.0),5.0));
 			
-			#ifndef ReflectedFog
+			// #ifndef ReflectedFog
 			 plumeDensity *= NETHER_PLUME_DENSITY;
-			#endif
+			// #endif
 
 			float plumeVolumeCoeff = exp(-plumeDensity*dd*dL);
 
@@ -96,7 +96,7 @@ vec4 GetVolumetricFog(
 			float hazeDensity = 0.001;
 
 			#ifndef ReflectedFog
-			 hazeDensity *= NETHER_PLUME_DENSITY;
+			 hazeDensity *= NETHER_HAZE_DENSITY;
 			#endif
 
 			float hazeVolumeCoeff = exp(-hazeDensity*dd*dL);
@@ -108,9 +108,9 @@ vec4 GetVolumetricFog(
 		//------ CEILING SMOKE EFFECT
 			float ceilingSmokeDensity = 0.001 * pow(min(max(progressW.y-40.0,0.0)/50.0,1.0),3.0);
 			
-			#ifndef ReflectedFog
-			 ceilingSmokeDensity *= NETHER_PLUME_DENSITY;
-			#endif
+			// #ifndef ReflectedFog
+			 ceilingSmokeDensity *= NETHER_CEILING_SMOKE_DENSITY;
+			// #endif
 
 			float ceilingSmokeVolumeCoeff = exp(-ceilingSmokeDensity*dd*dL);
 			
