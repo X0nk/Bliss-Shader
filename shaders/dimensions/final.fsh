@@ -168,6 +168,11 @@ void main() {
     COLOR = vec3(ld(texture2D(depthtex1, texcoord*RENDER_SCALE).r));
   #endif
 
+  #ifdef CUSTOM_MAPPING_ENABLED
+    vec3 CUSTOM_WHITE = vec3(float(CUSTOM_WHITE_R) / 255.0, float(CUSTOM_WHITE_G) / 255.0, float(CUSTOM_WHITE_B) / 255.0);
+    vec3 CUSTOM_BLACK = vec3(float(CUSTOM_BLACK_R) / 255.0, float(CUSTOM_BLACK_G) / 255.0, float(CUSTOM_BLACK_B) / 255.0);
+    COLOR = mix(CUSTOM_BLACK, CUSTOM_WHITE, COLOR);
+  #endif
 
   gl_FragColor.rgb = COLOR;
 }
