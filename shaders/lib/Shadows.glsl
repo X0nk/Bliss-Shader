@@ -4,12 +4,13 @@
 void GriAndEminShadowFix(
 	inout vec3 WorldPos,
 	vec3 FlatNormal,
-	float VanillaAO,
-	float SkyLightmap,
 	float transition
 ){
-	float zoomLevel = 1.0-(transition*transition*transition*transition*0.5+0.5);
-	if(SkyLightmap < 0.1 && isEyeInWater != 1) WorldPos = WorldPos - (	fract(WorldPos+cameraPosition - WorldPos*0.0001)*zoomLevel - zoomLevel*0.5);
+	transition = 1.0-transition; 
+	transition *= transition*transition*transition*transition*transition*transition;
+	float zoomLevel = mix(0.0, 0.5, transition);
+
+	if(zoomLevel > 0.001 && isEyeInWater != 1) WorldPos = WorldPos - (	fract(WorldPos+cameraPosition - WorldPos*0.0001)*zoomLevel - zoomLevel*0.5);
 }
 
 void applyShadowBias(inout vec3 projectedShadowPosition, in vec3 playerPos, in vec3 geoNormals){
