@@ -507,6 +507,9 @@ screen.Porosity = Porosity / Puddles / Wetness
     option.Puddle_Size = Puddle Size Multiplier
 
 option.MATERIAL_AO = Material Ambient Occlusion
+option.NORMAL_MAP_MULT = Normal map multiplier
+value.NORMAL_MAP_MULT.1.0 = Default 1.0 §aresourcepacks expect this value
+suffix.NORMAL_MAP_MULT = §c resourcepacks DO NOT expect this value
 
 option.DOF_QUALITY=Depth Of Field
     value.DOF_QUALITY.-1=Off
