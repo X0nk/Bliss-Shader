@@ -1124,7 +1124,13 @@ void main() {
 	#endif
 
 	#ifdef END_SHADER
-		float vortexBounds = clamp(vortexBoundRange - length(feetPlayerPos+cameraPosition), 0.0,1.0);
+
+		#ifdef END_LIGHTNING
+			float vortexBounds = clamp(vortexBoundRange - length(feetPlayerPos+cameraPosition), 0.0,1.0);
+		#else
+			float vortexBounds = 1.0;
+		#endif
+		
         vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds);
 
 		float lightningflash = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
