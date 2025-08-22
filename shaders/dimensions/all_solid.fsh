@@ -184,8 +184,8 @@ float encodeVec2(float x,float y){
 }
 
 #ifdef MC_NORMAL_MAP
-	vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
-		float bumpmult = clamp(puddle_values,0.0,1.0);
+	vec3 applyBump(mat3 tbnMatrix, vec3 bump){
+		float bumpmult = NORMAL_MAP_MULT;
 		bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
 		return normalize(bump*tbnMatrix);
 	}
@@ -577,7 +577,7 @@ void main() {
 		NormalTex.xy = NormalTex.xy * 2.0-1.0;
 		NormalTex.z = sqrt(max(1.0 - dot(NormalTex.xy, NormalTex.xy), 0.0));
 
-		normal = applyBump(tbnMatrix, NormalTex.xyz,  1.0);
+		normal = applyBump(tbnMatrix, NormalTex.xyz);
 	#endif
 	
 	//////////////////////////////// 				////////////////////////////////

@@ -209,10 +209,9 @@ vec3 getParallaxDisplacement(vec3 waterPos, vec3 playerPos) {
 	return parallaxPos;
 }
 
-vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
-	float bumpmult = puddle_values;
+vec3 applyBump(mat3 tbnMatrix, vec3 bump, float mult){
+	float bumpmult = mult;
 	bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
-	// 
 	return normalize(bump*tbnMatrix);
 }
 
@@ -540,9 +539,9 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	TangentNormal = NormalTex.xy;
 	
 	#if defined PHYSICSMOD_OCEAN_SHADER && defined PHYSICS_OCEAN
-		normal = applyBump(tbnMatrix, NormalTex.xyz, PHYSICS_OCEAN_TRANSITION);
+		normal = applyBump(tbnMatrix, NormalTex.xyz, isWater ? PHYSICS_OCEAN_TRANSITION : NORMAL_MAP_MULT);
 	#else
-		normal = applyBump(tbnMatrix, NormalTex.xyz, 1.0);
+		normal = applyBump(tbnMatrix, NormalTex.xyz, isWater ? 1.0 : NORMAL_MAP_MULT);
 	#endif
 
 	worldSpaceNormal = viewToWorld(normal);
