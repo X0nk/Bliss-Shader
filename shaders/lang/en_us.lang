@@ -68,21 +68,21 @@ screen.Direct_Light = Direct Light
             value.shadowDistance.224.0 = 14 Chunks
             value.shadowDistance.240.0 = 15 Chunks
             value.shadowDistance.256.0 = 16 Chunks
-            value.shadowDistance.272.0 = 17 Chunks
-            value.shadowDistance.288.0 = 18 Chunks
-            value.shadowDistance.304.0 = 19 Chunks
-            value.shadowDistance.320.0 = 20 Chunks
-            value.shadowDistance.336.0 = 21 Chunks
-            value.shadowDistance.352.0 = 22 Chunks
-            value.shadowDistance.368.0 = 23 Chunks
-            value.shadowDistance.384.0 = 24 Chunks
-            value.shadowDistance.512.0 = 32 Chunks
-            value.shadowDistance.768.0 = 48 Chunks
-            value.shadowDistance.1024.0 = 64 Chunks
-            value.shadowDistance.1536.0 = 96 Chunks
-            value.shadowDistance.2048.0 = 128 Chunks
-            value.shadowDistance.4096.0 = 256 Chunks
-            value.shadowDistance.8192.0 = 512 Chunks
+            value.shadowDistance.272.0 = 17 Chunks §cNOT RECOMMENDED§r
+            value.shadowDistance.288.0 = 18 Chunks §cNOT RECOMMENDED§r
+            value.shadowDistance.304.0 = 19 Chunks §cNOT RECOMMENDED§r
+            value.shadowDistance.320.0 = 20 Chunks §cNOT RECOMMENDED§r
+            value.shadowDistance.336.0 = 21 Chunks §cNOT RECOMMENDED§r
+            value.shadowDistance.352.0 = 22 Chunks §cNOT RECOMMENDED§r
+            value.shadowDistance.368.0 = 23 Chunks §cNOT RECOMMENDED§r
+            value.shadowDistance.384.0 = 24 Chunks §cNOT RECOMMENDED§r
+            value.shadowDistance.512.0 = 32 Chunks §cNOT RECOMMENDED§r
+            value.shadowDistance.768.0 = 48 Chunks §cNOT RECOMMENDED§r
+            value.shadowDistance.1024.0 = 64 Chunks §cNOT RECOMMENDED§r
+            value.shadowDistance.1536.0 = 96 Chunks §cNOT RECOMMENDED§r
+            value.shadowDistance.2048.0 = 128 Chunks §cNOT RECOMMENDED§r
+            value.shadowDistance.4096.0 = 256 Chunks §cNOT RECOMMENDED§r
+            value.shadowDistance.8192.0 = 512 Chunks §cNOT RECOMMENDED§r
 
         option.entityShadowDistanceMul = Entity Shadow Distance
             value.entityShadowDistanceMul.0.01 = 1% of Shadow Distance
@@ -130,19 +130,6 @@ screen.Direct_Light = Direct Light
         option.LPV_VL_FOG_ILLUMINATION = Fog Light Propagation
         option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS = Fog Light Propagation Brightness
             suffix.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS=%
-
-screen.Subsurface_Scattering = Sub-Surface Scattering
-    option.LabSSS_Curve = LabSSS Curve
-    option.MISC_BLOCK_SSS = SSS for random blocks
-    option.MOB_SSS = SSS for mobs
-    option.Ambient_SSS = SSS from the sky
-    option.ambientsss_brightness = Sky SSS Brightness
-    option.SSS_TYPE = Mode
-        value.SSS_TYPE.0 = None
-        value.SSS_TYPE.1 = Hardcoded only
-        value.SSS_TYPE.2 = Hardcoded + LabSSS
-        value.SSS_TYPE.3 = LabSSS only
-
 
 screen.Ambient_light = Ambient Light
     option.AO_Strength = AO Multiplier
@@ -437,10 +424,13 @@ screen.Post_Processing = Post Processing
     screen.TAA_OPTIONS = Anti-Aliasing Settings
         option.SCREENSHOT_MODE = Screenshot Mode
         option.TAA = TAA
-        option.RESPONSIVE_TAA = Responsive TAA §a(SET BLEND FACTOR TO 0.25 WHEN THIS IS ENABLED)
+        option.RESPONSIVE_TAA = Responsive TAA §a(TURN THIS OFF WITH TEMPORAL UPSCALING)
         option.BLEND_FACTOR = Blend Factor
+        option.BLEND_FACTOR_DURING_MOVEMENT = Blend Factor During Camera Movment
         option.TAA_UPSCALING = Temporal Upscaling
         option.SCALE_FACTOR = Scale Factor
+            prefix.SCALE_FACTOR = §fUpscale from 
+            suffix.SCALE_FACTOR = x §fof the window resolution
 	screen.COLOR_GRADING = Color Grading
 		option.LUMINANCE_CURVE = Tone Curve
 		option.LOWER_CURVE = Lower Curve
@@ -459,19 +449,30 @@ screen.Post_Processing = Post Processing
 		option.HIGHLIGHTS_GRADE_B = Highlights §9Blue
 		option.HIGHLIGHTS_GRADE_MUL = Highlights Brightness
 
+screen.Resource_Pack_Support = Materials / Resource Pack Support
+    screen.SPECULAR = Specular Reflections
+        option.DEFERRED_SPECULAR = Reflections on terrain
+        option.DEFERRED_SSR_QUALITY =^ Environment reflections
+            value.DEFERRED_SSR_QUALITY.0 =§c OFF
+            value.DEFERRED_SSR_QUALITY.1 = mirrored view mode
+            suffix.DEFERRED_SSR_QUALITY = §§ samples
+        option.DEFERRED_BACKGROUND_REFLECTION =^ Background reflections
+        option.DEFERRED_ROUGH_REFLECTION =^ Rough reflections
+        option.FORWARD_SPECULAR = Reflections on water, glass
+        option.FORWARD_SSR_QUALITY =^ Environment reflections
+            value.FORWARD_SSR_QUALITY.0 =§c OFF
+            value.FORWARD_SSR_QUALITY.1 = mirrored view mode
+            suffix.FORWARD_SSR_QUALITY = §§ samples
+        option.FORWARD_BACKGROUND_REFLECTION =^ Background reflections
+        option.FORWARD_ROUGH_REFLECTION =^ Rough reflections
+        option.SUN_SPECULAR_MULT = Sun/Moon reflection
+            value.SUN_SPECULAR_MULT.0 =§c OFF
+            value.SUN_SPECULAR_MULT.1 = ON
+            suffix.SUN_SPECULAR_MULT =x brighter
+        option.ROUGHNESS_TRESHOLD = Reflection visibilty threshold
+            value.ROUGHNESS_TRESHOLD.0.0 = no threshold
 
-screen.Resource_Pack_Support = Resource Pack Support
-    screen.Reflections = Specular Reflections
-        option.Specular_Reflections = Specular Reflections
-        option.Screen_Space_Reflections = Screen-Space Reflections
-        option.Rough_reflections = Detailed Roughness
-        option.Sky_reflection = Sky/Fog in Reflections
-        option.Dynamic_SSR_quality = Dynamic SSR Quality
-        option.Roughness_Threshold = Reflection Threshold
-        option.Sun_specular_Strength = Sun Reflection Multiplier
-        option.reflection_quality = SSR Quality
-
-    screen.Emissives = Emissives
+    screen.Emissives = Emissives / Glowing Textures
         option.Emissive_Brightness = Emission Multiplier
         option.Emissive_Curve = Emission Curve
         option.EMISSIVE_TYPE = Mode
@@ -480,6 +481,17 @@ screen.Resource_Pack_Support = Resource Pack Support
             value.EMISSIVE_TYPE.2 = Hardcoded + Lab Emission
             value.EMISSIVE_TYPE.3 = Lab Emission only
 
+    screen.Subsurface_Scattering = Sub-Surface Scattering
+        option.LabSSS_Curve = LabSSS Curve
+        option.MISC_BLOCK_SSS = SSS for random blocks
+        option.MOB_SSS = SSS for mobs
+        option.Ambient_SSS = SSS from the sky
+        option.ambientsss_brightness = Sky SSS Brightness
+        option.SSS_TYPE = Mode
+            value.SSS_TYPE.0 = None
+            value.SSS_TYPE.1 = Hardcoded only
+            value.SSS_TYPE.2 = Hardcoded + LabSSS
+            value.SSS_TYPE.3 = LabSSS only
 
 screen.POM = Parallax Occlusion Mapping / POM
     option.POM = Parallax Occlusion Mapping
@@ -489,8 +501,7 @@ screen.POM = Parallax Occlusion Mapping / POM
     option.Adaptive_Step_length = Dynamic Quality
     option.Horrible_slope_normals = Horrible Slope Normals
 
-
-screen.Porosity = Porosity / Puddles
+screen.Porosity = Porosity / Puddles / Wetness
     option.Porosity = Porosity
     option.Puddles = Puddles
     option.Puddle_Size = Puddle Size Multiplier
@@ -602,16 +613,22 @@ screen.Ambient_light.comment = Configure settings related to the lighting in sha
     option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS.comment = Configure the brightness of lit up fog.
     
 screen.Resource_Pack_Support.comment = A handfull of effects that use information provided by a resourcepack.
-    screen.Reflections.comment = Configure the reflections that use information provided by a LabPBR resourcepack.
-        option.Specular_Reflections.comment = Toggle all reflections for Labpbr packs. This enables the sun reflection, and allows other settings to be enabled below. §aPERFORMANCE COST:§r low
-        option.Screen_Space_Reflections.comment = Toggle screen-space reflections. §aPERFORMANCE COST:§r medium
-        option.Rough_reflections.comment = Toggle more detailed roughness for higher quality reflection. This will cause a good amount of visible noise. §aPERFORMANCE COST:§r medium to high
-        option.Sky_reflection.comment = Toggle reflections of the sky and fog. §aPERFORMANCE COST:§r low to medium.
-        option.Dynamic_SSR_quality.comment = This lowers the quality of screen-space reflections based on how visible they are. it can improve performance but lower the quality. 
-        option.Roughness_Threshold.comment = If the roughness reaches this threshold, all reflections except the sun do not render. it can improve performance.
-        option.Sun_specular_Strength.comment = Configure how bright the sun's reflection is.
-        option.reflection_quality.comment = Configure the quality of the screen-space reflections.
+    screen.SPECULAR.comment = Configure the reflections. they can use information provided by a LabPBR resourcepack.
+        option.DEFERRED_SPECULAR.comment = Toggle detailed reflections on all solid objects. §bWhat is this?§r "solid" meaning anything you cannot see through, like stone, wood, grass, leaves
+        option.FORWARD_SPECULAR.comment = Toggle detailed reflections on all translucent objects. §bWhat is this?§r "translucent" meaning things you can see through, like glass, water, ice, slime
+        
+        option.DEFERRED_SSR_QUALITY.comment = Configure the quality of reflections of the world around you that are visible on terrain. §bWhat is this?§r Configure how many samples the SSR/screen-space-reflections take to create a reflection of the world. §b"mirrored view mode"§r is quite literally the image you see, but mirrored on every surface - EXTREMLY low quality. §aPERFORMANCE COST:§r low to very high
+        option.FORWARD_SSR_QUALITY.comment = Configure the quality of reflections of the world around you that are visible on water, glass, and other translucent things. §bWhat is this?§r Configure how many samples the SSR/screen-space-reflections take to create a reflection of the world. §b"mirrored view mode"§r is quite literally the image you see, but mirrored on every surface - EXTREMLY low quality. §aPERFORMANCE COST:§r low to very high
 
+        option.DEFERRED_BACKGROUND_REFLECTION.comment = Toggle the reflections of the sky, clouds, or fog that are visible on terrain. §bWhat is this?§r Reflections of things like the sky, clouds, and fog. §aPERFORMANCE COST:§r low
+        option.FORWARD_BACKGROUND_REFLECTION.comment = Toggle the reflections of the sky, clouds, or fog that are visible on water, glass, and other translucent things. §bWhat is this?§r Reflections of things like the sky, clouds, and fog. §aPERFORMANCE COST:§r low
+       
+        option.DEFERRED_ROUGH_REFLECTION.comment = Toggle rough reflections that are visible on terrain. §bWhat is this?§r This is how "spread around" a reflection is based on how "smooth" a surface is, really un-smooth surfaces scatter reflections around alot, while smooth surfaces look like mirrors. §aPERFORMANCE COST:§r medium
+        option.FORWARD_ROUGH_REFLECTION.comment = Toggle rough reflections that are visible on water, glass, and other translucent things. §bWhat is this?§r This is how "spread around" a reflection is based on how "smooth" a surface is, really un-smooth surfaces scatter reflections around alot, while smooth surfaces look like mirrors. §aPERFORMANCE COST:§r medium
+        
+        option.ROUGHNESS_TRESHOLD.comment = Configure a threshold for environment and background reflections to stop being visible at. §bThis does not impact sun/moon reflections§r. §aPERFORMANCE COST:§r high thresholds can improve performance - low thresholds can worsen performance
+        option.SUN_SPECULAR_MULT.comment = Toggle the reflection of the sun or moon, or make them brighter. §bThis remains visible even if both environment and background reflections are disabled§r. §aPERFORMANCE COST:§r very low
+        
 screen.Subsurface_Scattering.comment = §bWhat is this?§r Sub-surface scattering is what happens when you put a bright light on your hand, and it starts to glow. The sun actually does the same thing to plants, cloth, skin, and other things.
     option.SSS_TYPE.comment = Configure how the sub-surface scattering is applied to the world.  §bHardcoded:§r The shader decides what gets it. §bLabSSS:§r The resourcepack decides what gets it. §aPERFORMANCE COST:§r very low
     option.MOB_SSS.comment = Toggle sub-surface scattering for mobs. players are included. §aPERFORMANCE COST:§r very low
@@ -714,8 +731,10 @@ screen.Post_Processing.comment = Configure settings for all post processing effe
         option.TAA.comment = Toggle temporal anti-aliasing. This removes all jagged edges on things, softens the image, and helps remove noise for many effects. This will cause ghosting or trailing because it uses past frames for extra information on the world. §aPERFORMANCE COST:§r low
         option.BLEND_FACTOR.comment = Configure how much of frame history is used. high numbers means it relies less on frame history, so it may look flickery and noisy. low numbers rely more on frame history, so it may look less moisy, but more smudged with more trailing.
         option.TAA_UPSCALING.comment = Toggle temporal upscaling. This retains a good amount of quality from a lower resolution image when it upscales. so you can still have a high looking resolution compared to typical upsampling and still have better performance.
-        option.SCALE_FACTOR.comment = Configure from what fraction of your resolution to upscale from. Below 0.5 is not recommended at all i only have it as an option because it's funny :P
-	screen.COLOR_GRADING.comment = Advanced color grading options
+        option.SCALE_FACTOR.comment = Configure from what fraction of your resolution to upscale from - §abelow 0.50x is not recommend, it is only allowed for fun!§r
+
+    
+    screen.COLOR_GRADING.comment = Advanced color grading options
 		option.LUMINANCE_CURVE.comment = Enable the tone curve. This is independent from color grading and is applied first.
 		option.COLOR_GRADING_ENABLED.comment = Enable color grading. The RGB sliders will not affect the brightness. This is applied after the tone curve
 
