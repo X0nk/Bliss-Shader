@@ -196,53 +196,61 @@ vec2 clampUV(in vec2 uv, vec2 texcoord){
   return clamp(mix(uv, texcoord, vignette),0.0,0.9999999);
 }
 
-vec3 doRefractionEffect( inout vec2 texcoord, vec2 normal, float linearDistance, bool isReflectiveEntity, bool underwater){
-
-  // make the tangent space normals match the directions of the texcoord UV, this greatly improves the refraction effect.
-  vec2 UVNormal = vec2(normal.x,-normal.y);
-
-  float refractionMult = 0.5 / (1.0 + pow(linearDistance,0.8) * (underwater ? 0.1 : 1.0));
-  float diffractionMult = 0.035;
-  float smudgeMult = 1.0;
-  if(isReflectiveEntity) refractionMult *= 0.5;
-
-  // for diffraction, i wanted to know *when* normals were at an angle
-  float clampValue = 0.2;
-  vec2 abberationOffset = clamp(UVNormal, -clampValue, clampValue) / clampValue * diffractionMult;
-
-  #ifdef REFRACTION_SMUDGE
-    vec2 directionalSmudge = abberationOffset * (blueNoise()-0.5) * smudgeMult;
-  #else
-    vec2 directionalSmudge = vec2(0.0);
-  #endif
-
-  vec2 refractedUV_no_offset = clampUV(texcoord - (UVNormal + directionalSmudge)*refractionMult, texcoord);
-  vec2 refractedUV = refractedUV_no_offset;
-  
-  #ifdef FAKE_DISPERSION_EFFECT
-    refractionMult *= min(  decodeVec2(texelFetch2D(colortex11, ivec2(clampUV(texcoord - ((UVNormal + abberationOffset) + directionalSmudge)*refractionMult,texcoord)/texelSize),0).b).g,
-                            decodeVec2(texelFetch2D(colortex11, ivec2(clampUV(texcoord + ((UVNormal + abberationOffset) + directionalSmudge)*refractionMult,texcoord)/texelSize),0).b).g  ) > 0.0 ? 1.0 : 0.0;
-  #else
-    refractionMult *= decodeVec2(texelFetch2D(colortex11, ivec2(refractedUV_no_offset/texelSize),0).b).g > 0.0 ? 1.0 : 0.0;
-  #endif
+vec3 doRefractionEffect( inout vec2 passTexcoord, vec2 normal, float linearDistance, bool isReflectiveEntity, bool underwater){
+  // correct normal directions to match texcoord directions (right facing X, up facing Y)
+  normal.y = -normal.y;
+  vec2 texcoord = passTexcoord;
 
   vec3 color = vec3(0.0);
 
-  #ifdef FAKE_DISPERSION_EFFECT
-    //// RED
-    refractedUV = clampUV(texcoord - ((UVNormal + abberationOffset) + directionalSmudge)*refractionMult,texcoord);
-    color.r = texture2D(colortex3, refractedUV).r;
-    //// GREEN
-    refractedUV = clampUV(texcoord - (UVNormal + directionalSmudge)*refractionMult,texcoord);
-    color.g = texture2D(colortex3, refractedUV).g;
-    //// BLUE
-    refractedUV = clampUV(texcoord - ((UVNormal - abberationOffset) + directionalSmudge)*refractionMult,texcoord);
-    color.b = texture2D(colortex3, refractedUV).b;
+  float refractAmount = float(FAKE_REFRACTION_AMOUNT)/4.0;
+  float dispersionAmount = float(FAKE_DISPERSION_AMOUNT)/4.0;
+  float smudgeAmount = float(REFRACTION_SMUDGE_AMOUNT)/4.0;
+
+  refractAmount *= 0.5 / (1.0 + pow(linearDistance,0.8) * (underwater ? 0.1 : 1.0));
+  if(isReflectiveEntity) refractAmount *= 0.5;
+
+  dispersionAmount *= 0.035;
+  smudgeAmount *= 0.035;
+
+  vec2 dispersion = (clamp(normal, -0.2, 0.2) / 0.2);
+  
+  #if REFRACTION_SMUDGE_AMOUNT > 0
+    vec2 smudge = smudgeAmount * dispersion * (blueNoise()-0.5);
   #else
-    color = texture2D(colortex3, refractedUV_no_offset).rgb;
+    vec2 smudge = vec2(0.0, 0.0);
   #endif
 
-  texcoord = refractedUV_no_offset;
+  dispersion *= dispersionAmount;
+
+  #if FAKE_DISPERSION_AMOUNT > 0
+    // do not offset texcoord if alpha is 1.0
+    refractAmount *= min(  decodeVec2(texelFetch2D(colortex11, ivec2(clampUV(texcoord - ((normal + dispersion) + smudge)*refractAmount, texcoord)/texelSize),0).b).g,
+                           decodeVec2(texelFetch2D(colortex11, ivec2(clampUV(texcoord - ((normal - dispersion) + smudge)*refractAmount, texcoord)/texelSize),0).b).g  ) > 0.0 ? 1.0 : 0.0;
+
+    // create offsets
+    vec2 offsetTexcoord = clampUV(texcoord - (normal + smudge)*refractAmount, texcoord);
+    passTexcoord = offsetTexcoord;
+
+    // sample color with offsetted texcoord. in this case, the red and blue channels have offsets in opposite directions for a dispersion effect.
+    color.g = texture2D(colortex3, offsetTexcoord).g;
+
+    offsetTexcoord = clampUV(texcoord - ((normal + dispersion) + smudge)*refractAmount, texcoord);
+    color.r = texture2D(colortex3, offsetTexcoord).r;
+
+    offsetTexcoord = clampUV(texcoord - ((normal - dispersion) + smudge)*refractAmount, texcoord);
+    color.b = texture2D(colortex3, offsetTexcoord).b;
+  #else
+    // do not offset texcoord if alpha is 1.0
+    refractAmount *= decodeVec2(texelFetch2D(colortex11, ivec2(clampUV(texcoord - (normal + smudge)*refractAmount, texcoord)/texelSize),0).b).g > 0.0 ? 1.0 : 0.0; 
+
+    // create offsets
+    vec2 offsetTexcoord = clampUV(texcoord - (normal + smudge)*refractAmount, texcoord);
+    passTexcoord = offsetTexcoord;
+
+    // sample color with distorted texcoords
+    color.rgb = texture2D(colortex3, offsetTexcoord).rgb;
+  #endif
 
   return color;
 }
@@ -524,10 +532,10 @@ void main() {
   ////// --------------- MAIN COLOR BUFFER
   ////// --------------- distort texcoords as a refraction effect
   vec2 refractedCoord = texcoord;
-  #ifdef FAKE_REFRACTION_EFFECT
+  #if FAKE_REFRACTION_AMOUNT > 0
     vec3 color = doRefractionEffect(refractedCoord, tangentNormals.xy, linearDistance, isReflectiveEntity, isWater && isEyeInWater == 1);
   #else
-    vec3 color = texture2D(colortex3, refractedCoord).rgb;
+    vec3 color = texture2D(colortex3, texcoord).rgb;
   #endif
 
   ////// --------------- START BLENDING FOGS AND FORWARD RENDERED COLOR

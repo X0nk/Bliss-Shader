@@ -389,11 +389,6 @@ screen.Climate = Climate Settings
 
 screen.World = World
     screen.Water = Water Settings
-        option.WATER_REFLECTIONS = Specular Reflections for Water
-        option.SCREENSPACE_REFLECTIONS = Screen-Space Reflections
-        option.SSR_STEPS = SSR Quality
-        option.WATER_SUN_SPECULAR = Sun/Moon Reflections
-        option.WATER_BACKGROUND_SPECULAR = Sky/Fog Reflections
         option.FAKE_REFRACTION_EFFECT = Refraction In Water/Glass
         option.Dirt_Amount = Dirt Amount
         option.Water_Top_Layer = Ocean Y coordinate
@@ -401,6 +396,39 @@ screen.World = World
         option.SNELLS_WINDOW = Snell's Window
         option.MINIMUM_WATER_ABSORBANCE = Minimum Water Absorbance
             value.MINIMUM_WATER_ABSORBANCE.-1 = AUTO
+
+        option.FAKE_REFRACTION_AMOUNT = Refraction amount
+        value.FAKE_REFRACTION_AMOUNT.0 = OFF
+           value.FAKE_REFRACTION_AMOUNT.1 = 0.25x
+           value.FAKE_REFRACTION_AMOUNT.2 = 0.50x
+           value.FAKE_REFRACTION_AMOUNT.3 = 0.75x
+           value.FAKE_REFRACTION_AMOUNT.4 = 1.00x
+           value.FAKE_REFRACTION_AMOUNT.5 = 1.25x
+           value.FAKE_REFRACTION_AMOUNT.6 = 1.50x
+           value.FAKE_REFRACTION_AMOUNT.7 = 1.75x
+           value.FAKE_REFRACTION_AMOUNT.8 = 2.00x
+
+        option.FAKE_DISPERSION_AMOUNT = Dispersion amount
+        value.FAKE_DISPERSION_AMOUNT.0 = OFF
+           value.FAKE_DISPERSION_AMOUNT.1 = 0.25x
+           value.FAKE_DISPERSION_AMOUNT.2 = 0.50x
+           value.FAKE_DISPERSION_AMOUNT.3 = 0.75x
+           value.FAKE_DISPERSION_AMOUNT.4 = 1.00x
+           value.FAKE_DISPERSION_AMOUNT.5 = 1.25x
+           value.FAKE_DISPERSION_AMOUNT.6 = 1.50x
+           value.FAKE_DISPERSION_AMOUNT.7 = 1.75x
+           value.FAKE_DISPERSION_AMOUNT.8 = 2.00x
+
+        option.REFRACTION_SMUDGE_AMOUNT = Smudge amount
+        value.REFRACTION_SMUDGE_AMOUNT.0 = OFF
+           value.REFRACTION_SMUDGE_AMOUNT.1 = 0.25x
+           value.REFRACTION_SMUDGE_AMOUNT.2 = 0.50x
+           value.REFRACTION_SMUDGE_AMOUNT.3 = 0.75x
+           value.REFRACTION_SMUDGE_AMOUNT.4 = 1.00x
+           value.REFRACTION_SMUDGE_AMOUNT.5 = 1.25x
+           value.REFRACTION_SMUDGE_AMOUNT.6 = 1.50x
+           value.REFRACTION_SMUDGE_AMOUNT.7 = 1.75x
+           value.REFRACTION_SMUDGE_AMOUNT.8 = 2.00x
 
         screen.Water_fog_color = Water Fog Settings
             option.Dirt_Scatter_R = Scatter Red (dirt)
@@ -510,6 +538,7 @@ option.MATERIAL_AO = Material Ambient Occlusion
 option.NORMAL_MAP_MULT = Normal map multiplier
 value.NORMAL_MAP_MULT.1.0 = Default 1.0 §aresourcepacks expect this value
 suffix.NORMAL_MAP_MULT = §c resourcepacks DO NOT expect this value
+
 
 option.DOF_QUALITY=Depth Of Field
     value.DOF_QUALITY.-1=Off
@@ -657,6 +686,10 @@ screen.Porosity.comment = Configure settings related to wetness and puddles
     option.Puddles.comment = Toggle puddles for when it rains. §aPERFORMANCE COST:§r low
     option.Puddle_Size.comment = Configure the size of the puddles.
 
+option.FAKE_REFRACTION_AMOUNT.comment = Configure the amount of distortion refraction will do. §bWhat is this?§r you could think of refraction as light bending when going through water or glass, making the things viewed through them look stretched, squished, distorted. §aPERFORMANCE COST:§r very low
+option.FAKE_DISPERSION_AMOUNT.comment = Configure the amount of dispersion within the refraction. §bWhat is this?§r when refraction happens, the parts that get really distorted will get a "chromatic abberation", faking the look of a rainbow or light prism. §aPERFORMANCE COST:§r very low
+option.REFRACTION_SMUDGE_AMOUNT.comment = Configure the amount of smudge within the refraction. §bWhat is this?§r when refraction happens, the parts that get really distorted will get smudged. §cWill cause visaul noise within refraction. §aPERFORMANCE COST:§r very low
+
 screen.Fog.comment = Configure settings related to the raymarched volumetric fog, or distance based fog.
     option.VL_RENDER_RESOLUTION.comment = Configure the resolution of the volumetric fog. §aPERFORMANCE COST:§r high
     option.VL_SAMPLES.comment = Configure the quality of the volumetric fog. §aPERFORMANCE COST:§r high
@@ -684,16 +717,9 @@ screen.Clouds.comment = Configure settings related to the raymarched volumetric 
 
 screen.World.comment = Configure settings for various things that happen in the world, from waving plants to water related settings.
     screen.Water.comment = Configure settings related to the water.
-        option.WATER_REFLECTIONS.comment = Toggle all reflections for translucent things. This allows other settings to be enabled below. §aPERFORMANCE COST:§r low-high
-        option.SCREENSPACE_REFLECTIONS.comment = Toggle screen-space reflections on translucent things. §aPERFORMANCE COST:§r medium
-        option.SSR_STEPS.comment = Configure the quality of the screen-space reflections on translucent things.  §aPERFORMANCE COST:§r medium to high
-        option.WATER_SUN_SPECULAR.comment = Toggle the sun and moon reflections on translucent things. §aPERFORMANCE COST:§r low
-        option.WATER_BACKGROUND_SPECULAR.comment = Toggle the sky and fog reflections on translucent things. §aPERFORMANCE COST:§r low to medium
-        option.FAKE_REFRACTION_EFFECT.comment = Toggle refraction on translucent things. §bWhat is this?§r If you look at water, you can see the light refracting distorts what is in it. §aPERFORMANCE COST:§r low
-        option.Dirt_Amount.comment = Configure how much dirt is in water. This controls how much fog is within water.
-        option.Water_Top_Layer.comment = Configure the Y coordinate at which the ocean should be in the world.
-        
-        screen.Water_fog_color.comment = Configure colors of the water fog. 
+    option.Dirt_Amount.comment = Configure how much dirt is in water. This controls how much fog is within water.
+    option.Water_Top_Layer.comment = Configure the Y coordinate at which the ocean should be in the world.
+    screen.Water_fog_color.comment = Configure colors of the water fog. 
 
 screen.Climate.comment = Configure settings related to the climate, like seasonal colors, daily weather, and biome specific fog.
     screen.Seasons.comment = Seasonal colors that cycle through, summer, fall, winter, and spring.
@@ -736,7 +762,6 @@ screen.Post_Processing.comment = Configure settings for all post processing effe
         option.TAA_UPSCALING.comment = Toggle temporal upscaling. This retains a good amount of quality from a lower resolution image when it upscales. so you can still have a high looking resolution compared to typical upsampling and still have better performance.
         option.SCALE_FACTOR.comment = Configure from what fraction of your resolution to upscale from - §abelow 0.50x is not recommend, it is only allowed for fun!§r
 
-    
     screen.COLOR_GRADING.comment = Advanced color grading options
 		option.LUMINANCE_CURVE.comment = Enable the tone curve. This is independent from color grading and is applied first.
 		option.COLOR_GRADING_ENABLED.comment = Enable color grading. The RGB sliders will not affect the brightness. This is applied after the tone curve
