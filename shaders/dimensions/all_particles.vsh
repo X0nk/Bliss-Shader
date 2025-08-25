@@ -103,9 +103,9 @@ void main() {
 		bool istopv = worldpos.y > cameraPosition.y + 5.0 && lmtexcoord.w > 0.99;
 
 		if(!istopv){
-			worldpos.xyz -= cameraPosition - vec3(2.0,0.0,2.0) * min(max(eyeBrightnessSmooth.y/240.0-0.95,0.0)*11.0,1.0);
+			worldpos.xyz -= cameraPosition - vec3(2.0,0.0,2.0) * min(max(clamp(eyeBrightnessSmooth.y/240.0,0,1)-0.95,0)/0.05,1);
 		}else{
-			worldpos.xyz -= cameraPosition ;
+			worldpos.xyz -= cameraPosition;
 		}
 
 		position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
@@ -136,12 +136,12 @@ void main() {
 	#endif
 	
 
-	#ifndef WEATHER
 	#ifdef TAA_UPSCALING
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
-	#ifdef TAA
-		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
-	#endif
+	#ifndef WEATHER
+		#ifdef TAA
+			gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+		#endif
 	#endif
 }
