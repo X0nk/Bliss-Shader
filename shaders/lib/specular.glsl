@@ -334,12 +334,8 @@ vec3 specularReflections(
 	#else
 		vec3 reflectedVector_L = reflect(playerPos, normal);
 	#endif
-
-	float shlickFresnel = shlickFresnelRoughness(dot(-normalize(viewDir), vec3(0.0,0.0,1.0)), roughness);
-
-	#if defined FORWARD_SPECULAR && defined SNELLS_WINDOW
-		if(isEyeInWater == 1 && isWater) shlickFresnel = mix(shlickFresnel, 1.0, min(max(0.98 - (1.0-shlickFresnel),0.0)/(1-0.98),1.0));
-	#endif
+	float VdotN = dot(-normalize(viewDir), vec3(0.0,0.0,1.0));
+	float shlickFresnel = shlickFresnelRoughness(VdotN, roughness);
 
 	// F0 <  230 dialectrics
 	// F0 >= 230 hardcoded metal f0
@@ -353,6 +349,16 @@ vec3 specularReflections(
 
 	#if defined FORWARD_SPECULAR
 		reflectanceForAlpha = clamp(dot(F0, vec3(0.3333333)), 0.0,1.0);
+		
+		#if defined SNELLS_WINDOW
+			if(isEyeInWater == 1 && isWater){
+				// emulate how mojang did snells window in vibrant visuals because it works nicely tbh
+				float snellsWindow = min(max(0.54 - clamp(1.0 + VdotN,0,1),0)/0.1,1);
+				snellsWindow = 1.0-snellsWindow*snellsWindow;
+				snellsWindow *= snellsWindow*snellsWindow;
+				reflectanceForAlpha = f0 + (1.0-f0) * snellsWindow;
+			}
+		#endif
 	#endif
 
 	vec3 specularReflections = diffuseLighting;
@@ -368,8 +374,9 @@ vec3 specularReflections(
 					vec3 backgroundReflection = volumetricsFromTex(reflectedVector_L, colortex4, roughness).rgb / 1200.0;
 				#else
 					vec3 backgroundReflection = skyCloudsFromTex(reflectedVector_L, colortex4).rgb / 1200.0;
-					if(isEyeInWater == 1) backgroundReflection *= exp(-vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B) * 15.0)*2;
-
+					#if defined SNELLS_WINDOW
+						if(isEyeInWater == 1) backgroundReflection *= exp(-vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B) * 15.0)*2;
+					#endif
 				#endif
 			#endif
 			#if DEFERRED_SSR_QUALITY > 0 || FORWARD_SSR_QUALITY > 0
