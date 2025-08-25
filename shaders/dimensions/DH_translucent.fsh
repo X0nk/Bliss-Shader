@@ -242,7 +242,7 @@ vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
 }
 
 #define FORWARD_SPECULAR
-#define FORWARD_ENVIORNMENT_REFLECTION
+#define FORWARD_SSR_QUALITY 30 // [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 200 300 400 500]
 #define FORWARD_BACKGROUND_REFLECTION
 
 /* RENDERTARGETS:2,7 */
@@ -392,8 +392,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
         #ifdef SNELLS_WINDOW
 	    	if(isEyeInWater == 1) fresnel = pow(clamp(1.5 + normalDotEye,0.0,1.0), 25.0);
 	    #endif
-        #if defined FORWARD_ENVIORNMENT_REFLECTION && defined DH_SCREENSPACE_REFLECTIONS
-            vec3 rtPos = doScreenSpaceReflectiom(reflectedVector, viewPos, interleaved_gradientNoise_temporal(), mix(5.0f, float(SSR_STEPS), fresnel));
+        #if FORWARD_SSR_QUALITY > 0 && defined DH_SCREENSPACE_REFLECTIONS
+            vec3 rtPos = doScreenSpaceReflectiom(reflectedVector, viewPos, interleaved_gradientNoise_temporal(), mix(5.0f, float(FORWARD_SSR_QUALITY), fresnel));
 
             if (rtPos.z < 0.99999){
             	vec3 previousPosition = mat3(gbufferModelViewInverse) * DH_toScreenSpace(rtPos) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
