@@ -176,10 +176,13 @@ vec4 screenSpaceReflections(
 	vec4 reflection = vec4(0.0);
 	float reflectionLength = 0.0;
 
+	float quality = 1.0f;
 	#if defined FORWARD_SPECULAR
 		float quality = float(FORWARD_SSR_QUALITY);
-	#else
-		float quality = float(DEFERRED_SSR_QUALITY);
+		quality = float(FORWARD_SSR_QUALITY);
+	#endif
+	#if defined DEFERRED_SPECULAR
+		quality = float(DEFERRED_SSR_QUALITY);
 	#endif
 
 	vec3 raytracePos = rayTraceSpeculars(reflectedVector, viewPos, noise, quality, isHand, reflectionLength);
