@@ -178,7 +178,6 @@ vec4 screenSpaceReflections(
 
 	float quality = 1.0f;
 	#if defined FORWARD_SPECULAR
-		float quality = float(FORWARD_SSR_QUALITY);
 		quality = float(FORWARD_SSR_QUALITY);
 	#endif
 	#if defined DEFERRED_SPECULAR
