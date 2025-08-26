@@ -57,6 +57,10 @@ void main() {
 	vec4 Albedo = texture2D(texture, texcoord);
 	Albedo.rgb = toLinear(Albedo.rgb * color.rgb);
 
+    #if defined LIGHTNING_AND_DRAGON_DEATH_BEAMS
+        gl_FragData[0] = vec4(Albedo.rgb * pow(1.0-pow(1.0-color.a,2),2) * 5.0 * 0.1, color.a);
+    #endif
+
     #if defined SPIDER_EYES || defined BEACON_BEAM || defined GLOWING 
 
         if(Albedo.a < 0.102 || dot(Albedo.rgb, vec3(0.33333)) < 1.0/255.0) { discard; return; }
