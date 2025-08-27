@@ -546,7 +546,7 @@ void main() {
     vec4 borderFog = vec4(skyGroundColor, getBorderFogDensity(linearDistance_cylinder, playerPos_normalized, swappedDepth >= 1.0));
 
     #if !defined SKY_GROUND
-      borderFog.rgb = skyFromTex(playerPos, colortex4)/1200.0 * Sky_Brightness;
+      borderFog.rgb = skyFromTex(playerPos_normalized, colortex4)/1200.0 * Sky_Brightness;
     #endif
     #if !defined DISTANT_HORIZONS
      if(!isWater) color = mix(color, borderFog.rgb, getBorderFogDensity(linearDistance_cylinder_alt, normalize(playerPos_alt), z2 >= 1.0 || TranslucentShader.a <= 0));
