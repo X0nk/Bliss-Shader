@@ -736,7 +736,12 @@ void applyPuddles(
 	float fullWet = clamp(wetnessAmount - 2.0,0.0,1.0);
 	// halfWet = 1.0;
  	// fullWet = 0.0;
-	float noise = texture2D(noisetex, worldPos.xz * 0.02).b;
+	vec2 driprate = vec2(0.0,frameTimeCounter)*0.05;
+
+	vec2 UV = mix(worldPos.xz, worldPos.xy*vec2(2.0, 0.5)+driprate, abs(flatNormals.z));
+	UV = mix(UV, worldPos.zy*vec2(2.0, 0.5)+driprate, abs(flatNormals.x));
+
+	float noise = texture2D(noisetex, UV * 0.02).b;
 
 
 	float lightmapMax = min(max(lightmap - 0.9,0.0) * 10.0,1.0) ;
