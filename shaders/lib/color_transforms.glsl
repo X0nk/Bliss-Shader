@@ -187,7 +187,8 @@ vec3 Full_Reinhard_Edit(vec3 C){
 
 	return (C * (1.0 + C / (whitepoint*whitepoint))) / (lighten + C);
 }
-
+// from Jodie's shadertoy: https://www.shadertoy.com/view/4dBcD1
+// i edited it a little tiny bit
 // from https://github.com/64/64.github.io/blob/src/code/tonemapping
 // https://64.github.io/tonemapping/#reinhard-jodie
 // Copyright (c) 2022 @64
