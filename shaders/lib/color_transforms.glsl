@@ -201,6 +201,7 @@ vec3 reinhard_jodie(vec3 color)
     // float whitePoint = 10.0;
 	// color *= (1.0 + color / (whitePoint*whitePoint));
 
+    color *= 1.5;
     vec3 tonemapLuminance = color / (1.0 + dot(color, vec3(0.21, 0.72, 0.07)));
     vec3 tonemapRGB = color / (1.0 + color);
     
