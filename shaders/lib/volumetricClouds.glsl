@@ -420,7 +420,7 @@ vec4 getCorrectBlendOrder(int viewIndex, vec4 smallCumulusColor,vec4 largeCumulu
 	// viewIndex = 1 is above large cumulus layer
 	// viewIndex = 2 is above altostratus layer
 
-	vec4 blendedCloudsColor = vec4(1.0);
+	vec4 blendedCloudsColor = vec4(0.0,0.0,0.0,1.0);
 
 	switch (viewIndex){
     	default : { break; }
@@ -566,6 +566,7 @@ vec4 GetVolumetricClouds(
 	vec3 sunMultiScattering = directLightCol;
 	vec3 skyScattering = indirectLightCol * (1.0 + pow(1.0-pow(1.0-clamp(sunVector.y,0.0,1.0),5.0),5.0));
 
+	bool occlusionCheck = true;
    	////-------  RENDER SMALL CUMULUS CLOUDS
 		vec4 smallCumulusClouds = cloudColor;
 
@@ -588,7 +589,7 @@ vec4 GetVolumetricClouds(
 
 			vec2 cloudLayer1_Distance = vec2(startDistance, 1.0);
 			
-			bool occlusionCheck = layerViewIndex < 1 ? smallCumulusClouds.a > 1e-5 : true;
+			occlusionCheck = layerViewIndex < 1 ? smallCumulusClouds.a > 1e-5 : true;
 			if(occlusionCheck) largeCumulusClouds = raymarchCloud(LARGECUMULUS_LAYER, samples, rayPosition, rayDirection, dither.x, minHeight, maxHeight, unignedSunVec, sunScattering, sunMultiScattering, skyScattering, lViewPosM, sampledSkyCol, cloudLayer1_Distance);
 		#endif
 
@@ -622,6 +623,9 @@ vec4 GetVolumetricClouds(
 	#if defined CloudLayer0 && defined CloudLayer1 && defined CloudLayer2
 		cloudPlaneDistance = mix(cloudLayer2_Distance.x, cloudLayer1_Distance.x, cloudLayer2_Distance.y);
 		cloudPlaneDistance = mix(cloudLayer0_Distance.x, cloudPlaneDistance, cloudLayer0_Distance.y);
+	#endif
+	#if !defined CloudLayer0 && defined CloudLayer1 && defined CloudLayer2
+		cloudPlaneDistance = mix(cloudLayer2_Distance.x, cloudLayer1_Distance.x, cloudLayer2_Distance.y);
 	#endif
 	#if defined CloudLayer0 && !defined CloudLayer1 && !defined CloudLayer2
 		cloudPlaneDistance = cloudLayer0_Distance.x;
