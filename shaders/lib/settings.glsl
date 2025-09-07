@@ -530,7 +530,7 @@ uniform int moonPhase;
 // ----- COLOR/POST PROCESSING RELATED SETTINGS ----- //
 ////////////////////////////////////////////////////////
 
-#define TONEMAP ToneMap_AgX_minimal // [no_tonemapper reinhard_jodie ToneMap_AgX_minimal ToneMap_AgX ToneMap_Hejl2015 Tonemap_Xonk Tonemap_Uchimura HableTonemap Full_Reinhard_Edit Tonemap_Full_Reinhard reinhard Tonemap_Lottes ACESFilm]
+#define TONEMAP ToneMap_AgX_minimal // [no_tonemapper reinhard_jodie_ruined reinhard_jodie ToneMap_AgX_minimal ToneMap_AgX ToneMap_Hejl2015 Tonemap_Xonk Tonemap_Uchimura HableTonemap Full_Reinhard_Edit Tonemap_Full_Reinhard reinhard Tonemap_Lottes ACESFilm]
 //#define USE_ACES_COLORSPACE_APPROXIMATION
 
 #define CONTRAST_ADAPTATIVE_SHARPENING
