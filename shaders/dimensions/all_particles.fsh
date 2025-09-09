@@ -488,7 +488,11 @@ void main() {
 
 		// distance fade targeting the world border...
 		if(TEXTURE.a < 0.7 && TEXTURE.a > 0.2) gl_FragData[0] *= clamp(1.0 - length(feetPlayerPos) / 100.0 ,0.0,1.0);
-
+		
+		#if DEBUG_VIEW == debug_LIGHTMAPS
+			gl_FragData[0].rgb = vec3(lmtexcoord.z,lmtexcoord.w,0.0);
+		#endif
+		
 		gl_FragData[0].rgb *= 0.1;
 		
 	#endif

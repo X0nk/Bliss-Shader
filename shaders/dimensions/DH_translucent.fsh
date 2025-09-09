@@ -440,7 +440,19 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
     #if DEBUG_VIEW == debug_DH_WATER_BLENDING
         if(gl_FragCoord.x*texelSize.x > 0.53) gl_FragData[0] = vec4(0.0);
     #endif
-   
+   	// #if DEBUG_VIEW == debug_MATERIAL_SSS
+	// 	Albedo.rgb = vec3(0.1);
+	// 	if(SSSAMOUNT > 0.0) Albedo.rgb = vec3(0.0,SSSAMOUNT,0.0);
+	// #endif
+	// #if DEBUG_VIEW == debug_MATERIAL_EMISSION
+	// 	Albedo.rgb = vec3(0.1);
+	// 	if(SpecularTex.b > 0.0) Albedo.rgb = vec3(0.0,SpecularTex.b,0.0);
+	// 	if(SpecularTex.b >= 1.0) Albedo.rgb = vec3(1.0,0.0,0.0);
+	// #endif
+	#if DEBUG_VIEW == debug_LIGHTMAPS
+		gl_FragData[0] = vec4(lightmapCoords.z*0.1,lightmapCoords.w*0.1,0.0,1.0);
+	#endif
+
     gl_FragData[1] = vec4(Albedo, material);
 }
 }

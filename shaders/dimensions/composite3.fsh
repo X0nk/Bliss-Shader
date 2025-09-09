@@ -447,6 +447,13 @@ void main() {
 
 	////// --------------- SETUP STUFF --------------- //////
   vec2 texcoord = gl_FragCoord.xy*texelSize;
+  
+  #if DEBUG_VIEW == debug_DEFERRED_RENDERING
+    gl_FragData[0].r = 1.0; // pass fog alpha so bloom can do bloomy fog
+    gl_FragData[1].rgb = clamp(texture2D(colortex3, texcoord).rgb, 0.0,68000.0);
+    return;
+  #endif
+  
   float depth = texelFetch2D(depthtex0, ivec2(gl_FragCoord.xy),0).x;
   bool hand = depth < 0.56;
   float z = depth;
@@ -605,6 +612,12 @@ void main() {
   gl_FragData[0].r = bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);
 
+  #if DEBUG_VIEW == debug_FORWARD_RENDERING
+    gl_FragData[1].rgb = vec3(1.0) * (1.0-TranslucentShader.a) + TranslucentShader.rgb*10.0;
+  #endif
+  #if DEBUG_VIEW == debug_FORWARD_COLOR_TINT
+    gl_FragData[1].rgb = vec3(1.0) * (1.0-albedo.a) + albedo.rgb ;
+  #endif
   // gl_FragData[1].rgb =  vec3(tangentNormals.xy,0.0) * 0.1  ;
   // gl_FragData[1].rgb =  vec3(1.0) * ld(    (data.a > 0.0 ? data.a : texture2D(depthtex0, texcoord).x   )              )   ;
   // gl_FragData[1].rgb = gl_FragData[1].rgb * (1.0-TranslucentShader.a) + TranslucentShader.rgb*10.0;

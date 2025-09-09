@@ -207,7 +207,19 @@ void main() {
     #ifdef WhiteWorld
         Albedo.rgb = vec3(0.5);
     #endif
-    
+	#if DEBUG_VIEW == debug_MATERIAL_SSS
+		Albedo.rgb = vec3(0.1);
+		if(SSSAMOUNT > 0.0) Albedo.rgb = vec3(0.0,SSSAMOUNT,0.0);
+	#endif
+	#if DEBUG_VIEW == debug_MATERIAL_EMISSION
+		Albedo.rgb = vec3(0.1);
+		if(EMISSIVE > 0.0) Albedo.rgb = vec3(0.0,EMISSIVE,0.0);
+		if(EMISSIVE >= 1.0) Albedo.rgb = vec3(1.0,0.0,0.0);
+	#endif
+	#if DEBUG_VIEW == debug_LIGHTMAPS
+		Albedo.rgb = vec3(lightmapCoords.z,lightmapCoords.w,0.0);
+	#endif
+
     gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w, materials));
     
 	gl_FragData[1].a = 0.0;

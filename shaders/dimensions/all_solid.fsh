@@ -629,6 +629,16 @@ void main() {
 		#if SSS_TYPE == 3		
 			gl_FragData[1].b = SpecularTex.b;
 		#endif
+
+		#if DEBUG_VIEW == debug_MATERIAL_SSS
+			Albedo.rgb = vec3(0.1);
+			if(SSSAMOUNT > 0.0) Albedo.rgb = vec3(0.0,SSSAMOUNT,0.0);
+		#endif
+		#if DEBUG_VIEW == debug_MATERIAL_EMISSION
+			Albedo.rgb = vec3(0.1);
+			if(EMISSIVE > 0.0) Albedo.rgb = vec3(0.0,EMISSIVE,0.0);
+			if(EMISSIVE >= 1.0) Albedo.rgb = vec3(1.0,0.0,0.0);
+		#endif
 	#endif
 
 	// hit glow effect...
@@ -639,6 +649,10 @@ void main() {
 	//////////////////////////////// 				////////////////////////////////
 	////////////////////////////////	FINALIZE	////////////////////////////////
 	//////////////////////////////// 				////////////////////////////////
+
+	#if DEBUG_VIEW == debug_LIGHTMAPS
+		Albedo.rgb = vec3(lmtexcoord.z,lmtexcoord.w,0.0);
+	#endif
 
 	#ifdef WORLD
 		// apply noise to lightmaps to reduce banding.
