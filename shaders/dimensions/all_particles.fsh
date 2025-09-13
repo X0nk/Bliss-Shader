@@ -333,7 +333,8 @@ void main() {
 	
 	Albedo.rgb = toLinear(Albedo.rgb);
 
-	if(dot(Albedo.rgb, vec3(0.33333)) < 1.0/255.0 || Albedo.a < 0.01 ) { discard; return; }
+	// if(dot(Albedo.rgb, vec3(0.33333)) < 1.0/255.0 || Albedo.a < 0.01 ) { discard; return; }
+	if(Albedo.a < 0.01 ) { discard; return; }
 	
 	gl_FragData[0] = vec4(encodeVec2(vec2(0.5)), encodeVec2(Albedo.rg), encodeVec2(vec2(Albedo.b,0.02)), 1.0);
 #endif
