@@ -98,9 +98,10 @@ void main() {
 
 	#if defined WEATHER || defined LINES
 		vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-   		vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz + cameraPosition;
+   		vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
 		
 		#ifdef WEATHER
+			worldpos += cameraPosition;
 			bool istopv = worldpos.y > cameraPosition.y + 5.0 && lmtexcoord.w > 0.99;
 
 			if(!istopv){
