@@ -404,9 +404,9 @@ void main() {
 		}
 	#endif
 
+	vec3 FlatNormals = normalize(texture2D(colortex15,texcoord).rgb * 2.0 - 1.0);
+	
 	#if defined DENOISE_SSS_AND_SSAO && indirect_effect == 1
-
-		vec3 FlatNormals = normalize(texture2D(colortex15,texcoord).rgb * 2.0 - 1.0);
 		if(z >= 1.0) FlatNormals = normal;
 
 		vec2 SSAO_SSS = SSAO(viewPos, worldToView(normal), worldToView(FlatNormals), hand, noise);
