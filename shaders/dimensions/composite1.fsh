@@ -723,19 +723,24 @@ vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 }
 
 uniform float wetnessAmount;
-uniform float wetness;
 
 void applyPuddles(
 	in vec3 worldPos, in vec3 flatNormals, in float lightmap, in bool isWater, inout vec3 albedo, inout vec3 normals, inout float roughness, inout float f0
 ){
+	/* PUDDLE_MODE
+		0 = OFF, NO WETNESS
+		1 = puddles + full wetness
+		2 = only puddles
+		3 = only full wetness
+	*/
+
 	vec3 unchangedNormals = normals;
-
-
 
 	float halfWet = min(wetnessAmount,1.0);
 	float fullWet = clamp(wetnessAmount - 2.0,0.0,1.0);
 	// halfWet = 1.0;
  	// fullWet = 0.0;
+
 	vec2 driprate = vec2(0.0,frameTimeCounter)*0.05;
 
 	vec2 UV = mix(worldPos.xz, worldPos.xy*vec2(2.0, 0.5)+driprate, abs(flatNormals.z));
@@ -743,16 +748,27 @@ void applyPuddles(
 
 	float noise = texture2D(noisetex, UV * 0.02).b;
 
-
 	float lightmapMax = min(max(lightmap - 0.9,0.0) * 10.0,1.0) ;
 	float lightmapMin = min(max(lightmap - 0.8,0.0) * 5.0,1.0) ;
 	lightmap = clamp(lightmapMax + noise*lightmapMin*2.0,0.0,1.0);
 	lightmap = pow(1.0-pow(1.0-lightmap,3.0),2.0);
 	
-	float puddles = max(halfWet - noise,0.0);
-	puddles = clamp(halfWet - exp(-25.0 * puddles*puddles*puddles*puddles*puddles),0.0,1.0);
-	
-	float wetnessStages = mix(puddles, 1.0, fullWet) * lightmap;
+	#if PUDDLE_MODE == 1
+		float puddles = max(halfWet - noise,0.0);
+		puddles = clamp(halfWet - exp(-25.0 * puddles*puddles*puddles*puddles*puddles),0.0,1.0);
+		puddles = mix(puddles, 1.0, fullWet);
+	#endif
+
+	#if PUDDLE_MODE == 2
+		float puddles = max(halfWet - noise,0.0);
+		puddles = clamp(halfWet - exp(-25.0 * puddles*puddles*puddles*puddles*puddles),0.0,1.0);
+	#endif
+
+	#if PUDDLE_MODE == 3
+		float puddles = fullWet;
+	#endif
+
+	float wetnessStages = puddles * lightmap;
 	if(isWater) wetnessStages = 0.0;
 
 	normals = mix(normals, flatNormals, puddles * lightmap * clamp(flatNormals.y,0.0,1.0));
@@ -1326,7 +1342,7 @@ void main() {
 			#endif
 		#endif
 
-		#if defined OVERWORLD_SHADER && defined DEFERRED_SPECULAR
+		#if PUDDLE_MODE > 0 && defined OVERWORLD_SHADER && defined DEFERRED_SPECULAR
 			if(!hand && !entities) applyPuddles(feetPlayerPos + cameraPosition, FlatNormals, lightmap.y, isWater, albedo, normal, SpecularTex.r, SpecularTex.g);
 		#endif
 
