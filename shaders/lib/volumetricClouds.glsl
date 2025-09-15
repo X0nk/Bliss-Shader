@@ -385,9 +385,9 @@ vec4 raymarchCloud(
 					newPos.xz /= max(newPos.y,0.0)*0.0025 + 1.0;
 					newPos.y = min(newPos.y,0.0);
 
+					float distancefog = exp(-0.00035 * length(newPos));
 					vec3 atmosphereHaze = (sampledSkyCol - sampledSkyCol * distancefog);
 					lighting = lighting * distancefog + atmosphereHaze;
-				
 
 					float densityCoeff = exp(-distanceFactor*shapeWithDensityFaded);
 					color += (lighting - lighting * densityCoeff) * totalAbsorbance;
