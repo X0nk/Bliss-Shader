@@ -531,7 +531,11 @@ screen.POM = Parallax Occlusion Mapping / POM
 
 screen.Porosity = Porosity / Puddles / Wetness
     option.Porosity = Porosity
-    option.Puddles = Puddles
+    option.PUDDLE_MODE = Wetness During Rain
+        value.PUDDLE_MODE.0 = No Wetness
+        value.PUDDLE_MODE.1 = Puddles + Completely Wet
+        value.PUDDLE_MODE.2 = Only Puddles
+        value.PUDDLE_MODE.3 = Only Complete Wetness
     option.Puddle_Size = Puddle Size Multiplier
 
 option.MATERIAL_AO = Material Ambient Occlusion
