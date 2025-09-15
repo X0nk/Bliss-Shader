@@ -727,6 +727,7 @@ uniform float wetnessAmount;
 void applyPuddles(
 	in vec3 worldPos, in vec3 flatNormals, in float lightmap, in bool isWater, inout vec3 albedo, inout vec3 normals, inout float roughness, inout float f0
 ){
+#if PUDDLE_MODE > 0
 	/* PUDDLE_MODE
 		0 = OFF, NO WETNESS
 		1 = puddles + full wetness
@@ -788,6 +789,7 @@ void applyPuddles(
 	// normals = mix(normals, unchangedNormals, snow);
 	// roughness = mix(roughness, 0.5, snow);
 	// albedo = mix(albedo, vec3(1.0), snow);
+#endif
 }
 
 
