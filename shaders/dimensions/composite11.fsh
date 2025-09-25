@@ -276,25 +276,28 @@ void main() {
 		float lightScat = clamp(BLOOM_STRENGTH * 0.3,0.0,1.0) * vignette;
 	#endif
 
-	#ifdef AUTO_EXPOSURE
-		float purkinje = clamp(exposure.a*exposure.a,0.0,1.0) * clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*Purkinje_strength,0,1);
-	#else
-		float purkinje = clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*Purkinje_strength,0,1);
-	#endif	
-	
-
  	float VL_abs = texture2D(colortex7, texcoord*RENDER_SCALE).r;
 
-  	VL_abs = clamp((1.0-VL_abs)*BLOOMY_FOG*0.75*(1.0+rainStrength) * (1.0-purkinje*0.3),0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
-	
-	col = (mix(col, fogBloom, VL_abs) + bloom*lightScat) * exposure.rgb;
-	
-  	float lum = dot(col, vec3(0.15,0.3,0.55));
-	float lum2 = dot(col, vec3(0.85,0.7,0.45));
-	float rodLum = lum2*200.0;
-	float rodCurve = clamp(mix(1.0, rodLum/(2.5+rodLum), purkinje),0.0,1.0);
+	#if Purkinje_strength > 0
+		float pstrength = float(Purkinje_strength) / 100.0;
+		
+		#ifdef AUTO_EXPOSURE
+			float purkinje = clamp(exposure.a*exposure.a,0.0,1.0) * clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*pstrength,0,1);
+		#else
+			float purkinje = clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*pstrength,0,1);
+		#endif	
+		
+  		VL_abs = clamp((1.0-VL_abs)*BLOOMY_FOG*0.75*(1.0+rainStrength) * (1.0-purkinje*0.3),0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
+		col = (mix(col, fogBloom, VL_abs) + bloom*lightScat) * exposure.rgb;
 
-	col = mix(lum * vec3(Purkinje_R, Purkinje_G, Purkinje_B) * Purkinje_Multiplier, col, rodCurve);
+  		float lum = dot(col, vec3(0.15,0.3,0.55));
+		float lum2 = dot(col, vec3(0.85,0.7,0.45));
+		float rodLum = lum2*200.0;
+
+		col = mix(lum * vec3(Purkinje_R, Purkinje_G, Purkinje_B) * Purkinje_Multiplier, col, rodCurve);
+	#else
+  		VL_abs = clamp((1.0-VL_abs)*BLOOMY_FOG*0.75*(1.0+rainStrength),0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
+		col = (mix(col, fogBloom, VL_abs) + bloom*lightScat) * exposure.rgb;
 	
 	#if WHITE_BALANCE != 6500
 		col *= blackbody(WHITE_BALANCE);
