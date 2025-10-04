@@ -872,9 +872,14 @@ void main() {
 		vec2 lightmap = dataUnpacked1.yz;
 
 		lightmap.xy = min(max(lightmap.xy - 0.05,0.0)*1.06,1.0); // small offset to hide flickering from precision error in the encoding/decoding on values close to 1.0 or 0.0
-		
-		#if !defined OVERWORLD_SHADER
-			lightmap.y = 1.0;
+		#if MC_VERSION < 12109
+			#if !defined OVERWORLD_SHADER
+				lightmap.y = 1.0;
+			#endif
+		#else
+			#if !defined OVERWORLD_SHADER && !defined END_SHADER
+				lightmap.y = 1.0;
+			#endif
 		#endif
 
 	////// --------------- UNPACK MISC --------------- //////
@@ -1167,7 +1172,7 @@ void main() {
         vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds);
 
 		float lightningflash = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
-		vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
+		vec3 lightColors = pow(lightmap.y,8) * LightSourceColors(vortexBounds, lightningflash);
 		
 		float end_NdotL = clamp(dot(slopednormal, normalize(-lightPos))*0.5+0.5,0.0,1.0);
 		end_NdotL *= end_NdotL;
@@ -1223,9 +1228,13 @@ void main() {
 			Indirect_lighting = vec3(0.3,0.6,1.0);
 			
 			Indirect_lighting = Indirect_lighting + 0.7*mix(-Indirect_lighting, Indirect_lighting * dot(slopednormal, feetPlayerPos_normalized), clamp(pow(1.0-pow(1.0-SSAO_SSS.x, 0.5),2.0),0.0,1.0));
-			Indirect_lighting *= 0.1;
+			Indirect_lighting *= 0.035 * lightmap.y*lightmap.y;
 
-			Indirect_lighting += lightColors * (endPhase*endPhase) * (1.0-exp(vec3(0.6,2.0,2.0) * -(endPhase*0.01))) /1000.0;
+			Indirect_lighting +=  lightColors * (endPhase*endPhase) * (1.0-exp(vec3(0.6,2.0,2.0) * -(endPhase*0.01))) /1000.0;
+
+    		// float minimumLightAmount = 0.02*nightVision + 0.005 * mix(MINIMUM_INDOOR_LIGHT, MINIMUM_OUTDOOR_LIGHT, clamp(eyeBrightnessSmooth.y/240.0 + lightmap.y,0.0,1.0));
+    		// Indirect_lighting += MinimumLightColor * minimumLightAmount;
+			Indirect_lighting += MinimumLightColor * (MIN_LIGHT_AMOUNT * 0.02 * 0.2 + nightVision*0.02);
 		#endif
 		
 		#ifdef IS_LPV_ENABLED
