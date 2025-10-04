@@ -120,7 +120,6 @@ uniform vec3 sunVec;
 flat varying vec3 WsunVec;
 flat varying vec3 unsigned_WsunVec;
 flat varying vec3 WmoonVec;
-flat varying float exposure;
 flat varying vec3 albedoSmooth;
 
 #ifdef IS_LPV_ENABLED
@@ -158,7 +157,6 @@ float convertHandDepth_2(in float depth, bool hand) {
 	
 	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
-	#define CLOUDS_INTERSECT_TERRAIN
 #endif
 
 #ifdef IS_LPV_ENABLED
@@ -1251,12 +1249,8 @@ void main() {
 
 		vec4 flashLightSpecularData = vec4(0.0);
 		#ifdef FLASHLIGHT
-			vec3 newViewPos = viewPos;
-
-
-			float flashlightshadows = SSRT_FlashLight_Shadows(toScreenSpace_DH(texcoord/RENDER_SCALE, z, DH_depth1), isDHrange, newViewPos, interleaved_gradientNoise_temporal());
-			
-			
+			// vec3 newViewPos = viewPos;
+			// float flashlightshadows = SSRT_FlashLight_Shadows(toScreenSpace_DH(texcoord/RENDER_SCALE, z, DH_depth1), isDHrange, newViewPos, interleaved_gradientNoise_temporal());
 			Indirect_lighting += calculateFlashlight(texcoord, viewPos, albedoSmooth, slopednormal, flashLightSpecularData, hand);
 		#endif
 
@@ -1331,8 +1325,9 @@ void main() {
 		// SSSColor *= 0.0;
 
 		#ifdef SSS_view
-			albedo = vec3(1);
+			albedo = vec3(1.0);
 			NdotL = 0;
+			Indirect_lighting = vec3(0.1);
 		#endif
 		#if defined END_SHADER
 			Direct_lighting *= AO;

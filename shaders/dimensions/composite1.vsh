@@ -72,8 +72,6 @@ void main() {
 	WsunVec = mix(WmoonVec, unsigned_WsunVec, clamp(lightCol.a,0,1));
 	
 
-	exposure = texelFetch2D(colortex4,ivec2(10,37),0).r;
-
 	readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
 	
 	#if TAA_MODE > 0

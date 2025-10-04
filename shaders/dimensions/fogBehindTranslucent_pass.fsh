@@ -7,7 +7,6 @@
 flat varying vec4 lightCol;
 flat varying vec3 averageSkyCol;
 flat varying vec3 averageSkyCol_Clouds;
-flat varying float exposure;
 
 // uniform int dhRenderDistance;
 uniform sampler2D noisetex;

@@ -357,7 +357,7 @@ void main() {
 	vec4 TEXTURE = texture2D(texture, lmtexcoord.xy)*color;
 	
 	#ifdef WhiteWorld
-		TEXTURE.rgb = vec3(0.5);
+		TEXTURE.rgb = vec3(1.0);
 	#endif
 
 	vec3 Albedo = toLinear(TEXTURE.rgb);

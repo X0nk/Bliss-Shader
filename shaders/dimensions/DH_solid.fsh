@@ -205,7 +205,7 @@ void main() {
 	#endif
 
     #ifdef WhiteWorld
-        Albedo.rgb = vec3(0.5);
+        Albedo.rgb = vec3(1.0);
     #endif
 	#if DEBUG_VIEW == debug_MATERIAL_SSS
 		Albedo.rgb = vec3(0.1);

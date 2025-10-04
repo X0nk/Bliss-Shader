@@ -11,10 +11,8 @@ flat varying int NameTags;
 #undef POM
 #endif
 
-#ifndef USE_LUMINANCE_AS_HEIGHTMAP
 #ifndef MC_NORMAL_MAP
 #undef POM
-#endif
 #endif
 
 #ifdef POM
@@ -510,10 +508,8 @@ void main() {
 	#endif
 	
 	#ifdef WhiteWorld
-		Albedo.rgb = vec3(0.5);
-	#endif
-
-		
+		Albedo.rgb = vec3(1.0);
+	#endif	
 	#ifdef AEROCHROME_MODE
 		float gray = dot(Albedo.rgb, vec3(0.2, 1.0, 0.07));
 		if (

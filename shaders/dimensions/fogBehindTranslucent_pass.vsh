@@ -14,7 +14,6 @@ flat varying vec3 refractedSunVec;
 // flat varying float tempOffsets;
 
 uniform sampler2D colortex4;
-flat varying float exposure;
 
 uniform float sunElevation;
 uniform vec2 texelSize;
@@ -80,6 +79,4 @@ void main() {
 	WsunVec = mix(WmoonVec, WsunVec, clamp(lightCol.a,0,1));
 	
 	refractedSunVec = refract(WsunVec, -vec3(0.0,1.0,0.0), 1.0/1.33333);
-
-	exposure = texelFetch2D(colortex4,ivec2(10,37),0).r;
 }

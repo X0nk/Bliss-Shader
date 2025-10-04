@@ -364,7 +364,8 @@ vec3 specularReflections(
 	vec3 specularReflections = diffuseLighting;
 
 	float reflectionVisibilty = getReflectionVisibility(f0, roughness);
-	#if defined DEFERRED_BACKGROUND_REFLECTION || defined FORWARD_BACKGROUND_REFLECTION || DEFERRED_SSR_QUALITY > 0 || FORWARD_SSR_QUALITY > 0
+
+	#if (defined DEFERRED_BACKGROUND_REFLECTION || defined FORWARD_BACKGROUND_REFLECTION) || (DEFERRED_SSR_QUALITY > 0 || FORWARD_SSR_QUALITY > 0)
 		if(reflectionVisibilty < 1.0){
 			
 			float backgroundReflectMask = lightmap;
