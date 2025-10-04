@@ -103,7 +103,7 @@ vec3 toScreenSpace(vec3 p) {
 #include "/lib/DistantHorizons_projections.glsl"
 
 float interleaved_gradientNoise_temporal(){
-	#ifdef TAA
+	#if TAA_MODE > 0
 		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887 * frameCounter);
 	#else
 		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
@@ -119,7 +119,7 @@ float interleaved_gradientNoise(){
 float R2_dither(){
 	vec2 coord = gl_FragCoord.xy ;
 
-	#ifdef TAA
+	#if TAA_MODE > 0
 		coord +=  (frameCounter%40000) * 2.0;
 	#endif
 	
@@ -128,7 +128,7 @@ float R2_dither(){
 }
 
 float blueNoise(){
-	#ifdef TAA
+	#if TAA_MODE > 0
   		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 	#else
 		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);

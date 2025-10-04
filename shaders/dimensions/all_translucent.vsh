@@ -250,10 +250,10 @@ void main() {
 
 	#endif
 
-	#ifdef TAA_UPSCALING
+	#if TAA_MODE == 3
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
-	#ifdef TAA
+	#if TAA_MODE > 0
 		#if defined ENTITIES && defined IS_IRIS
 		// remove jitter for nametags lol
 			if (entityId != 1600) gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;

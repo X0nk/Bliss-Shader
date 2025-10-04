@@ -34,10 +34,10 @@ void main() {
 		if(gl_Color.a < 1.0) gl_Position = vec4(10,10,10,0);
 	#endif
 
-	#ifdef TAA_UPSCALING
+	#if TAA_MODE == 3
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
-	#ifdef TAA
+	#if TAA_MODE > 0
 	    gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
 	#endif
 }

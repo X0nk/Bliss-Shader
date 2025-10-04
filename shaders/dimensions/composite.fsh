@@ -130,7 +130,7 @@ vec2 decodeVec2(float a){
 float interleaved_gradientNoise_temporal(){
 	vec2 coord = gl_FragCoord.xy;
 	
-	#ifdef TAA
+	#if TAA_MODE > 0
 		coord += (frameCounter*9)%40000;
 	#endif
 
@@ -144,7 +144,7 @@ float interleaved_gradientNoise(){
 float R2_dither(){
 	vec2 coord = gl_FragCoord.xy ;
 
-	#ifdef TAA
+	#if TAA_MODE > 0
 		coord += (frameCounter*2)%40000;
 	#endif
 	
@@ -152,7 +152,7 @@ float R2_dither(){
 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
 float blueNoise(){
-	#ifdef TAA
+	#if TAA_MODE > 0
   		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 	#else
 		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);

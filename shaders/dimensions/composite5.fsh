@@ -277,7 +277,7 @@ vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth)
 	dmin = dmin.z > dbl.z ? dbl : dmin;
 	dmin = dmin.z > dbr.z ? dbr : dmin;
 	
-	#ifdef TAA_UPSCALING
+	#if TAA_MODE == 3
 		dmin.xy = dmin.xy/RENDER_SCALE;
 	#endif
 
@@ -307,7 +307,7 @@ vec3 closestToCamera5taps_DH(vec2 texcoord, sampler2D depth, sampler2D dhDepth, 
 	dmin = dmin.z > dbl.z ? dbl : dmin;
 	dmin = dmin.z > dbr.z ? dbr : dmin;
 	
-	#ifdef TAA_UPSCALING
+	#if TAA_MODE == 3
 		dmin.xy = dmin.xy/RENDER_SCALE;
 	#endif
 
@@ -345,7 +345,7 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	previousPosition.xy = texcoord + (hand ? vec2(0.0) : velocity);
 	
 	// sample current frame, and make sure it is de-jittered
-	#ifdef TAA_UPSCALING
+	#if TAA_MODE == 3
 		vec3 currentFrame = smoothfilter(colortex3, adjTC_noJitter).rgb;
 	#else
 		vec3 currentFrame = texelFetch2D(colortex3, ivec2(adjTC_noJitter/texelSize), 0).rgb;
@@ -354,7 +354,7 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	//reject history if off-screen and early exit
 	if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0) return vec4(currentFrame, 1.0);
 
-	#ifdef TAA_UPSCALING
+	#if TAA_MODE == 3
 		// Interpolating neighboorhood clampling boundaries between pixels
 		vec3 colMax = texture2D(colortex0, adjTC).rgb;
 		vec3 colMin = texture2D(colortex6, adjTC).rgb;
@@ -419,7 +419,7 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 
 void main() {
 /* DRAWBUFFERS:5 */
-	#ifdef TAA
+	#if TAA_MODE > 0
 		vec2 taauTC = clamp(texcoord*RENDER_SCALE, vec2(0.0), RENDER_SCALE - texelSize*2.0);
 		
 		float dataUnpacked = decodeVec2(texelFetch2D(colortex1,ivec2(gl_FragCoord.xy*RENDER_SCALE),0).w).y; 

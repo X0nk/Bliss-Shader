@@ -84,10 +84,10 @@ void main() {
 
 
 
-	#ifdef TAA_UPSCALING
+	#if TAA_MODE == 3
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
-    #if defined TAA && defined DH_TAA_JITTER
+    #if TAA_MODE > 0 && defined DH_TAA_JITTER
 		gl_Position.xy += offsets[framemod4_DH] * gl_Position.w*texelSize;
 	#endif
 	

@@ -104,7 +104,7 @@ vec3 colorGrading(vec3 color) {
 }
 
 vec3 contrastAdaptiveSharpening(vec3 color, vec2 texcoord){
-
+  float sharpen_strength = float(SHARPENING)/100.0;
   //Weights : 1 in the center, 0.5 middle, 0.25 corners
   vec3 albedoCurrent1 = texture2D(colortex7, texcoord + vec2(texelSize.x,texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
   vec3 albedoCurrent2 = texture2D(colortex7, texcoord + vec2(texelSize.x,-texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
@@ -118,8 +118,8 @@ vec3 contrastAdaptiveSharpening(vec3 color, vec2 texcoord){
 
   float contrast = 1.0 - luma(std)/5.0;
 
-  color = color*(1.0+(SHARPENING+UPSCALING_SHARPNENING)*contrast) -
-  (SHARPENING+UPSCALING_SHARPNENING)/(1.0-0.5/3.5)*contrast*(m1 - 0.5/3.5*color); 
+  color = color*(1.0+(sharpen_strength+UPSCALING_SHARPNENING)*contrast) -
+  (sharpen_strength+UPSCALING_SHARPNENING)/(1.0-0.5/3.5)*contrast*(m1 - 0.5/3.5*color); 
 
   return color;
 }
@@ -171,7 +171,7 @@ void main() {
 	  vec3 color = texture2D(colortex7,texcoord).rgb;
   #endif
 
-	#ifdef CONTRAST_ADAPTATIVE_SHARPENING
+	#if SHARPENING > 0
     color = contrastAdaptiveSharpening(color, texcoord);
 	#endif
   

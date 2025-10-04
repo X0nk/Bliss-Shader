@@ -237,11 +237,17 @@ vec3 fp10Dither(vec3 color,float dither){
 }
 
 float interleaved_gradientNoise_temporal(){
-	#ifdef TAA
-		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887 * frameCounter);
-	#else
-		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
+	vec2 coord = gl_FragCoord.xy;
+	#if TAA_MODE > 0
+		coord += (frameCounter%40000) * 2.0;
 	#endif
+
+	return fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y ) + 1.0/1.6180339887);
+	// #if TAA_MODE > 0
+	// 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887 * frameCounter);
+	// #else
+	// 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
+	// #endif
 }
 
 float interleaved_gradientNoise(){
@@ -253,7 +259,7 @@ float interleaved_gradientNoise(){
 float R2_dither(){
 	vec2 coord = gl_FragCoord.xy ;
 
-	#ifdef TAA
+	#if TAA_MODE > 0
 		coord += (frameCounter%40000) * 2.0;
 	#endif
 	
@@ -264,7 +270,7 @@ float R2_dither(){
 float R2_dither2(){
 	vec2 coord = gl_FragCoord.xy ;
 
-	#ifdef TAA
+	#if TAA_MODE > 0
 		coord += (frameCounter*8)%40000;
 	#endif
 	
@@ -273,7 +279,7 @@ float R2_dither2(){
 }
 
 float blueNoise(){
-	#ifdef TAA
+	#if TAA_MODE > 0
   		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 	#else
 		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
@@ -803,8 +809,8 @@ void main() {
 		float noise_2 = R2_dither();
 		vec2 bnoise = blueNoise(gl_FragCoord.xy).rg;
 
-		#ifdef TAA
-			int seed = (frameCounter*5)%40000;
+		#if TAA_MODE > 0
+			int seed = frameCounter*8%40000;
 		#else
 			int seed = 600;
 		#endif

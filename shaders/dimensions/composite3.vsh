@@ -42,7 +42,7 @@ void main() {
 		WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
 	#endif
 
-	#ifdef TAA
+	#if TAA_MODE > 0
 		TAA_Offset = offsets[framemod8];
 	#else
 		TAA_Offset = vec2(0.0);

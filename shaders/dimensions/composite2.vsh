@@ -83,7 +83,7 @@ void main() {
 		exposure = texelFetch2D(colortex4,ivec2(10,37),0).r;
 	#endif
 
-	#ifdef TAA
+	#if TAA_MODE > 0
 		TAA_Offset = offsets[framemod8];
 	#else
 		TAA_Offset = vec2(0.0);

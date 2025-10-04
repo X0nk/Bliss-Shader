@@ -388,10 +388,10 @@ void main() {
 		YearCycleColor(color.rgb, gl_Color.rgb, mc_Entity.x == BLOCK_AIR_WAVING, true);
 	#endif
 
-	#ifdef TAA_UPSCALING
+	#if TAA_MODE == 3
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
-	#ifdef TAA
+	#if TAA_MODE > 0
 		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
 	#endif
 

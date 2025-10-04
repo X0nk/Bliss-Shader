@@ -158,7 +158,7 @@ uniform float waterEnteredAltitude;
 
 
 float interleaved_gradientNoise_temporal(){
-	#ifdef TAA
+	#if TAA_MODE > 0
 		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887 * frameCounter);
 	#else
 		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
@@ -174,7 +174,7 @@ float interleaved_gradientNoise(){
 float R2_dither(){
 	vec2 coord = gl_FragCoord.xy ;
 
-	#ifdef TAA
+	#if TAA_MODE > 0
 		coord += + (frameCounter%40000) * 2.0;
 	#endif
 	
@@ -183,7 +183,7 @@ float R2_dither(){
 }
 
 float blueNoise(){
-	#ifdef TAA
+	#if TAA_MODE > 0
   		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 	#else
 		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
@@ -399,7 +399,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	
 	vec3 FragCoord = gl_FragCoord.xyz;
 
-	#ifdef TAA
+	#if TAA_MODE > 0
 		vec2 tempOffset = offsets[framemod8];
 		vec3 viewPos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
 	#else

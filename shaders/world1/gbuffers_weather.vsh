@@ -1,5 +1,5 @@
 #version 120
-#define TAA
+#define TAA_MODE 2 // [0 1 2 3]
 
 /*
 !! DO NOT REMOVE !!
@@ -38,7 +38,8 @@ void main() {
 	gl_Position = ftransform();
 	
 	color = gl_Color;
-	#ifdef TAA
-	gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+
+	#if TAA_MODE > 0
+		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
 	#endif
 }

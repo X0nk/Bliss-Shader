@@ -128,7 +128,7 @@ float interleaved_gradientNoise(){
 }
 
 float R2_dither(){
-  	#ifdef TAA
+  	#if TAA_MODE > 0
 		vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
 	#else
 		vec2 coord = gl_FragCoord.xy;

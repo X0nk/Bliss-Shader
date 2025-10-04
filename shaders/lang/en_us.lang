@@ -1,5 +1,4 @@
-option.SHADER_VERSION_LABEL = Bliss In-Dev Version
-    prefix.SHADER_VERSION_LABEL = COMMIT #
+option.SHADER_VERSION_LABEL = Bliss Unstable
 
 # if you're here to translate, this is a joke, these don't do what they say
 profile.QUALITY=Quality
@@ -142,11 +141,12 @@ screen.Ambient_light = Ambient Light
     option.ambient_brightness = Ambient Light Brightness
     option.MIN_LIGHT_AMOUNT = Minimum Light Brightness
     option.indirect_effect = Indirect Lighting
-        value.indirect_effect.0 = Vanilla AO
-            value.indirect_effect.1 = SSAO
-            value.indirect_effect.2 = GTAO
-            value.indirect_effect.3 = SSRT (AO only) - §cLOTS OF VISUAL NOISE§r
-            value.indirect_effect.4 = SSRT (AO + GI) - §cLOTS OF VISUAL NOISE§r
+        value.indirect_effect.VANILLA_AO = Vanilla AO
+            value.indirect_effect.SSAO_FILTERED = SSAO
+            value.indirect_effect.SSAO_HQ = HQ SSAO
+            value.indirect_effect.GTAO = GTAO
+            value.indirect_effect.SSRT_AO = SSRT (AO only) - §cLOTS OF VISUAL NOISE§r
+            value.indirect_effect.SSRT_AO_GI = SSRT (AO + GI) - §cLOTS OF VISUAL NOISE§r
 
     screen.Ambient_Colors =  Ambient Light Color
         option.AmbientLight_R = Red Amount
@@ -169,7 +169,6 @@ screen.Fog = Fog Settings
     option.BLOOMY_FOG = Bloomy Fog Multiplier
     option.Haze_amount = Atmospheric Haze Density
     option.RainFog_amount = Rain Fog Multiplier
-    option.RAYMARCH_CLOUDS_WITH_FOG = Render Clouds As Fog §c(READ DESCRIPTION)§r
     option.BorderFog = Chunk Border Fog
 
     screen.TOD_fog = Time Of Day Fog
@@ -443,23 +442,32 @@ screen.World = World
 
 
 screen.Post_Processing = Post Processing
-    screen.Tonemapping = Tone-Map/Color Settings
+    option.TONEMAP = Tone Mapping Operator
     screen.Exposure = Exposure Settings
+        option.Manual_exposure_value = Manual Exposure Level §a(DISABLE AUTO EXPOSURE TO USE THIS)
+        option.EXPOSURE_MULTIPLIER = Exposure Multiplier
+        option.AUTO_EXPOSURE = Auto Exposure
+        option.Exposure_Speed = Auto Exposure Adjusting Speed
+        option.EXPOSURE_DARKENING = Darkening Strength
+        option.EXPOSURE_BRIGHTENING = Brightening Strength
     screen.DepthOfField = Depth Of Field Settings
     screen.Purkinje_effect = Purkinje Effect Settings
         option.Purkinje_strength = Purkinje Effect Blending Amount
         value.Purkinje_strength.0 = OFF
         suffix.Purkinje_strength =%
-    option.SHARPENING = Sharpening amount
+    option.SHARPENING = Sharpening Amount
+    value.SHARPENING.0 = OFF
     option.BLOOM_STRENGTH = Bloom Multiplier
     screen.TAA_OPTIONS = Anti-Aliasing Settings
         option.SCREENSHOT_MODE = Screenshot Mode
-        option.TAA = TAA
-        option.RESPONSIVE_TAA = Responsive TAA §a(TURN THIS OFF WITH TEMPORAL UPSCALING)
+        option.TAA_MODE = TAA Mode
+        value.TAA_MODE.0 = OFF
+        value.TAA_MODE.1 = Standard
+        value.TAA_MODE.2 = Resposive
+        value.TAA_MODE.3 = Temporal Upscaling
         option.BLEND_FACTOR = Blend Factor
         option.BLEND_FACTOR_DURING_MOVEMENT = Blend Factor During Camera Movment
-        option.TAA_UPSCALING = Temporal Upscaling
-        option.SCALE_FACTOR = Scale Factor
+        option.SCALE_FACTOR = Scale Factor §a(set TAA mode to "Temporal Upscaling")
             prefix.SCALE_FACTOR = §fUpscale from 
             suffix.SCALE_FACTOR = x §fof the window resolution
 	screen.COLOR_GRADING = Color Grading
@@ -479,6 +487,32 @@ screen.Post_Processing = Post Processing
 		option.HIGHLIGHTS_GRADE_G = Highlights §aGreen
 		option.HIGHLIGHTS_GRADE_B = Highlights §9Blue
 		option.HIGHLIGHTS_GRADE_MUL = Highlights Brightness
+	screen.Color_Processing = Color Processing
+        option.SATURATION = Saturation
+            value.SATURATION.0.0 = 0.0 (Neutral)
+        option.CROSSTALK = Crosstalk
+            value.CROSSTALK.0.0 = 0.0 (Neutral)
+        option.WHITE_BALANCE = White Balance
+            value.WHITE_BALANCE.6500 = 6500 (Neutral)
+    screen.Camera_Settings = Camera Settings
+        option.CAMERA_GRIDLINES = Camera Grid Lines
+    option.MOTION_BLUR = Motion Blur
+    option.MOTION_BLUR_STRENGTH = Motion Blur Amount
+    option.CHROMATIC_ABERRATION = Chromatic Aberration
+    option.CHROMATIC_ABERRATION_STRENGTH = Chromatic Aberration Amount
+    option.VIGNETTE = Vignette
+    option.VIGNETTE_STRENGTH = Vignette Amount
+    screen.FLASHLIGHT_SETTING = Flashlight Settings
+
+    screen.GAMEPLAY_EFFECTS = Gameplay Screen Effects
+    option.MOTION_AMOUNT = The Motion Amount In All Gameplay Effects
+    option.WATER_ON_CAMERA_EFFECT = Enter/Exit Water Effect
+    option.DAMAGE_TAKEN_EFFECT = Damage Taken Effect
+    option.ON_FIRE_DISTORT_EFFECT = On-Fire effect
+    option.ON_FIRE_DISTORT_EFFECT_STRENGTH = On-Fire effect Amount
+    option.LOW_HEALTH_EFFECT = Low Health Effects
+    option.LOW_HEALTH_EFFECT_START = Minimum Health Needed For Low Health Effect
+    option.CRITICALLY_LOW_HEALTH_EFFECT_START = Minimum Health Needed For Critically Low Health Effect
 
 screen.Resource_Pack_Support = Materials / Resource Pack Support
     screen.SPECULAR = Specular Reflections
@@ -635,7 +669,7 @@ screen.Ambient_light.comment = Configure settings related to the lighting in sha
     option.ambientOcclusionLevel.comment = Configure the strength of the ambient occlusion from vanilla minecraft. §bWhat is this?§r This ambient occlusion is in minecraft even without shaders enabled.
     option.ambient_brightness.comment = Configure the brightnes of lighting in shaded places
     option.MIN_LIGHT_AMOUNT.comment = Configure the minimum amount of light that can be in shaded places.
-    option.indirect_effect.comment = Toggle different types of effects to make lighting in shaded places higher quality. §aPERFORMANCE COSTS:§r. Vanilla AO: very low. SSAO: low to medium. GTAO: medium to high. SSRT: high to very high - GI is slower
+    option.indirect_effect.comment = Toggle different types of effects to make lighting in shaded places higher quality. §aPERFORMANCE COSTS:§r. Vanilla AO: very low. SSAO: low to medium. HQ SSAO: medium. GTAO: medium to high. SSRT: high to very high - GI is slower
 
     screen.Ambient_Colors.comment = Configure the color of light in shaded areas.
     screen.Torch_Colors.comment = Configure the color of light from torches or other placed lightsources.
@@ -694,7 +728,7 @@ screen.Porosity.comment = Configure settings related to wetness and puddles
     option.Puddle_Size.comment = Configure the size of the puddles.
 
 option.FAKE_REFRACTION_AMOUNT.comment = Configure the amount of distortion refraction will do. §bWhat is this?§r you could think of refraction as light bending when going through water or glass, making the things viewed through them look stretched, squished, distorted. §aPERFORMANCE COST:§r very low
-option.FAKE_DISPERSION_AMOUNT.comment = Configure the amount of dispersion within the refraction. §bWhat is this?§r when refraction happens, the parts that get really distorted will get a "chromatic abberation", faking the look of a rainbow or light prism. §aPERFORMANCE COST:§r very low
+option.FAKE_DISPERSION_AMOUNT.comment = Configure the amount of dispersion within the refraction. §bWhat is this?§r when refraction happens, the parts that get really distorted will get a "chromatic aberration", faking the look of a rainbow or light prism. §aPERFORMANCE COST:§r very low
 option.REFRACTION_SMUDGE_AMOUNT.comment = Configure the amount of smudge within the refraction. §bWhat is this?§r when refraction happens, the parts that get really distorted will get smudged. §cWill cause visaul noise within refraction. §aPERFORMANCE COST:§r very low
 
 screen.Fog.comment = Configure settings related to the raymarched volumetric fog, or distance based fog.
@@ -703,7 +737,6 @@ screen.Fog.comment = Configure settings related to the raymarched volumetric fog
     option.BLOOMY_FOG.comment = Configure the strength of bloom that is applied to fog. §bWhat is this?§r This effect makes the fog look soft, it helps hide a little noise too. can cause some visible flickering on detailed edges. §aPERFORMANCE COST:§r very low
     option.Haze_amount.comment = Configure how dense the atmosphere around you is. §bWhat is this?§r This is the blue haze you see in the distance.
     option.RainFog_amount.comment = Configure how dense the fog gets when it rains.
-    option.RAYMARCH_CLOUDS_WITH_FOG.comment = §cWARNING§r: This setting is experimental and not very well made! you will need to increase fog samples to make it match the normal clouds. Toggle detailed fog when you go within or around a cloud. §aPERFORMANCE COST:§r high. 
     option.BorderFog.comment = §bWhat is this?§r Toggle a fog that attempts to hide the chunks loading in. But because the sky is all over the place, it is difficult to do well. §aPERFORMANCE COST:§r very very low
 
     screen.TOD_fog.comment = Configure the density of fog that appears at specific times of the day.
@@ -763,7 +796,7 @@ screen.Post_Processing.comment = Configure settings for all post processing effe
     option.SHARPENING.comment = Configure the amount of contrast adapitive sharpening that is applied to the image. This can really bring out lost details from anti-aliasing or upscaling.
     option.BLOOM_STRENGTH.comment = Configure the amount of bloom that is applied to the image. §bWhat is this?§r Bloom is the soft glow on everything, to describe that something is bright or not.
     screen.TAA_OPTIONS.comment = Configure settings related to anti-aliasing.
-        option.SCREENSHOT_MODE.comment = Toggle frame accumulation to get a low noise and high quality image. §bWhat is this?§r It stacks frames that happend onto the next frame that is generated, so it is like a long exposure photo.
+        option.SCREENSHOT_MODE.comment = §aTHIS DOES NOT CHANGE GRAPHICS QUALITY IN ANY WAY§r. Toggle frame accumulation to get a low noise image. §bWhat is this?§r It stacks frames that happend onto the next frame that is generated, so it is like a long exposure photo.
         option.TAA.comment = Toggle temporal anti-aliasing. This removes all jagged edges on things, softens the image, and helps remove noise for many effects. This will cause ghosting or trailing because it uses past frames for extra information on the world. §aPERFORMANCE COST:§r low
         option.BLEND_FACTOR.comment = Configure how much of frame history is used. high numbers means it relies less on frame history, so it may look flickery and noisy. low numbers rely more on frame history, so it may look less moisy, but more smudged with more trailing.
         option.TAA_UPSCALING.comment = Toggle temporal upscaling. This retains a good amount of quality from a lower resolution image when it upscales. so you can still have a high looking resolution compared to typical upsampling and still have better performance.
@@ -836,3 +869,12 @@ option.TOGGLE_VL_FOG.comment = one big button to just turn all the fog off.
 
 option.TRANSLUCENT_COLORED_SHADOWS.comment = §bWhat is this?§r This effect allows translucent things like stained glass to color the sunlight as it passes through it. §aPERFORMANCE COST:§r medium
 option.MINIMUM_WATER_ABSORBANCE.comment = §bWhat is this?§r This controls how "clear" the water is in shallow areas. AUTO allows water to be clear outdoors, but adjust to be at a minimum value of 7 when indoors, to make it clearly visible. §dTHIS SETTING DOES NOT IMPACT UNDER-WATER VISUALS.        
+
+option.SATURATION.comment = §bWhat is this?§r This controls how "colorful" the image is. negative values take away colors - positive values make them more intense.
+option.CROSSTALK.comment = §bWhat is this?§r This is a modifier of saturation - it offsets the saturation of the BRIGHT parts of the image.
+option.WHITE_BALANCE.comment = §bWhat is this?§r This controls how warm or cool the image looks - it balances the blues and reds.
+option.TAA_MODE.comment = §bStandard:§r has the best antialiasing ability - uses more jitter offsets, but needs more frame history (set blend factor lower), it will flicker more and have more motion artifacts. §bResponsive:§r has the worst antialiasing ability - uses fewer jitter offsets, needs less frame history (set blend factor higher), so it can have fewer motion artifacts. §bTemporal Upscaling:§r Render the shader at a lower window resolution, and then scale it back up to fit the screen for better performance - has MANY artifacts.
+option.MOTION_BLUR.comment = §bWhat is this?§r This effect makes the entire screen blur in whatever direction you move the camera, or wherever you move within the world. §aPERFORMANCE COST:§r very low
+option.CHROMATIC_ABERRATION.comment = §bWhat is this?§r This effect makes the edges of the screen have a color shift of red and blue. §aPERFORMANCE COST:§r very very low
+option.VIGNETTE.comment = §bWhat is this?§r This effect makes the edges of the screen increasingly dark the closer to the edges it gets. §aPERFORMANCE COST:§r very very low
+option.TONEMAP.comment = §bWhat is this?§r This fits the internal HDR or whatever range of color the shader is doing, to look nice on your SDR monitor. it will control general color processing - the contrast, saturation, white point, black point, hue shift, path to white, ect - each one has a different look

@@ -16,7 +16,7 @@ vec3 toLinear(vec3 sRGB){
 }
 
 float interleaved_gradientNoise_temporal(){
-	#ifdef TAA
+	#if TAA_MODE > 0
 		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887 * frameCounter);
 	#else
 		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);

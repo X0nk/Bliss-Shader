@@ -76,13 +76,13 @@ void main() {
 
 	readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
 	
-	#ifdef TAA
+	#if TAA_MODE > 0
 		TAA_Offset = offsets[framemod8];
 	#else
 		TAA_Offset = vec2(0.0);
 	#endif
 
-	#ifdef TAA_UPSCALING
+	#if TAA_MODE == 3
 		gl_Position.xy = (gl_Position.xy*0.5+0.5)*RENDER_SCALE*2.0-1.0;
 	#endif
 }
