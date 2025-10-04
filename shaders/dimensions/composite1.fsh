@@ -1302,7 +1302,7 @@ void main() {
 	////////////////////////////////////////////////////////////////////////////////
 	
 	/////////////////////////////	SKY SSS		/////////////////////////////
-		#if defined Ambient_SSS && defined OVERWORLD_SHADER && indirect_effect != VANILLA_AO
+		#if defined Ambient_SSS && defined OVERWORLD_SHADER && (indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ)
 			vec3 ambientColor = AmbientLightColor * ambientsss_brightness * ambient_brightness * 2.0;
 			
 
