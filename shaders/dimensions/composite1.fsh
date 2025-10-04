@@ -558,16 +558,22 @@ void doEdgeAwareBlur(
 		#ifdef Variable_Penumbra_Shadows
 			shadow_RESULT += texelFetch2D(tex1, UV + OFFSET[i] + UV_NOISE, 0).rgb*edgeDiff;
 		#endif
-		// #if indirect_effect == 1
+
+		#if indirect_effect == SSAO_FILTERED
 			ssao_RESULT += texelFetch2D(tex2, UV + OFFSET[i] + UV_NOISE, 0).rg*edgeDiff;
-		// #endif
+		#endif
 
 		edgeSum += edgeDiff;
 	}
 	// sample without an offset with texture filtering to get a slightly blurred sample. make sure to average without skewing the rest of the average.
 	filteredShadow = shadow_RESULT/edgeSum * 0.8 + 0.2 * texture2D(tex1, texelSize*gl_FragCoord.xy).rgb;
-	ambientEffects =   ssao_RESULT/edgeSum * 0.8 + 0.2 * texture2D(tex2, texelSize*gl_FragCoord.xy).rg;
-	// ambientEffects.x = edgeSum / 4.0;
+	
+	#if indirect_effect == SSAO_FILTERED
+		ambientEffects = ssao_RESULT/edgeSum * 0.8 + 0.2 * texture2D(tex2, texelSize*gl_FragCoord.xy).rg;
+	#endif
+	#if indirect_effect == SSAO_HQ
+		ambientEffects = texture2D(tex2, texelSize*gl_FragCoord.xy).rg;
+	#endif
 
 }
 
@@ -1182,7 +1188,7 @@ void main() {
 		#if defined OVERWORLD_SHADER
 			float skylight = 1.0;
 		
-			#if indirect_effect == 0 || indirect_effect == 1 || indirect_effect == 2
+			#if indirect_effect == VANILLA_AO || indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ || indirect_effect == GTAO
 
 				vec3 indirectNormal = slopednormal / dot(abs(slopednormal),vec3(1.0));
 
@@ -1196,7 +1202,7 @@ void main() {
 				// skylight = 1.0;
 			#endif
 
-			#if indirect_effect == 3 || indirect_effect == 4
+			#if indirect_effect == SSRT_AO || indirect_effect == SSRT_AO_GI
 				skylight = 1.0;
 			#endif
 			
@@ -1208,7 +1214,7 @@ void main() {
 			Indirect_lighting = volumetricsFromTex(normalize(normal), colortex4, 6).rgb / 1200.0;
 			vec3 up = volumetricsFromTex(vec3(0.0,1.0,0.0), colortex4, 6).rgb / 1200.0;
 			
-			#if indirect_effect == 1
+			#if indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ
 				Indirect_lighting = mix(up, Indirect_lighting,  clamp(pow(1.0-pow(1.0-SSAO_SSS.x, 0.5),2.0),0.0,1.0));
 			#endif
 			
@@ -1268,8 +1274,7 @@ void main() {
 			Indirect_lighting *= AO;
 		#endif
 
-		#if indirect_effect == 1
-
+		#if indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ
 			float vanillaAO_curve = pow(1.0 - vanilla_AO*vanilla_AO,5.0);
 			float SSAO_curve = pow(SSAO_SSS.x,4.0);
 
@@ -1280,19 +1285,19 @@ void main() {
 		#endif
 
 		// // GTAO... this is so dumb but whatevverrr
-		#if indirect_effect == 2
+		#if indirect_effect == GTAO
 			float vanillaAO_curve = pow(1.0 - vanilla_AO*vanilla_AO,5.0);
 
 			vec2 r2 = fract(R2_samples((frameCounter%40000) + frameCounter*2) + bnoise);
-			float GTAO =  !hand ? ambient_occlusion(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5, z), viewPos, worldToView(slopednormal), r2) : 1.0;
+			float getGTAO = !hand ? ambient_occlusion(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5, z), viewPos, worldToView(slopednormal), r2) : 1.0;
 			
-			AO = vec3(min(vanillaAO_curve,GTAO));
+			AO = vec3(min(vanillaAO_curve,getGTAO));
 			
 			Indirect_lighting *= AO;
 		#endif
 
 		// RTAO and/or SSGI
-		#if indirect_effect == 3 || indirect_effect == 4
+		#if indirect_effect == SSRT_AO || indirect_effect == SSRT_AO_GI
 			if(!hand) Indirect_lighting = ApplySSRT(Indirect_lighting, blockLightColor, MinimumLightColor, viewPos, normal, vec3(bnoise, noise_2), lightmap.y, isGrass, isDHrange);
 		#endif
 
@@ -1303,7 +1308,7 @@ void main() {
 	////////////////////////////////////////////////////////////////////////////////
 	
 	/////////////////////////////	SKY SSS		/////////////////////////////
-		#if defined Ambient_SSS && defined OVERWORLD_SHADER // && indirect_effect == 1
+		#if defined Ambient_SSS && defined OVERWORLD_SHADER && indirect_effect != VANILLA_AO
 			vec3 ambientColor = AmbientLightColor * ambientsss_brightness * ambient_brightness * 2.0;
 			
 
@@ -1314,15 +1319,7 @@ void main() {
 			thingy = pow(thingy,3.5);
 			thingy = 1-pow(1-thingy,5);
 
-			Indirect_lighting = Indirect_lighting + Indirect_SSS * ambientColor;
-
-			// float lightmapCurve =  ((pow(lightmap.y,15.0)*2.0 + lightmap.y*lightmap.y)/3.0);
-			// Indirect_lighting = ambient_brightness * AmbientLightColor * mix(Indirect_SSS*lightmap.y*2.5, vec3(1.0), skylight * SSAO_curve * lightmapCurve);
-			// Indirect_lighting += blockLightColor * SSAO_curve;
-
-			// #ifdef OVERWORLD_SHADER
-			// 	if(LabSSS > 0.0) Indirect_lighting += (1.0-SkySSS) * LightningPhase * lightningEffect *  pow(lightmap.y,10);
-			// #endif
+			Indirect_lighting += Indirect_SSS * ambientColor;
 		#endif
 	
 	/////////////////////////////////////////////////////////////////////////

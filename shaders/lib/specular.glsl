@@ -308,11 +308,9 @@ vec3 specularReflections(
 	,in vec4 flashLight_stuff
 
 ){
-	#ifdef FORWARD_RENDERED_SPECULAR
-		lightmap = pow(min(max(lightmap-0.6,0.0)*2.5,1.0),2.0);
-	#else
-		lightmap = clamp((lightmap-0.8)*7.0, 0.0,1.0);
-	#endif
+	lightmap = min(max(lightmap-0.9,0.0)/0.1,1.0); 
+	lightmap *= lightmap;	lightmap = 1.0-lightmap;
+	lightmap *= lightmap;	lightmap = 1.0-lightmap;
 
 	roughness = 1.0 - roughness; 
 	roughness *= roughness;

@@ -91,7 +91,14 @@
 #define Hand_Held_lights
 #define HANDHELD_LIGHT_RANGE 16 // [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120 125 130 135 140 145 150 155 160 165 170 175 180 185 190 195 200 205 210 215 220 225 230 235 240 245 250 255]
 
-#define indirect_effect 1 // [0 1 2 3 4]
+#define VANILLA_AO 0
+#define SSAO_FILTERED 1
+#define SSAO_HQ 2
+#define GTAO 3
+#define SSRT_AO 4
+#define SSRT_AO_GI 5
+
+#define indirect_effect SSAO_FILTERED // [VANILLA_AO SSAO_FILTERED SSAO_HQ GTAO SSRT_AO SSRT_AO_GI]
 
 #define AO_in_sunlight
 #define AO_Strength 1.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0]

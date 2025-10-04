@@ -257,6 +257,11 @@ vec2 SSAO(
 	vec3 viewPos, vec3 normal, vec3 flatnormal, bool hand, float noise
 ){
 	int samples = 7;
+	
+	#if indirect_effect == SSAO_HQ
+		samples = 21;
+	#endif
+
 	float occlusion = 0.0; 
 	float sss = 0.0;
 
@@ -406,7 +411,7 @@ void main() {
 
 	vec3 FlatNormals = normalize(texture2D(colortex15,texcoord).rgb * 2.0 - 1.0);
 	
-	#if defined DENOISE_SSS_AND_SSAO && indirect_effect == 1
+	#if defined DENOISE_SSS_AND_SSAO && indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ
 		if(z >= 1.0) FlatNormals = normal;
 
 		vec2 SSAO_SSS = SSAO(viewPos, worldToView(normal), worldToView(FlatNormals), hand, noise);
