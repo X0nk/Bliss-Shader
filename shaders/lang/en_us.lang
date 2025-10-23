@@ -33,7 +33,7 @@ option.colortype = coloring mode
 
 screen.Mod_support = Settings For Supported Mods
 
-option.RESOURCEPACK_SKY = Resource Pack Sky
+option.RESOURCEPACK_SKY = Resource Pack Sky - §cWARNING:§r read the description!
     value.RESOURCEPACK_SKY.0 = Do not use
     value.RESOURCEPACK_SKY.1 = Sky + Shader sun/moon
     value.RESOURCEPACK_SKY.2 = Full sky
@@ -813,7 +813,7 @@ screen.Post_Processing.comment = Configure settings for all post processing effe
 		option.LUMINANCE_CURVE.comment = Enable the tone curve. This is independent from color grading and is applied first.
 		option.COLOR_GRADING_ENABLED.comment = Enable color grading. The RGB sliders will not affect the brightness. This is applied after the tone curve
 
-option.RESOURCEPACK_SKY.comment = Toggle resourcepack sky support. Configure settings to use the whole resourcepack sky, or keep the shader's sun and moon. §aPERFORMANCE COST:§r very low
+option.RESOURCEPACK_SKY.comment =§cWARNING: This setting, IF USED, will cause broken rendering for: lead ropes, fishing lines, and possibly some entities!§r. Toggle resourcepack sky support. Configure settings to use the whole resourcepack sky, or keep the shader's sun and moon. §aPERFORMANCE COST:§r very low
 option.SKY_GROUND = Atmosphere ground
 
 option.MATERIAL_AO.comment = Toggle the use of ambient occlusion based on what the resourcepack provides. §aPERFORMANCE COST:§r very low
