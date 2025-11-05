@@ -102,10 +102,10 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
     	    break; }
 
     	    case LARGECUMULUS_LAYER: {
-				erosion += (1.0 - densityAtPos(samplePos * 100.0 * CloudLayer1_scale)) * sqrt(1.0-shape);
+				erosion += (1.0 - densityAtPos(samplePos * 70.0 * CloudLayer1_scale)) * sqrt(1.0-shape);
 
 				float falloff = 1.0 - clamp((maxHeight - position.y)/200.0,0.0,1.0);
-				erosion += abs(densityAtPos(samplePos * 450.0 * CloudLayer1_scale) - falloff) * 0.75 * (1.0-shape) * (1.0-falloff*0.5);
+				erosion += abs(densityAtPos(samplePos * 250.0 * CloudLayer1_scale) - falloff) * 0.75 * (1.0-shape) * (1.0-falloff*0.5);
 
 				erosion = erosion*erosion*erosion*erosion;
 			break; }
@@ -542,7 +542,7 @@ vec4 GetVolumetricClouds(
 
 	float maxSamples = 15.0;
 	float minSamples = 10.0;
-	int samples = int(clamp(maxSamples / sqrt(exp2(NormPlayerPos.y)), 0.0, minSamples));
+	int samples = int(clamp(maxSamples / sqrt(exp2(NormPlayerPos.y)), 1.0, minSamples));
 	// int samples = 30;
    
    	///------- setup the ray
@@ -633,15 +633,15 @@ vec4 GetVolumetricClouds(
    	////------- BLEND LAYERS
 
 	// this is for an intersection check for VL fog, so that fog cannot march beyond a cloud.
+	#if defined CloudLayer0 && defined CloudLayer1 && defined CloudLayer2
+		cloudPlaneDistance = mix(cloudLayer1_Distance.x, cloudLayer2_Distance.x, cloudLayer1_Distance.y);
+		cloudPlaneDistance = mix(cloudLayer0_Distance.x, cloudPlaneDistance, cloudLayer0_Distance.y);
+	#endif
 	#if defined CloudLayer0 && !defined CloudLayer1 && !defined CloudLayer2
 		cloudPlaneDistance = cloudLayer0_Distance.x;
 	#endif
 	#if defined CloudLayer0 && defined CloudLayer1 && !defined CloudLayer2
 		cloudPlaneDistance = mix(cloudLayer0_Distance.x, cloudLayer1_Distance.x, cloudLayer0_Distance.y);
-	#endif
-	#if defined CloudLayer0 && defined CloudLayer1 && defined CloudLayer2
-		cloudPlaneDistance = mix(cloudLayer2_Distance.x, cloudLayer1_Distance.x, cloudLayer2_Distance.y);
-		cloudPlaneDistance = mix(cloudLayer0_Distance.x, cloudPlaneDistance, cloudLayer0_Distance.y);
 	#endif
 	#if !defined CloudLayer0 && defined CloudLayer1 && defined CloudLayer2
 		cloudPlaneDistance = mix(cloudLayer2_Distance.x, cloudLayer1_Distance.x, cloudLayer2_Distance.y);
