@@ -355,11 +355,11 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
     	vec3 AmbientLightColor = averageSkyCol_Clouds/900.0 ;
 
-    	vec3 ambientcoefs = worldSpaceNormals.xyz / dot(abs(worldSpaceNormals.xyz), vec3(1.0));
-    	float SkylightDir = ambientcoefs.y*1.5;
-    
-    	float skylight = max(pow(worldSpaceNormals.y*0.5+0.5,0.1) + SkylightDir, 0.2);
-    	AmbientLightColor *= skylight;
+		vec3 indirectNormal = worldSpaceNormals.xyz / dot(abs(worldSpaceNormals.xyz),vec3(1.0));
+		float SkylightDir = clamp(indirectNormal.y*0.7+0.3,0.0,1.0);
+
+		float skylight = mix(0.08, 1.0, SkylightDir);
+		AmbientLightColor *= skylight;
     #endif
 	
     #ifndef OVERWORLD_SHADER
