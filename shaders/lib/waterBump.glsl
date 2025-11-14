@@ -1,7 +1,8 @@
-float waterCaustics(vec3 worldPos, vec3 sunVec) {
+float waterCaustics(vec3 worldPos, vec3 sunVec, float surfacePos) {
 
-	vec3 projectedPos = worldPos - (sunVec/sunVec.y*worldPos.y);
+	vec3 projectedPos = worldPos + (sunVec/abs(sunVec.y))*surfacePos;
 	vec2 pos = projectedPos.xz;
+	
 
 	float movement = frameTimeCounter * 0.035 * WATER_WAVE_SPEED;
 

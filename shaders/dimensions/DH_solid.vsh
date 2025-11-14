@@ -95,12 +95,15 @@ void main() {
     
     gcolor = gl_Color;
 	
-
 	EMISSIVE = 0.0;
 	if(dhMaterialId == DH_BLOCK_ILLUMINATED || gl_MultiTexCoord1.x >= 0.95) EMISSIVE = 0.5;
 
 	SSSAMOUNT = 0.0;
 	#if defined DH_SUBSURFACE_SCATTERING
+		#if defined COLOR_TEST_FOR_SUBSURFACE_SCATTERING_MATERIAL
+			if(dot(gl_Color.rgb, vec3(DH_SSS_THRESHOLD_R, DH_SSS_THRESHOLD_G, DH_SSS_THRESHOLD_B)) > 0.0 && dhMaterialId == DH_BLOCK_UNKNOWN) SSSAMOUNT = 0.25;
+		#endif
+
 		if (dhMaterialId == DH_BLOCK_LEAVES) SSSAMOUNT = 1.0;
 		if (dhMaterialId == DH_BLOCK_SNOW) SSSAMOUNT = 0.5;
 	#endif

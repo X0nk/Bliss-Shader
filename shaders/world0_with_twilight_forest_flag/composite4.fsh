@@ -3,4 +3,4 @@
 #define OVERWORLD_SHADER
 #define TWILIGHT_FOREST_FLAG
 
-#include "/dimensions/composite3.fsh"
+#include "/dimensions/composite4.fsh"

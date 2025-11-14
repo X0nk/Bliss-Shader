@@ -211,7 +211,7 @@ void main() {
 	// #endif
 
 
-	vec2 lmcoord = gl_MultiTexCoord1.xy / 240.0; 
+	vec2 lmcoord = max(gl_MultiTexCoord1.xy - 8.0, 0.0) / (240.0-8.0);
 	lmtexcoord.zw = lmcoord;
 
 

@@ -1,5 +1,12 @@
-uniform float viewWidth;
-uniform float viewHeight;
+#include "/lib/settings.glsl"
+
+varying vec2 texcoord;
+
+uniform sampler2D colortex4;
+
+flat varying vec4 exposure;
+flat varying vec2 rodExposureDepth;
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -7,9 +14,11 @@ uniform float viewHeight;
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-	//Improves performances and makes sure bloom radius stays the same at high resolution (>1080p)
-	vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
+
 	gl_Position = ftransform();
-	//*0.51 to avoid errors when sampling outside since clearing is disabled
-	gl_Position.xy = (gl_Position.xy*0.5+0.5)*0.51/clampedRes*vec2(1920.0,1080.)*2.0-1.0;
+	texcoord = gl_MultiTexCoord0.xy;
+
+	exposure = vec4(vec3(texelFetch2D(colortex4,ivec2(10,37),0).r),texelFetch2D(colortex4,ivec2(10,37),0).r);
+	rodExposureDepth = texelFetch2D(colortex4,ivec2(14,37),0).rg;
+	rodExposureDepth.y = sqrt(rodExposureDepth.y/65000.0);
 }

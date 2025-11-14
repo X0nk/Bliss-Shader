@@ -49,7 +49,7 @@ vec4 GetVolumetricFog(
 	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
 	vec3 progressW = vec3(0.0);
 
-	float maxLength = min(length(dVWorld), far)/length(dVWorld);
+	float maxLength = min(length(dVWorld), min(far,16*12))/length(dVWorld);
 
 	dVWorld *= maxLength;
 
@@ -63,10 +63,6 @@ vec4 GetVolumetricFog(
 	float absorbance = 1.0;
 
 	vec3 hazeColor = normalize(gl_Fog.color.rgb + 1e-6) * 0.25;
-
-	#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
-    	float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) / 5.0;
-	#endif
 
 	for (int i = 0; i < SAMPLECOUNT; i++) {
 		float d = (pow(expFactor, float(i+dither2)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
@@ -134,10 +130,6 @@ vec4 GetVolumetricFog(
 
 				color += (flashlightGlow - flashlightGlow * exp(-max(plumeDensity,0.005)*dd*dL)) * absorbance;
 			#endif
-			#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
-				color += LPV_FOG_ILLUMINATION(progressW-cameraPosition, dd, dL) * TorchBrightness_autoAdjust * absorbance;
-			#endif
-
 	}
 	return vec4(color, absorbance);
 }

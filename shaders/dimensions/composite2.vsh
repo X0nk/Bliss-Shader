@@ -6,10 +6,6 @@ flat varying vec4 lightCol;
 flat varying vec3 averageSkyCol;
 flat varying vec3 averageSkyCol_Clouds;
 
-#if defined LPV_VL_FOG_ILLUMINATION && defined IS_LPV_ENABLED
-	flat varying float exposure;
-#endif
-
 #include "/lib/scene_controller.glsl"
 
 
@@ -45,7 +41,7 @@ uniform float frameTimeCounter;
 void main() {
 	gl_Position = ftransform();
 
-	gl_Position.xy = (gl_Position.xy*0.5+0.5)*(0.01+VL_RENDER_RESOLUTION)*2.0-1.0;
+	gl_Position.xy = (gl_Position.xy*0.5+0.5)*(0.01+VL_RENDERING_RESOLUTION_SCALE)*2.0-1.0;
 
 	
 	#ifdef OVERWORLD_SHADER
@@ -53,7 +49,9 @@ void main() {
 		averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
 		averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 
-		readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
+				#define READ_SCENE_CONTROLLER_PARAMETERS
+		#include "/lib/scene_controller.glsl"
+		// readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
 	#endif
 
 	#ifdef NETHER_SHADER
@@ -79,14 +77,9 @@ void main() {
 
 	refractedSunVec = refract(lightCol.a*WsunVec, -vec3(0.0,1.0,0.0), 1.0/1.33333);
 
-	#if defined LPV_VL_FOG_ILLUMINATION && defined IS_LPV_ENABLED
-		exposure = texelFetch2D(colortex4,ivec2(10,37),0).r;
-	#endif
-
 	#if TAA_MODE > 0
 		TAA_Offset = offsets[framemod8];
 	#else
 		TAA_Offset = vec2(0.0);
 	#endif
-
 }

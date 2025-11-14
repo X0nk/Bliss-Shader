@@ -2,4 +2,4 @@
 
 #define END_SHADER
 
-#include "/dimensions/fogBehindTranslucent_pass.fsh"
+#include "/dimensions/composite.fsh"

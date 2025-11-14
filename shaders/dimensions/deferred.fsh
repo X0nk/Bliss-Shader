@@ -61,6 +61,15 @@ uniform ivec2 eyeBrightnessSmooth;
 uniform float caveDetection;
 uniform int isEyeInWater;
 
+uniform float dayChangeSmooth;
+uniform bool worldTimeChangeCheck;
+
+uniform int hideGUI;
+
+uniform float near;
+uniform float dhFarPlane;
+uniform float dhNearPlane;
+
 vec4 lightCol = vec4(lightSourceColor, float(sunElevation > 1e-5)*2-1.);
 
 #include "/lib/util.glsl"
@@ -106,9 +115,6 @@ vec3 toScreenSpace(vec3 p) {
     return viewPos.xyz / viewPos.w;
 }
 
-uniform float near;
-uniform float dhFarPlane;
-uniform float dhNearPlane;
 
 
 #include "/lib/DistantHorizons_projections.glsl"
@@ -144,6 +150,10 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 float invLinZ (float lindepth){
 	return -((2.0*near/lindepth)-far-near)/(far-near);
 }
+
+// #define LIGHTNINGFLASH_VL
+#include "/lib/lightning_stuff.glsl"
+
 #ifdef OVERWORLD_SHADER
 
 	// uniform sampler2D colortex4;
@@ -161,7 +171,6 @@ float invLinZ (float lindepth){
 
 	// #define TEST
 	#define TIMEOFDAYFOG
-	#include "/lib/lightning_stuff.glsl"
 
 	#include "/lib/scene_controller.glsl"
 
@@ -195,10 +204,6 @@ vec2 R2_samples(float n){
 	return fract(alpha * n);
 }
 
-uniform float dayChangeSmooth;
-uniform bool worldTimeChangeCheck;
-
-uniform int hideGUI;
 
 
 void main() {
@@ -219,7 +224,7 @@ float mixhistory = 0.06;
 	if (gl_FragCoord.x > 1 && gl_FragCoord.x < 4 && gl_FragCoord.y > 1 && gl_FragCoord.y < 4){
 		mixhistory = 10.0 * frameTime;
 
-		gl_FragData[0].rgb = writeSceneControllerParameters(gl_FragCoord.xy, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
+		gl_FragData[0].rgb = writeSceneControllerParameters(gl_FragCoord.xy, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog, parameters.localFog, parameters.localFogColor);
 	}
 
 	///////////////////////////////
@@ -298,11 +303,11 @@ if (gl_FragCoord.x > 18. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257){
 	
 	vec3 mC = vec3(fog_coefficientMieR*1e-6, fog_coefficientMieG*1e-6, fog_coefficientMieB*1e-6);
 	
-	sky = calculateAtmosphere((averageSkyCol*4000.0/2.0), viewVector, vec3(0.0,1.0,0.0), WsunVec, -WsunVec, planetSphere, skyAbsorb, 10, blueNoise());
+	sky = calculateAtmosphere(averageSkyCol*2000.0, viewVector, vec3(0.0,1.0,0.0), WsunVec, -WsunVec, planetSphere, skyAbsorb, 10, blueNoise());
 
 	// fade atmosphere conditions for rain away when you pass above the cloud plane.
-	// float heightRelativeToClouds = clamp(1.0 - max(eyeAltitude - CloudLayer0_height,0.0) / 200.0 ,0.0,1.0);
-	// if(rainStrength > 0.0) sky = mix(sky, 3.0 + averageSkyCol*4000 * (skyAbsorb*0.7+0.3), clamp(1.0 - exp(pow(clamp(-viewVector.y+0.9,0.0,1.0),2) * -5.0),0.0,1.0) * heightRelativeToClouds * rainStrength);
+	float heightRelativeToClouds = clamp(1.0 - max(eyeAltitude - CloudLayer0_height,0.0) / 200.0 ,0.0,1.0);
+	if(rainStrength > 0.0) sky = mix(sky, averageSkyCol * 2000.0 * (skyAbsorb*0.7+0.3), clamp(1.0 - exp(pow(clamp(-viewVector.y+0.9,0.0,1.0),2) * -5.0),0.0,1.0) * heightRelativeToClouds * rainStrength);
 	
 	#ifdef AEROCHROME_MODE
 		sky *= vec3(0.0, 0.18, 0.35);
@@ -316,6 +321,7 @@ if (gl_FragCoord.x > 18. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257){
 /// --- Sky + clouds + fog 
 if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+257.){
 	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
+	
 	vec3 viewVector = cartToSphere(p);
 
 	vec3 viewPos = mat3(gbufferModelView)*viewVector*1024.0;
@@ -339,9 +345,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 
 	float cloudPlaneDistance = 0.0;
 	vec4 volumetricClouds = GetVolumetricClouds(viewPos, vec2(noise, 1.0-noise), WsunVec, suncol*2.5, skyGroundCol/30.0, cloudPlaneDistance);
-
-	float atmosphereAlpha = 1.0;
-	vec4 volumetricFog = GetVolumetricFog(viewPos, WsunVec,   vec2(noise, 1.0-noise), suncol*2.5, skyGroundCol/30.0, averageSkyCol_Clouds*5.0, atmosphereAlpha, volumetricClouds.rgb, cloudPlaneDistance);
+	vec4 volumetricFog = GetVolumetricFog(viewPos,vec2(noise, 1.0-noise),  WsunVec,    suncol*2.5, skyGroundCol/30.0, averageSkyCol_Clouds*5.0, cloudPlaneDistance);
 
 	sky = sky * volumetricClouds.a + volumetricClouds.rgb / 5.0;
 	sky = sky * volumetricFog.a + volumetricFog.rgb / 5.0;

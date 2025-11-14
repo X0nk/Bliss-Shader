@@ -254,10 +254,6 @@ vec4 GetVolumetricFog(
 	vec3 hazeColor = normalize(gl_Fog.color.rgb + 1e-6) * 0.1;
     
 	float lightningflash = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
-
-	#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
-    	float TorchBrightness_autoAdjust = mix(1.0, 30.0,  clamp(exp(-10.0*exposure),0.0,1.0)) / 5.0;
-	#endif
 	
 	for (int i = 0; i < SAMPLECOUNT; i++) {
 		float d = (pow(expFactor, float(i+dither)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
@@ -319,11 +315,6 @@ vec4 GetVolumetricFog(
 
 			color += (flashlightGlow - flashlightGlow * exp(-max(stormDensity,0.005)*dd*dL)) * absorbance;
 		#endif
-
-		//------ LPV FOG EFFECT
-			#if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
-				color += LPV_FOG_ILLUMINATION(progressW-cameraPosition, dd, dL) * TorchBrightness_autoAdjust * absorbance;
-			#endif
 	}
 	return vec4(color, absorbance);
 }

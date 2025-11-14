@@ -40,7 +40,7 @@ void main() {
 	gl_Position = ftransform();
 
 	// gl_Position.xy = (gl_Position.xy*0.5+0.5)*0.51*2.0-1.0;
-	gl_Position.xy = (gl_Position.xy*0.5+0.5)*(0.01+VL_RENDER_RESOLUTION)*2.0-1.0;
+	gl_Position.xy = (gl_Position.xy*0.5+0.5)*(0.01+VL_RENDERING_RESOLUTION_SCALE)*2.0-1.0;
 	
   	// #if TAA_MODE > 0
 	// tempOffsets = HaltonSeq2(frameCounter%10000);
@@ -53,7 +53,9 @@ void main() {
 		averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
 		averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 	
-		readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
+		#define READ_SCENE_CONTROLLER_PARAMETERS
+		#include "/lib/scene_controller.glsl"
+		// readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
 	#endif
 
 	#ifdef NETHER_SHADER

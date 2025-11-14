@@ -15,8 +15,6 @@ flat varying vec4 lightCol;
 flat varying vec3 moonCol;
 flat varying vec3 albedoSmooth;
 
-flat varying float exposure;
-
 flat varying vec2 TAA_Offset;
 flat varying vec3 zMults;
 uniform sampler2D colortex4;
@@ -71,8 +69,9 @@ void main() {
 
 	WsunVec = mix(WmoonVec, unsigned_WsunVec, clamp(lightCol.a,0,1));
 	
-
-	readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
+	#define READ_SCENE_CONTROLLER_PARAMETERS
+	#include "/lib/scene_controller.glsl"
+	// readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
 	
 	#if TAA_MODE > 0
 		TAA_Offset = offsets[framemod8];

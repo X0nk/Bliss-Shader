@@ -1,3 +1,4 @@
+
 #include "/lib/settings.glsl"
 // #if defined END_SHADER || defined NETHER_SHADER
 	#undef IS_LPV_ENABLED
@@ -93,9 +94,8 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 	#include "/lib/diffuse_lighting.glsl"
 
 	#define TIMEOFDAYFOG
-	#include "/lib/lightning_stuff.glsl"
+	// #include "/lib/lightning_stuff.glsl"
 
-	#define CLOUDS_INTERSECT_TERRAIN
 	// #define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
 	#include "/lib/climate_settings.glsl"
@@ -257,14 +257,17 @@ vec2 decodeVec2(float a){
 
 
 void main() {
-/* RENDERTARGETS:13 */
+
 
 	gl_FragData[0] = vec4(0,0,0,1);
 
-	vec2 tc = floor(gl_FragCoord.xy)/VL_RENDER_RESOLUTION*texelSize+0.5*texelSize;
+	vec2 texcoord = floor(gl_FragCoord.xy - 0.5)/VL_RENDERING_RESOLUTION_SCALE;
+	vec2 texcoord_norm = texcoord*texelSize;
+	ivec2 texcoord_cast = ivec2(texcoord);
+	// vec2 tc = floor(gl_FragCoord.xy)/VL_RENDERING_RESOLUTION_SCALE*texelSize + 0.5*texelSize;
 
-	float alpha = texture2D(colortex7,tc).a ;
-	float blendedAlpha = texture2D(colortex2, tc).a;
+	float alpha = texelFetch2D(colortex7,texcoord_cast,0).a ;
+	float blendedAlpha = texelFetch2D(colortex2, texcoord_cast,0).a;
 
 
 	bool iswater = alpha > 0.99;
@@ -277,36 +280,33 @@ void main() {
 		float noise_1 = R2_dither();
 		float noise_2 = blueNoise();
 
-		float z0 = texelFetch2D(depthtex0, ivec2((floor(gl_FragCoord.xy - 0.5)/VL_RENDER_RESOLUTION*texelSize)/texelSize), 0 ).x;
+		float z0 = texelFetch2D(depthtex0, texcoord_cast, 0 ).x;
 
 		#ifdef DISTANT_HORIZONS
-			float DH_z0 = texelFetch2D(dhDepthTex, ivec2((floor(gl_FragCoord.xy - 0.5)/VL_RENDER_RESOLUTION*texelSize)/texelSize), 0 ).x;//texture2D(dhDepthTex,tc).x;
+			float DH_z0 = texelFetch2D(dhDepthTex, texcoord_cast, 0 ).x;//texture2D(dhDepthTex,tc).x;
 		#else
 			float DH_z0 = 0.0;
 		#endif
 
-		float z = texelFetch2D(depthtex1, ivec2((floor(gl_FragCoord.xy - 0.5)/VL_RENDER_RESOLUTION*texelSize)/texelSize), 0 ).x;
+		float z = texelFetch2D(depthtex1, texcoord_cast, 0 ).x;
 
 		#ifdef DISTANT_HORIZONS
-			// float DH_z = texture2D(dhDepthTex1,tc).x;
-			float DH_z = texelFetch2D(dhDepthTex1, ivec2((floor(gl_FragCoord.xy - 0.5)/VL_RENDER_RESOLUTION*texelSize)/texelSize), 0 ).x;//texture2D(dhDepthTex,tc).x;
+			float DH_z = texelFetch2D(dhDepthTex1, texcoord_cast, 0 ).x;
 		#else
 			float DH_z = 0.0;
 		#endif
 
-		// vec3 lightningColor = (lightningEffect / 3) * (max(eyeBrightnessSmooth.y,0)/240.);
 
-		float dirtAmount = Dirt_Amount ;
-    	// float dirtAmount = Dirt_Amount + 0.01;
+		float dirtAmount = Dirt_Amount;
 		vec3 waterEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
 		vec3 dirtEpsilon = vec3(Dirt_Absorb_R, Dirt_Absorb_G, Dirt_Absorb_B);
-		vec3 totEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);//dirtEpsilon * dirtAmount + waterEpsilon;
+		vec3 totEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
 		vec3 scatterCoef = dirtAmount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / 3.14;
 
 		#ifdef BIOME_TINT_WATER
 			// yoink the biome tint written in this buffer for water only.
 			if(iswater){
-				vec2 data = texelFetch2D(colortex11,ivec2(tc/texelSize),0).gb;
+				vec2 data = texelFetch2D(colortex11,texcoord_cast,0).gb;
 				vec3 wateralbedo = vec3(decodeVec2(data.x),decodeVec2(data.y).r);
 				scatterCoef = dirtAmount * normalize(wateralbedo.rgb+1e-7) / 3.14;
 			}
@@ -316,21 +316,20 @@ void main() {
 		vec3 indirectLightColor = averageSkyCol / 1200.0;
 		vec3 indirectLightColor_dynamic = averageSkyCol_Clouds / 1200.0;
 
-
-		vec3 viewPos1 = toScreenSpace_DH(tc/RENDER_SCALE, z, DH_z);
-		vec3 viewPos0 = toScreenSpace_DH(tc/RENDER_SCALE, z0, DH_z0);
+		vec3 viewPos1 = toScreenSpace_DH(texcoord_norm/RENDER_SCALE, z, DH_z);
+		vec3 viewPos0 = toScreenSpace_DH(texcoord_norm/RENDER_SCALE, z0, DH_z0);
 
 		vec3 playerPos = mat3(gbufferModelViewInverse) *  viewPos1;
 		vec3 playerPos0 = mat3(gbufferModelViewInverse) *  viewPos0;
 
 		#ifdef OVERWORLD_SHADER
-			vec2 lightmap = decodeVec2(texelFetch2D(colortex14,ivec2(tc/texelSize),0).x);
+			vec2 lightmap = decodeVec2(texelFetch2D(colortex14,texcoord_cast,0).x);
 			
 			#ifdef DISTANT_HORIZONS
 				if(z >= 1.0) lightmap.y = 0.99;
 			#endif
 		#else
-			vec2 lightmap = decodeVec2(texelFetch2D(colortex14,ivec2(tc/texelSize),0).a);
+			vec2 lightmap = decodeVec2(texelFetch2D(colortex14,texcoord_cast,0).a);
 			lightmap.y = 1.0;
 		#endif
 
@@ -340,19 +339,17 @@ void main() {
 		
 	 	indirectLightColor_dynamic *= ambient_brightness * lightmap.y*lightmap.y;
 
-		indirectLightColor_dynamic += MIN_LIGHT_AMOUNT * 0.02 * 0.2 + nightVision*0.02;
+		// indirectLightColor_dynamic += MIN_LIGHT_AMOUNT * 0.02 * 0.2 + nightVision*0.02;
 
 		indirectLightColor_dynamic += vec3(TORCH_R,TORCH_G,TORCH_B)	* pow(1.0-sqrt(1.0-clamp(lightmap.x,0.0,1.0)),2.0)  * TORCH_AMOUNT;
 
 		vec4 finalVolumetrics = vec4(0.0,0.0,0.0,1.0);
-		float cloudPlaneDistance = 0.0;
 
 		#ifdef OVERWORLD_SHADER
+			float cloudPlaneDistance = 0.0;
 			vec4 VolumetricClouds = GetVolumetricClouds(viewPos1, vec2(noise_1, noise_2), WsunVec, directLightColor, indirectLightColor, cloudPlaneDistance);
+			vec4 VolumetricFog = GetVolumetricFog(viewPos1, vec2(noise_1, noise_2),  WsunVec, directLightColor, indirectLightColor, indirectLightColor_dynamic, cloudPlaneDistance);
 
-			float atmosphereAlpha = 1.0;
-			vec4 VolumetricFog = GetVolumetricFog(viewPos1, WsunVec,  vec2(noise_1, noise_2), directLightColor, indirectLightColor, indirectLightColor_dynamic, atmosphereAlpha, VolumetricClouds.rgb,cloudPlaneDistance);
-			
 			finalVolumetrics.rgb += VolumetricClouds.rgb;
 			finalVolumetrics.a *= VolumetricClouds.a;
 		#endif

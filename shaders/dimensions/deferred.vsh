@@ -123,19 +123,20 @@ void main() {
    	// }
 	float maxIT = 20.0;
 	for (int i = 0; i < int(maxIT); i++) {
-		vec2 ij = R2_samples(((i*50+1)%1000)*int(maxIT)+i) ;//* vec2(0.3183,0.9000);
+		vec2 ij = R2_samples(((i*50+1)%1000)*int(maxIT)+i) * vec2(1.0,0.9000);
 		vec3 pos = normalize(rodSample(ij)) * vec3(1.0,0.5,1.0) + vec3(0.0,0.5,0.0);
 
 		averageSkyCol_Clouds += skyCloudsFromTex(pos,colortex4).rgb/maxIT/150.0;
 		averageSkyCol += 1.5 * skyFromTex(pos,colortex4).rgb/maxIT/150.0;
 	}
 
-	vec3 minimumlight =  vec3(1.0) * 0.01 * MIN_LIGHT_AMOUNT + nightVision * 0.05;
+	// vec3 minimumlight =  vec3(1.0) * 0.01 * MIN_LIGHT_AMOUNT + nightVision * 0.05;
+	// vec3 minimumlight =  vec3(1.0) * 0.01 * MIN_LIGHT_AMOUNT + nightVision * 0.05;
 
 	// luminance based reinhard is useful ouside of tonemapping too.
 	averageSkyCol_Clouds = 1.5 * (averageSkyCol_Clouds / (1.0+luma(averageSkyCol_Clouds)*0.2));
 	
-	averageSkyCol = max(averageSkyCol * PLANET_GROUND_BRIGHTNESS,0.0) + minimumlight;
+	averageSkyCol = max(averageSkyCol * PLANET_GROUND_BRIGHTNESS,0.0) ;
 
 	#ifdef USE_CUSTOM_SKY_GROUND_LIGHTING_COLORS
 		averageSkyCol = luma(averageSkyCol) * vec3(SKY_GROUND_R,SKY_GROUND_G,SKY_GROUND_B);
@@ -175,7 +176,8 @@ void main() {
 		parameters.smallCumulus.x, parameters.smallCumulus.y, 
 		parameters.largeCumulus.x, parameters.largeCumulus.y,
 		parameters.altostratus.x, parameters.altostratus.y,
-		parameters.fog.x, parameters.fog.y
+		parameters.fog.x, parameters.fog.y, 
+		parameters.localFog.x, parameters.localFog.y, parameters.localFogColor.rgb
 	);
 
 //////////////////////////////

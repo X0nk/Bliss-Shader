@@ -2,4 +2,4 @@
 
 #define NETHER_SHADER
 
-#include "/dimensions/fogBehindTranslucent_pass.vsh"
+#include "/dimensions/composite.vsh"

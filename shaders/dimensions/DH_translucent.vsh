@@ -102,7 +102,9 @@ void main() {
 	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 	
 	#ifdef OVERWORLD_SHADER
-		readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
+		#define READ_SCENE_CONTROLLER_PARAMETERS
+		#include "/lib/scene_controller.glsl"
+		// readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
 	#endif
 
 

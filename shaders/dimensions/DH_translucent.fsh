@@ -431,7 +431,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
     #ifdef DH_OVERDRAW_PREVENTION
         float distancefade = min(max(1.0 - length(playerPos)/clamp(far-16*4, 16, maxOverdrawDistance),0.0)*5,1.0);
 
-        if(texture2D(depthtex0, gl_FragCoord.xy*texelSize).x < 1.0 ||  distancefade > 0.0){
+        if(texture2D(depthtex0, gl_FragCoord.xy*texelSize).x < 1.0 || distancefade > 0.0){
             gl_FragData[0].a = 0.0;
             material = 0.0;
         }

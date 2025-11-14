@@ -98,7 +98,6 @@ flat varying int SIGN;
 
 
 flat varying float HELD_ITEM_BRIGHTNESS;
-uniform float noPuddleAreas;
 uniform float nightVision;
 
 // float interleaved_gradientNoise(){
@@ -651,8 +650,16 @@ void main() {
 	#endif
 
 	#ifdef WORLD
-		// apply noise to lightmaps to reduce banding.
 		vec2 PackLightmaps = vec2(torchlightmap, lmtexcoord.w);
+		
+		// special curve to give more precision on high/low values of the gradient. this curve will be inverted after sampling and decoding.
+		// PackLightmaps = pow(1.0-pow(1.0-PackLightmaps,vec2(0.5)),vec2(0.5));
+		
+		#if defined WORLD && !defined HAND && !defined ENTITIES
+			// some dither to lightmaps to reduce banding.
+			PackLightmaps = clamp( PackLightmaps + PackLightmaps * (interleaved_gradientNoise()-0.5)*0.005,0,1);
+		#endif
+
 		vec4 data1 = clamp( encode(viewToWorld(normal), PackLightmaps), 0.0, 1.0);
 
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));

@@ -34,6 +34,7 @@ vec3 doBlockLightLighting(
     lightmapLight *= lightmapLight;
 
     float lightmapCurve = mix(lightmapLight, 2.5, lightmapBrightspot);
+    // lightmapCurve = lightmap;
     vec3 blockLight = lightmapCurve * lightColor;
     
     #if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
@@ -74,12 +75,16 @@ vec3 doIndirectLighting(
     // float lightmapCurve = pow(1.0-pow(1.0-lightmap,2.0),2.0);
     // float lightmapCurve = lightmap*lightmap;
     float lightmapCurve = (pow(lightmap,15.0)*2.0 + lightmap*lightmap)/3.0; //make sure its 0.0-1.0
-
+    // lightmapCurve = lightmap;
     vec3 indirectLight = lightColor * lightmapCurve * ambient_brightness; 
 
     // indirectLight = max(indirectLight, minimumLightColor * (MIN_LIGHT_AMOUNT * 0.02 * 0.2 + nightVision));
-    indirectLight += minimumLightColor * (MIN_LIGHT_AMOUNT * 0.02 * 0.2 + nightVision*0.02);
-
+    // indirectLight += minimumLightColor * (MIN_LIGHT_AMOUNT * 0.02 * 0.2 + nightVision*0.02);
+    
+    float minimumLightAmount = 0.02*nightVision + 0.005 * mix(MINIMUM_INDOOR_LIGHT, MINIMUM_OUTDOOR_LIGHT, clamp(eyeBrightnessSmooth.y/240.0 + lightmap,0.0,1.0));
+    
+    indirectLight += minimumLightColor * minimumLightAmount;
+    
     return indirectLight;
 }
 

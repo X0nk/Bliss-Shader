@@ -164,7 +164,8 @@ screen.Ambient_light = Ambient Light
     
 
 screen.Fog = Fog Settings
-    option.VL_RENDER_RESOLUTION = Fog Resolution Scaling
+    option.VL_RENDERING_RESOLUTION_SCALE = Volumetrics Render Scale
+    suffix.VL_RENDERING_RESOLUTION_SCALE = x
     option.VL_SAMPLES = Fog Samples
     option.BLOOMY_FOG = Bloomy Fog Multiplier
     option.Haze_amount = Atmospheric Haze Density
@@ -172,7 +173,9 @@ screen.Fog = Fog Settings
     option.BorderFog = Chunk Border Fog
 
     screen.TOD_fog = Time Of Day Fog
-        option.TOD_Fog_mult = Fog Density Multiplier
+        option.TOD_FOG_AMOUNT = Fog Amount
+        value.TOD_FOG_AMOUNT.0 = NONE
+        suffix.TOD_FOG_AMOUNT = %
         option.Morning_Uniform_Fog = Morning Fog Density
         option.Noon_Uniform_Fog = Noon Fog Density
         option.Evening_Uniform_Fog = Evening Fog Density
@@ -196,130 +199,229 @@ screen.Fog = Fog Settings
         option.NETHER_PLUME_DENSITY = Nether Smoke Density
 
 screen.Clouds = Cloud Settings
-    option.VOLUMETRIC_CLOUDS = Volumetric Clouds
-    option.CLOUDS_QUALITY = Cloud Resolution Scaling
-    option.CLOUDS_SHADOWS = Cloud Shadows
+
+    option.SMALL_CUMULUS_LABEL = Small Cumulus Layer
+    option.LARGE_CUMULUS_LABEL = Large Cumulus Layer
+    option.ALTOSTRATUS_LABEL =   Altostratus Layer
+    value.SMALL_CUMULUS_LABEL.0 = §f↓
+    value.LARGE_CUMULUS_LABEL.0 = §f↓
+    value.ALTOSTRATUS_LABEL.0 = §f↓
+
+    option.CLOUD_SHADOW_AMOUNT = Cloud Shadow Visibilty
+    value.CLOUD_SHADOW_AMOUNT.0 = OFF
+    suffix.CLOUD_SHADOW_AMOUNT = %
     option.Cloud_Speed = Cloud Speed Multiplier
-    option.Rain_coverage = Coverage When Raining
-    option.Daily_Weather = Daily Weather
 
-    option.CloudLayer0          = Small Cumulus Clouds
-    option.CloudLayer0_coverage = Coverage
-    option.CloudLayer0_density  = Density
-    option.CloudLayer0_height   = Height
+    option.CloudLayer0 = Small Cumulus Clouds
+    option.CloudLayer1 = Large Cumulus Clouds
+    option.CloudLayer2 = Altostratus Clouds
+    screen.CloudLayer0_config = Small Cumulus Config §cTEMPORARY SUBMENU§r 
+    screen.CloudLayer1_config = Large Cumulus Config §cTEMPORARY SUBMENU§r 
+    screen.CloudLayer2_config = Altostratus Config §cTEMPORARY SUBMENU§r 
 
-    option.CloudLayer1          = Large Cumulus Clouds
-    option.CloudLayer1_coverage = Coverage
-    option.CloudLayer1_density  = Density
-    option.CloudLayer1_height   = Height
+    option.CloudLayer0_height   = Altitude
+    option.CloudLayer0_scale    = Scale
+    option.CloudLayer0_tallness = Tallness
+    option.CloudLayer1_height   = Altitude
+    option.CloudLayer1_scale    = Scale
+    option.CloudLayer1_tallness = Tallness
+    option.CloudLayer2_height   = Altitude
+    option.CloudLayer2_scale    = Scale
+    option.CloudLayer2_tallness = Tallness
+    
+    screen.DAILY_WEATHER = Daily Weather Presets
+    option.USE_CUSTOM_DAILY_WEATHER_PROFILE = Daily Weather Mode
+        value.USE_CUSTOM_DAILY_WEATHER_PROFILE.0 = Hardcoded
+        value.USE_CUSTOM_DAILY_WEATHER_PROFILE.1 =§f↓§r Only Use Preset 1 §f↓§r
+        value.USE_CUSTOM_DAILY_WEATHER_PROFILE.2 =§f↓§r Use Presets 1 to 2 §f↓§r
+        value.USE_CUSTOM_DAILY_WEATHER_PROFILE.3 =§f↓§r Use Presets 1 to 3 §f↓§r
+        value.USE_CUSTOM_DAILY_WEATHER_PROFILE.4 =§f↓§r Use Presets 1 to 4 §f↓§r
+        value.USE_CUSTOM_DAILY_WEATHER_PROFILE.5 =§f↓§r Use Presets 1 to 5 §f↓§r
+        value.USE_CUSTOM_DAILY_WEATHER_PROFILE.6 =§f↓§r Use Presets 1 to 6 §f↓§r
+    
+    screen.DAILY_WEATHER_PROFILE_1 = Preset 1
+    screen.DAILY_WEATHER_PROFILE_2 = Preset 2
+    screen.DAILY_WEATHER_PROFILE_3 = Preset 3
+    screen.DAILY_WEATHER_PROFILE_4 = Preset 4
+    screen.DAILY_WEATHER_PROFILE_5 = Preset 5
+    screen.DAILY_WEATHER_PROFILE_6 = Preset 6
 
-    option.CloudLayer2          = Altostratus Clouds
-    option.CloudLayer2_coverage = Coverage
-    option.CloudLayer2_density  = Density
-    option.CloudLayer2_height   = Height
+    screen.RAINY_WEATHER = Rainy Weather Presets
+    option.USE_CUSTOM_DAILY_RAIN_PROFILE = Rainy Weather Mode
+        value.USE_CUSTOM_DAILY_RAIN_PROFILE.0 = Hardcoded
+        value.USE_CUSTOM_DAILY_RAIN_PROFILE.1 =§f↓§r Only Use Preset 1 §f↓§r
+        value.USE_CUSTOM_DAILY_RAIN_PROFILE.2 =§f↓§r Use Presets 1 to 2 §f↓§r
+        value.USE_CUSTOM_DAILY_RAIN_PROFILE.3 =§f↓§r Use Presets 1 to 3 §f↓§r
+        value.USE_CUSTOM_DAILY_RAIN_PROFILE.4 =§f↓§r Use Presets 1 to 4 §f↓§r
+        value.USE_CUSTOM_DAILY_RAIN_PROFILE.5 =§f↓§r Use Presets 1 to 5 §f↓§r
+        value.USE_CUSTOM_DAILY_RAIN_PROFILE.6 =§f↓§r Use Presets 1 to 6 §f↓§r
+    
+    screen.RAINY_WEATHER_PROFILE_1 = Preset 1
+    screen.RAINY_WEATHER_PROFILE_2 = Preset 2
+    screen.RAINY_WEATHER_PROFILE_3 = Preset 3
+    screen.RAINY_WEATHER_PROFILE_4 = Preset 4
+    screen.RAINY_WEATHER_PROFILE_5 = Preset 5
+    screen.RAINY_WEATHER_PROFILE_6 = Preset 6
 
-screen.DAILY_WEATHER = Daily Weather Settings
-option.CHOOSE_RANDOM_WEATHER_PROFILE = Random Weather Profile
-    screen.DAY0_WEATHER = Day 0 Weather Profile
-        option.DAY0_l0_coverage = Small Cumulus coverage
-        option.DAY0_l0_density = Small Cumulus Density
-        option.DAY0_l1_coverage = Large Cumulus Coverage
-        option.DAY0_l1_density = Large Cumulus Density
-        option.DAY0_l2_coverage = Altostratus Clouds Coverage
-        option.DAY0_l2_density =  Altostratus Clouds Density
-        option.DAY0_ufog_density = Uniform Fog Density
-        option.DAY0_cfog_density = Cloudy Fog Density
-        
-    screen.DAY1_WEATHER = Day 1 Weather Profile
-        option.DAY1_l0_coverage = Small Cumulus coverage
-        option.DAY1_l0_density = Small Cumulus Density
-        option.DAY1_l1_coverage = Large Cumulus Coverage
-        option.DAY1_l1_density = Large Cumulus Density
-        option.DAY1_l2_coverage = Altostratus Clouds Coverage
-        option.DAY1_l2_density =  Altostratus Clouds Density
-        option.DAY1_ufog_density = Uniform Fog Density
-        option.DAY1_cfog_density = Cloudy Fog Density
-        
-    screen.DAY2_WEATHER = Day 2 Weather Profile
-        option.DAY2_l0_coverage = Small Cumulus coverage
-        option.DAY2_l0_density = Small Cumulus Density
-        option.DAY2_l1_coverage = Large Cumulus Coverage
-        option.DAY2_l1_density = Large Cumulus Density
-        option.DAY2_l2_coverage = Altostratus Clouds Coverage
-        option.DAY2_l2_density =  Altostratus Clouds Density
-        option.DAY2_ufog_density = Uniform Fog Density
-        option.DAY2_cfog_density = Cloudy Fog Density
+    option.DAILY_PROFILE_1_LAYER0_COVERAGE = Coverage
+    option.DAILY_PROFILE_1_LAYER0_DENSITY = Density
+    option.DAILY_PROFILE_1_LAYER1_COVERAGE = Coverage
+    option.DAILY_PROFILE_1_LAYER1_DENSITY = Density
+    option.DAILY_PROFILE_1_LAYER2_COVERAGE = Coverage
+    option.DAILY_PROFILE_1_LAYER2_DENSITY = Density
 
-    screen.DAY3_WEATHER = Day 3 Weather Profile
-        option.DAY3_l0_coverage = Small Cumulus coverage
-        option.DAY3_l0_density = Small Cumulus Density
-        option.DAY3_l1_coverage = Large Cumulus Coverage
-        option.DAY3_l1_density = Large Cumulus Density
-        option.DAY3_l2_coverage = Altostratus Clouds Coverage
-        option.DAY3_l2_density =  Altostratus Clouds Density
-        option.DAY3_ufog_density = Uniform Fog Density
-        option.DAY3_cfog_density = Cloudy Fog Density
+    option.DAILY_PROFILE_2_LAYER0_COVERAGE = Coverage
+    option.DAILY_PROFILE_2_LAYER0_DENSITY = Density
+    option.DAILY_PROFILE_2_LAYER1_COVERAGE = Coverage
+    option.DAILY_PROFILE_2_LAYER1_DENSITY = Density
+    option.DAILY_PROFILE_2_LAYER2_COVERAGE = Coverage
+    option.DAILY_PROFILE_2_LAYER2_DENSITY = Density
 
-    screen.DAY4_WEATHER = Day 4 Weather Profile
-        option.DAY4_l0_coverage = Small Cumulus coverage
-        option.DAY4_l0_density = Small Cumulus Density
-        option.DAY4_l1_coverage = Large Cumulus Coverage
-        option.DAY4_l1_density = Large Cumulus Density
-        option.DAY4_l2_coverage = Altostratus Clouds Coverage
-        option.DAY4_l2_density =  Altostratus Clouds Density
-        option.DAY4_ufog_density = Uniform Fog Density
-        option.DAY4_cfog_density = Cloudy Fog Density
+    option.DAILY_PROFILE_3_LAYER0_COVERAGE = Coverage
+    option.DAILY_PROFILE_3_LAYER0_DENSITY = Density
+    option.DAILY_PROFILE_3_LAYER1_COVERAGE = Coverage
+    option.DAILY_PROFILE_3_LAYER1_DENSITY = Density
+    option.DAILY_PROFILE_3_LAYER2_COVERAGE = Coverage
+    option.DAILY_PROFILE_3_LAYER2_DENSITY = Density
 
-    screen.DAY5_WEATHER = Day 5 Weather Profile
-        option.DAY5_l0_coverage = Small Cumulus coverage
-        option.DAY5_l0_density = Small Cumulus Density
-        option.DAY5_l1_coverage = Large Cumulus Coverage
-        option.DAY5_l1_density = Large Cumulus Density
-        option.DAY5_l2_coverage = Altostratus Clouds Coverage
-        option.DAY5_l2_density =  Altostratus Clouds Density
-        option.DAY5_ufog_density = Uniform Fog Density
-        option.DAY5_cfog_density = Cloudy Fog Density
+    option.DAILY_PROFILE_4_LAYER0_COVERAGE = Coverage
+    option.DAILY_PROFILE_4_LAYER0_DENSITY = Density
+    option.DAILY_PROFILE_4_LAYER1_COVERAGE = Coverage
+    option.DAILY_PROFILE_4_LAYER1_DENSITY = Density
+    option.DAILY_PROFILE_4_LAYER2_COVERAGE = Coverage
+    option.DAILY_PROFILE_4_LAYER2_DENSITY = Density
 
-    screen.DAY6_WEATHER = Day 6 Weather Profile
-        option.DAY6_l0_coverage = Small Cumulus coverage
-        option.DAY6_l0_density = Small Cumulus Density
-        option.DAY6_l1_coverage = Large Cumulus Coverage
-        option.DAY6_l1_density = Large Cumulus Density
-        option.DAY6_l2_coverage = Altostratus Clouds Coverage
-        option.DAY6_l2_density =  Altostratus Clouds Density
-        option.DAY6_ufog_density = Uniform Fog Density
-        option.DAY6_cfog_density = Cloudy Fog Density
+    option.DAILY_PROFILE_5_LAYER0_COVERAGE = Coverage
+    option.DAILY_PROFILE_5_LAYER0_DENSITY = Density
+    option.DAILY_PROFILE_5_LAYER1_COVERAGE = Coverage
+    option.DAILY_PROFILE_5_LAYER1_DENSITY = Density
+    option.DAILY_PROFILE_5_LAYER2_COVERAGE = Coverage
+    option.DAILY_PROFILE_5_LAYER2_DENSITY = Density
 
-    screen.DAY7_WEATHER = Day 7 Weather Profile
-        option.DAY7_l0_coverage = Small Cumulus coverage
-        option.DAY7_l0_density = Small Cumulus Density
-        option.DAY7_l1_coverage = Large Cumulus Coverage
-        option.DAY7_l1_density = Large Cumulus Density
-        option.DAY7_l2_coverage = Altostratus Clouds Coverage
-        option.DAY7_l2_density =  Altostratus Clouds Density
-        option.DAY7_ufog_density = Uniform Fog Density
-        option.DAY7_cfog_density = Cloudy Fog Density
+    option.DAILY_PROFILE_6_LAYER0_COVERAGE = Coverage
+    option.DAILY_PROFILE_6_LAYER0_DENSITY = Density
+    option.DAILY_PROFILE_6_LAYER1_COVERAGE = Coverage
+    option.DAILY_PROFILE_6_LAYER1_DENSITY = Density
+    option.DAILY_PROFILE_6_LAYER2_COVERAGE = Coverage
+    option.DAILY_PROFILE_6_LAYER2_DENSITY = Density
 
-    screen.DAY8_WEATHER = Day 8 Weather Profile
-        option.DAY8_l0_coverage = Small Cumulus coverage
-        option.DAY8_l0_density = Small Cumulus Density
-        option.DAY8_l1_coverage = Large Cumulus Coverage
-        option.DAY8_l1_density = Large Cumulus Density
-        option.DAY8_l2_coverage = Altostratus Clouds Coverage
-        option.DAY8_l2_density =  Altostratus Clouds Density
-        option.DAY8_ufog_density = Uniform Fog Density
-        option.DAY8_cfog_density = Cloudy Fog Density
+    option.RAINY_PROFILE_1_LAYER0_COVERAGE = Coverage
+    option.RAINY_PROFILE_1_LAYER0_DENSITY = Density
+    option.RAINY_PROFILE_1_LAYER1_COVERAGE = Coverage
+    option.RAINY_PROFILE_1_LAYER1_DENSITY = Density
+    option.RAINY_PROFILE_1_LAYER2_COVERAGE = Coverage
+    option.RAINY_PROFILE_1_LAYER2_DENSITY = Density
 
-    screen.DAY9_WEATHER = Day 9 Weather Profile
-        option.DAY9_l0_coverage = Small Cumulus coverage
-        option.DAY9_l0_density = Small Cumulus Density
-        option.DAY9_l1_coverage = Large Cumulus Coverage
-        option.DAY9_l1_density = Large Cumulus Density
-        option.DAY9_l2_coverage = Altostratus Clouds Coverage
-        option.DAY9_l2_density =  Altostratus Clouds Density
-        option.DAY9_ufog_density = Uniform Fog Density
-        option.DAY9_cfog_density = Cloudy Fog Density
-        
+    option.RAINY_PROFILE_2_LAYER0_COVERAGE = Coverage
+    option.RAINY_PROFILE_2_LAYER0_DENSITY = Density
+    option.RAINY_PROFILE_2_LAYER1_COVERAGE = Coverage
+    option.RAINY_PROFILE_2_LAYER1_DENSITY = Density
+    option.RAINY_PROFILE_2_LAYER2_COVERAGE = Coverage
+    option.RAINY_PROFILE_2_LAYER2_DENSITY = Density
+
+    option.RAINY_PROFILE_3_LAYER0_COVERAGE = Coverage
+    option.RAINY_PROFILE_3_LAYER0_DENSITY = Density
+    option.RAINY_PROFILE_3_LAYER1_COVERAGE = Coverage
+    option.RAINY_PROFILE_3_LAYER1_DENSITY = Density
+    option.RAINY_PROFILE_3_LAYER2_COVERAGE = Coverage
+    option.RAINY_PROFILE_3_LAYER2_DENSITY = Density
+
+    option.RAINY_PROFILE_4_LAYER0_COVERAGE = Coverage
+    option.RAINY_PROFILE_4_LAYER0_DENSITY = Density
+    option.RAINY_PROFILE_4_LAYER1_COVERAGE = Coverage
+    option.RAINY_PROFILE_4_LAYER1_DENSITY = Density
+    option.RAINY_PROFILE_4_LAYER2_COVERAGE = Coverage
+    option.RAINY_PROFILE_4_LAYER2_DENSITY = Density
+
+    option.RAINY_PROFILE_5_LAYER0_COVERAGE = Coverage
+    option.RAINY_PROFILE_5_LAYER0_DENSITY = Density
+    option.RAINY_PROFILE_5_LAYER1_COVERAGE = Coverage
+    option.RAINY_PROFILE_5_LAYER1_DENSITY = Density
+    option.RAINY_PROFILE_5_LAYER2_COVERAGE = Coverage
+    option.RAINY_PROFILE_5_LAYER2_DENSITY = Density
+
+    option.RAINY_PROFILE_6_LAYER0_COVERAGE = Coverage
+    option.RAINY_PROFILE_6_LAYER0_DENSITY = Density
+    option.RAINY_PROFILE_6_LAYER1_COVERAGE = Coverage
+    option.RAINY_PROFILE_6_LAYER1_DENSITY = Density
+    option.RAINY_PROFILE_6_LAYER2_COVERAGE = Coverage
+    option.RAINY_PROFILE_6_LAYER2_DENSITY = Density
+
+option.USE_CUSTOM_HOT_BIOME_RAIN_PROFILE = Hot Biome Rainy Weather Mode
+    value.USE_CUSTOM_HOT_BIOME_RAIN_PROFILE.-1 = OFF
+    value.USE_CUSTOM_HOT_BIOME_RAIN_PROFILE.0 = Hardcoded
+    value.USE_CUSTOM_HOT_BIOME_RAIN_PROFILE.1 = §f↓§r Only Use Preset 1 §f↓§r
+    value.USE_CUSTOM_HOT_BIOME_RAIN_PROFILE.2 = §f↓§r Use Presets 1 to 2 §f↓§r
+    value.USE_CUSTOM_HOT_BIOME_RAIN_PROFILE.3 = §f↓§r Use Presets 1 to 3 §f↓§r
+    screen.HOT_BIOME_RAINY_WEATHER_PROFILE_1 = Preset 1
+    screen.HOT_BIOME_RAINY_WEATHER_PROFILE_2 = Preset 2
+    screen.HOT_BIOME_RAINY_WEATHER_PROFILE_3 = Preset 3
+
+option.USE_CUSTOM_COLD_BIOME_RAIN_PROFILE = Cold Biome Rainy Weather Mode
+    value.USE_CUSTOM_COLD_BIOME_RAIN_PROFILE.-1 = OFF
+    value.USE_CUSTOM_COLD_BIOME_RAIN_PROFILE.0 = Hardcoded
+    value.USE_CUSTOM_COLD_BIOME_RAIN_PROFILE.1 = §f↓§r Only Use Preset 1 §f↓§r
+    value.USE_CUSTOM_COLD_BIOME_RAIN_PROFILE.2 = §f↓§r Use Presets 1 to 2 §f↓§r
+    value.USE_CUSTOM_COLD_BIOME_RAIN_PROFILE.3 = §f↓§r Use Presets 1 to 3 §f↓§r
+    screen.COLD_BIOME_RAINY_WEATHER_PROFILE_1 = Preset 1
+    screen.COLD_BIOME_RAINY_WEATHER_PROFILE_2 = Preset 2
+    screen.COLD_BIOME_RAINY_WEATHER_PROFILE_3 = Preset 3
+
+    option.HOT_BIOME_RAINY_PROFILE_1_UNIFORM_FOG_DENSITY = Uniform Fog Density
+    option.HOT_BIOME_RAINY_PROFILE_1_CLUMPY_FOG_DENSITY = Clumpy Fog Density
+    option.HOT_BIOME_RAINY_PROFILE_1_FOG_COLOR_R = Fog Color Red
+    option.HOT_BIOME_RAINY_PROFILE_1_FOG_COLOR_G = Fog Color Green
+    option.HOT_BIOME_RAINY_PROFILE_1_FOG_COLOR_B = Fog Color Blue
+    option.HOT_BIOME_RAINY_PROFILE_2_UNIFORM_FOG_DENSITY = Uniform Fog Density
+    option.HOT_BIOME_RAINY_PROFILE_2_CLUMPY_FOG_DENSITY = Clumpy Fog Density
+    option.HOT_BIOME_RAINY_PROFILE_2_FOG_COLOR_R = Fog Color Red
+    option.HOT_BIOME_RAINY_PROFILE_2_FOG_COLOR_G = Fog Color Green
+    option.HOT_BIOME_RAINY_PROFILE_2_FOG_COLOR_B = Fog Color Blue
+    option.HOT_BIOME_RAINY_PROFILE_3_UNIFORM_FOG_DENSITY = Uniform Fog Density
+    option.HOT_BIOME_RAINY_PROFILE_3_CLUMPY_FOG_DENSITY = Clumpy Fog Density
+    option.HOT_BIOME_RAINY_PROFILE_3_FOG_COLOR_R = Fog Color Red
+    option.HOT_BIOME_RAINY_PROFILE_3_FOG_COLOR_G = Fog Color Green
+    option.HOT_BIOME_RAINY_PROFILE_3_FOG_COLOR_B = Fog Color Blue
+
+    option.COLD_BIOME_RAINY_PROFILE_1_UNIFORM_FOG_DENSITY = Uniform Fog Density
+    option.COLD_BIOME_RAINY_PROFILE_1_CLUMPY_FOG_DENSITY = Clumpy Fog Density
+    option.COLD_BIOME_RAINY_PROFILE_1_FOG_COLOR_R = Fog Color Red
+    option.COLD_BIOME_RAINY_PROFILE_1_FOG_COLOR_G = Fog Color Green
+    option.COLD_BIOME_RAINY_PROFILE_1_FOG_COLOR_B = Fog Color Blue
+    option.COLD_BIOME_RAINY_PROFILE_2_UNIFORM_FOG_DENSITY = Uniform Fog Density
+    option.COLD_BIOME_RAINY_PROFILE_2_CLUMPY_FOG_DENSITY = Clumpy Fog Density
+    option.COLD_BIOME_RAINY_PROFILE_2_FOG_COLOR_R = Fog Color Red
+    option.COLD_BIOME_RAINY_PROFILE_2_FOG_COLOR_G = Fog Color Green
+    option.COLD_BIOME_RAINY_PROFILE_2_FOG_COLOR_B = Fog Color Blue
+    option.COLD_BIOME_RAINY_PROFILE_3_UNIFORM_FOG_DENSITY = Uniform Fog Density
+    option.COLD_BIOME_RAINY_PROFILE_3_CLUMPY_FOG_DENSITY = Clumpy Fog Density
+    option.COLD_BIOME_RAINY_PROFILE_3_FOG_COLOR_R = Fog Color Red
+    option.COLD_BIOME_RAINY_PROFILE_3_FOG_COLOR_G = Fog Color Green
+    option.COLD_BIOME_RAINY_PROFILE_3_FOG_COLOR_B = Fog Color Blue
+
+    option.USE_CUSTOM_SWAMP_CATEGORY_PROFILE = Swamp Biome Mode
+    value.USE_CUSTOM_SWAMP_CATEGORY_PROFILE.-1 = OFF
+    value.USE_CUSTOM_SWAMP_CATEGORY_PROFILE.0 = Hardcoded
+    value.USE_CUSTOM_SWAMP_CATEGORY_PROFILE.1 = §f↓§r Use Custom Preset §f↓§r
+    screen.CUSTOM_SWAMP_CATEGORY_PROFILE_1 = Custom Preset
+
+    option.USE_CUSTOM_JUNGLE_CATEGORY_PROFILE = Jungle Biome Mode
+    value.USE_CUSTOM_JUNGLE_CATEGORY_PROFILE.-1 = OFF
+    value.USE_CUSTOM_JUNGLE_CATEGORY_PROFILE.0 = Hardcoded
+    value.USE_CUSTOM_JUNGLE_CATEGORY_PROFILE.1 = §f↓§r Use Custom Preset §f↓§r
+    screen.CUSTOM_JUNGLE_CATEGORY_PROFILE_1 = Custom Preset
+
+    option.CUSTOM_SWAMP_PROFILE_1_UNIFORM_FOG_DENSITY = Uniform Fog Density
+    option.CUSTOM_SWAMP_PROFILE_1_CLUMPY_FOG_DENSITY = Clumpy Fog Density
+    option.CUSTOM_SWAMP_PROFILE_1_FOG_COLOR_R = Fog Color Red
+    option.CUSTOM_SWAMP_PROFILE_1_FOG_COLOR_G = Fog Color Green
+    option.CUSTOM_SWAMP_PROFILE_1_FOG_COLOR_B = Fog Color Blue
+
+    option.CUSTOM_JUNGLE_PROFILE_1_UNIFORM_FOG_DENSITY = Uniform Fog Density
+    option.CUSTOM_JUNGLE_PROFILE_1_CLUMPY_FOG_DENSITY  = Clumpy Fog Density
+    option.CUSTOM_JUNGLE_PROFILE_1_FOG_COLOR_R = Fog Color Red
+    option.CUSTOM_JUNGLE_PROFILE_1_FOG_COLOR_G = Fog Color Green
+    option.CUSTOM_JUNGLE_PROFILE_1_FOG_COLOR_B = Fog Color Blue
 
 screen.Climate = Climate Settings
     option.Seasons = Seasonal Colors
@@ -739,7 +841,7 @@ option.FAKE_DISPERSION_AMOUNT.comment = Configure the amount of dispersion withi
 option.REFRACTION_SMUDGE_AMOUNT.comment = Configure the amount of smudge within the refraction. §bWhat is this?§r when refraction happens, the parts that get really distorted will get smudged. §cWill cause visaul noise within refraction. §aPERFORMANCE COST:§r very low
 
 screen.Fog.comment = Configure settings related to the raymarched volumetric fog, or distance based fog.
-    option.VL_RENDER_RESOLUTION.comment = Configure the resolution of the volumetric fog. §aPERFORMANCE COST:§r high
+    option.VL_RENDERING_RESOLUTION_SCALE.comment = Configure the resolution of the volumetric fog. §aPERFORMANCE COST:§r high
     option.VL_SAMPLES.comment = Configure the quality of the volumetric fog. §aPERFORMANCE COST:§r high
     option.BLOOMY_FOG.comment = Configure the strength of bloom that is applied to fog. §bWhat is this?§r This effect makes the fog look soft, it helps hide a little noise too. can cause some visible flickering on detailed edges. §aPERFORMANCE COST:§r very low
     option.Haze_amount.comment = Configure how dense the atmosphere around you is. §bWhat is this?§r This is the blue haze you see in the distance.
@@ -747,7 +849,7 @@ screen.Fog.comment = Configure settings related to the raymarched volumetric fog
     option.BorderFog.comment = §bWhat is this?§r Toggle a fog that attempts to hide the chunks loading in. But because the sky is all over the place, it is difficult to do well. §aPERFORMANCE COST:§r very very low
 
     screen.TOD_fog.comment = Configure the density of fog that appears at specific times of the day.
-        option.TOD_Fog_mult.comment = Configure how much total fog there is that appears at specific times during the day. this does not effect the atmospheric haze. 
+        option.TOD_FOG_AMOUNT.comment = Configure how much total fog there is that appears at specific times during the day. this does not effect the atmospheric haze. 
 
     screen.Cave_Fog.comment = Configure settings for fog that appears when you are in very dark places such as caves.
         option.Cave_Fog.comment = Toggle the fog that appears in dark places. It is impossible to accurately tell when you are in a cave with a shader, so this fog might appear in places that are not a cave. §aPERFORMANCE COST:§r low
@@ -757,7 +859,7 @@ screen.Clouds.comment = Configure settings related to the raymarched volumetric 
     option.VOLUMETRIC_CLOUDS.comment = Toggle the clouds. §aPERFORMANCE COST:§r medium to high
     option.CLOUDS_QUALITY.comment = Configure the resolution of the volumetric clouds. §aPERFORMANCE COST:§r high
     option.CLOUDS_SHADOWS.comment = Toggle shadows that are casted from the clouds onto the ground, and fog below them. §aPERFORMANCE COST:§r low to medium
-    option.Daily_Weather.comment = Toggle the weather that changes every day. §bWhat is this?§r There are 10 weather profiles that the shader cycles through every day. You cannot change any cloud coverage settings when this is enabled. §aPERFORMANCE COST:§r low
+    option.DAILY_WEATHER_PROFILE.comment = Toggle the weather that changes every day. §bWhat is this?§r There are 10 weather profiles that the shader cycles through every day. You cannot change any cloud coverage settings when this is enabled. §aPERFORMANCE COST:§r low
     option.CHOOSE_RANDOM_WEATHER_PROFILE.comment = §bWhat is this?§r Configure the shader to randomly choose the weather from one of the days below. When this is turned off, the shader will choose the day in order.
     option.Cloud_Speed.comment = Configure how fast the clouds move as the day goes by.
     option.Rain_coverage.comment = Configure how much of the sky the clouds cover during rain.

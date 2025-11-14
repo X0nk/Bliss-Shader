@@ -29,7 +29,7 @@ void main() {
 
 	vec2 texcoord = gl_FragCoord.xy * texelSize;
 
-	gl_FragData[0] = texelFetch2D(colortex1, ivec2(gl_FragCoord.xy),0);
+	gl_FragData[0] = texelFetch2D(colortex1, ivec2(gl_FragCoord.xy), 0);
 
 	if(
 		texelFetch2D(depthtex0, ivec2(gl_FragCoord.xy), 0).x < 1.0 

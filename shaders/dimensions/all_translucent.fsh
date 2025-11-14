@@ -46,6 +46,7 @@ uniform sampler2D depthtex0;
 
 #ifdef DISTANT_HORIZONS
 	uniform sampler2D dhDepthTex1;
+	uniform sampler2D dhDepthTex0;
 #endif
 
 uniform sampler2D colortex7;
@@ -111,9 +112,11 @@ uniform float waterEnteredAltitude;
 #include "/lib/sky_gradient.glsl"
 #include "/lib/waterBump.glsl"
 
+#define LIGHTNINGFLASH_DIFFUSE
+#include "/lib/lightning_stuff.glsl"
+
 #ifdef OVERWORLD_SHADER
 	flat varying float Flashing;
-	#include "/lib/lightning_stuff.glsl"
 	
 	#include "/lib/scene_controller.glsl"
 	
@@ -440,7 +443,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	#ifdef WhiteWorld
 		gl_FragData[0].rgb = vec3(1.0);
-		gl_FragData[0].a = 1.0/255.0;
+		gl_FragData[0].a = 1.0;
 	#endif
 
 	vec3 Albedo = toLinear(gl_FragData[0].rgb);
@@ -450,8 +453,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			if (isWater) Albedo *= sqrt(luma(Albedo));
 		#else
 			if (isWater){
-				Albedo = vec3(0.0);
 				gl_FragData[0].a = 1.0/255.0;
+				Albedo = vec3(0.0);
 			}
 		#endif
 	#endif
@@ -555,7 +558,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#if defined ENTITIES && defined IS_IRIS
 		if(NAMETAG > 0) nameTagMask = 0.1;
 	#endif
-
+	
 	gl_FragData[2] = vec4(encodeVec2(TangentNormal*0.5+0.5), encodeVec2(GLASS_TINT_COLORS.rg), encodeVec2(GLASS_TINT_COLORS.ba), encodeVec2(0.0, nameTagMask));
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -609,7 +612,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			float waterdepth = max(-(feetPlayerPos.y + distanceFromWaterSurface),0.0);
 
 			DirectLightColor *= exp(-vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B) * (waterdepth/abs(WsunVec.y)));
-			DirectLightColor *= pow(waterCaustics(feetPlayerPos + cameraPosition, WsunVec)*WATER_CAUSTICS_BRIGHTNESS, WATER_CAUSTICS_POWER);
+			DirectLightColor *= pow(waterCaustics(feetPlayerPos + cameraPosition, WsunVec, -(feetPlayerPos.y + distanceFromWaterSurface))*WATER_CAUSTICS_BRIGHTNESS, WATER_CAUSTICS_POWER);
 		}
 
 		// float NdotL = clamp((-15 + dot(normal, normalize(WsunVec*mat3(gbufferModelViewInverse)))*255.0) / 240.0  ,0.0,1.0);
@@ -695,8 +698,13 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, feetPlayerPos, lpvPos);
 	
 	vec4 flashLightSpecularData = vec4(0.0);
+
 	#ifdef FLASHLIGHT
 		Indirect_lighting += calculateFlashlight(FragCoord.xy*texelSize/RENDER_SCALE, viewPos, vec3(0.0), worldSpaceNormal, flashLightSpecularData, false);
+	#endif
+
+	#if defined LIGHTNING_FLASH
+		Indirect_lighting += createLightningPointLight(feetPlayerPos, lightningBoltPosition.xyz, worldSpaceNormal) * lightmap.y*lightmap.y*lightmap.y*lightmap.y;
 	#endif
 
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
@@ -780,6 +788,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		#endif
 
 		bool WATER = texture2D(colortex7, gl_FragCoord.xy*texelSize).a > 0.0 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance) && texture2D(depthtex1, gl_FragCoord.xy*texelSize).x >= 1.0;
+		// bool WATER =  length(feetPlayerPos) > clamp(far-16*4, 17.5, maxOverdrawDistance) && texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x >= 1.0 || texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x < gl_FragCoord.z;
+		// float depth = texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x;
+		// bool WATER = (abs(depth - texelFetch2D(dhDepthTex0, ivec2(gl_FragCoord.xy), 0).x) > 0.23 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance)) || (length(feetPlayerPos) > clamp(far-16*4, 20, maxOverdrawDistance) && depth >= 1.0);// && texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x < 1.0;
+		// bool WATER = texelFetch2D(dhDepthTex0, ivec2(gl_FragCoord.xy),0).x == texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x;
 
 		if(WATER) {
 			gl_FragData[0].a = 0.0;

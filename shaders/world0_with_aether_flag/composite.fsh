@@ -3,4 +3,4 @@
 #define OVERWORLD_SHADER
 #define AETHER_FLAG
 
-#include "/dimensions/fogBehindTranslucent_pass.fsh"
+#include "/dimensions/composite.fsh"

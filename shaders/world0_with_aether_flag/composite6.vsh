@@ -3,4 +3,4 @@
 #define OVERWORLD_SHADER
 #define AETHER_FLAG
 
-#include "/dimensions/composite5.vsh"
+#include "/dimensions/composite6.vsh"

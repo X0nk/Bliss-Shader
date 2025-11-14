@@ -26,6 +26,7 @@ uniform sampler2D colortex4;
 #endif
 	
 
+uniform bool isInRainFallEnviornment;
 uniform vec3 sunPosition;
 uniform float sunElevation;
 
@@ -100,9 +101,9 @@ void main() {
 		
 		#ifdef WEATHER
 			worldpos += cameraPosition;
-			bool istopv = worldpos.y > cameraPosition.y + 5.0 && lmtexcoord.w > 0.99;
+			bool istopv = (worldpos.y > cameraPosition.y + 5.0 && lmtexcoord.w > 0.99);
 
-			if(!istopv){
+			if(!istopv && isInRainFallEnviornment){
 				worldpos.xyz -= cameraPosition - vec3(2.0,0.0,2.0) * min(max(clamp(eyeBrightnessSmooth.y/240.0,0,1)-0.95,0)/0.05,1);
 			}else{
 				worldpos.xyz -= cameraPosition;
@@ -121,7 +122,6 @@ void main() {
 		gl_Position = ftransform();
 	#endif
 
-
 	color = gl_Color;
 	
 	#ifdef LINES
@@ -135,7 +135,9 @@ void main() {
 		averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
 		WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
 
-		readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
+		#define READ_SCENE_CONTROLLER_PARAMETERS
+		#include "/lib/scene_controller.glsl"
+		// readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
 	#endif
 	
 

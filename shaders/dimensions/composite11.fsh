@@ -1,353 +1,189 @@
 #include "/lib/settings.glsl"
 
-#include "/lib/res_params.glsl"
-
-
-flat varying vec4 exposure;
-flat varying vec2 rodExposureDepth;
 varying vec2 texcoord;
-
-const bool colortex5MipmapEnabled = true;
-// uniform sampler2D colortex4;
-uniform sampler2D colortex5;
-uniform sampler2D colortex3;
-// uniform sampler2D colortex6;
-uniform sampler2D colortex7;
-// uniform sampler2D colortex8; // specular
-uniform sampler2D colortex9; // specular
-uniform sampler2D depthtex0;
-uniform sampler2D depthtex1;
-uniform sampler2D noisetex;
 uniform vec2 texelSize;
 
-uniform ivec2 eyeBrightnessSmooth;
-uniform float viewWidth;
+uniform sampler2D colortex7;
+uniform sampler2D colortex14;
+uniform sampler2D depthtex0;
+uniform sampler2D noisetex;
+
 uniform float viewHeight;
+uniform float viewWidth;
+uniform float aspectRatio;
+
 uniform float frameTimeCounter;
 uniform int frameCounter;
-uniform int isEyeInWater;
-uniform float near;
-uniform float aspectRatio;
-uniform float far;
-uniform float rainStrength;
-uniform float screenBrightness;
-uniform vec4 Moon_Weather_properties; // R = cloud coverage 		G = fog density
+
 uniform int hideGUI;
-
-uniform int framemod8;
-#include "/lib/TAA_jitter.glsl"
-
-
-uniform mat4 gbufferModelViewInverse;
-uniform mat4 gbufferProjectionInverse;
-vec4 Weather_properties = Moon_Weather_properties;
 
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
-// #include "/lib/biome_specifics.glsl"
-#include "/lib/bokeh.glsl"
+#include "/lib/res_params.glsl"
 
-float cdist(vec2 coord) {
-	return max(abs(coord.s-0.5),abs(coord.t-0.5))*2.0;
+/*
+vec4 SampleTextureCatmullRom(sampler2D tex, vec2 uv, vec2 texSize )
+{
+    // We're going to sample a a 4x4 grid of texels surrounding the target UV coordinate. We'll do this by rounding
+    // down the sample location to get the exact center of our "starting" texel. The starting texel will be at
+    // location [1, 1] in the grid, where [0, 0] is the top left corner.
+    vec2 samplePos = uv * texSize;
+    vec2 texPos1 = floor(samplePos - 0.5) + 0.5;
+
+    // Compute the fractional offset from our starting texel to our original sample location, which we'll
+    // feed into the Catmull-Rom spline function to get our filter weights.
+    vec2 f = samplePos - texPos1;
+
+    // Compute the Catmull-Rom weights using the fractional offset that we calculated earlier.
+    // These equations are pre-expanded based on our knowledge of where the texels will be located,
+    // which lets us avoid having to evaluate a piece-wise function.
+    vec2 w0 = f * ( -0.5 + f * (1.0 - 0.5*f));
+    vec2 w1 = 1.0 + f * f * (-2.5 + 1.5*f);
+    vec2 w2 = f * ( 0.5 + f * (2.0 - 1.5*f) );
+    vec2 w3 = f * f * (-0.5 + 0.5 * f);
+
+    // Work out weighting factors and sampling offsets that will let us use bilinear filtering to
+    // simultaneously evaluate the middle 2 samples from the 4x4 grid.
+    vec2 w12 = w1 + w2;
+    vec2 offset12 = w2 / (w1 + w2);
+
+    // Compute the final UV coordinates we'll use for sampling the texture
+    vec2 texPos0 = texPos1 - vec2(1.0);
+    vec2 texPos3 = texPos1 + vec2(2.0);
+    vec2 texPos12 = texPos1 + offset12;
+
+    texPos0 *= texelSize;
+    texPos3 *= texelSize;
+    texPos12 *= texelSize;
+
+    vec4 result = vec4(0.0);
+    result += texture2D(tex, vec2(texPos0.x,  texPos0.y)) * w0.x * w0.y;
+    result += texture2D(tex, vec2(texPos12.x, texPos0.y)) * w12.x * w0.y;
+    result += texture2D(tex, vec2(texPos3.x,  texPos0.y)) * w3.x * w0.y;
+
+    result += texture2D(tex, vec2(texPos0.x,  texPos12.y)) * w0.x * w12.y;
+    result += texture2D(tex, vec2(texPos12.x, texPos12.y)) * w12.x * w12.y;
+    result += texture2D(tex, vec2(texPos3.x,  texPos12.y)) * w3.x * w12.y;
+
+    result += texture2D(tex, vec2(texPos0.x,  texPos3.y)) * w0.x * w3.y;
+    result += texture2D(tex, vec2(texPos12.x, texPos3.y)) * w12.x * w3.y;
+    result += texture2D(tex, vec2(texPos3.x,  texPos3.y)) * w3.x * w3.y;
+
+    return result;
+}
+*/
+
+float lowerCurve(float x) {
+	float y = 16 * x * (0.5 - x) * 0.1;
+	return clamp(y, 0.0, 1.0);
+}
+
+float upperCurve(float x) {
+	float y = 16 * (0.5 - x) * (x - 1.0) * 0.1;
+	return clamp(y, 0.0, 1.0);
+}
+
+vec3 luminanceCurve(vec3 color){
+	color.r += LOWER_CURVE * lowerCurve(color.r) + UPPER_CURVE * upperCurve(color.r);
+	color.g += LOWER_CURVE * lowerCurve(color.g) + UPPER_CURVE * upperCurve(color.g);
+	color.b += LOWER_CURVE * lowerCurve(color.b) + UPPER_CURVE * upperCurve(color.b);
+	return color;
+}
+
+vec3 colorGrading(vec3 color) {
+	float grade_luma = dot(color, vec3(1.0 / 3.0));
+  float shadows_amount = saturate(-6.0 * grade_luma + 2.75);
+	float mids_amount = saturate(-abs(6.0 * grade_luma - 3.0) + 1.25);
+	float highlights_amount = saturate(6.0 * grade_luma - 3.25);
+
+	vec3 graded_shadows = color * SHADOWS_TARGET * SHADOWS_GRADE_MUL * 1.7320508076;
+	vec3 graded_mids = color * MIDS_TARGET * MIDS_GRADE_MUL * 1.7320508076;
+	vec3 graded_highlights = color * HIGHLIGHTS_TARGET * HIGHLIGHTS_GRADE_MUL * 1.7320508076;
+
+	return saturate(graded_shadows * shadows_amount + graded_mids * mids_amount + graded_highlights * highlights_amount);
+}
+
+vec3 contrastAdaptiveSharpening(vec3 color, vec2 texcoord){
+  float sharpen_strength = float(SHARPENING)/100.0;
+  //Weights : 1 in the center, 0.5 middle, 0.25 corners
+  vec3 albedoCurrent1 = texture2D(colortex7, texcoord + vec2(texelSize.x,texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
+  vec3 albedoCurrent2 = texture2D(colortex7, texcoord + vec2(texelSize.x,-texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
+  vec3 albedoCurrent3 = texture2D(colortex7, texcoord + vec2(-texelSize.x,-texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
+  vec3 albedoCurrent4 = texture2D(colortex7, texcoord + vec2(-texelSize.x,texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
+ 
+  vec3 m1 = -0.5/3.5*color + albedoCurrent1/3.5 + albedoCurrent2/3.5 + albedoCurrent3/3.5 + albedoCurrent4/3.5;
+  
+  vec3 std = abs(color - m1) + abs(albedoCurrent1 - m1) + abs(albedoCurrent2 - m1) +
+  abs(albedoCurrent3 - m1) + abs(albedoCurrent3 - m1) + abs(albedoCurrent4 - m1);
+
+  float contrast = 1.0 - luma(std)/5.0;
+
+  color = color*(1.0+(sharpen_strength+UPSCALING_SHARPNENING)*contrast) -
+  (sharpen_strength+UPSCALING_SHARPNENING)/(1.0-0.5/3.5)*contrast*(m1 - 0.5/3.5*color); 
+
+  return color;
+}
+
+vec3 saturationAndCrosstalk(vec3 color){
+
+	float luminance = luma(color);
+
+	vec3 lumaColDiff = color - luminance;
+
+	color = color + lumaColDiff*(-luminance*CROSSTALK + SATURATION);
+  
+  return color;
+}
+
+float interleaved_gradientNoise(){
+	vec2 coord = gl_FragCoord.xy;
+	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
+	return noise;
 }
 float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
-float ld(float depth) {
-    return (2.0 * near) / (far + near - depth * (far - near));		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
-}
 
-// uniform float viewWidth;
-// uniform float viewHeight;
+vec3 chromaticAberration(vec2 UV){
+  float noise = blueNoise() - 0.5;
 
-// uniform sampler2D depthtex0;
+  vec2 centeredUV = (texcoord - 0.5);
+  // not stretched by aspect ratio; circular by choice :) it makes most the abberation on the left/right of the screen.
+  float vignette = 1.0 - clamp(1.0 - length(centeredUV * vec2(aspectRatio,1.0)) / 200.0,0.0,1.0);
 
-#ifdef DISTANT_HORIZONS
-uniform sampler2D dhDepthTex;
-#endif
-uniform float dhNearPlane;
-uniform float dhFarPlane;
+  float aberrationStrength = CHROMATIC_ABERRATION_STRENGTH * vignette;
 
-float linearizeDepthFast(const in float depth, const in float near, const in float far) {
-    return (near * far) / (depth * (near - far) + far);
-}
+  vec3 color = vec3(0.0);
+  color.r = texture2D(colortex7, (centeredUV - (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).r;
+  color.g = texture2D(colortex7, texcoord).g;
+  color.b = texture2D(colortex7, (centeredUV + (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).b;
 
-float bloomWeight(){
-	
-	float weights[7] = float[](     1.0,    1.0/2.0,    1.0/3.0,    1.0/5.5,    1.0/8.0,    1.0/10.0,   1.0/12.0    );
-	// float weights[7] = float[](     0.7,    pow(0.5,2), pow(0.5,3),  pow(0.5,4),   pow(0.5,5),    pow(0.5,6), pow(0.5,7)	);
-
-	float result = 0.0;
-
-	for ( int i = 0; i < 7; i++) {
-		result += weights[i];
-	}
-
-	return result;
-}
-vec3 invTonemap(vec3 col){
-	return col/(1-luma(col));
-}
-#define linear_to_srgb(x) (pow(x, vec3(1.0/2.2)))
-
-uniform sampler2D colortex6;
-
-
-float w0(float a)
-{
-    return (1.0/6.0)*(a*(a*(-a + 3.0) - 3.0) + 1.0);
-}
-
-float w1(float a)
-{
-    return (1.0/6.0)*(a*a*(3.0*a - 6.0) + 4.0);
-}
-
-float w2(float a)
-{
-    return (1.0/6.0)*(a*(a*(-3.0*a + 3.0) + 3.0) + 1.0);
-}
-
-float w3(float a)
-{
-    return (1.0/6.0)*(a*a*a);
-}
-
-float g0(float a)
-{
-    return w0(a) + w1(a);
-}
-
-float g1(float a)
-{
-    return w2(a) + w3(a);
-}
-
-float h0(float a)
-{
-    return -1.0 + w1(a) / (w0(a) + w1(a));
-}
-
-float h1(float a)
-{
-    return 1.0 + w3(a) / (w2(a) + w3(a));
-}
-
-vec4 texture2D_bicubic(sampler2D tex, vec2 uv)
-{
-	vec4 texelSize = vec4(texelSize,1.0/texelSize);
-	uv = uv*texelSize.zw;
-	vec2 iuv = floor( uv );
-	vec2 fuv = fract( uv );
-
-    float g0x = g0(fuv.x);
-    float g1x = g1(fuv.x);
-    float h0x = h0(fuv.x);
-    float h1x = h1(fuv.x);
-    float h0y = h0(fuv.y);
-    float h1y = h1(fuv.y);
-
-	vec2 p0 = (vec2(iuv.x + h0x, iuv.y + h0y) - 0.5) * texelSize.xy;
-	vec2 p1 = (vec2(iuv.x + h1x, iuv.y + h0y) - 0.5) * texelSize.xy;
-	vec2 p2 = (vec2(iuv.x + h0x, iuv.y + h1y) - 0.5) * texelSize.xy;
-	vec2 p3 = (vec2(iuv.x + h1x, iuv.y + h1y) - 0.5) * texelSize.xy;
-
-    return g0(fuv.y) * (g0x * texture2D(tex, p0)  +
-                        g1x * texture2D(tex, p1)) +
-           g1(fuv.y) * (g0x * texture2D(tex, p2)  +
-                        g1x * texture2D(tex, p3));
-}
-
-// vec3 lenseFlare(vec2 UV){
-//   float noise = blueNoise();
-
-//   float vignetteLength = 0.2;
-//   float vignette =  0.5+length(texcoord-0.5);//min(max(length(texcoord-0.5) - vignetteLength,0.0) / (1.0/(1.0-vignetteLength)),1.0);
-
-//   float aberrationStrength = vignette;//clamp(CHROMATIC_ABERRATION_STRENGTH * 0.01 * (1.0 - vignette),0.0,0.9) * vignette * 0.75;
-
-//   vec2 centeredUV = texcoord - 0.5;
-
-//   vec3 color = vec3(0.0);
-//   color = texture2D(colortex7, texcoord).rgb;
-
-//   vec2 distortedUV = (centeredUV -  (centeredUV ) * aberrationStrength) + 0.5;
-
-//   color += texture2D(colortex7,  distortedUV).rgb;
-//   // color.r = texture2D(colortex7, (centeredUV - (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).r;
-//   // color.g = texture2D(colortex7, texcoord).g;
-//   // color.b = texture2D(colortex7, (centeredUV + (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).b;
-
-//   return color;
-// }
-
-vec3 srgbToLinear(vec3 srgb){
-    return mix(
-        srgb / 12.92,
-        pow(.947867 * srgb + .0521327, vec3(2.4) ),
-        step( .04045, srgb )
-    );
-}
-vec3 blackbody(float Temp)
-{
-    float t = pow(Temp, -1.5);
-    float lt = log(Temp);
-
-    vec3 WB_temp = vec3(0.0);
-         WB_temp.r = 220000.0 * t + 0.58039215686;
-         WB_temp.g = 0.39231372549 * lt - 2.44549019608;
-         WB_temp.g = Temp > 6500. ? 138039.215686 * t + 0.72156862745 : WB_temp.g;
-         WB_temp.b = 0.76078431372 * lt - 5.68078431373;
-         WB_temp = clamp(WB_temp,0,1);
-         WB_temp = Temp < 1000. ? WB_temp * Temp * 0.001 : WB_temp;
-
-    return srgbToLinear(WB_temp);
+  return color;
 }
 
 void main() {
+
   /* DRAWBUFFERS:7 */
-	float vignette = (1.5-dot(texcoord-0.5,texcoord-0.5)*2.);
-	vec3 col = texture2D(colortex5,texcoord).rgb;
+  
+  #ifdef CHROMATIC_ABERRATION
+	  vec3 color = chromaticAberration(texcoord);
+  #else
+	  vec3 color = texture2D(colortex7,texcoord).rgb;
+  #endif
 
-	#if DOF_QUALITY >= 0
-		/*--------------------------------*/
-		float z = ld(texture2D(depthtex1, texcoord.st*RENDER_SCALE).r)*far;
-		#if MANUAL_FOCUS == -2
-			float focus = rodExposureDepth.y*far;
-		#elif MANUAL_FOCUS == -1
-			float focus = mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
-		#elif MANUAL_FOCUS > 0
-			float focus = MANUAL_FOCUS;
-		#endif
-		#if DOF_QUALITY < 5
-		float pcoc = min(abs(aperture * (focal/100.0 * (z - focus)) / (z * (focus - focal/100.0))),texelSize.x*15.0);
-		#ifdef FAR_BLUR_ONLY
-			pcoc *= float(z > focus);
-		#endif
-		#ifdef REMOVE_HAND_BLUR
-			pcoc *= float(z > 0.56);
-		#endif
-		// float noise = blueNoise()*6.28318530718;
-		// mat2 noiseM = mat2( cos( noise ), -sin( noise ),
-	    //                    sin( noise ), cos( noise )
-	    //                      );
-		vec3 bcolor = vec3(0.);
-		float nb = 0.0;
-		vec2 bcoord = vec2(0.0);
-		/*--------------------------------*/
-		float dofLodLevel = pcoc * 200.0;
-
-		vec2 dispersion = (texcoord - 0.5) * pcoc * 200.0 * DOF_DISPERSION_MULT;
-
-		for ( int i = 0; i < BOKEH_SAMPLES; i++) {
-			// bcolor += texture2DLod(colortex5, texcoord.xy + bokeh_offsets[i]*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).rgb;
-			
-			bcolor.r += texture2DLod(colortex5, texcoord.xy + (bokeh_offsets[i] + dispersion)*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).r;
-			bcolor.g += texture2DLod(colortex5, texcoord.xy + bokeh_offsets[i]*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).g;
-			bcolor.b += texture2DLod(colortex5, texcoord.xy + (bokeh_offsets[i] - dispersion)*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).b;
-		}
-		col = bcolor/BOKEH_SAMPLES;
-		#endif
+	#if SHARPENING > 0
+    color = contrastAdaptiveSharpening(color, texcoord);
 	#endif
+  
+  color = saturationAndCrosstalk(color);
+  
+  #ifdef LUMINANCE_CURVE
+	  color = luminanceCurve(color);
+  #endif
 
-	vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
-
-	vec2 resScale = vec2(1920.,1080.)/clampedRes;
-	vec2 bloomTileUV = (((gl_FragCoord.xy)*2.0 + 0.5)*texelSize/2.0) / clampedRes*vec2(1920.,1080.);
-
-	vec3 bloomTile0 = texture2D_bicubic(colortex3, bloomTileUV/2.).rgb; //1/4 res
-	vec3 bloomTile1 = texture2D_bicubic(colortex6, bloomTileUV/4.).rgb; //1/8 res
-	vec3 bloomTile2 = texture2D_bicubic(colortex6, bloomTileUV/8.+vec2(0.25*resScale.x+2.5*texelSize.x,.0)).rgb;  //1/16 res
-	vec3 bloomTile3 = texture2D_bicubic(colortex6, bloomTileUV/16.+vec2(0.375*resScale.x+4.5*texelSize.x,.0)).rgb; //1/32 res
-	vec3 bloomTile4 = texture2D_bicubic(colortex6, bloomTileUV/32.+vec2(0.4375*resScale.x+6.5*texelSize.x,.0)).rgb; //1/64 res
-	vec3 bloomTile5 = texture2D_bicubic(colortex6, bloomTileUV/64.+vec2(0.46875*resScale.x+8.5*texelSize.x,.0)).rgb; //1/128 res
-	vec3 bloomTile6 = texture2D_bicubic(colortex6, bloomTileUV/128.+vec2(0.484375*resScale.x+10.5*texelSize.x,.0)).rgb; //1/256 res
-
-	#ifdef OLD_BLOOM
-		vec3 bloom = (bloomTile0 + bloomTile1 + bloomTile2 + bloomTile3 + bloomTile4 + bloomTile5 + bloomTile6) / 7.0;
-		vec3 fogBloom = bloom;
-		
-		float lightScat = clamp((BLOOM_STRENGTH+3) * 0.05 * pow(exposure.a, 0.2)  ,0.0,1.0) * vignette;
-	#else
-		float weights[7] = float[](     1.0,    1.0/2.0,    1.0/3.0,    1.0/5.5,    1.0/8.0,    1.0/10.0,   1.0/12.0    );
-		vec3 bloom = (bloomTile0*weights[0] + bloomTile1*weights[1] + bloomTile2*weights[2] + bloomTile3*weights[3] + bloomTile4*weights[4] + bloomTile5*weights[5] + bloomTile6*weights[6]) / bloomWeight();
-		vec3 fogBloom = (bloomTile0 + bloomTile1 + bloomTile2 + bloomTile3 + bloomTile4 + bloomTile5 + bloomTile6) / 7.0;
-		
-		float lightScat = clamp(BLOOM_STRENGTH * 0.3,0.0,1.0) * vignette;
-	#endif
-
- 	float VL_abs = texture2D(colortex7, texcoord*RENDER_SCALE).r;
-
-	#if Purkinje_strength > 0
-		float pstrength = float(Purkinje_strength) / 100.0;
-		
-		#ifdef AUTO_EXPOSURE
-			float purkinje = clamp(exposure.a*exposure.a,0.0,1.0) * clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*pstrength,0,1);
-		#else
-			float purkinje = clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*pstrength,0,1);
-		#endif	
-		
-  		VL_abs = clamp((1.0-VL_abs)*BLOOMY_FOG*0.75*(1.0+rainStrength) * (1.0-purkinje*0.3),0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
-		col = (mix(col, fogBloom, VL_abs) + bloom*lightScat) * exposure.rgb;
-
-  		float lum = dot(col, vec3(0.15,0.3,0.55));
-		float lum2 = dot(col, vec3(0.85,0.7,0.45));
-		float rodLum = lum2*200.0;
-		float rodCurve = clamp(mix(1.0, rodLum/(2.5+rodLum), purkinje),0.0,1.0);
-
-		col = mix(lum * vec3(Purkinje_R, Purkinje_G, Purkinje_B) * Purkinje_Multiplier, col, rodCurve);
-	#else
-  		VL_abs = clamp((1.0-VL_abs)*BLOOMY_FOG*0.75*(1.0+rainStrength),0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
-		col = (mix(col, fogBloom, VL_abs) + bloom*lightScat) * exposure.rgb;
-	#endif
-	
-	#if WHITE_BALANCE != 6500
-		col *= blackbody(WHITE_BALANCE);
-	#endif
-
-	#ifndef USE_ACES_COLORSPACE_APPROXIMATION
-		col = LinearTosRGB(TONEMAP(col));
-	#else
-		col = col * ACESInputMat;
-		col = TONEMAP(col);
-
-		col = LinearTosRGB(clamp(col * ACESOutputMat, 0.0, 1.0));
-	#endif
-
-	gl_FragData[0].rgb = clamp(int8Dither(col,texcoord),0.0,1.0);
-	
-	#if DOF_QUALITY == 5
-		#if FOCUS_LASER_COLOR == 0 // Red
-		vec3 laserColor = vec3(25, 0, 0);
-		#elif FOCUS_LASER_COLOR == 1 // Green
-		vec3 laserColor = vec3(0, 25, 0);
-		#elif FOCUS_LASER_COLOR == 2 // Blue
-		vec3 laserColor = vec3(0, 0, 25);
-		#elif FOCUS_LASER_COLOR == 3 // Pink
-		vec3 laserColor = vec3(25, 10, 15);
-		#elif FOCUS_LASER_COLOR == 4 // Yellow
-		vec3 laserColor = vec3(25, 25, 0);
-		#elif FOCUS_LASER_COLOR == 5 // White
-		vec3 laserColor = vec3(25);
-		#endif
-		float depth = texture(depthtex0, texcoord).r;
-		
-		#ifdef DISTANT_HORIZONS
-		float _near = near;
-		float _far = far*4.0;
-
-		if (depth >= 1.0) {
-			depth = texture2D(dhDepthTex, texcoord).x;
-			_near = dhNearPlane;
-			_far = dhFarPlane;
-		}
-
-		depth = linearizeDepthFast(depth, _near, _far);
-		#else
-		depth = linearizeDepthFast(depth, near, far);
-		#endif
-
-		// focus = gl_FragCoord.x * 0.1;
-		if( hideGUI < 1) gl_FragData[0].rgb += laserColor * pow( clamp( 	 1.0-abs(focus-abs(depth))		,0,1),25) ;
-	#endif
+  #ifdef COLOR_GRADING_ENABLED
+	  color = colorGrading(color);
+  #endif
+  
+	gl_FragData[0].rgb = clamp(int8Dither(color, texcoord),0.0,1.0);
 }

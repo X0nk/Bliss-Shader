@@ -1,5 +1,6 @@
 // this file contains all things for seasons, weather, and biome specific settings.
 // i gotta start centralizing shit someday. 
+// THAT DAY HAS COME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -12,7 +13,7 @@
 	#ifdef SEASONS_VSH
 
 		uniform int worldDay;  
-		uniform float noPuddleAreas;
+		uniform float NoRainFallEnviornmentSmooth;
 
 	    void YearCycleColor (
 	        inout vec3 FinalColor,
@@ -80,7 +81,7 @@
 			// 	// this is to make snow only exist in winter
 	    	// 	float FallToWinter_snowfall = mix(0.0, 1.0, AutumnTime);
 	    	// 	float WinterToSpring_snowfall = mix(FallToWinter_snowfall, 0.0, WinterTime);
-			// 	// SnowySeason = clamp(pow(sin(WinterToSpring_snowfall*SeasonLength)*0.5+0.5,5),0,1)  * WinterToSpring_snowfall * noPuddleAreas;
+			// 	// SnowySeason = clamp(pow(sin(WinterToSpring_snowfall*SeasonLength)*0.5+0.5,5),0,1)  * WinterToSpring_snowfall * NoRainFallEnviornmentSmooth;
 			// #else
 			// 	// SnowySeason = 0.0;
 			// #endif
@@ -123,12 +124,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-	uniform float isJungles;
-	uniform float isSwamps;
-	uniform float isDarkForests;
-	uniform float sandStorm;
-	uniform float snowStorm;
-
+	// uniform float isJungles;
+	// uniform float isSwamps;
+	// uniform float isDarkForests;
+	// uniform float sandStorm;
+	// uniform float snowStorm;
+/*
 #ifdef PER_BIOME_ENVIRONMENT
 
 	void BiomeFogColor(
@@ -193,11 +194,11 @@
 	}
 
 #endif
-
+*/
 ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// FOG CONTROLLER /////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-
+/*
 #ifdef TIMEOFDAYFOG
 	// uniform int worldTime;
 	void FogDensities(
@@ -213,8 +214,8 @@
 		float Night   = clamp((Time-13000.0)/2000.0,0.0,1.0) * clamp((23000.0-Time)/2000.0,0.0,1.0);
 
 		// set densities.		   morn, noon, even, night
-		vec4 UniformDensity = TOD_Fog_mult * vec4(Morning_Uniform_Fog, Noon_Uniform_Fog, Evening_Uniform_Fog, Night_Uniform_Fog);
-		vec4 CloudyDensity =  TOD_Fog_mult * vec4(Morning_Cloudy_Fog, Noon_Cloudy_Fog, Evening_Cloudy_Fog, Night_Cloudy_Fog);
+		vec4 UniformDensity = TOD_FOG_AMOUNT * vec4(Morning_Uniform_Fog, Noon_Uniform_Fog, Evening_Uniform_Fog, Night_Uniform_Fog);
+		vec4 CloudyDensity =  TOD_FOG_AMOUNT * vec4(Morning_Cloudy_Fog, Noon_Cloudy_Fog, Evening_Cloudy_Fog, Night_Cloudy_Fog);
 		
 		Rainy = Rainy*RainFog_amount;
 
@@ -226,3 +227,4 @@
 		Cloudy *= Morning*CloudyDensity.r + Noon*CloudyDensity.g + Evening*CloudyDensity.b + Night*CloudyDensity.a;
 	}
 #endif
+*/
