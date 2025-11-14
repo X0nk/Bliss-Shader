@@ -407,9 +407,9 @@ void blendAllFogTypes( inout vec3 color, inout float bloomyFogMult, vec4 volumet
   color = color * volumetrics.a + volumetrics.rgb;
   
   // make bloomy fog only work outside of the overworld (unless underwater)
-  #if !defined OVERWORLD_SHADER
+  // #if !defined OVERWORLD_SHADER
     bloomyFogMult = min(bloomyFogMult, volumetrics.a);
-  #endif
+  // #endif
 
   // blend vanilla fogs (blindness, darkness, lava, powdered snow)
   if(isEyeInWater > 1 || blindness > 0 || darknessFactor > 0){
