@@ -1,7 +1,6 @@
 #version 120
 
-#define END_SHADER
-
 #define WORLD
+#define END_SHADER
 
 #include "/dimensions/all_solid.fsh"

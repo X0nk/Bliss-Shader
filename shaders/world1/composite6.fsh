@@ -2,4 +2,4 @@
 
 #define END_SHADER
 
-#include "/dimensions/composite5.fsh"
+#include "/dimensions/composite6.fsh"
