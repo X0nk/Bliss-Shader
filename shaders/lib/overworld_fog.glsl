@@ -324,6 +324,11 @@ vec4 GetVolumetricFog(
 		#endif
 
 		float localEffectDensity = kill * getLocalEffectDensity(localRayProgress);
+
+		#ifdef EXCLUDE_WRITE_TO_LUT
+			localEffectDensity *= indoors;
+		#endif
+
 		float localFogVolumeCoeff = exp(-localEffectDensity*dd*localRayLength);
 		vec3 localFogLighting = localFogColor_lightCol*shadows*sunPhase + localFogColor_ambientCol*skyPhase;
 		
