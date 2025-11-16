@@ -51,6 +51,8 @@ uniform float frameTimeCounter;
 // varying vec2 texcoord;
 uniform vec2 texelSize;
 flat varying vec2 TAA_Offset;
+uniform float viewHeight;
+uniform float viewWidth;
 
 uniform int isEyeInWater;
 uniform float rainStrength;
@@ -58,6 +60,7 @@ uniform ivec2 eyeBrightnessSmooth;
 uniform float eyeAltitude;
 uniform float caveDetection;
 uniform float skyLightLevelSmooth;
+uniform float waterEnteredAltitude;
 
 vec4 blueNoise(vec2 coord){
   return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
@@ -221,11 +224,25 @@ uniform sampler2D colortex4;
 
 #define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
 
+uniform int framemod8;
+#include "/lib/TAA_jitter.glsl"
+
+/*
+from https://blog.demofox.org/2022/01/01/interleaved-gradient-noise-a-different-kind-of-low-discrepancy-sequence/
+Copyright 2019 Alan Wolfe
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 float interleaved_gradientNoise_temporal(){
-	vec2 coord = gl_FragCoord.xy + (frameCounter%40000) * 2.0;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
+	vec2 coord = gl_FragCoord.xy + 5.588238 * float(frameCounter%64);
+	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y)) ;
 	return noise;
 }
+
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy;
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
@@ -245,53 +262,6 @@ float R2_dither(){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
-
-void waterVolumetrics_notoverworld(inout vec3 inColor, vec3 rayStart, vec3 rayEnd, float estEndDepth, float estSunDepth, float rayLength, float dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient){
-	inColor *= exp(-rayLength * waterCoefs);	//No need to take the integrated value
-	
-	int spCount = rayMarchSampleCount;
-	vec3 start = toShadowSpaceProjected(rayStart);
-	vec3 end = toShadowSpaceProjected(rayEnd);
-	vec3 dV = (end-start);
-	//limit ray length at 32 blocks for performance and reducing integration error
-	//you can't see above this anyway
-	float maxZ = min(rayLength,12.0)/(1e-8+rayLength);
-	dV *= maxZ;
-
-
-	rayLength *= maxZ;
-	
-	float dY = normalize(mat3(gbufferModelViewInverse) * rayEnd).y * rayLength;
-	estEndDepth *= maxZ;
-	estSunDepth *= maxZ;
-
-	vec3 wpos = mat3(gbufferModelViewInverse) * rayStart  + gbufferModelViewInverse[3].xyz;
-	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
-
-	vec3 absorbance = vec3(1.0);
-	vec3 vL = vec3(0.0);
-
-	float expFactor = 11.0;
-	for (int i=0;i<spCount;i++) {
-		float d = (pow(expFactor, float(i+dither)/float(spCount))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
-		float dd = pow(expFactor, float(i+dither)/float(spCount)) * log(expFactor) / float(spCount)/(expFactor-1.0);
-		vec3 spPos = start.xyz + dV*d;
-
-		vec3 progressW = start.xyz+cameraPosition+dVWorld;
-
-		vec3 ambientMul = exp(-max(estEndDepth * d,0.0) * waterCoefs );
-		vec3 Indirectlight = ambientMul*ambient;
-
-		vec3 light = Indirectlight * scatterCoef;
-
-		vL += (light - light * exp(-waterCoefs * dd * rayLength)) / waterCoefs * absorbance;
-		absorbance *= exp(-dd * rayLength * waterCoefs);
-	}
-	inColor += vL;
-
-}
-
-uniform float waterEnteredAltitude;
 
 vec4 waterVolumetrics(vec3 rayStart, vec3 rayEnd, float rayLength, vec2 dither, vec3 waterCoefs, vec3 scatterCoef, vec3 ambient, vec3 lightSource, float VdotL, vec3 LPV){
 	int spCount = 8;
@@ -387,7 +357,6 @@ vec4 waterVolumetrics(vec3 rayStart, vec3 rayEnd, float rayLength, vec2 dither, 
 	return vec4(vL, dot(absorbance,vec3(0.335)));
 }
 
-
 float fogPhase2(float lightPoint){
 	float linear = 1.0 - clamp(lightPoint*0.5+0.5,0.0,1.0);
 	float linear2 = 1.0 - clamp(lightPoint,0.0,1.0);
@@ -397,6 +366,7 @@ float fogPhase2(float lightPoint){
 
 	return exponential;
 }
+
 //encoding by jodie
 float encodeVec2(vec2 a){
     const vec2 constant1 = vec2( 1., 256.) / 65535.;
@@ -409,11 +379,6 @@ vec2 decodeVec2(float a){
     const float constant2 = 256. / 255.;
     return fract( a * constant1 ) * constant2 ;
 }
-
-
-
-uniform int framemod8;
-#include "/lib/TAA_jitter.glsl"
 
 float convertHandDepth(float depth) {
     float ndcDepth = depth * 2.0 - 1.0;
@@ -430,8 +395,6 @@ float swapperlinZ(float depth, float _near, float _far) {
 
 }
 
-uniform float viewHeight;
-uniform float viewWidth;
 float godrayTest( in vec3 viewPos, in vec3 lightDir, float noise, float vanilladepth){
 
 	// return 1.0;1
@@ -579,21 +542,22 @@ vec4 waterVolumetrics_alt( vec3 rayStart, vec3 rayEnd, float estEndDepth, float 
 	
     return vec4(vL, dot(absorbance,vec3(0.333333)));
 }
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
-//////////////////////////////VOID MAIN//////////////////////////////
 
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
 
 	/* RENDERTARGETS:0,13 */
 
 	gl_FragData[1] = vec4(0.0,0.0,0.0, 1.0);	
+	
 	float noise_2 = blueNoise();
-	float noise_1 = max(1.0 - R2_dither(),0.0015);
-	// float noise_2 = interleaved_gradientNoise_temporal();
+	// float noise_1 = max(1.0 - R2_dither(),0.0015);
+	float noise_1 = interleaved_gradientNoise_temporal();
 	vec2 bnoise = blueNoise(gl_FragCoord.xy ).rg;
 
 	int seed = frameCounter%40000;
@@ -687,7 +651,7 @@ void main() {
   		  }
   		#endif
 
-		vec4 VolumetricFog = GetVolumetricFog(viewPos0, BN, WsunVec, directLightColor, indirectLight_fog, indirectLight, cloudPlaneDistance);
+		vec4 VolumetricFog = GetVolumetricFog(viewPos0, vec2(noise_1), WsunVec, directLightColor, indirectLight_fog, indirectLight, cloudPlaneDistance);
 
 		#if defined LPV_VL_FOG_ILLUMINATION
 			VolumetricFog.a *= LPV_ILLUMINATION.a;
@@ -701,7 +665,7 @@ void main() {
 	#endif
 
 	#if defined NETHER_SHADER || defined END_SHADER
-		vec4 VolumetricFog = GetVolumetricFog(viewPos0, BN.x, BN.y);
+		vec4 VolumetricFog = GetVolumetricFog(viewPos0, noise_1, noise_1);
 		
 		#if defined LPV_VL_FOG_ILLUMINATION
 			VolumetricFog.a *= LPV_ILLUMINATION.a;
@@ -713,7 +677,7 @@ void main() {
 	#endif
 
 	if (isEyeInWater == 1){
-		vec4 underWaterFog =  waterVolumetrics(vec3(0.0), viewPos0, length(viewPos0), BN, totEpsilon, scatterCoef, indirectLightColor_dynamic, directLightColor , dot(normalize(viewPos0), normalize(sunVec* lightCol.a ) ), LPV_ILLUMINATION.rgb);
+		vec4 underWaterFog =  waterVolumetrics(vec3(0.0), viewPos0, length(viewPos0), vec2(noise_1), totEpsilon, scatterCoef, indirectLightColor_dynamic, directLightColor , dot(normalize(viewPos0), normalize(sunVec* lightCol.a ) ), LPV_ILLUMINATION.rgb);
 		VolumetricFog = vec4(underWaterFog.rgb, 1.0);
 	}
 
@@ -728,7 +692,7 @@ void main() {
 		gl_FragData[1] = vec4(0.0,0.0,0.0,1.0);	
 
 		#if defined OVERWORLD_SHADER
-			VolumetricClouds = GetVolumetricClouds(viewPos1, BN, WsunVec, directLightColor, indirectLightColor, cloudPlaneDistance);
+			VolumetricClouds = GetVolumetricClouds(viewPos1, vec2(noise_1), WsunVec, directLightColor, indirectLightColor, cloudPlaneDistance);
 	
 			VolumetricFog = GetVolumetricFog(viewPos1, vec2(noise_1), WsunVec, directLightColor, indirectLight_fog, indirectLight, cloudPlaneDistance);
 

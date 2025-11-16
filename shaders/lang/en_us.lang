@@ -185,7 +185,7 @@ screen.Fog = Fog Settings
         option.Evening_Cloudy_Fog = Evening Cloudy Fog Density
         option.Night_Cloudy_Fog = Night Cloudy Fog Density
 
-        option.PER_BIOME_ENVIRONMENT = Per Biome Environments
+        screen.BIOME_EFFECTS = Biome Effects
 
     screen.Cave_Fog = Cave Fog
         option.Cave_Fog = Cave Fog
