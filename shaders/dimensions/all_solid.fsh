@@ -277,8 +277,12 @@ float EndPortalEffect(
 }
 
 float bias(){
-	// return (Texture_MipMap_Bias + (blueNoise()-0.5)*0.5) - (1.0-RENDER_SCALE.x) * 2.0;
-	return Texture_MipMap_Bias - (1.0-RENDER_SCALE.x) * 2.0;
+	// bias mipmapping as window resolution and / or render scale changes.
+	#if TAA_MODE == 3
+		return (1.0 - texelSize.x * 2560.0) + (0.0 - (1.0-RENDER_SCALE.x) * 2.0);
+	#else
+		return 1.0 - texelSize.x * 2560.0;
+	#endif
 }
 vec4 texture2D_POMSwitch(
 	sampler2D sampler, 
