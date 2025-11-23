@@ -24,7 +24,7 @@ vec3 gauss1D(vec2 coord,vec2 dir,float alpha,int maxIT){
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-/* DRAWBUFFERS:6 */
+/* RENDERTARGETS:6 */
 
 vec2 texcoord = (gl_FragCoord.xy*vec2(2.0,4.0))*texelSize;
 vec2 gaussDir = vec2(1.0,0.0);

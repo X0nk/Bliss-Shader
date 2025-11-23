@@ -22,7 +22,7 @@ vec2 decodeVec2(float a){
 
 void main() {
 
-/* DRAWBUFFERS:3 */
+/* RENDERTARGETS:3 */
 
 vec2 resScale = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.))/vec2(1920.,1080.);
 vec2 quarterResTC = gl_FragCoord.xy*2.0*resScale*texelSize;

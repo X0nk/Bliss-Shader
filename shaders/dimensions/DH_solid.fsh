@@ -224,7 +224,9 @@ void main() {
     
 	gl_FragData[1].a = 0.0;
     
-	#if EMISSIVE_TYPE == 0
+	gl_FragData[2] = vec4(0.0,0.0,0.0,0.0);
+	
+    #if EMISSIVE_TYPE == 0
 		gl_FragData[2].a = 0.0;
 	#else
 		gl_FragData[2].a = EMISSIVE;

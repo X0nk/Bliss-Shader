@@ -589,6 +589,7 @@ void main() {
 		// SpecularTex.r = max(SpecularTex.r, rainfall);
 		// SpecularTex.g = max(SpecularTex.g, max(Puddle_shape*0.02,0.02));
 
+		gl_FragData[1] = vec4(0.0,0.0,0.0,0.0);
 		gl_FragData[1].rg = SpecularTex.rg;
 
 		#if EMISSIVE_TYPE == 0

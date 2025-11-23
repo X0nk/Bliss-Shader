@@ -17,7 +17,7 @@ uniform float viewWidth;
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-/* DRAWBUFFERS:06 */
+/* RENDERTARGETS:0,6 */
   vec2 screenEdges = 2.0/vec2(viewWidth, viewHeight);
 	vec2 jitter = offsets[framemod8]*texelSize*0.5;
   ivec2 center = ivec2(clamp(gl_FragCoord.xy*texelSize, screenEdges, 1.0-screenEdges)/texelSize);

@@ -163,7 +163,7 @@ vec3 chromaticAberration(vec2 UV){
 
 void main() {
 
-  /* DRAWBUFFERS:7 */
+  /* RENDERTARGETS:7 */
   
   #ifdef CHROMATIC_ABERRATION
 	  vec3 color = chromaticAberration(texcoord);
@@ -185,5 +185,5 @@ void main() {
 	  color = colorGrading(color);
   #endif
   
-	gl_FragData[0].rgb = clamp(int8Dither(color, texcoord),0.0,1.0);
+	gl_FragData[0] = vec4(clamp(int8Dither(color, texcoord),0.0,1.0), 0.0);
 }

@@ -207,7 +207,7 @@ vec2 R2_samples(float n){
 
 
 void main() {
-/* DRAWBUFFERS:4 */
+/* RENDERTARGETS:4 */
 
 gl_FragData[0] = vec4(0.0);
 
