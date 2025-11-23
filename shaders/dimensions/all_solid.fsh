@@ -381,6 +381,7 @@ void main() {
 
 	vec2 adjustedTexCoord = lmtexcoord.xy;
 
+	float saveDepth = 0.0;
 #if defined POM && defined WORLD && !defined ENTITIES && !defined HAND
 	// vec2 tempOffset=offsets[framemod8];
 	adjustedTexCoord = fract(vtexcoord.st)*vtexcoordam.pq+vtexcoordam.st;
@@ -397,7 +398,9 @@ void main() {
 	float maxdist = MAX_OCCLUSION_DISTANCE;
 	if(!ifPOM) maxdist = 0.0;
 
+
 	gl_FragDepth = gl_FragCoord.z;
+	
 	if (falloff > 0.0) {
 
 		float depthmap = readNormal(vtexcoord.st).a;
@@ -407,7 +410,7 @@ void main() {
  		if ( viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
 			float noise = blueNoise();
 			#ifdef Adaptive_Step_length
-				vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * pomdepth) * clamp(1.0-pow(depthmap,2),0.1,1.0);
+				vec3 interval = (viewVector.xyz / -viewVector.z / MAX_OCCLUSION_POINTS * pomdepth) * clamp(1.0-pow(depthmap,2),0.1,1.0);
 				used_POM_DEPTH = 1.0;
 			#else
 				vec3 interval = viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS*pomdepth;
@@ -420,6 +423,15 @@ void main() {
 			for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - pomdepth + pomdepth * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
 				coord = coord + interval  * used_POM_DEPTH; 
 				sumVec += used_POM_DEPTH; 
+
+				#if defined POM_OFFSET_SHADOW_BIAS
+					// absolutely disgusting but works for now
+					if(loopCount > MAX_OCCLUSION_POINTS*0.01 * POM_DEPTH * 30.0) saveDepth = max(0.20,saveDepth);
+					if(loopCount > MAX_OCCLUSION_POINTS*0.02 * POM_DEPTH * 30.0) saveDepth = max(0.25,saveDepth);
+					if(loopCount > MAX_OCCLUSION_POINTS*0.03 * POM_DEPTH * 30.0) saveDepth = max(0.30,saveDepth);
+					if(loopCount > MAX_OCCLUSION_POINTS*0.05 * POM_DEPTH * 30.0) saveDepth = max(0.35,saveDepth);
+					if(loopCount > MAX_OCCLUSION_POINTS*0.06 * POM_DEPTH * 30.0) saveDepth = max(0.40,saveDepth);
+				#endif
 			}
 	
 			if (coord.t < mincoord) {
@@ -435,8 +447,10 @@ void main() {
 
 			gl_FragDepth = toClipSpace3(truePos).z;
 		}
+		
 	}
 #endif
+
 	if(!ifPOM) adjustedTexCoord = lmtexcoord.xy;
 	
 
@@ -545,6 +559,10 @@ void main() {
 	#ifdef WORLD
 		if (Albedo.a > 0.1) Albedo.a = normalMat.a;
 		else Albedo.a = 0.0;
+		
+		#if defined POM_OFFSET_SHADOW_BIAS
+			if(saveDepth > 0) Albedo.a = saveDepth;
+		#endif
 	#endif
 
 	#ifdef HAND

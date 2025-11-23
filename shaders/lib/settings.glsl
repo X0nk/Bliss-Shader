@@ -221,6 +221,10 @@ const float entityShadowDistanceMul = 0.25; // [0.01 0.02 0.03 0.04 0.05 0.10 0.
 #define MAX_ITERATIONS 35 // [5 10 15 20 25 30 35 40 45 50 60 70 80 90 100 125 150 200 300 400 500]
 #define MAX_DIST 25.0 // [5.0 10.0 15.0 20.0 25.0 35.0 30.0 40.0 50.0 60.0 70.0 80.0 90.0 100.0 125.0 150.0 200.0 300.0 400.0 500.0]
 
+#ifdef POM
+	#define POM_OFFSET_SHADOW_BIAS
+#endif
+
 #define SSS_TYPE 1 // [0 1 2 3]
 #define LabSSS_Curve 1.0 // [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0]
 // #define MOB_SSS
