@@ -51,7 +51,7 @@ void main() {
             vec3 GlintColor = vec3(0.0);
             Albedo.a = 0.0;
         #else
-            vec3 GlintColor = Albedo.rgb * 0.2 * Emissive_Brightness;
+            vec3 GlintColor = Albedo.rgb * 0.2 * Emissive_Brightness * ENCHANT_GLINT_BRIGHTNESS;
         #endif
 
 	    gl_FragData[0] = vec4(GlintColor*0.1, 0.000001);

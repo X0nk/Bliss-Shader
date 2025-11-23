@@ -210,6 +210,9 @@ vec3 blackbody(float Temp)
 void main() {
   /* DRAWBUFFERS:7 */
 	float vignette = (1.5-dot(texcoord-0.5,texcoord-0.5)*2.);
+
+	float bloomyFog_Mult = BLOOMY_FOG;
+	if(isEyeInWater == 1) bloomyFog_Mult = UNDERWATER_BLOOMY_FOG;
 	
 	#if DOF_QUALITY == -1 || DOF_QUALITY == 5
 		vec3 col = texture2D(colortex5,texcoord).rgb;
@@ -293,7 +296,7 @@ void main() {
 			float purkinje = clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*pstrength,0,1);
 		#endif	
 		
-  		VL_abs = clamp((1.0-VL_abs)*BLOOMY_FOG,0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
+  		VL_abs = clamp((1.0-VL_abs)*bloomyFog_Mult,0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
 		col = (mix(col, fogBloom, VL_abs) + bloom*lightScat) * exposure.rgb;
 
   		float lum = dot(col, vec3(0.15,0.3,0.55));
@@ -303,7 +306,7 @@ void main() {
 
 		col = mix(lum * vec3(Purkinje_R, Purkinje_G, Purkinje_B) * Purkinje_Multiplier, col, rodCurve);
 	#else
-  		VL_abs = clamp((1.0-VL_abs)*BLOOMY_FOG*0.75*(1.0+rainStrength),0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
+  		VL_abs = clamp((1.0-VL_abs)*bloomyFog_Mult*0.75*(1.0+rainStrength),0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
 		col = (mix(col, fogBloom, VL_abs) + bloom*lightScat) * exposure.rgb;
 	#endif
 	
