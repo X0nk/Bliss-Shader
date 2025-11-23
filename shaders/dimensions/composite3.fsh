@@ -632,7 +632,7 @@ void main() {
     #endif
   #endif
 
-  gl_FragData[0].r = bloomyFogMult; // pass fog alpha so bloom can do bloomy fog
+  gl_FragData[0] = vec4(bloomyFogMult,0.0,0.0,1.0); // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);
 
   #if DEBUG_VIEW == debug_FORWARD_RENDERING
