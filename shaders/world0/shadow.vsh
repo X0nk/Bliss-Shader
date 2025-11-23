@@ -202,7 +202,7 @@ void main() {
 		vec3 playerpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
 	// #endif
 
-	#if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
+	#if defined IS_LPV_ENABLED && defined MC_GL_ARB_shader_image_load_store
 		PopulateShadowVoxel(playerpos);
 	#endif
 

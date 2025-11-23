@@ -7,7 +7,7 @@
 // #endif
 
 #ifdef IS_LPV_ENABLED
-	#extension GL_EXT_shader_image_load_store: enable
+	#extension GL_ARB_shader_image_load_store: enable
 	#extension GL_ARB_shading_language_packing: enable
 #endif
 

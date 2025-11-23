@@ -40,7 +40,7 @@ Read the terms of modification and sharing before changing something below pleas
 
 
 void main() {
-	#if defined IS_LPV_ENABLED && defined MC_GL_EXT_shader_image_load_store
+	#if defined IS_LPV_ENABLED && defined MC_GL_ARB_shader_image_load_store
 		#ifdef LPV_NOSHADOW_HACK
 			vec3 playerpos = gl_Vertex.xyz;
 		#else
