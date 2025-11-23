@@ -305,12 +305,8 @@ vec2 SSAO(
 				occlusion += max(0.0, dot(normalize(viewPosDiff), normal) - preAo) * threshHold;
 				
 				#ifdef Ambient_SSS
-					#ifdef OLD_INDIRECT_SSS
-						sss += clamp(-dot(normalize(viewPosDiff), flatnormal),0.0,1.0) * exp(-10*occlusion);
-					#else
-						sss += clamp(-dot(normalize(viewPosDiff), flatnormal) - occlusion/n,0.0,1.0) * 0.25 + (normalize(mat3(gbufferModelViewInverse) * -viewPosDiff).y - occlusion/n) * threshHold;
-						// sss += (normalize(mat3(gbufferModelViewInverse) * -viewPosDiff).y - (occlusion/n)*0.5) * threshHold;
-					#endif
+					sss += clamp(-dot(normalize(viewPosDiff), flatnormal) - occlusion/n,0.0,1.0) * 0.25 + (normalize(mat3(gbufferModelViewInverse) * -viewPosDiff).y - occlusion/n) * threshHold;
+					// sss += (normalize(mat3(gbufferModelViewInverse) * -viewPosDiff).y - (occlusion/n)*0.5) * threshHold;
 				#endif
 
 			}
@@ -418,9 +414,7 @@ void main() {
 
 		vec2 SSAO_SSS = SSAO(viewPos, worldToView(normal), worldToView(FlatNormals), hand, noise);
 		
-		#ifndef OLD_INDIRECT_SSS
-			SSAO_SSS.y = clamp(SSAO_SSS.y + 0.5 * lightmap.y*lightmap.y,0.0,1.0);
-		#endif
+		SSAO_SSS.y = clamp(SSAO_SSS.y + 0.5 * lightmap.y*lightmap.y,0.0,1.0);
 
 		if(swappedDepth >= 1.0) SSAO_SSS = vec2(1.0,0.0);
 

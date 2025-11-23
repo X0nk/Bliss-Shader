@@ -36,8 +36,8 @@ uniform int framemod8;
 varying vec4 vtexcoordam; // .st for add, .pq for mul
 varying vec4 vtexcoord;
 
-vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
-vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq)*exp2(Texture_MipMap_Bias);
+vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq);
+vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq);
 // #endif
 
 #include "/lib/res_params.glsl"

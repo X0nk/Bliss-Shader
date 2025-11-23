@@ -387,7 +387,14 @@ void Emission(
 }
 
 uniform vec3 eyePosition;
-
+float bias(){
+	// bias mipmapping as window resolution and / or render scale changes.
+	#if TAA_MODE == 3
+		return (1.0 - texelSize.x * 2560.0) + (0.0 - (1.0-RENDER_SCALE.x) * 2.0);
+	#else
+		return 1.0 - texelSize.x * 2560.0;
+	#endif
+}
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -401,6 +408,7 @@ void main() {
 if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	{
 	
 	vec3 FragCoord = gl_FragCoord.xyz;
+	float mipmapBias = bias();
 
 	#if TAA_MODE > 0
 		vec2 tempOffset = offsets[framemod8];
@@ -437,7 +445,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 /////////////////////////////////// ALBEDO /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-	gl_FragData[0] = texture2D(texture, lmtexcoord.xy, Texture_MipMap_Bias) * color;
+	gl_FragData[0] = texture2D(texture, lmtexcoord.xy, mipmapBias) * color;
 
 	float UnchangedAlpha = gl_FragData[0].a;
 
@@ -511,7 +519,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 						  tangent.z, tangent2.z, normal.z);
 
 
-	vec3 NormalTex = vec3(texture2D(normals, lmtexcoord.xy, Texture_MipMap_Bias).xy,0.0);
+	vec3 NormalTex = vec3(texture2D(normals, lmtexcoord.xy, mipmapBias).xy,0.0);
 	NormalTex.xy = NormalTex.xy*2.0-1.0;
 	NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0);
 
@@ -566,7 +574,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 ////////////////////////////////////////////////////////////////////////////////
 
 
-	vec3 SpecularTex = texture2D(specular, lmtexcoord.xy, Texture_MipMap_Bias).rga;
+	vec3 SpecularTex = texture2D(specular, lmtexcoord.xy, mipmapBias).rga;
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// DIFFUSE LIGHTING //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
