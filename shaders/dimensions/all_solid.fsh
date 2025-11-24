@@ -399,7 +399,9 @@ void main() {
 	if(!ifPOM) maxdist = 0.0;
 
 
-	gl_FragDepth = gl_FragCoord.z;
+	#if defined DEPTH_WRITE_POM
+		gl_FragDepth = gl_FragCoord.z;
+	#endif
 	
 	if (falloff > 0.0) {
 
@@ -422,7 +424,7 @@ void main() {
 			float sumVec = noise;
 			for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - pomdepth + pomdepth * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
 				coord = coord + interval  * used_POM_DEPTH; 
-				sumVec += used_POM_DEPTH; 
+				sumVec += used_POM_DEPTH;
 
 				#if defined POM_OFFSET_SHADOW_BIAS
 					// absolutely disgusting but works for now
@@ -443,9 +445,10 @@ void main() {
 			
 			adjustedTexCoord = mix(fract(coord.st)*vtexcoordam.pq+vtexcoordam.st, adjustedTexCoord, max(dist-MIX_OCCLUSION_DISTANCE,0.0)/(MAX_OCCLUSION_DISTANCE-MIX_OCCLUSION_DISTANCE));
 
-			vec3 truePos = fragpos + sumVec*inverseMatrix(tbnMatrix)*interval;
-
-			gl_FragDepth = toClipSpace3(truePos).z;
+			#if defined DEPTH_WRITE_POM
+				vec3 truePos = fragpos + sumVec*inverseMatrix(tbnMatrix)*interval;
+				gl_FragDepth = toClipSpace3(truePos).z;
+			#endif
 		}
 		
 	}
@@ -647,6 +650,8 @@ void main() {
 		#if SSS_TYPE == 3		
 			gl_FragData[1].b = SpecularTex.b;
 		#endif
+
+		
 
 		#if DEBUG_VIEW == debug_MATERIAL_SSS
 			Albedo.rgb = vec3(0.1);
