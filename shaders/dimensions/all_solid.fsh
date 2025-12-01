@@ -462,8 +462,7 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 	float textureLOD = bias();
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD) * color;
-	
-	
+
 	#if defined HAND
 		if (Albedo.a < 0.1) discard;
 	#endif
@@ -563,8 +562,8 @@ void main() {
 		if (Albedo.a > 0.1) Albedo.a = normalMat.a;
 		else Albedo.a = 0.0;
 		
-		#if defined POM_OFFSET_SHADOW_BIAS
-			if(saveDepth > 0) Albedo.a = saveDepth;
+		#if defined POM_OFFSET_SHADOW_BIAS && !defined HAND
+			if(saveDepth > 0) Albedo.a = min(saveDepth,Albedo.a);
 		#endif
 	#endif
 
