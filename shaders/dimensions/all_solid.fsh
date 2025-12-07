@@ -277,11 +277,15 @@ float EndPortalEffect(
 }
 
 float bias(){
-	// bias mipmapping as window resolution and / or render scale changes.
-	#if TAA_MODE == 3
-		return (1.0 - texelSize.x * 2560.0) + (0.0 - (1.0-RENDER_SCALE.x) * 2.0);
+	#ifdef SCALE_MIPMAP_WITH_RESOLUTION
+		// bias mipmapping as window resolution and / or render scale changes.
+		#if TAA_MODE == 3
+			return (1.0 - texelSize.x * 2560.0) + (0.0 - (1.0-RENDER_SCALE.x) * 2.0);
+		#else
+			return 1.0 - texelSize.x * 2560.0;
+		#endif
 	#else
-		return 1.0 - texelSize.x * 2560.0;
+		return 0.0;
 	#endif
 }
 vec4 texture2D_POMSwitch(
