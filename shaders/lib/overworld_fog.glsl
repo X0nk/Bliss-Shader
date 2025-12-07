@@ -289,7 +289,7 @@ vec4 GetVolumetricFog(
 		#endif
 		/// ATMOSOPHERE
 		float planetVolume = clamp(1.0 - length((rayProgress-cameraPosition) - vec3(0.0, 250.0, 0.0)) / 2500.0, 0.0,1.0);
-		vec2 airCoef = exp2(-max(rayProgress.y-SEA_LEVEL,0.0)/vec2(8.0e3, 1.2e3)*vec2(6.,7.0)) * planetVolume * 25.0 * Haze_amount;
+		vec2 airCoef = exp2(-max(rayProgress.y-62.0,0.0)/vec2(8.0e3, 1.2e3)*vec2(6.,7.0)) * planetVolume * 25.0 * Haze_amount;
 		vec3 rayleigh = rayleighCoeffs*airCoef.x;
 		vec3 mie = mieCoeffs*(airCoef.y + min(Haze_amount,1.0));
 		vec3 airDensity = kill*(rayleigh + mie);
