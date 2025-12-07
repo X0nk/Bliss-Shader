@@ -1,3 +1,5 @@
+#define ANTIALIASING_RELATED_SETTINGS
+#define EMISSION_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 
 varying vec4 pos;

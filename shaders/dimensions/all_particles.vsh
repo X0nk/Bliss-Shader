@@ -1,3 +1,5 @@
+#define HANDHELD_LIGHTSOURCE_RELATED_SETTINGS
+#define ANTIALIASING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/items.glsl"

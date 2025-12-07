@@ -1,7 +1,9 @@
 #version 120
+#define ANTIALIASING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 
 #if RESOURCEPACK_SKY != 0
+
 	#include "/lib/res_params.glsl"
 	/*
 	!! DO NOT REMOVE !!

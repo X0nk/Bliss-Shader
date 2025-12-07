@@ -1,7 +1,10 @@
+#define ANTIALIASING_RELATED_SETTINGS
+#define SEASONS_RELATED_SETTINGS
+#define DEPTH_OF_FIELD_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 
-varying vec4 pos;
+// varying vec4 pos;
 varying vec4 localPos;
 varying vec4 gcolor;
 varying vec2 lightmapCoords;

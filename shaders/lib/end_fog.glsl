@@ -64,7 +64,11 @@ SOFTWARE.*/
 
 // vec3 RandomPosition = hash31(frameTimeCounter);
 float vortexBoundRange = 300.0;
-vec3 ManualLightPos = vec3(ORB_X, ORB_Y, ORB_Z);
+#ifdef THE_ORB
+	vec3 ManualLightPos = vec3(ORB_X, ORB_Y, ORB_Z);
+#else
+	vec3 ManualLightPos = vec3(0.0);
+#endif
 
 vec3 LightSourcePosition(vec3 worldPos, vec3 cameraPos, float vortexBounds){
 

@@ -1,3 +1,4 @@
+#define POST_PROCESSING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 
 varying vec2 texcoord;

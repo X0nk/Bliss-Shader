@@ -1,3 +1,5 @@
+#define ANTIALIASING_RELATED_SETTINGS
+#define DEPTH_OF_FIELD_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 
@@ -44,8 +46,6 @@ uniform float far;
 uniform int framemod4_DH;
 #define DH_TAA_OVERRIDE
 #include "/lib/TAA_jitter.glsl"
-
-
 
 uniform vec3 cameraPosition;
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)

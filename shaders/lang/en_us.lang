@@ -668,8 +668,7 @@ screen.POM = Parallax Occlusion Mapping / POM
     option.Adaptive_Step_length = Dynamic Quality
     option.Horrible_slope_normals = Horrible Slope Normals
 
-screen.Porosity = Porosity / Puddles / Wetness
-    option.Porosity = Porosity
+screen.WETNESS = Wetness / Puddles / Porosity
     option.PUDDLE_MODE = Wetness During Rain
         value.PUDDLE_MODE.0 = No Wetness
         value.PUDDLE_MODE.1 = Puddles + Completely Wet
@@ -856,7 +855,6 @@ screen.Fog.comment = Configure settings related to the raymarched volumetric fog
         option.CaveFogFallOff.comment = Configure how quickly the fog gradient reaches its brightest part.
 
 screen.Clouds.comment = Configure settings related to the raymarched volumetric clouds.
-    option.VOLUMETRIC_CLOUDS.comment = Toggle the clouds. §aPERFORMANCE COST:§r medium to high
     option.CLOUDS_QUALITY.comment = Configure the resolution of the volumetric clouds. §aPERFORMANCE COST:§r high
     option.CLOUDS_SHADOWS.comment = Toggle shadows that are casted from the clouds onto the ground, and fog below them. §aPERFORMANCE COST:§r low to medium
     option.DAILY_WEATHER_PROFILE.comment = Toggle the weather that changes every day. §bWhat is this?§r There are 10 weather profiles that the shader cycles through every day. You cannot change any cloud coverage settings when this is enabled. §aPERFORMANCE COST:§r low
@@ -867,7 +865,6 @@ screen.Clouds.comment = Configure settings related to the raymarched volumetric 
 screen.World.comment = Configure settings for various things that happen in the world, from waving plants to water related settings.
     screen.Water.comment = Configure settings related to the water.
     option.Dirt_Amount.comment = Configure how much dirt is in water. This controls how much fog is within water.
-    option.Water_Top_Layer.comment = Configure the Y coordinate at which the ocean should be in the world.
     screen.Water_fog_color.comment = Configure colors of the water fog. 
 
 screen.Climate.comment = Configure settings related to the climate, like seasonal colors, daily weather, and biome specific fog.

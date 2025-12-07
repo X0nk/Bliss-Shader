@@ -1,3 +1,6 @@
+#define ANTIALIASING_RELATED_SETTINGS
+#define SHADOWMAP_CONSTANT_RELATED_SETTINGS
+
 #include "/lib/settings.glsl"
 #include "/lib/util.glsl"
 #include "/lib/res_params.glsl"

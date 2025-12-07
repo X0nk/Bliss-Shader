@@ -1,3 +1,20 @@
+#define NETHER_RELATED_SETTINGS
+#define END_RELATED_SETTINGS
+#define HANDHELD_LIGHTSOURCE_RELATED_SETTINGS
+#define ANTIALIASING_RELATED_SETTINGS
+#define SKY_RELATED_SETTINGS
+#define WETNESS_RELATED_SETTINGS
+#define EMISSION_RELATED_SETTINGS
+#define DEFFERRED_LIGHTING_PASS_RELATED_SETTINGS
+#define SUB_SURFACE_SCATTERING_RELATED_SETTINGS
+#define SPECULAR_RELATED_SETTINGS
+#define DEFERRED_SPECULAR_RELATED_SETTINGS
+#define SHADOWMAP_CONSTANT_RELATED_SETTINGS
+#define DIRECT_LIGHT_RELATED_SETTINGS
+#define INDIRECT_EFFECT_RELATED_SETTINGS
+#define AMBIENT_LIGHT_RELATED_SETTINGS
+#define VOLUMETRIC_CLOUD_RELATED_SETTINGS
+#define WATER_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 
 // #if defined END_SHADER || defined NETHER_SHADER
@@ -31,20 +48,14 @@ uniform float nightVision;
 	flat varying vec3 averageSkyCol_Clouds;
 	flat varying vec4 lightCol;
 	flat varying vec3 moonCol;
-
-	#if SUN_SPECULAR_MULT != 0
-		#define LIGHTSOURCE_REFLECTION
-	#endif
 #endif
 
 #ifdef NETHER_SHADER
 	const bool colortex4MipmapEnabled = true;
-	#undef LIGHTSOURCE_REFLECTION
 #endif
 
 #ifdef END_SHADER
 	flat varying float Flashing;
-	#undef LIGHTSOURCE_REFLECTION
 #endif
 
 uniform int hideGUI;
@@ -116,7 +127,10 @@ uniform vec3 sunVec;
 flat varying vec3 WsunVec;
 flat varying vec3 unsigned_WsunVec;
 flat varying vec3 WmoonVec;
-flat varying vec3 albedoSmooth;
+
+#ifdef FLASHLIGHT
+	flat varying vec3 albedoSmooth;
+#endif
 
 #ifdef IS_LPV_ENABLED
 	uniform int heldItemId;
@@ -148,9 +162,7 @@ float convertHandDepth_2(in float depth, bool hand) {
 #include "/lib/sky_gradient.glsl"
 
 #ifdef OVERWORLD_SHADER
-
 	#include "/lib/scene_controller.glsl"
-	
 	#define CLOUDSHADOWSONLY
 	#include "/lib/volumetricClouds.glsl"
 #endif
@@ -163,24 +175,8 @@ float convertHandDepth_2(in float depth, bool hand) {
 
 #define LIGHTNINGFLASH_DIFFUSE
 #include "/lib/lightning_stuff.glsl"
-
-// #define DEFERRED_SPECULAR
-#define DEFERRED_SSR_QUALITY 30 // [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 200 300 400 500]
-#define DEFERRED_BACKGROUND_REFLECTION
-#define DEFERRED_ROUGH_REFLECTION
-
-#ifdef DEFERRED_SPECULAR
-#endif
-#if DEFERRED_SSR_QUALITY > -1
-#endif
-#ifdef DEFERRED_BACKGROUND_REFLECTION
-#endif
-#ifdef DEFERRED_ROUGH_REFLECTION
-#endif
-
 #include "/lib/specular.glsl"
 #include "/lib/diffuse_lighting.glsl"
-
 #include "/lib/end_fog.glsl"
 #include "/lib/DistantHorizons_projections.glsl"
 
@@ -650,17 +646,12 @@ vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, floa
 
 vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
 	// Density = 1.0;
-	#ifdef OLD_INDIRECT_SSS
-		float scatterDepth = 1.0 - pow(1.0-Scattering, 0.5 + Density * 2.5);
-		vec3 absorbColor = vec3(1.0) * exp(-(15.0 - 10.0*scatterDepth)  * sss_absorbance_multiplier * 0.01);
-		vec3 scatter =  scatterDepth *  absorbColor * pow(Density, LabSSS_Curve);
-	#else
-		float scatterDepth = pow(Scattering,3.5);
-		scatterDepth = 1.0-pow(1.0-scatterDepth,5.0);
 
-		vec3 absorbColor = exp(max(luma(albedo) - albedo*vec3(1.0,1.1,1.2), 0.0) * -20.0 * sss_absorbance_multiplier);
-		vec3 scatter = scatterDepth * mix(absorbColor, vec3(1.0), scatterDepth) * pow(Density, LabSSS_Curve);
-	#endif
+	float scatterDepth = pow(Scattering,3.5);
+	scatterDepth = 1.0-pow(1.0-scatterDepth,5.0);
+	
+	vec3 absorbColor = exp(max(luma(albedo) - albedo*vec3(1.0,1.1,1.2), 0.0) * -20.0 * sss_absorbance_multiplier);
+	vec3 scatter = scatterDepth * mix(absorbColor, vec3(1.0), scatterDepth) * pow(Density, LabSSS_Curve);
 
 	// scatter *= 1.0 + exp(-7.0*(-playerPosNormalized.y*0.5+0.5));
 
@@ -1404,19 +1395,7 @@ void main() {
 	if(translucentMasks > 0.0){
 		// water absorbtion will impact ALL light coming up from terrain underwater.
 		gl_FragData[0].rgb *= Absorbtion;
-
-		// #ifdef DISTANT_HORIZONS
-	  	// 	float DH_mixedLinearZ = sqrt(texelFetch2D(colortex12,ivec2(gl_FragCoord.xy),0).a/65000.0);
-		// 	vec4 vlBehingTranslucents = BilateralUpscale_VLFOG(colortex13, colortex12, DH_mixedLinearZ);
-		// #else
-		// 	vec4 vlBehingTranslucents = BilateralUpscale_VLFOG(colortex13, depthtex1, ld(z));
-		// #endif
-
-    	// gl_FragData[0].rgb = gl_FragData[0].rgb * vlBehingTranslucents.a + vlBehingTranslucents.rgb;
 	}
-
-	// gl_FragData[0].rgb = (sqrt(texelFetch2D(colortex4,ivec2(gl_FragCoord.xy/4.0),0).a/65000.0)) * vec3(1.0);
-	
 	////// DEBUG VIEW STUFF
 	#if DEBUG_VIEW == debug_SHADOWMAP	
 		gl_FragData[0].rgb = vec3(1.0) * (Shadows * NdotL * 0.9 + 0.1);

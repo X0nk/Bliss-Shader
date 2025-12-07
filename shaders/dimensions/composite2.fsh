@@ -1,3 +1,14 @@
+#define NETHER_RELATED_SETTINGS
+#define END_RELATED_SETTINGS
+#define SKY_RELATED_SETTINGS
+#define ATMOSPHERE_COEFF_RELATED_SETTINGS
+#define DISTANCE_BASED_FOG_RELATED_SETTINGS
+#define SHADOWMAP_CONSTANT_RELATED_SETTINGS
+#define AMBIENT_LIGHT_RELATED_SETTINGS
+#define SEASONS_RELATED_SETTINGS
+#define VOLUMETRIC_CLOUD_RELATED_SETTINGS
+#define VOLUMETRIC_FOG_RELATED_SETTINGS
+#define WATER_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 
 #define EXCLUDE_WRITE_TO_LUT
@@ -24,6 +35,7 @@ uniform sampler2D colortex7;
 uniform sampler2D colortex10;
 uniform sampler2D colortex12;
 uniform sampler2D colortex14;
+
 
 flat varying vec3 WsunVec;
 uniform vec3 sunVec;
@@ -226,6 +238,7 @@ uniform sampler2D colortex4;
 
 uniform int framemod8;
 #include "/lib/TAA_jitter.glsl"
+
 
 /*
 from https://blog.demofox.org/2022/01/01/interleaved-gradient-noise-a-different-kind-of-low-discrepancy-sequence/

@@ -1,4 +1,8 @@
-
+#define HANDHELD_LIGHTSOURCE_RELATED_SETTINGS
+#define ANTIALIASING_RELATED_SETTINGS
+#define DEPTH_OF_FIELD_RELATED_SETTINGS
+#define GEOMETRY_ANIMATION_RELATED_SETTINGS
+#define SEASONS_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/bokeh.glsl"

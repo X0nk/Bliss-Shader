@@ -1,5 +1,9 @@
 #version 120
+
+#define GEOMETRY_ANIMATION_RELATED_SETTINGS
+#define SHADOWMAP_CONSTANT_RELATED_SETTINGS
 #include "/lib/settings.glsl"
+
 #ifdef IS_LPV_ENABLED
 	#extension GL_ARB_explicit_attrib_location: enable
 	#extension GL_ARB_shader_image_load_store: enable

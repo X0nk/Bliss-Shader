@@ -1,3 +1,11 @@
+#define DEPTH_OF_FIELD_RELATED_SETTINGS
+#define ATMOSPHERE_COEFF_RELATED_SETTINGS
+#define SUN_AND_MOON_RELATED_SETTINGS
+#define EXPOSURE_RELATED_SETTINGS
+#define SHADOWMAP_CONSTANT_RELATED_SETTINGS
+#define SEASONS_RELATED_SETTINGS
+#define VOLUMETRIC_FOG_RELATED_SETTINGS
+#define SCENE_CONTROLLER_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 
@@ -15,7 +23,6 @@ flat varying vec3 moonColor;
 flat varying vec3 lightSourceColor;
 flat varying vec3 zenithColor;
 
-flat varying vec2 tempOffsets;
 
 flat varying float exposure;
 flat varying float avgBrightness;

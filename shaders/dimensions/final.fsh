@@ -1,3 +1,5 @@
+#define GAMEPLAY_EFFECTS_RELATED_SETTINGS
+#define POST_PROCESSING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 
 uniform sampler2D colortex7;

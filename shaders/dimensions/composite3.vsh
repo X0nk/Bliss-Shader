@@ -1,3 +1,6 @@
+#define ANTIALIASING_RELATED_SETTINGS
+#define SKY_RELATED_SETTINGS
+#define DISTANCE_BASED_FOG_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 
 varying vec2 texcoord;

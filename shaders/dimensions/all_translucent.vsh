@@ -1,3 +1,8 @@
+#define HANDHELD_LIGHTSOURCE_RELATED_SETTINGS
+#define ANTIALIASING_RELATED_SETTINGS
+#define DEPTH_OF_FIELD_RELATED_SETTINGS
+#define SHADOWMAP_CONSTANT_RELATED_SETTINGS
+#define WATER_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/bokeh.glsl"

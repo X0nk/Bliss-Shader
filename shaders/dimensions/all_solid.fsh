@@ -1,5 +1,10 @@
 #extension GL_ARB_shader_texture_lod : enable
-
+#define HANDHELD_LIGHTSOURCE_RELATED_SETTINGS
+#define ANTIALIASING_RELATED_SETTINGS
+#define SUB_SURFACE_SCATTERING_RELATED_SETTINGS
+#define EMISSION_RELATED_SETTINGS
+#define WETNESS_RELATED_SETTINGS
+#define PARALLAX_OCCLUSION_MAPPING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/blocks.glsl"
 #include "/lib/entities.glsl"
@@ -654,7 +659,6 @@ void main() {
 			gl_FragData[1].b = SpecularTex.b;
 		#endif
 
-		
 
 		#if DEBUG_VIEW == debug_MATERIAL_SSS
 			Albedo.rgb = vec3(0.1);

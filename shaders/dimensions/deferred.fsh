@@ -1,8 +1,16 @@
+#define NETHER_RELATED_SETTINGS
+#define END_RELATED_SETTINGS
+#define ATMOSPHERE_COEFF_RELATED_SETTINGS
+#define SUN_AND_MOON_RELATED_SETTINGS
+#define SKY_RELATED_SETTINGS
+#define SHADOWMAP_CONSTANT_RELATED_SETTINGS
+#define AMBIENT_LIGHT_RELATED_SETTINGS
+#define SEASONS_RELATED_SETTINGS
+#define VOLUMETRIC_CLOUD_RELATED_SETTINGS
+#define VOLUMETRIC_FOG_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 
 #define ReflectedFog
-
-
 
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec3 averageSkyCol;
@@ -10,12 +18,6 @@ flat varying vec3 averageSkyCol;
 flat varying vec3 lightSourceColor;
 flat varying vec3 sunColor;
 flat varying vec3 moonColor;
-// flat varying vec3 zenithColor;
-// flat varying vec3 rayleighAborbance; 
-
-// flat varying vec3 WsunVec;
-
-flat varying vec2 tempOffsets;
 
 flat varying float exposure;
 flat varying float avgBrightness;
@@ -76,7 +78,7 @@ vec4 lightCol = vec4(lightSourceColor, float(sunElevation > 1e-5)*2-1.);
 #include "/lib/ROBOBO_sky.glsl"
 #include "/lib/sky_gradient.glsl"
 #include "/lib/Shadow_Params.glsl"
-#include "/lib/waterBump.glsl"
+// #include "/lib/waterBump.glsl"
 
 vec3 WsunVec = mat3(gbufferModelViewInverse)*sunVec;
 // vec3 WsunVec = normalize(LightDir);
@@ -294,7 +296,7 @@ float mixhistory = 0.06;
 
 /// --- Sky only
 if (gl_FragCoord.x > 18. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257){
-	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.,1.))/256.+tempOffsets/256.,0.0,1.0);
+	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.,1.))/256.,0.0,1.0);
 	vec3 viewVector = cartToSphere(p);
 
 	vec2 planetSphere = vec2(0.0);
@@ -320,7 +322,7 @@ if (gl_FragCoord.x > 18. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257){
 
 /// --- Sky + clouds + fog 
 if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+257.){
-	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.+tempOffsets/256.,0.0,1.0);
+	vec2 p = clamp(floor(gl_FragCoord.xy-vec2(18.+257,1.))/256.,0.0,1.0);
 	
 	vec3 viewVector = cartToSphere(p);
 
@@ -361,7 +363,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 
 	//Sky gradient with clouds
 	if (gl_FragCoord.x > (fogPos.x - fogPos.x*0.22) && gl_FragCoord.y > 0.4 && gl_FragCoord.x < 535){
-		vec2 p = clamp(floor(gl_FragCoord.xy-fogPos)/256.+tempOffsets/256.,-0.2,1.2);
+		vec2 p = clamp(floor(gl_FragCoord.xy-fogPos)/256.,-0.2,1.2);
 		vec3 viewVector = cartToSphere(p);
 		float noise = interleaved_gradientNoise_temporal();
 

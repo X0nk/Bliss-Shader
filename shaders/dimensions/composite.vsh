@@ -1,3 +1,5 @@
+#define ANTIALIASING_RELATED_SETTINGS
+
 #include "/lib/settings.glsl"
 
 flat varying vec2 TAA_Offset;

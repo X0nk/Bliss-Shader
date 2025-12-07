@@ -1,7 +1,9 @@
+#define SUB_SURFACE_SCATTERING_RELATED_SETTINGS
+#define EMISSION_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 
 
-varying vec4 pos;
+// varying vec4 pos;
 varying vec4 localPos;
 varying vec4 gcolor;
 varying vec2 lightmapCoords;

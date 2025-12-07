@@ -1,3 +1,5 @@
+#define ANTIALIASING_RELATED_SETTINGS
+#include "/lib/settings.glsl"
 #include "/lib/util.glsl"
 #include "/lib/res_params.glsl"
 

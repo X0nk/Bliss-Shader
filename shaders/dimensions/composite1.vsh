@@ -1,3 +1,5 @@
+#define ANTIALIASING_RELATED_SETTINGS
+#define SHADOWMAP_CONSTANT_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 
@@ -13,7 +15,9 @@ flat varying vec3 unsigned_WsunVec;
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec4 lightCol;
 flat varying vec3 moonCol;
-flat varying vec3 albedoSmooth;
+#ifdef FLASHLIGHT
+	flat varying vec3 albedoSmooth;
+#endif
 
 flat varying vec2 TAA_Offset;
 flat varying vec3 zMults;
