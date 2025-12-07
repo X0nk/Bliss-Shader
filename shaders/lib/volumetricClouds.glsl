@@ -61,10 +61,10 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 
 			shape = min(max(coverage - smallCloud,0.0) / (1e-6+sqrt(coverage)),1.0);
 			shape *= shape;
-			return shape;
-
 		break; }
     }
+
+	if(LayerIndex == ALTOSTRATUS_LAYER) return shape;
 
 	// clamp density of the cloud within its upper/lower bounds
 	shape = min(min(shape, clamp(maxHeight - position.y,0,1)), 1.0 - clamp(minHeight - position.y,0,1));
@@ -226,7 +226,6 @@ vec3 getCloudLighting(
 	,float backScatterPhase
 	,vec4 phaseLevels
 ){
-
 	float beerCoef = -4.0;
 	float powder = min(exp(beerCoef*exp(beerCoef*shapeFaded)) * 3.5, 1);
 	float backscatter = powder * backScatterPhase;
