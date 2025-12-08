@@ -1,10 +1,10 @@
 #version 120
 #define ANTIALIASING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
+#include "/lib/res_params.glsl"
 
 #if RESOURCEPACK_SKY != 0
 
-	#include "/lib/res_params.glsl"
 	/*
 	!! DO NOT REMOVE !!
 	This code is from Chocapic13' shaders

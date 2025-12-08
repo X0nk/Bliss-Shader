@@ -1,7 +1,7 @@
 #define DEPTH_OF_FIELD_RELATED_SETTINGS
 #define POST_PROCESSING_RELATED_SETTINGS
+#define ANTIALIASING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
-
 #include "/lib/res_params.glsl"
 
 

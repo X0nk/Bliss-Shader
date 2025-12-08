@@ -415,7 +415,7 @@ void main() {
 
 	vec3 FlatNormals = normalize(texture2D(colortex15,texcoord).rgb * 2.0 - 1.0);
 	
-	#if defined indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ
+	#if indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ
 		if(z >= 1.0) FlatNormals = normal;
 
 		vec2 SSAO_SSS = SSAO(viewPos, worldToView(normal), worldToView(FlatNormals), hand, noise);
