@@ -1,13 +1,3 @@
-// --- CONFIGURATION ---
-#define LPV_AO_CONTROL  // True / False
-#define LPV_AO_STRENGTH 0.0  // 0.0 -> 2.0
-#define LPV_AO_CONTROL_EDGE_SMOOTHNESS 2  // [-1 0 1 2]
-// #define LPV_AO_CONTROL_LEAK_FIX_TRADEOFF  // True / False
-#define LPV_VANILLA_LIGHMAP_MASK_STRENGTH 1.0  // 0.0 -> 1.0
-// #define LPV_AO_VANILLA_AO_BRIGHTENING  // Requires less than 1.0 AO
-#define LPV_AO_VANILLA_AO_BRIGHTENING_MULTIPLAYER 1.0  // 0.0 -> 10.0
-
-
 // LPV block brightness scale. just 1.0/15.0
 const float LpvBlockBrightness = 0.066666;
 

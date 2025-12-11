@@ -1242,6 +1242,9 @@ void main() {
 		
 		vec3 AO = vec3(1.0);
 
+		#ifdef LPV_AO_VANILLA_AO_BRIGHTENING
+			// Required to make this setting visible in the GUI
+		#endif
 		#if defined IS_LPV_ENABLED && defined LPV_AO_VANILLA_AO_BRIGHTENING
 			// TODO: Don't invert the AO twice, and don't do the power 3 separate times 
 			AO = vec3(pow(1.0 - vanilla_AO*vanilla_AO, 5.0));
