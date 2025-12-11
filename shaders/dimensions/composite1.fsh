@@ -1242,18 +1242,26 @@ void main() {
 		
 		vec3 AO = vec3(1.0);
 
-		#if indirect_effect == 0
-			AO = vec3(pow(1.0 - vanilla_AO*vanilla_AO,5.0));
+		#if defined IS_LPV_ENABLED && defined LPV_AO_VANILLA_AO_BRIGHTENING
+			// TODO: Don't invert the AO twice, and don't do the power 3 separate times 
+			AO = vec3(pow(1.0 - vanilla_AO*vanilla_AO, 5.0));
+			vec3 addition = pow(clamp((1.0 - AO * 1.35), 0, 1), vec3(2.5)) * blockLightColor;
+			// TODO: '1.35' and '2.5' magic numbers, can be made into configurabe defines
+			Indirect_lighting += addition * LPV_AO_VANILLA_AO_BRIGHTENING_MULTIPLAYER;
+		#endif
+
+		#if indirect_effect == VANILLA_AO
+			AO = vec3(pow(1.0 - vanilla_AO*vanilla_AO, 5.0));
 			Indirect_lighting *= AO;
 		#endif
 
 		#if indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ
-			float vanillaAO_curve = pow(1.0 - vanilla_AO*vanilla_AO,5.0);
-			float SSAO_curve = pow(SSAO_SSS.x,4.0);
+			float vanillaAO_curve = pow(1.0 - vanilla_AO*vanilla_AO, 5.0);
+			float SSAO_curve = pow(SSAO_SSS.x, 4.0);
 
 			// use the min of vanilla ao so they dont overdarken eachother
 			// AO = vec3( min(vanillaAO_curve, SSAO_curve) );
-			AO = vec3( SSAO_curve );
+			AO = vec3(SSAO_curve);
 			Indirect_lighting *= AO;
 		#endif
 

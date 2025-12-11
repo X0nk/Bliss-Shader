@@ -38,15 +38,16 @@ vec3 doBlockLightLighting(
     vec3 blockLight = lightmapCurve * lightColor;
     
     #if defined IS_LPV_ENABLED && defined MC_GL_ARB_shader_image_load_store
-        vec4 lpvSample = SampleLpvLinear(lpvPos);
+        vec4 lpvSample = SampleLpv(lpvPos);
         #ifdef VANILLA_LIGHTMAP_MASK
-            lpvSample.rgb *= lightmapCurve;
+            // No idea why but root of 4 works very nicely
+            lpvSample.rgb *= mix(1.0, lightmapCurve, pow(LPV_VANILLA_LIGHMAP_MASK_STRENGTH, 0.25));
         #endif
         vec3 lpvBlockLight = GetLpvBlockLight(lpvSample);
 
         // create a smooth falloff at the edges of the voxel volume.
         float fadeLength = 10.0; // in meters
-        vec3 cubicRadius = clamp( min(((LpvSize3-1.0) - lpvPos)/fadeLength,      lpvPos/fadeLength) ,0.0,1.0);
+        vec3 cubicRadius = clamp( min(((LpvSize3-1.0) - lpvPos)/fadeLength, lpvPos/fadeLength) ,0.0,1.0);
         float voxelRangeFalloff = cubicRadius.x*cubicRadius.y*cubicRadius.z;
         voxelRangeFalloff = 1.0 - pow(1.0-pow(voxelRangeFalloff,1.5),3.0);
         
