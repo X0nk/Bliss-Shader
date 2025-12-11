@@ -140,8 +140,8 @@ vec4 SampleLpv(const in vec3 lpvPos) {
     hsv.z = lpvCurve(hsv.b) * LpvBlockSkyRange.x;
     lpvSample.rgb = HsvToRgb(hsv);
 
-    // lpvSample.rgb = clamp(lpvSample.rgb / 15.0, 0.0, 1.0);
-    lpvSample.rgb = lpvSample.rgb / 15.0;
+    lpvSample.rgb = clamp(lpvSample.rgb / 15.0, 0.0, 1.0);
+    // Isn't `lpvSample.rgb = lpvSample.rgb / 15.0` enough?
     
     return lpvSample;
 }
