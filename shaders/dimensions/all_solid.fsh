@@ -626,12 +626,12 @@ void main() {
 		#endif
 
 		#if EMISSIVE_TYPE == 1
-			gl_FragData[1].a = EMISSIVE;
+			gl_FragData[1].a = EMISSIVE * sqrt(RgbToHsv(Albedo.rgb)[2]);
 		#endif
 
 		#if EMISSIVE_TYPE == 2
 			gl_FragData[1].a = SpecularTex.a;
-			if(SpecularTex.a <= 0.0) gl_FragData[1].a = EMISSIVE;
+			if(SpecularTex.a <= 0.0) gl_FragData[1].a = EMISSIVE * sqrt(RgbToHsv(Albedo.rgb)[2]);
 		#endif
 
 		#if EMISSIVE_TYPE == 3		
