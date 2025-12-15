@@ -134,6 +134,7 @@ vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 		float sp = invLinZ(sampleDepth) ;
 
 		if( (sp < max(minZ, maxZ) && sp > min(minZ, maxZ))) return vec3(spos.xy/RENDER_SCALE,sp);
+		
 		minZ = maxZ - biasAmount / linZ(spos.z);
 		maxZ += stepv.z;
 
@@ -180,7 +181,7 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 	stepv.xy *= RENDER_SCALE;
 
 	vec3 spos = clipPosition + stepv*noise;
-	spos += stepv*0.3;
+	// spos += stepv*0.3;
 	spos.xy += TAA_Offset*texelSize*0.5*RENDER_SCALE;
 	
 
@@ -205,8 +206,7 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 
 		if(nextZ < currZ && (sp <= max(minZ,maxZ) && sp >= min(minZ,maxZ))) return vec3(spos.xy/RENDER_SCALE,sp);
 		
-
-		minZ = maxZ-biasamount / currZ;
+		minZ = maxZ - biasamount / currZ;
 		maxZ += stepv.z;
 
 		spos += stepv;
@@ -241,6 +241,7 @@ vec3 ApplySSRT(
 	vec3 skycontribution2 = unchangedIndirect;
 	float CURVE = 1.0;
 	vec3 bouncedLight = vec3(0.0);
+	
 	for (int i = 0; i < nrays; i++){
 		int seed = (frameCounter%40000)*nrays+i;
 		vec2 ij = fract(R2_samples(seed) + noise.xy);
@@ -250,16 +251,14 @@ vec3 ApplySSRT(
 			vec3 rayHit = rayTrace_GI( mat3(gbufferModelView) * rayDir, viewPos, noise.z, 50.); // ssr rt
 		#else
 			vec3 rayHit = RT_alternate(mat3(gbufferModelView)*rayDir, viewPos, noise.z, 10., isLOD, CURVE);  // choc sspt 
-
-
+			
 			/// RAAAAAAAAAAAAAAAAAAAAAAAAGHH
 			// CURVE = (1.0-exp(-5.0*(1.0-CURVE)));
 			CURVE = 1.0-pow(1.0-pow(1.0-CURVE,2.0),5.0);
 		#endif
-
+		
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
 			#ifdef OVERWORLD_SHADER
-				// skycontribution = doIndirectLighting(pow(skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb/1200.0, vec3(0.7)) * 2.5, minimumLightColor, lightmap) + blockLightColor;
 				skycontribution = doIndirectLighting(skyCloudsFromTex(rayDir, colortex4).rgb/1200.0, minimumLightColor, lightmap) + blockLightColor;
 			#else
 				skycontribution = volumetricsFromTex(rayDir, colortex4, 6).rgb / 1200.0 + blockLightColor;
@@ -273,14 +272,16 @@ vec3 ApplySSRT(
 		radiance += skycontribution;
 		radiance2 += skycontribution2;
 
-		if (rayHit.z < 1.0){
+		if (rayHit.z < 0.9999 && distance(gl_FragCoord.xy*texelSize, rayHit.xy) > 0.001){
 			#if indirect_effect == SSRT_AO_GI
 				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
 				previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
 				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
 
 				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.y < 1.0){
-					bouncedLight = texture2D(colortex5, previousPosition.xy).rgb * GI_Strength * CURVE;	
+					bouncedLight = texelFetch2D(colortex5, ivec2(previousPosition.xy/texelSize),0).rgb * GI_Strength * CURVE;
+					// bouncedLight = texture2D(colortex5, previousPosition.xy).rgb * GI_Strength * CURVE;
+					
 
 					radiance += bouncedLight;
 					radiance2 += bouncedLight;

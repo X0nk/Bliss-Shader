@@ -122,8 +122,8 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
 	clipPosition.xy *= RENDER_SCALE;
 	stepv.xy *= RENDER_SCALE;
 
-	vec3 spos = clipPosition + stepv*dither;
-	spos += stepv*0.5 + vec3(0.5*texelSize,0.0); // small offsets to reduce artifacts from precision differences.
+	vec3 spos = clipPosition + stepv*(dither*0.5+0.5);
+	spos += vec3(0.5*texelSize,0.0); // small offsets to reduce artifacts from precision differences.
 	
 	#if defined DEFERRED_SPECULAR && TAA_MODE > 0
 		spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
@@ -131,7 +131,6 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
 
 	float minZ = spos.z - 0.00025 / linZ(spos.z);
 	float maxZ = spos.z;
-	
 	vec3 hitPos = vec3(1.1);
 
   	for (int i = 0; i <= int(quality); i++) {
@@ -185,7 +184,8 @@ vec4 screenSpaceReflections(
 	#endif
 
 	vec3 raytracePos = rayTraceSpeculars(reflectedVector, viewPos, noise, quality, isHand, reflectionLength);
-	if (raytracePos.z > 1.0) return reflection;
+	
+	if (raytracePos.z > 1.0 || distance(gl_FragCoord.xy*texelSize, raytracePos.xy) < 0.002) return reflection;
 
 	// use higher LOD as the reflection goes on, to blur it. this helps denoise a little.
 	reflectionLength = min(max(reflectionLength - 0.1, 0.0)/0.9, 1.0);
@@ -205,7 +205,7 @@ vec4 screenSpaceReflections(
 			reflection.a = 1.0;
 		#endif
 		
-		#ifdef FORWARD_RENDERED_SPECULAR
+		#ifdef FORWARD_SPECULAR
 			// vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
 			// vec2 resScale = vec2(1920.,1080.)/clampedRes;
 			// vec2 bloomTileUV = (((previousPosition.xy/texelSize)*2.0 + 0.5)*texelSize/2.0) / clampedRes*vec2(1920.,1080.);
@@ -317,7 +317,7 @@ vec3 specularReflections(
 
 	f0 = f0 == 0.0 ? 0.02 : f0;
 
-	// f0 = 0.1;
+	// f0 = 0.9;
 	// roughness = 0.0;
 
 	bool isMetal = f0 > 229.5/255.0;
@@ -380,8 +380,10 @@ vec3 specularReflections(
 					#endif
 				#endif
 			#endif
+
 			#if DEFERRED_SSR_QUALITY > 0 || FORWARD_SSR_QUALITY > 0
 				vec4 enviornmentReflection = screenSpaceReflections(mat3(gbufferModelView) * reflectedVector_L, viewPos, noise.z, isHand, roughness, backgroundReflectMask);
+				
 				// darkening for metals.
 				vec3 DarkenedDiffuseLighting = isMetal ? diffuseLighting * (1.0-enviornmentReflection.a) * (1.0-lightmap) : diffuseLighting;
 			#else
@@ -401,6 +403,7 @@ vec3 specularReflections(
 
 			// lerp back to diffuse lighting if the reflection has not been deemed visible enough
 			specularReflections = mix(specularReflections, diffuseLighting, reflectionVisibilty);
+			
 		}
 	#endif
 
