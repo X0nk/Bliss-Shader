@@ -698,8 +698,8 @@
 // Fix for making nether/end work until next Iris release to fix shadow matrices
 //#define LPV_NOSHADOW_HACK
 
-#if defined LPV_ENABLED
-	#if defined IRIS_FEATURE_CUSTOM_IMAGES
+#ifdef LPV_ENABLED
+	#ifdef IRIS_FEATURE_CUSTOM_IMAGES
 		#define IS_LPV_ENABLED
 
 		const float voxelDistance = 64.0;
