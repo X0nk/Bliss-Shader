@@ -44,11 +44,6 @@ vec3 WsunVec = normalize((float(sunElevation > 1e-5)*2.0 - 1.0) * normalize(mat3
 #define projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 #define PI 3.141592653589793
 
-uniform float LOD_NEARPLANE;
-uniform float LOD_FARPLANE;
-uniform int LOD_RENDERDISTANCE;
-
-
 float DH_ld(float dist) {
     return (2.0 * LOD_NEARPLANE) / (LOD_FARPLANE + LOD_NEARPLANE - dist * (LOD_FARPLANE - LOD_NEARPLANE));
 }

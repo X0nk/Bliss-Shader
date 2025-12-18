@@ -49,10 +49,10 @@ layout(location = 2) out vec4 MISC_DATA;
 void voxy_emitFragment(VoxyFragmentParameters parameters) {
 
     vec3 normal = vec3( uint((parameters.face >> 1) == 2), uint((parameters.face >> 1) == 0), uint((parameters.face >> 1) == 1) ) * (float(int(parameters.face) & 1) * 2.0 - 1.0);
-    normal.z = clamp(normal.z-1.0,-1,1)*0.5+0.5;
+    normal.z = clamp(normal.z-1.0,-1.0,1.0)*0.5+0.5;
     normal = normalize(normal);
 
-    vec3 Albedo = clamp( parameters.sampledColour.rgb * parameters.tinting.rgb, 0.0, 1.0);
+    vec3 Albedo = parameters.sampledColour.rgb * parameters.tinting.rgb;
     
 	#ifdef WhiteWorld
 		Albedo.rgb = vec3(1.0);

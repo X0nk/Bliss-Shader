@@ -7,8 +7,6 @@
     ",
     "version": 1,
     "excludeLodsFromVanillaDepth": true,
-    "uniforms": [],
-    "samplers": {},
     "opaqueDrawBuffers": [1,8,15],
     "translucentDrawBuffers": [2,7],
     "blending": { 
@@ -47,7 +45,10 @@
         "isEyeInWater",
         "near",
         "far",
-        "taaJitter"
+        "taaJitter",
+        "LOD_NEARPLANE",
+        "LOD_FARPLANE",
+        "LOD_RENDERDISTANCE"
     ]
     #if TAA_MODE > 0
         ,"taaOffset": "{
