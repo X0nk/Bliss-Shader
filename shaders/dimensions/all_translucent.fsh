@@ -9,8 +9,9 @@
 #define AMBIENT_LIGHT_RELATED_SETTINGS
 #define VOLUMETRIC_CLOUD_RELATED_SETTINGS
 #define WATER_RELATED_SETTINGS
-#define ANTIALIASING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
+
+#include "/lib/macro_lod_mod.glsl"
 
 #undef FLASHLIGHT_BOUNCED_INDIRECT
 
@@ -55,12 +56,6 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 uniform sampler2D noisetex;
 uniform sampler2D depthtex1;
 uniform sampler2D depthtex0;
-
-#ifdef DISTANT_HORIZONS
-	uniform sampler2D dhDepthTex1;
-	uniform sampler2D dhDepthTex0;
-#endif
-
 uniform sampler2D colortex7;
 uniform sampler2D colortex12;
 uniform sampler2D colortex13;
@@ -103,7 +98,7 @@ uniform float nightVision;
 uniform int frameCounter;
 uniform float frameTimeCounter;
 uniform vec2 texelSize;
-uniform int framemod8;
+
 uniform float viewWidth;
 uniform float viewHeight;
 
@@ -414,7 +409,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	float mipmapBias = bias();
 
 	#if TAA_MODE > 0
-		vec2 tempOffset = offsets[framemod8];
+		vec2 tempOffset = taaJitter;
 		vec3 viewPos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
 	#else
 		vec3 viewPos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0));

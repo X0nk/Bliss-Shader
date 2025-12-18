@@ -81,7 +81,7 @@ uniform int heldItemId2;
 flat varying float HELD_ITEM_BRIGHTNESS;
 
 uniform vec2 texelSize;
-uniform int framemod8;
+
 
 #include "/lib/TAA_jitter.glsl"
 
@@ -263,9 +263,9 @@ void main() {
 	#if TAA_MODE > 0
 		#if defined ENTITIES && defined IS_IRIS
 		// remove jitter for nametags lol
-			if (entityId != 1600) gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+			if (entityId != 1600) gl_Position.xy += taaJitter * gl_Position.w*texelSize;
 		#else
-			gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+			gl_Position.xy += taaJitter * gl_Position.w*texelSize;
 		#endif
 	#endif
 

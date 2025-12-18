@@ -115,7 +115,7 @@ vec3 toLinear(vec3 sRGB){
 //     return fragposition.xyz / fragposition.w;
 // }
 
-uniform int framemod8;
+
 
 #include "/lib/TAA_jitter.glsl"
 
@@ -355,7 +355,7 @@ void main() {
 		#endif
 	#endif
 
-	vec2 tempOffset = offsets[framemod8];
+	vec2 tempOffset = taaJitter;
 	vec3 viewPos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
 	vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
 	vec3 feetPlayerPos_normalized = normalize(feetPlayerPos);

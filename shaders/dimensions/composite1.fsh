@@ -16,6 +16,8 @@
 #define VOLUMETRIC_CLOUD_RELATED_SETTINGS
 #define WATER_RELATED_SETTINGS
 #include "/lib/settings.glsl"
+#include "/lib/macro_lod_mod.glsl"
+#include "/lib/TAA_jitter.glsl"
 
 // #if defined END_SHADER || defined NETHER_SHADER
 // 	#undef IS_LPV_ENABLED
@@ -63,12 +65,6 @@ uniform sampler2D noisetex; //noise
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 uniform sampler2D depthtex2;
-
-#ifdef DISTANT_HORIZONS
-uniform sampler2D dhDepthTex;
-uniform sampler2D dhDepthTex1;
-#endif
-
 uniform sampler2D colortex0; //clouds
 uniform sampler2D colortex1; //albedo(rgb),material(alpha) RGBA16
 uniform sampler2D colortex2; //translucents(rgba)
@@ -112,8 +108,9 @@ uniform float viewWidth;
 uniform float viewHeight;
 uniform float aspectRatio;
 
+
 uniform float eyeAltitude;
-flat varying vec2 TAA_Offset;
+
 
 uniform int frameCounter;
 uniform float frameTimeCounter;
@@ -175,7 +172,6 @@ float convertHandDepth_2(in float depth, bool hand) {
 
 #define LIGHTNINGFLASH_DIFFUSE
 #include "/lib/lightning_stuff.glsl"
-#include "/lib/specular.glsl"
 #include "/lib/diffuse_lighting.glsl"
 #include "/lib/end_fog.glsl"
 #include "/lib/DistantHorizons_projections.glsl"
@@ -202,6 +198,7 @@ float DH_ld(float dist) {
     return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
 }
 
+#include "/lib/specular.glsl"
 float DH_inv_ld (float lindepth){
 	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
 }
@@ -231,6 +228,7 @@ vec3 fp10Dither(vec3 color,float dither){
 
 float interleaved_gradientNoise_temporal(){
 	vec2 coord = gl_FragCoord.xy;
+	
 	#if TAA_MODE > 0
 		coord += (frameCounter%40000) * 2.0;
 	#endif
@@ -340,8 +338,8 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 	float _near = near; float _far = far*4.0;
 
 	if (depthCheck) {
-		_near = dhNearPlane;
-		_far = dhFarPlane;
+		_near = LOD_NEARPLANE;
+		_far = LOD_FARPLANE;
 	}
     
     vec3 position = toClipSpace3_DH(viewPos, depthCheck) ;
@@ -366,10 +364,15 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 	for (int i = 0; i < int(samples); i++) { 
 		if(newPos.x < 0 || newPos.x > 1 || newPos.y < 0 || newPos.y > 1) break;
 		
-		float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, ivec2(newPos.xy/texelSize),0).x,hand);
-		
-		#ifdef DISTANT_HORIZONS
-			if(depthCheck) sampleDepth = texelFetch2D(dhDepthTex1, ivec2(newPos.xy/texelSize),0).x;
+		#ifdef USING_LOD_MOD
+			float sampleDepth = 0.0;
+			if(depthCheck){
+				sampleDepth = texelFetch2D(LOD_DEPTHBUFFER_OPAQUE, ivec2(newPos.xy/texelSize*RENDER_SCALE),0).x;
+			}else{
+				sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, ivec2(newPos.xy/texelSize),0).x,hand);
+			}
+		#else
+			float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, ivec2(newPos.xy/texelSize),0).x,hand);
 		#endif
 
 		if(sampleDepth < newPos.z){
@@ -424,10 +427,15 @@ float SSRT_FlashLight_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, floa
 
 	for (int i = 0; i < int(steps); i++) {
 		
-		float samplePos = texture2D(depthtex2, screenPos.xy).x;
-		
-		#ifdef DISTANT_HORIZONS
-			if(depthCheck) samplePos = texture2D(dhDepthTex1, screenPos.xy).x;
+		#ifdef USING_LOD_MOD
+			float samplePos = 0.0;
+			if(depthCheck){
+				samplePos = texture2D(LOD_DEPTHBUFFER_TRANSLUCENT, screenPos.xy).x;
+			}else{
+				samplePos = texture2D(depthtex2, screenPos.xy).x;
+			}
+		#else
+			float samplePos = texture2D(depthtex2, screenPos.xy).x;
 		#endif
 
 		if(samplePos < screenPos.z){// && (samplePos <= max(minZ,maxZ) && samplePos >= min(minZ,maxZ))){
@@ -762,15 +770,15 @@ void main() {
 
 		bool isDHrange = z >= 1.0;
 
-		#ifdef DISTANT_HORIZONS
+		#ifdef USING_LOD_MOD
 			float DH_mixedLinearZ = sqrt(texture2D(colortex12,texcoord).a/65000.0);
-			float DH_depth0 = texture2D(dhDepthTex,texcoord).x;
-			float DH_depth1 = texture2D(dhDepthTex1,texcoord).x;
+			float DH_depth0 = texture2D(LOD_DEPTHBUFFER_TRANSLUCENT,texcoord).x;
+			float DH_depth1 = texture2D(LOD_DEPTHBUFFER_OPAQUE,texcoord).x;
 
 			float depthOpaque = z;
 			float depthOpaqueL = linearizeDepthFast(depthOpaque, near, farPlane);
 			
-			#ifdef DISTANT_HORIZONS
+			#ifdef USING_LOD_MOD
 			    float dhDepthOpaque = DH_depth1;
 			    float dhDepthOpaqueL = linearizeDepthFast(dhDepthOpaque, dhNearPlane, dhFarPlane);
 
@@ -797,6 +805,7 @@ void main() {
 		// vec4 dataUnpacked2 = vec4(decodeVec2(data.z),decodeVec2(data.w));
 
 		vec3 albedo = toLinear(vec3(dataUnpacked0.xz,dataUnpacked1.x));
+
 		vec3 normal = decode(dataUnpacked0.yw);
 		vec2 lightmap = dataUnpacked1.yz;
 		// special curve to give more precision on high/low values of the gradient. this curve will be inverted after sampling and decoding.
@@ -871,10 +880,10 @@ void main() {
 			convertHandDepth(z0);
 		}
 
-		#ifdef DISTANT_HORIZONS
-			vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE - TAA_Offset*texelSize*0.5, z, DH_depth1);
+		#ifdef USING_LOD_MOD
+			vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE - taaJitter*texelSize*0.5, z, DH_depth1);
 		#else
-			vec3 viewPos = toScreenSpace(vec3(texcoord/RENDER_SCALE - TAA_Offset*texelSize*0.5, z));
+			vec3 viewPos = toScreenSpace(vec3(texcoord/RENDER_SCALE - taaJitter*texelSize*0.5, z));
 		#endif
 		
 		vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
@@ -938,15 +947,16 @@ void main() {
 		
 		feetPlayerPos += gbufferModelViewInverse[3].xyz;
 		
-		#ifdef DISTANT_HORIZONS
-			vec3 playerPos0 = mat3(gbufferModelViewInverse) *  toScreenSpace_DH(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5, z0, DH_depth0) + gbufferModelViewInverse[3].xyz;
+		#ifdef USING_LOD_MOD
+			vec3 playerPos0 = mat3(gbufferModelViewInverse) *  toScreenSpace_DH(texcoord/RENDER_SCALE-taaJitter*texelSize*0.5, z0, DH_depth0) + gbufferModelViewInverse[3].xyz;
 		#else
-			vec3 playerPos0 = mat3(gbufferModelViewInverse) * toScreenSpace(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5,z0)) + gbufferModelViewInverse[3].xyz;
+			vec3 playerPos0 = mat3(gbufferModelViewInverse) * toScreenSpace(vec3(texcoord/RENDER_SCALE-taaJitter*texelSize*0.5,z0)) + gbufferModelViewInverse[3].xyz;
 		#endif
 
 		float Vdiff = distance(feetPlayerPos, playerPos0);
 		float estimatedDepth = Vdiff* abs(feetPlayerPos_normalized.y);// assuming water plane
 		
+
 		// vec3 waterNormal = clamp(normalize(cross(dFdx(playerPos0), dFdy(playerPos0))),-1,1); // it uses depth that has POM written to it.	
 		// vec3 absPlayerPosNorm = abs(feetPlayerPos_normalized);
 		// estimatedDepth = mix(estimatedDepth, Vdiff*absPlayerPosNorm.y, max(waterNormal.y,0));
@@ -970,6 +980,7 @@ void main() {
 		// based on the angle of the sun, sunlight will travel through more/less water to reach the same spot. scale absorbtion depth accordingly
 		vec3 sunlightAbsorbtion = exp(-totEpsilon * (estimatedDepth/abs(WsunVec.y)));
 		float percievedWaterDepth = estimatedDepth;
+
 		
 		if (isEyeInWater == 1){
 			
@@ -992,7 +1003,6 @@ void main() {
 			percievedWaterDepth = mix(-(feetPlayerPos.y + cameraPosition.y), percievedWaterDepth, waterNormal.y);
 		}
 
-		DEBUG = vec3(estimatedDepth);
 		DirectLightColor *= sunlightAbsorbtion;
 
 		if( nightVision > 0.0 ) Absorbtion += exp(-totEpsilon * 25.0) * nightVision;
@@ -1009,6 +1019,7 @@ void main() {
 
 
 		DirectLightColor *= pow(mix(1.0, waterCaustics(feetPlayerPos + cameraPosition, WsunVec, percievedWaterDepth)*WATER_CAUSTICS_BRIGHTNESS, clamp(estimatedDepth,0,1)), WATER_CAUSTICS_POWER);
+	
 	}
 		
 		// albedo *= waterCaustics(feetPlayerPos + cameraPosition, WsunVec);
@@ -1021,7 +1032,7 @@ void main() {
 	///////////////////////////////////	    FILTER STUFF      //////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////
 
-		#if defined DISTANT_HORIZONS && defined DH_AMBIENT_OCCLUSION
+		#ifdef USING_LOD_MOD && defined DH_AMBIENT_OCCLUSION
 			doEdgeAwareBlur(colortex3,	colortex14, colortex12, DH_mixedLinearZ, hand, SSAO_SSS, filteredShadow);
 		#else
 			doEdgeAwareBlur(colortex3,	colortex14, depthtex0, ld(z0), 	hand, SSAO_SSS, filteredShadow);
@@ -1076,7 +1087,9 @@ void main() {
 
 		float ShadowAlpha = 0.0; // this is for subsurface scattering later.
 		vec3 tintedSunlight = DirectLightColor; // this is for subsurface scattering later.
-		
+
+		// DEBUG.rgb = vec3(1.0) * shadow2D(shadow, projectedShadowPosition).x;
+
 		shadowColor = ComputeShadowMap_COLOR(projectedShadowPosition, distortFactor, noise_2, filteredShadow.x, flatNormNdotL, shadowMapFalloff, DirectLightColor, ShadowAlpha, tintedSunlight, LabSSS > 0.0,Shadows);
 		
 		// transition to fallback lightmap shadow mask.
@@ -1091,7 +1104,7 @@ void main() {
 			float sunSSS_density = LabSSS;
 			float SSS_shadow = ShadowAlpha;
 			
-			#ifdef DISTANT_HORIZONS
+			#ifdef USING_LOD_MOD
 				shadowMapFalloff2 = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / min(shadowDistance, max(far-32.0,32.0)),0.0)*5.0,1.0));
 			#endif
 
@@ -1108,7 +1121,6 @@ void main() {
 				ShadowBlockerDepth = max(ShadowBlockerDepth, (1.0-shadowMapFalloff2) * 10.0);
 			#endif
 			
-				
 			#ifdef TRANSLUCENT_COLORED_SHADOWS
 				SSSColor = tintedSunlight;
 			#else
@@ -1116,8 +1128,8 @@ void main() {
 			#endif
 		
 			SSSColor = SubsurfaceScattering_sun(albedo, ShadowBlockerDepth, sunSSS_density, clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), SS_directLight.g, shadowMapFalloff2, hand);
+			
 			if(isEyeInWater != 1) SSSColor *= lightLeakFix;
-
 		#endif
 
 	
@@ -1262,7 +1274,7 @@ void main() {
 			float vanillaAO_curve = pow(1.0 - vanilla_AO*vanilla_AO,5.0);
 
 			vec2 r2 = fract(R2_samples((frameCounter%40000) + frameCounter*2) + bnoise);
-			float getGTAO = !hand ? ambient_occlusion(vec3(texcoord/RENDER_SCALE-TAA_Offset*texelSize*0.5, z), viewPos, worldToView(slopednormal), r2) : 1.0;
+			float getGTAO = !hand ? ambient_occlusion(vec3(texcoord/RENDER_SCALE-taaJitter*texelSize*0.5, z), viewPos, worldToView(slopednormal), r2) : 1.0;
 			
 			AO = vec3(min(vanillaAO_curve,getGTAO));
 			
@@ -1329,9 +1341,8 @@ void main() {
 		
 		#if defined DEFERRED_SPECULAR	
 			vec3 specularNoises = vec3(vec2(blueNoise(), ig_noise), ig_noise);
-    		vec3 specularNormal = normal;
-			if (dot(normal, (feetPlayerPos_normalized)) > 0.0) specularNormal = FlatNormals;
-			FINAL_COLOR = specularReflections(viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, specularNormal, SpecularTex.r, SpecularTex.g, albedo, FINAL_COLOR, DirectLightColor*shadowColor, lightmap.y, hand, flashLightSpecularData);
+    		// vec3 specularNormal = normal;
+			FINAL_COLOR = specularReflections(viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, normal, SpecularTex.r, SpecularTex.g, albedo, FINAL_COLOR, DirectLightColor*shadowColor, lightmap.y, hand, flashLightSpecularData);
 		#endif
 
 		gl_FragData[0].rgb = FINAL_COLOR;
@@ -1405,7 +1416,7 @@ void main() {
 	#endif
 	#if DEBUG_VIEW == debug_NORMALS
 		if(swappedDepth >= 1.0) Direct_lighting = vec3(1.0);
-		gl_FragData[0].rgb = normal ;
+		gl_FragData[0].rgb = (hideGUI == 1 ? normal : -normal);// * vec3(0,1,0);
 	#endif
 	#if DEBUG_VIEW == debug_SPECULAR
 		if(swappedDepth >= 1.0) Direct_lighting = vec3(1.0);
@@ -1438,6 +1449,8 @@ void main() {
 		// }
 	#endif
 
+	// vec3 heightUV = (feetPlayerPos + (cameraPosition - vec3(9727.5,0.0,511.5))) / 2048.0;
+	
 	// gl_FragData[0].rgb = DEBUG;
 
 	/* RENDERTARGETS:3 */

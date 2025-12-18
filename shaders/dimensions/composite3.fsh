@@ -4,10 +4,11 @@
 #define SEASONS_RELATED_SETTINGS
 #define WATER_RELATED_SETTINGS
 #include "/lib/settings.glsl"
+#include "/lib/macro_lod_mod.glsl"
 
 flat varying vec3 zMults;
 
-flat varying vec2 TAA_Offset;
+
 flat varying vec3 WsunVec;
 
 #ifdef OVERWORLD_SHADER
@@ -17,12 +18,6 @@ flat varying vec3 WsunVec;
 uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
-
-#ifdef DISTANT_HORIZONS
-uniform sampler2D dhDepthTex;
-uniform sampler2D dhDepthTex1;
-#endif
-
 uniform sampler2D colortex0;
 // uniform sampler2D colortex1;
 uniform sampler2D colortex2;
@@ -37,10 +32,8 @@ uniform sampler2D colortex10;
 uniform sampler2D colortex11;
 uniform sampler2D colortex12;
 uniform sampler2D colortex13;
-// uniform sampler2D colortex14;
-// uniform sampler2D colortex15;
-uniform vec2 texelSize;
 
+uniform vec2 texelSize;
 uniform float viewHeight;
 uniform float viewWidth;
 // uniform vec3 sunVec;
@@ -50,9 +43,7 @@ uniform int frameCounter;
 uniform float far;
 uniform float near;
 uniform float farPlane;
-uniform float dhNearPlane;
-uniform float dhFarPlane;
-uniform int dhRenderDistance;
+
 
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;
@@ -157,11 +148,11 @@ float linearize(float dist) {
 }
 
 float DH_ld(float dist) {
-  return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+  return (2.0 * LOD_NEARPLANE) / (LOD_FARPLANE + LOD_NEARPLANE - dist * (LOD_FARPLANE - LOD_NEARPLANE));
 }
 
 float DH_inv_ld (float lindepth){
-	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
+	return -((2.0*LOD_NEARPLANE/lindepth)-LOD_FARPLANE-LOD_NEARPLANE)/(LOD_FARPLANE-LOD_NEARPLANE);
 }
 
 float linearizeDepthFast(const in float depth, const in float near, const in float far) {
@@ -438,8 +429,8 @@ float getBorderFogDensity(float linearDistance, vec3 playerPos, bool sky){
 
   if(sky) return 0.0;
 
-  #ifdef DISTANT_HORIZONS
-  	float borderFogDensity = smoothstep(1.0, 0.0, min(max(1.0 - linearDistance / dhRenderDistance,0.0)*3.0,1.0)   );
+  #ifdef USING_LOD_MOD
+  	float borderFogDensity = smoothstep(1.0, 0.0, min(max(1.0 - linearDistance / LOD_RENDERDISTANCE,0.0)*3.0,1.0)   );
   #else
   	float borderFogDensity = smoothstep(1.0, 0.0, min(max(1.0 - linearDistance / far,0.0)*3.0,1.0)   );
   #endif
@@ -469,13 +460,13 @@ void main() {
 
 	float swappedDepth = z;
 
-	#ifdef DISTANT_HORIZONS
-    float DH_depth0 = texture2D(dhDepthTex,texcoord).x;
+	#ifdef USING_LOD_MOD
+    float DH_depth0 = texture2D(LOD_DEPTHBUFFER_OPAQUE,texcoord).x;
 		float depthOpaque = z;
 		float depthOpaqueL = linearizeDepthFast(depthOpaque, near, farPlane);
 		
 		float dhDepthOpaque = DH_depth0;
-		float dhDepthOpaqueL = linearizeDepthFast(dhDepthOpaque, dhNearPlane, dhFarPlane);
+		float dhDepthOpaqueL = linearizeDepthFast(dhDepthOpaque, LOD_NEARPLANE, LOD_FARPLANE);
 	  if (depthOpaque >= 1.0 || (dhDepthOpaqueL < depthOpaqueL && dhDepthOpaque > 0.0)){
 		  depthOpaque = dhDepthOpaque;
 		  depthOpaqueL = dhDepthOpaqueL;
@@ -534,7 +525,7 @@ void main() {
   ////// --------------- get volumetrics
   #ifdef DISTANT_HORIZONS
 	  float DH_mixedLinearZ = sqrt(texelFetch2D(colortex12,ivec2(gl_FragCoord.xy),0).a/65000.0);
-    vec4 temporallyFilteredVL = VLTemporalFiltering(viewPos, DH_mixedLinearZ, colortex12,hand);
+    vec4 temporallyFilteredVL = VLTemporalFiltering(viewPos, DH_mixedLinearZ, colortex12, hand);
   #else
     vec4 temporallyFilteredVL = VLTemporalFiltering(viewPos, frDepth, depthtex0, hand);
   #endif
@@ -577,7 +568,7 @@ void main() {
     #if !defined SKY_GROUND
       borderFog.rgb = skyFromTex(playerPos_normalized, colortex4)/1200.0 * Sky_Brightness;
     #endif
-    #if !defined DISTANT_HORIZONS
+    #if !defined USING_LOD_MOD
      if(!isWater) color = mix(color, borderFog.rgb, getBorderFogDensity(linearDistance_cylinder_alt, normalize(playerPos_alt), z2 >= 1.0 || TranslucentShader.a <= 0));
     #endif
   #else
@@ -640,6 +631,13 @@ void main() {
   gl_FragData[0] = vec4(bloomyFogMult,0.0,0.0,1.0); // pass fog alpha so bloom can do bloomy fog
   gl_FragData[1].rgb = clamp(color.rgb, 0.0,68000.0);
 
+
+
+  // gl_FragData[1].rgb  = vec3(texture(vxDepthTexTrans, texcoord).x)/10;
+
+
+
+  // COLOR = vec3(texture2D(colortex16, texcoord).r);
   #if DEBUG_VIEW == debug_FORWARD_RENDERING
     gl_FragData[1].rgb = vec3(1.0) * (1.0-TranslucentShader.a) + TranslucentShader.rgb*10.0;
   #endif

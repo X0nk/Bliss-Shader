@@ -1,0 +1,62 @@
+// THANK YOU SIXTHSURGE FOR ALLOWING USAGE OF PHOTON CODE TO BUILD THIS VOXY IMPLEMENTATION FROM: https://github.com/sixthsurge/photon
+{
+    "unusedString": "
+        #define ANTIALIASING_RELATED_SETTINGS
+        #include "/lib/settings.glsl"
+        #include "/lib/res_params.glsl"
+    ",
+    "version": 1,
+    "excludeLodsFromVanillaDepth": true,
+    "uniforms": [],
+    "samplers": {},
+    "opaqueDrawBuffers": [1,8,15],
+    "translucentDrawBuffers": [2,7],
+    "blending": { 
+        -1: "off", 
+        0: "SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE_MINUS_DST_ALPHA ONE"
+    },
+    "samplers": [
+        "noisetex",
+        "colortex4",
+        "colortex5",
+        "colortex16"
+    ],
+    "uniforms": [
+        "vxRenderDistance",
+        "vxViewProj",
+        "vxViewProjInv",
+        "vxViewProjPrev",
+        "vxModelView",
+        "vxModelViewInv",
+        "vxModelViewPrev",
+        "vxProj",
+        "vxProjInv",
+        "vxProjPrev",
+        "gbufferModelView",
+        "gbufferModelViewInverse",
+        "gbufferProjection",
+        "gbufferProjectionInverse",
+        "gbufferPreviousModelView",
+        "gbufferPreviousProjection",
+        "cameraPosition",
+        "previousCameraPosition",
+        "frameTimeCounter",
+        "sunPosition",
+        "sunElevation",
+        "texelSize",
+        "isEyeInWater",
+        "near",
+        "far",
+        "taaJitter"
+    ]
+    #if TAA_MODE > 0
+        ,"taaOffset": "{
+            return taaJitter*texelSize;
+        }"
+        #if TAA_MODE == 3
+            ,"useViewportDims": true,
+            "renderScale": [SCALE_FACTOR,SCALE_FACTOR]
+        #endif
+    #endif
+
+}

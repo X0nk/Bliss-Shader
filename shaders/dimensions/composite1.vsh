@@ -19,7 +19,7 @@ flat varying vec3 moonCol;
 	flat varying vec3 albedoSmooth;
 #endif
 
-flat varying vec2 TAA_Offset;
+
 flat varying vec3 zMults;
 uniform sampler2D colortex4;
 
@@ -35,7 +35,7 @@ uniform float sunElevation;
 uniform int frameCounter;
 uniform float frameTimeCounter;
 
-uniform int framemod8;
+
 #include "/lib/TAA_jitter.glsl"
 
 
@@ -76,12 +76,6 @@ void main() {
 	#define READ_SCENE_CONTROLLER_PARAMETERS
 	#include "/lib/scene_controller.glsl"
 	// readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
-	
-	#if TAA_MODE > 0
-		TAA_Offset = offsets[framemod8];
-	#else
-		TAA_Offset = vec2(0.0);
-	#endif
 
 	#if TAA_MODE == 3
 		gl_Position.xy = (gl_Position.xy*0.5+0.5)*RENDER_SCALE*2.0-1.0;

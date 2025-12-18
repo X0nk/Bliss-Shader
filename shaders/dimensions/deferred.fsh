@@ -9,16 +9,16 @@
 #define VOLUMETRIC_CLOUD_RELATED_SETTINGS
 #define VOLUMETRIC_FOG_RELATED_SETTINGS
 #include "/lib/settings.glsl"
+#include "/lib/macro_lod_mod.glsl"
 
+#define DHVLFOG
 #define ReflectedFog
 
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec3 averageSkyCol;
-
 flat varying vec3 lightSourceColor;
 flat varying vec3 sunColor;
 flat varying vec3 moonColor;
-
 flat varying float exposure;
 flat varying float avgBrightness;
 flat varying float rodExposure;
@@ -26,17 +26,7 @@ flat varying float avgL2;
 flat varying float centerDepth;
 
 uniform sampler2D noisetex;
-
 uniform sampler2D colortex1;
-
-vec2 decodeVec2(float a){
-    const vec2 constant1 = 65535. / vec2( 256., 65536.);
-    const float constant2 = 256. / 255.;
-    return fract( a * constant1 ) * constant2 ;
-}
-vec3 toLinear(vec3 sRGB){
-	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
-}
 
 uniform float frameTime;
 uniform int frameCounter;
@@ -67,12 +57,7 @@ uniform float dayChangeSmooth;
 uniform bool worldTimeChangeCheck;
 
 uniform int hideGUI;
-
 uniform float near;
-uniform float dhFarPlane;
-uniform float dhNearPlane;
-
-vec4 lightCol = vec4(lightSourceColor, float(sunElevation > 1e-5)*2-1.);
 
 #include "/lib/util.glsl"
 #include "/lib/ROBOBO_sky.glsl"
@@ -80,8 +65,19 @@ vec4 lightCol = vec4(lightSourceColor, float(sunElevation > 1e-5)*2-1.);
 #include "/lib/Shadow_Params.glsl"
 // #include "/lib/waterBump.glsl"
 
+vec4 lightCol = vec4(lightSourceColor, float(sunElevation > 1e-5)*2-1.);
 vec3 WsunVec = mat3(gbufferModelViewInverse)*sunVec;
 // vec3 WsunVec = normalize(LightDir);
+
+vec2 decodeVec2(float a){
+    const vec2 constant1 = 65535. / vec2( 256., 65536.);
+    const float constant2 = 256. / 255.;
+    return fract( a * constant1 ) * constant2 ;
+}
+
+vec3 toLinear(vec3 sRGB){
+	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
+}
 
 vec3 toShadowSpaceProjected(vec3 p3){
     p3 = mat3(gbufferModelViewInverse) * p3 + gbufferModelViewInverse[3].xyz;
@@ -106,7 +102,6 @@ float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
 
-#define DHVLFOG
 // #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 // #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
@@ -117,33 +112,24 @@ vec3 toScreenSpace(vec3 p) {
     return viewPos.xyz / viewPos.w;
 }
 
-
-
 #include "/lib/DistantHorizons_projections.glsl"
 
 vec3 DH_toScreenSpace(vec3 p) {
-	vec4 iProjDiag = vec4(dhProjectionInverse[0].x, dhProjectionInverse[1].y, dhProjectionInverse[2].zw);
+	vec4 iProjDiag = vec4(LOD_PROJECTION_INVERSE[0].x, LOD_PROJECTION_INVERSE[1].y, LOD_PROJECTION_INVERSE[2].zw);
     vec3 feetPlayerPos = p * 2. - 1.;
-    vec4 viewPos = iProjDiag * feetPlayerPos.xyzz + dhProjectionInverse[3];
+    vec4 viewPos = iProjDiag * feetPlayerPos.xyzz + LOD_PROJECTION_INVERSE[3];
     return viewPos.xyz / viewPos.w;
 }
 
 vec3 DH_toClipSpace3(vec3 viewSpacePosition) {
-    return projMAD(dhProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+    return projMAD(LOD_PROJECTION, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 }
-
-// float DH_ld(float dist) {
-//     return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
-// }
-// float DH_invLinZ (float lindepth){
-// 	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
-// }
 
 float DH_ld(float dist) {
-    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+    return (2.0 * LOD_NEARPLANE) / (LOD_FARPLANE + LOD_NEARPLANE - dist * (LOD_FARPLANE - LOD_NEARPLANE));
 }
 float DH_inv_ld (float lindepth){
-	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
+	return -((2.0*LOD_NEARPLANE/lindepth)-LOD_FARPLANE-LOD_NEARPLANE)/(LOD_FARPLANE-LOD_NEARPLANE);
 }
 
 float linearizeDepthFast(const in float depth, const in float near, const in float far) {
@@ -171,7 +157,6 @@ float invLinZ (float lindepth){
 		uniform sampler2DShadow shadowtex1;
 	#endif
 
-	// #define TEST
 	#define TIMEOFDAYFOG
 
 	#include "/lib/scene_controller.glsl"

@@ -39,7 +39,7 @@ uniform float screenBrightness;
 uniform vec4 Moon_Weather_properties; // R = cloud coverage 		G = fog density
 uniform int hideGUI;
 
-uniform int framemod8;
+
 #include "/lib/TAA_jitter.glsl"
 
 
@@ -289,8 +289,8 @@ void main() {
 
  	float VL_abs = texture2D(colortex7, texcoord*RENDER_SCALE).r;
 
-	#if Purkinje_strength > 0
-		float pstrength = float(Purkinje_strength) / 100.0;
+	#if PURKINJE_AMOUNT > 0
+		float pstrength = float(PURKINJE_AMOUNT) / 100.0;
 		
 		#ifdef AUTO_EXPOSURE
 			float purkinje = clamp(exposure.a*exposure.a,0.0,1.0) * clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*pstrength,0,1);

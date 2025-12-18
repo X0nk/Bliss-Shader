@@ -9,67 +9,41 @@
 #include "/lib/blocks.glsl"
 #include "/lib/entities.glsl"
 #include "/lib/items.glsl"
+#include "/lib/res_params.glsl"
+#include "/lib/TAA_jitter.glsl"
 
-flat varying int NameTags;
-
-#ifdef HAND
-#undef POM
+#if defined HAND
+	#undef POM
 #endif
 
-#ifndef MC_NORMAL_MAP
-#undef POM
-#endif
-
-#ifdef POM
-#define MC_NORMAL_MAP
-#endif
-
-
+varying vec4 lmtexcoord;
+varying vec4 color;
+varying vec4 normalMat;
+varying vec4 tangent;
+varying vec3 FlatNormals;
 varying float VanillaAO;
 
-const float mincoord = 1.0/4096.0;
-const float maxcoord = 1.0-mincoord;
-
-const float MAX_OCCLUSION_DISTANCE = MAX_DIST;
-const float MIX_OCCLUSION_DISTANCE = MAX_DIST*0.9;
-const int   MAX_OCCLUSION_POINTS   = MAX_ITERATIONS;
-
-uniform vec2 texelSize;
-uniform int framemod8;
-
-// #ifdef POM
-varying vec4 vtexcoordam; // .st for add, .pq for mul
-varying vec4 vtexcoord;
-
-vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq);
-vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq);
-// #endif
-
-#include "/lib/res_params.glsl"
-varying vec4 lmtexcoord;
-
-varying vec4 color;
-
-uniform float far;
-
-
-uniform float wetness;
-varying vec4 normalMat;
-
-
-#ifdef MC_NORMAL_MAP
-	uniform sampler2D normals;
-	varying vec4 tangent;
-	varying vec3 FlatNormals;
-#endif
-
-
-uniform sampler2D specular;
-
-
+flat varying int NameTags;
+flat varying float blockID;
+flat varying float SSSAMOUNT;
+flat varying float EMISSIVE;
+flat varying int LIGHTNING;
+flat varying int PORTAL;
+flat varying int SIGN;
+flat varying float HELD_ITEM_BRIGHTNESS;
 
 uniform sampler2D texture;
+uniform sampler2D normals;
+uniform sampler2D specular;
 uniform sampler2D colortex1;//albedo(rgb),material(alpha) RGBA16
+uniform sampler2D depthtex0;
+uniform sampler2D noisetex;//depth
+
+uniform vec2 texelSize;
+
+uniform float near;
+uniform float far;
+uniform float wetness;
 uniform float frameTimeCounter;
 uniform int frameCounter;
 uniform mat4 gbufferProjectionInverse;
@@ -78,8 +52,9 @@ uniform mat4 gbufferProjection;
 uniform mat4 gbufferModelViewInverse;
 uniform vec3 cameraPosition;
 uniform float rainStrength;
-uniform sampler2D noisetex;//depth
-uniform sampler2D depthtex0;
+uniform vec4 entityColor;
+uniform float nightVision;
+uniform vec3 eyePosition;
 
 #if defined VIVECRAFT
 	uniform bool vivecraftIsVR;
@@ -89,25 +64,19 @@ uniform sampler2D depthtex0;
 	uniform mat4 vivecraftRelativeOffHandRot;
 #endif
 
-uniform vec4 entityColor;
+const float mincoord = 1.0/4096.0;
+const float maxcoord = 1.0-mincoord;
 
-// in vec3 velocity;
+const float MAX_OCCLUSION_DISTANCE = MAX_DIST;
+const float MIX_OCCLUSION_DISTANCE = MAX_DIST*0.9;
+const int   MAX_OCCLUSION_POINTS   = MAX_ITERATIONS;
 
-flat varying float blockID;
-
-flat varying float SSSAMOUNT;
-flat varying float EMISSIVE;
-flat varying int LIGHTNING;
-flat varying int PORTAL;
-flat varying int SIGN;
-
-
-flat varying float HELD_ITEM_BRIGHTNESS;
-uniform float nightVision;
-
-// float interleaved_gradientNoise(){
-// 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
-// }
+// #ifdef POM
+varying vec4 vtexcoordam; // .st for add, .pq for mul
+varying vec4 vtexcoord;
+vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq);
+vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq);
+// #endif
 
 float interleaved_gradientNoise_temporal(){
 	#if TAA_MODE > 0
@@ -116,11 +85,13 @@ float interleaved_gradientNoise_temporal(){
 		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
 	#endif
 }
+
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy;
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 	return noise;
 }
+
 float R2_dither(){
 	vec2 coord = gl_FragCoord.xy ;
 
@@ -131,6 +102,7 @@ float R2_dither(){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
+
 float blueNoise(){
 	#if TAA_MODE > 0
   		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
@@ -162,11 +134,13 @@ vec3 viewToWorld(vec3 viewPosition) {
     pos = gbufferModelViewInverse * pos;
     return pos.xyz;
 }
+
 vec3 worldToView(vec3 worldPos) {
     vec4 pos = vec4(worldPos, 0.0);
     pos = gbufferModelView * pos;
     return pos.xyz;
 }
+
 vec4 encode (vec3 n, vec2 lightmaps){
 	n.xy = n.xy / dot(abs(n), vec3(1.0));
 	n.xy = n.z <= 0.0 ? (1.0 - abs(n.yx)) * sign(n.xy) : n.xy;
@@ -185,14 +159,11 @@ float encodeVec2(float x,float y){
     return encodeVec2(vec2(x,y));
 }
 
-#ifdef MC_NORMAL_MAP
-	vec3 applyBump(mat3 tbnMatrix, vec3 bump){
-		float bumpmult = NORMAL_MAP_MULT;
-		bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
-		return normalize(bump*tbnMatrix);
-	}
-#endif
-
+vec3 applyBump(mat3 tbnMatrix, vec3 bump){
+	float bumpmult = NORMAL_MAP_MULT;
+	bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
+	return normalize(bump*tbnMatrix);
+}
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
@@ -203,82 +174,35 @@ vec3 toScreenSpace(vec3 p) {
     vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
     return fragposition.xyz / fragposition.w;
 }
+
 vec3 toClipSpace3(vec3 viewSpacePosition) {
     return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 }
 
 #ifdef POM
-	vec4 readNormal(in vec2 coord)
-	{
+	vec4 readNormal(in vec2 coord){
 		return texture2DGradARB(normals,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
 	}
-	vec4 readTexture(in vec2 coord)
-	{
+	vec4 readTexture(in vec2 coord){
 		return texture2DGradARB(texture,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
 	}
 #endif
 
-
 float luma(vec3 color) {
 	return dot(color,vec3(0.21, 0.72, 0.07));
 }
-
 
 vec3 toLinear(vec3 sRGB){
 	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
 }
 
 
-const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
-									vec2(-1.,3.)/8.,
-									vec2(5.0,1.)/8.,
-									vec2(-3,-5.)/8.,
-									vec2(-5.,5.)/8.,
-									vec2(-7.,-1.)/8.,
-									vec2(3,7.)/8.,
-									vec2(7.,-7.)/8.);
-
-
-uniform float near;
-
-
 float ld(float dist) {
     return (2.0 * near) / (far + near - dist * (far - near));
 }
 
-
 vec4 readNoise(in vec2 coord){
-	// return texture2D(noisetex,coord*vtexcoordam.pq+vtexcoord.st);
-		return texture2DGradARB(noisetex,coord*vtexcoordam.pq + vtexcoordam.st,dcdx,dcdy);
-}
-float EndPortalEffect(
-	inout vec4 ALBEDO,
-	vec3 FragPos,
-	vec3 WorldPos,
-	mat3 tbnMatrix
-){	
-
-	int maxdist = 25;
-	int quality = 35;
-
-	vec3 viewVec = normalize(tbnMatrix*FragPos);
-	if ( viewVec.z < 0.0 && length(FragPos) < maxdist) {
-		float endportalGLow = 0.0;
-		float Depth = 0.3;
-		vec3 interval = (viewVec.xyz /-viewVec.z/quality*Depth) * (0.7 + (blueNoise()-0.5)*0.1);
-
-		vec3 coord = vec3(WorldPos.xz , 1.0);
-		coord += interval;
-
-		for (int loopCount = 0; (loopCount < quality) && (1.0 - Depth + Depth * ( 1.0-readNoise(coord.st).r - readNoise(-coord.st*3).b*0.2 ) ) < coord.p  && coord.p >= 0.0; ++loopCount) {
-			coord = coord+interval ; 
-			endportalGLow += (0.3/quality);
-		}
-
-  		ALBEDO.rgb = vec3(0.5,0.75,1.0) * sqrt(endportalGLow);
-
-		return clamp(pow(endportalGLow*3.5,3),0,1);
-	}
+	return texture2DGradARB(noisetex,coord*vtexcoordam.pq + vtexcoordam.st,dcdx,dcdy);
 }
 
 float bias(){
@@ -293,6 +217,7 @@ float bias(){
 		return 0.0;
 	#endif
 }
+
 vec4 texture2D_POMSwitch(
 	sampler2D sampler, 
 	vec2 lightmapCoord,
@@ -306,8 +231,6 @@ vec4 texture2D_POMSwitch(
 		return texture2D(sampler, lightmapCoord, LOD);
 	}
 }
-
-uniform vec3 eyePosition;
 
 void convertHandDepth(inout float depth) {
     float ndcDepth = depth * 2.0 - 1.0;
@@ -341,18 +264,20 @@ void main() {
 		ifPOM = true;
 	#endif
 
+	#ifdef HAND
+		ifPOM = false;
+	#endif
+
 	if(SIGN > 0) ifPOM = false;
 
 	vec3 normal = normalMat.xyz;
 
-	#ifdef MC_NORMAL_MAP
-		vec3 binormal = normalize(cross(tangent.rgb,normal)*tangent.w);
-		mat3 tbnMatrix = mat3(tangent.x, binormal.x, normal.x,
+	vec3 binormal = normalize(cross(tangent.rgb,normal)*tangent.w);
+	mat3 tbnMatrix = mat3(tangent.x, binormal.x, normal.x,
 							  tangent.y, binormal.y, normal.y,
 							  tangent.z, binormal.z, normal.z);
-	#endif
 
-	vec2 tempOffset = offsets[framemod8];
+	vec2 tempOffset = taaJitter;
 
 	vec3 fragpos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
 	vec3 playerpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz;
@@ -387,12 +312,11 @@ void main() {
 	#endif
 	
 	float lightmap = clamp( (lmtexcoord.w-0.9) * 10.0,0.,1.);
-
 	vec2 adjustedTexCoord = lmtexcoord.xy;
-
 	float saveDepth = 0.0;
+
 #if defined POM && defined WORLD && !defined ENTITIES && !defined HAND
-	// vec2 tempOffset=offsets[framemod8];
+	// vec2 tempOffset=taaJitter;
 	adjustedTexCoord = fract(vtexcoord.st)*vtexcoordam.pq+vtexcoordam.st;
 	// vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
 	vec3 viewVector = normalize(tbnMatrix*fragpos);
@@ -406,7 +330,6 @@ void main() {
 
 	float maxdist = MAX_OCCLUSION_DISTANCE;
 	if(!ifPOM) maxdist = 0.0;
-
 
 	#if defined DEPTH_WRITE_POM
 		gl_FragDepth = gl_FragCoord.z;
@@ -465,7 +388,6 @@ void main() {
 
 	if(!ifPOM) adjustedTexCoord = lmtexcoord.xy;
 	
-
 	//////////////////////////////// 				////////////////////////////////
 	////////////////////////////////	ALBEDO		////////////////////////////////
 	//////////////////////////////// 				//////////////////////////////// 
@@ -478,7 +400,7 @@ void main() {
 
 	if(LIGHTNING > 0) Albedo = vec4(1);
 
-	#if  defined WORLD && !defined ENTITIES && !defined HAND
+	#if defined WORLD && !defined ENTITIES && !defined HAND
 	float endPortalEmission = 0.0;
 	if(PORTAL > 0) {
 		float steps = 20;
@@ -593,7 +515,7 @@ void main() {
 	////////////////////////////////	NORMAL		////////////////////////////////
 	//////////////////////////////// 				//////////////////////////////// 
 
-	#if defined WORLD && defined MC_NORMAL_MAP
+	#if defined WORLD
 		vec4 NormalTex = texture2D_POMSwitch(normals, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM,textureLOD).xyzw;
 		
 		#ifdef MATERIAL_AO

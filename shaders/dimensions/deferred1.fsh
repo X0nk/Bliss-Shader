@@ -1,4 +1,5 @@
 #include "/lib/settings.glsl"
+#include "/lib/macro_lod_mod.glsl"
 
 uniform sampler2D colortex4;
 uniform sampler2D colortex1;
@@ -8,23 +9,17 @@ uniform vec2 texelSize;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 
-#ifdef DISTANT_HORIZONS
-uniform sampler2D dhDepthTex;
-uniform sampler2D dhDepthTex1;
-#endif
 uniform float near;
 uniform float far;
-uniform float dhFarPlane;
-uniform float dhNearPlane;
 
 float linZ(float depth) {
     return (2.0 * near) / (far + near - depth * (far - near));
 }
 float DH_linZ(float dist) {
-    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+    return (2.0 * LOD_NEARPLANE) / (LOD_FARPLANE + LOD_NEARPLANE - dist * (LOD_FARPLANE - LOD_NEARPLANE));
 }
 float DH_invLinZ (float lindepth){
-	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
+	return -((2.0*LOD_NEARPLANE/lindepth)-LOD_FARPLANE-LOD_NEARPLANE)/(LOD_FARPLANE-LOD_NEARPLANE);
 }
 void convertHandDepth(inout float depth) {
     float ndcDepth = depth * 2.0 - 1.0;
@@ -52,8 +47,8 @@ void main() {
 
 	if(hand) convertHandDepth(newTex);
 
-	#ifdef DISTANT_HORIZONS
-    	float QuarterResDepth = texelFetch2D(dhDepthTex, ivec2(gl_FragCoord.xy*4), 0).x;
+	#ifdef USING_LOD_MOD
+    	float QuarterResDepth = texelFetch2D(LOD_DEPTHBUFFER_OPAQUE, ivec2(gl_FragCoord.xy*4), 0).x;
 		QuarterResDepth = DH_linZ(QuarterResDepth);
    		gl_FragData[1].a = QuarterResDepth*QuarterResDepth*65000.0;
 	#endif

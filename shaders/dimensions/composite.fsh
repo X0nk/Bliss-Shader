@@ -5,6 +5,8 @@
 #define INDIRECT_EFFECT_RELATED_SETTINGS
 #define AMBIENT_LIGHT_RELATED_SETTINGS
 #include "/lib/settings.glsl"
+#include "/lib/macro_lod_mod.glsl"
+#include "/lib/TAA_jitter.glsl"
 
 #ifndef DH_AMBIENT_OCCLUSION
 	#undef DISTANT_HORIZONS
@@ -12,18 +14,12 @@
 
 
 flat varying vec3 WsunVec;
-flat varying vec2 TAA_Offset;
+
 
 #include "/lib/res_params.glsl"
 
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
-
-#ifdef DISTANT_HORIZONS
-	uniform sampler2D dhDepthTex;
-	uniform sampler2D dhDepthTex1;
-#endif
-
 uniform sampler2D colortex1;
 uniform sampler2D colortex3; // Noise
 uniform sampler2D colortex6; // Noise
@@ -133,6 +129,11 @@ vec2 decodeVec2(float a){
     return fract( a * constant1 ) * constant2 ;
 }
 
+float IGN(){
+	vec2 coord = gl_FragCoord.xy + 5.588238 * float(frameCounter%64);
+	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y)) ;
+	return noise;
+}
 
 float interleaved_gradientNoise_temporal(){
 	vec2 coord = gl_FragCoord.xy;
@@ -272,7 +273,7 @@ vec2 SSAO(
 	float occlusion = 0.0; 
 	float sss = 0.0;
 
-	vec2 jitterOffsets = TAA_Offset*texelSize*0.5 * RENDER_SCALE - texelSize*0.5;
+	vec2 jitterOffsets = taaJitter*texelSize*0.5 * RENDER_SCALE - texelSize*0.5;
 
 	// scale the offset radius down as distance increases.
 	float linearViewDistance = length(viewPos);
@@ -291,12 +292,13 @@ vec2 SSAO(
 
 		if (offsetUV.x >= 0 && offsetUV.y >= 0 && offsetUV.x < viewWidth*RENDER_SCALE.x && offsetUV.y < viewHeight*RENDER_SCALE.y ) {
 			
-			float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, offsetUV, 0).x, hand);
 
-			#ifdef DISTANT_HORIZONS
-				float sampleDHDepth = texelFetch2D(dhDepthTex1, offsetUV, 0).x;
+			#ifdef USING_LOD_MOD
+				float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, offsetUV, 0).x, hand);
+				float sampleDHDepth = texelFetch2D(LOD_DEPTHBUFFER_OPAQUE, offsetUV, 0).x;
 				vec3 offsetViewPos = toScreenSpace_DH((offsetUV*texelSize - jitterOffsets) * (1.0/RENDER_SCALE), sampleDepth, sampleDHDepth);
 			#else
+				float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, offsetUV, 0).x, hand);
 				vec3 offsetViewPos = toScreenSpace(vec3((offsetUV*texelSize - jitterOffsets) * (1.0/RENDER_SCALE), sampleDepth));
 			#endif
 
@@ -380,8 +382,8 @@ void main() {
 
 	float z = convertHandDepth_2(texelFetch2D(depthtex1,ivec2(gl_FragCoord.xy),0).x,hand);
 	
-	#ifdef DISTANT_HORIZONS
-		float DH_depth1 = texelFetch2D(dhDepthTex1,ivec2(gl_FragCoord.xy),0).x;
+	#ifdef USING_LOD_MOD
+		float DH_depth1 = texelFetch2D(LOD_DEPTHBUFFER_OPAQUE,ivec2(gl_FragCoord.xy),0).x;
 		float swappedDepth = z >= 1.0 ? DH_depth1 : z;
 	#else
 		float DH_depth1 = 1.0;
@@ -389,12 +391,12 @@ void main() {
 	#endif
 
 
-	vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE - TAA_Offset*texelSize*0.5, z, DH_depth1);
+	vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE - taaJitter*texelSize*0.5, z, DH_depth1);
 	vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos;
 	
 	float depth = z;
 
-	#ifdef DISTANT_HORIZONS
+	#ifdef USING_LOD_MOD
 	    float _near = near;
 	    float _far = far*4.0;
 	    if (depth >= 1.0) {

@@ -224,8 +224,8 @@ vec4 GetVolumetricFog(
 
 	float rayLength = length(rayStartPos);
 
-	#ifdef DISTANT_HORIZONS
-		float maxLength = min(rayLength, max(far, dhRenderDistance))/rayLength;
+	#ifdef USING_LOD_MOD
+		float maxLength = min(rayLength, max(far, LOD_RENDERDISTANCE))/rayLength;
 	#else
 		float maxLength = min(rayLength, far)/rayLength;
 	#endif

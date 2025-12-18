@@ -118,7 +118,7 @@ vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 	// spos += stepv*0.3;
 
 	#if defined DEFERRED_SPECULAR && TAA_MODE > 0
-		spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
+		spos.xy += taaJitter*texelSize*0.5/RENDER_SCALE;
 	#endif
 
 	float minZ = spos.z - biasAmount / linZ(spos.z);
@@ -182,7 +182,7 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 
 	vec3 spos = clipPosition + stepv*noise;
 	// spos += stepv*0.3;
-	spos.xy += TAA_Offset*texelSize*0.5*RENDER_SCALE;
+	spos.xy += taaJitter*texelSize*0.5*RENDER_SCALE;
 	
 
 	float minZ = spos.z - biasamount / linZ(spos.z);

@@ -31,7 +31,7 @@ uniform vec3 sunPosition;
 uniform float sunElevation;
 
 uniform vec2 texelSize;
-uniform int framemod8;
+
 
 #if DOF_QUALITY == 5
 uniform int hideGUI;
@@ -43,8 +43,8 @@ uniform float far;
 #endif
 
 
-uniform int framemod4_DH;
-#define DH_TAA_OVERRIDE
+
+
 #include "/lib/TAA_jitter.glsl"
 
 uniform vec3 cameraPosition;
@@ -116,7 +116,7 @@ void main() {
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
     #if TAA_MODE > 0 && defined DH_TAA_JITTER
-		gl_Position.xy += offsets[framemod4_DH] * gl_Position.w*texelSize;
+		gl_Position.xy += taaJitter * gl_Position.w*texelSize;
 	#endif
 
 	#if DOF_QUALITY == 5

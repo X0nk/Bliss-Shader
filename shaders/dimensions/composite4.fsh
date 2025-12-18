@@ -3,7 +3,7 @@
 uniform sampler2D colortex3;
 
 uniform vec2 texelSize;
-uniform int framemod8;
+
 #include "/lib/TAA_jitter.glsl"
 // Compute 3x3 min max for TAA
 
@@ -19,7 +19,7 @@ uniform float viewWidth;
 void main() {
 /* RENDERTARGETS:0,6 */
   vec2 screenEdges = 2.0/vec2(viewWidth, viewHeight);
-	vec2 jitter = offsets[framemod8]*texelSize*0.5;
+	vec2 jitter = taaJitter*texelSize*0.5;
   ivec2 center = ivec2(clamp(gl_FragCoord.xy*texelSize, screenEdges, 1.0-screenEdges)/texelSize);
 
 	// vec3 current = texelFetch2D(colortex3, center, 0).rgb;

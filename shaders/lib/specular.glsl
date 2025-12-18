@@ -126,7 +126,7 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
 	spos += vec3(0.5*texelSize,0.0); // small offsets to reduce artifacts from precision differences.
 	
 	#if defined DEFERRED_SPECULAR && TAA_MODE > 0
-		spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
+		spos.xy += taaJitter*texelSize*0.5/RENDER_SCALE;
 	#endif
 
 	float minZ = spos.z - 0.00025 / linZ(spos.z);

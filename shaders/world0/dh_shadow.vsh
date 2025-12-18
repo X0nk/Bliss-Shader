@@ -8,6 +8,12 @@ Read the terms of modification and sharing before changing something below pleas
 */
 #include "/lib/settings.glsl"
 
+#include "/lib/macro_lod_mod.glsl"
+#ifdef USING_LOD_MOD
+	uniform sampler2D LOD_DEPTHBUFFER_OPAQUE;
+	uniform sampler2D LOD_DEPTHBUFFER_TRANSLUCENT;
+#endif
+
 #define SHADOW_MAP_BIAS 0.5
 const float PI = 3.1415927;
 varying vec2 texcoord;

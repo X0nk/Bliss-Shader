@@ -15,7 +15,7 @@ flat varying int dh_material_id;
 uniform float nightVision;
 
 uniform vec2 texelSize;
-uniform int framemod8;
+
 
 uniform float far;
 
@@ -27,11 +27,9 @@ uniform float screenBrightness;
 #include "/lib/bokeh.glsl"
 #endif
 
-uniform int framemod4_DH;
-#define DH_TAA_OVERRIDE
+
+
 #include "/lib/TAA_jitter.glsl"
-
-
 
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;
@@ -91,7 +89,7 @@ void main() {
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
     #if TAA_MODE > 0 && defined DH_TAA_JITTER
-		gl_Position.xy += offsets[framemod4_DH] * gl_Position.w*texelSize;
+		gl_Position.xy += taaJitter * gl_Position.w*texelSize;
 	#endif
 	
 	lightmapCoords = (gl_TextureMatrix[1] * gl_MultiTexCoord1).xy;

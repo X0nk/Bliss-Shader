@@ -106,7 +106,7 @@ vec3 colorGrading(vec3 color) {
 }
 
 vec3 contrastAdaptiveSharpening(vec3 color, vec2 texcoord){
-  float sharpen_strength = float(SHARPENING)/100.0;
+  float sharpen_strength = float(SHARPENING_AMOUNT)/100.0;
   //Weights : 1 in the center, 0.5 middle, 0.25 corners
   vec3 albedoCurrent1 = texture2D(colortex7, texcoord + vec2(texelSize.x,texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
   vec3 albedoCurrent2 = texture2D(colortex7, texcoord + vec2(texelSize.x,-texelSize.y)/MC_RENDER_QUALITY*0.5).rgb;
@@ -153,7 +153,7 @@ vec3 chromaticAberration(vec2 UV){
   // not stretched by aspect ratio; circular by choice :) it makes most the abberation on the left/right of the screen.
   float vignette = 1.0 - clamp(1.0 - length(centeredUV * vec2(aspectRatio,1.0)) / 200.0,0.0,1.0);
 
-  float aberrationStrength = CHROMATIC_ABERRATION_STRENGTH * vignette;
+  float aberrationStrength = (float(CHROMATIC_ABERRATION_AMOUNT)/20.0) * vignette;
 
   vec3 color = vec3(0.0);
   color.r = texture2D(colortex7, (centeredUV - (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).r;
@@ -167,13 +167,13 @@ void main() {
 
   /* RENDERTARGETS:7 */
   
-  #ifdef CHROMATIC_ABERRATION
+  #if CHROMATIC_ABERRATION_AMOUNT > 0
 	  vec3 color = chromaticAberration(texcoord);
   #else
 	  vec3 color = texture2D(colortex7,texcoord).rgb;
   #endif
 
-	#if SHARPENING > 0
+	#if SHARPENING_AMOUNT > 0
     color = contrastAdaptiveSharpening(color, texcoord);
 	#endif
   

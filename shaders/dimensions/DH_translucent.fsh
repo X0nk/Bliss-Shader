@@ -11,6 +11,7 @@
 #include "/lib/color_transforms.glsl"
 #include "/lib/projections.glsl"
 
+#include "/lib/macro_lod_mod.glsl"
 #ifdef OVERWORLD_SHADER
 	#define WATER_SUN_SPECULAR
 #endif
@@ -23,10 +24,6 @@ uniform sampler2D noisetex;
 const bool shadowHardwareFiltering = true;
 uniform sampler2DShadow shadow;
 
-#ifdef DISTANT_HORIZONS
-uniform sampler2D dhDepthTex;
-uniform sampler2D dhDepthTex1;
-#endif
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 
@@ -144,7 +141,7 @@ float GGX(vec3 n, vec3 v, vec3 l, float r, float f0) {
   return dotNL * D * F / (dotLH*dotLH*(1.0-k2)+k2);
 }
 
-uniform int framemod8;
+
 
 #include "/lib/TAA_jitter.glsl"
 

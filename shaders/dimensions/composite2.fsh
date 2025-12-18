@@ -1,4 +1,3 @@
-
 #define ANTIALIASING_RELATED_SETTINGS
 #define NETHER_RELATED_SETTINGS
 #define END_RELATED_SETTINGS
@@ -13,6 +12,8 @@
 #define WATER_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 
+#include "/lib/macro_lod_mod.glsl"
+
 #define EXCLUDE_WRITE_TO_LUT
 
 flat varying vec4 lightCol;
@@ -22,12 +23,6 @@ flat varying vec3 averageSkyCol_Clouds;
 uniform sampler2D noisetex;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
-
-#ifdef DISTANT_HORIZONS
-uniform sampler2D dhDepthTex;
-uniform sampler2D dhDepthTex1;
-#endif
-
 uniform sampler2D colortex0;
 uniform sampler2D colortex2;
 uniform sampler2D colortex3;
@@ -64,7 +59,7 @@ uniform float frameTimeCounter;
 
 // varying vec2 texcoord;
 uniform vec2 texelSize;
-flat varying vec2 TAA_Offset;
+
 uniform float viewHeight;
 uniform float viewWidth;
 
@@ -85,7 +80,6 @@ vec2 R2_samples(int n){
 }
 
 uniform int hideGUI;
-// uniform int dhRenderDistance;
 #define DHVLFOG
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
@@ -220,7 +214,6 @@ uniform float nightVision;
 	#include "/lib/scene_controller.glsl"
 
 
-	// uniform int dhRenderDistance;
 	#define TIMEOFDAYFOG
 
 	#include "/lib/volumetricClouds.glsl"
@@ -238,7 +231,7 @@ uniform sampler2D colortex4;
 
 #define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
 
-uniform int framemod8;
+
 #include "/lib/TAA_jitter.glsl"
 
 
@@ -597,7 +590,7 @@ void main() {
 		lightmap.y = 1.0;
 	#endif
 
-	float alpha = texelFetch2D(colortex7,texcoord_cast,0).a ;
+	float alpha = texelFetch2D(colortex7,texcoord_cast,0).a;
 	float blendedAlpha = texelFetch2D(colortex2, texcoord_cast,0).a;
 
 	bool iswater = alpha > 0.99;
@@ -605,9 +598,9 @@ void main() {
 	float z0 = texelFetch2D(depthtex0, texcoord_cast,0).x;
 	float z1 = texelFetch2D(depthtex1, texcoord_cast,0).x;
 
-	#ifdef DISTANT_HORIZONS
-		float DH_z0 = texelFetch2D(dhDepthTex, texcoord_cast,0).x;
-		float DH_z1 = texelFetch2D(dhDepthTex1, texcoord_cast,0).x;
+	#ifdef USING_LOD_MOD
+		float DH_z0 = texelFetch2D(LOD_DEPTHBUFFER_OPAQUE, texcoord_cast,0).x;
+		float DH_z1 = texelFetch2D(LOD_DEPTHBUFFER_TRANSLUCENT, texcoord_cast,0).x;
 	#else
 		float DH_z0 = 0.0;
 		float DH_z1 = 0.0;

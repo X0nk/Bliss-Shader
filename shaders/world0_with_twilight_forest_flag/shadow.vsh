@@ -1,5 +1,8 @@
 #version 120
 #include "/lib/settings.glsl"
+
+#include "/lib/macro_lod_mod.glsl"
+
 #ifdef IS_LPV_ENABLED
 	#extension GL_ARB_explicit_attrib_location: enable
 	#extension GL_ARB_shader_image_load_store: enable

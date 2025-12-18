@@ -39,11 +39,23 @@ uniform float far;
 float ld(float dist) {
     return (2.0 * near) / (far + near - dist * (far - near));
 }
+
+/*
+from https://blog.demofox.org/2022/01/01/interleaved-gradient-noise-a-different-kind-of-low-discrepancy-sequence/
+Copyright 2019 Alan Wolfe
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy;
-	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
+	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y)) ;
 	return noise;
 }
+
 float blueNoise(){
   return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
@@ -97,7 +109,7 @@ vec3 doMotionBlur(vec2 texcoord, float depth, float noise, bool hand){
   // thank you Capt Tatsu for letting me use these
   velocity /= (1.0 + length(velocity)); // ensure the blurring stays sane where UV is beyond 1.0 or -1.0
   velocity /= (1.0 + frameTime*1000.0 * samples * 0.25); // ensure the blur radius stays roughly the same no matter the framerate or sample count
-  velocity *= blurMult * MOTION_BLUR_STRENGTH; // remove hand blur and add user control
+  velocity *= blurMult * (float(MOTION_BLUR_AMOUNT)/20.0); // remove hand blur and add user control
 
   texcoord = texcoord - velocity*(samples*0.5 + noise);
 
@@ -125,15 +137,15 @@ float doVignette( in vec2 texcoord, in float noise){
   // stop banding
   vignette = vignette + vignette*(noise-0.5)*0.01;
   
-  return mix(1.0, vignette, VIGNETTE_STRENGTH);
+  return mix(1.0, vignette, float(VIGNETTE_AMOUNT)/100.0);
 }
 
 void main() {
   
   float noise = blueNoise();
 
-  #ifdef MOTION_BLUR
     float depth = texture2D(depthtex0, texcoord*RENDER_SCALE).r;
+  #if MOTION_BLUR_AMOUNT > 0
     bool hand = depth < 0.56;
     float depth2 = convertHandDepth_2(depth, hand);
 
@@ -147,7 +159,7 @@ void main() {
     applyGameplayEffects(COLOR, texcoord, noise);
   #endif
   
-  #ifdef VIGNETTE
+  #if VIGNETTE_AMOUNT > 0
     COLOR *= doVignette(texcoord, noise);
   #endif
 

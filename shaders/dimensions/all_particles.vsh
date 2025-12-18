@@ -33,7 +33,7 @@ uniform vec3 sunPosition;
 uniform float sunElevation;
 
 uniform vec2 texelSize;
-uniform int framemod8;
+
 uniform float frameTimeCounter;
 uniform vec3 cameraPosition;
 uniform mat4 gbufferModelViewInverse;
@@ -148,7 +148,7 @@ void main() {
 	#endif
 	#ifndef WEATHER
 		#if TAA_MODE > 0
-			gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+			gl_Position.xy += taaJitter * gl_Position.w*texelSize;
 		#endif
 	#endif
 }

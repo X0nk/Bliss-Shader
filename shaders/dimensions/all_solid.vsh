@@ -9,64 +9,45 @@
 #include "/lib/blocks.glsl"
 #include "/lib/entities.glsl"
 #include "/lib/items.glsl"
+#include "/lib/TAA_jitter.glsl"
 
-/*
-!! DO NOT REMOVE !!
-This code is from Chocapic13' shaders
-Read the terms of modification and sharing before changing something below please !
-!! DO NOT REMOVE !!
-*/
-
-
-#ifdef HAND
-#undef POM
+#if defined HAND
+	#undef POM
 #endif
 
-#ifndef MC_NORMAL_MAP
-#undef POM
-#endif
-
-#ifdef POM
-#define MC_NORMAL_MAP
-#endif
-
-
-varying vec4 color;
-varying float VanillaAO;
-
-varying vec4 lmtexcoord;
-varying vec4 normalMat;
-
-// #ifdef POM
-	varying vec4 vtexcoordam; // .st for add, .pq for mul
-	varying vec4 vtexcoord;
-// #endif
-
-#ifdef MC_NORMAL_MAP
-	varying vec4 tangent;
-	attribute vec4 at_tangent;
-	varying vec3 FlatNormals;
-#endif
-
-uniform float frameTimeCounter;
-const float PI48 = 150.796447372*WAVY_SPEED;
-float pi2wt = PI48*frameTimeCounter;
-
+attribute vec4 at_tangent;
 attribute vec4 mc_Entity;
 attribute vec4 mc_midTexCoord;
 
 uniform int blockEntityId;
 uniform int entityId;
-flat varying float blockID;
-
 uniform int heldItemId;
 uniform int heldItemId2;
+
+varying vec4 color;
+varying float VanillaAO;
+varying vec4 lmtexcoord;
+varying vec4 normalMat;
+varying vec4 vtexcoordam; // .st for add, .pq for mul
+varying vec4 vtexcoord;
+varying vec4 tangent;
+varying vec3 FlatNormals;
+
+flat varying float SSSAMOUNT;
+flat varying float EMISSIVE;
+flat varying int LIGHTNING;
+flat varying int PORTAL;
+flat varying int SIGN;
 flat varying float HELD_ITEM_BRIGHTNESS;
-
-
-
+flat varying float blockID;
 flat varying int NameTags;
 
+uniform mat4 gbufferModelView;
+uniform mat4 gbufferModelViewInverse;
+uniform vec3 cameraPosition;
+uniform vec2 texelSize;
+
+uniform float nightVision;
 uniform int frameCounter;
 uniform float far;
 uniform float aspectRatio;
@@ -75,45 +56,31 @@ uniform float viewWidth;
 uniform int hideGUI;
 uniform float screenBrightness;
 uniform int isEyeInWater;
+uniform float frameTimeCounter;
 
-flat varying float SSSAMOUNT;
-flat varying float EMISSIVE;
-flat varying int LIGHTNING;
-flat varying int PORTAL;
-flat varying int SIGN;
+uniform sampler2D noisetex;//depth
 
-// in vec3 at_velocity;
-// out vec3 velocity;
-
-uniform float nightVision;
-
-uniform mat4 gbufferModelView;
-uniform mat4 gbufferModelViewInverse;
-uniform vec3 cameraPosition;
-uniform vec2 texelSize;
-uniform int framemod8;
+const float PI48 = 150.796447372*WAVY_SPEED;
+float pi2wt = PI48*frameTimeCounter;
 
 #if defined HAND
-uniform mat4 gbufferPreviousModelView;
-uniform vec3 previousCameraPosition;
+	uniform mat4 gbufferPreviousModelView;
+	uniform vec3 previousCameraPosition;
 
-float detectCameraMovement(){
-	// simply get the difference of modelview matrices and cameraPosition across a frame.
-	vec3 fakePos = vec3(0.5,0.5,0.0);
-	vec3 hand_playerPos = mat3(gbufferModelViewInverse) * fakePos + (cameraPosition - previousCameraPosition);
-	vec3 previousPosition = mat3(gbufferPreviousModelView) * hand_playerPos;
-	float detectMovement = 1.0 - clamp(distance(previousPosition, fakePos)/texelSize.x,0.0,1.0);
-	
-	return detectMovement;
-}
+	float detectCameraMovement(){
+		// simply get the difference of modelview matrices and cameraPosition across a frame.
+		vec3 fakePos = vec3(0.5,0.5,0.0);
+		vec3 hand_playerPos = mat3(gbufferModelViewInverse) * fakePos + (cameraPosition - previousCameraPosition);
+		vec3 previousPosition = mat3(gbufferPreviousModelView) * hand_playerPos;
+		float detectMovement = 1.0 - clamp(distance(previousPosition, fakePos)/texelSize.x,0.0,1.0);
+
+		return detectMovement;
+	}
 #endif
-
-#include "/lib/TAA_jitter.glsl"
-
-
 							
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+
 vec4 toClipSpace3(vec3 viewSpacePosition) {
     return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
 }
@@ -145,15 +112,6 @@ vec3 calcMoveLeaves(in vec3 pos, in float f0, in float f1, in float f2, in float
     return move1*5.*WAVY_STRENGTH;
 }
 
-// float luma(vec3 color) {
-// 	return dot(color,vec3(0.21, 0.72, 0.07));
-// }
-
-#define SEASONS_VSH
-#include "/lib/climate_settings.glsl"
-
-
-uniform sampler2D noisetex;//depth
 float densityAtPos(in vec3 pos){
 	pos /= 18.;
 	pos.xz *= 0.5;
@@ -167,9 +125,11 @@ float densityAtPos(in vec3 pos){
 
 	return mix(xy.r,xy.g, f.y);
 }
+
 float luma(vec3 color) {
 	return dot(color,vec3(0.21, 0.72, 0.07));
 }
+
 vec3 viewToWorld(vec3 viewPos) {
     vec4 pos;
     pos.xyz = viewPos;
@@ -177,11 +137,21 @@ vec3 viewToWorld(vec3 viewPos) {
     pos = gbufferModelViewInverse * pos;
     return pos.xyz;
 }
+
+#define SEASONS_VSH
+#include "/lib/climate_settings.glsl"
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
+/*
+!! DO NOT REMOVE !!
+This code is from Chocapic13' shaders
+Read the terms of modification and sharing before changing something below please !
+!! DO NOT REMOVE !!
+*/
 
 void main() {
 
@@ -200,8 +170,6 @@ void main() {
 	VanillaAO = 1.0 - clamp(color.a,0,1);
 	if (color.a < 0.3) color.a = 1.0; // fix vanilla ao on some custom block models.
 	
-
-
     /////// ----- RANDOM STUFF ----- ///////
 	// gl_TextureMatrix[0] for animated things like charged creepers
 	lmtexcoord.xy = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
@@ -214,26 +182,17 @@ void main() {
 	vtexcoord.xy    = sign(texcoordminusmid)*0.5+0.5;
 	// #endif
 
-
 	vec2 lmcoord = max(gl_MultiTexCoord1.xy - 8.0, 0.0) / (240.0-8.0);
 	lmtexcoord.zw = lmcoord;
 
-
-
-	#ifdef MC_NORMAL_MAP
-		vec3 alterTangent = at_tangent.rgb;
-
-		tangent = vec4(normalize(gl_NormalMatrix * alterTangent.rgb), at_tangent.w);
-	#endif
-
+	vec3 alterTangent = at_tangent.rgb;
+	tangent = vec4(normalize(gl_NormalMatrix * alterTangent.rgb), at_tangent.w);
 	normalMat = vec4(normalize(gl_NormalMatrix * gl_Normal), 1.0);
-	
 	FlatNormals = normalMat.xyz;
 
 	blockID = mc_Entity.x ;
 
 	if(blockID == BLOCK_GROUND_WAVING_VERTICAL || blockID == BLOCK_GRASS_SHORT || blockID == BLOCK_GRASS_TALL_LOWER || blockID == BLOCK_GRASS_TALL_UPPER ) normalMat.a = 0.60;
-
 
 	PORTAL = 0;
 	SIGN = 0;
@@ -247,11 +206,8 @@ void main() {
 	NameTags = 0;
 
 #ifdef ENTITIES
-
 	// disallow POM to work on item frames.
 	if(entityId == ENTITY_ITEM_FRAME) SIGN = 1;
-
-
 	// try and single out nametag text and then discard nametag background
 	// if( dot(gl_Color.rgb, vec3(1.0/3.0)) < 1.0) NameTags = 1;
 	// if(gl_Color.a < 1.0) NameTags = 1;
@@ -396,7 +352,7 @@ void main() {
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
 	#if TAA_MODE > 0
-		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+		gl_Position.xy += taaJitter * gl_Position.w*texelSize;
 	#endif
 
 

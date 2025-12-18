@@ -78,8 +78,15 @@ uniform int hideGUI;
 #include "/lib/projections.glsl"
 
 
-uniform int framemod8;
+
 #include "/lib/TAA_jitter.glsl"
+
+#include "/lib/macro_lod_mod.glsl"
+
+uniform float near;
+uniform float far;
+
+#include "/lib/DistantHorizons_projections.glsl"
 
 vec2 decodeVec2(float a){
     const vec2 constant1 = 65535. / vec2( 256., 65536.);
@@ -126,25 +133,15 @@ float convertHandDepth2( float depth) {
 }
 
 
-#ifdef DISTANT_HORIZONS
-uniform sampler2D dhDepthTex;
-#endif
-uniform float near;
-uniform float far;
-uniform float dhFarPlane;
-uniform float dhNearPlane;
-
-#include "/lib/DistantHorizons_projections.glsl"
-
 
 float ld(float dist) {
     return (2.0 * near) / (far + near - dist * (far - near));
 }
 float DH_ld(float dist) {
-    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+    return (2.0 * LOD_NEARPLANE) / (LOD_FARPLANE + LOD_NEARPLANE - dist * (LOD_FARPLANE - LOD_NEARPLANE));
 }
 float DH_inv_ld (float lindepth){
-	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
+	return -((2.0*LOD_NEARPLANE/lindepth)-LOD_FARPLANE-LOD_NEARPLANE)/(LOD_FARPLANE-LOD_NEARPLANE);
 }
 
 float linearizeDepthFast(const in float depth, const in float near, const in float far) {
@@ -156,8 +153,8 @@ float invertlinearDepthFast(const in float depth, const in float near, const in 
 
 vec3 toClipSpace3Prev_DH( vec3 viewSpacePosition, bool depthCheck ) {
 
-	#ifdef DISTANT_HORIZONS
-		mat4 projectionMatrix = depthCheck ? dhPreviousProjection : gbufferPreviousProjection;
+	#ifdef USING_LOD_MOD
+		mat4 projectionMatrix = depthCheck ? LOD_PROJECTION_PREV : gbufferPreviousProjection;
    		return projMAD(projectionMatrix, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 	#else
     	return projMAD(gbufferPreviousProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
@@ -169,12 +166,12 @@ vec3 toScreenSpace_DH_special(vec3 POS, bool depthCheck ) {
 	vec4 viewPos = vec4(0.0);
 	vec3 feetPlayerPos = vec3(0.0);
 	vec4 iProjDiag = vec4(0.0);
-	#ifdef DISTANT_HORIZONS
+	#ifdef USING_LOD_MOD
     	if (depthCheck) {
-			iProjDiag = vec4(dhProjectionInverse[0].x, dhProjectionInverse[1].y, dhProjectionInverse[2].zw);
+			iProjDiag = vec4(LOD_PROJECTION_INVERSE[0].x, LOD_PROJECTION_INVERSE[1].y, LOD_PROJECTION_INVERSE[2].zw);
 
     		feetPlayerPos = POS * 2.0 - 1.0;
-    		viewPos = iProjDiag * feetPlayerPos.xyzz + dhProjectionInverse[3];
+    		viewPos = iProjDiag * feetPlayerPos.xyzz + LOD_PROJECTION_INVERSE[3];
 			viewPos.xyz /= viewPos.w;
 
 		} else {
@@ -185,7 +182,7 @@ vec3 toScreenSpace_DH_special(vec3 POS, bool depthCheck ) {
     		viewPos = iProjDiag * feetPlayerPos.xyzz + gbufferProjectionInverse[3];
 			viewPos.xyz /= viewPos.w;
 			
-	#ifdef DISTANT_HORIZONS
+	#ifdef USING_LOD_MOD
 		}
 	#endif
 
@@ -315,15 +312,15 @@ vec3 closestToCamera5taps_DH(vec2 texcoord, sampler2D depth, sampler2D dhDepth, 
 
 vec4 computeTAA(vec2 texcoord, bool hand){
 
-	vec2 jitter = offsets[framemod8]*texelSize*0.5;
+	vec2 jitter = taaJitter*texelSize*0.5;
 	vec2 adjTC = clamp(texcoord*RENDER_SCALE - texelSize*0.5, vec2(0.0), RENDER_SCALE- texelSize*1.5);
 	vec2 adjTC_noJitter = adjTC + jitter;
 
 	// get previous frames position stuff for UV	
 	//use velocity from the nearest texel from camera in a 3x3 box in order to improve edge quality in motion	
-	#ifdef DISTANT_HORIZONS
+	#ifdef USING_LOD_MOD
 		bool depthCheck = texture2D(depthtex0,adjTC).x >= 1.0;
-		vec3 closestToCamera = closestToCamera5taps_DH(adjTC, depthtex0, dhDepthTex, depthCheck);
+		vec3 closestToCamera = closestToCamera5taps_DH(adjTC, depthtex0, LOD_DEPTHBUFFER_TRANSLUCENT, depthCheck);
 		vec3 viewPos = toScreenSpace_DH_special(closestToCamera, depthCheck);
 	#else
 		vec3 closestToCamera = closestToCamera5taps(adjTC, depthtex0);
@@ -333,7 +330,7 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
 	vec3 previousPosition = mat3(gbufferPreviousModelView) * playerPos + gbufferPreviousModelView[3].xyz;
 	
-	#ifdef DISTANT_HORIZONS
+	#ifdef USING_LOD_MOD
 		previousPosition = toClipSpace3Prev_DH(previousPosition, depthCheck);
 	#else
 		previousPosition = toClipSpace3Prev(previousPosition);

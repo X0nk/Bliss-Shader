@@ -525,8 +525,8 @@ vec4 GetVolumetricClouds(
 
 	float heightRelativeToClouds = clamp(1.0 - max(cameraPosition.y - minHeight,0.0) / 100.0 ,0.0,1.0);
 
-	#if defined DISTANT_HORIZONS
-		float maxdist = dhFarPlane - 16.0;
+	#ifdef USING_LOD_MOD
+		float maxdist = LOD_RENDERDISTANCE;
 	#else
 		float maxdist = far + 16.0*5.0;
 	#endif
@@ -562,8 +562,8 @@ vec4 GetVolumetricClouds(
 	// setup for getting distance
 	vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos;
 
-	#ifdef DISTANT_HORIZONS
-		float maxLength = min(length(playerPos), max(far, dhRenderDistance))/length(playerPos);
+	#ifdef USING_LOD_MOD
+		float maxLength = min(length(playerPos), max(far, LOD_RENDERDISTANCE))/length(playerPos);
 	#else
 		float maxLength = min(length(playerPos), far)/length(playerPos);
 	#endif
