@@ -384,7 +384,7 @@
 		#define moonColorBase vec3(moonColorR,moonColorG,moonColorB) * moon_illuminance
 	#else
 		#define sunColorBase blackbody(Sun_temp) * sun_illuminance
-		#if defined MOONPHASE_BASED_MOONLIGHT
+		#ifdef MOONPHASE_BASED_MOONLIGHT
 			uniform int moonPhase;
 			#define phasebrightness (abs(4-moonPhase))
 			#define moonlightbrightness (phasebrightness/4.0)
@@ -400,7 +400,7 @@
 	#define WATER_ON_CAMERA_EFFECT
 	#define ON_FIRE_DISTORT_EFFECT
 	#define ON_FIRE_DISTORT_EFFECT_STRENGTH 0.7 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0]
-	#if defined IS_IRIS
+	#ifdef IS_IRIS
 		#define DAMAGE_TAKEN_EFFECT
 		#define LOW_HEALTH_EFFECT
 		#define LOW_HEALTH_EFFECT_START 6.0 // [1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0 18.0 19.0 20.0 21.0 22.0 23.0 24.0]
@@ -655,7 +655,7 @@
 
 #if defined DISTANT_HORIZONS
 	// #define DISTANT_HORIZONS_SHADOWMAP
-	#if defined DISTANT_HORIZONS_SHADOWMAP
+	#ifdef DISTANT_HORIZONS_SHADOWMAP
 		#undef DISTORT_SHADOWMAP
 		const float shadowNearPlane = -1.0;
 		const float shadowFarPlane = -1.0;
@@ -745,7 +745,7 @@
 #define DEBUG_VIEW debug_OFF // [debug_OFF debug_SHADOWMAP debug_NORMALS debug_SPECULAR debug_INDIRECT debug_DIRECT debug_VIEW_POSITION debug_DH_WATER_BLENDING debug_FILTERED_STUFF debug_DEPTHTEX0 debug_DEPTHTEX1 debug_MATERIAL_SSS debug_MATERIAL_EMISSION debug_LIGHTMAPS debug_FORWARD_RENDERING debug_FORWARD_COLOR_TINT debug_DEFERRED_RENDERING]
 
 // #define THE_ORB
-#if defined THE_ORB
+#ifdef THE_ORB
 	#define ORB_X 0 // [-200 -195 -190 -185 -180 -175 -170 -165 -160 -155 -150 -145 -140 -135 -130 -125 -120 -115 -110 -105 -100 -95 -90 -85 -80 -75 -70 -65 -60 -55 -50 -45 -40 -35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120 125 130 135 140 145 150 155 160 165 170 175 180 185 190 195 200]
 	#define ORB_Y 0 // [-200 -195 -190 -185 -180 -175 -170 -165 -160 -155 -150 -145 -140 -135 -130 -125 -120 -115 -110 -105 -100 -95 -90 -85 -80 -75 -70 -65 -60 -55 -50 -45 -40 -35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120 125 130 135 140 145 150 155 160 165 170 175 180 185 190 195 200 210 220 230 240 250]
 	#define ORB_Z 0 // [-200 -195 -190 -185 -180 -175 -170 -165 -160 -155 -150 -145 -140 -135 -130 -125 -120 -115 -110 -105 -100 -95 -90 -85 -80 -75 -70 -65 -60 -55 -50 -45 -40 -35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 105 110 115 120 125 130 135 140 145 150 155 160 165 170 175 180 185 190 195 200]

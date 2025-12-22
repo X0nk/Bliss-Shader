@@ -984,9 +984,9 @@ option.SATURATION.comment = §bWhat is this?§r This controls how "colorful" the
 option.CROSSTALK.comment = §bWhat is this?§r This is a modifier of saturation - it offsets the saturation of the BRIGHT parts of the image.
 option.WHITE_BALANCE.comment = §bWhat is this?§r This controls how warm or cool the image looks - it balances the blues and reds.
 option.TAA_MODE.comment = §bStandard:§r has the best antialiasing ability - uses more jitter offsets, but needs more frame history (set blend factor lower), it will flicker more and have more motion artifacts. §bResponsive:§r has the worst antialiasing ability - uses fewer jitter offsets, needs less frame history (set blend factor higher), so it can have fewer motion artifacts. §bTemporal Upscaling:§r Render the shader at a lower window resolution, and then scale it back up to fit the screen for better performance - has MANY artifacts.
-option.MOTION_BLUR.comment = §bWhat is this?§r This effect makes the entire screen blur in whatever direction you move the camera, or wherever you move within the world. §aPERFORMANCE COST:§r very low
-option.CHROMATIC_ABERRATION.comment = §bWhat is this?§r This effect makes the edges of the screen have a color shift of red and blue. §aPERFORMANCE COST:§r very very low
-option.VIGNETTE.comment = §bWhat is this?§r This effect makes the edges of the screen increasingly dark the closer to the edges it gets. §aPERFORMANCE COST:§r very very low
+option.MOTION_BLUR_AMOUNT.comment = §bWhat is this?§r This effect makes the entire screen blur in whatever direction you move the camera, or wherever you move within the world. §aPERFORMANCE COST:§r very low
+option.CHROMATIC_ABERRATION_AMOUNT.comment = §bWhat is this?§r This effect makes the edges of the screen have a color shift of red and blue. §aPERFORMANCE COST:§r very very low
+option.VIGNETTE_AMOUNT.comment = §bWhat is this?§r This effect makes the edges of the screen increasingly dark the closer to the edges it gets. §aPERFORMANCE COST:§r very very low
 option.TONEMAP.comment = §bWhat is this?§r This fits the internal HDR or whatever range of color the shader is doing, to look nice on your SDR monitor. it will control general color processing - the contrast, saturation, white point, black point, hue shift, path to white, ect - each one has a different look
 
 option.DOF_QUALITY.comment= §bWhat is this?§r This is the "un-focus" blur in the background and foreground when a camera focuses its lense on something, sometimes referred to as "bokeh". §aPERFORMANCE COST:§r low to high

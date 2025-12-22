@@ -265,7 +265,7 @@ vec3 ApplySSRT(
 			#endif
 		#else
 			#ifdef OVERWORLD_SHADER
-				skycontribution = unchangedIndirect * (max(rayDir.y,pow(1.0-lightmap,2))*0.95+0.05);
+				skycontribution = unchangedIndirect * (max(rayDir.y,pow(1.0-lightmap,2))*0.95+0.05) * 1.25;
 			#endif
 		#endif
 
