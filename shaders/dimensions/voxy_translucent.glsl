@@ -94,6 +94,14 @@ vec4 skyCloudsFromTex(vec3 pos,sampler2D sampler){
 	return texture2D(sampler, uv);
 }
 
+vec4 volumetricsFromTex(vec3 pos,sampler2D sampler){
+	vec2 p = sphereToCarte(pos);
+	p = clamp(p, 0.0, 1.0);
+	vec2 uv = p*texelSize*256. + vec2(256.0 - 256.0*0.12,1.5)*texelSize;
+
+	return texture2D(sampler, uv);
+}
+
 float GGX(vec3 n, vec3 v, vec3 l, float r, float f0) {
   r = max(pow(r,2.5), 0.0001);
 
@@ -272,10 +280,16 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
         // #endif
 
 	    #if defined FORWARD_BACKGROUND_REFLECTION
-	        Reflections.rgb = mix(FinalColor, skyCloudsFromTex(mat3(vxModelViewInv) * reflectedVector, colortex4).rgb / 1200.0, fresnel);
+	        Reflections.rgb = mix(FinalColor,
+                #ifdef OVERWORLD_SHADER
+                    skyCloudsFromTex(mat3(vxModelViewInv) * reflectedVector, colortex4).rgb / 1200.0
+                #else
+			        volumetricsFromTex(mat3(vxModelViewInv) * reflectedVector, colortex4).rgb / 1200.0
+                #endif
+                ,fresnel);
         #endif
 
-	    #if defined OVERWORLD_SHADER || SUN_SPECULAR_MULT > 0
+	    #if defined OVERWORLD_SHADER && SUN_SPECULAR_MULT > 0
             Reflections.rgb += (DirectLightColor * Shadows) * GGX(normal, -normalize(playerPos), WsunVec, roughness, f0);
         #endif
 
