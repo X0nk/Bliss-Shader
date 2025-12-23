@@ -11,6 +11,11 @@
 #include "/lib/settings.glsl"
 #include "/lib/macro_lod_mod.glsl"
 
+// this is an emergency plain text that will be visible as an the log error when a user tries to use voxy and DH both at once.
+#if defined VOXY && defined DISTANT_HORIZONS 
+float errortext = THIS_IS_NOT_A_BUG_____YOU_CANNOT_USE_VOXY_AND_DISTANT_HORIZIONS_TOGETHER_____USE_ONE_OR_THE_OTHER;
+#endif
+
 #define DHVLFOG
 #define ReflectedFog
 
