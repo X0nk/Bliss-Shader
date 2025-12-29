@@ -407,7 +407,7 @@ vec3 specularReflections(
 		}
 	#endif
 
-	#if defined OVERWORLD_SHADER || SUN_SPECULAR_MULT > 0
+	#if defined OVERWORLD_SHADER && SUN_SPECULAR_MULT > 0
 		vec3 lightSourceReflection = SUN_SPECULAR_MULT * lightColor * GGX(normal, -playerPos, lightPos, roughness, reflectance, metalAlbedoTint);
 		specularReflections += lightSourceReflection;
 	#endif

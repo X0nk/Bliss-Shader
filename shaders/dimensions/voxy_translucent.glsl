@@ -290,7 +290,7 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
         #endif
 
 	    #if defined OVERWORLD_SHADER && SUN_SPECULAR_MULT > 0
-            Reflections.rgb += (DirectLightColor * Shadows) * GGX(normal, -normalize(playerPos), WsunVec, roughness, f0);
+            Reflections.rgb += SUN_SPECULAR_MULT * DirectLightColor * Shadows * GGX(normal, -normalize(playerPos), WsunVec, roughness, f0);
         #endif
 
         FORWARD_RENDERED_COLOR.a = FORWARD_RENDERED_COLOR.a + (1.0-FORWARD_RENDERED_COLOR.a) * fresnel;
