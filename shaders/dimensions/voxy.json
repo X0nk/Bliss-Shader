@@ -16,7 +16,8 @@
     "samplers": [
         "noisetex",
         "colortex4",
-        "colortex5"
+        "colortex5",
+        "vxDepthTexOpaque"
     ],
     "uniforms": [
         "vxRenderDistance",
@@ -47,7 +48,8 @@
         "taaJitter",
         "LOD_NEARPLANE",
         "LOD_FARPLANE",
-        "LOD_RENDERDISTANCE"
+        "LOD_RENDERDISTANCE",
+        "frameCounter"
     ]
     #if TAA_MODE > 0
         ,"taaOffset": "{

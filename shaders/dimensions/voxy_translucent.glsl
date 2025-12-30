@@ -122,46 +122,62 @@ float GGX(vec3 n, vec3 v, vec3 l, float r, float f0) {
   return dotNL * D * F / (dotLH*dotLH*(1.0-k2)+k2);
 }
 
-// vec3 doScreenSpaceReflectiom(vec3 dir, vec3 position, float dither, float quality){
+vec3 doScreenSpaceReflection(vec3 dir, vec3 position, float dither, float quality){
 
-// 	float biasAmount = 0.001;
+	float biasAmount = 0.1;
 
-// 	vec3 clipPosition = toClipSpace3(position);
-// 	float rayLength = ((position.z + dir.z * LOD_FARPLANE*sqrt(3.)) > -LOD_NEARPLANE) ? (-LOD_NEARPLANE - position.z) / dir.z : LOD_FARPLANE*sqrt(3.);
+	vec3 clipPosition = toClipSpace3(position);
+	float rayLength = ((position.z + dir.z * LOD_FARPLANE*sqrt(3.)) > -LOD_NEARPLANE) ? (-LOD_NEARPLANE - position.z) / dir.z : LOD_FARPLANE*sqrt(3.);
 	
-// 	vec3 direction = toClipSpace3(position + dir*rayLength) - clipPosition;  //convert to clip space
+	vec3 direction = toClipSpace3(position + dir*rayLength) - clipPosition;  //convert to clip space
 
-// 	//get at which length the ray intersects with the edge of the screen
-// 	vec3 maxLengths = (step(0.0, direction) - clipPosition) / direction;
-// 	float mult = min(min(maxLengths.x, maxLengths.y), maxLengths.z);
-// 	vec3 stepv = direction * mult / quality;
+	//get at which length the ray intersects with the edge of the screen
+	vec3 maxLengths = (step(0.0, direction) - clipPosition) / direction;
+	float mult = min(min(maxLengths.x, maxLengths.y), maxLengths.z);
+	vec3 stepv = direction * mult / quality;
 
-// 	clipPosition.xy *= RENDER_SCALE;
-// 	stepv.xy *= RENDER_SCALE;
+	clipPosition.xy *= RENDER_SCALE;
+	stepv.xy *= RENDER_SCALE;
 
-// 	vec3 spos = clipPosition + stepv*dither;
-// 	spos.xy += texelSize*0.5;
+	vec3 spos = clipPosition + stepv*(dither*0.5+0.5);
+	spos.xy += texelSize*0.5;
 
-// 	float minZ = spos.z - 0.00025 / DH_ld(spos.z);
-// 	float maxZ = spos.z;
+	float minZ = spos.z - 0.00025 / DH_ld(spos.z);
+	float maxZ = spos.z;
 	
-//   	for (int i = 0; i <= int(quality); i++) {
+  	for (int i = 0; i <= int(quality); i++) {
 
-// 		if(spos.x < 0 || spos.x > 1 || spos.y < 0 || spos.y > 1) return vec3(1.1);
+		if(spos.x < 0 || spos.x > 1 || spos.y < 0 || spos.y > 1) return vec3(1.1);
 
-// 		float sampleDepth = sqrt(texelFetch(colortex12,ivec2(spos.xy/texelSize/4),0).a/65000.0);
-// 		// float sampleDepth = DH_ld(texture2D(vxDepthTexOpaque, spos.xy).x);
-// 		float sp = DH_inv_ld(sampleDepth);
+		// float sampleDepth = sqrt(texelFetch(colortex16,ivec2(spos.xy/texelSize/4),0).x/65000.0);
+		float sampleDepth = DH_ld(texture2D(vxDepthTexOpaque, spos.xy).x);
+		float sp = DH_inv_ld(sampleDepth);
 		
-// 		if(sp < max(minZ, maxZ) && sp > min(minZ, maxZ)) return vec3(spos.xy/RENDER_SCALE,sp);
+		if(sp < max(minZ, maxZ) && sp > min(minZ, maxZ)) return vec3(spos.xy/RENDER_SCALE,sp);
 
-// 		minZ = maxZ - biasAmount / DH_ld(spos.z);
-// 		maxZ += stepv.z;
+		minZ = maxZ - biasAmount / DH_ld(spos.z);
+		maxZ += stepv.z;
 
-// 		spos += stepv;
-//   	}
-//   return direction;
-// }
+		spos += stepv;
+  	}
+  return direction;
+}
+
+/*
+from https://blog.demofox.org/2022/01/01/interleaved-gradient-noise-a-different-kind-of-low-discrepancy-sequence/
+Copyright 2019 Alan Wolfe
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+float interleaved_gradientNoise_temporal(){
+	vec2 coord = gl_FragCoord.xy + 5.588238 * float(frameCounter%64);
+	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y)) ;
+	return noise;
+}
 
 /*
 struct VoxyFragmentParameters {
@@ -254,6 +270,8 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
     // specular lighting
 	#ifdef FORWARD_SPECULAR
 	    vec4 Reflections = vec4(0.0);
+	    vec4 SSR = vec4(0.0);
+        vec3 backgroundReflection = FinalColor;
         float roughness = 0.0;
 	    float f0 = 0.02;
 
@@ -263,34 +281,33 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
 	    float fresnel =  pow(clamp(1.0 + normalDotEye, 0.0, 1.0),5.0);
 	    fresnel = mix(f0, 1.0, fresnel);
 
-        // #if FORWARD_SSR_QUALITY > 0 && defined DH_SCREENSPACE_REFLECTIONS
-            // vec3 rtPos = doScreenSpaceReflectiom(reflectedVector, viewPos, 1.0, 30.0f);
-            // Reflections.rgb = rtPos;
-            // if (rtPos.z < 0.99999){
-            	// vec3 previousPosition = mat3(vxModelViewInv) * toScreenSpace(rtPos) + vxModelViewInv[3].xyz + cameraPosition-previousCameraPosition;
-            	// previousPosition = mat3(vxModelViewPrev) * previousPosition + vxModelViewPrev[3].xyz;
-            	// previousPosition.xy = projMAD(vxProjPrev, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
-            	// if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.y < 1.0) {
-	    			// Reflections.a = 1.0;
-	    			// Reflections.rgb = texture2D(colortex5, rtPos.xy).rgb;
-            	// }
-            // }
-	    		// if (rtPos.x > 0.0 && rtPos.y > 0.0 && rtPos.x < 1.0 && rtPos.y < 1.0) SSR_HIT_SKY_MASK = 1.0;
-	    	// }
-        // #endif
-
-	    #if defined FORWARD_BACKGROUND_REFLECTION
-	        Reflections.rgb = mix(FinalColor,
-                #ifdef OVERWORLD_SHADER
-                    skyCloudsFromTex(mat3(vxModelViewInv) * reflectedVector, colortex4).rgb / 1200.0
-                #else
-			        volumetricsFromTex(mat3(vxModelViewInv) * reflectedVector, colortex4).rgb / 1200.0
-                #endif
-                ,fresnel);
+        #if FORWARD_SSR_QUALITY > 0 && defined VOXY_SCREENSPACE_REFLECTIONS
+            vec3 rtPos = doScreenSpaceReflection(reflectedVector, viewPos, interleaved_gradientNoise_temporal(), 10.0f);
+            
+            if (rtPos.z < 0.99999){
+            	vec3 previousPosition = mat3(vxModelViewInv) * toScreenSpace(rtPos) + vxModelViewInv[3].xyz + cameraPosition-previousCameraPosition;
+            	previousPosition = mat3(vxModelViewPrev) * previousPosition + vxModelViewPrev[3].xyz;
+            	previousPosition.xy = projMAD(vxProjPrev, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
+            	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.y < 1.0) {
+	    			SSR.a = 1.0;
+	    			SSR.rgb = texture(colortex5, previousPosition.xy).rgb;
+            	}
+            }
+            
         #endif
+        
+	    #if defined FORWARD_BACKGROUND_REFLECTION
+            #ifdef OVERWORLD_SHADER
+                backgroundReflection = skyCloudsFromTex(mat3(vxModelViewInv) * reflectedVector, colortex4).rgb / 1200.0;
+            #else
+                backgroundReflection = volumetricsFromTex(mat3(vxModelViewInv) * reflectedVector, colortex4).rgb / 1200.0;
+            #endif
+        #endif
+	    
+        Reflections.rgb = mix(FinalColor, mix(backgroundReflection.rgb, SSR.rgb, SSR.a), fresnel);
 
 	    #if defined OVERWORLD_SHADER && SUN_SPECULAR_MULT > 0
-            Reflections.rgb += SUN_SPECULAR_MULT * DirectLightColor * Shadows * GGX(normal, -normalize(playerPos), WsunVec, roughness, f0);
+            Reflections.rgb += SUN_SPECULAR_MULT * DirectLightColor * Shadows * GGX(normal, -normalize(playerPos), WsunVec, roughness, f0) * (1.0-SSR.a);
         #endif
 
         FORWARD_RENDERED_COLOR.a = FORWARD_RENDERED_COLOR.a + (1.0-FORWARD_RENDERED_COLOR.a) * fresnel;
