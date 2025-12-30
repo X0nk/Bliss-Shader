@@ -297,7 +297,7 @@ vec2 SSAO(
 				float sampleDHDepth = 1.0;
 				float sampleDepth = 1.0;
 				if(isLOD){
-					sampleDHDepth = texelFetch2D(LOD_DEPTHBUFFER_TRANSLUCENT, offsetUV, 0).x;
+					sampleDHDepth = texelFetch2D(LOD_DEPTHTEX1, offsetUV, 0).x;
 				}else{
 					sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, offsetUV, 0).x, hand);
 				}
@@ -389,7 +389,7 @@ void main() {
 	float z = convertHandDepth_2(texelFetch2D(depthtex1,ivec2(gl_FragCoord.xy),0).x,hand);
 	
 	#ifdef USING_LOD_MOD
-		float DH_depth1 = texelFetch2D(LOD_DEPTHBUFFER_OPAQUE,ivec2(gl_FragCoord.xy),0).x;
+		float DH_depth1 = texelFetch2D(LOD_DEPTHTEX1,ivec2(gl_FragCoord.xy),0).x;
 		float swappedDepth = z >= 1.0 ? DH_depth1 : z;
 	#else
 		float DH_depth1 = 1.0;

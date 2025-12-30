@@ -3,6 +3,8 @@
 #define ANTIALIASING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
+#include "/lib/macro_lod_mod.glsl"
+
 
 
 flat varying vec4 exposure;
@@ -66,12 +68,6 @@ float ld(float depth) {
 // uniform float viewHeight;
 
 // uniform sampler2D depthtex0;
-
-#ifdef DISTANT_HORIZONS
-uniform sampler2D dhDepthTex;
-#endif
-uniform float dhNearPlane;
-uniform float dhFarPlane;
 
 float linearizeDepthFast(const in float depth, const in float near, const in float far) {
     return (near * far) / (depth * (near - far) + far);
@@ -343,14 +339,14 @@ void main() {
 		#endif
 		float depth = texture(depthtex0, texcoord).r;
 		
-		#ifdef DISTANT_HORIZONS
+		#ifdef USING_LOD_MOD
 		float _near = near;
 		float _far = far*4.0;
 
 		if (depth >= 1.0) {
-			depth = texture2D(dhDepthTex, texcoord).x;
-			_near = dhNearPlane;
-			_far = dhFarPlane;
+			depth = texture2D(LOD_DEPTHTEX0, texcoord).x;
+			_near = LOD_NEARPLANE;
+			_far = LOD_FARPLANE;
 		}
 
 		depth = linearizeDepthFast(depth, _near, _far);

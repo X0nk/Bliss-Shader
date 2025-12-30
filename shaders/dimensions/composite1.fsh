@@ -367,7 +367,7 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 		#ifdef USING_LOD_MOD
 			float sampleDepth = 0.0;
 			if(depthCheck){
-				sampleDepth = texelFetch2D(LOD_DEPTHBUFFER_TRANSLUCENT, ivec2(newPos.xy/texelSize),0).x;
+				sampleDepth = texelFetch2D(LOD_DEPTHTEX1, ivec2(newPos.xy/texelSize),0).x;
 			}else{
 				sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, ivec2(newPos.xy/texelSize),0).x,hand);
 			}
@@ -430,7 +430,7 @@ float SSRT_FlashLight_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, floa
 		#ifdef USING_LOD_MOD
 			float samplePos = 0.0;
 			if(depthCheck){
-				samplePos = texture2D(LOD_DEPTHBUFFER_TRANSLUCENT, screenPos.xy).x;
+				samplePos = texture2D(LOD_DEPTHTEX1, screenPos.xy).x;
 			}else{
 				samplePos = texture2D(depthtex2, screenPos.xy).x;
 			}
@@ -485,7 +485,7 @@ void doEdgeAwareBlur(
 	);
 
 	for(int i = 0; i < 4; i++) {
-		#ifdef DISTANT_HORIZONS
+		#ifdef USING_LOD_MOD
 			float offsetDepth = sqrt(texelFetch2D(depth, UV + OFFSET[i] + UV_NOISE,0).a/65000.0);
 		#else
 			float offsetDepth = ld(convertHandDepth_2(texelFetch2D(depth, UV + OFFSET[i] + UV_NOISE, 0).r,hand));
@@ -520,7 +520,7 @@ vec4 BilateralUpscale_VLFOG(sampler2D tex, sampler2D depth, float referenceDepth
 	vec4 colorSum = vec4(0.0);
 	float edgeSum = 0.0;
 
-	#ifdef DISTANT_HORIZONS
+	#ifdef USING_LOD_MOD
 		float threshold = referenceDepth * mix(0.5,  0.05, min(max(0.1 - referenceDepth,0)/0.1,1));
 	#else
 		float threshold = referenceDepth * 0.05;
@@ -542,7 +542,7 @@ vec4 BilateralUpscale_VLFOG(sampler2D tex, sampler2D depth, float referenceDepth
 	);
 
 	for(int i = 0; i < 4; i++) {
-		#ifdef DISTANT_HORIZONS
+		#ifdef USING_LOD_MOD
 			float offsetDepth = sqrt(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE,0).a/65000.0);
 		#else
 			float offsetDepth = ld(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE, 0).r);
@@ -772,8 +772,8 @@ void main() {
 
 		#ifdef USING_LOD_MOD
 			float DH_mixedLinearZ = sqrt(texture2D(colortex12,texcoord).a/65000.0);
-			float DH_depth0 = texture2D(LOD_DEPTHBUFFER_OPAQUE,texcoord).x;
-			float DH_depth1 = texture2D(LOD_DEPTHBUFFER_TRANSLUCENT ,texcoord).x;
+			float DH_depth0 = texture2D(LOD_DEPTHTEX0,texcoord).x;
+			float DH_depth1 = texture2D(LOD_DEPTHTEX1 ,texcoord).x;
 
 			float depthOpaque = z;
 			float depthOpaqueL = linearizeDepthFast(depthOpaque, near, farPlane);

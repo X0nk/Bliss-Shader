@@ -257,8 +257,8 @@ vec3 toClipSpace3Prev(vec3 viewSpacePosition) {
 
 vec3 toClipSpace3Prev_DH( vec3 viewSpacePosition, bool depthCheck ) {
 
-	#ifdef DISTANT_HORIZONS
-		mat4 projectionMatrix = depthCheck ? dhPreviousProjection : gbufferPreviousProjection;
+	#ifdef USING_LOD_MOD
+		  mat4 projectionMatrix = depthCheck ? LOD_PROJECTION_PREV : gbufferPreviousProjection;
    		return projMAD(projectionMatrix, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 	#else
     	return projMAD(gbufferPreviousProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
@@ -289,7 +289,7 @@ vec4 bilateralUpsample(vec2 fragcoord, sampler2D colortex, out float outerEdgeRe
 
   for(int i = 0; i < 5; i++) {
 
-		#ifdef DISTANT_HORIZONS
+		#ifdef USING_LOD_MOD
 		  float offsetDepth = sqrt(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE,0).a/65000.0);
     #else
       float offsetDepth = linearize(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE, 0).r);
@@ -461,7 +461,7 @@ void main() {
 	float swappedDepth = z;
 
 	#ifdef USING_LOD_MOD
-    float DH_depth0 = texture2D(LOD_DEPTHBUFFER_OPAQUE,texcoord).x;
+    float DH_depth0 = texture2D(LOD_DEPTHTEX0,texcoord).x;
 		float depthOpaque = z;
 		float depthOpaqueL = linearizeDepthFast(depthOpaque, near, farPlane);
 		
@@ -523,7 +523,7 @@ void main() {
 	bool isEntity = abs(translucentMasks - 0.9) < 0.01 || isReflectiveEntity;
 
   ////// --------------- get volumetrics
-  #ifdef DISTANT_HORIZONS
+  #ifdef USING_LOD_MOD
 	  float DH_mixedLinearZ = sqrt(texelFetch2D(colortex12,ivec2(gl_FragCoord.xy),0).a/65000.0);
     vec4 temporallyFilteredVL = VLTemporalFiltering(viewPos, DH_mixedLinearZ, colortex12, hand);
   #else
@@ -547,7 +547,7 @@ void main() {
 
   ////// --------------- get volumetrics
   float blank = 0.0;
-  #ifdef DISTANT_HORIZONS
+  #ifdef USING_LOD_MOD
     vec4 VLBehindTranslucents = bilateralUpsample(refractedCoord/texelSize, colortex13, blank, DH_mixedLinearZ, depthtex1, hand);
   #else
     vec4 VLBehindTranslucents = bilateralUpsample(refractedCoord/texelSize, colortex13, blank, linearize(texelFetch2D(depthtex1, ivec2(refractedCoord/texelSize),0).x), depthtex1, hand);

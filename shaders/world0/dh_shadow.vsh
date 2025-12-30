@@ -10,8 +10,8 @@ Read the terms of modification and sharing before changing something below pleas
 
 #include "/lib/macro_lod_mod.glsl"
 #ifdef USING_LOD_MOD
-	uniform sampler2D LOD_DEPTHBUFFER_OPAQUE;
-	uniform sampler2D LOD_DEPTHBUFFER_TRANSLUCENT;
+	uniform sampler2D LOD_DEPTHTEX0;
+	uniform sampler2D LOD_DEPTHTEX1;
 #endif
 
 #define SHADOW_MAP_BIAS 0.5

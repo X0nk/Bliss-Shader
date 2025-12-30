@@ -1,7 +1,7 @@
 #include "/lib/settings.glsl"
 
-uniform sampler2D depthtex0;
-uniform sampler2D dhDepthTex;
+#include "/lib/macro_lod_mod.glsl"
+
 uniform sampler2D colortex1;
 uniform sampler2D colortex2;
 uniform vec2 texelSize;
@@ -34,8 +34,8 @@ void main() {
 	if(
 		texelFetch2D(depthtex0, ivec2(gl_FragCoord.xy), 0).x < 1.0 
 		
-		#ifdef DISTANT_HORIZONS
-			|| texelFetch2D(dhDepthTex, ivec2(gl_FragCoord.xy), 0).x < 1.0
+		#ifdef USING_LOD_MOD
+			|| texelFetch2D(LOD_DEPTHTEX0, ivec2(gl_FragCoord.xy), 0).x < 1.0
 		#endif
 
 	) {

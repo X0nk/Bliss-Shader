@@ -48,7 +48,7 @@ void main() {
 	if(hand) convertHandDepth(newTex);
 
 	#ifdef USING_LOD_MOD
-    	float QuarterResDepth = texelFetch2D(LOD_DEPTHBUFFER_OPAQUE, ivec2(gl_FragCoord.xy*4), 0).x;
+    	float QuarterResDepth = texelFetch2D(LOD_DEPTHTEX0, ivec2(gl_FragCoord.xy*4), 0).x;
 		QuarterResDepth = DH_linZ(QuarterResDepth);
    		gl_FragData[1].a = QuarterResDepth*QuarterResDepth*65000.0;
 	#endif

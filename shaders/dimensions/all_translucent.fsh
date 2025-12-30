@@ -485,7 +485,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#if defined PHYSICSMOD_OCEAN_SHADER && defined PHYSICS_OCEAN
 		WavePixelData wave = physics_wavePixel(physics_localPosition.xz, physics_localWaviness, physics_iterationsNormal, physics_gameTime);
 		
-		#if defined DISTANT_HORIZONS
+		#ifdef USING_LOD_MOD
 			float PHYSICS_OCEAN_TRANSITION = 1.0-pow(1.0-pow(1.0-clamp(1.0-length(feetPlayerPos.xz)/max(far,0.0),0,1),5),5);
 		#else
 			float PHYSICS_OCEAN_TRANSITION = 0.0;
