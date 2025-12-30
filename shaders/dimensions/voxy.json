@@ -16,8 +16,7 @@
     "samplers": [
         "noisetex",
         "colortex4",
-        "colortex5",
-        "colortex16"
+        "colortex5"
     ],
     "uniforms": [
         "vxRenderDistance",

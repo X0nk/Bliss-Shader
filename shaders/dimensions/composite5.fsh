@@ -320,7 +320,7 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	//use velocity from the nearest texel from camera in a 3x3 box in order to improve edge quality in motion	
 	#ifdef USING_LOD_MOD
 		bool depthCheck = texture2D(depthtex0,adjTC).x >= 1.0;
-		vec3 closestToCamera = closestToCamera5taps_DH(adjTC, depthtex0, LOD_DEPTHBUFFER_TRANSLUCENT, depthCheck);
+		vec3 closestToCamera = closestToCamera5taps_DH(adjTC, depthtex0, LOD_DEPTHBUFFER_OPAQUE, depthCheck);
 		vec3 viewPos = toScreenSpace_DH_special(closestToCamera, depthCheck);
 	#else
 		vec3 closestToCamera = closestToCamera5taps(adjTC, depthtex0);

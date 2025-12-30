@@ -367,7 +367,7 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 		#ifdef USING_LOD_MOD
 			float sampleDepth = 0.0;
 			if(depthCheck){
-				sampleDepth = texelFetch2D(LOD_DEPTHBUFFER_OPAQUE, ivec2(newPos.xy/texelSize),0).x;
+				sampleDepth = texelFetch2D(LOD_DEPTHBUFFER_TRANSLUCENT, ivec2(newPos.xy/texelSize),0).x;
 			}else{
 				sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, ivec2(newPos.xy/texelSize),0).x,hand);
 			}
@@ -772,8 +772,8 @@ void main() {
 
 		#ifdef USING_LOD_MOD
 			float DH_mixedLinearZ = sqrt(texture2D(colortex12,texcoord).a/65000.0);
-			float DH_depth0 = texture2D(LOD_DEPTHBUFFER_TRANSLUCENT,texcoord).x;
-			float DH_depth1 = texture2D(LOD_DEPTHBUFFER_OPAQUE,texcoord).x;
+			float DH_depth0 = texture2D(LOD_DEPTHBUFFER_OPAQUE,texcoord).x;
+			float DH_depth1 = texture2D(LOD_DEPTHBUFFER_TRANSLUCENT ,texcoord).x;
 
 			float depthOpaque = z;
 			float depthOpaqueL = linearizeDepthFast(depthOpaque, near, farPlane);

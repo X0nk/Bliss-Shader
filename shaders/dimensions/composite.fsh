@@ -262,7 +262,7 @@ float convertHandDepth_2(in float depth, bool hand) {
 }
 
 vec2 SSAO(
-	vec3 viewPos, vec3 normal, vec3 flatnormal, bool hand, float noise
+	vec3 viewPos, vec3 normal, vec3 flatnormal, bool hand, float noise, bool isLOD
 ){
 	int samples = 7;
 	
@@ -294,8 +294,14 @@ vec2 SSAO(
 			
 
 			#ifdef USING_LOD_MOD
-				float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, offsetUV, 0).x, hand);
-				float sampleDHDepth = texelFetch2D(LOD_DEPTHBUFFER_OPAQUE, offsetUV, 0).x;
+				float sampleDHDepth = 1.0;
+				float sampleDepth = 1.0;
+				if(isLOD){
+					sampleDHDepth = texelFetch2D(LOD_DEPTHBUFFER_TRANSLUCENT, offsetUV, 0).x;
+				}else{
+					sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, offsetUV, 0).x, hand);
+				}
+
 				vec3 offsetViewPos = toScreenSpace_DH((offsetUV*texelSize - jitterOffsets) * (1.0/RENDER_SCALE), sampleDepth, sampleDHDepth);
 			#else
 				float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, offsetUV, 0).x, hand);
@@ -420,7 +426,7 @@ void main() {
 	#if indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ
 		if(z >= 1.0) FlatNormals = normal;
 
-		vec2 SSAO_SSS = SSAO(viewPos, worldToView(normal), worldToView(FlatNormals), hand, noise);
+		vec2 SSAO_SSS = SSAO(viewPos, worldToView(normal), worldToView(FlatNormals), hand, noise, z >= 1.0);
 		
 		SSAO_SSS.y = clamp(SSAO_SSS.y + 0.5 * lightmap.y*lightmap.y,0.0,1.0);
 
