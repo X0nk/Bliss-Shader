@@ -407,12 +407,12 @@ void main() {
 	    float _far = far*4.0;
 	    if (depth >= 1.0) {
 	        depth = DH_depth1;
-	        _near = dhNearPlane;
-	        _far = dhFarPlane;
+	        _near = LOD_NEARPLANE;
+	        _far = LOD_FARPLANE;
 	    }
 
 	    depth = linearizeDepthFast(depth, _near, _far);
-	    depth = depth / dhFarPlane;
+	    depth = depth / LOD_FARPLANE;
 
 		if(depth < 1.0){
    			gl_FragData[2] = vec4(vec3(0.0), depth * depth * 65000.0);
