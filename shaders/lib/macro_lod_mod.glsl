@@ -14,8 +14,8 @@
 #endif
 
 #ifdef VOXY
-    #define LOD_DEPTHBUFFER_OPAQUE vxDepthTexOpaque
-    #define LOD_DEPTHBUFFER_TRANSLUCENT vxDepthTexTrans
+    #define LOD_DEPTHBUFFER_OPAQUE vxDepthTexTrans
+    #define LOD_DEPTHBUFFER_TRANSLUCENT vxDepthTexOpaque
     #define LOD_PROJECTION vxProj
     #define LOD_PROJECTION_INVERSE vxProjInv
     #define LOD_PROJECTION_PREV vxProjPrev

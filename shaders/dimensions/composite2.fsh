@@ -599,8 +599,8 @@ void main() {
 	float z1 = texelFetch2D(depthtex1, texcoord_cast,0).x;
 
 	#ifdef USING_LOD_MOD
-		float DH_z0 = texelFetch2D(LOD_DEPTHBUFFER_TRANSLUCENT, texcoord_cast,0).x;
-		float DH_z1 = texelFetch2D(LOD_DEPTHBUFFER_OPAQUE, texcoord_cast,0).x;
+		float DH_z0 = texelFetch2D(LOD_DEPTHBUFFER_OPAQUE, texcoord_cast,0).x;
+		float DH_z1 = texelFetch2D(LOD_DEPTHBUFFER_TRANSLUCENT, texcoord_cast,0).x;
 	#else
 		float DH_z0 = 0.0;
 		float DH_z1 = 0.0;
