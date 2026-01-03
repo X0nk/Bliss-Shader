@@ -205,6 +205,22 @@ vec3 blackbody(float Temp)
     return srgbToLinear(WB_temp);
 }
 
+// https://www.shadertoy.com/view/4djSRW
+vec3 hash32(vec2 p)
+{
+	vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yxz+33.33);
+    return fract((p3.xxy+p3.yzz)*p3.zyx);
+}
+
+void applyNoiseFilter(inout vec3 color){
+
+	vec3 filmgrain = hash32(gl_FragCoord.xy + (frameCounter%60) * 100) - 0.5; // 3 component
+	// vec3 filmgrain = hash12(gl_FragCoord.xy+frameCounter%16 * 100)-0.5 + vec3(0.0); // single component
+    
+	color += color * filmgrain * (float(FILM_GRAIN_AMOUNT)/50.0);
+}
+
 void main() {
   /* RENDERTARGETS:7 */
 	float vignette = (1.5-dot(texcoord-0.5,texcoord-0.5)*2.);
@@ -310,6 +326,10 @@ void main() {
 	
 	#if WHITE_BALANCE != 6500
 		col *= blackbody(WHITE_BALANCE);
+	#endif
+
+	#if FILM_GRAIN_AMOUNT > 0
+    	applyNoiseFilter(col);
 	#endif
 
 	#ifndef USE_ACES_COLORSPACE_APPROXIMATION

@@ -46,12 +46,12 @@ screen.Waving_Stuff = Waving Stuff
 
 screen.Direct_Light = Direct Light
     screen.Shadows = Shadows
-        option.TRANSLUCENT_COLORED_SHADOWS = Colored Shadows
+        option.TRANSLUCENT_COLORED_SHADOWS = Translucent Colored Shadows
         option.SCREENSPACE_CONTACT_SHADOWS = Screen-space Shadows
         option.RENDER_ENTITY_SHADOWS = Shadows for Entities
         option.RENDER_PLAYER_SHADOWS = Shadows for the Player
-        option.shadowMapResolution = Shadow Resolution
-        option.shadowDistance = Shadow Distance
+        option.shadowMapResolution = ShadowMap Resolution
+        option.shadowDistance = ShadowMap Distance
             value.shadowDistance.32.0 = 2 Chunks
             value.shadowDistance.48.0 = 3 Chunks
             value.shadowDistance.64.0 = 4 Chunks
@@ -608,6 +608,10 @@ screen.Post_Processing = Post Processing
     option.VIGNETTE_AMOUNT = Vignette Amount
         suffix.VIGNETTE_AMOUNT =%
         value.VIGNETTE_AMOUNT.0 = OFF
+    option.FILM_GRAIN_AMOUNT =  Film Grain Amount
+        suffix.FILM_GRAIN_AMOUNT =%
+        value.FILM_GRAIN_AMOUNT.0 = OFF
+
     screen.FLASHLIGHT_SETTING = Flashlight Settings
 
     screen.GAMEPLAY_EFFECTS = Gameplay Screen Effects
@@ -988,6 +992,7 @@ option.MOTION_BLUR_AMOUNT.comment = §bWhat is this?§r This effect makes the en
 option.CHROMATIC_ABERRATION_AMOUNT.comment = §bWhat is this?§r This effect makes the edges of the screen have a color shift of red and blue. §aPERFORMANCE COST:§r very very low
 option.VIGNETTE_AMOUNT.comment = §bWhat is this?§r This effect makes the edges of the screen increasingly dark the closer to the edges it gets. §aPERFORMANCE COST:§r very very low
 option.TONEMAP.comment = §bWhat is this?§r This fits the internal HDR or whatever range of color the shader is doing, to look nice on your SDR monitor. it will control general color processing - the contrast, saturation, white point, black point, hue shift, path to white, ect - each one has a different look
+option.FILM_GRAIN_AMOUNT.comment = §bWhat is this?§r This adds a "graininess" or "static" to the screen. §aPERFORMANCE COST:§r very very low
 
 option.DOF_QUALITY.comment= §bWhat is this?§r This is the "un-focus" blur in the background and foreground when a camera focuses its lense on something, sometimes referred to as "bokeh". §aPERFORMANCE COST:§r low to high
 option.MANUAL_FOCUS.comment= §bWhat is this?§r control how the camera lense focuses. "Auto-Focus" will focus on what you look at. "brightness Slider" lets you manually focus using the brightness setting in video settings. "Manual Focus" only focuses on a fixed point some distance away from the camera in meters.
