@@ -265,6 +265,8 @@
 		#ifdef FORWARD_ROUGH_REFLECTION
 		#endif
 	#endif
+
+	// #define SSR_SELF_REFLECT_FIX
 #endif
 
 #if defined SUB_SURFACE_SCATTERING_RELATED_SETTINGS
