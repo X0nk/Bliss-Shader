@@ -337,14 +337,16 @@ vec4 VLTemporalFiltering(vec3 viewPos, in float referenceDepth, sampler2D depth,
 
   if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0) return currentFrame;
   
-	vec4 col1 = texture2D(colortex0, VLtexCoord + vec2( texelSize.x,  texelSize.y));
-	vec4 col2 = texture2D(colortex0, VLtexCoord + vec2( texelSize.x, -texelSize.y));
-	vec4 col3 = texture2D(colortex0, VLtexCoord + vec2(-texelSize.x, -texelSize.y));
-	vec4 col4 = texture2D(colortex0, VLtexCoord + vec2(-texelSize.x,  texelSize.y));
-	vec4 col5 = texture2D(colortex0, VLtexCoord + vec2( 0.0,			    texelSize.y));
-	vec4 col6 = texture2D(colortex0, VLtexCoord + vec2( 0.0,			   -texelSize.y));
-	vec4 col7 = texture2D(colortex0, VLtexCoord + vec2(-texelSize.x,  		    0.0));
-	vec4 col8 = texture2D(colortex0, VLtexCoord + vec2( texelSize.x,  		    0.0));
+	float clampRadius = mix(2.0, 1.0, clamp(length(velocity/texelSize),0.0,1.0)	);
+
+	vec4 col1 = texture2D(colortex0, VLtexCoord + vec2( texelSize.x,  texelSize.y)*clampRadius);
+	vec4 col2 = texture2D(colortex0, VLtexCoord + vec2( texelSize.x, -texelSize.y)*clampRadius);
+	vec4 col3 = texture2D(colortex0, VLtexCoord + vec2(-texelSize.x, -texelSize.y)*clampRadius);
+	vec4 col4 = texture2D(colortex0, VLtexCoord + vec2(-texelSize.x,  texelSize.y)*clampRadius);
+	vec4 col5 = texture2D(colortex0, VLtexCoord + vec2( 0.0,			    texelSize.y)*clampRadius);
+	vec4 col6 = texture2D(colortex0, VLtexCoord + vec2( 0.0,			   -texelSize.y)*clampRadius);
+	vec4 col7 = texture2D(colortex0, VLtexCoord + vec2(-texelSize.x,  		    0.0)*clampRadius);
+	vec4 col8 = texture2D(colortex0, VLtexCoord + vec2( texelSize.x,  		    0.0)*clampRadius);
 
 	vec4 colMax = max(currentFrame,max(col1,max(col2,max(col3, max(col4, max(col5, max(col6, max(col7, col8))))))));
 	vec4 colMin = min(currentFrame,min(col1,min(col2,min(col3, min(col4, min(col5, min(col6, min(col7, col8))))))));
