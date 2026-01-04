@@ -199,9 +199,9 @@ vec3 doRefractionEffect( inout vec2 passTexcoord, vec2 normal, float linearDista
 
   vec3 color = vec3(0.0);
 
-  float refractAmount = float(FAKE_REFRACTION_AMOUNT)/4.0;
-  float dispersionAmount = float(FAKE_DISPERSION_AMOUNT)/4.0;
-  float smudgeAmount = float(REFRACTION_SMUDGE_AMOUNT)/4.0;
+  float refractAmount = float(FAKE_REFRACTION_AMOUNT)/50.0;
+  float dispersionAmount = float(FAKE_DISPERSION_AMOUNT)/50.0;
+  float smudgeAmount = float(REFRACTION_SMUDGE_AMOUNT)/50.0;
 
   refractAmount *= 0.5 / (1.0 + pow(linearDistance,0.8) * (underwater ? 0.1 : 1.0));
   if(isReflectiveEntity) refractAmount *= 0.5;

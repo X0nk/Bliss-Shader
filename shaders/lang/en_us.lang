@@ -500,36 +500,15 @@ screen.World = World
 
         option.FAKE_REFRACTION_AMOUNT = Refraction amount
         value.FAKE_REFRACTION_AMOUNT.0 = OFF
-           value.FAKE_REFRACTION_AMOUNT.1 = 0.25x
-           value.FAKE_REFRACTION_AMOUNT.2 = 0.50x
-           value.FAKE_REFRACTION_AMOUNT.3 = 0.75x
-           value.FAKE_REFRACTION_AMOUNT.4 = 1.00x
-           value.FAKE_REFRACTION_AMOUNT.5 = 1.25x
-           value.FAKE_REFRACTION_AMOUNT.6 = 1.50x
-           value.FAKE_REFRACTION_AMOUNT.7 = 1.75x
-           value.FAKE_REFRACTION_AMOUNT.8 = 2.00x
+        suffix.FAKE_REFRACTION_AMOUNT =%
 
         option.FAKE_DISPERSION_AMOUNT = Dispersion amount
         value.FAKE_DISPERSION_AMOUNT.0 = OFF
-           value.FAKE_DISPERSION_AMOUNT.1 = 0.25x
-           value.FAKE_DISPERSION_AMOUNT.2 = 0.50x
-           value.FAKE_DISPERSION_AMOUNT.3 = 0.75x
-           value.FAKE_DISPERSION_AMOUNT.4 = 1.00x
-           value.FAKE_DISPERSION_AMOUNT.5 = 1.25x
-           value.FAKE_DISPERSION_AMOUNT.6 = 1.50x
-           value.FAKE_DISPERSION_AMOUNT.7 = 1.75x
-           value.FAKE_DISPERSION_AMOUNT.8 = 2.00x
+        suffix.FAKE_DISPERSION_AMOUNT =%
 
         option.REFRACTION_SMUDGE_AMOUNT = Smudge amount
         value.REFRACTION_SMUDGE_AMOUNT.0 = OFF
-           value.REFRACTION_SMUDGE_AMOUNT.1 = 0.25x
-           value.REFRACTION_SMUDGE_AMOUNT.2 = 0.50x
-           value.REFRACTION_SMUDGE_AMOUNT.3 = 0.75x
-           value.REFRACTION_SMUDGE_AMOUNT.4 = 1.00x
-           value.REFRACTION_SMUDGE_AMOUNT.5 = 1.25x
-           value.REFRACTION_SMUDGE_AMOUNT.6 = 1.50x
-           value.REFRACTION_SMUDGE_AMOUNT.7 = 1.75x
-           value.REFRACTION_SMUDGE_AMOUNT.8 = 2.00x
+        suffix.REFRACTION_SMUDGE_AMOUNT =%
 
         screen.Water_fog_color = Water Fog Settings
             option.Dirt_Scatter_R = Scatter Red (dirt)
