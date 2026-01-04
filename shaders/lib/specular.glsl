@@ -143,6 +143,9 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
 
 		if(sp < max(minZ, maxZ) && sp > min(minZ, maxZ)) {
 			hitPos = vec3(spos.xy/RENDER_SCALE, sp);
+			#ifdef TERRIBLE_SSR_LOD_FALLBACK
+				if(sp >= 0.99999) hitPos = reflectedTC;
+			#endif
 			break;
 		}
 		
