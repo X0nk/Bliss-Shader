@@ -339,7 +339,14 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	vec2 velocity = previousPosition.xy - closestToCamera.xy;
 	
 	previousPosition.xy = texcoord + (hand ? vec2(0.0) : velocity);
-	
+
+	// adjust clamping radius when motion is detected to reduce ghosting further without needing to change blend factor
+	#if NEIGHBORHOOD_CLAMP_RADIUS_MULT_DURING_MOVEMENT > 99
+		float clampRadius = mix(1.0, float(NEIGHBORHOOD_CLAMP_RADIUS_MULT_DURING_MOVEMENT)/100.0f, clamp(length(velocity/texelSize),0.0,1.0)	);
+	#else
+		float clampRadius = 1.0;
+	#endif
+
 	// sample current frame, and make sure it is de-jittered
 	#if TAA_MODE == 3
 		vec3 currentFrame = smoothfilter(colortex3, adjTC_noJitter).rgb;
@@ -357,14 +364,14 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	#else
 		//Assuming the history color is a blend of the 3x3 neighborhood, we clamp the history to the min and max of each channel in the 3x3 neighborhood
 		vec3 col0 = currentFrame; // can use this because its the center sample.
-		vec3 col1 = texture2D(colortex3, adjTC_noJitter + vec2( texelSize.x,	 texelSize.y)).rgb;
-		vec3 col2 = texture2D(colortex3, adjTC_noJitter + vec2( texelSize.x,	-texelSize.y)).rgb;
-		vec3 col3 = texture2D(colortex3, adjTC_noJitter + vec2(-texelSize.x,	-texelSize.y)).rgb;
-		vec3 col4 = texture2D(colortex3, adjTC_noJitter + vec2(-texelSize.x,	 texelSize.y)).rgb;
-		vec3 col5 = texture2D(colortex3, adjTC_noJitter + vec2( 0.0,			 texelSize.y)).rgb;
-		vec3 col6 = texture2D(colortex3, adjTC_noJitter + vec2( 0.0,			-texelSize.y)).rgb;
-		vec3 col7 = texture2D(colortex3, adjTC_noJitter + vec2(-texelSize.x,	 		 0.0)).rgb;
-		vec3 col8 = texture2D(colortex3, adjTC_noJitter + vec2( texelSize.x,	 		 0.0)).rgb;
+		vec3 col1 = texture2D(colortex3, adjTC_noJitter + vec2( texelSize.x,	 texelSize.y)*clampRadius).rgb;
+		vec3 col2 = texture2D(colortex3, adjTC_noJitter + vec2( texelSize.x,	-texelSize.y)*clampRadius).rgb;
+		vec3 col3 = texture2D(colortex3, adjTC_noJitter + vec2(-texelSize.x,	-texelSize.y)*clampRadius).rgb;
+		vec3 col4 = texture2D(colortex3, adjTC_noJitter + vec2(-texelSize.x,	 texelSize.y)*clampRadius).rgb;
+		vec3 col5 = texture2D(colortex3, adjTC_noJitter + vec2( 0.0,			 texelSize.y)*clampRadius).rgb;
+		vec3 col6 = texture2D(colortex3, adjTC_noJitter + vec2( 0.0,			-texelSize.y)*clampRadius).rgb;
+		vec3 col7 = texture2D(colortex3, adjTC_noJitter + vec2(-texelSize.x,	 		 0.0)*clampRadius).rgb;
+		vec3 col8 = texture2D(colortex3, adjTC_noJitter + vec2( texelSize.x,	 		 0.0)*clampRadius).rgb;
 
 		vec3 colMax = max(col0,max(col1,max(col2,max(col3, max(col4, max(col5, max(col6, max(col7, col8))))))));
 		vec3 colMin = min(col0,min(col1,min(col2,min(col3, min(col4, min(col5, min(col6, min(col7, col8))))))));
@@ -386,7 +393,7 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	// reduce history usage if the camera moves to reduce artifacts in motion.
 	float cameraMovement = length(velocity/texelSize);
 	blendingFactor = clamp(cameraMovement, blendingFactor, BLEND_FACTOR_DURING_MOVEMENT);
-	if(hand) blendingFactor = clamp(cameraMovement, blendingFactor, 1.0);
+	// if(hand) blendingFactor = clamp(cameraMovement, blendingFactor, 1.0);
 	
 	////// Increases blending factor when far from AABB, reduces ghosting
 	blendingFactor = clamp(blendingFactor + luma(abs(clampedframeHistory - frameHistory)/clampedframeHistory),0.0,1.0);

@@ -549,6 +549,11 @@ screen.Post_Processing = Post Processing
         value.TAA_MODE.3 = Temporal Upscaling
         option.BLEND_FACTOR = Blend Factor
         option.BLEND_FACTOR_DURING_MOVEMENT = Blend Factor During Camera Movment
+        option.NEIGHBORHOOD_CLAMP_RADIUS_MULT_DURING_MOVEMENT = Clamping Radius During Camera Movment
+        value.NEIGHBORHOOD_CLAMP_RADIUS_MULT_DURING_MOVEMENT.100 = OFF
+        suffix.NEIGHBORHOOD_CLAMP_RADIUS_MULT_DURING_MOVEMENT =%
+        option.NEIGHBORHOOD_CLAMP_RADIUS_MULT_DURING_MOVEMENT.comment = lower means less ghosting in motion, but more flickering and noise... this is an alternative to adjusting blending factor
+
         option.SCALE_FACTOR = Scale Factor §a(set TAA mode to "Temporal Upscaling")
             prefix.SCALE_FACTOR = §fUpscale from 
             suffix.SCALE_FACTOR = x §fof the window resolution
