@@ -851,3 +851,6 @@
 #endif
 #ifdef VOXY_SCREENSPACE_REFLECTIONS
 #endif
+#ifdef LABEL_0
+#define LABEL_0 0 // [0]
+#endif

@@ -702,6 +702,7 @@ void applyPuddles(
 		puddles = clamp(halfWet - exp(-25.0 * puddles*puddles*puddles*puddles*puddles),0.0,1.0);
 		
 		float wetnessStages = max(puddles, fullWet) * lightmap;
+		float wetnessDarkening = max(puddles, fullWet*0.5) * lightmap;
 	#endif
 
 	#if PUDDLE_MODE == 2
@@ -709,11 +710,13 @@ void applyPuddles(
 		puddles = clamp(halfWet - exp(-25.0 * puddles*puddles*puddles*puddles*puddles),0.0,1.0);
 	
 		float wetnessStages = puddles * lightmap;
+		float wetnessDarkening = wetnessStages;
 	#endif
 
 	#if PUDDLE_MODE == 3
 		float puddles = 0.0;
 		float wetnessStages = fullWet * lightmap;
+		float wetnessDarkening = wetnessStages*0.5;
 	#endif
 
 	if(isWater) wetnessStages = 0.0;
@@ -721,7 +724,7 @@ void applyPuddles(
 	normals = mix(normals, flatNormals, puddles * lightmap * clamp(flatNormals.y,0.0,1.0));
 	roughness = mix(roughness, 1.0, wetnessStages);
 
-	if(f0 < 229.5/255.0 ) albedo = pow(albedo * (1.0 - 0.08*wetnessStages), vec3(1.0 + 0.7*wetnessStages));
+	if(f0 < 229.5/255.0 ) albedo = pow(albedo * (1.0 - 0.08*wetnessDarkening), vec3(1.0 + 0.7*wetnessDarkening));
 
 	//////////////// snow
 	

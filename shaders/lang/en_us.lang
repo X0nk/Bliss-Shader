@@ -655,6 +655,8 @@ screen.POM = Parallax Occlusion Mapping / POM
     option.Adaptive_Step_length = Dynamic Quality
     option.Horrible_slope_normals = Horrible Slope Normals
 
+option.LABEL_0 = §a"Reflections on terrain" must be enabled for wetness to work
+value.LABEL_0.0 = §f?§r
 screen.WETNESS = Wetness / Puddles / Porosity
     option.PUDDLE_MODE = Wetness During Rain
         value.PUDDLE_MODE.0 = No Wetness
