@@ -341,7 +341,7 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	previousPosition.xy = texcoord + (hand ? vec2(0.0) : velocity);
 
 	// adjust clamping radius when motion is detected to reduce ghosting further without needing to change blend factor
-	#if NEIGHBORHOOD_CLAMP_RADIUS_MULT_DURING_MOVEMENT > 99
+	#if NEIGHBORHOOD_CLAMP_RADIUS_MULT_DURING_MOVEMENT < 100
 		float clampRadius = mix(1.0, float(NEIGHBORHOOD_CLAMP_RADIUS_MULT_DURING_MOVEMENT)/100.0f, clamp(length(velocity/texelSize),0.0,1.0)	);
 	#else
 		float clampRadius = 1.0;
