@@ -282,6 +282,10 @@ vec4 GetVolumetricFog(
 		rayProgress = gbufferModelViewInverse[3].xyz + cameraPosition + d*rayStartPos;
 		localRayProgress = gbufferModelViewInverse[3].xyz + cameraPosition + d*localRayStartPos;
 		
+		#ifdef FAKE_PLANET
+			LightColor = getPlanetAbsorb(rayProgress, WsunVec, colortex4);
+		#endif
+
 		vec3 shadows = getShadows(mix(rayProgress, localRayProgress, localFogExists), sunVector, d, start, shadowMapRayStartPos, shadowMapRayProgress, flatPhase, sunPhase);
 		
 		#if defined LIGHTNING_FLASH && defined LIGHTNINGFLASH_VL

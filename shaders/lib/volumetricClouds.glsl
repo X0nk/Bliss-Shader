@@ -20,6 +20,20 @@ float densityAtPos(in vec3 pos){
 	return mix(xy.r,xy.g, f.y);
 }
 
+vec3 getPlanetAbsorb(in vec3 worldPos, in vec3 sunVector, sampler2D colortex){
+	
+	float position = clamp((worldPos.y - (FAKE_PLANET_START_HEIGHT + 1.0/abs(sunVector.y*0.1)))*256.0 / FAKE_PLANET_GRADIENT_LENGTH,0.0,257.0);
+	// float position = clamp((worldPos.y + 60.0)*256.0 / 1500.0,0.0,257.0);
+
+	vec3 skyAbsorb = texture2D(colortex, vec2(16.5, position)*texelSize).rgb / 2400.0;
+	
+	#ifdef ReflectedFog
+		return skyAbsorb*2400.0/150.0 * 2.5;
+	#else
+		return skyAbsorb;
+	#endif
+}
+
 float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, float maxHeight){
 
 	vec3 samplePos = position*vec3(0.25, 0.005, 0.25);
@@ -118,6 +132,10 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 }
 
 float getPlanetShadow(vec3 playerPos, vec3 WsunVec){
+	#ifdef FAKE_PLANET
+		return 1.0;
+	#endif
+
 	float planetShadow = min(max(playerPos.y - (-100.0 + 1.0 / abs(WsunVec.y*0.1)),0.0) / 100.0, 1.0);
 
 	planetShadow = mix(pow(1.0-pow(1.0-planetShadow,2.0),2.0), 1.0, pow(abs(WsunVec.y),2.0));
@@ -267,6 +285,10 @@ vec4 raymarchCloud(
 	float totalAbsorbance = 1.0;
 	float planetShadow = getPlanetShadow(rayPosition, sunVector);
 	sunScattering *= planetShadow;
+
+	#ifdef FAKE_PLANET
+		sunScattering = getPlanetAbsorb(rayPosition, WsunVec, colortex4);
+	#endif
 
 	float distanceFactor = length(rayDirection);
 

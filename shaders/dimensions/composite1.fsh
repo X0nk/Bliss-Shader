@@ -929,6 +929,9 @@ void main() {
 			DirectLightColor = lightCol.rgb / 2400.0;
 			AmbientLightColor = averageSkyCol_Clouds / 900.0;
 			
+			#ifdef FAKE_PLANET
+				DirectLightColor = getPlanetAbsorb(feetPlayerPos + cameraPosition, WsunVec, colortex4);
+			#endif
 			#ifdef USE_CUSTOM_DIFFUSE_LIGHTING_COLORS
 				DirectLightColor.rgb = luma(DirectLightColor.rgb) * vec3(DIRECTLIGHT_DIFFUSE_R,DIRECTLIGHT_DIFFUSE_G,DIRECTLIGHT_DIFFUSE_B);
 				AmbientLightColor = luma(AmbientLightColor) * vec3(INDIRECTLIGHT_DIFFUSE_R,INDIRECTLIGHT_DIFFUSE_G,INDIRECTLIGHT_DIFFUSE_B);

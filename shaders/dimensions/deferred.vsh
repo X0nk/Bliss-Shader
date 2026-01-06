@@ -20,6 +20,7 @@ flat varying vec3 averageSkyCol_Clouds;
 flat varying vec3 averageSkyCol;
 
 flat varying vec3 sunColor;
+flat varying vec3 sunColor2;
 flat varying vec3 moonColor;
 flat varying vec3 lightSourceColor;
 flat varying vec3 zenithColor;
@@ -163,6 +164,7 @@ void main() {
 	vec3 skyAbsorb = vec3(0.0);
 	sunColor = calculateAtmosphere(vec3(0.0), sunVec, vec3(0.0,1.0,0.0), sunVec, -sunVec, planetSphere, skyAbsorb, 25,0.0);
 	sunColor = sunColorBase/4000.0 * skyAbsorb;
+	sunColor2 = sunColorBase/4000.0;
 	moonColor = moonColorBase/4000.0;
 
 	// lightSourceColor = sunVis >= 1e-5 ? sunColor * sunVis : moonColor * moonVis;

@@ -23,6 +23,7 @@ flat varying vec3 averageSkyCol_Clouds;
 flat varying vec3 averageSkyCol;
 flat varying vec3 lightSourceColor;
 flat varying vec3 sunColor;
+flat varying vec3 sunColor2;
 flat varying vec3 moonColor;
 flat varying float exposure;
 flat varying float avgBrightness;
@@ -346,6 +347,27 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 
 	if(worldTimeChangeCheck) mixhistory = 1.0;
 }
+
+#ifdef FAKE_PLANET
+	vec2 pixelPos2 = vec2(16,1);
+	if (gl_FragCoord.x > pixelPos2.x && gl_FragCoord.x < pixelPos2.x + 1 && gl_FragCoord.y > pixelPos2.y){
+		if(worldTimeChangeCheck) mixhistory = 1.0;
+
+		vec3 pos = vec3(0.0);
+		pos.y = clamp(gl_FragCoord.y/256.0,0.0,1.0);
+
+		// approximate how much atmosphere the sun is travelling through and scale abso
+		pos.y = pos.y / (1.0/abs(WsunVec.y))*5.0;
+
+		vec2 variable = vec2(0);
+		vec3 absorb = vec3(0.0);
+		vec3 transmittance = calculateAtmosphere(vec3(0.0), pos, vec3(0.0,1.0,0.0), pos, vec3(0.0), variable, absorb, 25, 0.0);
+		transmittance = min(sunColor2 * absorb, sunColor2);
+
+		gl_FragData[0] = vec4(transmittance, 1.0);
+	}
+#endif
+
 #endif
 
 #if defined NETHER_SHADER || defined END_SHADER
