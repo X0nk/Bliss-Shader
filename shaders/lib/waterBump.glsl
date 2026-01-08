@@ -15,13 +15,13 @@ float waterCaustics(vec3 worldPos, vec3 sunVec, float surfacePos) {
 		vec2(32.,32.)
 	);
 
-	float largeWaves = texture2D(noisetex, pos / 600.0 ).b;
+	float largeWaves = texture(noisetex, pos / 600.0 ).b;
 	float largeWavesCurved = pow(1.0-pow(1.0-largeWaves,2.5),4.5);
 
 	float heightSum = 0.0;
 	for (int i = 0; i < 3; i++){
 		pos = rotationMatrix * pos;
-		heightSum += pow(abs(abs(texture2D(noisetex, pos / wave_size[i] + largeWavesCurved * 0.5 + movement).b * 2.0 - 1.0) * 2.0 - 1.0), 1.0+largeWavesCurved) ;
+		heightSum += pow(abs(abs(texture(noisetex, pos / wave_size[i] + largeWavesCurved * 0.5 + movement).b * 2.0 - 1.0) * 2.0 - 1.0), 1.0+largeWavesCurved) ;
 	}
 
 	return exp((1.0 + 5.0 * sqrt(largeWavesCurved)) * (heightSum / 3.0 - 0.5));
@@ -47,7 +47,7 @@ float getWaterHeightmap(vec2 posxz, in float largeWaves, in float largeWavesCurv
 	for (int i = 0; i < 3; i++){
 
 		pos = rotationMatrix * pos;
-		heightSum += texture2D(noisetex, pos / wave_size[i] + largeWavesCurved * 0.5 + movement).b;
+		heightSum += texture(noisetex, pos / wave_size[i] + largeWavesCurved * 0.5 + movement).b;
 	}
 
 	return (heightSum/4.5) * max(largeWavesCurved,0.3);
@@ -55,7 +55,7 @@ float getWaterHeightmap(vec2 posxz, in float largeWaves, in float largeWavesCurv
 
 vec3 getWaveNormal(vec3 waterPos, vec3 playerpos, bool isLOD){
 	
-	float largeWaves = texture2D(noisetex, waterPos.xy / 600.0 ).b;
+	float largeWaves = texture(noisetex, waterPos.xy / 600.0 ).b;
 	float largeWavesCurved = pow(1.0-pow(1.0-largeWaves,2.5),4.5);
 	
 	#ifdef HYPER_DETAILED_WAVES
