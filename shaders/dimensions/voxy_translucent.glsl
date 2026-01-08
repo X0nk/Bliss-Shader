@@ -91,7 +91,7 @@ vec4 skyCloudsFromTex(vec3 pos,sampler2D sampler){
 	vec2 p = sphereToCarte(pos);
 	vec2 uv = clamp(p, 0.0, 1.0) * texelSize*256. + vec2(18.5+257.,1.5)*texelSize;
 
-	return texture2D(sampler, uv);
+	return texture(sampler, uv);
 }
 
 vec4 volumetricsFromTex(vec3 pos,sampler2D sampler){
@@ -99,7 +99,7 @@ vec4 volumetricsFromTex(vec3 pos,sampler2D sampler){
 	p = clamp(p, 0.0, 1.0);
 	vec2 uv = p*texelSize*256. + vec2(256.0 - 256.0*0.12,1.5)*texelSize;
 
-	return texture2D(sampler, uv);
+	return texture(sampler, uv);
 }
 
 float GGX(vec3 n, vec3 v, vec3 l, float r, float f0) {
@@ -150,7 +150,7 @@ vec3 doScreenSpaceReflection(vec3 dir, vec3 position, float dither, float qualit
 		if(spos.x < 0 || spos.x > 1 || spos.y < 0 || spos.y > 1) return vec3(1.1);
 
 		// float sampleDepth = sqrt(texelFetch(colortex16,ivec2(spos.xy/texelSize/4),0).x/65000.0);
-		float sampleDepth = DH_ld(texture2D(vxDepthTexOpaque, spos.xy).x);
+		float sampleDepth = DH_ld(texture(vxDepthTexOpaque, spos.xy).x);
 		float sp = DH_inv_ld(sampleDepth);
 		
 		if(sp < max(minZ, maxZ) && sp > min(minZ, maxZ)) return vec3(spos.xy/RENDER_SCALE,sp);
