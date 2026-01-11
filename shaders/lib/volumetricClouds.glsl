@@ -15,7 +15,7 @@ float densityAtPos(in vec3 pos){
 	vec2 coord =  uv / 512.0;
 	
 	//The y channel has an offset to avoid using two textures fetches
-	vec2 xy = texture2D(noisetex, coord).yx;
+	vec2 xy = texture(noisetex, coord).yx;
 
 	return mix(xy.r,xy.g, f.y);
 }
@@ -25,7 +25,7 @@ vec3 getPlanetAbsorb(in vec3 worldPos, in vec3 sunVector, sampler2D colortex){
 	float position = clamp((worldPos.y - (FAKE_PLANET_START_HEIGHT + 1.0/abs(sunVector.y*0.1)))*256.0 / FAKE_PLANET_GRADIENT_LENGTH,0.0,257.0);
 	// float position = clamp((worldPos.y + 60.0)*256.0 / 1500.0,0.0,257.0);
 
-	vec3 skyAbsorb = texture2D(colortex, vec2(16.5, position)*texelSize).rgb / 2400.0;
+	vec3 skyAbsorb = texture(colortex, vec2(16.5, position)*texelSize).rgb / 2400.0;
 	
 	#ifdef ReflectedFog
 		return skyAbsorb*2400.0/150.0 * 2.5;
@@ -49,8 +49,8 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
         case SMALLCUMULUS_LAYER: {
 			coverage = parameters.smallCumulus.x;
 
-			largeCloud = texture2D(noisetex, (samplePos.xz + cloud_movement)/5000.0 * CloudLayer0_scale).b;
-			smallCloud = 1.0-texture2D(noisetex, (samplePos.xz - cloud_movement)/500.0 * CloudLayer0_scale).r;
+			largeCloud = texture(noisetex, (samplePos.xz + cloud_movement)/5000.0 * CloudLayer0_scale).b;
+			smallCloud = 1.0-texture(noisetex, (samplePos.xz - cloud_movement)/500.0 * CloudLayer0_scale).r;
 			smallCloud = abs(largeCloud-0.6) + smallCloud*smallCloud;
 
 			shape = min(max(coverage - smallCloud,0.0)/(1e-6+sqrt(coverage)),1.0) ;
@@ -59,8 +59,8 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
         case LARGECUMULUS_LAYER: {
 			coverage = parameters.largeCumulus.x;
 
-			largeCloud = texture2D(noisetex, (samplePos.zx + cloud_movement*3.0)/10000.0 * CloudLayer1_scale).b;
-			smallCloud = texture2D(noisetex, (samplePos.zx - cloud_movement*3.0)/2500.0 * CloudLayer1_scale).b;
+			largeCloud = texture(noisetex, (samplePos.zx + cloud_movement*3.0)/10000.0 * CloudLayer1_scale).b;
+			smallCloud = texture(noisetex, (samplePos.zx - cloud_movement*3.0)/2500.0 * CloudLayer1_scale).b;
 			smallCloud = abs(largeCloud* -0.7) + smallCloud;
 
 			shape = min(max(coverage - smallCloud,0.0)/(1e-6+sqrt(coverage)),1.0) ;
@@ -69,8 +69,8 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 	    case ALTOSTRATUS_LAYER: {
 			coverage = parameters.altostratus.x;
 
-			largeCloud = texture2D(noisetex, (position.xz + cloud_movement*20.0)/100000. * CloudLayer2_scale).b;
-			smallCloud = 1.0 - texture2D(noisetex, ((position.xz + vec2(-cloud_movement,cloud_movement)*20.0)/7500. - vec2(1.0-largeCloud, -largeCloud)/5.0) * CloudLayer2_scale).b;
+			largeCloud = texture(noisetex, (position.xz + cloud_movement*20.0)/100000. * CloudLayer2_scale).b;
+			smallCloud = 1.0 - texture(noisetex, ((position.xz + vec2(-cloud_movement,cloud_movement)*20.0)/7500. - vec2(1.0-largeCloud, -largeCloud)/5.0) * CloudLayer2_scale).b;
 			smallCloud = largeCloud + smallCloud * 0.4 * clamp(1.5-largeCloud,0.0,1.0);
 
 			shape = min(max(coverage - smallCloud,0.0) / (1e-6+sqrt(coverage)),1.0);

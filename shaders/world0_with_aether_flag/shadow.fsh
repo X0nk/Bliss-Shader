@@ -15,13 +15,13 @@ uniform sampler2D noisetex;
 //////////////////////////////VOID MAIN//////////////////////////////
 
 float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 );
+  return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 );
 }
 
 
 void main() {
 	
-	vec4 shadowColor = vec4(texture2D(tex,texcoord.xy).rgb * color.rgb,  texture2DLod(tex, texcoord.xy, 0).a);
+	vec4 shadowColor = vec4(texture(tex,texcoord.xy).rgb * color.rgb,  texture2DLod(tex, texcoord.xy, 0).a);
 
 	#ifdef TRANSLUCENT_COLORED_SHADOWS
 		if(shadowColor.a > 0.9999) shadowColor.rgb = vec3(0.0);

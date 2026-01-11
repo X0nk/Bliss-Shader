@@ -181,9 +181,9 @@ float R2_dither(){
 
 float blueNoise(){
 	#if TAA_MODE > 0
-  		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+  		return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 	#else
-		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
+		return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
 	#endif
 }
 
@@ -192,7 +192,7 @@ float blueNoise(){
 varying vec3 viewVector;
 vec3 getParallaxDisplacement(vec3 waterPos, vec3 playerPos) {
 
-	float largeWaves = texture2D(noisetex, waterPos.xy / 600.0 ).b;
+	float largeWaves = texture(noisetex, waterPos.xy / 600.0 ).b;
 	float largeWavesCurved = pow(1.0-pow(1.0-largeWaves,2.5),4.5);
 
 	float waterHeight = getWaterHeightmap(waterPos.xy, largeWaves, largeWavesCurved);
@@ -336,7 +336,7 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 			shadowmap += max(opaqueShadow, shadowDepthDiff);
 
 			// get translucent shadow data
-			vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
+			vec4 translucentShadow = texture(shadowcolor0, projectedShadowPosition.xy);
 
 			// this curve simply looked the nicest. it has no other meaning.
 			float shadowAlpha = pow(1.0 - pow(translucentShadow.a,5.0),0.2);
@@ -443,7 +443,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 /////////////////////////////////// ALBEDO /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-	gl_FragData[0] = texture2D(texture, lmtexcoord.xy, mipmapBias) * color;
+	gl_FragData[0] = texture(texture, lmtexcoord.xy, mipmapBias) * color;
 
 	float UnchangedAlpha = gl_FragData[0].a;
 
@@ -517,7 +517,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 						  tangent.z, tangent2.z, normal.z);
 
 
-	vec3 NormalTex = vec3(texture2D(normals, lmtexcoord.xy, mipmapBias).xy,0.0);
+	vec3 NormalTex = vec3(texture(normals, lmtexcoord.xy, mipmapBias).xy,0.0);
 	NormalTex.xy = NormalTex.xy*2.0-1.0;
 	NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0);
 
@@ -572,7 +572,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 ////////////////////////////////////////////////////////////////////////////////
 
 
-	vec3 SpecularTex = texture2D(specular, lmtexcoord.xy, mipmapBias).rga;
+	vec3 SpecularTex = texture(specular, lmtexcoord.xy, mipmapBias).rga;
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// DIFFUSE LIGHTING //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -665,7 +665,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
         vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds);
 
-		float lightningflash = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
+		float lightningflash = texelFetch(colortex4,ivec2(1,1),0).x/150.0;
 		vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
 		
 		float end_NdotL = clamp(dot(worldSpaceNormal, normalize(-lightPos))*0.5+0.5,0.0,1.0);
@@ -793,11 +793,11 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			float maxOverdrawDistance = OVERDRAW_MAX_DISTANCE;
 		#endif
 
-		bool WATER = texture2D(colortex7, gl_FragCoord.xy*texelSize).a > 0.0 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance) && texture2D(depthtex1, gl_FragCoord.xy*texelSize).x >= 1.0;
-		// bool WATER =  length(feetPlayerPos) > clamp(far-16*4, 17.5, maxOverdrawDistance) && texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x >= 1.0 || texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x < gl_FragCoord.z;
-		// float depth = texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x;
-		// bool WATER = (abs(depth - texelFetch2D(dhDepthTex0, ivec2(gl_FragCoord.xy), 0).x) > 0.23 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance)) || (length(feetPlayerPos) > clamp(far-16*4, 20, maxOverdrawDistance) && depth >= 1.0);// && texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x < 1.0;
-		// bool WATER = texelFetch2D(dhDepthTex0, ivec2(gl_FragCoord.xy),0).x == texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x;
+		bool WATER = texture(colortex7, gl_FragCoord.xy*texelSize).a > 0.0 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance) && texture(depthtex1, gl_FragCoord.xy*texelSize).x >= 1.0;
+		// bool WATER =  length(feetPlayerPos) > clamp(far-16*4, 17.5, maxOverdrawDistance) && texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x >= 1.0 || texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x < gl_FragCoord.z;
+		// float depth = texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x;
+		// bool WATER = (abs(depth - texelFetch(dhDepthTex0, ivec2(gl_FragCoord.xy), 0).x) > 0.23 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance)) || (length(feetPlayerPos) > clamp(far-16*4, 20, maxOverdrawDistance) && depth >= 1.0);// && texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x < 1.0;
+		// bool WATER = texelFetch(dhDepthTex0, ivec2(gl_FragCoord.xy),0).x == texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x;
 
 		if(WATER) {
 			gl_FragData[0].a = 0.0;

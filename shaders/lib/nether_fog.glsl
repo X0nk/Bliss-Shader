@@ -8,7 +8,7 @@ float densityAtPosFog(in vec3 pos){
 	f = (f*f) * (3.-2.*f);
 	vec2 uv =  p.xz + f.xz + p.y * vec2(0.0,193.0);
 	vec2 coord =  uv / 512.0;
-	vec2 xy = texture2D(noisetex, coord).yx;
+	vec2 xy = texture(noisetex, coord).yx;
 	return mix(xy.r,xy.g, f.y);
 }
 
@@ -17,7 +17,7 @@ float cloudVol(in vec3 pos){
 
     float Wind = pow(max(pos.y-30,0.0) / 15.0,2.1);
 
-	float Plumes = texture2D(noisetex, (samplePos.xz + Wind)/256.0).b;
+	float Plumes = texture(noisetex, (samplePos.xz + Wind)/256.0).b;
 	float floorPlumes = clamp(0.3 - exp(Plumes * -6),0,1);
 	Plumes *= Plumes;
 

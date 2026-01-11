@@ -173,7 +173,7 @@ vec3 doScreenSpaceReflectiom(vec3 dir, vec3 position, float dither, float qualit
 
 		if(spos.x < 0 || spos.x > 1 || spos.y < 0 || spos.y > 1) return vec3(1.1);
 
-		float sampleDepth = sqrt(texelFetch2D(colortex12,ivec2(spos.xy/texelSize/4),0).a/65000.0);
+		float sampleDepth = sqrt(texelFetch(colortex12,ivec2(spos.xy/texelSize/4),0).a/65000.0);
 		float sp = DH_inv_ld(sampleDepth);
 		
 		if(sp < max(minZ, maxZ) && sp > min(minZ, maxZ)) return vec3(spos.xy/RENDER_SCALE,sp);
@@ -405,7 +405,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
             	previousPosition.xy = projMAD(dhPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
             	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.y < 1.0) {
 					Reflections.a = 1.0;
-					Reflections.rgb = texture2D(colortex5, previousPosition.xy).rgb;
+					Reflections.rgb = texture(colortex5, previousPosition.xy).rgb;
             	}
             }else{
 				if (rtPos.x > 0.0 && rtPos.y > 0.0 && rtPos.x < 1.0 && rtPos.y < 1.0) SSR_HIT_SKY_MASK = 1.0;
@@ -435,7 +435,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
     #ifdef DH_OVERDRAW_PREVENTION
         float distancefade = min(max(1.0 - length(playerPos)/clamp(far-16*4, 16, maxOverdrawDistance),0.0)*5,1.0);
 
-        if(texture2D(depthtex0, gl_FragCoord.xy*texelSize).x < 1.0 || distancefade > 0.0){
+        if(texture(depthtex0, gl_FragCoord.xy*texelSize).x < 1.0 || distancefade > 0.0){
             gl_FragData[0].a = 0.0;
             material = 0.0;
         }

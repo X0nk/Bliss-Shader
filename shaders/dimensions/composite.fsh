@@ -161,13 +161,13 @@ float R2_dither(){
 }
 float blueNoise(){
 	#if TAA_MODE > 0
-  		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+  		return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 	#else
-		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
+		return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
 	#endif
 }
 vec4 blueNoise(vec2 coord){
-  return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
+  return texelFetch(colortex6, ivec2(coord)%512 , 0) ;
 }
 vec2 R2_samples(int n){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
@@ -261,6 +261,28 @@ float convertHandDepth_2(in float depth, bool hand) {
     return ndcDepth * 0.5 + 0.5;
 }
 
+vec3 toScreenSpace_LOD_TEST( in vec2 texcoord, in float depth) {
+
+	vec4 viewPos = vec4(0.0);
+	vec3 feetPlayerPos = vec3(0.0);
+	vec4 iProjDiag = vec4(0.0);
+
+    if (depth < 1.0) {
+		iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
+    	feetPlayerPos = vec3(texcoord, depth) * 2.0 - 1.0;
+    	viewPos = iProjDiag * feetPlayerPos.xyzz + gbufferProjectionInverse[3];
+		viewPos.xyz /= viewPos.w;
+	} else {
+		depth = texelFetch(LOD_DEPTHTEX1, ivec2(texcoord/texelSize), 0).x;
+		iProjDiag = vec4(LOD_PROJECTION_INVERSE[0].x, LOD_PROJECTION_INVERSE[1].y, LOD_PROJECTION_INVERSE[2].zw);
+    	feetPlayerPos = vec3(texcoord, depth) * 2.0 - 1.0;
+    	viewPos = iProjDiag * feetPlayerPos.xyzz + LOD_PROJECTION_INVERSE[3];
+		viewPos.xyz /= viewPos.w;
+	}
+
+    return viewPos.xyz;
+}
+
 vec2 SSAO(
 	vec3 viewPos, vec3 normal, vec3 flatnormal, bool hand, float noise, bool isLOD
 ){
@@ -294,17 +316,10 @@ vec2 SSAO(
 			
 
 			#ifdef USING_LOD_MOD
-				float sampleDHDepth = 1.0;
-				float sampleDepth = 1.0;
-				if(isLOD){
-					sampleDHDepth = texelFetch2D(LOD_DEPTHTEX1, offsetUV, 0).x;
-				}else{
-					sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, offsetUV, 0).x, hand);
-				}
-
-				vec3 offsetViewPos = toScreenSpace_DH((offsetUV*texelSize - jitterOffsets) * (1.0/RENDER_SCALE), sampleDepth, sampleDHDepth);
+				float sampleDepth = convertHandDepth_2(texelFetch(depthtex1, offsetUV, 0).x, hand);
+				vec3 offsetViewPos = toScreenSpace_LOD_TEST((offsetUV*texelSize - jitterOffsets) * (1.0/RENDER_SCALE), sampleDepth);
 			#else
-				float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, offsetUV, 0).x, hand);
+				float sampleDepth = convertHandDepth_2(texelFetch(depthtex1, offsetUV, 0).x, hand);
 				vec3 offsetViewPos = toScreenSpace(vec3((offsetUV*texelSize - jitterOffsets) * (1.0/RENDER_SCALE), sampleDepth));
 			#endif
 
@@ -366,7 +381,7 @@ void main() {
 	vec2 texcoord = gl_FragCoord.xy*texelSize;
 
 	
-	vec4 data = texelFetch2D(colortex1,ivec2(gl_FragCoord.xy),0);
+	vec4 data = texelFetch(colortex1,ivec2(gl_FragCoord.xy),0);
 	vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y));
 	vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w));
 	vec3 normal = mat3(gbufferModelViewInverse) * clamp(worldToView( decode(dataUnpacked0.yw) ),-1.,1.);
@@ -375,7 +390,7 @@ void main() {
 
 	float lightLeakFix = clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0);
 
-	gl_FragData[1] = vec4(0.0,0.0,0.0, texelFetch2D(colortex14,ivec2((floor(gl_FragCoord.xy)/VL_RENDERING_RESOLUTION_SCALE*texelSize+0.5*texelSize)/texelSize),0).a);
+	gl_FragData[1] = vec4(0.0,0.0,0.0, texelFetch(colortex14,ivec2((floor(gl_FragCoord.xy)/VL_RENDERING_RESOLUTION_SCALE*texelSize+0.5*texelSize)/texelSize),0).a);
 
 
 	// bool lightningBolt = abs(dataUnpacked1.w-0.5) <0.01;
@@ -386,10 +401,10 @@ void main() {
 	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
 	// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
 
-	float z = convertHandDepth_2(texelFetch2D(depthtex1,ivec2(gl_FragCoord.xy),0).x,hand);
+	float z = convertHandDepth_2(texelFetch(depthtex1,ivec2(gl_FragCoord.xy),0).x,hand);
 	
 	#ifdef USING_LOD_MOD
-		float DH_depth1 = texelFetch2D(LOD_DEPTHTEX1,ivec2(gl_FragCoord.xy),0).x;
+		float DH_depth1 = texelFetch(LOD_DEPTHTEX1,ivec2(gl_FragCoord.xy),0).x;
 		float swappedDepth = z >= 1.0 ? DH_depth1 : z;
 	#else
 		float DH_depth1 = 1.0;
@@ -421,7 +436,7 @@ void main() {
 		}
 	#endif
 
-	vec3 FlatNormals = normalize(texture2D(colortex15,texcoord).rgb * 2.0 - 1.0);
+	vec3 FlatNormals = normalize(texture(colortex15,texcoord).rgb * 2.0 - 1.0);
 	
 	#if indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ
 		if(z >= 1.0) FlatNormals = normal;
@@ -439,9 +454,9 @@ void main() {
 
 	/*------------- VOLUMETRICS BEHIND TRANSLUCENTS PASS-THROUGH -------------*/
 	// colortex10 is the history buffer used in reprojection of volumetrics, i can just hijack that.
-	gl_FragData[3] = texture2D(colortex10, texcoord);
+	gl_FragData[3] = texture(colortex10, texcoord);
 	
-	// if(texture2D(colortex7,texcoord).a > 0.0) {
+	// if(texture(colortex7,texcoord).a > 0.0) {
 	// 	vec4 VL = BilateralUpscale_VLFOG(colortex13, depthtex1, gl_FragCoord.xy - 1.5, ld(z));
 		
 	// 	// gl_FragData[3].rgb += VL.rgb * gl_FragData[3].a;
@@ -452,11 +467,11 @@ void main() {
 
 
 #ifdef OVERWORLD_SHADER
-	float SpecularTex = texture2D(colortex8,texcoord).z;
+	float SpecularTex = texture(colortex8,texcoord).z;
 	float LabSSS = clamp((-64.0 + SpecularTex * 255.0) / 191.0 ,0.0,1.0);
 
 	float NdotL = clamp(dot(normal,WsunVec),0.0,1.0);
-	float vanillAO = clamp(texture2D(colortex15,texcoord).a,0.0,1.0)  ;
+	float vanillAO = clamp(texture(colortex15,texcoord).a,0.0,1.0)  ;
 
 	float minshadowfilt = Min_Shadow_Filter_Radius;
 	float maxshadowfilt = Max_Shadow_Filter_Radius;
@@ -517,7 +532,7 @@ void main() {
 					
 						float weight = 3.0 + (i+noise) * rdMul/SHADOW_FILTER_SAMPLE_COUNT*shadowMapResolution*distortFactor/2.7;
 						
-						float d = texelFetch2D(shadow, ivec2((projectedShadowPosition.xy+offsetS*rdMul)*shadowMapResolution),0).x;
+						float d = texelFetch(shadow, ivec2((projectedShadowPosition.xy+offsetS*rdMul)*shadowMapResolution),0).x;
 						float b = smoothstep(weight*diffthresh/2.0, weight*diffthresh, projectedShadowPosition.z - d);
 
 						blockerCount += b;

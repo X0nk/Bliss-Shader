@@ -138,13 +138,15 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
 			if(!hand && (spos.x < 0 || spos.x > 1 || spos.y < 0 || spos.y > 1)) return vec3(1.1);
 		#endif
 
-		float sampleDepth = sqrt(texelFetch2D(colortex4, ivec2(spos.xy/texelSize/4.0),0).a/65000.0);
+		float sampleDepth = sqrt(texelFetch(colortex4, ivec2(spos.xy/texelSize/4.0),0).a/65000.0);
+		
 		float sp = invLinZ(sampleDepth);
+
 
 		if(sp < max(minZ, maxZ) && sp > min(minZ, maxZ)) {
 			hitPos = vec3(spos.xy/RENDER_SCALE, sp);
 			#ifdef TERRIBLE_SSR_LOD_FALLBACK
-				if(sp >= 0.99999) hitPos = reflectedTC;
+				if(sp > 0.99999) hitPos = reflectedTC;
 			#endif
 			break;
 		}
@@ -216,8 +218,8 @@ vec4 screenSpaceReflections(
 			// vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
 			// vec2 resScale = vec2(1920.,1080.)/clampedRes;
 			// vec2 bloomTileUV = (((previousPosition.xy/texelSize)*2.0 + 0.5)*texelSize/2.0) / clampedRes*vec2(1920.,1080.);
-			// reflection.rgb = texture2D(colortex6, bloomTileUV / 4.0).rgb;
-			reflection.rgb = texture2D(colortex5, previousPosition.xy).rgb;
+			// reflection.rgb = texture(colortex6, bloomTileUV / 4.0).rgb;
+			reflection.rgb = texture(colortex5, previousPosition.xy).rgb;
 		#else
 			reflection.rgb = texture2DLod(colortex5, previousPosition.xy, LOD).rgb;
 		#endif

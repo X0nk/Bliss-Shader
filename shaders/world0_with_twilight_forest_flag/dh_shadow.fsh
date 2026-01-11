@@ -27,5 +27,5 @@ void main() {
         return;
     }
     
-	gl_FragData[0] = texture2D(tex, texcoord.xy);
+	gl_FragData[0] = texture(tex, texcoord.xy);
 }

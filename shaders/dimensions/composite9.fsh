@@ -11,7 +11,7 @@ vec3 gauss1D(vec2 coord,vec2 dir,float alpha,int maxIT){
 	for (int i = -maxIT;i<maxIT+1;i++){
 		float weight = exp(-i*i*alpha*4.0);
 		vec2 spCoord = coord+dir*texelSize*(2.0*i+0.5);
-		tot += vec4(texture2D(colortex6,spCoord).rgb,1.0)*weight*float(spCoord.y > minTC && spCoord.y < maxTC);
+		tot += vec4(texture(colortex6,spCoord).rgb,1.0)*weight*float(spCoord.y > minTC && spCoord.y < maxTC);
 	}
 	return  tot.rgb/max(1.0,tot.a);
 }

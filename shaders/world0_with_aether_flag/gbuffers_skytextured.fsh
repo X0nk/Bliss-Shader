@@ -30,7 +30,7 @@ void main() {
 	#if RESOURCEPACK_SKY != 0
 		/* RENDERTARGETS:2 */
 
-		vec4 COLOR = texture2D(texture, texcoord.xy) * color;
+		vec4 COLOR = texture(texture, texcoord.xy) * color;
 
 		bool isSun = renderStage == MC_RENDER_STAGE_SUN || renderStage == 4;
 		bool isMoon = renderStage == MC_RENDER_STAGE_MOON || renderStage == 5;

@@ -271,14 +271,14 @@ float R2_dither2(){
 
 float blueNoise(){
 	#if TAA_MODE > 0
-  		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+  		return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 	#else
-		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
+		return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
 	#endif
 }
 
 vec4 blueNoise(vec2 coord){
-  return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
+  return texelFetch(colortex6, ivec2(coord)%512 , 0) ;
 }
 
 vec2 CleanSample(
@@ -367,12 +367,12 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 		#ifdef USING_LOD_MOD
 			float sampleDepth = 0.0;
 			if(depthCheck){
-				sampleDepth = texelFetch2D(LOD_DEPTHTEX1, ivec2(newPos.xy/texelSize),0).x;
+				sampleDepth = texelFetch(LOD_DEPTHTEX1, ivec2(newPos.xy/texelSize),0).x;
 			}else{
-				sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, ivec2(newPos.xy/texelSize),0).x,hand);
+				sampleDepth = convertHandDepth_2(texelFetch(depthtex1, ivec2(newPos.xy/texelSize),0).x,hand);
 			}
 		#else
-			float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, ivec2(newPos.xy/texelSize),0).x,hand);
+			float sampleDepth = convertHandDepth_2(texelFetch(depthtex1, ivec2(newPos.xy/texelSize),0).x,hand);
 		#endif
 
 		if(sampleDepth < newPos.z){
@@ -430,12 +430,12 @@ float SSRT_FlashLight_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, floa
 		#ifdef USING_LOD_MOD
 			float samplePos = 0.0;
 			if(depthCheck){
-				samplePos = texture2D(LOD_DEPTHTEX1, screenPos.xy).x;
+				samplePos = texture(LOD_DEPTHTEX1, screenPos.xy).x;
 			}else{
-				samplePos = texture2D(depthtex2, screenPos.xy).x;
+				samplePos = texture(depthtex2, screenPos.xy).x;
 			}
 		#else
-			float samplePos = texture2D(depthtex2, screenPos.xy).x;
+			float samplePos = texture(depthtex2, screenPos.xy).x;
 		#endif
 
 		if(samplePos < screenPos.z){// && (samplePos <= max(minZ,maxZ) && samplePos >= min(minZ,maxZ))){
@@ -486,31 +486,31 @@ void doEdgeAwareBlur(
 
 	for(int i = 0; i < 4; i++) {
 		#ifdef USING_LOD_MOD
-			float offsetDepth = sqrt(texelFetch2D(depth, UV + OFFSET[i] + UV_NOISE,0).a/65000.0);
+			float offsetDepth = sqrt(texelFetch(depth, UV + OFFSET[i] + UV_NOISE,0).a/65000.0);
 		#else
-			float offsetDepth = ld(convertHandDepth_2(texelFetch2D(depth, UV + OFFSET[i] + UV_NOISE, 0).r,hand));
+			float offsetDepth = ld(convertHandDepth_2(texelFetch(depth, UV + OFFSET[i] + UV_NOISE, 0).r,hand));
 		#endif
 
 		float edgeDiff = abs(offsetDepth - referenceDepth) < threshold ? 1.0 : 1e-7;
 
 		#ifdef Variable_Penumbra_Shadows
-			shadow_RESULT += texelFetch2D(tex1, UV + OFFSET[i] + UV_NOISE, 0).rgb*edgeDiff;
+			shadow_RESULT += texelFetch(tex1, UV + OFFSET[i] + UV_NOISE, 0).rgb*edgeDiff;
 		#endif
 
 		#if indirect_effect == SSAO_FILTERED
-			ssao_RESULT += texelFetch2D(tex2, UV + OFFSET[i] + UV_NOISE, 0).rg*edgeDiff;
+			ssao_RESULT += texelFetch(tex2, UV + OFFSET[i] + UV_NOISE, 0).rg*edgeDiff;
 		#endif
 
 		edgeSum += edgeDiff;
 	}
 	// sample without an offset with texture filtering to get a slightly blurred sample. make sure to average without skewing the rest of the average.
-	filteredShadow = shadow_RESULT/edgeSum * 0.8 + 0.2 * texture2D(tex1, texelSize*gl_FragCoord.xy).rgb;
+	filteredShadow = shadow_RESULT/edgeSum * 0.8 + 0.2 * texture(tex1, texelSize*gl_FragCoord.xy).rgb;
 	
 	#if indirect_effect == SSAO_FILTERED
-		ambientEffects = ssao_RESULT/edgeSum * 0.8 + 0.2 * texture2D(tex2, texelSize*gl_FragCoord.xy).rg;
+		ambientEffects = ssao_RESULT/edgeSum * 0.8 + 0.2 * texture(tex2, texelSize*gl_FragCoord.xy).rg;
 	#endif
 	#if indirect_effect == SSAO_HQ
-		ambientEffects = texture2D(tex2, texelSize*gl_FragCoord.xy).rg;
+		ambientEffects = texture(tex2, texelSize*gl_FragCoord.xy).rg;
 	#endif
 
 }
@@ -543,13 +543,13 @@ vec4 BilateralUpscale_VLFOG(sampler2D tex, sampler2D depth, float referenceDepth
 
 	for(int i = 0; i < 4; i++) {
 		#ifdef USING_LOD_MOD
-			float offsetDepth = sqrt(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE,0).a/65000.0);
+			float offsetDepth = sqrt(texelFetch(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE,0).a/65000.0);
 		#else
-			float offsetDepth = ld(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE, 0).r);
+			float offsetDepth = ld(texelFetch(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE, 0).r);
 		#endif
 
 		float edgeDiff = abs(offsetDepth - referenceDepth) < threshold ? 1.0 : 1e-7;
-		vec4 offsetColor = texelFetch2D(tex, UV_COLOR + OFFSET[i] + UV_NOISE, 0).rgba;
+		vec4 offsetColor = texelFetch(tex, UV_COLOR + OFFSET[i] + UV_NOISE, 0).rgba;
 		colorSum += offsetColor*edgeDiff;
 		edgeSum += edgeDiff;
 	}
@@ -690,7 +690,7 @@ void applyPuddles(
 	vec2 UV = mix(worldPos.xz, worldPos.xy*vec2(2.0, 0.5)+driprate, abs(flatNormals.z));
 	UV = mix(UV, worldPos.zy*vec2(2.0, 0.5)+driprate, abs(flatNormals.x));
 
-	float noise = texture2D(noisetex, UV * 0.02).b;
+	float noise = texture(noisetex, UV * 0.02).b;
 
 	float lightmapMax = min(max(lightmap - 0.9,0.0) * 10.0,1.0) ;
 	float lightmapMin = min(max(lightmap - 0.8,0.0) * 5.0,1.0) ;
@@ -767,16 +767,16 @@ void main() {
 		// float z0 = texture2D(depthtex0,texcoord).x;
 		// float z = texture2D(depthtex1,texcoord).x;
 		
-		float z0 = texelFetch2D(depthtex0, ivec2(gl_FragCoord.xy), 0).x;
-		float z =  texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x;
+		float z0 = texelFetch(depthtex0, ivec2(gl_FragCoord.xy), 0).x;
+		float z =  texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x;
 		float swappedDepth = z;
 
 		bool isDHrange = z >= 1.0;
 
 		#ifdef USING_LOD_MOD
-			float DH_mixedLinearZ = sqrt(texture2D(colortex12,texcoord).a/65000.0);
-			float DH_depth0 = texture2D(LOD_DEPTHTEX0,texcoord).x;
-			float DH_depth1 = texture2D(LOD_DEPTHTEX1 ,texcoord).x;
+			float DH_mixedLinearZ = sqrt(texture(colortex12,texcoord).a/65000.0);
+			float DH_depth0 = texture(LOD_DEPTHTEX0,texcoord).x;
+			float DH_depth1 = texture(LOD_DEPTHTEX1 ,texcoord).x;
 
 			float depthOpaque = z;
 			float depthOpaqueL = linearizeDepthFast(depthOpaque, near, farPlane);
@@ -799,7 +799,7 @@ void main() {
 
 	////// --------------- UNPACK OPAQUE GBUFFERS --------------- //////
 	
-		vec4 data = texelFetch2D(colortex1, ivec2(gl_FragCoord.xy), 0);
+		vec4 data = texelFetch(colortex1, ivec2(gl_FragCoord.xy), 0);
 
 		vec3 skyboxCol = data.rgb;
 
@@ -829,11 +829,12 @@ void main() {
 
 	////// --------------- UNPACK MISC --------------- //////
 	
-		vec4 SpecularTex = texelFetch2D(colortex8, ivec2(gl_FragCoord.xy), 0);
+		vec4 SpecularTex = texelFetch(colortex8, ivec2(gl_FragCoord.xy), 0);
 		float LabSSS = clamp((-65.0 + SpecularTex.z * 255.0) / 190.0 ,0.0,1.0);	
+		float labPorosity = clamp(SpecularTex.z * 255.0, 0.0,64.5)/64.5;	
 		// LabSSS = 1;
 
-		vec4 normalAndAO = texture2D(colortex15,texcoord);
+		vec4 normalAndAO = texture(colortex15,texcoord);
 		vec3 FlatNormals = normalize(normalAndAO.rgb * 2.0 - 1.0);
 		vec3 slopednormal = normal;
 
@@ -863,7 +864,7 @@ void main() {
 		// 0.9 = entity mask
 		// 0.8 = reflective entities
 		// 0.7 = reflective blocks
-  		float translucentMasks = texture2D(colortex7, texcoord).a;
+  		float translucentMasks = texture(colortex7, texcoord).a;
 
 		bool isWater = translucentMasks > 0.99;
 		// bool isReflectiveEntity = abs(translucentMasks - 0.8) < 0.01;
@@ -1155,7 +1156,7 @@ void main() {
 		
         vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds);
 
-		float lightningflash = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
+		float lightningflash = texelFetch(colortex4,ivec2(1,1),0).x/150.0;
 		vec3 lightColors = pow(lightmap.y,8) * LightSourceColors(vortexBounds, lightningflash);
 		
 		float end_NdotL = clamp(dot(slopednormal, normalize(-lightPos))*0.5+0.5,0.0,1.0);

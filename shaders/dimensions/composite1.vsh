@@ -47,21 +47,21 @@ void main() {
 	gl_Position = ftransform();
 
 	#ifdef END_SHADER
-		Flashing = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
+		Flashing = texelFetch(colortex4,ivec2(1,1),0).x/150.0;
 	#endif
 
 	zMults = vec3(1.0/(far * near),far+near,far-near);
 
-	lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
+	lightCol.rgb = texelFetch(colortex4,ivec2(6,37),0).rgb;
 	lightCol.a = float(sunElevation > 1e-5)*2.0 - 1.0;
 
-	moonCol = texelFetch2D(colortex4,ivec2(9,37),0).rgb;
+	moonCol = texelFetch(colortex4,ivec2(9,37),0).rgb;
 	
 	#if defined FLASHLIGHT && defined FLASHLIGHT_BOUNCED_INDIRECT
-		albedoSmooth = texelFetch2D(colortex4,ivec2(15.5,2.5),0).rgb;
+		albedoSmooth = texelFetch(colortex4,ivec2(15.5,2.5),0).rgb;
 	#endif
 
-	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+	averageSkyCol_Clouds = texelFetch(colortex4,ivec2(0,37),0).rgb;
 
 	unsigned_WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
 	

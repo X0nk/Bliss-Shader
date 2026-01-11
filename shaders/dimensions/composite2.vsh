@@ -42,9 +42,9 @@ void main() {
 
 	
 	#ifdef OVERWORLD_SHADER
-		lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
-		averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
-		averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+		lightCol.rgb = texelFetch(colortex4,ivec2(6,37),0).rgb;
+		averageSkyCol = texelFetch(colortex4,ivec2(1,37),0).rgb;
+		averageSkyCol_Clouds = texelFetch(colortex4,ivec2(0,37),0).rgb;
 
 		#define READ_SCENE_CONTROLLER_PARAMETERS
 		#include "/lib/scene_controller.glsl"

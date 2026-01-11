@@ -9,7 +9,7 @@ float densityAtPosFog(in vec3 pos){
 	f = (f*f) * (3.-2.*f);
 	vec2 uv =  p.xz + f.xz + p.y * vec2(0.0,193.0);
 	vec2 coord =  uv / 512.0;
-	vec2 xy = texture2D(noisetex, coord).yx;
+	vec2 xy = texture(noisetex, coord).yx;
 	return mix(xy.r,xy.g, f.y);
 }
 
@@ -58,7 +58,7 @@ vec3 sampleShadowmapVL(vec3 start, vec3 shadowMapRayStartPos, vec3 shadowMapRayP
 			shadowColor = vec3(shadow2D(shadowtex0, shadowPos).x);
 
 			if(shadow2D(shadowtex1, shadowPos).x > shadowPos.z && shadowColor.x < 1.0){
-				vec4 translucentShadow = texture2D(shadowcolor0, shadowPos.xy);
+				vec4 translucentShadow = texture(shadowcolor0, shadowPos.xy);
 				if(translucentShadow.a < 0.9) shadowColor = normalize(translucentShadow.rgb+0.0001);
 			}
 		#else

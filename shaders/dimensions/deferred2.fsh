@@ -30,20 +30,20 @@ void main() {
 
 	vec2 texcoord = gl_FragCoord.xy * texelSize;
 
-	gl_FragData[0] = texelFetch2D(colortex1, ivec2(gl_FragCoord.xy), 0);
+	gl_FragData[0] = texelFetch(colortex1, ivec2(gl_FragCoord.xy), 0);
 
 	if(
-		texelFetch2D(depthtex0, ivec2(gl_FragCoord.xy), 0).x < 1.0 
+		texelFetch(depthtex0, ivec2(gl_FragCoord.xy), 0).x < 1.0 
 		
 		#ifdef USING_LOD_MOD
-			|| texelFetch2D(LOD_DEPTHTEX0, ivec2(gl_FragCoord.xy), 0).x < 1.0
+			|| texelFetch(LOD_DEPTHTEX0, ivec2(gl_FragCoord.xy), 0).x < 1.0
 		#endif
 
 	) {
 		// doing this for precision reasons, DH does NOT like depth => 1.0
 	}else{
 		
-		vec3 skyColor = texelFetch2D(colortex2, ivec2(gl_FragCoord.xy),0).rgb;
+		vec3 skyColor = texelFetch(colortex2, ivec2(gl_FragCoord.xy),0).rgb;
 		skyColor.rgb = max(skyColor.rgb - skyColor.rgb * interleaved_gradientNoise()*0.05, 0.0);
 
 		gl_FragData[0].rgb = skyColor/50.0;

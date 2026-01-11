@@ -58,7 +58,7 @@ float cdist(vec2 coord) {
 	return max(abs(coord.s-0.5),abs(coord.t-0.5))*2.0;
 }
 float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+  return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
 float ld(float depth) {
     return (2.0 * near) / (far + near - depth * (far - near));		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
@@ -153,10 +153,10 @@ vec4 texture2D_bicubic(sampler2D tex, vec2 uv)
 	vec2 p2 = (vec2(iuv.x + h0x, iuv.y + h1y) - 0.5) * texelSize.xy;
 	vec2 p3 = (vec2(iuv.x + h1x, iuv.y + h1y) - 0.5) * texelSize.xy;
 
-    return g0(fuv.y) * (g0x * texture2D(tex, p0)  +
-                        g1x * texture2D(tex, p1)) +
-           g1(fuv.y) * (g0x * texture2D(tex, p2)  +
-                        g1x * texture2D(tex, p3));
+    return g0(fuv.y) * (g0x * texture(tex, p0)  +
+                        g1x * texture(tex, p1)) +
+           g1(fuv.y) * (g0x * texture(tex, p2)  +
+                        g1x * texture(tex, p3));
 }
 
 // vec3 lenseFlare(vec2 UV){
@@ -229,12 +229,12 @@ void main() {
 	if(isEyeInWater == 1) bloomyFog_Mult = UNDERWATER_BLOOMY_FOG;
 	
 	#if DOF_QUALITY == -1 || DOF_QUALITY == 5
-		vec3 col = texture2D(colortex5,texcoord).rgb;
+		vec3 col = texture(colortex5,texcoord).rgb;
 	#endif
 
 	#if DOF_QUALITY >= 0
 		/*--------------------------------*/
-		float z = ld(texture2D(depthtex1, texcoord.st*RENDER_SCALE).r)*far;
+		float z = ld(texture(depthtex1, texcoord.st*RENDER_SCALE).r)*far;
 
 		#if MANUAL_FOCUS == -2
 			float focus = rodExposureDepth.y*far;
@@ -299,7 +299,7 @@ void main() {
 		float lightScat = clamp(BLOOM_STRENGTH * 0.3,0.0,1.0) * vignette;
 	#endif
 
- 	float VL_abs = texture2D(colortex7, texcoord*RENDER_SCALE).r;
+ 	float VL_abs = texture(colortex7, texcoord*RENDER_SCALE).r;
 
 	#if PURKINJE_AMOUNT > 0
 		float pstrength = float(PURKINJE_AMOUNT) / 100.0;
@@ -364,7 +364,7 @@ void main() {
 		float _far = far*4.0;
 
 		if (depth >= 1.0) {
-			depth = texture2D(LOD_DEPTHTEX0, texcoord).x;
+			depth = texture(LOD_DEPTHTEX0, texcoord).x;
 			_near = LOD_NEARPLANE;
 			_far = LOD_FARPLANE;
 		}

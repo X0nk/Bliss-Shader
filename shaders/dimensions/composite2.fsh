@@ -72,7 +72,7 @@ uniform float skyLightLevelSmooth;
 uniform float waterEnteredAltitude;
 
 vec4 blueNoise(vec2 coord){
-  return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
+  return texelFetch(colortex6, ivec2(coord)%512 , 0) ;
 }
 vec2 R2_samples(int n){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
@@ -258,7 +258,7 @@ float interleaved_gradientNoise(){
 }
 
 float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter );
+  return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter );
 }
 
 float R2_dither(){
@@ -332,7 +332,7 @@ vec4 waterVolumetrics(vec3 rayStart, vec3 rayEnd, float rayLength, vec2 dither, 
 					sh = vec3(shadow2D(shadowtex0, pos).x);
 
 					if(shadow2D(shadowtex1, pos).x > pos.z && sh.x < 1.0){
-						vec4 translucentShadow = texture2D(shadowcolor0, pos.xy);
+						vec4 translucentShadow = texture(shadowcolor0, pos.xy);
 						if(translucentShadow.a < 0.9) sh = normalize(translucentShadow.rgb+0.0001);
 					}
 				#else
@@ -446,10 +446,10 @@ float godrayTest( in vec3 viewPos, in vec3 lightDir, float noise, float vanillad
 	for (int i = 0; i < int(samples); i++) { 
 		newPos.xy = clamp(newPos.xy, screenEdges, 1.0-screenEdges);
 
-		float sampleDepth = invLinZ(sqrt(texelFetch2D(colortex4, ivec2(newPos.xy/texelSize/4.0),0).a/65000.0));
+		float sampleDepth = invLinZ(sqrt(texelFetch(colortex4, ivec2(newPos.xy/texelSize/4.0),0).a/65000.0));
 		
 		#ifdef DISTANT_HORIZONS
-			if(depthCheck) sampleDepth = texelFetch2D(dhDepthTex1, ivec2(newPos.xy/texelSize),0).x;
+			if(depthCheck) sampleDepth = texelFetch(dhDepthTex1, ivec2(newPos.xy/texelSize),0).x;
 		#endif
 		
 		godrays += (swapperlinZ(sampleDepth, _near, _far) > 1.0 ? 1.0 : lightRange);
@@ -526,7 +526,7 @@ vec4 waterVolumetrics_alt( vec3 rayStart, vec3 rayEnd, float estEndDepth, float 
 					sh = vec3(shadow2D(shadowtex0, pos).x);
 
 					if(shadow2D(shadowtex1, pos).x > pos.z && sh.x < 1.0){
-						vec4 translucentShadow = texture2D(shadowcolor0, pos.xy);
+						vec4 translucentShadow = texture(shadowcolor0, pos.xy);
 						if(translucentShadow.a < 0.9) sh = normalize(translucentShadow.rgb+0.0001);
 					}
 				#else
@@ -580,27 +580,27 @@ void main() {
 	// vec2 tc = floor(gl_FragCoord.xy)/VL_RENDERING_RESOLUTION_SCALE*texelSize + 0.5*texelSize;
 
 	#ifdef OVERWORLD_SHADER
-		vec2 lightmap = decodeVec2(texelFetch2D(colortex14,texcoord_cast,0).x);
+		vec2 lightmap = decodeVec2(texelFetch(colortex14,texcoord_cast,0).x);
 		
 		// #ifdef DISTANT_HORIZONS
 		// 	if(z >= 1.0) lightmap.y = 0.99;
 		// #endif
 	#else
-		vec2 lightmap = decodeVec2(texelFetch2D(colortex14,texcoord_cast,0).a);
+		vec2 lightmap = decodeVec2(texelFetch(colortex14,texcoord_cast,0).a);
 		lightmap.y = 1.0;
 	#endif
 
-	float alpha = texelFetch2D(colortex7,texcoord_cast,0).a;
-	float blendedAlpha = texelFetch2D(colortex2, texcoord_cast,0).a;
+	float alpha = texelFetch(colortex7,texcoord_cast,0).a;
+	float blendedAlpha = texelFetch(colortex2, texcoord_cast,0).a;
 
 	bool iswater = alpha > 0.99;
 
-	float z0 = texelFetch2D(depthtex0, texcoord_cast,0).x;
-	float z1 = texelFetch2D(depthtex1, texcoord_cast,0).x;
+	float z0 = texelFetch(depthtex0, texcoord_cast,0).x;
+	float z1 = texelFetch(depthtex1, texcoord_cast,0).x;
 
 	#ifdef USING_LOD_MOD
-		float DH_z0 = texelFetch2D(LOD_DEPTHTEX0, texcoord_cast,0).x;
-		float DH_z1 = texelFetch2D(LOD_DEPTHTEX1, texcoord_cast,0).x;
+		float DH_z0 = texelFetch(LOD_DEPTHTEX0, texcoord_cast,0).x;
+		float DH_z1 = texelFetch(LOD_DEPTHTEX1, texcoord_cast,0).x;
 	#else
 		float DH_z0 = 0.0;
 		float DH_z1 = 0.0;

@@ -172,7 +172,7 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 		shadowmap += max(opaqueShadow, shadowDepthDiff);
 
 		// get translucent shadow data
-		vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
+		vec4 translucentShadow = texture(shadowcolor0, projectedShadowPosition.xy);
 
 		// this curve simply looked the nicest. it has no other meaning.
 		float shadowAlpha = pow(1.0 - pow(translucentShadow.a,5.0),0.2);
@@ -334,7 +334,7 @@ void main() {
 
 		vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy));
 	#else
-		vec4 Albedo = texture2D(texture, adjustedTexCoord.xy);
+		vec4 Albedo = texture(texture, adjustedTexCoord.xy);
 	#endif
 	
 	Albedo.rgb = toLinear(Albedo.rgb);
@@ -360,7 +360,7 @@ void main() {
 	vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
 	vec3 feetPlayerPos_normalized = normalize(feetPlayerPos);
 
-	vec4 TEXTURE = texture2D(texture, lmtexcoord.xy)*color;
+	vec4 TEXTURE = texture(texture, lmtexcoord.xy)*color;
 	
 	#ifdef WhiteWorld
 		TEXTURE.rgb = vec3(1.0);

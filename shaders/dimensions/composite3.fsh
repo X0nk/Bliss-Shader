@@ -125,14 +125,14 @@ float R2_dither(){
 
 float blueNoise(){
 	#if TAA_MODE > 0
-  		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+  		return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 	#else
-		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
+		return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
 	#endif
 }
 
 vec4 blueNoise(vec2 coord){
-  return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
+  return texelFetch(colortex6, ivec2(coord)%512 , 0) ;
 }
 
 vec3 normVec (vec3 vec){
@@ -221,31 +221,31 @@ vec3 doRefractionEffect( inout vec2 passTexcoord, vec2 normal, float linearDista
 
   #if FAKE_DISPERSION_AMOUNT > 0
     // do not offset texcoord if alpha is 1.0
-    refractAmount *= min(  decodeVec2(texelFetch2D(colortex11, ivec2(clampUV(texcoord - ((normal + dispersion) + smudge)*refractAmount, texcoord)/texelSize),0).b).g,
-                           decodeVec2(texelFetch2D(colortex11, ivec2(clampUV(texcoord - ((normal - dispersion) + smudge)*refractAmount, texcoord)/texelSize),0).b).g  ) > 0.0 ? 1.0 : 0.0;
+    refractAmount *= min(  decodeVec2(texelFetch(colortex11, ivec2(clampUV(texcoord - ((normal + dispersion) + smudge)*refractAmount, texcoord)/texelSize),0).b).g,
+                           decodeVec2(texelFetch(colortex11, ivec2(clampUV(texcoord - ((normal - dispersion) + smudge)*refractAmount, texcoord)/texelSize),0).b).g  ) > 0.0 ? 1.0 : 0.0;
 
     // create offsets
     vec2 offsetTexcoord = clampUV(texcoord - (normal + smudge)*refractAmount, texcoord);
     passTexcoord = offsetTexcoord;
 
     // sample color with offsetted texcoord. in this case, the red and blue channels have offsets in opposite directions for a dispersion effect.
-    color.g = texture2D(colortex3, offsetTexcoord).g;
+    color.g = texture(colortex3, offsetTexcoord).g;
 
     offsetTexcoord = clampUV(texcoord - ((normal + dispersion) + smudge)*refractAmount, texcoord);
-    color.r = texture2D(colortex3, offsetTexcoord).r;
+    color.r = texture(colortex3, offsetTexcoord).r;
 
     offsetTexcoord = clampUV(texcoord - ((normal - dispersion) + smudge)*refractAmount, texcoord);
-    color.b = texture2D(colortex3, offsetTexcoord).b;
+    color.b = texture(colortex3, offsetTexcoord).b;
   #else
     // do not offset texcoord if alpha is 1.0
-    refractAmount *= decodeVec2(texelFetch2D(colortex11, ivec2(clampUV(texcoord - (normal + smudge)*refractAmount, texcoord)/texelSize),0).b).g > 0.0 ? 1.0 : 0.0; 
+    refractAmount *= decodeVec2(texelFetch(colortex11, ivec2(clampUV(texcoord - (normal + smudge)*refractAmount, texcoord)/texelSize),0).b).g > 0.0 ? 1.0 : 0.0; 
 
     // create offsets
     vec2 offsetTexcoord = clampUV(texcoord - (normal + smudge)*refractAmount, texcoord);
     passTexcoord = offsetTexcoord;
 
     // sample color with distorted texcoords
-    color.rgb = texture2D(colortex3, offsetTexcoord).rgb;
+    color.rgb = texture(colortex3, offsetTexcoord).rgb;
   #endif
 
   return color;
@@ -290,15 +290,15 @@ vec4 bilateralUpsample(vec2 fragcoord, sampler2D colortex, out float outerEdgeRe
   for(int i = 0; i < 5; i++) {
 
 		#ifdef USING_LOD_MOD
-		  float offsetDepth = sqrt(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE,0).a/65000.0);
+		  float offsetDepth = sqrt(texelFetch(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE,0).a/65000.0);
     #else
-      float offsetDepth = linearize(texelFetch2D(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE, 0).r);
+      float offsetDepth = linearize(texelFetch(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE, 0).r);
     #endif
 
     float edgeDiff = abs(offsetDepth - referenceDepth) < threshold ? 1.0 : 1e-7;
     outerEdgeResults = max(outerEdgeResults, abs(referenceDepth - offsetDepth));
 
-    vec4 offsetColor = texelFetch2D(colortex, UV_COLOR + OFFSET[i] + UV_NOISE, 0).rgba;
+    vec4 offsetColor = texelFetch(colortex, UV_COLOR + OFFSET[i] + UV_NOISE, 0).rgba;
     colorSum += offsetColor*edgeDiff;
     edgeSum += edgeDiff;
 
@@ -323,7 +323,7 @@ vec4 VLTemporalFiltering(vec3 viewPos, in float referenceDepth, sampler2D depth,
 	vec2 velocity = previousPosition.xy - offsetTexcoord;
 	previousPosition.xy = offsetTexcoord + velocity;
 
-  vec4 currentFrame = texture2D(colortex0, VLtexCoord);
+  vec4 currentFrame = texture(colortex0, VLtexCoord);
 
   // to fill pixel gaps in geometry edges, do a bilateral upsample.
   // pass a mask to only show upsampled color around the edges of blocks. this is so it doesnt blur reprojected results.
@@ -339,19 +339,19 @@ vec4 VLTemporalFiltering(vec3 viewPos, in float referenceDepth, sampler2D depth,
   
 	float clampRadius = mix(2.0, 1.0, clamp(length(velocity/texelSize),0.0,1.0)	);
 
-	vec4 col1 = texture2D(colortex0, VLtexCoord + vec2( texelSize.x,  texelSize.y)*clampRadius);
-	vec4 col2 = texture2D(colortex0, VLtexCoord + vec2( texelSize.x, -texelSize.y)*clampRadius);
-	vec4 col3 = texture2D(colortex0, VLtexCoord + vec2(-texelSize.x, -texelSize.y)*clampRadius);
-	vec4 col4 = texture2D(colortex0, VLtexCoord + vec2(-texelSize.x,  texelSize.y)*clampRadius);
-	vec4 col5 = texture2D(colortex0, VLtexCoord + vec2( 0.0,			    texelSize.y)*clampRadius);
-	vec4 col6 = texture2D(colortex0, VLtexCoord + vec2( 0.0,			   -texelSize.y)*clampRadius);
-	vec4 col7 = texture2D(colortex0, VLtexCoord + vec2(-texelSize.x,  		    0.0)*clampRadius);
-	vec4 col8 = texture2D(colortex0, VLtexCoord + vec2( texelSize.x,  		    0.0)*clampRadius);
+	vec4 col1 = texture(colortex0, VLtexCoord + vec2( texelSize.x,  texelSize.y)*clampRadius);
+	vec4 col2 = texture(colortex0, VLtexCoord + vec2( texelSize.x, -texelSize.y)*clampRadius);
+	vec4 col3 = texture(colortex0, VLtexCoord + vec2(-texelSize.x, -texelSize.y)*clampRadius);
+	vec4 col4 = texture(colortex0, VLtexCoord + vec2(-texelSize.x,  texelSize.y)*clampRadius);
+	vec4 col5 = texture(colortex0, VLtexCoord + vec2( 0.0,			    texelSize.y)*clampRadius);
+	vec4 col6 = texture(colortex0, VLtexCoord + vec2( 0.0,			   -texelSize.y)*clampRadius);
+	vec4 col7 = texture(colortex0, VLtexCoord + vec2(-texelSize.x,  		    0.0)*clampRadius);
+	vec4 col8 = texture(colortex0, VLtexCoord + vec2( texelSize.x,  		    0.0)*clampRadius);
 
 	vec4 colMax = max(currentFrame,max(col1,max(col2,max(col3, max(col4, max(col5, max(col6, max(col7, col8))))))));
 	vec4 colMin = min(currentFrame,min(col1,min(col2,min(col3, min(col4, min(col5, min(col6, min(col7, col8))))))));
   
-  vec4 frameHistory = texture2D(colortex10, previousPosition.xy*RENDER_SCALE);
+  vec4 frameHistory = texture(colortex10, previousPosition.xy*RENDER_SCALE);
   vec4 clampedFrameHistory = clamp(frameHistory, colMin, colMax);
 
   float blendingFactor = 0.1;
@@ -450,20 +450,20 @@ void main() {
   
   #if DEBUG_VIEW == debug_DEFERRED_RENDERING
     gl_FragData[0].r = 1.0; // pass fog alpha so bloom can do bloomy fog
-    gl_FragData[1].rgb = clamp(texture2D(colortex3, texcoord).rgb, 0.0,68000.0);
+    gl_FragData[1].rgb = clamp(texture(colortex3, texcoord).rgb, 0.0,68000.0);
     return;
   #endif
   
-  float depth = texelFetch2D(depthtex0, ivec2(gl_FragCoord.xy),0).x;
+  float depth = texelFetch(depthtex0, ivec2(gl_FragCoord.xy),0).x;
   bool hand = depth < 0.56;
   float z = depth;
-  float z2 = texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy),0).x;
+  float z2 = texelFetch(depthtex1, ivec2(gl_FragCoord.xy),0).x;
   float frDepth = linearize(z);
 
 	float swappedDepth = z;
 
 	#ifdef USING_LOD_MOD
-    float DH_depth0 = texture2D(LOD_DEPTHTEX0,texcoord).x;
+    float DH_depth0 = texture(LOD_DEPTHTEX0,texcoord).x;
 		float depthOpaque = z;
 		float depthOpaqueL = linearizeDepthFast(depthOpaque, near, farPlane);
 		
@@ -496,11 +496,11 @@ void main() {
 	float lightleakfixfast = clamp(eyeBrightness.y/240.,0.0,1.0);
 
 	////// --------------- UNPACK OPAQUE GBUFFERS --------------- //////
-	// float opaqueMasks = decodeVec2(texture2D(colortex1,texcoord).a).y;
+	// float opaqueMasks = decodeVec2(texture(colortex1,texcoord).a).y;
 	// bool isOpaque_entity = abs(opaqueMasks-0.45) < 0.01;
 
 	////// --------------- UNPACK TRANSLUCENT GBUFFERS --------------- //////
-	vec4 data = texelFetch2D(colortex11,ivec2(texcoord/texelSize),0).rgba;
+	vec4 data = texelFetch(colortex11,ivec2(texcoord/texelSize),0).rgba;
 	vec4 unpack0 = vec4(decodeVec2(data.r),decodeVec2(data.g)) ;
 	vec4 unpack1 = vec4(decodeVec2(data.b),decodeVec2(data.a)) ;
 	
@@ -517,7 +517,7 @@ void main() {
 	// 0.9 = entity mask
 	// 0.8 = reflective entities
 	// 0.7 = reflective blocks
-  float translucentMasks = texelFetch2D(colortex7,ivec2(gl_FragCoord.xy),0).a;
+  float translucentMasks = texelFetch(colortex7,ivec2(gl_FragCoord.xy),0).a;
 
 	bool isWater = translucentMasks > 0.99;
 	bool isReflectiveEntity = abs(translucentMasks - 0.8) < 0.01;
@@ -526,7 +526,7 @@ void main() {
 
   ////// --------------- get volumetrics
   #ifdef USING_LOD_MOD
-	  float DH_mixedLinearZ = sqrt(texelFetch2D(colortex12,ivec2(gl_FragCoord.xy),0).a/65000.0);
+	  float DH_mixedLinearZ = sqrt(texelFetch(colortex12,ivec2(gl_FragCoord.xy),0).a/65000.0);
     vec4 temporallyFilteredVL = VLTemporalFiltering(viewPos, DH_mixedLinearZ, colortex12, hand);
   #else
     vec4 temporallyFilteredVL = VLTemporalFiltering(viewPos, frDepth, depthtex0, hand);
@@ -543,7 +543,7 @@ void main() {
   #if FAKE_REFRACTION_AMOUNT > 0
     vec3 color = doRefractionEffect(refractedCoord, tangentNormals.xy, linearDistance, isReflectiveEntity, isWater && isEyeInWater == 1);
   #else
-    vec3 color = texture2D(colortex3, texcoord).rgb;
+    vec3 color = texture(colortex3, texcoord).rgb;
   #endif
   
 
@@ -552,11 +552,11 @@ void main() {
   #ifdef USING_LOD_MOD
     vec4 VLBehindTranslucents = bilateralUpsample(refractedCoord/texelSize, colortex13, blank, DH_mixedLinearZ, depthtex1, hand);
   #else
-    vec4 VLBehindTranslucents = bilateralUpsample(refractedCoord/texelSize, colortex13, blank, linearize(texelFetch2D(depthtex1, ivec2(refractedCoord/texelSize),0).x), depthtex1, hand);
+    vec4 VLBehindTranslucents = bilateralUpsample(refractedCoord/texelSize, colortex13, blank, linearize(texelFetch(depthtex1, ivec2(refractedCoord/texelSize),0).x), depthtex1, hand);
   #endif
   
   ////// --------------- START BLENDING FOGS AND FORWARD RENDERED COLOR
-  vec4 TranslucentShader = texture2D(colortex2, texcoord);
+  vec4 TranslucentShader = texture(colortex2, texcoord);
 
   // ensure that bloomy fog mask in this VLBehindTranslucents.a does not darken outside of glass areas.
   if(TranslucentShader.a > 0.0 &&  TranslucentShader.a < 1.0) color.rgb = color.rgb * VLBehindTranslucents.a + VLBehindTranslucents.rgb;
@@ -604,7 +604,7 @@ void main() {
 ////// --------------- bloomy rain effect
   #ifdef OVERWORLD_SHADER
   
-    float rainDrops = texelFetch2D(colortex9,ivec2(texcoord/texelSize),0).a;
+    float rainDrops = texelFetch(colortex9,ivec2(texcoord/texelSize),0).a;
     
     if(rainDrops > 0.0) {
       bloomyFogMult *= clamp(1.0 - pow(rainDrops*5.0,2),0.0,1.0);

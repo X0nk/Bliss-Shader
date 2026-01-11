@@ -21,7 +21,7 @@ vec3 toLinear(vec3 sRGB){
 
 void main() {
 
-	vec4 Albedo = texture2D(texture, texcoord);
+	vec4 Albedo = texture(texture, texcoord);
 	Albedo.rgb = toLinear(Albedo.rgb * color.rgb);
 
     #if defined BEACON_BEAM

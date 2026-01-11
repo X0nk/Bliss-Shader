@@ -38,17 +38,19 @@ vec2 decodeVec2(float a){
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-/* RENDERTARGETS:4,12 */
-	vec3 oldTex = texelFetch2D(colortex4, ivec2(gl_FragCoord.xy), 0).xyz;
-	float newTex = texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy*4), 0).x;
+	/* RENDERTARGETS:4,12 */
 
-	float dataUnpacked = decodeVec2(texelFetch2D(colortex1,ivec2(gl_FragCoord.xy*4),0).w).y; 
+
+	vec3 oldTex = texelFetch(colortex4, ivec2(gl_FragCoord.xy), 0).xyz;
+	float newTex = texelFetch(depthtex1, ivec2(gl_FragCoord.xy*4), 0).x;
+
+	float dataUnpacked = decodeVec2(texelFetch(colortex1,ivec2(gl_FragCoord.xy*4),0).w).y; 
 	bool hand = abs(dataUnpacked-0.75) < 0.01;
 
 	if(hand) convertHandDepth(newTex);
 
 	#ifdef USING_LOD_MOD
-    	float QuarterResDepth = texelFetch2D(LOD_DEPTHTEX0, ivec2(gl_FragCoord.xy*4), 0).x;
+    	float QuarterResDepth = texelFetch(LOD_DEPTHTEX0, ivec2(gl_FragCoord.xy*4), 0).x;
 		QuarterResDepth = DH_linZ(QuarterResDepth);
    		gl_FragData[1].a = QuarterResDepth*QuarterResDepth*65000.0;
 	#endif
