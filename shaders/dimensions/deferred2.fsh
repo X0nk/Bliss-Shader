@@ -4,6 +4,7 @@
 
 uniform sampler2D colortex1;
 uniform sampler2D colortex2;
+uniform sampler2D depthtex0;
 uniform vec2 texelSize;
 
 
@@ -14,6 +15,7 @@ float interleaved_gradientNoise(){
 	float noise = fract( 52.9829189 * fract( (coord.x * 0.06711056) + (coord.y * 0.00583715)) );
 	return noise ;
 }
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -23,7 +25,6 @@ float interleaved_gradientNoise(){
 	#if RESOURCEPACK_SKY != 0
 	/* RENDERTARGETS:1,2 */
 	#endif
-
 
 void main() {
 
