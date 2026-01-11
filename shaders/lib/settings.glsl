@@ -5,7 +5,40 @@
 	const int shadowMapResolution = 2048; // [512 768 1024 1536 2048 3172 4096 8192]
 	const float shadowDistance = 128.0; // [32.0 48.0 64.0 80.0 96.0 112.0 128.0 144.0 160.0 176.0 192.0 208.0 224.0 240.0 256.0 272.0 288.0 304.0 320.0 336.0 352.0 368.0 384.0 512.0 768.0 1024.0 1536.0 2048.0 4096.0 8192.0]
 	const float shadowDistanceRenderMul = 1.0;
-	const float entityShadowDistanceMul = 0.25; // [0.01 0.02 0.03 0.04 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.75 1.00]
+	
+	// absolutely disgusting
+	#define ENTITY_SHADOW_AMOUNT 7 // [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15]
+	#if ENTITY_SHADOW_AMOUNT == 1
+		const float entityShadowDistanceMul = 0.01;
+	#elif ENTITY_SHADOW_AMOUNT == 2
+		const float entityShadowDistanceMul = 0.02;
+	#elif ENTITY_SHADOW_AMOUNT == 3
+		const float entityShadowDistanceMul = 0.03;
+	#elif ENTITY_SHADOW_AMOUNT == 4
+		const float entityShadowDistanceMul = 0.04;
+	#elif ENTITY_SHADOW_AMOUNT == 5
+		const float entityShadowDistanceMul = 0.05;
+	#elif ENTITY_SHADOW_AMOUNT == 6
+		const float entityShadowDistanceMul = 0.1;
+	#elif ENTITY_SHADOW_AMOUNT == 7
+		const float entityShadowDistanceMul = 0.2;
+	#elif ENTITY_SHADOW_AMOUNT == 8
+		const float entityShadowDistanceMul = 0.3;
+	#elif ENTITY_SHADOW_AMOUNT == 9
+		const float entityShadowDistanceMul = 0.4;
+	#elif ENTITY_SHADOW_AMOUNT == 10
+		const float entityShadowDistanceMul = 0.5;
+	#elif ENTITY_SHADOW_AMOUNT == 11
+		const float entityShadowDistanceMul = 0.6;
+	#elif ENTITY_SHADOW_AMOUNT == 12
+		const float entityShadowDistanceMul = 0.7;
+	#elif ENTITY_SHADOW_AMOUNT == 13
+		const float entityShadowDistanceMul = 0.8;
+	#elif ENTITY_SHADOW_AMOUNT == 14
+		const float entityShadowDistanceMul = 0.9;
+	#elif (ENTITY_SHADOW_AMOUNT == 15 || ENTITY_SHADOW_AMOUNT == 0)
+		const float entityShadowDistanceMul = 1.0;
+	#endif
 #endif
 
 #if defined DIRECT_LIGHT_RELATED_SETTINGS
