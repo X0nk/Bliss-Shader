@@ -16,7 +16,7 @@ uniform bool isInNoRainFallEnviornment;
 uniform int worldTime;
 
 #define DECLARE_UNIFORMS_OR_WRITE_FUNCTIONS_FOR_CUSTOM_SCENE_CONTROLLER_PROFILES
-#include /CUSTOM_SCENE_PARAMETERS.glsl
+#include "/CUSTOM_SCENE_PARAMETERS.glsl"
 
 // https://www.shadertoy.com/view/llGSzw
 float hash11( uint n ) 
@@ -587,7 +587,7 @@ if(rainStrength > 0.0001){
 
 
 #define WRITE_CUSTOM_SCENE_CONTROLLER_PROFILES
-#include /CUSTOM_SCENE_PARAMETERS.glsl
+#include "/CUSTOM_SCENE_PARAMETERS.glsl"
 
 }
 #endif
