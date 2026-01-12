@@ -73,7 +73,7 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 
 void main() {
 
-	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
+	lmtexcoord.xy = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 	vec2 lmcoord = gl_MultiTexCoord1.xy / 240.0;
 	lmtexcoord.zw = lmcoord;
 
