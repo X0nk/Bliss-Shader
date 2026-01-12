@@ -491,7 +491,9 @@ vec4 waterVolumetrics_alt( vec3 rayStart, vec3 rayEnd, float estEndDepth, float 
 
 	// do this outside raymarch loop, masking the water surface is good enough
 	#if defined OVERWORLD_SHADER
-		sh *= GetCloudShadow(wpos+cameraPosition, WsunVec);
+		float cloudShadow = GetCloudShadow(wpos+cameraPosition, WsunVec);
+	#else
+		float cloudShadow = 1.0;
 	#endif
 	
 	float thing = -normalize(dVWorld).y;
@@ -538,7 +540,7 @@ vec4 waterVolumetrics_alt( vec3 rayStart, vec3 rayEnd, float estEndDepth, float 
 		vec3 sunAbsorbance = exp(-waterCoefs * estSunDepth * d);
 		vec3 ambientAbsorbance = exp(-waterCoefs * (estEndDepth * d + thing));
 
-		vec3 Directlight = lightSource * sh * phase * sunAbsorbance;
+		vec3 Directlight = lightSource * sh * cloudShadow * phase * sunAbsorbance;
 		vec3 Indirectlight = ambient * ambientAbsorbance;
 
 		vec3 light = (Indirectlight + Directlight) * scatterCoef;
