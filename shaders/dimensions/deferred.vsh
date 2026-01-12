@@ -213,8 +213,8 @@ void main() {
 
 	avgExp = exp(avgExp/maxITexp);
 	avgB = exp(avgB/maxITexp);
-
-	avgBrightness = clamp(mix(avgExp,texelFetch(colortex4,ivec2(10,37),0).g,0.95),0.00003051757,65000.0);
+	
+	avgBrightness = clamp(mix(avgExp,texelFetch(colortex4,ivec2(10,37),0).g, AUTO_EXPOSURE_ADJUST_RATE),0.00003051757,65000.0);
 
 	float L = max(avgBrightness,1e-8);
 	float keyVal = 1.03-2.0/(log(L*4000/150.*8./3.0+1.0)/log(10.0)+2.0);
@@ -239,5 +239,12 @@ void main() {
 	#ifndef AUTO_EXPOSURE
 	 exposure = Manual_exposure_value;
 	 rodExposure = clamp(log(Manual_exposure_value*2.0+1.0)-0.1,0.0,2.0);
+	#endif
+
+	#ifdef display_LUT
+		if(hideGUI == 0){
+		 exposure = Manual_exposure_value;
+		 rodExposure = clamp(log(Manual_exposure_value*2.0+1.0)-0.1,0.0,2.0);
+		}
 	#endif
 }
