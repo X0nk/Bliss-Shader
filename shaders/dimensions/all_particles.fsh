@@ -492,11 +492,14 @@ void main() {
 			gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * Albedo;
 		#endif
 
-		// distance fade targeting the world border...
-		float pos = (feetPlayerPos+cameraPosition).y;
-		float fadeGradient = clamp(min(1.0 - (pos - 319.0)/800.0,(pos + 1000.0)/800.0),0.0,1.0);
-		fadeGradient *= fadeGradient*fadeGradient;
-		if(TEXTURE.a < 0.7 && TEXTURE.a > 0.2) gl_FragData[0].rgba *= fadeGradient;
+		if(renderStage == MC_RENDER_STAGE_WORLD_BORDER){
+			// distance fade targeting the world border...
+			float gradientPos = (feetPlayerPos+cameraPosition).y;
+			float fadeGradient = clamp(min(1.0 - (gradientPos - 319.0)/800.0,(gradientPos + 1000.0)/800.0),0.0,1.0);
+			fadeGradient *= fadeGradient*fadeGradient;
+
+			gl_FragData[0].rgba = vec4(Albedo.rgb, TEXTURE.a) * fadeGradient;
+		}
 	
 		#if DEBUG_VIEW == debug_LIGHTMAPS
 			gl_FragData[0].rgb = vec3(lmtexcoord.z,lmtexcoord.w,0.0)*0.1;
