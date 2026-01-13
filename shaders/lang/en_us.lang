@@ -1,3 +1,10 @@
+§c⚠ READ DESCRIPTION§r
+§c⚠ LOTS OF VISUAL NOISE§r
+§a⚠ PERFORMANCE COST:§r
+§cⓘ IRIS REQUIRED§r
+§bⓘ What is this?§r
+§c⚠⚠⚠§r
+§cOFF§r
 
  ###################################################### ↓↓↓ THIS SUBMENU'S LABELS
 screen.Sun_and_Moon_Colors = Sun/Moon Colors
@@ -7,7 +14,7 @@ screen.Sun_and_Moon_Colors = Sun/Moon Colors
     option.MOONPHASE_BASED_MOONLIGHT = Moonphase based brightness levels
 
     option.colortype = coloring mode
-        value.colortype.1 = RGB color (above)
+        value.colortype.1 = RGB color §b↑↑↑
             option.sunColorR = Sun Color: Red
             option.sunColorG = Sun Color: Green
             option.sunColorB = Sun Color: Blue
@@ -15,7 +22,7 @@ screen.Sun_and_Moon_Colors = Sun/Moon Colors
             option.moonColorG = Moon Color: Green
             option.moonColorB = Moon Color: Blue
 
-        value.colortype.2 = Kelvin temperature (below)
+        value.colortype.2 = Kelvin temperature §b↓↓↓
             option.Sun_temp = Sun temperature
             suffix.Sun_temp = K
             option.Moon_temp = moon temperature
@@ -26,11 +33,11 @@ screen.Sun_and_Moon_Colors = Sun/Moon Colors
 
  ###################################################### ↑↑↑ THIS SUBMENU'S DESCRIPTIONS
 
-    screen.Sun_and_Moon_Colors.comment = Configure the color of the sun or moon.
-    option.sunPathRotation.comment = Configure the angle of the sun or moon
-    option.sun_illuminance.comment = Configure the brightness of the sun
-    option.moon_illuminance.comment = Configure the brightness of the moon
-    option.MOONPHASE_BASED_MOONLIGHT.comment = §bⓘ What is this?§r every night, the moon has different lighting. This setting adjusts the moonlight brightness based on how much of the moon is glowing. §a⚠ PERFORMANCE COST:§r nearly nothing
+    screen.Sun_and_Moon_Colors.comment = §bⓘ What is this?§r Configure the color of the sun or moon.
+    option.sunPathRotation.comment = §bⓘ What is this?§r Configure the angle of the sun or moon
+    option.sun_illuminance.comment = §bⓘ What is this?§r Configure the brightness of the sun
+    option.moon_illuminance.comment = §bⓘ What is this?§r Configure the brightness of the moon
+    option.MOONPHASE_BASED_MOONLIGHT.comment = §bⓘ What is this?§r Every night, the moon has different lighting. This setting adjusts the moonlight brightness based on how much of the moon is glowing. §a⚠ PERFORMANCE COST:§r nearly nothing
 
  ###################################################### ↓↓↓ THIS SUBMENU'S LABELS
 screen.Direct_Light = Direct Light
@@ -83,24 +90,24 @@ screen.Direct_Light = Direct Light
         value.shadowDistance.8192.0 = 512 Chunks §c⚠⚠⚠§r
 
     option.ENTITY_SHADOW_AMOUNT = Entity ShadowMap Distance
-        value.ENTITY_SHADOW_AMOUNT.0 = §cOFF
-        value.ENTITY_SHADOW_AMOUNT.1 = 1% of ShadowMap Distance
-        value.ENTITY_SHADOW_AMOUNT.2 = 2% of ShadowMap Distance
-        value.ENTITY_SHADOW_AMOUNT.3 = 3% of ShadowMap Distance
-        value.ENTITY_SHADOW_AMOUNT.4 = 4% of ShadowMap Distance
-        value.ENTITY_SHADOW_AMOUNT.5 = 5% of ShadowMap Distance
-        value.ENTITY_SHADOW_AMOUNT.6 = 10% of ShadowMap Distance
-        value.ENTITY_SHADOW_AMOUNT.7 = 20% of ShadowMap Distance
-        value.ENTITY_SHADOW_AMOUNT.8 = 30% of ShadowMap Distance
-        value.ENTITY_SHADOW_AMOUNT.9 = 40% of ShadowMap Distance
-        value.ENTITY_SHADOW_AMOUNT.10 = 50% of ShadowMap Distance
-        value.ENTITY_SHADOW_AMOUNT.11 = 60% of ShadowMap Distance
-        value.ENTITY_SHADOW_AMOUNT.12 = 70% of ShadowMap Distance
-        value.ENTITY_SHADOW_AMOUNT.13 = 80% of ShadowMap Distance
-        value.ENTITY_SHADOW_AMOUNT.14 = 90% of ShadowMap Distance
-        value.ENTITY_SHADOW_AMOUNT.15 = 100% of ShadowMap Distance
+        value.ENTITY_SHADOW_AMOUNT.0 = §cOFF§r §bⓘ includes all entities§r
+        value.ENTITY_SHADOW_AMOUNT.1 = 1% of ShadowMap Distance §bⓘ only for mobs§r
+        value.ENTITY_SHADOW_AMOUNT.2 = 2% of ShadowMap Distance §bⓘ only for mobs§r
+        value.ENTITY_SHADOW_AMOUNT.3 = 3% of ShadowMap Distance §bⓘ only for mobs§r
+        value.ENTITY_SHADOW_AMOUNT.4 = 4% of ShadowMap Distance §bⓘ only for mobs§r
+        value.ENTITY_SHADOW_AMOUNT.5 = 5% of ShadowMap Distance §bⓘ only for mobs§r
+        value.ENTITY_SHADOW_AMOUNT.6 = 10% of ShadowMap Distance §bⓘ only for mobs§r
+        value.ENTITY_SHADOW_AMOUNT.7 = 20% of ShadowMap Distance §bⓘ only for mobs§r
+        value.ENTITY_SHADOW_AMOUNT.8 = 30% of ShadowMap Distance §bⓘ only for mobs§r
+        value.ENTITY_SHADOW_AMOUNT.9 = 40% of ShadowMap Distance §bⓘ only for mobs§r
+        value.ENTITY_SHADOW_AMOUNT.10 = 50% of ShadowMap Distance §bⓘ only for mobs§r
+        value.ENTITY_SHADOW_AMOUNT.11 = 60% of ShadowMap Distance §bⓘ only for mobs§r
+        value.ENTITY_SHADOW_AMOUNT.12 = 70% of ShadowMap Distance §bⓘ only for mobs§r
+        value.ENTITY_SHADOW_AMOUNT.13 = 80% of ShadowMap Distance §bⓘ only for mobs§r
+        value.ENTITY_SHADOW_AMOUNT.14 = 90% of ShadowMap Distance §bⓘ only for mobs§r
+        value.ENTITY_SHADOW_AMOUNT.15 = 100% of ShadowMap Distance §bⓘ only for mobs§r
 
-    screen.Filtering = Shadow Filtering Settings
+    screen.Filtering = ShadowMap Filtering Settings
         option.SHADOW_FILTER_SAMPLE_COUNT = Basic Shadow Filter Samples
         option.Min_Shadow_Filter_Radius = Minimum Shadow filter Radius
         option.Variable_Penumbra_Shadows = Variable Penumbra Shadows
@@ -109,20 +116,17 @@ screen.Direct_Light = Direct Light
         option.Max_Filter_Depth = Sun Size Factor
 
     option.LIGHTLEAKFIX_MODE = "lightleak fix" mode
-        value.LIGHTLEAKFIX_MODE.0 = none. §csunlight will leak through walls§r
-        value.LIGHTLEAKFIX_MODE.1 = gap fill/zoom. §cmakes shadows blocky§r
-        value.LIGHTLEAKFIX_MODE.2 = use sky lightmap levels. §cno sunlight will shine in low lightmap levels§r
+        value.LIGHTLEAKFIX_MODE.0 = §cOFF§r §bⓘ sunlight will leak through walls§r
+        value.LIGHTLEAKFIX_MODE.1 = gap fill/zoom. §bⓘ makes shadows blocky§r
+        value.LIGHTLEAKFIX_MODE.2 = use sky light levels. §bⓘ no sunlight in low light levels§r
 
  ###################################################### ↑↑↑ THIS SUBMENU'S DESCRIPTIONS
 
     screen.Direct_Light.comment = Configure settings related to the sun and shadows.
-    option.ENTITY_SHADOW_AMOUNT.comment = §bⓘ What is this?§r Configure how far shadows should work for entities. This is good if you want to keep entity shadows and improved performance in high entity areas.
-    screen.Shadows.comment = Configure the shadows from the sun to your liking.
     option.SCREENSPACE_CONTACT_SHADOWS.comment = §bⓘ What is this?§r These are shadows for things that are far away, and on small details nearby. §a⚠ PERFORMANCE COST:§r low to medium; it is more expensive at higher resolutions.
-    option.RENDER_ENTITY_SHADOWS.comment =  §bⓘ What is this?§r Shadows on all types of entities, like mobs, chests, banners, or signs. §a⚠ PERFORMANCE COST:§r low to high; it is very expensive when there are many entities nearby.
-    option.shadowMapResolution.comment = The quality of shadows from the sun casted by things in the world. §a⚠ PERFORMANCE COST:§r medium to very high; Shadows must render the 3D world a second time from the perspective of the sun, this is why it cuts performance in half.
-    option.shadowDistance.comment = The maximum distance the shadowmap can render. §a⚠ PERFORMANCE COST:§r medium to very high; If the chunk render distance is high, the shadows will become more expensive.
-    screen.Filtering.comment = Configure the filtering effects applied to the shadows.
+    option.shadowMapResolution.comment = §bⓘ What is this?§r The quality of shadows from the sun casted by things in the world. The shadowmap is its own camera independent of the player camera; it has its own "screen resolution". §a⚠ PERFORMANCE COST:§r medium to very high; Shadows must render the 3D world a second time from the perspective of the sun, this is why it cuts performance in half.
+    option.shadowDistance.comment = §bⓘ What is this?§r The maximum distance the ShadowMap Renders geometry. §c⚠⚠⚠ THIS CANNOT RENDER FARTHER THAN THE VANILLA RENDER DISTANCE - SETTING IT FARTHER RUINS SHADOW QUALITY FOR NO REASON§r. §a⚠ PERFORMANCE COST:§r medium to very high; If the chunk render distance is high, the shadows will become more expensive.
+    screen.Filtering.comment = Configure the filtering effects applied to the shadows. 
     option.SHADOW_FILTER_SAMPLE_COUNT.comment = The quality of the basic shadow filter. This filter just softens the shadows. §a⚠ PERFORMANCE COST:§r low to medium; Increasing this should reduce some noise at the edge of shadows.
     option.Min_Shadow_Filter_Radius.comment = The maximum softness of the basic shadow filter.
     option.Variable_Penumbra_Shadows.comment = This effect softens the shadows more and more the farther the shadow gets from what casted it. This effect is used to create higher quality shadows and Sub-surface scattering. §a⚠ PERFORMANCE COST:§r low to high;
@@ -130,11 +134,13 @@ screen.Direct_Light = Direct Light
     option.Max_Shadow_Filter_Radius.comment = The maximum softness the shadows can get when far away from what casted it.
     option.Max_Filter_Depth.comment = Configure the size of the sun. If the sun is larger, shadows get softer closer to what casts them.
     option.TRANSLUCENT_COLORED_SHADOWS.comment = §bⓘ What is this?§r This effect allows translucent things like stained glass to color the sunlight as it passes through it. §a⚠ PERFORMANCE COST:§r medium
+    option.RENDER_PLAYER_SHADOWS.comment = §bⓘ What is this?§r Configure if the player contributes to the ShadowMap. §a⚠ PERFORMANCE COST:§r very very low
+    option.ENTITY_SHADOW_AMOUNT.comment = §bⓘ What is this?§r Configure what fraction of the ShadowMap distance that mobs can contribute to the ShadowMap. Or disable the ShadowMap for ALL entities, for improved performance in scenes dense with entities. §a⚠ PERFORMANCE COST:§r low to very high
 
  ###################################################### ↓↓↓ THIS SUBMENU'S LABELS
 screen.Ambient_light = Ambient Light
 
-    screen.LPV = FloodFill - §cIRIS REQUIRED§r
+    screen.LPV = FloodFill Colored Lighting §cⓘ IRIS REQUIRED§r
         option.LPV_ENABLED = Enabled
         option.LPV_SIZE = Size
             value.LPV_SIZE.6 = Small [64]
@@ -169,8 +175,8 @@ screen.Ambient_light = Ambient Light
             value.indirect_effect.SSAO_FILTERED = SSAO
             value.indirect_effect.SSAO_HQ = HQ SSAO
             value.indirect_effect.GTAO = GTAO
-            value.indirect_effect.SSRT_AO = SSRT (AO only) - §cLOTS OF VISUAL NOISE§r
-            value.indirect_effect.SSRT_AO_GI = SSRT (AO + GI) - §cLOTS OF VISUAL NOISE§r
+            value.indirect_effect.SSRT_AO = SSRT (AO only) §c⚠ LOTS OF VISUAL NOISE§r
+            value.indirect_effect.SSRT_AO_GI = SSRT (AO + GI) §c⚠ LOTS OF VISUAL NOISE§r
 
     screen.Ambient_Colors =  Ambient Light Color
         option.AmbientLight_R = Red Amount
@@ -224,14 +230,14 @@ screen.Resource_Pack_Support = Materials / Resource Pack Support
             value.DEFERRED_SSR_QUALITY.1 = mirrored view mode
             suffix.DEFERRED_SSR_QUALITY = §§ samples
         option.DEFERRED_BACKGROUND_REFLECTION =^ Background reflections
-        option.DEFERRED_ROUGH_REFLECTION =^ Rough reflections - §cCAN CAUSE VISUAL NOISE§r
+        option.DEFERRED_ROUGH_REFLECTION =^ Rough reflections §c⚠ CAN CAUSE VISUAL NOISE§r
         option.FORWARD_SPECULAR = Reflections on water, glass
         option.FORWARD_SSR_QUALITY =^ Environment reflections
             value.FORWARD_SSR_QUALITY.0 =§cOFF
             value.FORWARD_SSR_QUALITY.1 = mirrored view mode
             suffix.FORWARD_SSR_QUALITY = §§ samples
         option.FORWARD_BACKGROUND_REFLECTION =^ Background reflections
-        option.FORWARD_ROUGH_REFLECTION =^ Rough reflections - §cCAN CAUSE VISUAL NOISE§r
+        option.FORWARD_ROUGH_REFLECTION =^ Rough reflections §c⚠ CAN CAUSE VISUAL NOISE§r
         option.SUN_SPECULAR_MULT = Sun/Moon reflection
             value.SUN_SPECULAR_MULT.0 =§cOFF
             value.SUN_SPECULAR_MULT.1 = ON
@@ -268,12 +274,12 @@ screen.Resource_Pack_Support = Materials / Resource Pack Support
         option.Adaptive_Step_length = Dynamic Quality
         option.Horrible_slope_normals = Horrible Slope Normals
 
-    option.LABEL_0 = §a"Reflections on terrain" must be enabled for wetness to work
-    value.LABEL_0.0 = §f?§r
+    option.LABEL_0 = §bⓘ "Reflections on terrain" must be enabled for wetness to work
+    value.LABEL_0.0 = §bⓘ§r
     screen.WETNESS = Wetness / Puddles / Porosity
         option.PUDDLE_MODE = Wetness During Rain
             value.PUDDLE_MODE.0 = No Wetness
-            value.PUDDLE_MODE.1 = Puddles + Completely Wet
+            value.PUDDLE_MODE.1 = Puddles + Complete Wetness
             value.PUDDLE_MODE.2 = Only Puddles
             value.PUDDLE_MODE.3 = Only Complete Wetness
         option.Puddle_Size = Puddle Size Multiplier
@@ -281,8 +287,8 @@ screen.Resource_Pack_Support = Materials / Resource Pack Support
     option.MATERIAL_AO = Material Ambient Occlusion
     option.NORMAL_MAP_MULT = Normal map multiplier
     value.NORMAL_MAP_MULT.1.0 = Default 1.0 §aresourcepacks expect this value
-    suffix.NORMAL_MAP_MULT = §c resourcepacks DO NOT expect this value
-    option.RESOURCEPACK_SKY = Resource Pack Sky - §cWARNING:§r read the description!
+    suffix.NORMAL_MAP_MULT = §c ⚠ resourcepacks DO NOT expect this value
+    option.RESOURCEPACK_SKY = Resource Pack Sky §c⚠ READ DESCRIPTION§r
         value.RESOURCEPACK_SKY.0 = Do not use
         value.RESOURCEPACK_SKY.1 = Sky + Shader sun/moon
         value.RESOURCEPACK_SKY.2 = Full sky
@@ -335,7 +341,7 @@ screen.Resource_Pack_Support = Materials / Resource Pack Support
     option.FAKE_REFRACTION_AMOUNT.comment = Configure the amount of distortion refraction will do. §bⓘ What is this?§r you could think of refraction as light bending when going through water or glass, making the things viewed through them look stretched, squished, distorted. §a⚠ PERFORMANCE COST:§r very low
     option.FAKE_DISPERSION_AMOUNT.comment = Configure the amount of dispersion within the refraction. §bⓘ What is this?§r when refraction happens, the parts that get really distorted will get a "chromatic aberration", faking the look of a rainbow or light prism. §a⚠ PERFORMANCE COST:§r very low
     option.REFRACTION_SMUDGE_AMOUNT.comment = Configure the amount of smudge within the refraction. §bⓘ What is this?§r when refraction happens, the parts that get really distorted will get smudged. §cWill cause visaul noise within refraction. §a⚠ PERFORMANCE COST:§r very low
-    option.RESOURCEPACK_SKY.comment =§cWARNING: This setting, IF USED, will cause broken rendering for: lead ropes, fishing lines, and possibly some entities from mods!§r. Toggle resourcepack sky support. Configure settings to use the whole resourcepack sky, or keep the shader's sun and moon. §a⚠ PERFORMANCE COST:§r very low
+    option.RESOURCEPACK_SKY.comment =§c⚠ This setting, IF USED, will cause broken rendering for: lead ropes, fishing lines, and possibly some entities!§r. Toggle resourcepack sky support. Configure settings to use the whole resourcepack sky, or keep the shader's sun and moon. §a⚠ PERFORMANCE COST:§r very low
     option.MATERIAL_AO.comment = Toggle the use of ambient occlusion based on what the resourcepack provides. §a⚠ PERFORMANCE COST:§r very low
     option.SNELLS_WINDOW.comment = §bⓘ What is this?§r this is the dark reflective circle you see when under-water. This is an approximation of a thing that happens in reality known as "total internal reflection". §a⚠ PERFORMANCE COST:§r very very very small.
     
@@ -980,8 +986,8 @@ screen.World = World
  ###################################################### ↓↓↓ THIS SUBMENU'S LABELS
 screen.MOD_SETTINGS = Supported Mods
 
-    screen.VOXY_SETTINGS = Voxy - §c⚠ IRIS REQUIRED ⚠§r
-    screen.DISTANT_HORIZONS_SETTINGS = Distant Horizons - §c⚠ IRIS REQUIRED ⚠§r
+    screen.VOXY_SETTINGS = Voxy §cⓘ IRIS REQUIRED§r
+    screen.DISTANT_HORIZONS_SETTINGS = Distant Horizons §cⓘ IRIS REQUIRED§r
     option.DH_OVERDRAW_PREVENTION = Overdraw prevention
     option.OVERDRAW_MAX_DISTANCE = Max distance for overdraw prevention 
         value.OVERDRAW_MAX_DISTANCE.0 = Unlimited
@@ -1006,7 +1012,7 @@ screen.MOD_SETTINGS = Supported Mods
     option.DISTANT_HORIZONS_SHADOWMAP = §c(DO NOT USE IF YOU DO NOT KNOW WHAT THIS IS)§r DH shadowmap support
     option.TOGGLE_VL_FOG = Toggle Volumetric Fog
 
-    screen.PHYSICS_MOD_OCEAN = Physics Mod - §c⚠ READ DESCRIPTION ⚠§r
+    screen.PHYSICS_MOD_OCEAN = Physics Mod §c⚠ READ DESCRIPTION§r
 
  ###################################################### ↑↑↑ THIS SUBMENU'S DESCRIPTIONS
 
