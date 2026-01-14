@@ -3,7 +3,6 @@
 #define GEOMETRY_ANIMATION_RELATED_SETTINGS
 #define SHADOWMAP_CONSTANT_RELATED_SETTINGS
 #include "/lib/settings.glsl"
-
 #include "/lib/macro_lod_mod.glsl"
 
 #ifdef IS_LPV_ENABLED
