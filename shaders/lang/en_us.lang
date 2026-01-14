@@ -210,8 +210,8 @@ screen.Ambient_light = Ambient Light
         option.HANDHELD_LIGHTSOURCE_G = Light Color G
         option.HANDHELD_LIGHTSOURCE_B = Light Color B
 
-        option.FLASHLIGHT_BOUNCED_INDIRECT = (Flashlight) Bounced light
-        option.FLASHLIGHT_FOG_ILLUMINATION = (Flashlight) Fog illumination
+        option.FLASHLIGHT_BOUNCED_INDIRECT = (Flashlight) Bounced light §c⚠ CURRENTLY BROKEN§r
+        option.FLASHLIGHT_FOG_ILLUMINATION = (Flashlight) Fog illumination §c⚠ CURRENTLY BROKEN§r
         option.FLASHLIGHT_BRIGHTNESS_MULT = (Flashlight) Brightness Multiplier
         option.FLASHLIGHT_SIZE = (Flashlight) Flashlight Size
         option.FLASHLIGHT_BRIGHTNESS_FALLOFF_MULT = (Flashlight) Range Falloff Multiplier
