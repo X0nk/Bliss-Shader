@@ -30,7 +30,7 @@ flat varying float EMISSIVE;
 flat varying int LIGHTNING;
 flat varying int PORTAL;
 flat varying int SIGN;
-flat varying float HELD_ITEM_BRIGHTNESS;
+// flat varying float HELD_ITEM_BRIGHTNESS;
 
 uniform sampler2D texture;
 uniform sampler2D normals;
@@ -282,15 +282,6 @@ void main() {
 	vec3 fragpos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
 	vec3 playerpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz;
 	vec3 worldpos = playerpos + cameraPosition;
-			float pointLight = clamp(1.0-(length(worldpos-playerCamPos)-1)/HANDHELD_LIGHT_RANGE,0.0,1.0);
-			
-			torchlightmap = mix(torchlightmap, HELD_ITEM_BRIGHTNESS, pointLight);
-		}
-
-		#ifdef HAND
-			torchlightmap *= 0.9;
-		#endif
-	#endif
 	
 	float lightmap = clamp( (lmtexcoord.w-0.9) * 10.0,0.,1.);
 	vec2 adjustedTexCoord = lmtexcoord.xy;
@@ -373,7 +364,7 @@ void main() {
 	////////////////////////////////	ALBEDO		////////////////////////////////
 	//////////////////////////////// 				//////////////////////////////// 
 	float textureLOD = bias();
-	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD) * color;
+	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD);
 	Albedo *= color;
 	// if(Albedo.a < max(alphaTestRef,0.1)){discard; return;}else{}
 
@@ -590,7 +581,7 @@ void main() {
 	#endif
 
 	#ifdef WORLD
-		vec2 PackLightmaps = vec2(torchlightmap, lmtexcoord.w);
+		vec2 PackLightmaps = vec2(lmtexcoord.z, lmtexcoord.w);
 		
 		// special curve to give more precision on high/low values of the gradient. this curve will be inverted after sampling and decoding.
 		// PackLightmaps = pow(1.0-pow(1.0-PackLightmaps,vec2(0.5)),vec2(0.5));
