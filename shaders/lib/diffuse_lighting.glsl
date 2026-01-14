@@ -220,8 +220,8 @@ vec3 doHandHeldLight(
     vec3 offHandLight = vec3(0.0);
     vec3 offHandPos = vec3(0.0);
 
-    float mainHandlightlevel = float(heldBlockLightValue);
-    float offHandlightlevel = float(heldBlockLightValue2);
+    float mainHandlightlevel = clamp(float(heldBlockLightValue),0.0,15.0);
+    float offHandlightlevel = clamp(float(heldBlockLightValue2),0.0,15.0);
     
     #if HANDHELD_LIGHTSOURCE_MODE == 3
         calculateFinishedPointLight(viewPos, normal, 16, heldItemId, vec3(-0.25, 0.1-playerLookVector.y*0.2, 0.1), mainHandPos, mainHandLight);
