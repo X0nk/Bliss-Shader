@@ -378,6 +378,7 @@ void main() {
 	#endif
 
 	#ifdef WEATHER
+		if(TEXTURE.a > 0.1) discard;
 		gl_FragData[1] = vec4(0.0,0.0,0.0,TEXTURE.a); // for bloomy rain and stuff
 	#endif
 
