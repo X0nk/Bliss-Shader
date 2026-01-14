@@ -1258,7 +1258,7 @@ void main() {
 			
 			Indirect_lighting += doHandHeldLight(
 				viewPos, slopednormal
-        		#if defined DEFERRED_SPECULAR
+        		#if defined HANDHELD_LIGHTSOURCE_SPECULAR && defined DEFERRED_SPECULAR
 					,mainHandPos, mainHandCol, offHandPos, offHandCol
 				#endif
 			);

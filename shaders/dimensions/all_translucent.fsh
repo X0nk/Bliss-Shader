@@ -699,7 +699,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#if HANDHELD_LIGHTSOURCE_MODE > 0
 		Indirect_lighting += doHandHeldLight(
 			viewPos, worldSpaceNormal
-        	#if defined FORWARD_SPECULAR
+        	#if defined HANDHELD_LIGHTSOURCE_SPECULAR && defined FORWARD_SPECULAR
 				,mainHandPos, mainHandCol, offHandPos, offHandCol
 			#endif
 		);
