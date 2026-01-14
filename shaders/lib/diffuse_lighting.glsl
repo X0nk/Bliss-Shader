@@ -116,9 +116,9 @@ uniform vec3 playerLookVector;
 
 float createHandheldPointLightFalloff(in float linearDistance, in float range){
     
-    // float gradient = 1.0 - clamp(linearDistance/range, 0.0, 1.0);
-    float gradient = 1.0 - clamp(1.0 - linearDistance/range, -0.999,1.0);
-    gradient = max(exp(-10.0 * gradient),0.0);
+    float gradient = 1.0 - clamp(linearDistance/range, 0.0, 1.0);
+    // float gradient = 1.0 - clamp(1.0 - linearDistance/range, -0.999,1.0);
+    // gradient = max(exp(-10.0 * gradient),0.0);
 
     return gradient;
 }
@@ -137,7 +137,7 @@ void calculateFinishedPointLight(
 
     int lightLevel, int heldItemId, vec3 handOffset, 
 
-    inout vec3 handPos, out vec3 lighting
+    out vec3 handPos, out vec3 lighting
 ){
     if(lightLevel > 0){
         // offset viewPos to match hand position
@@ -161,7 +161,7 @@ void calculateFinishedPointLight(
                 if(heldItemId < 1) lighting = vec3(HANDHELD_LIGHTSOURCE_R,HANDHELD_LIGHTSOURCE_G,HANDHELD_LIGHTSOURCE_B);
             #endif
         #else
-            lighting = vec3(HANDHELD_LIGHTSOURCE_R,HANDHELD_LIGHTSOURCE_G,HANDHELD_LIGHTSOURCE_B);
+            lighting = vec3(HANDHELD_LIGHTSOURCE_R, HANDHELD_LIGHTSOURCE_G, HANDHELD_LIGHTSOURCE_B);
             float lightRange = float(lightLevel);
             lighting *= lightRange/15.0;
         #endif
