@@ -137,17 +137,18 @@ void calculateFinishedPointLight(
 
     float lightLevel, int heldItemId, vec3 handOffset, 
 
-    out vec3 handPos, out vec3 lighting
+    inout vec3 handPos, inout vec3 lighting
 ){
-    if(lightLevel > 0.001){
+    if(lightLevel > 1e-6){
         // offset viewPos to match hand position
         handPos = mat3(gbufferModelViewInverse) * (viewPos + handOffset) + gbufferModelViewInverse[3].xyz;
         
-        #if HANDHELD_LIGHTSOURCE_MODE == 1
-            handPos += cameraPosition - eyePosition;
-        #elif HANDHELD_LIGHTSOURCE_MODE > 1
+        // make sure the position is centered on the player, not the camera.
+        handPos += cameraPosition - eyePosition;
+        
+        #if HANDHELD_LIGHTSOURCE_MODE > 1
             /// previous frame data to lag the light behind to seem handheld.
-            handPos += (cameraPosition-eyePosition) - (cameraPosition-previousCameraPosition)*3.0;
+            handPos -= (cameraPosition-previousCameraPosition)*3.0;
         #endif
         
         // get color and stuff
@@ -220,14 +221,11 @@ vec3 doHandHeldLight(
     vec3 offHandLight = vec3(0.0);
     vec3 offHandPos = vec3(0.0);
 
-    float mainHandlightlevel = clamp(float(heldBlockLightValue),0.0,15.0);
-    float offHandlightlevel = clamp(float(heldBlockLightValue2),0.0,15.0);
-    
     #if HANDHELD_LIGHTSOURCE_MODE == 3
-        calculateFinishedPointLight(viewPos, normal, 16, heldItemId, vec3(-0.25, 0.1-playerLookVector.y*0.2, 0.1), mainHandPos, mainHandLight);
+        calculateFinishedPointLight(viewPos, normal, 16.0, heldItemId, vec3(-0.25, 0.1-playerLookVector.y*0.2, 0.1), mainHandPos, mainHandLight);
     #else
-        calculateFinishedPointLight(viewPos, normal, mainHandlightlevel , heldItemId , vec3(-0.25, 0.1-playerLookVector.y*0.2, 0.1), mainHandPos, mainHandLight);
-        calculateFinishedPointLight(viewPos, normal, offHandlightlevel, heldItemId2, vec3( 0.25, 0.1-playerLookVector.y*0.2, 0.1), offHandPos , offHandLight );
+        calculateFinishedPointLight(viewPos, normal, float(heldBlockLightValue), heldItemId, vec3(-0.25, 0.1-playerLookVector.y*0.2, 0.1), mainHandPos, mainHandLight);
+        calculateFinishedPointLight(viewPos, normal, float(heldBlockLightValue2), heldItemId2, vec3( 0.25, 0.1-playerLookVector.y*0.2, 0.1), offHandPos, offHandLight);
     #endif
 
     #if defined HANDHELD_LIGHTSOURCE_SPECULAR && (defined DEFERRED_SPECULAR || defined FORWARD_SPECULAR)
