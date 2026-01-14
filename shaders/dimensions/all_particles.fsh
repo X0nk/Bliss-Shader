@@ -70,7 +70,6 @@ uniform float rainStrength;
 uniform float nightVision;
 uniform float waterEnteredAltitude;
 
-
 flat varying float HELD_ITEM_BRIGHTNESS;
 
 uniform mat4 gbufferPreviousModelView;
@@ -89,9 +88,12 @@ uniform vec3 previousCameraPosition;
 #endif
 
 
+uniform int heldItemId;
+uniform int heldItemId2;
+uniform int heldBlockLightValue;
+uniform int heldBlockLightValue2;
+
 #ifdef IS_LPV_ENABLED
-	uniform int heldItemId;
-	uniform int heldItemId2;
 	uniform int frameCounter;
 
 	#include "/lib/hsv.glsl"
@@ -100,6 +102,7 @@ uniform vec3 previousCameraPosition;
 #endif
 
 #include "/lib/diffuse_lighting.glsl"
+
 #include "/lib/sky_gradient.glsl"
 
 vec3 toLinear(vec3 sRGB){
@@ -263,7 +266,7 @@ vec4 texture2D_POMSwitch(
 float luma(vec3 color) {
 	return dot(color,vec3(0.21, 0.72, 0.07));
 }
-uniform vec3 eyePosition;
+// uniform vec3 eyePosition;
 
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -370,23 +373,8 @@ void main() {
 	
 	vec2 lightmap = clamp(lmtexcoord.zw,0.0,1.0);
 
-
 	#ifndef OVERWORLD_SHADER
 		lightmap.y = 1.0;
-	#endif
-
-	#if defined Hand_Held_lights && !defined LPV_ENABLED
-		#ifdef IS_IRIS
-			vec3 playerCamPos = eyePosition;
-		#else
-			vec3 playerCamPos = cameraPosition;
-		#endif
-		// lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length((feetPlayerPos+cameraPosition) - playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
-		if(HELD_ITEM_BRIGHTNESS > 0.0){ 
-			float pointLight = clamp(1.0-(length((feetPlayerPos+cameraPosition)-playerCamPos)-1.0)/HANDHELD_LIGHT_RANGE,0.0,1.0);
-			lightmap.x = mix(lightmap.x, HELD_ITEM_BRIGHTNESS, pointLight*pointLight);
-		}
-	
 	#endif
 
 	#ifdef WEATHER

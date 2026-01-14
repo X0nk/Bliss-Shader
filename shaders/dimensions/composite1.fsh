@@ -125,14 +125,21 @@ flat varying vec3 WsunVec;
 flat varying vec3 unsigned_WsunVec;
 flat varying vec3 WmoonVec;
 
-#ifdef FLASHLIGHT
-	flat varying vec3 albedoSmooth;
-#endif
+// #ifdef FLASHLIGHT
+// 	flat varying vec3 albedoSmooth;
+// #endif
 
-#ifdef IS_LPV_ENABLED
-	uniform int heldItemId;
-	uniform int heldItemId2;
-#endif
+uniform int heldBlockLightValue;
+uniform int heldBlockLightValue2;
+uniform int heldItemId;
+uniform int heldItemId2;
+
+// // #ifdef IS_LPV_ENABLED
+// 	uniform int heldItemId;
+// 	uniform int heldItemId2;
+// 	uniform int heldBlockLightValue;
+// 	uniform int heldBlockLightValue2;
+// #endif
 
 uniform float waterEnteredAltitude;
 
@@ -1240,13 +1247,21 @@ void main() {
 
 		vec3 blockLightColor = doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, feetPlayerPos, lpvPos);
 		Indirect_lighting += blockLightColor;
-
-		vec4 flashLightSpecularData = vec4(0.0);
 		
-		#ifdef FLASHLIGHT
-			// vec3 newViewPos = viewPos;
-			// float flashlightshadows = SSRT_FlashLight_Shadows(toScreenSpace_DH(texcoord/RENDER_SCALE, z, DH_depth1), isDHrange, newViewPos, interleaved_gradientNoise_temporal());
-			Indirect_lighting += calculateFlashlight(texcoord, viewPos, albedoSmooth, slopednormal, flashLightSpecularData, hand);
+		vec3 mainHandPos = vec3(0.0);
+		vec3 mainHandCol = vec3(0.0);
+		vec3 offHandPos = vec3(0.0);
+		vec3 offHandCol = vec3(0.0);
+
+		#if HANDHELD_LIGHTSOURCE_MODE > 0
+			// float flashlightshadows = SSRT_FlashLight_Shadows(shiftedViewPos, isDHrange, normalize(shiftedPlayerPos), interleaved_gradientNoise_temporal());
+			
+			Indirect_lighting += doHandHeldLight(
+				viewPos, slopednormal
+        		#if defined DEFERRED_SPECULAR
+					,mainHandPos, mainHandCol, offHandPos, offHandCol
+				#endif
+			);
 		#endif
 
 		#if defined LIGHTNING_FLASH
@@ -1349,7 +1364,7 @@ void main() {
 		#if defined DEFERRED_SPECULAR	
 			vec3 specularNoises = vec3(vec2(blueNoise(), ig_noise), ig_noise);
     		// vec3 specularNormal = normal;
-			FINAL_COLOR = specularReflections(viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, normal, SpecularTex.r, SpecularTex.g, albedo, FINAL_COLOR, DirectLightColor*shadowColor, lightmap.y, hand, flashLightSpecularData);
+			FINAL_COLOR = specularReflections(viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, normal, SpecularTex.r, SpecularTex.g, albedo, FINAL_COLOR, DirectLightColor*shadowColor, lightmap.y, hand, mainHandPos, mainHandCol, offHandPos, offHandCol);
 		#endif
 
 		gl_FragData[0].rgb = FINAL_COLOR;

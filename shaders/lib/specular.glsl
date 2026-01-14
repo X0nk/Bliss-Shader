@@ -241,7 +241,7 @@ vec4 screenSpaceReflections(
 // );
 // // reflectLength = pow(1-pow(1-reflectLength,2),5) * 6;
 // reflectLength = (exp(-4*(1-reflectLength))) * 6;
-// Reflections.rgb = texture2D(colortex6, bloomTileoffsetUV[0]).rgb;
+// Reflections.rgb = texture(colortex6, bloomTileoffsetUV[0]).rgb;
 
 	return reflection;
 }
@@ -314,7 +314,12 @@ vec3 specularReflections(
 	, inout float reflectanceForAlpha
 	#endif
 	
-	,in vec4 flashLight_stuff
+	// ,in vec4 flashLight_stuff
+	// ,in vec3 handHeldLightColor
+	,in vec3 mainHandPos
+	,in vec3 mainHandCol
+	,in vec3 offHandPos
+	,in vec3 offHandCol
 
 ){
 	lightmap = min(max(lightmap-0.9,0.0)/0.1,1.0); 
@@ -421,9 +426,18 @@ vec3 specularReflections(
 		specularReflections += lightSourceReflection;
 	#endif
 
-	#if defined FLASHLIGHT_SPECULAR && (defined DEFERRED_SPECULAR || defined FORWARD_SPECULAR)
-		vec3 flashLightReflection = vec3(FLASHLIGHT_R,FLASHLIGHT_G,FLASHLIGHT_B) * flashLight_stuff.a * GGX(normal, -flashLight_stuff.xyz, -flashLight_stuff.xyz, roughness, reflectance, metalAlbedoTint);
-		specularReflections += flashLightReflection;
+	#if defined HANDHELD_LIGHTSOURCE_SPECULAR && (HANDHELD_LIGHTSOURCE_MODE > 0 && (defined DEFERRED_SPECULAR || defined FORWARD_SPECULAR))
+		vec3 mainHandLightReflection = vec3(0.0);
+		vec3 offHandLightReflection = vec3(0.0);
+		
+    	#if HANDHELD_LIGHTSOURCE_MODE == 3
+			mainHandLightReflection = mainHandCol * GGX(normal, -mainHandPos, -mainHandPos, roughness, reflectance, metalAlbedoTint);
+		#else
+			if(heldBlockLightValue > 0) mainHandLightReflection = mainHandCol * GGX(normal, -mainHandPos, -mainHandPos, roughness, reflectance, metalAlbedoTint);
+    		if(heldBlockLightValue2 > 0) offHandLightReflection = offHandCol * GGX(normal, -offHandPos, -offHandPos, roughness, reflectance, metalAlbedoTint);
+    	#endif
+		
+		specularReflections += mainHandLightReflection + offHandLightReflection;
 	#endif
 
 	return specularReflections;

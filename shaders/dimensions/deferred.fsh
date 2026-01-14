@@ -266,21 +266,21 @@ float mixhistory = 0.06;
 		}
 	#endif
 
-	#if defined FLASHLIGHT && defined FLASHLIGHT_BOUNCED_INDIRECT
-		// sample center pixel of albedo color, and interpolate it overtime.
-		if (gl_FragCoord.x > 15 && gl_FragCoord.x < 16 && gl_FragCoord.y > 2 && gl_FragCoord.y < 3){
+	// #if defined FLASHLIGHT && defined FLASHLIGHT_BOUNCED_INDIRECT
+	// 	// sample center pixel of albedo color, and interpolate it overtime.
+	// 	if (gl_FragCoord.x > 15 && gl_FragCoord.x < 16 && gl_FragCoord.y > 2 && gl_FragCoord.y < 3){
 			
-			mixhistory = 0.01;
+	// 		mixhistory = 0.01;
 
-			vec3 data = texelFetch(colortex1, ivec2(0.5/texelSize), 0).rgb;
-			vec3 decodeAlbedo = vec3(decodeVec2(data.x).x,decodeVec2(data.y).x, decodeVec2(data.z).x);
-			vec3 albedo = toLinear(decodeAlbedo);
+	// 		vec3 data = texelFetch(colortex1, ivec2(0.5/texelSize), 0).rgb;
+	// 		vec3 decodeAlbedo = vec3(decodeVec2(data.x).x,decodeVec2(data.y).x, decodeVec2(data.z).x);
+	// 		vec3 albedo = toLinear(decodeAlbedo);
 			
-			albedo = normalize(albedo + 1e-7) * (dot(albedo,vec3(0.21, 0.72, 0.07))*0.5+0.5);
+	// 		albedo = normalize(albedo + 1e-7) * (dot(albedo,vec3(0.21, 0.72, 0.07))*0.5+0.5);
 			
-			gl_FragData[0] = vec4(albedo,1.0);
-		}
-	#endif
+	// 		gl_FragData[0] = vec4(albedo,1.0);
+	// 	}
+	// #endif
 ////////////////////////////////
 /// --- ATMOSPHERE IMAGE --- ///
 ////////////////////////////////

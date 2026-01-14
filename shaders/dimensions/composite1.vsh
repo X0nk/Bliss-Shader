@@ -15,9 +15,10 @@ flat varying vec3 unsigned_WsunVec;
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec4 lightCol;
 flat varying vec3 moonCol;
-#ifdef FLASHLIGHT
-	flat varying vec3 albedoSmooth;
-#endif
+
+// #ifdef FLASHLIGHT
+// 	flat varying vec3 albedoSmooth;
+// #endif
 
 
 flat varying vec3 zMults;
@@ -57,9 +58,9 @@ void main() {
 
 	moonCol = texelFetch(colortex4,ivec2(9,37),0).rgb;
 	
-	#if defined FLASHLIGHT && defined FLASHLIGHT_BOUNCED_INDIRECT
-		albedoSmooth = texelFetch(colortex4,ivec2(15.5,2.5),0).rgb;
-	#endif
+	// #if defined FLASHLIGHT && defined FLASHLIGHT_BOUNCED_INDIRECT
+	// 	albedoSmooth = texelFetch(colortex4,ivec2(15.5,2.5),0).rgb;
+	// #endif
 
 	averageSkyCol_Clouds = texelFetch(colortex4,ivec2(0,37),0).rgb;
 

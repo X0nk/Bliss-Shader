@@ -78,7 +78,7 @@ uniform float screenBrightness;
 
 uniform int heldItemId;
 uniform int heldItemId2;
-flat varying float HELD_ITEM_BRIGHTNESS;
+// flat varying float HELD_ITEM_BRIGHTNESS;
 
 uniform vec2 texelSize;
 
@@ -182,11 +182,11 @@ void main() {
  		gl_Position = toClipSpace3(position);
 	#endif
 
-	HELD_ITEM_BRIGHTNESS = 0.0;
+	// HELD_ITEM_BRIGHTNESS = 0.0;
 	
-	#ifdef Hand_Held_lights
-		if(heldItemId > 999 || heldItemId2 > 999) HELD_ITEM_BRIGHTNESS = 0.9;
-	#endif
+	// #ifdef Hand_Held_lights
+	// 	if(heldItemId > 999 || heldItemId2 > 999) HELD_ITEM_BRIGHTNESS = 0.9;
+	// #endif
 	
 	// 1.0 = water mask
 	// 0.9 = entity mask

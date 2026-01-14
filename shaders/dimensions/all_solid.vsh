@@ -38,7 +38,7 @@ flat varying float EMISSIVE;
 flat varying int LIGHTNING;
 flat varying int PORTAL;
 flat varying int SIGN;
-flat varying float HELD_ITEM_BRIGHTNESS;
+// flat varying float HELD_ITEM_BRIGHTNESS;
 flat varying float blockID;
 flat varying int NameTags;
 
@@ -121,7 +121,7 @@ float densityAtPos(in vec3 pos){
 	vec2 coord =  uv / 512.0;
 	
 	//The y channel has an offset to avoid using two textures fetches
-	vec2 xy = texture(noisetex, coord).yx;
+	vec2 xy = texture2D(noisetex, coord).yx;
 
 	return mix(xy.r,xy.g, f.y);
 }
@@ -223,10 +223,10 @@ void main() {
 		LIGHTNING = 0;
 	// if(NameTags > 0) EMISSIVE = 0.9;
 
-	HELD_ITEM_BRIGHTNESS = 0.0;
-	#ifdef Hand_Held_lights
-		if(heldItemId > 999 || heldItemId2 > 999 ) HELD_ITEM_BRIGHTNESS = 0.9;
-	#endif
+	// HELD_ITEM_BRIGHTNESS = 0.0;
+	// #ifdef Hand_Held_lights
+	// 	if(heldItemId > 999 || heldItemId2 > 999 ) HELD_ITEM_BRIGHTNESS = 0.9;
+	// #endif
 
 	// normal block lightsources		
 	if(mc_Entity.x >= 100 && mc_Entity.x < 300) EMISSIVE = 0.5;

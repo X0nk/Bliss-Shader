@@ -90,11 +90,11 @@ void main() {
 	#endif
 
 
-	HELD_ITEM_BRIGHTNESS = 0.0;
+	// HELD_ITEM_BRIGHTNESS = 0.0;
 
-	#ifdef Hand_Held_lights
-		if(heldItemId > 999 || heldItemId2 > 999) HELD_ITEM_BRIGHTNESS = 0.9;
-	#endif
+	// #ifdef Hand_Held_lights
+	// 	if(heldItemId > 999 || heldItemId2 > 999) HELD_ITEM_BRIGHTNESS = 0.9;
+	// #endif
 
 
 	#if defined WEATHER || defined LINES

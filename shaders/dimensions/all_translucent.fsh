@@ -136,9 +136,12 @@ uniform float waterEnteredAltitude;
 	#include "/lib/end_fog.glsl"
 #endif
 
+uniform int heldItemId;
+uniform int heldItemId2;
+uniform int heldBlockLightValue;
+uniform int heldBlockLightValue2;
+
 #ifdef IS_LPV_ENABLED
-	uniform int heldItemId;
-	uniform int heldItemId2;
 
 	#include "/lib/hsv.glsl"
 	#include "/lib/lpv_common.glsl"
@@ -380,7 +383,6 @@ void Emission(
 	if( Emission < 254.5/255.0) Lighting = mix(Lighting, Albedo * 5.0 * Emissive_Brightness, pow(Emission, Emissive_Curve));
 }
 
-uniform vec3 eyePosition;
 float bias(){
 	#ifdef SCALE_MIPMAP_WITH_RESOLUTION
 		// bias mipmapping as window resolution and / or render scale changes.
@@ -584,20 +586,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#ifndef OVERWORLD_SHADER
 		lightmap.y = 1.0;
 	#endif
-	
-	#if defined Hand_Held_lights && !defined LPV_ENABLED
-		#ifdef IS_IRIS
-			vec3 playerCamPos = eyePosition;
-		#else
-			vec3 playerCamPos = cameraPosition;
-		#endif
-		
-		if(HELD_ITEM_BRIGHTNESS > 0.0){ 
-			float pointLight = clamp(1.0-length((feetPlayerPos+cameraPosition)-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0,1.0);
-			lightmap.x  = mix(lightmap.x , HELD_ITEM_BRIGHTNESS, pointLight*pointLight);
-		}
-
-	#endif
 
 	vec3 Indirect_lighting = vec3(0.0);
 	vec3 MinimumLightColor = vec3(1.0);
@@ -703,10 +691,18 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, feetPlayerPos, lpvPos);
 	
-	vec4 flashLightSpecularData = vec4(0.0);
+	vec3 mainHandPos = vec3(0.0);
+	vec3 mainHandCol = vec3(0.0);
+	vec3 offHandPos = vec3(0.0);
+	vec3 offHandCol = vec3(0.0);
 
-	#ifdef FLASHLIGHT
-		Indirect_lighting += calculateFlashlight(FragCoord.xy*texelSize/RENDER_SCALE, viewPos, vec3(0.0), worldSpaceNormal, flashLightSpecularData, false);
+	#if HANDHELD_LIGHTSOURCE_MODE > 0
+		Indirect_lighting += doHandHeldLight(
+			viewPos, worldSpaceNormal
+        	#if defined FORWARD_SPECULAR
+				,mainHandPos, mainHandCol, offHandPos, offHandCol
+			#endif
+		);
 	#endif
 
 	#if defined LIGHTNING_FLASH
@@ -764,7 +760,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 				float Shadows = 0.0;
 			#endif
 			
-			vec3 specularReflections = specularReflections(viewPos, normalize(feetPlayerPos), WsunVec, vec3(blueNoise(), vec2(interleaved_gradientNoise_temporal())), worldSpaceNormal, roughness, f0, Albedo, FinalColor*gl_FragData[0].a, DirectLightColor * Shadows, lightmap.y, isHand, isWater, reflectance, flashLightSpecularData);
+			vec3 specularReflections = specularReflections(viewPos, normalize(feetPlayerPos), WsunVec, vec3(blueNoise(), vec2(interleaved_gradientNoise_temporal())), worldSpaceNormal, roughness, f0, Albedo, FinalColor*gl_FragData[0].a, DirectLightColor * Shadows, lightmap.y, isHand, isWater, reflectance, mainHandPos, mainHandCol, offHandPos, offHandCol);
 			
 			gl_FragData[0].a = gl_FragData[0].a + (1.0-gl_FragData[0].a) * reflectance;
 		

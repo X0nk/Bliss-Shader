@@ -192,6 +192,30 @@ screen.Ambient_light = Ambient Light
         option.TORCH_G = Green Amount
         option.TORCH_B = Blue Amount
 
+    option.HANDHELD_LIGHTSOURCE_MODE = Handheld Light Mode
+        value.HANDHELD_LIGHTSOURCE_MODE.0 = §cOFF
+        value.HANDHELD_LIGHTSOURCE_MODE.1 = Point Light §bⓘ From Lightsource Items§
+        value.HANDHELD_LIGHTSOURCE_MODE.2 = Flashlight §bⓘ From Lightsource Items§
+        value.HANDHELD_LIGHTSOURCE_MODE.3 = Flashlight §bⓘ Always on§r
+
+    screen.HANDHELD_LIGHTSOURCE_SETTINGS = Handheld Lightsource Settings
+
+        option.HANDHELD_LIGHTSOURCE_RANGE = Handheld Light Range
+            value.HANDHELD_LIGHTSOURCE_RANGE.0 = Use Held Item's Light Level
+            suffix.HANDHELD_LIGHTSOURCE_RANGE = §c§r blocks
+
+        option.HANDHELD_LIGHTSOURCE_RANGE = Handheld Light Range
+        option.HANDHELD_LIGHTSOURCE_SPECULAR = Reflections from Handheld Light
+        option.HANDHELD_LIGHTSOURCE_R = Light Color R
+        option.HANDHELD_LIGHTSOURCE_G = Light Color G
+        option.HANDHELD_LIGHTSOURCE_B = Light Color B
+
+        option.FLASHLIGHT_BOUNCED_INDIRECT = (Flashlight) Bounced light
+        option.FLASHLIGHT_FOG_ILLUMINATION = (Flashlight) Fog illumination
+        option.FLASHLIGHT_BRIGHTNESS_MULT = (Flashlight) Brightness Multiplier
+        option.FLASHLIGHT_SIZE = (Flashlight) Flashlight Size
+        option.FLASHLIGHT_BRIGHTNESS_FALLOFF_MULT = (Flashlight) Range Falloff Multiplier
+
  ###################################################### ↑↑↑ THIS SUBMENU'S DESCRIPTIONS
 
     screen.Ambient_light.comment = Configure settings related to the lighting in shaded places

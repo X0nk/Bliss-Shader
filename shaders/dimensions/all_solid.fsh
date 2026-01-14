@@ -40,7 +40,7 @@ uniform sampler2D depthtex0;
 uniform sampler2D noisetex;//depth
 
 uniform vec2 texelSize;
-
+uniform float alphaTestRef;
 uniform float near;
 uniform float far;
 uniform float wetness;
@@ -282,25 +282,6 @@ void main() {
 	vec3 fragpos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
 	vec3 playerpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz;
 	vec3 worldpos = playerpos + cameraPosition;
-
-	float torchlightmap = lmtexcoord.z;
-
-	#if defined Hand_Held_lights && !defined LPV_ENABLED
-		#ifdef IS_IRIS
-			vec3 playerCamPos = eyePosition;
-		#else
-			vec3 playerCamPos = cameraPosition;
-		#endif
-
-		#ifdef VIVECRAFT
-        	if (vivecraftIsVR) { 
-				playerCamPos = cameraPosition - vivecraftRelativeMainHandPos;
-			}
-		#endif
-
-		// if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(worldpos-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
-		if(HELD_ITEM_BRIGHTNESS > 0.0){ 
-			
 			float pointLight = clamp(1.0-(length(worldpos-playerCamPos)-1)/HANDHELD_LIGHT_RANGE,0.0,1.0);
 			
 			torchlightmap = mix(torchlightmap, HELD_ITEM_BRIGHTNESS, pointLight);
@@ -393,6 +374,8 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 	float textureLOD = bias();
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD) * color;
+	Albedo *= color;
+	// if(Albedo.a < max(alphaTestRef,0.1)){discard; return;}else{}
 
 	#if defined HAND
 		if (Albedo.a < 0.1) discard;

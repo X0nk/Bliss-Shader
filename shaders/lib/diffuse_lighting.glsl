@@ -1,25 +1,25 @@
-#ifdef IS_LPV_ENABLED
-    vec3 GetHandLight(const in int itemId, const in vec3 playerPos, const in vec3 normal) {
-        vec3 lightFinal = vec3(0.0);
-        vec3 lightColor = vec3(0.0);
-        float lightRange = 0.0;
+// #ifdef IS_LPV_ENABLED
+//     vec3 GetHandLight(const in int itemId, const in vec3 playerPos, const in vec3 normal) {
+//         vec3 lightFinal = vec3(0.0);
+//         vec3 lightColor = vec3(0.0);
+//         float lightRange = 0.0;
 
-        uvec2 blockData = texelFetch(texBlockData, itemId, 0).rg;
-        vec4 lightColorRange = unpackUnorm4x8(blockData.r);
-        lightColor = srgbToLinear(lightColorRange.rgb);
-        lightRange = lightColorRange.a * 255.0;
+//         uvec2 blockData = texelFetch(texBlockData, itemId, 0).rg;
+//         vec4 lightColorRange = unpackUnorm4x8(blockData.r);
+//         lightColor = srgbToLinear(lightColorRange.rgb);
+//         lightRange = lightColorRange.a * 255.0;
 
-        if (lightRange > 0.0) {
-            float lightDist = length(playerPos);
-            vec3 lightDir = playerPos / lightDist;
-            float NoL = 1.0;//max(dot(normal, lightDir), 0.0);
-            float falloff = pow(1.0 - lightDist / lightRange, 3.0);
-            lightFinal = lightColor * NoL * max(falloff, 0.0);
-        }
+//         // if (lightRange > 0.0) {
+//         //     float lightDist = length(playerPos);
+//         //     vec3 lightDir = playerPos / lightDist;
+//         //     float NoL = 1.0;//max(dot(normal, lightDir), 0.0);
+//         //     float falloff = pow(1.0 - lightDist / lightRange, 3.0);
+//         //     lightFinal = lightColor * NoL * max(falloff, 0.0);
+//         // }
 
-        return lightFinal;
-    }
-#endif
+//         return lightColor;
+//     }
+// #endif
 
 vec3 doBlockLightLighting(
     vec3 lightColor, float lightmap,
@@ -53,16 +53,16 @@ vec3 doBlockLightLighting(
         // outside the voxel volume, lerp to vanilla lighting as a fallback
         blockLight = mix(blockLight, lpvSample.rgb + lightColor * 2.5 * min(max(lightmap-0.999,0.0)/(1.0-0.999),1.0), voxelRangeFalloff);
 
-        #ifdef Hand_Held_lights
-            // create handheld lightsources
-            const vec3 normal = vec3(0.0); // TODO
+        // #ifdef Hand_Held_lights
+        //     // create handheld lightsources
+        //     const vec3 normal = vec3(0.0); // TODO
 
-                if (heldItemId > 0)
-                blockLight += GetHandLight(heldItemId, playerPos, normal);
+        //         if (heldItemId > 0)
+        //         blockLight += GetHandLight(heldItemId, playerPos, normal);
 
-                if (heldItemId2 > 0)
-                blockLight += GetHandLight(heldItemId2, playerPos, normal);
-        #endif
+        //         if (heldItemId2 > 0)
+        //         blockLight += GetHandLight(heldItemId2, playerPos, normal);
+        // #endif
     #endif
 
     return blockLight * TORCH_AMOUNT;
@@ -88,7 +88,11 @@ vec3 doIndirectLighting(
     return indirectLight;
 }
 
-uniform float centerDepthSmooth;
+// uniform int heldItemId;
+// uniform int heldItemId2;
+// uniform float centerDepthSmooth;
+uniform vec3 eyePosition;
+uniform vec3 playerLookVector;
 
 #if defined VIVECRAFT
 	uniform bool vivecraftIsVR;
@@ -98,65 +102,137 @@ uniform float centerDepthSmooth;
 	uniform mat4 vivecraftRelativeOffHandRot;
 #endif
 
-vec3 calculateFlashlight(in vec2 texcoord, in vec3 viewPos, in vec3 albedo, in vec3 normal, out vec4 flashLightSpecularData, bool hand){
+#ifdef IS_LPV_ENABLED
+    vec4 getHandheldLightData(int ID){
 
-	// vec3 shiftedViewPos = viewPos + vec3(-0.25, 0.2, 0.0);
-	// vec3 shiftedPlayerPos = mat3(gbufferModelViewInverse) * shiftedViewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition) * 3.0;
-	// shiftedViewPos = mat3(gbufferPreviousModelView) * shiftedPlayerPos + gbufferPreviousModelView[3].xyz;
-	vec3 shiftedViewPos;
-    vec3 shiftedPlayerPos;
-	float forwardOffset;
+        uvec2 blockData = texelFetch(texBlockData, ID, 0).rg;
+        vec4 lightColorRange = unpackUnorm4x8(blockData.r);
+        vec3 lightColor = srgbToLinear(lightColorRange.rgb);
+        float lightRange = lightColorRange.a * 255.0;
 
-    #ifdef VIVECRAFT
-        if (vivecraftIsVR) {
-	        forwardOffset = 0.0;
-            shiftedPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz + vivecraftRelativeMainHandPos;
-            shiftedViewPos = shiftedPlayerPos * mat3(vivecraftRelativeMainHandRot);
-        } else
-    #endif
-    {
-	    forwardOffset = 0.5;
-        shiftedViewPos = viewPos + vec3(-0.25, 0.2, 0.0);
-        shiftedPlayerPos = mat3(gbufferModelViewInverse) * shiftedViewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition) * 3.0;
-        shiftedViewPos = mat3(gbufferPreviousModelView) * shiftedPlayerPos + gbufferPreviousModelView[3].xyz;
+        return vec4(lightColor, lightRange);
     }
+#endif
 
+float createHandheldPointLightFalloff(in float linearDistance, in float range){
     
+    // float gradient = 1.0 - clamp(linearDistance/range, 0.0, 1.0);
+    float gradient = 1.0 - clamp(1.0 - linearDistance/range, -0.999,1.0);
+    gradient = max(exp(-10.0 * gradient),0.0);
+
+    return gradient;
+}
+
+float createHandheldPointlight(in vec3 position, in vec3 normal, in float range){
+
+    float NdotL = clamp(dot(normal, -normalize(position)),0.0,1.0);
     
-    vec2 scaledViewPos = shiftedViewPos.xy / max(-shiftedViewPos.z - forwardOffset, 1e-7);
-	float linearDistance = length(shiftedPlayerPos);
-	float shiftedLinearDistance = length(scaledViewPos);
+    float falloff = createHandheldPointLightFalloff(length(position), range);
+    
+    return NdotL * falloff;
+}
 
-	float lightFalloff = 1.0 - clamp(1.0-linearDistance/FLASHLIGHT_RANGE, -0.999,1.0);
-	lightFalloff = max(exp(-10.0 * FLASHLIGHT_BRIGHTNESS_FALLOFF_MULT * lightFalloff),0.0);
+void calculateFinishedPointLight(
+    in vec3 viewPos, in vec3 normal, 
 
-	#if defined FLASHLIGHT_SPECULAR && (defined DEFERRED_SPECULAR || defined FORWARD_SPECULAR)
-		float flashLightSpecular = lightFalloff * exp2(-7.0*shiftedLinearDistance*shiftedLinearDistance) * FLASHLIGHT_BRIGHTNESS_MULT;
-		flashLightSpecularData = vec4(normalize(shiftedPlayerPos), flashLightSpecular);	
-	#endif
+    int lightLevel, int heldItemId, vec3 handOffset, 
 
-	float projectedCircle = clamp(1.0 - shiftedLinearDistance*FLASHLIGHT_SIZE,0.0,1.0);
-	float lenseDirt = texture(noisetex, scaledViewPos * 0.2 + 0.1).b;
-	float lenseShape = (pow(abs(pow(abs(projectedCircle-1.0),2.0)*2.0 - 0.5),2.0) + lenseDirt*0.2) * 10.0;
+    inout vec3 handPos, out vec3 lighting
+){
+    if(lightLevel > 0){
+        // offset viewPos to match hand position
+        handPos = mat3(gbufferModelViewInverse) * (viewPos + handOffset) + gbufferModelViewInverse[3].xyz;
+        
+        #if HANDHELD_LIGHTSOURCE_MODE == 1
+            handPos += cameraPosition - eyePosition;
+        #elif HANDHELD_LIGHTSOURCE_MODE > 1
+            /// previous frame data to lag the light behind to seem handheld.
+            handPos += (cameraPosition-eyePosition) - (cameraPosition - previousCameraPosition)*3.0;
+        #endif
+        
+        // get color and stuff
+        #ifdef IS_LPV_ENABLED
+            vec4 sampledLightColor = getHandheldLightData(heldItemId);
+            lighting = sampledLightColor.rgb;
+            float lightRange = sampledLightColor.a;
+            
+            // ensure that there is color if no light item is held.
+            #if HANDHELD_LIGHTSOURCE_MODE == 3
+                if(heldItemId < 1) lighting = vec3(HANDHELD_LIGHTSOURCE_R,HANDHELD_LIGHTSOURCE_G,HANDHELD_LIGHTSOURCE_B);
+            #endif
+        #else
+            lighting = vec3(HANDHELD_LIGHTSOURCE_R,HANDHELD_LIGHTSOURCE_G,HANDHELD_LIGHTSOURCE_B);
+            float lightRange = float(lightLevel);
+            lighting *= lightRange/15.0;
+        #endif
+
+        #if HANDHELD_LIGHTSOURCE_RANGE > 0
+            lightRange = float(HANDHELD_LIGHTSOURCE_RANGE);
+        #endif
+        
+        // combine ndotl, attentuation, color, and pass it on.
+        lighting *= createHandheldPointlight(handPos, normal, lightRange);
+        
+        #if HANDHELD_LIGHTSOURCE_MODE > 1
+            /// previous frame data to lag the light behind to seem handheld.
+            vec3 prevPos = mat3(gbufferPreviousModelView) * handPos + gbufferPreviousModelView[3].xyz;
+            // project outwards from the camera to get that zooming out effect.
+            vec2 scaledViewPos = prevPos.xy / max(-prevPos.z - 0.0, 1e-7);
+            float scaledLinearDistance = length(scaledViewPos);
+
+            // create projected pattern
+    	    float projectedCircle = clamp(1.0 - scaledLinearDistance*FLASHLIGHT_SIZE,0.0,1.0);
+    	    float lenseDirt = texture(noisetex, scaledViewPos * 0.2 + 0.1).b;
+    	    float lenseShape = (pow(abs(pow(abs(projectedCircle-1.0),2.0)*2.0 - 0.5),2.0) + lenseDirt*0.2) * 10.0;
+
+            // for fake indirect bounce. makes the flashlight more usable.
+            float bounce = clamp(1.0 - length(handPos)/max(lightRange,16), 0.0,1.0);
+
+            // mask to point light
+    	    lighting *= pow(1.0-pow(1.0-projectedCircle,2),2) * lenseShape * FLASHLIGHT_BRIGHTNESS_MULT + bounce*0.005;
+
+            //#if defined FLASHLIGHT_SPECULAR && (defined DEFERRED_SPECULAR || defined FORWARD_SPECULAR)
+            //  float flashLightSpecular = lightFalloff * exp2(-7.0*shiftedLinearDistance*shiftedLinearDistance) * FLASHLIGHT_BRIGHTNESS_MULT;
+            //  flashLightSpecularData = vec4(normalize(shiftedPlayerPos), flashLightSpecular);	
+            //#endif
+
+    	    //#ifdef FLASHLIGHT_BOUNCED_INDIRECT
+    	    //  float lightWidth = 1.0+linearDistance*3.0;
+    	    //  vec3 pointPos = mat3(gbufferModelViewInverse) * (toScreenSpace(vec3(texcoord, centerDepthSmooth)) + vec3(-0.25, 0.2, 0.0));
+    	    //  float flashLightHitPoint = distance(pointPos, shiftedPlayerPos);
+    	    //  float indirectFlashLight = exp(-10.0 * (1.0 - clamp(1.0-length(shiftedViewPos.xy)/lightWidth,0.0,1.0)) );
+    	    //  indirectFlashLight *= pow(clamp(1.0-flashLightHitPoint/lightWidth,0,1),2.0);
+    	    //  flashlightDiffuse += albedo/150.0 * indirectFlashLight * lightFalloff;
+    	    //#endif
+        #endif
+    }
+}
+
+vec3 doHandHeldLight(
+    in vec3 viewPos, in vec3 normal
+        #if defined HANDHELD_LIGHTSOURCE_SPECULAR && (defined DEFERRED_SPECULAR || defined FORWARD_SPECULAR)
+            ,out vec3 passMainHandPos, out vec3 passMainHandCol, out vec3 passOffHandPos, out vec3 passOffHandCol 
+        #endif
+    ){
 	
-	float offsetNdotL = clamp(dot(-normal, normalize(shiftedPlayerPos)),0,1);
-	vec3 flashlightDiffuse = vec3(1.0) * lightFalloff * offsetNdotL * pow(1.0-pow(1.0-projectedCircle,2),2) * lenseShape * FLASHLIGHT_BRIGHTNESS_MULT;
-	
-	if(hand){
-		flashlightDiffuse = vec3(0.0);
-		flashLightSpecularData = vec4(0.0);
-	}
+    vec3 mainHandLight = vec3(0.0);
+    vec3 mainHandPos = vec3(0.0);
+    vec3 offHandLight = vec3(0.0);
+    vec3 offHandPos = vec3(0.0);
+    
+    #if HANDHELD_LIGHTSOURCE_MODE == 3
+        calculateFinishedPointLight(viewPos, normal, 16, heldItemId, vec3(-0.25, 0.1-playerLookVector.y*0.2, 0.1), mainHandPos, mainHandLight);
+    #else
+        calculateFinishedPointLight(viewPos, normal, heldBlockLightValue , heldItemId , vec3(-0.25, 0.1-playerLookVector.y*0.2, 0.1), mainHandPos, mainHandLight);
+        calculateFinishedPointLight(viewPos, normal, heldBlockLightValue2, heldItemId2, vec3( 0.25, 0.1-playerLookVector.y*0.2, 0.1), offHandPos , offHandLight );
+    #endif
 
-	#ifdef FLASHLIGHT_BOUNCED_INDIRECT
-		float lightWidth = 1.0+linearDistance*3.0;
-		vec3 pointPos = mat3(gbufferModelViewInverse) *  (toScreenSpace(vec3(texcoord, centerDepthSmooth)) + vec3(-0.25, 0.2, 0.0));
-		float flashLightHitPoint = distance(pointPos, shiftedPlayerPos);
+    #if defined HANDHELD_LIGHTSOURCE_SPECULAR && (defined DEFERRED_SPECULAR || defined FORWARD_SPECULAR)
+	    passMainHandCol = mainHandLight;
+	    passMainHandPos = normalize(mainHandPos);
+	    passOffHandCol = offHandLight;
+	    passOffHandPos = normalize(offHandPos);
+    #endif
 
-		float indirectFlashLight = exp(-10.0 * (1.0 - clamp(1.0-length(shiftedViewPos.xy)/lightWidth,0.0,1.0)) );
-		indirectFlashLight *= pow(clamp(1.0-flashLightHitPoint/lightWidth,0,1),2.0);
-
-		flashlightDiffuse += albedo/150.0 * indirectFlashLight * lightFalloff;
-	#endif
-
-	return flashlightDiffuse * vec3(FLASHLIGHT_R,FLASHLIGHT_G,FLASHLIGHT_B);
+    return mainHandLight + offHandLight;
 }
