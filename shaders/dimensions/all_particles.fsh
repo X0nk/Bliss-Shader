@@ -378,7 +378,18 @@ void main() {
 	#endif
 
 	#ifdef WEATHER
+	
 		gl_FragData[1] = vec4(0.0,0.0,0.0,TEXTURE.a); // for bloomy rain and stuff
+
+		#if RAINDROP_TEST_MODE == 2
+			gl_FragData[1] = vec4(1.0,0.0,0.0,TEXTURE.a); // for bloomy rain and stuff
+		#endif
+
+		
+		#if RAINDROP_TEST_MODE == 3
+			if(TEXTURE.a < 0.1) discard;
+			gl_FragData[1] = vec4(0.0,0.0,0.0,TEXTURE.a); // for bloomy rain and stuff
+		#endif
 	#endif
 
 	#ifndef WEATHER

@@ -602,6 +602,8 @@ void main() {
   blendAllFogTypes(color, bloomyFogMult, temporallyFilteredVL, linearDistance, playerPos_normalized, cameraPosition, isSky);
 
 ////// --------------- bloomy rain effect
+
+#if RAINDROP_TEST_MODE != 1
   #ifdef OVERWORLD_SHADER
   
     float rainDrops = texelFetch(colortex9,ivec2(texcoord/texelSize),0).a;
@@ -611,6 +613,7 @@ void main() {
       color.rgb += color.rgb * 0.2 * rainDrops;
     }
   #endif
+#endif
 
 ////// --------------- FINALIZE
   #ifdef display_LUT
