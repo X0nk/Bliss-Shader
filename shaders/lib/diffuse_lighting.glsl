@@ -223,8 +223,8 @@ vec3 doHandHeldLight(
     #if HANDHELD_LIGHTSOURCE_MODE == 3
         calculateFinishedPointLight(viewPos, normal, 16, heldItemId, vec3(-0.25, 0.1-playerLookVector.y*0.2, 0.1), mainHandPos, mainHandLight);
     #else
-        calculateFinishedPointLight(viewPos, normal, heldBlockLightValue , heldItemId , vec3(-0.25, 0.1-playerLookVector.y*0.2, 0.1), mainHandPos, mainHandLight);
-        calculateFinishedPointLight(viewPos, normal, heldBlockLightValue2, heldItemId2, vec3( 0.25, 0.1-playerLookVector.y*0.2, 0.1), offHandPos , offHandLight );
+        calculateFinishedPointLight(viewPos, normal, 16 , heldItemId , vec3(-0.25, 0.1-playerLookVector.y*0.2, 0.1), mainHandPos, mainHandLight);
+        calculateFinishedPointLight(viewPos, normal, 16, heldItemId2, vec3( 0.25, 0.1-playerLookVector.y*0.2, 0.1), offHandPos , offHandLight );
     #endif
 
     #if defined HANDHELD_LIGHTSOURCE_SPECULAR && (defined DEFERRED_SPECULAR || defined FORWARD_SPECULAR)
