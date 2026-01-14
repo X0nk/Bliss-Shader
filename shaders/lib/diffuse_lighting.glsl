@@ -125,7 +125,7 @@ float createHandheldPointLightFalloff(in float linearDistance, in float range){
 
 float createHandheldPointlight(in vec3 position, in vec3 normal, in float range){
 
-    float NdotL = clamp(dot(normal, -normalize(position)),0.0,1.0);
+    float NdotL = clamp(dot(-normal, normalize(position)),0.0,1.0);
     
     float falloff = createHandheldPointLightFalloff(length(position), range);
     
@@ -147,7 +147,7 @@ void calculateFinishedPointLight(
             handPos += cameraPosition - eyePosition;
         #elif HANDHELD_LIGHTSOURCE_MODE > 1
             /// previous frame data to lag the light behind to seem handheld.
-            handPos += (cameraPosition-eyePosition) - (cameraPosition - previousCameraPosition)*3.0;
+            handPos += (cameraPosition-eyePosition) - (cameraPosition-previousCameraPosition)*3.0;
         #endif
         
         // get color and stuff
@@ -171,7 +171,7 @@ void calculateFinishedPointLight(
         #endif
         
         // combine ndotl, attentuation, color, and pass it on.
-        lighting *= createHandheldPointlight(handPos, normal, lightRange);
+        lighting *= createHandheldPointlight(handPos, normal, max(lightRange,1e-6));
         
         #if HANDHELD_LIGHTSOURCE_MODE > 1
             /// previous frame data to lag the light behind to seem handheld.
