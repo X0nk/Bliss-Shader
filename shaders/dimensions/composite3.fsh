@@ -603,16 +603,13 @@ void main() {
 
 ////// --------------- bloomy rain effect
 
-#if RAINDROP_TEST_MODE != 1
-  #ifdef OVERWORLD_SHADER
+#ifdef OVERWORLD_SHADER
+  float rainDrops = texelFetch(colortex9,ivec2(texcoord/texelSize),0).a;
   
-    float rainDrops = texelFetch(colortex9,ivec2(texcoord/texelSize),0).a;
-    
-    if(rainDrops > 0.0) {
-      bloomyFogMult *= clamp(1.0 - pow(rainDrops*5.0,2),0.0,1.0);
-      color.rgb += color.rgb * 0.2 * rainDrops;
-    }
-  #endif
+  if(rainDrops > 0.0) {
+    bloomyFogMult *= clamp(1.0 - pow(rainDrops*5.0,2),0.0,1.0);
+    color.rgb += color.rgb * 0.2 * rainDrops;
+  }
 #endif
 
 ////// --------------- FINALIZE
