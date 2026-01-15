@@ -140,6 +140,9 @@ void calculateFinishedPointLight(
     inout vec3 handPos, inout vec3 lighting
 ){
     if(lightLevel > 1e-6){
+
+        viewPos.z -= max((mat3(gbufferModelView) * playerLookVector).z,0);
+
         // offset viewPos to match hand position
         handPos = mat3(gbufferModelViewInverse) * (viewPos + handOffset) + gbufferModelViewInverse[3].xyz;
         

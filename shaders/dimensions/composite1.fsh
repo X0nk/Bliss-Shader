@@ -1255,9 +1255,11 @@ void main() {
 
 		#if HANDHELD_LIGHTSOURCE_MODE > 0
 			// float flashlightshadows = SSRT_FlashLight_Shadows(shiftedViewPos, isDHrange, normalize(shiftedPlayerPos), interleaved_gradientNoise_temporal());
-			
+			vec3 handheldViewPos = viewPos;
+			if(hand) handheldViewPos.z += 0.7;
+
 			Indirect_lighting += doHandHeldLight(
-				viewPos, slopednormal
+				handheldViewPos, slopednormal
         		#if defined HANDHELD_LIGHTSOURCE_SPECULAR && defined DEFERRED_SPECULAR
 					,mainHandPos, mainHandCol, offHandPos, offHandCol
 				#endif
