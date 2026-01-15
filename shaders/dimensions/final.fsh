@@ -142,7 +142,6 @@ float doVignette( in vec2 texcoord, in float noise){
 
 void main() {
   
-  float noise = blueNoise();
   float noise = interleaved_gradientNoise();
   vec2 texcoord_offset = texcoord;
 
