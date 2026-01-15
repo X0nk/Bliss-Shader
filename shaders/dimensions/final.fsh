@@ -143,6 +143,8 @@ float doVignette( in vec2 texcoord, in float noise){
 void main() {
   
   float noise = blueNoise();
+  float noise = interleaved_gradientNoise();
+  vec2 texcoord_offset = texcoord;
 
   #if MOTION_BLUR_AMOUNT > 0
     float depth = texture(depthtex0, texcoord_offset*RENDER_SCALE).r;
