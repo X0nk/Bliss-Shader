@@ -140,8 +140,10 @@ void calculateFinishedPointLight(
     inout vec3 handPos, inout vec3 lighting
 ){
     if(lightLevel > 1e-6){
-
-        viewPos.z -= max((mat3(gbufferModelView) * playerLookVector).z,0);
+        // in third person, mirror positions when backfacing third person is used.
+        float headViewDir = max((mat3(gbufferModelView) * playerLookVector).z,0);
+        viewPos.z -= headViewDir;
+        handOffset.x *= mix(1.0,-1.0,headViewDir);
 
         // offset viewPos to match hand position
         handPos = mat3(gbufferModelViewInverse) * (viewPos + handOffset) + gbufferModelViewInverse[3].xyz;
