@@ -817,6 +817,9 @@ void main() {
 		vec3 albedo = toLinear(vec3(dataUnpacked0.xz,dataUnpacked1.x));
 
 		vec3 normal = decode(dataUnpacked0.yw);
+
+		if(isDHrange) normal = viewToWorld(normal);
+
 		vec2 lightmap = dataUnpacked1.yz;
 		// special curve to give more precision on high/low values of the gradient. this curve will be inverted after sampling and decoding.
 		// lightmap = 1.0-pow(1.0-pow(lightmap,vec2(2)),vec2(2));

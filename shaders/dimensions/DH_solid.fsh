@@ -172,14 +172,14 @@ void main() {
         }
     #endif
 
-    vec3 normals = (normals_and_materials.xyz);
+    vec3 normals = normalize(normals_and_materials.xyz); // normals in viewspace by default
     float materials = normals_and_materials.a;
 	vec2 PackLightmaps = lightmapCoords;
 
     // PackLightmaps.y *= 1.05;
     PackLightmaps = min(max(PackLightmaps,0.0)*1.05,1.0);
     
-    vec4 data1 = clamp( encode(viewToWorld(normals), PackLightmaps), 0.0, 1.0);
+    vec4 data1 = clamp( encode(normals, PackLightmaps), 0.0, 1.0);
     
     // alpha is material masks, set it to 0.65 to make a DH LODs mask. 
 	#ifdef DH_NOISE_TEXTURE

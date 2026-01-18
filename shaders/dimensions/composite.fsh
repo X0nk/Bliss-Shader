@@ -384,7 +384,8 @@ void main() {
 	vec4 data = texelFetch(colortex1,ivec2(gl_FragCoord.xy),0);
 	vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y));
 	vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w));
-	vec3 normal = mat3(gbufferModelViewInverse) * clamp(worldToView( decode(dataUnpacked0.yw) ),-1.,1.);
+	vec3 normal = decode(dataUnpacked0.yw);
+	
 	vec2 lightmap = dataUnpacked1.yz;
 
 
@@ -402,6 +403,8 @@ void main() {
 	// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
 
 	float z = convertHandDepth_2(texelFetch(depthtex1,ivec2(gl_FragCoord.xy),0).x,hand);
+	
+	if(z >= 1.0) normal = viewToWorld(normal);
 	
 	#ifdef USING_LOD_MOD
 		float DH_depth1 = texelFetch(LOD_DEPTHTEX1,ivec2(gl_FragCoord.xy),0).x;
