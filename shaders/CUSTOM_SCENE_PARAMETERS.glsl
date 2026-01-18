@@ -100,7 +100,7 @@
 */
 
 #ifdef DECLARE_UNIFORMS_OR_WRITE_FUNCTIONS_FOR_CUSTOM_SCENE_CONTROLLER_PROFILES
-// DECLARE UNIFORMS PROVIDED BY IRIS HERE. if they are already declared elswhere in the shaderpack, there will be an error. not all uniforms are viable to be used.
+// DECLARE UNIFORMS PROVIDED BY IRIS HERE. if they are already declared elsewhere in the shaderpack, there will be an error. not all uniforms are viable to be used.
 // read the iris documentation for a complete list of uniforms to call https://shaders.properties/current/reference/uniforms/overview/
 
 // you can also write functions here if you want. you must follow the syntax of the programming language "GLSL"
