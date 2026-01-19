@@ -400,7 +400,7 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 	}
 	return vec2(shadows, SSS / samples );
 }
-#ifdef HANDHELD_LIGHTSOURCE_SSRT_SHADOWS
+#if HANDHELD_LIGHTSOURCE_SSRT_SHADOWS > 0
 float handHeldLight_SSRT_Shadows(vec3 viewPos, vec3 shadowHandPos, float noise){
 
 	vec3 shadowHandViewPos = mat3(gbufferModelView) * shadowHandPos;
@@ -1250,9 +1250,14 @@ void main() {
 				,mainHandPos, mainHandCol, offHandPos, offHandCol
 			);
 
-			#ifdef HANDHELD_LIGHTSOURCE_SSRT_SHADOWS
+			#if HANDHELD_LIGHTSOURCE_SSRT_SHADOWS > 0
 				// make sure not to calculate ssrt shadows if there is no light being held.
-				if(!hand && (heldBlockLightValue > 0 || heldBlockLightValue2 > 0)){
+				#if HANDHELD_LIGHTSOURCE_SSRT_SHADOWS == 1
+					if(!hand && (heldBlockLightValue > 0 || heldBlockLightValue2 > 0)){
+				#elif HANDHELD_LIGHTSOURCE_SSRT_SHADOWS == 2
+					if((firstPersonCamera && !hand) && (heldBlockLightValue > 0 || heldBlockLightValue2 > 0)){
+				#endif
+
 					// whichever held light is brighter gets the shadows
 					vec3 shadowHandPos = heldBlockLightValue > heldBlockLightValue2 ? mainHandPos : offHandPos;
 

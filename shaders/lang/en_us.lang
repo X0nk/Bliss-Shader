@@ -210,6 +210,9 @@ screen.Ambient_light = Ambient Light
         option.HANDHELD_LIGHTSOURCE_G = Light Color G
         option.HANDHELD_LIGHTSOURCE_B = Light Color B
         option.HANDHELD_LIGHTSOURCE_SSRT_SHADOWS = Shadows from Handheld Light
+            value.HANDHELD_LIGHTSOURCE_SSRT_SHADOWS.0 = §cOFF
+            value.HANDHELD_LIGHTSOURCE_SSRT_SHADOWS.1 = ON §bⓘ First & Third Person§r
+            value.HANDHELD_LIGHTSOURCE_SSRT_SHADOWS.2 = ON §bⓘ First Person only§r
 
         option.FLASHLIGHT_BOUNCED_INDIRECT = (Flashlight) Bounced light §c⚠ CURRENTLY BROKEN§r
         option.FLASHLIGHT_FOG_ILLUMINATION = (Flashlight) Fog illumination §c⚠ CURRENTLY BROKEN§r
