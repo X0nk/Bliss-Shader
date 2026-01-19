@@ -378,7 +378,6 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		
 		colMin = 0.5 * (colMin + min(col0,min(col5,min(col6,min(col7,col8)))));
 		colMax = 0.5 * (colMax + max(col0,max(col5,max(col6,max(col7,col8)))));
-
 	#endif
 	
     #ifdef DAMAGE_TAKEN_EFFECT
@@ -393,11 +392,14 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	// reduce history usage if the camera moves to reduce artifacts in motion.
 	float cameraMovement = length(velocity/texelSize);
 	blendingFactor = clamp(cameraMovement, blendingFactor, BLEND_FACTOR_DURING_MOVEMENT);
-	// if(hand) blendingFactor = clamp(cameraMovement, blendingFactor, 1.0);
+	
+	#if NEIGHBORHOOD_CLAMP_RADIUS_MULT_DURING_MOVEMENT > 99
+		if(hand) blendingFactor = clamp(cameraMovement, blendingFactor, 1.0);
+	#endif
 	
 	////// Increases blending factor when far from AABB, reduces ghosting
 	blendingFactor = clamp(blendingFactor + luma(abs(clampedframeHistory - frameHistory)/clampedframeHistory),0.0,1.0);
-	
+
 	////// Blend current pixel with clamped history, apply fast tonemap beforehand to reduce flickering
 	vec3 finalResult = invTonemap(mix(tonemap(clampedframeHistory), tonemap(currentFrame), blendingFactor));
    
