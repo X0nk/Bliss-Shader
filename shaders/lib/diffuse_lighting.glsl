@@ -91,8 +91,10 @@ vec3 doIndirectLighting(
 // uniform int heldItemId;
 // uniform int heldItemId2;
 // uniform float centerDepthSmooth;
-uniform vec3 eyePosition;
+// uniform vec3 eyePosition;
+uniform vec3 relativeEyePosition;
 uniform vec3 playerLookVector;
+uniform bool firstPersonCamera;
 
 #if defined VIVECRAFT
 	uniform bool vivecraftIsVR;
@@ -149,7 +151,7 @@ void calculateFinishedPointLight(
         handPos = mat3(gbufferModelViewInverse) * (viewPos + handOffset) + gbufferModelViewInverse[3].xyz;
         
         // make sure the position is centered on the player, not the camera.
-        handPos += cameraPosition - eyePosition;
+        if(!firstPersonCamera) handPos += relativeEyePosition;
         
         #if HANDHELD_LIGHTSOURCE_MODE > 1
             /// previous frame data to lag the light behind to seem handheld.
@@ -177,7 +179,7 @@ void calculateFinishedPointLight(
         #endif
         
         // combine ndotl, attentuation, color, and pass it on.
-        lighting *= createHandheldPointlight(handPos, normal, max(lightRange,1e-6));
+        lighting *= createHandheldPointlight(handPos, normal, max(lightRange + 2,1e-6));
         
         #if HANDHELD_LIGHTSOURCE_MODE > 1
             /// previous frame data to lag the light behind to seem handheld.
@@ -214,31 +216,16 @@ void calculateFinishedPointLight(
     }
 }
 
-vec3 doHandHeldLight(
+void doHandHeldLight(
     in vec3 viewPos, in vec3 normal
-        #if defined HANDHELD_LIGHTSOURCE_SPECULAR && (defined DEFERRED_SPECULAR || defined FORWARD_SPECULAR)
-            ,out vec3 passMainHandPos, out vec3 passMainHandCol, out vec3 passOffHandPos, out vec3 passOffHandCol 
-        #endif
-    ){
-	
-    vec3 mainHandLight = vec3(0.0);
-    vec3 mainHandPos = vec3(0.0);
-    vec3 offHandLight = vec3(0.0);
-    vec3 offHandPos = vec3(0.0);
+    ,inout vec3 passMainHandPos, inout vec3 passMainHandCol, inout vec3 passOffHandPos, inout vec3 passOffHandCol 
+){
 
     #if HANDHELD_LIGHTSOURCE_MODE == 3
-        calculateFinishedPointLight(viewPos, normal, 16.0, heldItemId, vec3(-0.25, 0.1-playerLookVector.y*0.2, 0.1), mainHandPos, mainHandLight);
+        calculateFinishedPointLight(viewPos, normal, 16.0, heldItemId, vec3(-0.25, 0.1-playerLookVector.y*0.2, 0.1), passMainHandPos, passMainHandCol);
     #else
-        calculateFinishedPointLight(viewPos, normal, float(heldBlockLightValue), heldItemId, vec3(-0.25, 0.1-playerLookVector.y*0.2, 0.1), mainHandPos, mainHandLight);
-        calculateFinishedPointLight(viewPos, normal, float(heldBlockLightValue2), heldItemId2, vec3( 0.25, 0.1-playerLookVector.y*0.2, 0.1), offHandPos, offHandLight);
+        calculateFinishedPointLight(viewPos, normal, float(heldBlockLightValue), heldItemId, vec3(-0.25, 0.1-playerLookVector.y*0.2, 0.1), passMainHandPos, passMainHandCol);
+        calculateFinishedPointLight(viewPos, normal, float(heldBlockLightValue2), heldItemId2, vec3( 0.25, 0.1-playerLookVector.y*0.2, 0.1), passOffHandPos, passOffHandCol);
     #endif
 
-    #if defined HANDHELD_LIGHTSOURCE_SPECULAR && (defined DEFERRED_SPECULAR || defined FORWARD_SPECULAR)
-	    passMainHandCol = mainHandLight;
-	    passMainHandPos = normalize(mainHandPos);
-	    passOffHandCol = offHandLight;
-	    passOffHandPos = normalize(offHandPos);
-    #endif
-
-    return mainHandLight + offHandLight;
 }

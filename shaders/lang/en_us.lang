@@ -209,6 +209,7 @@ screen.Ambient_light = Ambient Light
         option.HANDHELD_LIGHTSOURCE_R = Light Color R
         option.HANDHELD_LIGHTSOURCE_G = Light Color G
         option.HANDHELD_LIGHTSOURCE_B = Light Color B
+        option.HANDHELD_LIGHTSOURCE_SSRT_SHADOWS = Shadows from Handheld Light
 
         option.FLASHLIGHT_BOUNCED_INDIRECT = (Flashlight) Bounced light §c⚠ CURRENTLY BROKEN§r
         option.FLASHLIGHT_FOG_ILLUMINATION = (Flashlight) Fog illumination §c⚠ CURRENTLY BROKEN§r
@@ -217,7 +218,7 @@ screen.Ambient_light = Ambient Light
         option.FLASHLIGHT_BRIGHTNESS_FALLOFF_MULT = (Flashlight) Range Falloff Multiplier
 
  ###################################################### ↑↑↑ THIS SUBMENU'S DESCRIPTIONS
-
+    
     screen.Ambient_light.comment = Configure settings related to the lighting in shaded places
     option.AO_Strength.comment = Configure the strength of the ambient occlusion created by SSAO, GTAO, and SSRT. §bⓘ What is this?§r ambient occlusion is the small soft shadows in corners and such.
     option.GI_Strength.comment = Configure the strength of the global illumination created by SSRT. §bⓘ What is this?§r global illumination in this scenario specifically is the light bouncing off a surface and onto some other area.

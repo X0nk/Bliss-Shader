@@ -389,7 +389,7 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 			float dist = abs(linearSampledDepth - linearCurrentPos) / linearCurrentPos;
 			
 			// if (dist < 0.035){
-			if (dist < 0.035/(1.0+linearCurrentPos) && (sampleDepth < newPos.z )) shadows = 0.0;
+			if (dist < 0.035/(1.0+linearCurrentPos)) shadows = 0.0;
 
 			// if (dist < 0.3/(1.0+linearCurrentPos)) SSS += distanceScale2;
 			if (dist < SSSdistanceScale) SSS += distanceScale2;
@@ -400,64 +400,49 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 	}
 	return vec2(shadows, SSS / samples );
 }
+#ifdef HANDHELD_LIGHTSOURCE_SSRT_SHADOWS
+float handHeldLight_SSRT_Shadows(vec3 viewPos, vec3 shadowHandPos, float noise){
 
-float SSRT_FlashLight_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise){
-	
+	vec3 shadowHandViewPos = mat3(gbufferModelView) * shadowHandPos;
+	// funnt little thing to exaggerate the effec to shadows
+	shadowHandViewPos.xy += (shadowHandViewPos.xy / (1.0+length(shadowHandPos)))*0.5;
+	vec3 lightDir = -shadowHandViewPos;
 
     float steps = 16.0;
-	float Shadow = 1.0; 
-	float SSS = 0.0;
-	// isSSS = true;
+	float _near = near; 
+	float _far = far*4.0;
 
-	float _near = near; float _far = far*4.0;
-
-	if (depthCheck) {
-		_near = dhNearPlane;
-		_far = dhFarPlane;
-	}
-    
-
-	vec3 clipPosition = toClipSpace3_DH(viewPos, depthCheck);
+	vec3 position = toClipSpace3_DH(viewPos, false);
 	//prevents the ray from going behind the camera
 	float rayLength = ((viewPos.z + lightDir.z * _far*sqrt(3.)) > -_near) ?
       				  (-_near -viewPos.z) / lightDir.z : _far*sqrt(3.);
 
-    vec3 direction = toClipSpace3_DH(viewPos + lightDir*rayLength, depthCheck) - clipPosition;  //convert to clip space
-
-    direction.xyz = direction.xyz / max(abs(direction.x)/0.0005, abs(direction.y)/0.0005);	//fixed step size
-
-	float Stepmult = 6.0;
-
-    vec3 rayDir = direction * Stepmult * vec3(RENDER_SCALE,1.0);
-	vec3 screenPos = clipPosition * vec3(RENDER_SCALE,1.0) + rayDir*noise;
-
-
-	for (int i = 0; i < int(steps); i++) {
-		
-		#ifdef USING_LOD_MOD
-			float samplePos = 0.0;
-			if(depthCheck){
-				samplePos = texture(LOD_DEPTHTEX1, screenPos.xy).x;
-			}else{
-				samplePos = texture(depthtex2, screenPos.xy).x;
-			}
-		#else
-			float samplePos = texture(depthtex2, screenPos.xy).x;
-		#endif
-
-		if(samplePos < screenPos.z){// && (samplePos <= max(minZ,maxZ) && samplePos >= min(minZ,maxZ))){
-			// vec2 linearZ = vec2(swapperlinZ(screenPos.z, _near, _far), swapperlinZ(samplePos, _near, _far));
-			// float calcthreshold = abs(linearZ.x - linearZ.y) / linearZ.x;
-
-			// if (calcthreshold < 0.035) 
-			Shadow = 0.0;
-		} 
-	
-		screenPos += rayDir;
+    vec3 direction = toClipSpace3_DH(viewPos + lightDir*rayLength, false) - position;
+    
+	if(firstPersonCamera){
+		direction *= 0.001;
+	}else{
+		direction.xyz = direction.xyz / max(abs(direction.x)/0.0005, abs(direction.y)/0.0005);	//fixed step size
+		direction *= 12.0;
 	}
 
-	return Shadow;
+	position.xy *= RENDER_SCALE;
+	direction.xy *= RENDER_SCALE;
+	
+	vec3 newPos = position + direction*noise;
+	newPos += direction*0.3;
+	for (int i = 0; i < int(steps); i++) {
+		
+		float samplePos = texture(depthtex2, newPos.xy).x;
+
+		if(samplePos < newPos.z) return 0.0;
+
+		newPos += direction;
+	}
+
+	return 1.0;
 }
+#endif
 
 void Emission(
 	inout vec3 Lighting,
@@ -1257,16 +1242,32 @@ void main() {
 		vec3 offHandCol = vec3(0.0);
 
 		#if HANDHELD_LIGHTSOURCE_MODE > 0
-			// float flashlightshadows = SSRT_FlashLight_Shadows(shiftedViewPos, isDHrange, normalize(shiftedPlayerPos), interleaved_gradientNoise_temporal());
 			vec3 handheldViewPos = viewPos;
 			if(hand) handheldViewPos.z += 0.7;
 
-			Indirect_lighting += doHandHeldLight(
+			doHandHeldLight(
 				handheldViewPos, slopednormal
-        		#if defined HANDHELD_LIGHTSOURCE_SPECULAR && defined DEFERRED_SPECULAR
-					,mainHandPos, mainHandCol, offHandPos, offHandCol
-				#endif
+				,mainHandPos, mainHandCol, offHandPos, offHandCol
 			);
+
+			#ifdef HANDHELD_LIGHTSOURCE_SSRT_SHADOWS
+				// make sure not to calculate ssrt shadows if there is no light being held.
+				if(!hand && (heldBlockLightValue > 0 || heldBlockLightValue2 > 0)){
+					// whichever held light is brighter gets the shadows
+					vec3 shadowHandPos = heldBlockLightValue > heldBlockLightValue2 ? mainHandPos : offHandPos;
+
+					float handHeldLightShadow = handHeldLight_SSRT_Shadows(viewPos, shadowHandPos, ig_noise);
+
+					// whichever held light is brighter gets the shadows 2x
+					if(heldBlockLightValue < heldBlockLightValue2){
+						offHandCol *= handHeldLightShadow;
+					}else{
+						mainHandCol *= handHeldLightShadow;
+					}
+				}
+			#endif
+
+			Indirect_lighting += mainHandCol + offHandCol;
 		#endif
 
 		#if defined LIGHTNING_FLASH
