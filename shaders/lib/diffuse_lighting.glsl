@@ -166,7 +166,16 @@ void calculateFinishedPointLight(
             
             // ensure that there is color if no light item is held.
             #if HANDHELD_LIGHTSOURCE_MODE == 3
-                if(heldItemId < 1) lighting = vec3(HANDHELD_LIGHTSOURCE_R,HANDHELD_LIGHTSOURCE_G,HANDHELD_LIGHTSOURCE_B);
+                if(heldItemId < 1){
+                    lighting = vec3(HANDHELD_LIGHTSOURCE_R,HANDHELD_LIGHTSOURCE_G,HANDHELD_LIGHTSOURCE_B);
+                    lightRange = 15.0;
+                }
+            #else
+                if(heldItemId < 1){
+                    lighting = vec3(HANDHELD_LIGHTSOURCE_R,HANDHELD_LIGHTSOURCE_G,HANDHELD_LIGHTSOURCE_B);
+                    lightRange = lightLevel;
+                    lighting *= lightRange/15.0;
+                }
             #endif
         #else
             lighting = vec3(HANDHELD_LIGHTSOURCE_R, HANDHELD_LIGHTSOURCE_G, HANDHELD_LIGHTSOURCE_B);
