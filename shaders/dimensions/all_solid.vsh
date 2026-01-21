@@ -38,7 +38,6 @@ flat varying float EMISSIVE;
 flat varying int LIGHTNING;
 flat varying int PORTAL;
 flat varying int SIGN;
-// flat varying float HELD_ITEM_BRIGHTNESS;
 flat varying float blockID;
 flat varying int NameTags;
 
@@ -223,11 +222,6 @@ void main() {
 		LIGHTNING = 0;
 	// if(NameTags > 0) EMISSIVE = 0.9;
 
-	// HELD_ITEM_BRIGHTNESS = 0.0;
-	// #ifdef Hand_Held_lights
-	// 	if(heldItemId > 999 || heldItemId2 > 999 ) HELD_ITEM_BRIGHTNESS = 0.9;
-	// #endif
-
 	// normal block lightsources		
 	if(mc_Entity.x >= 100 && mc_Entity.x < 300) EMISSIVE = 0.5;
 	
@@ -331,9 +325,9 @@ void main() {
 		}
 	#endif
 	
-	#ifdef PLANET_CURVATURE
+	#if CURVATURE_AMOUNT !=  0
 		float curvature = length(worldpos) / (16*8);
-		worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
+		worldpos.y -= curvature*curvature * (float(CURVATURE_AMOUNT)/10.0f);
 	#endif
 
 	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;

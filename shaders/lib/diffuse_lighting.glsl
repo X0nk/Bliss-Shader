@@ -52,17 +52,6 @@ vec3 doBlockLightLighting(
         
         // outside the voxel volume, lerp to vanilla lighting as a fallback
         blockLight = mix(blockLight, lpvSample.rgb + lightColor * 2.5 * min(max(lightmap-0.999,0.0)/(1.0-0.999),1.0), voxelRangeFalloff);
-
-        // #ifdef Hand_Held_lights
-        //     // create handheld lightsources
-        //     const vec3 normal = vec3(0.0); // TODO
-
-        //         if (heldItemId > 0)
-        //         blockLight += GetHandLight(heldItemId, playerPos, normal);
-
-        //         if (heldItemId2 > 0)
-        //         blockLight += GetHandLight(heldItemId2, playerPos, normal);
-        // #endif
     #endif
 
     return blockLight * TORCH_AMOUNT;
@@ -141,6 +130,7 @@ void calculateFinishedPointLight(
 
     inout vec3 handPos, inout vec3 lighting
 ){
+    
     if(lightLevel > 1e-6){
         // in third person, mirror positions when backfacing third person is used.
         float headViewDir = max((mat3(gbufferModelView) * playerLookVector).z,0);
@@ -164,15 +154,15 @@ void calculateFinishedPointLight(
             lighting = sampledLightColor.rgb;
             float lightRange = sampledLightColor.a;
             
-            // ensure that there is color if no light item is held.
+            // ensure that there is color if no light item is held. or if the light item is not listed.
             #if HANDHELD_LIGHTSOURCE_MODE == 3
                 if(heldItemId < 1){
-                    lighting = vec3(HANDHELD_LIGHTSOURCE_R,HANDHELD_LIGHTSOURCE_G,HANDHELD_LIGHTSOURCE_B);
+                    lighting = vec3(HANDHELD_LIGHTSOURCE_R, HANDHELD_LIGHTSOURCE_G, HANDHELD_LIGHTSOURCE_B);
                     lightRange = 15.0;
                 }
             #else
                 if(heldItemId < 1){
-                    lighting = vec3(HANDHELD_LIGHTSOURCE_R,HANDHELD_LIGHTSOURCE_G,HANDHELD_LIGHTSOURCE_B);
+                    lighting = vec3(HANDHELD_LIGHTSOURCE_R, HANDHELD_LIGHTSOURCE_G, HANDHELD_LIGHTSOURCE_B);
                     lightRange = lightLevel;
                     lighting *= lightRange/15.0;
                 }
@@ -237,4 +227,6 @@ void doHandHeldLight(
         calculateFinishedPointLight(viewPos, normal, float(heldBlockLightValue2), heldItemId2, vec3( 0.25, 0.1-playerLookVector.y*0.2, 0.1), passOffHandPos, passOffHandCol);
     #endif
 
+    passMainHandCol *= HANDHELD_LIGHTSOURCE_BRIGHTNESS;
+    passOffHandCol *= HANDHELD_LIGHTSOURCE_BRIGHTNESS;
 }

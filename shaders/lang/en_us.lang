@@ -141,14 +141,14 @@ screen.Direct_Light = Direct Light
 screen.Ambient_light = Ambient Light
 
     screen.LPV = FloodFill Colored Lighting §cⓘ IRIS REQUIRED§r
-        option.LPV_ENABLED = Enabled
-        option.LPV_SIZE = Size
-            value.LPV_SIZE.6 = Small [64]
-            value.LPV_SIZE.7 = Medium [128]
-            value.LPV_SIZE.8 = Large [256]
+        option.LPV_ENABLED = FloodFill Colored Lighting
+        option.LPV_SIZE = FloodFill Render Distance
+            value.LPV_SIZE.6 = 4 chunks
+            value.LPV_SIZE.7 = 8 chunks
+            value.LPV_SIZE.8 = 16 chunks
         option.LPV_SATURATION = Light Saturation
             suffix.LPV_SATURATION=%
-        option.LPV_TINT_SATURATION = Tint Saturation
+        option.LPV_TINT_SATURATION = Glass Tint Saturation
             suffix.LPV_TINT_SATURATION=%
         option.LPV_NORMAL_STRENGTH = Normal Strength
             suffix.LPV_NORMAL_STRENGTH = %
@@ -160,16 +160,17 @@ screen.Ambient_light = Ambient Light
         option.LPV_VL_FOG_ILLUMINATION = Fog Light Propagation
         option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS = Fog Light Propagation Brightness
             suffix.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS=%
+        option.VANILLA_LIGHTMAP_MASK = Vanilla Torch lightmap Mask
 
+    option.AO_in_sunlight = Apply AO to sunlight
     option.AO_Strength = AO Multiplier
     option.GI_Strength = GI Multiplier
-    option.HQ_SSGI = Long Range Marching (SSRT)
+    option.LONG_RANGE_SSRT = Long Range Marching (SSRT)
     option.UseQuarterResDepth = sample 1/4 resolution depth (SSRT)
-    option.Hand_Held_lights = Hand Held Light
     option.SKY_CONTRIBUTION_IN_SSRT = High Quality Ambient Light (SSRT)
     option.ambientOcclusionLevel = Vanilla AO Amount
-    option.ambient_brightness = Ambient Light Brightness
-    option.MIN_LIGHT_AMOUNT = Minimum Light Brightness
+    option.MINIMUM_OUTDOOR_LIGHT = Minimum Light Brightness §bⓘ Outdoors§
+    option.MINIMUM_INDOOR_LIGHT = Minimum Light Brightness  §bⓘ Indoors§
     option.indirect_effect = Indirect Lighting
         value.indirect_effect.VANILLA_AO = Vanilla AO
             value.indirect_effect.SSAO_FILTERED = SSAO
@@ -178,19 +179,16 @@ screen.Ambient_light = Ambient Light
             value.indirect_effect.SSRT_AO = SSRT (AO only) §c⚠ LOTS OF VISUAL NOISE§r
             value.indirect_effect.SSRT_AO_GI = SSRT (AO + GI) §c⚠ LOTS OF VISUAL NOISE§r
 
-    screen.Ambient_Colors =  Ambient Light Color
-        option.AmbientLight_R = Red Amount
-        option.AmbientLight_G = Green Amount
-        option.AmbientLight_B = Blue Amount
-        option.ambient_colortype = Coloring Type
-            value.ambient_colortype.0 = Temperature
-            value.ambient_colortype.1 = RGB
+    screen.INDIRECT_LIGHT_COLORS = Lighting Colors
+        option.ambient_brightness = Ambient Light Brightness
+        option.AmbientLight_R = ↑ Light Color R
+        option.AmbientLight_G = ↑ Light Color G
+        option.AmbientLight_B = ↑ Light Color B
     
-    screen.Torch_Colors = Torch Color
-        option.TORCH_AMOUNT = Torch Light Multiplier
-        option.TORCH_R = Red Amount
-        option.TORCH_G = Green Amount
-        option.TORCH_B = Blue Amount
+        option.TORCH_AMOUNT = Torch Light Brightness
+        option.TORCH_R = ↑ Light Color R
+        option.TORCH_G = ↑ Light Color G
+        option.TORCH_B = ↑ Light Color B
 
     option.HANDHELD_LIGHTSOURCE_MODE = Handheld Light Mode
         value.HANDHELD_LIGHTSOURCE_MODE.0 = §cOFF
@@ -198,17 +196,19 @@ screen.Ambient_light = Ambient Light
         value.HANDHELD_LIGHTSOURCE_MODE.2 = Flashlight §bⓘ From Lightsource Items§
         value.HANDHELD_LIGHTSOURCE_MODE.3 = Flashlight §bⓘ Always on§r
 
-    screen.HANDHELD_LIGHTSOURCE_SETTINGS = Handheld Lightsource Settings
+    screen.HANDHELD_LIGHTSOURCE_SETTINGS = Handheld Light Settings
 
         option.HANDHELD_LIGHTSOURCE_RANGE = Handheld Light Range
             value.HANDHELD_LIGHTSOURCE_RANGE.0 = Use Held Item's Light Level
+            value.HANDHELD_LIGHTSOURCE_RANGE.1 = 1 block
             suffix.HANDHELD_LIGHTSOURCE_RANGE = §c§r blocks
 
+        option.HANDHELD_LIGHTSOURCE_BRIGHTNESS = Handheld Light brightness
         option.HANDHELD_LIGHTSOURCE_RANGE = Handheld Light Range
         option.HANDHELD_LIGHTSOURCE_SPECULAR = Reflections from Handheld Light
-        option.HANDHELD_LIGHTSOURCE_R = Light Color R
-        option.HANDHELD_LIGHTSOURCE_G = Light Color G
-        option.HANDHELD_LIGHTSOURCE_B = Light Color B
+        option.HANDHELD_LIGHTSOURCE_R = ↑ Light Color R
+        option.HANDHELD_LIGHTSOURCE_G = ↑ Light Color G
+        option.HANDHELD_LIGHTSOURCE_B = ↑ Light Color B
         option.HANDHELD_LIGHTSOURCE_SSRT_SHADOWS = Shadows from Handheld Light
             value.HANDHELD_LIGHTSOURCE_SSRT_SHADOWS.0 = §cOFF
             value.HANDHELD_LIGHTSOURCE_SSRT_SHADOWS.1 = ON §bⓘ First & Third Person§r
@@ -225,8 +225,7 @@ screen.Ambient_light = Ambient Light
     screen.Ambient_light.comment = Configure settings related to the lighting in shaded places
     option.AO_Strength.comment = Configure the strength of the ambient occlusion created by SSAO, GTAO, and SSRT. §bⓘ What is this?§r ambient occlusion is the small soft shadows in corners and such.
     option.GI_Strength.comment = Configure the strength of the global illumination created by SSRT. §bⓘ What is this?§r global illumination in this scenario specifically is the light bouncing off a surface and onto some other area.
-    option.HQ_SSGI.comment = Toggle long range screen-space raytracing. this will allow SSRT lighting to travel ALOT farther within the scene from where it bounces/casts shadows. §a⚠ PERFORMANCE COST:§r very high
-    option.Hand_Held_lights.comment = Toggle shader-side hand held lightsources. §a⚠ PERFORMANCE COST:§r very low
+    option.LONG_RANGE_SSRT.comment = Toggle long range screen-space raytracing. this will allow SSRT lighting to travel ALOT farther within the scene from where it bounces/casts shadows. §a⚠ PERFORMANCE COST:§r very high
     option.SKY_CONTRIBUTION_IN_SSRT.comment = Allow the SSRT to take the entire sky and fog into account to create high quality lighting for shaded areas. This may introduce more noise. §a⚠ PERFORMANCE COST:§r medium
 
     option.ambientOcclusionLevel.comment = Configure the strength of the ambient occlusion from vanilla minecraft. §bⓘ What is this?§r This ambient occlusion is in minecraft even without shaders enabled.
@@ -237,9 +236,9 @@ screen.Ambient_light = Ambient Light
     screen.Ambient_Colors.comment = Configure the color of light in shaded areas.
     screen.Torch_Colors.comment = Configure the color of light from torches or other placed lightsources.
 
-    option.LPV_SIZE.comment = Configures the size (in blocks) of the volume for colored lighting.
-    option.LPV_SATURATION.comment = Configures the intensity of colored lighting.
-    option.LPV_TINT_SATURATION.comment = Configures the intensity of tinting by translucent blocks on colored lighting.
+    option.LPV_SIZE.comment = Configures the size of the volume for colored lighting.
+    option.LPV_SATURATION.comment = Configures how intense the color is for colored lighting.
+    option.LPV_TINT_SATURATION.comment = Configures how intense the color is for colored lighting passing through translucent things like stained glass.
     option.LPV_NORMAL_STRENGTH.comment = Configure the amount surface normals will affect lighting direction.
     option.LPV_ENTITY_LIGHTS.comment = Allows entities to contribute to colored lighting.
     option.LPV_REDSTONE_LIGHTS.comment = Allows redstone blocks to contribute to colored lighting.
@@ -985,10 +984,14 @@ screen.Water = Water Settings
 ###################################################### ↓↓↓ THIS SUBMENU'S LABELS
 screen.World = World
 
-    screen.Waving_Stuff = Waving Stuff
-        option.WAVY_PLANTS = Waving Plants
-        option.WAVY_STRENGTH = Waving Strength
-        option.WAVY_SPEED = Waving Speed
+    option.WAVY_SPEED = Waving Foliage Speed
+    option.FOLIAGE_ANIMATION_AMOUNT = Waving Foliage Amount
+        value.FOLIAGE_ANIMATION_AMOUNT.0 = §cOFF
+        suffix.FOLIAGE_ANIMATION_AMOUNT = %
+
+    option.CURVATURE_AMOUNT = Planet Curvature Amount
+        value.CURVATURE_AMOUNT.0 = §cOFF
+        suffix.CURVATURE_AMOUNT = %
 
     option.SKY_GROUND = Atmosphere ground
     

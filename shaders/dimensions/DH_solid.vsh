@@ -67,11 +67,11 @@ void main() {
     vec4 viewPos = gl_ModelViewMatrix * vPos;
 	localPos = gbufferModelViewInverse * viewPos;
 
-	#ifdef PLANET_CURVATURE
+	#if CURVATURE_AMOUNT !=  0
 		vec4 worldPos = localPos;
 
 		float curvature = length(worldPos) / (16*8);
-		worldPos.y -= curvature*curvature * CURVATURE_AMOUNT;
+		worldPos.y -= curvature*curvature * (float(CURVATURE_AMOUNT)/10.0f);
 
 		worldPos = gbufferModelView * worldPos;
 

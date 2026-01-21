@@ -477,20 +477,23 @@ void doEdgeAwareBlur(
 	);
 
 	for(int i = 0; i < 4; i++) {
+		
+		ivec2 offset = OFFSET[i];
+
 		#ifdef USING_LOD_MOD
-			float offsetDepth = sqrt(texelFetch(depth, UV + OFFSET[i] + UV_NOISE,0).a/65000.0);
+			float offsetDepth = sqrt(texelFetch(depth, UV + offset + UV_NOISE,0).a/65000.0);
 		#else
-			float offsetDepth = ld(convertHandDepth_2(texelFetch(depth, UV + OFFSET[i] + UV_NOISE, 0).r,hand));
+			float offsetDepth = ld(convertHandDepth_2(texelFetch(depth, UV + offset + UV_NOISE, 0).r,hand));
 		#endif
 
 		float edgeDiff = abs(offsetDepth - referenceDepth) < threshold ? 1.0 : 1e-7;
 
 		#ifdef Variable_Penumbra_Shadows
-			shadow_RESULT += texelFetch(tex1, UV + OFFSET[i] + UV_NOISE, 0).rgb*edgeDiff;
+			shadow_RESULT += texelFetch(tex1, UV + offset + UV_NOISE, 0).rgb*edgeDiff;
 		#endif
 
 		#if indirect_effect == SSAO_FILTERED
-			ssao_RESULT += texelFetch(tex2, UV + OFFSET[i] + UV_NOISE, 0).rg*edgeDiff;
+			ssao_RESULT += texelFetch(tex2, UV + offset + UV_NOISE, 0).rg*edgeDiff;
 		#endif
 
 		edgeSum += edgeDiff;

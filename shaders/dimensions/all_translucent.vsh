@@ -78,7 +78,6 @@ uniform float screenBrightness;
 
 uniform int heldItemId;
 uniform int heldItemId2;
-// flat varying float HELD_ITEM_BRIGHTNESS;
 
 uniform vec2 texelSize;
 
@@ -171,9 +170,9 @@ void main() {
 	
    	vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
 	
-	#ifdef PLANET_CURVATURE
+	#if CURVATURE_AMOUNT !=  0
 		float curvature = length(worldpos) / (16*8);
-		worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
+		worldpos.y -= curvature*curvature * (float(CURVATURE_AMOUNT)/10.0f);
 	#endif
 
 	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
@@ -182,12 +181,6 @@ void main() {
  		gl_Position = toClipSpace3(position);
 	#endif
 
-	// HELD_ITEM_BRIGHTNESS = 0.0;
-	
-	// #ifdef Hand_Held_lights
-	// 	if(heldItemId > 999 || heldItemId2 > 999) HELD_ITEM_BRIGHTNESS = 0.9;
-	// #endif
-	
 	// 1.0 = water mask
 	// 0.9 = entity mask
 	// 0.8 = reflective entities

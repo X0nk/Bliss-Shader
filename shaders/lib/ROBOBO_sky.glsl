@@ -87,7 +87,7 @@ vec3 sky_opticalDepth(vec3 position, vec3 direction, const float steps) {
 }
 
 vec3 sky_transmittance(vec3 position, vec3 direction, const float steps) {
-	return exp(-sky_opticalDepth(position, direction, steps) * rLOG2);
+	return exp2(-sky_opticalDepth(position, direction, steps) * rLOG2);
 }
 
 

@@ -196,7 +196,7 @@ vec3 ApplySSRT(
 		vec2 ij = fract(R2_samples(seed) + noise.xy);
 		vec3 rayDir = TangentToWorld(normal, normalize(cosineHemisphereSample(ij)));
 
-		#ifdef HQ_SSGI
+		#ifdef LONG_RANGE_SSRT
 			vec3 rayHit = rayTrace_GI( mat3(gbufferModelView) * rayDir, viewPos, noise.z, 50.); // ssr rt
 		#else
 			vec3 rayHit = RT_alternate(mat3(gbufferModelView)*rayDir, viewPos, noise.z, 10., isLOD, CURVE);  // choc sspt 
