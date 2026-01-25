@@ -655,7 +655,7 @@ float indirectSSS_phase(float LightPos){
 
 	curve *= curve;
 	curve = 1.0-curve;
-	curve *= curve*curve*curve;
+	curve *= curve;
 	curve = 1.0-curve;
 
 	curve += 1.0;
