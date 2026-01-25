@@ -647,16 +647,38 @@ vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, floa
 	return scatter;	
 }
 
-vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density){
+float indirectSSS_phase(float LightPos){
+
+	float curve = LightPos;
+
+	curve = curve*0.5+0.5;
+
+	curve *= curve;
+	curve = 1.0-curve;
+	curve *= curve*curve*curve;
+	curve = 1.0-curve;
+
+	curve += 1.0;
+
+	return 2;
+}
+
+vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density, float lightPos){
 	// Density = 1.0;
 
 	float scatterDepth = pow(Scattering,3.5);
 	scatterDepth = 1.0-pow(1.0-scatterDepth,5.0);
 	
 	vec3 absorbColor = exp(max(luma(albedo) - albedo*vec3(1.0,1.1,1.2), 0.0) * -20.0 * sss_absorbance_multiplier);
-	vec3 scatter = scatterDepth * mix(absorbColor, vec3(1.0), scatterDepth) * pow(Density, LabSSS_Curve);
+	vec3 scatter = scatterDepth * mix(absorbColor, vec3(1.0), scatterDepth);
+	
+	#if SSS_TYPE == 3
+		scatter *= pow(Density, LabSSS_Curve);
+	#else
+		if(Density < 0.01) scatter = vec3(0.0);
+	#endif
 
-	// scatter *= 1.0 + exp(-7.0*(-playerPosNormalized.y*0.5+0.5));
+	scatter *= indirectSSS_phase(lightPos); // ~2x brighter at the peak
 
 	return scatter;
 }
@@ -1329,14 +1351,11 @@ void main() {
 	
 	/////////////////////////////	SKY SSS		/////////////////////////////
 		#if defined Ambient_SSS && defined OVERWORLD_SHADER && (indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ)
-			vec3 ambientColor = AmbientLightColor * ambientsss_brightness * ambient_brightness * 2.0;
+			
+			vec3 ambientColor = AmbientLightColor * ambientsss_brightness * ambient_brightness;
 
-			Indirect_SSS = SubsurfaceScattering_sky(albedo, SkySSS, LabSSS);
+			Indirect_SSS = SubsurfaceScattering_sky(albedo, SkySSS, LabSSS, feetPlayerPos_normalized.y);
 			Indirect_SSS *= lightmap.y;
-
-			float thingy = SkySSS;
-			thingy = pow(thingy,3.5);
-			thingy = 1-pow(1-thingy,5);
 
 			Indirect_lighting += Indirect_SSS * ambientColor;
 		#endif
