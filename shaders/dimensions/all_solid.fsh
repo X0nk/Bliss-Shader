@@ -366,7 +366,7 @@ void main() {
 	float textureLOD = bias();
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD);
 
-	if(Albedo.a < max(alphaTestRef,0.5)){discard; return;}
+	if(Albedo.a < alphaTestRef){discard; return;}
 
 	Albedo *= color;
 
