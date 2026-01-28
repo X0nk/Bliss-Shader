@@ -365,12 +365,10 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 	float textureLOD = bias();
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD);
-	Albedo *= color;
-	// if(Albedo.a < max(alphaTestRef,0.1)){discard; return;}else{}
 
-	#if defined HAND
-		if (Albedo.a < 0.1) discard;
-	#endif
+	if(Albedo.a < max(alphaTestRef,0.5)){discard; return;}
+
+	Albedo *= color;
 
 	if(LIGHTNING > 0) Albedo = vec4(1);
 
