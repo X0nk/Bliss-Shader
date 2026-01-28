@@ -395,6 +395,8 @@
 	#if defined OVERWORLD_SHADER
 		#define BorderFog
 	#endif
+	#define RAIN_SNOW_BLOOMY_FOG 1.0 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
+	#define RAIN_SNOW_BRIGHTNESS 0.2 // [0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.75 0.8 0.85 0.9 0.95 1.0 1.5 2.0 3.0 4.0 5.0 6.0 10.0]
 #endif
 
 #if defined ATMOSPHERE_COEFF_RELATED_SETTINGS

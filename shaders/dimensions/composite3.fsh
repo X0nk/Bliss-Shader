@@ -607,8 +607,8 @@ void main() {
   float rainDrops = texelFetch(colortex9,ivec2(texcoord/texelSize),0).a;
   
   if(rainDrops > 0.0) {
-    bloomyFogMult *= clamp(1.0 - pow(rainDrops*5.0,2),0.0,1.0);
-    color.rgb += color.rgb * 0.2 * rainDrops;
+    bloomyFogMult *= mix(1.0, clamp(1.0 - pow(rainDrops*5.0,2),0.0,1.0), RAIN_SNOW_BLOOMY_FOG);
+    color.rgb += color.rgb * RAIN_SNOW_BRIGHTNESS;
   }
 #endif
 
