@@ -42,6 +42,7 @@ varying vec4 color;
 
 uniform int renderStage;
 uniform int isEyeInWater;
+uniform float alphaTestRef;
 
 uniform sampler2D texture;
 uniform sampler2D noisetex;
@@ -339,12 +340,14 @@ void main() {
 	#else
 		vec4 Albedo = texture(texture, adjustedTexCoord.xy);
 	#endif
+
+	if(Albedo.a < alphaTestRef){discard; return;}
 	
 	Albedo.rgb = toLinear(Albedo.rgb);
 
 	// if(dot(Albedo.rgb, vec3(0.33333)) < 1.0/255.0 || Albedo.a < 0.01 ) { discard; return; }
-	if(Albedo.a < 0.01 ) { discard; return; }
-	
+	// if(Albedo.a < 0.01 ) { discard; return; }
+
 	gl_FragData[0] = vec4(encodeVec2(vec2(0.5)), encodeVec2(Albedo.rg), encodeVec2(vec2(Albedo.b,0.02)), 1.0);
 #endif
 
@@ -363,7 +366,9 @@ void main() {
 	vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
 	vec3 feetPlayerPos_normalized = normalize(feetPlayerPos);
 
-	vec4 TEXTURE = texture(texture, lmtexcoord.xy)*color;
+	vec4 TEXTURE = texture(texture, lmtexcoord.xy);
+	if(TEXTURE.a < alphaTestRef){discard; return;}
+	TEXTURE *= color;
 	
 	#ifdef WhiteWorld
 		TEXTURE.rgb = vec3(1.0);
@@ -378,7 +383,6 @@ void main() {
 	#endif
 
 	#ifdef WEATHER
-		if(TEXTURE.a < 0.1) discard;
 		gl_FragData[1] = vec4(0.0,0.0,0.0,TEXTURE.a); // for bloomy rain and stuff
 	#endif
 
