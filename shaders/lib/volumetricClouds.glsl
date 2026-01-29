@@ -136,7 +136,7 @@ float getPlanetShadow(vec3 playerPos, vec3 WsunVec){
 		return 1.0;
 	#endif
 
-	float planetShadow = min(max(playerPos.y - (-100.0 + 1.0 / abs(WsunVec.y*0.1)),0.0) / 100.0, 1.0);
+	float planetShadow = min(max(playerPos.y - (FAKE_PLANET_START_HEIGHT + 1.0 / abs(WsunVec.y*0.1)),0.0) / 100.0, 1.0);
 
 	planetShadow = mix(pow(1.0-pow(1.0-planetShadow,2.0),2.0), 1.0, pow(abs(WsunVec.y),2.0));
 
