@@ -660,7 +660,7 @@ float indirectSSS_phase(float LightPos){
 
 	curve += 1.0;
 
-	return 2;
+	return curve;
 }
 
 vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density, float lightPos){
