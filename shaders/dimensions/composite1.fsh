@@ -783,6 +783,7 @@ void main() {
 
 		// float z0 = texture2D(depthtex0,texcoord).x;
 		// float z = texture2D(depthtex1,texcoord).x;
+		// float z = texture(depthtex1,texcoord).x;
 		
 		float z0 = texelFetch(depthtex0, ivec2(gl_FragCoord.xy), 0).x;
 		float z =  texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x;
@@ -849,10 +850,13 @@ void main() {
 
 	////// --------------- UNPACK MISC --------------- //////
 	
-		vec4 SpecularTex = texelFetch(colortex8, ivec2(gl_FragCoord.xy), 0);
+		vec4 specdata = texelFetch(colortex8, ivec2(gl_FragCoord.xy), 0);
+		vec4 specdataUnpacked1 = vec4(decodeVec2(specdata.z),decodeVec2(specdata.w));
+		vec4 SpecularTex = vec4(specdataUnpacked0.xz, specdataUnpacked1.xz);
+		vec3 FlatNormals = normalize(vec3(specdataUnpacked0.yw,specdataUnpacked1.y) * 2.0 - 1.0);
+
 		float LabSSS = clamp((-65.0 + SpecularTex.z * 255.0) / 190.0 ,0.0,1.0);	
 		float labPorosity = clamp(SpecularTex.z * 255.0, 0.0,64.5)/64.5;	
-		// LabSSS = 1;
 
 		vec4 normalAndAO = texture(colortex15,texcoord);
 		vec3 FlatNormals = normalize(normalAndAO.rgb * 2.0 - 1.0);

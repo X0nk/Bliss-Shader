@@ -149,6 +149,13 @@ vec4 encode (vec3 n, vec2 lightmaps){
     return vec4(encn,vec2(lightmaps.x,lightmaps.y));
 }
 
+vec2 encode_normal (vec3 n){
+	n.xy = n.xy / dot(abs(n), vec3(1.0));
+	n.xy = n.z <= 0.0 ? (1.0 - abs(n.yx)) * sign(n.xy) : n.xy;
+    vec2 encn = clamp(n.xy * 0.5 + 0.5,-1.0,1.0);
+	
+    return encn;
+}
 //encoding by jodie
 float encodeVec2(vec2 a){
     const vec2 constant1 = vec2( 1., 256.) / 65535.;
@@ -245,9 +252,9 @@ void convertHandDepth(inout float depth) {
 //////////////////////////////VOID MAIN//////////////////////////////
 
 #if defined HAND || defined ENTITIES || defined BLOCKENTITIES
-	/* RENDERTARGETS:1,8,15,2 */
+	/* RENDERTARGETS:1,8,2 */
 #else
-	/* RENDERTARGETS:1,8,15 */
+	/* RENDERTARGETS:1,8 */
 #endif
 
 void main() {
@@ -432,6 +439,7 @@ void main() {
 	#ifdef WhiteWorld
 		Albedo.rgb = vec3(1.0);
 	#endif	
+	
 	#ifdef AEROCHROME_MODE
 		float gray = dot(Albedo.rgb, vec3(0.2, 1.0, 0.07));
 		if (
@@ -473,13 +481,13 @@ void main() {
 	#ifdef HAND
 		if (Albedo.a > 0.1){
 			Albedo.a = 0.75;
-			gl_FragData[3] = vec4(0.0);
+			gl_FragData[2] = vec4(0.0);
 		} else {
 			Albedo.a = 1.0;
 		}
 	#endif
 	#if defined PARTICLE_RENDERING_FIX && (defined ENTITIES || defined BLOCKENTITIES)
-		gl_FragData[3] = vec4(0.0);
+		gl_FragData[2] = vec4(0.0);
 	#endif
 
 	
@@ -509,60 +517,47 @@ void main() {
 	#ifdef WORLD
 		vec4 SpecularTex = texture2D_POMSwitch(specular, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM,textureLOD);
 
-		// SpecularTex.r = max(SpecularTex.r, rainfall);
-		// SpecularTex.g = max(SpecularTex.g, max(Puddle_shape*0.02,0.02));
-
-		gl_FragData[1] = vec4(0.0,0.0,0.0,0.0);
-		gl_FragData[1].rg = SpecularTex.rg;
+		vec4 specularData = vec4(0.0);
+		
+		specularData.rg = SpecularTex.rg;
 
 		#if EMISSIVE_TYPE == 0
-			gl_FragData[1].a = 0.0;
-		#endif
-
-		#if EMISSIVE_TYPE == 1
-			gl_FragData[1].a = EMISSIVE;
-		#endif
-
-		#if EMISSIVE_TYPE == 2
-			gl_FragData[1].a = SpecularTex.a;
-			if(SpecularTex.a <= 0.0) gl_FragData[1].a = EMISSIVE;
-		#endif
-
-		#if EMISSIVE_TYPE == 3		
-			gl_FragData[1].a = SpecularTex.a;
+			specularData.a = 0.0;
+		#elif EMISSIVE_TYPE == 1
+			specularData.a = EMISSIVE;
+		#elif EMISSIVE_TYPE == 2
+			if(SpecularTex.a > 0.0) {
+				specularData.a = EMISSIVE;
+			}else{
+				specularData.a = SpecularTex.a;
+			}
+		#elif EMISSIVE_TYPE == 3		
+			specularData.a = SpecularTex.a;
 		#endif
 		
-		#if  defined WORLD && !defined ENTITIES && !defined HAND
-			if(PORTAL > 0) gl_FragData[1].a = endPortalEmission;
+		#if defined WORLD && !defined ENTITIES && !defined HAND
+			if(PORTAL > 0) specularData.a = endPortalEmission;
 		#endif
 
 		#if SSS_TYPE == 0
-			gl_FragData[1].b = 0.0;
+			specularData.b = 0.0;
+		#elif SSS_TYPE == 1
+			specularData.b = SSSAMOUNT;
+		#elif SSS_TYPE == 2
+			specularData.b = SpecularTex.b;
+			if(SpecularTex.b < 65.0/255.0) specularData.b = SSSAMOUNT;
+		#elif SSS_TYPE == 3		
+			specularData.b = SpecularTex.b;
 		#endif
 
-		#if SSS_TYPE == 1
-			gl_FragData[1].b = SSSAMOUNT;
-		#endif
+		vec4 otherData = vec4(viewToWorld(FlatNormals) * 0.5 + 0.5, VanillaAO);
 
-		#if SSS_TYPE == 2
-			gl_FragData[1].b = SpecularTex.b;
-			if(SpecularTex.b < 65.0/255.0) gl_FragData[1].b = SSSAMOUNT;
-		#endif
-
-		#if SSS_TYPE == 3		
-			gl_FragData[1].b = SpecularTex.b;
-		#endif
-
-
-		#if DEBUG_VIEW == debug_MATERIAL_SSS
-			Albedo.rgb = vec3(0.1);
-			if(SSSAMOUNT > 0.0) Albedo.rgb = vec3(0.0,SSSAMOUNT,0.0);
-		#endif
-		#if DEBUG_VIEW == debug_MATERIAL_EMISSION
-			Albedo.rgb = vec3(0.1);
-			if(EMISSIVE > 0.0) Albedo.rgb = vec3(0.0,EMISSIVE,0.0);
-			if(EMISSIVE >= 1.0) Albedo.rgb = vec3(1.0,0.0,0.0);
-		#endif
+		gl_FragData[1] = vec4(
+			encodeVec2(specularData.x, otherData.x),
+			encodeVec2(specularData.y, otherData.y),
+			encodeVec2(specularData.z, otherData.z),
+			encodeVec2(specularData.w, otherData.w)
+			);
 	#endif
 
 	// hit glow effect...
@@ -593,7 +588,5 @@ void main() {
 
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
 
-		gl_FragData[2] = vec4(viewToWorld(FlatNormals) * 0.5 + 0.5, VanillaAO);	
 	#endif
-	
 }
