@@ -80,7 +80,6 @@ uniform sampler2D colortex11;
 uniform sampler2D colortex12;
 uniform sampler2D colortex13;
 uniform sampler2D colortex14;
-uniform sampler2D colortex15; // flat normals(rgb), vanillaAO(alpha)
 
 #ifdef IS_LPV_ENABLED
 	uniform usampler1D texBlockData;
@@ -851,20 +850,18 @@ void main() {
 	////// --------------- UNPACK MISC --------------- //////
 	
 		vec4 specdata = texelFetch(colortex8, ivec2(gl_FragCoord.xy), 0);
+		
+		vec4 specdataUnpacked0 = vec4(decodeVec2(specdata.x),decodeVec2(specdata.y));
 		vec4 specdataUnpacked1 = vec4(decodeVec2(specdata.z),decodeVec2(specdata.w));
+
 		vec4 SpecularTex = vec4(specdataUnpacked0.xz, specdataUnpacked1.xz);
 		vec3 FlatNormals = normalize(vec3(specdataUnpacked0.yw,specdataUnpacked1.y) * 2.0 - 1.0);
+		float vanilla_AO = min(max(specdataUnpacked1.w-0.005,0.0)/0.995,1.0);
 
 		float LabSSS = clamp((-65.0 + SpecularTex.z * 255.0) / 190.0 ,0.0,1.0);	
 		float labPorosity = clamp(SpecularTex.z * 255.0, 0.0,64.5)/64.5;	
 
-		vec4 normalAndAO = texture(colortex15,texcoord);
-		vec3 FlatNormals = normalize(normalAndAO.rgb * 2.0 - 1.0);
 		vec3 slopednormal = normal;
-
-		float vanilla_AO = z < 1.0 ? clamp(normalAndAO.a,0,1) : 0.0;
-		normalAndAO.a = clamp(pow(normalAndAO.a*5,4),0,1);
-
 		if(isDHrange){
 			FlatNormals = normal;
 			slopednormal = normal;
