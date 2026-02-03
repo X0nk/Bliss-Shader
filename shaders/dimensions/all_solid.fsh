@@ -550,7 +550,7 @@ void main() {
 			specularData.b = SpecularTex.b;
 		#endif
 
-		vec4 otherData = vec4(viewToWorld(FlatNormals) * 0.5 + 0.5, VanillaAO);
+		vec4 otherData = clamp(vec4(viewToWorld(FlatNormals) * 0.5 + 0.5, VanillaAO),0.0,1.0);
 
 		gl_FragData[1] = vec4(
 			encodeVec2(specularData.x, otherData.x),
