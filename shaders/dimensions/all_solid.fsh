@@ -584,7 +584,10 @@ void main() {
 			PackLightmaps = clamp( PackLightmaps + PackLightmaps * (interleaved_gradientNoise()-0.5)*0.005,0,1);
 		#endif
 
-		vec4 data1 = clamp( encode(viewToWorld(normal), PackLightmaps), 0.0, 1.0);
+		vec4 data1 = clamp(encode(viewToWorld(normal), PackLightmaps), 0.0, 1.0);
+
+		Albedo = clamp(Albedo,0,1);
+		data1 = clamp(data1,0,1);
 
 		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
 
