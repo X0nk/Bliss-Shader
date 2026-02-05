@@ -2,52 +2,7 @@
 #define ANTIALIASING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
-
-/*
-const int colortex0Format = RGBA16F;				// low res clouds (deferred->composite2) + low res VL (composite5->composite15)
-const int colortex1Format = RGBA16;					// terrain gbuffer (gbuffer->composite2)
-const int colortex2Format = RGBA16F;				// forward + transparencies (gbuffer->composite4)
-const int colortex3Format = R11F_G11F_B10F;			// frame buffer + bloom (deferred6->final)
-const int colortex4Format = RGBA16F;				// light values and skyboxes (everything)
-const int colortex6Format = R11F_G11F_B10F;			// additionnal buffer for bloom (composite3->final)
-const int colortex7Format = RGBA8;					// Final output, transparencies id (gbuffer->composite4)
-const int colortex8Format = RGBA16;					// Specular Texture
-const int colortex9Format = RGBA8;					// rain in alpha
-const int colortex10Format = RGBA16F;				// resourcepack Skies
-const int colortex11Format = RGBA16; 				// unchanged translucents albedo, alpha and tangent normals
-const int colortex12Format = RGBA16F;				// DISTANT HORIZONS + VANILLA MIXED DEPTHs
-const int colortex13Format = RGBA16F;				// low res VL (composite5->composite15)
-const int colortex14Format = RGBA16;				// rg = SSAO and SS-SSS. a = skylightmap for translucents.
-const int colortex15Format = RGBA8;					// flat normals and vanilla AO
-*/
-
-#ifdef SCREENSHOT_MODE
-	/*
-	const int colortex5Format = RGBA32F;			//TAA buffer (everything)
-	*/
-#else
-	/*
-	const int colortex5Format = RGBA16F;			//TAA buffer (everything)
-	*/
-#endif
-
-//no need to clear the buffers, saves a few fps
-const bool colortex0Clear = false;
-const bool colortex1Clear = false;
-const bool colortex2Clear = true;
-const bool colortex3Clear = false;
-const bool colortex4Clear = false;
-const bool colortex5Clear = false;
-const bool colortex6Clear = false;
-const bool colortex7Clear = false;
-const bool colortex8Clear = false;
-const bool colortex9Clear = true;
-const bool colortex10Clear = false;
-const bool colortex11Clear = true;
-const bool colortex12Clear = false;
-const bool colortex13Clear = false;
-const bool colortex14Clear = true;
-const bool colortex15Clear = false;
+#include "/lib/buffer_formatting.glsl"
 
 varying vec2 texcoord;
 flat varying float tempOffsets;
