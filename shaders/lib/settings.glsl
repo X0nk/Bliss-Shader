@@ -328,7 +328,7 @@
 	#define Adaptive_Step_length
 	// #define Horrible_slope_normals
 	#if defined POM && defined DEPTH_WRITE_POM
-		#define POM_OFFSET_SHADOW_BIAS
+		// #define POM_OFFSET_SHADOW_BIAS
 	#endif
 #endif
 
