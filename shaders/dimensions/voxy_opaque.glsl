@@ -58,7 +58,6 @@ struct VoxyFragmentParameters {
 
 layout(location = 0) out vec4 DEFERRED_DATA;
 layout(location = 1) out vec4 SPECULAR_DATA;
-layout(location = 2) out vec4 MISC_DATA;
 
 void voxy_emitFragment(VoxyFragmentParameters parameters) {
 
@@ -73,41 +72,48 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
 	#endif
 
     vec2 lightMaps = parameters.lightMap.xy;
-    vec4 data1 = clamp( encode(worldToView(normal), lightMaps), 0.0, 1.0);
-    float pixelMask = 0.0;
+    vec4 data1 = encode(worldToView(normal), lightMaps);
+    
+    Albedo = clamp(Albedo,0.0,1.0);
+    data1 = clamp(data1,0.0,1.0);
 
     DEFERRED_DATA.xyzw = vec4(  encodeVec2(Albedo.x, data1.x),
                                 encodeVec2(Albedo.y, data1.y),
                                 encodeVec2(Albedo.z, data1.z),
-                                encodeVec2(data1.w, pixelMask) );
+                                encodeVec2(data1.w, 0.0) );
                                 
     float subSurfaceScattering = 0.0;
     #if SSS_TYPE > 0
-    if(
-        parameters.customId == BLOCK_SSS_STRONG || parameters.customId == BLOCK_SAPLING ||
-        parameters.customId == BLOCK_AIR_WAVING
-    ) subSurfaceScattering = 1.0;
+        if(
+            parameters.customId == BLOCK_SSS_STRONG || parameters.customId == BLOCK_SAPLING ||
+            parameters.customId == BLOCK_AIR_WAVING
+        ) subSurfaceScattering = 1.0;
 
-    if(
-        parameters.customId == BLOCK_GROUND_WAVING || parameters.customId == BLOCK_GROUND_WAVING_VERTICAL ||
-        parameters.customId == BLOCK_GRASS_SHORT || parameters.customId == BLOCK_GRASS_TALL_UPPER ||
-        parameters.customId == BLOCK_GRASS_TALL_LOWER
-    ) subSurfaceScattering = 0.5;
-	
-    if (
-		parameters.customId == BLOCK_SSS_WEAK || parameters.customId == BLOCK_SSS_WEAK_2 ||
-		parameters.customId == BLOCK_GLOW_LICHEN || parameters.customId == BLOCK_SNOW_LAYERS || parameters.customId == BLOCK_CARPET ||
-		parameters.customId == BLOCK_AMETHYST_BUD_MEDIUM || parameters.customId == BLOCK_AMETHYST_BUD_LARGE || parameters.customId == BLOCK_AMETHYST_CLUSTER ||
-		parameters.customId == BLOCK_BAMBOO || parameters.customId == BLOCK_SAPLING || parameters.customId == BLOCK_VINE
-	) subSurfaceScattering = 0.5;
+        if(
+            parameters.customId == BLOCK_GROUND_WAVING || parameters.customId == BLOCK_GROUND_WAVING_VERTICAL ||
+            parameters.customId == BLOCK_GRASS_SHORT || parameters.customId == BLOCK_GRASS_TALL_UPPER ||
+            parameters.customId == BLOCK_GRASS_TALL_LOWER
+        ) subSurfaceScattering = 0.5;
     
-	// if(
-	// 	parameters.customId == BLOCK_SSS_WEIRD || parameters.customId == BLOCK_GRASS
-	// ) subSurfaceScattering = 0.5;
-    
-	if(parameters.customId == BLOCK_SSS_WEAK_3) subSurfaceScattering = 0.4;
+        if (
+	    	parameters.customId == BLOCK_SSS_WEAK || parameters.customId == BLOCK_SSS_WEAK_2 ||
+	    	parameters.customId == BLOCK_GLOW_LICHEN || parameters.customId == BLOCK_SNOW_LAYERS || parameters.customId == BLOCK_CARPET ||
+	    	parameters.customId == BLOCK_AMETHYST_BUD_MEDIUM || parameters.customId == BLOCK_AMETHYST_BUD_LARGE || parameters.customId == BLOCK_AMETHYST_CLUSTER ||
+	    	parameters.customId == BLOCK_BAMBOO || parameters.customId == BLOCK_SAPLING || parameters.customId == BLOCK_VINE
+	    ) subSurfaceScattering = 0.5;
+
+	    if(parameters.customId == BLOCK_SSS_WEAK_3) subSurfaceScattering = 0.4;
     #endif
-    SPECULAR_DATA.xyzw = vec4(0.0,0.0,subSurfaceScattering,0.0);
+    
+    vec4 specularData = vec4(0.0,0.0,subSurfaceScattering,0.0);
+    vec4 otherData = vec4(normal.xyz * 0.5 + 0.5,1.0);
 
-    MISC_DATA.xyzw = vec4(normal.xyz * 0.5 + 0.5, 0.0);	
+    specularData = clamp(specularData,0.0,1.0);
+    otherData = clamp(otherData,0.0,1.0);
+
+	SPECULAR_DATA.xyzw = vec4(
+		encodeVec2(specularData.x, otherData.x),
+		encodeVec2(specularData.y, otherData.y),
+		encodeVec2(specularData.z, otherData.z),
+		encodeVec2(specularData.w, otherData.w) );
 }

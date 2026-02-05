@@ -7,7 +7,7 @@
     ",
     "version": 1,
     "excludeLodsFromVanillaDepth": true,
-    "opaqueDrawBuffers": [1,8,15],
+    "opaqueDrawBuffers": [1,8],
     "translucentDrawBuffers": [2,7],
     "blending": { 
         -1: "off", 
