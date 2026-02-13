@@ -3,6 +3,7 @@
 #define DEPTH_OF_FIELD_RELATED_SETTINGS
 #define GEOMETRY_ANIMATION_RELATED_SETTINGS
 #define SEASONS_RELATED_SETTINGS
+#define SUB_SURFACE_SCATTERING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/bokeh.glsl"
@@ -38,6 +39,7 @@ flat varying float EMISSIVE;
 flat varying int LIGHTNING;
 flat varying int PORTAL;
 flat varying int SIGN;
+flat varying int SHADOWBIAS_OFFSET_MASK;
 flat varying float blockID;
 flat varying int NameTags;
 
@@ -59,8 +61,8 @@ uniform float frameTimeCounter;
 
 uniform sampler2D noisetex;//depth
 
-const float PI48 = 150.796447372*WAVY_SPEED;
-float pi2wt = PI48*frameTimeCounter;
+
+#include "/lib/vertex_displacement.glsl"
 
 #if defined HAND
 	uniform mat4 gbufferPreviousModelView;
@@ -82,33 +84,6 @@ float pi2wt = PI48*frameTimeCounter;
 
 vec4 toClipSpace3(vec3 viewSpacePosition) {
     return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
-}
-
-vec2 calcWave(in vec3 pos) {
-
-    float magnitude = abs(sin(dot(vec4(frameTimeCounter, pos),vec4(1.0,0.005,0.005,0.005)))*0.5+0.72)*0.013;
-	vec2 ret = (sin(pi2wt*vec2(0.0063,0.0015)*4. - pos.xz + pos.y*0.05)+0.1)*magnitude;
-
-    return ret;
-}
-
-vec3 calcMovePlants(in vec3 pos) {
-    vec2 move1 = calcWave(pos );
-	float move1y = -length(move1);
-   return vec3(move1.x,move1y,move1.y)*5.*WAVY_STRENGTH;
-}
-
-vec3 calcWaveLeaves(in vec3 pos, in float fm, in float mm, in float ma, in float f0, in float f1, in float f2, in float f3, in float f4, in float f5) {
-
-    float magnitude = abs(sin(dot(vec4(frameTimeCounter, pos),vec4(1.0,0.005,0.005,0.005)))*0.5+0.72)*0.013;
-	vec3 ret = (sin(pi2wt*vec3(0.0063,0.0224,0.0015)*1.5 - pos))*magnitude;
-
-    return ret;
-}
-
-vec3 calcMoveLeaves(in vec3 pos, in float f0, in float f1, in float f2, in float f3, in float f4, in float f5, in vec3 amp1, in vec3 amp2) {
-    vec3 move1 = calcWaveLeaves(pos      , 0.0054, 0.0400, 0.0400, 0.0127, 0.0089, 0.0114, 0.0063, 0.0224, 0.0015) * amp1;
-    return move1*5.*WAVY_STRENGTH;
 }
 
 float densityAtPos(in vec3 pos){
@@ -195,6 +170,7 @@ void main() {
 
 	PORTAL = 0;
 	SIGN = 0;
+	SHADOWBIAS_OFFSET_MASK = 0;
 
 	#if defined WORLD && !defined HAND
 		if(blockEntityId == BLOCK_SIGN) SIGN = 1;
@@ -236,7 +212,7 @@ void main() {
     /////// ----- SSS STUFF ----- ///////
 		SSSAMOUNT = 0.0;
 
-#ifdef WORLD
+#if defined WORLD || defined ENTITIES
     /////// ----- SSS ON BLOCKS ----- ///////
 	// strong
 	if (
@@ -291,7 +267,6 @@ void main() {
 		if(blockEntityId == BLOCK_SSS_WEAK_3) SSSAMOUNT = 0.4;
 
 		// low
-
 	#endif
 
    	vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
@@ -326,14 +301,14 @@ void main() {
 	#endif
 	
 	#if CURVATURE_AMOUNT !=  0
-		float curvature = length(worldpos) / (16*8);
-		worldpos.y -= curvature*curvature * (float(CURVATURE_AMOUNT)/10.0f);
+		applyWorldCurvature(worldpos);
 	#endif
-
+	
 	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 	
 	// ensure hand/entities have the same transformations as the spidereyes and enchant glint programs.
-	#if !defined ENTITIES && !defined HAND
+	// will do world curvature here soon, needs the same transformations as enchant glint to avoid zfighting
+	#if !defined HAND && !defined ENTITIES
 		gl_Position = toClipSpace3(position);
 	#endif
 #endif

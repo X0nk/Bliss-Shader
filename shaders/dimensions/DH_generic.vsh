@@ -1,5 +1,6 @@
 #define ANTIALIASING_RELATED_SETTINGS
 #define DEPTH_OF_FIELD_RELATED_SETTINGS
+#define GEOMETRY_ANIMATION_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 
@@ -7,7 +8,6 @@ varying vec4 pos;
 varying vec4 gcolor;
 
 uniform vec2 texelSize;
-
 
 #if DOF_QUALITY == 5
 	uniform int hideGUI;
@@ -17,12 +17,39 @@ uniform vec2 texelSize;
 	uniform float far;
 	#include "/lib/bokeh.glsl"
 #endif
+uniform vec3 cameraPosition;
+uniform int frameTimeCounter;
+uniform mat4 dhProjection;
+uniform mat4 gbufferModelView;
+uniform mat4 gbufferModelViewInverse;
 
 #include "/lib/TAA_jitter.glsl"
+#include "/lib/vertex_displacement.glsl"
 
 
 void main() {
-    gl_Position = ftransform();
+
+    // gl_Position = ftransform();
+
+    vec4 vPos = gl_Vertex;
+
+    vec3 cameraOffset = fract(cameraPosition);
+    vPos.xyz = floor(vPos.xyz + cameraOffset + 0.5) - cameraOffset;
+
+    vec4 viewPos = gl_ModelViewMatrix * vPos;
+	vec4 localPos = gbufferModelViewInverse * viewPos;
+
+	#if CURVATURE_AMOUNT !=  0
+		vec4 worldPos = localPos;
+
+		applyWorldCurvature(worldPos.xyz);
+
+		worldPos = gbufferModelView * worldPos;
+    	gl_Position = dhProjection * worldPos;
+	#else
+    	gl_Position = dhProjection * viewPos;
+	#endif
+
 
 	#if TAA_MODE == 3
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;

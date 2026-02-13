@@ -2,6 +2,9 @@
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 
+// will do soon, needs the same transformations as entities so that enchant glint does not zfight
+// #include "/lib/vertex_displacement.glsl"
+
 /*
 !! DO NOT REMOVE !!
 This code is from Chocapic13' shaders

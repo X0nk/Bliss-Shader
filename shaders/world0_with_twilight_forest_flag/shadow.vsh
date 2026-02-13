@@ -261,9 +261,9 @@ void main() {
 	#endif
 
 	#if CURVATURE_AMOUNT !=  0
-		float curvature = length(worldpos) / (16*8);
-		worldpos.y -= curvature*curvature * (float(CURVATURE_AMOUNT)/10.0f);
+		applyWorldCurvature(worldpos);
 	#endif
+	
 
 	position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz;
 

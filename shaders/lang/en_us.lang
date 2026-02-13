@@ -999,7 +999,7 @@ screen.World = World
         value.FOLIAGE_ANIMATION_AMOUNT.0 = §cOFF
         suffix.FOLIAGE_ANIMATION_AMOUNT = %
 
-    option.CURVATURE_AMOUNT = Planet Curvature Amount
+    option.CURVATURE_AMOUNT = Planet Curvature Amount §bⓘ Voxy Not Supported§r
         value.CURVATURE_AMOUNT.0 = §cOFF
         suffix.CURVATURE_AMOUNT = %
 

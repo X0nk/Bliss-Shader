@@ -1,6 +1,7 @@
 #define ANTIALIASING_RELATED_SETTINGS
 #define SEASONS_RELATED_SETTINGS
 #define DEPTH_OF_FIELD_RELATED_SETTINGS
+#define GEOMETRY_ANIMATION_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 
@@ -28,8 +29,10 @@ uniform float screenBrightness;
 #endif
 
 
+uniform int frameTimeCounter;
 
 #include "/lib/TAA_jitter.glsl"
+#include "/lib/vertex_displacement.glsl"
 
 uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferModelView;
@@ -49,16 +52,6 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 
 void main() {
 
-	// vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-   	// vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
-	// #ifdef PLANET_CURVATURE
-	// 	float curvature = length(worldpos) / (16*8);
-	// 	worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
-	// #endif
-	// position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
-
-	// gl_Position = toClipSpace3(position);
-	
     vec4 vPos = gl_Vertex;
 
     vec3 cameraOffset = fract(cameraPosition);
@@ -70,11 +63,9 @@ void main() {
 	#if CURVATURE_AMOUNT !=  0
 		vec4 worldPos = localPos;
 
-		float curvature = length(worldPos) / (16*8);
-		worldPos.y -= curvature*curvature * (float(CURVATURE_AMOUNT)/10.0f);
+		applyWorldCurvature(worldPos.xyz);
 
 		worldPos = gbufferModelView * worldPos;
-
     	gl_Position = dhProjection * worldPos;
 	#else
     	gl_Position = dhProjection * viewPos;

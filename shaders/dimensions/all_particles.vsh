@@ -1,5 +1,6 @@
 #define HANDHELD_LIGHTSOURCE_RELATED_SETTINGS
 #define ANTIALIASING_RELATED_SETTINGS
+#define GEOMETRY_ANIMATION_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/items.glsl"
@@ -44,15 +45,13 @@ uniform int heldItemId;
 uniform int heldItemId2;
 
 #include "/lib/TAA_jitter.glsl"
+#include "/lib/vertex_displacement.glsl"
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 vec4 toClipSpace3(vec3 viewSpacePosition) {
     return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
 }		
-
-
-
 
 #ifdef DAMAGE_BLOCK_EFFECT
 	varying vec4 vtexcoordam; // .st for add, .pq for mul
@@ -103,9 +102,8 @@ void main() {
 			}
 		#endif
 		
-		#if defined LINES && CURVATURE_AMOUNT != 0
-			float curvature = length(worldpos) / (16*8);
-			worldpos.y -= curvature*curvature * (float(CURVATURE_AMOUNT)/10.0f);
+		#if defined LINES && CURVATURE_AMOUNT !=  0
+			applyWorldCurvature(worldpos);
 		#endif
 
 		position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;

@@ -3,6 +3,7 @@
 #define DEPTH_OF_FIELD_RELATED_SETTINGS
 #define SHADOWMAP_CONSTANT_RELATED_SETTINGS
 #define WATER_RELATED_SETTINGS
+#define GEOMETRY_ANIMATION_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/bokeh.glsl"
@@ -83,6 +84,7 @@ uniform vec2 texelSize;
 
 
 #include "/lib/TAA_jitter.glsl"
+#include "/lib/vertex_displacement.glsl"
 
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
@@ -171,8 +173,7 @@ void main() {
    	vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
 	
 	#if CURVATURE_AMOUNT !=  0
-		float curvature = length(worldpos) / (16*8);
-		worldpos.y -= curvature*curvature * (float(CURVATURE_AMOUNT)/10.0f);
+		applyWorldCurvature(worldpos);
 	#endif
 
 	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
