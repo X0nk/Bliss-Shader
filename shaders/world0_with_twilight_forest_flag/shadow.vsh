@@ -233,7 +233,7 @@ void main() {
 	int blockId = int(mc_Entity.x + 0.5);
 
 	vec3 worldpos = playerpos;
-	#ifdef WAVY_PLANTS
+	#if FOLIAGE_ANIMATION_AMOUNT > 0
 		// also use normal, so up/down facing geometry does not get detatched from its model parts.
 		bool InterpolateFromBase = gl_MultiTexCoord0.t < max(mc_midTexCoord.t, abs(viewToWorld(normalize(gl_NormalMatrix * gl_Normal)).y));
 

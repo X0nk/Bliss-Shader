@@ -296,7 +296,7 @@ void main() {
 
    	vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
 
-	#ifdef WAVY_PLANTS
+	#if FOLIAGE_ANIMATION_AMOUNT > 0
 		// also use normal, so up/down facing geometry does not get detatched from its model parts.
 		bool InterpolateFromBase = gl_MultiTexCoord0.t < max(mc_midTexCoord.t, abs(viewToWorld(FlatNormals).y));
 
