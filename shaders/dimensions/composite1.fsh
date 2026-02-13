@@ -15,6 +15,7 @@
 #define AMBIENT_LIGHT_RELATED_SETTINGS
 #define VOLUMETRIC_CLOUD_RELATED_SETTINGS
 #define WATER_RELATED_SETTINGS
+#define PARALLAX_OCCLUSION_MAPPING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/macro_lod_mod.glsl"
 #include "/lib/TAA_jitter.glsl"
@@ -876,11 +877,15 @@ void main() {
 		// 0.50 = lightning bolt mask
 		// 0.45 = entity mask
 		float opaqueMasks = dataUnpacked1.w;
-		#if defined POM_OFFSET_SHADOW_BIAS
-			float POM_DEEPNESS = opaqueMasks < 0.43 ? 1.0 - min(max(0.4-opaqueMasks,0.0)/0.4,1.0) : 0.0;
-		#else
-			float POM_DEEPNESS = 0.0;
-		#endif
+
+		// bool isPOM = abs(opaqueMasks-0.2) < 0.01;
+		
+		// #if defined POM_OFFSET_SHADOW_BIAS
+			float POM_DEEPNESS = opaqueMasks < 0.48 ? 1.0-min(max(0.4-opaqueMasks,0.0)/0.4,1.0) : 0.0;
+		// #else
+		// 	float POM_DEEPNESS = 0.0;
+		// #endif
+
 		// 1.0 = water mask
 		// 0.9 = entity mask
 		// 0.8 = reflective entities
@@ -1097,8 +1102,8 @@ void main() {
 		#endif
 
 		vec3 projectedShadowPosition = mat3(shadowModelView) * shadowPlayerPos + shadowModelView[3].xyz;
-
-		applyShadowBias(projectedShadowPosition, shadowPlayerPos, FlatNormals, POM_DEEPNESS);
+		
+		applyShadowBias(projectedShadowPosition, shadowPlayerPos, FlatNormals);
 
 		projectedShadowPosition = diagonal3_old(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
@@ -1110,7 +1115,12 @@ void main() {
 			float distortFactor = 1.0;
 		#endif
 		
-		projectedShadowPosition.z += shadowProjection[3].z * 0.0012;
+		#if defined POM_OFFSET_SHADOW_BIAS && defined POM
+			projectedShadowPosition.z += shadowProjection[3].z * (0.0012 + POM_DEEPNESS * POM_DEPTH * 0.01);
+		#else
+			projectedShadowPosition.z += shadowProjection[3].z * 0.0012;
+		#endif
+
 		projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5,0.5,0.5) ;
 
 		float ShadowAlpha = 0.0; // this is for subsurface scattering later.

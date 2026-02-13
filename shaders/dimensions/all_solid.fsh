@@ -317,33 +317,30 @@ void main() {
 	if (falloff > 0.0) {
 
 		float depthmap = readNormal(vtexcoord.st).a;
-		float used_POM_DEPTH = 1.0;
 		float pomdepth = POM_DEPTH*falloff;
 
  		if ( viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
 			float noise = blueNoise();
 			#ifdef Adaptive_Step_length
 				vec3 interval = (viewVector.xyz / -viewVector.z / MAX_OCCLUSION_POINTS * pomdepth) * clamp(1.0-pow(depthmap,2),0.1,1.0);
-				used_POM_DEPTH = 1.0;
 			#else
 				vec3 interval = viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS*pomdepth;
 			#endif
 			vec3 coord = vec3(vtexcoord.st , 1.0);
 
-			coord += interval * noise * used_POM_DEPTH;
+			coord += interval * noise;
 
 			float sumVec = noise;
 			for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - pomdepth + pomdepth * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
-				coord = coord + interval  * used_POM_DEPTH; 
-				sumVec += used_POM_DEPTH;
+				coord = coord + interval ; 
+				sumVec += 1.0;
 
 				#if defined POM_OFFSET_SHADOW_BIAS
-					// absolutely disgusting but works for now
-					if(loopCount > MAX_OCCLUSION_POINTS*0.01 * POM_DEPTH * 30.0) saveDepth = max(0.20,saveDepth);
-					if(loopCount > MAX_OCCLUSION_POINTS*0.02 * POM_DEPTH * 30.0) saveDepth = max(0.25,saveDepth);
-					if(loopCount > MAX_OCCLUSION_POINTS*0.03 * POM_DEPTH * 30.0) saveDepth = max(0.30,saveDepth);
-					if(loopCount > MAX_OCCLUSION_POINTS*0.05 * POM_DEPTH * 30.0) saveDepth = max(0.35,saveDepth);
-					if(loopCount > MAX_OCCLUSION_POINTS*0.06 * POM_DEPTH * 30.0) saveDepth = max(0.40,saveDepth);
+					#ifdef Adaptive_Step_length
+						saveDepth += clamp((1.0/MAX_OCCLUSION_POINTS)*clamp(1.0-pow(depthmap,2),0.1,1.0),0.0,1.0);
+					#else
+						saveDepth += clamp(1.0/MAX_OCCLUSION_POINTS,0.0,1.0);
+					#endif
 				#endif
 			}
 	
@@ -474,7 +471,7 @@ void main() {
 		else Albedo.a = 0.0;
 		
 		#if defined POM_OFFSET_SHADOW_BIAS && !defined HAND
-			if(saveDepth > 0) Albedo.a = min(saveDepth,Albedo.a);
+			if(saveDepth > 0) Albedo.a = min(sqrt(saveDepth),Albedo.a);
 		#endif
 	#endif
 
