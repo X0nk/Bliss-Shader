@@ -1112,7 +1112,8 @@ void main() {
 		#endif
 
 		#if defined POM && defined POM_OFFSET_SHADOW_BIAS
-			projectedShadowPosition.z += shadowProjection[3].z * (0.0012 + shadowCutMask * mix(0.25,1.0,POM_DEPTH) * 0.01);
+			// the idea is to cut the shadows starting position, interpolating down to the lowest depth of POM within a block.
+			projectedShadowPosition.z += shadowProjection[3].z * (0.0012 + 0.035 * (float(POM_DEPTH)/100.0) * shadowCutMask);
 		#else
 			projectedShadowPosition.z += shadowProjection[3].z * 0.0012;
 		#endif

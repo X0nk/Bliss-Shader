@@ -171,7 +171,7 @@ screen.Ambient_light = Ambient Light
     option.ambientOcclusionLevel = Vanilla AO Amount
     option.MINIMUM_OUTDOOR_LIGHT = Minimum Light Brightness §bⓘ Outdoors§
     option.MINIMUM_INDOOR_LIGHT = Minimum Light Brightness  §bⓘ Indoors§
-    option.indirect_effect = Indirect Lighting
+    option.indirect_effect = Indirect Lighting Mode
         value.indirect_effect.VANILLA_AO = Vanilla AO
             value.indirect_effect.SSAO_FILTERED = SSAO
             value.indirect_effect.SSAO_HQ = HQ SSAO
@@ -294,12 +294,19 @@ screen.Resource_Pack_Support = Materials / Resource Pack Support
             value.SSS_TYPE.3 = LabSSS only
 
     screen.POM = Parallax Occlusion Mapping / POM
-        option.POM = Parallax Occlusion Mapping
+        option.POM = Parallax Occlusion Mapping / POM
         option.MAX_ITERATIONS = Quality
+            suffix.MAX_ITERATIONS = §r Steps
         option.POM_DEPTH = Depth
+            suffix.POM_DEPTH = §r Centimeters
+            value.POM_DEPTH.1 = 1 Centimeter
+            value.POM_DEPTH.100 = 1 Meter
         option.MAX_DIST = Maximum Distance
+            suffix.MAX_DIST = §r Meters
         option.Adaptive_Step_length = Dynamic Quality
         option.Horrible_slope_normals = Horrible Slope Normals
+        option.POM_OFFSET_SHADOW_BIAS = Self Shadowing Fix §bⓘ needs depthwrite POM§r §c⚠ can cause light leaks§r
+        option.DEPTH_WRITE_POM = Depth Write POM
 
     option.LABEL_0 = §bⓘ "Reflections on terrain" must be enabled for wetness to work
     value.LABEL_0.0 = §bⓘ§r
@@ -359,6 +366,9 @@ screen.Resource_Pack_Support = Materials / Resource Pack Support
     option.MAX_DIST.comment = The maximum distance from the camera that the parallax occlusion mapping effect can render. §a⚠ PERFORMANCE COST:§r high
     option.Adaptive_Step_length.comment = This will increase visual quality without needing to increase the actual quality. This causes some artifacts if you look really close, or have a very busy heightmap with sharp varying heights. 
     option.Horrible_slope_normals.comment = This is a poorly done implementation to give a surface to the sides of the parallax occlusion mapping. i do not recommend this. §a⚠ PERFORMANCE COST:§r low
+    
+    option.DEPTH_WRITE_POM.comment = §bⓘ What is this?§r By writing the results of POM into the depth buffers, all lighting effects that use the depth buffer will now properly interact with POM. §a⚠ PERFORMANCE COST:§r medium
+    option.POM_OFFSET_SHADOW_BIAS.comment = §bⓘ What is this?§r When "Depth Write POM" is enabled, the ShadowMap does not know POM is changing the surface depth, causing an ugly shadow cast from an invisible surface onto the deeper POM parts. §a⚠ PERFORMANCE COST:§r very low
 
     screen.Porosity.comment = Configure settings related to wetness and puddles
     option.Porosity.comment = §bⓘ What is this?§r Porosity is a description of how porous some material is, or essentially how much water can be held inside it. for examle, sponges are very porous; water is contained within and darkens it as a results. §a⚠ PERFORMANCE COST:§r low
@@ -953,15 +963,15 @@ screen.Water = Water Settings
     option.MINIMUM_WATER_ABSORBANCE = Minimum Water Absorbance
         value.MINIMUM_WATER_ABSORBANCE.-1 = AUTO
 
-    option.FAKE_REFRACTION_AMOUNT = Refraction amount
+    option.FAKE_REFRACTION_AMOUNT = Refraction Amount
     value.FAKE_REFRACTION_AMOUNT.0 = §cOFF
     suffix.FAKE_REFRACTION_AMOUNT =%
 
-    option.FAKE_DISPERSION_AMOUNT = Dispersion amount
+    option.FAKE_DISPERSION_AMOUNT = Rainbow Dispersion Amount
     value.FAKE_DISPERSION_AMOUNT.0 = §cOFF
     suffix.FAKE_DISPERSION_AMOUNT =%
 
-    option.REFRACTION_SMUDGE_AMOUNT = Smudge amount
+    option.REFRACTION_SMUDGE_AMOUNT = Smudge Amount
     value.REFRACTION_SMUDGE_AMOUNT.0 = §cOFF
     suffix.REFRACTION_SMUDGE_AMOUNT =%
 

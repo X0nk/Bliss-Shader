@@ -302,6 +302,9 @@ void main() {
 		float dist = length(fragpos);
 
 		float maxdist = MAX_OCCLUSION_DISTANCE;
+		
+		float pomdepth = (float(POM_DEPTH)/100.0);
+
 		if (dist < maxdist) {
 
 			float depthmap = readNormal(vtexcoord.st).a;
@@ -310,17 +313,17 @@ void main() {
 	 		if ( viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
 
 				#ifdef Adaptive_Step_length
-					vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * POM_DEPTH) * clamp(1.0-pow(depthmap,2),0.1,1.0);
+					vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * pomdepth) * clamp(1.0-pow(depthmap,2),0.1,1.0);
 					used_POM_DEPTH = 1.0;
 				#else
-					vec3 interval = viewVector.xyz/-viewVector.z/ MAX_OCCLUSION_POINTS*POM_DEPTH;
+					vec3 interval = viewVector.xyz/-viewVector.z/ MAX_OCCLUSION_POINTS*pomdepth;
 				#endif
 				vec3 coord = vec3(vtexcoord.st, 1.0);
 
 				coord += interval * used_POM_DEPTH;
 
 				float sumVec = 0.5;
-				for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - POM_DEPTH + POM_DEPTH * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
+				for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - pomdepth + pomdepth * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
 					coord = coord + interval * used_POM_DEPTH; 
 					sumVec += used_POM_DEPTH; 
 				}

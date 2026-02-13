@@ -325,14 +325,14 @@ void main() {
 	if (falloff > 0.0) {
 
 		float depthmap = readNormal(vtexcoord.st).a;
-		float pomdepth = POM_DEPTH*falloff;
+		float pomdepth = (float(POM_DEPTH)/100.0)*falloff;
 
  		if ( viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
 			float noise = blueNoise();
 			#ifdef Adaptive_Step_length
 				vec3 interval = (viewVector.xyz / -viewVector.z / MAX_OCCLUSION_POINTS * pomdepth) * clamp(1.0-pow(depthmap,2),0.1,1.0);
 			#else
-				vec3 interval = viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS*pomdepth;
+				vec3 interval = viewVector.xyz / -viewVector.z / MAX_OCCLUSION_POINTS*pomdepth;
 			#endif
 			vec3 coord = vec3(vtexcoord.st , 1.0);
 
@@ -345,9 +345,9 @@ void main() {
 
 				#if defined POM_OFFSET_SHADOW_BIAS
 					#ifdef Adaptive_Step_length
-						saveDepth += clamp((1.0/MAX_OCCLUSION_POINTS)*clamp(1.0-pow(depthmap,2),0.1,1.0)-0.0001,0.0,1.0);
+						saveDepth += clamp((1.0/MAX_OCCLUSION_POINTS)*clamp(1.0-pow(depthmap,2),0.1,1.0),0.0,1.0);
 					#else
-						saveDepth += clamp(1.0/MAX_OCCLUSION_POINTS-0.0001,0.0,1.0);
+						saveDepth += clamp(1.0/MAX_OCCLUSION_POINTS,0.0,1.0);
 					#endif
 				#endif
 			}
@@ -479,7 +479,7 @@ void main() {
 		else Albedo.a = 0.0;
 		
 		#if !defined HAND && !defined ENTITIES && defined POM && defined POM_OFFSET_SHADOW_BIAS
-			if(saveDepth > 0) Albedo.a = clamp(sqrt(saveDepth)*0.45,0.0,Albedo.a);
+			if(saveDepth > 0) Albedo.a = clamp(saveDepth*0.45,0.0,Albedo.a);
 		#endif
 	#endif
 
