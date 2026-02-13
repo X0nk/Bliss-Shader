@@ -877,14 +877,10 @@ void main() {
 		// 0.50 = lightning bolt mask
 		// 0.45 = entity mask
 		float opaqueMasks = dataUnpacked1.w;
-
-		// bool isPOM = abs(opaqueMasks-0.2) < 0.01;
 		
-		// #if defined POM_OFFSET_SHADOW_BIAS
-			float POM_DEEPNESS = opaqueMasks < 0.48 ? 1.0-min(max(0.4-opaqueMasks,0.0)/0.4,1.0) : 0.0;
-		// #else
-		// 	float POM_DEEPNESS = 0.0;
-		// #endif
+		#if defined POM && defined POM_OFFSET_SHADOW_BIAS
+			float shadowCutMask = opaqueMasks < 0.45 ? min(max(opaqueMasks/0.45,0.0)*3.0,1.0) : 0.0;
+		#endif
 
 		// 1.0 = water mask
 		// 0.9 = entity mask
@@ -1114,9 +1110,9 @@ void main() {
 		#else
 			float distortFactor = 1.0;
 		#endif
-		
-		#if defined POM_OFFSET_SHADOW_BIAS && defined POM
-			projectedShadowPosition.z += shadowProjection[3].z * (0.0012 + POM_DEEPNESS * POM_DEPTH * 0.01);
+
+		#if defined POM && defined POM_OFFSET_SHADOW_BIAS
+			projectedShadowPosition.z += shadowProjection[3].z * (0.0012 + shadowCutMask * mix(0.25,1.0,POM_DEPTH) * 0.01);
 		#else
 			projectedShadowPosition.z += shadowProjection[3].z * 0.0012;
 		#endif
@@ -1475,7 +1471,7 @@ void main() {
 	}
 	////// DEBUG VIEW STUFF
 	#if DEBUG_VIEW == debug_SHADOWMAP	
-		gl_FragData[0].rgb = vec3(1.0) * (Shadows * NdotL * 0.9 + 0.1);
+		gl_FragData[0].rgb = vec3(1.0) * max(Shadows,0.2);
 		
 		if(dot(feetPlayerPos_normalized, unsigned_WsunVec) > 0.999 ) gl_FragData[0].rgb = vec3(10,10,0);
 		if(dot(feetPlayerPos_normalized, -WmoonVec) > 0.999 ) gl_FragData[0].rgb = vec3(1,1,10);

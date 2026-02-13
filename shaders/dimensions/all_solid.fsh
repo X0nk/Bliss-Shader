@@ -253,8 +253,16 @@ void convertHandDepth(inout float depth) {
 
 #if defined HAND || defined ENTITIES || defined BLOCKENTITIES
 	/* RENDERTARGETS:1,8,2 */
+	
+	layout(location = 0) out vec4 DEFERRED_DATA;
+	layout(location = 1) out vec4 SPECULAR_DATA;
+	layout(location = 2) out vec4 EXTRA_STUFF;
+
 #else
 	/* RENDERTARGETS:1,8 */
+
+	layout(location = 0) out vec4 DEFERRED_DATA;
+	layout(location = 1) out vec4 SPECULAR_DATA;
 #endif
 
 void main() {
@@ -337,9 +345,9 @@ void main() {
 
 				#if defined POM_OFFSET_SHADOW_BIAS
 					#ifdef Adaptive_Step_length
-						saveDepth += clamp((1.0/MAX_OCCLUSION_POINTS)*clamp(1.0-pow(depthmap,2),0.1,1.0),0.0,1.0);
+						saveDepth += clamp((1.0/MAX_OCCLUSION_POINTS)*clamp(1.0-pow(depthmap,2),0.1,1.0)-0.0001,0.0,1.0);
 					#else
-						saveDepth += clamp(1.0/MAX_OCCLUSION_POINTS,0.0,1.0);
+						saveDepth += clamp(1.0/MAX_OCCLUSION_POINTS-0.0001,0.0,1.0);
 					#endif
 				#endif
 			}
@@ -374,7 +382,7 @@ void main() {
 
 	Albedo *= color;
 
-	if(LIGHTNING > 0) Albedo = vec4(1);
+	if(LIGHTNING > 0) Albedo = vec4(1.0);
 
 	#if defined WORLD && !defined ENTITIES && !defined HAND
 	float endPortalEmission = 0.0;
@@ -470,21 +478,21 @@ void main() {
 		if (Albedo.a > 0.1) Albedo.a = normalMat.a;
 		else Albedo.a = 0.0;
 		
-		#if defined POM_OFFSET_SHADOW_BIAS && !defined HAND
-			if(saveDepth > 0) Albedo.a = min(sqrt(saveDepth),Albedo.a);
+		#if !defined HAND && !defined ENTITIES && defined POM && defined POM_OFFSET_SHADOW_BIAS
+			if(saveDepth > 0) Albedo.a = clamp(sqrt(saveDepth)*0.45,0.0,Albedo.a);
 		#endif
 	#endif
 
 	#ifdef HAND
 		if (Albedo.a > 0.1){
 			Albedo.a = 0.75;
-			gl_FragData[2] = vec4(0.0);
+			EXTRA_STUFF.xyzw = vec4(0.0);
 		} else {
 			Albedo.a = 1.0;
 		}
 	#endif
 	#if defined PARTICLE_RENDERING_FIX && (defined ENTITIES || defined BLOCKENTITIES)
-		gl_FragData[2] = vec4(0.0);
+		EXTRA_STUFF.xyzw = vec4(0.0);
 	#endif
 
 	
@@ -549,7 +557,7 @@ void main() {
 
 		vec4 otherData = clamp(vec4(viewToWorld(FlatNormals) * 0.5 + 0.5, VanillaAO),0.0,1.0);
 
-		gl_FragData[1] = vec4(
+		SPECULAR_DATA.xyzw = vec4(
 			encodeVec2(specularData.x, otherData.x),
 			encodeVec2(specularData.y, otherData.y),
 			encodeVec2(specularData.z, otherData.z),
@@ -586,7 +594,12 @@ void main() {
 		Albedo = clamp(Albedo,0,1);
 		data1 = clamp(data1,0,1);
 
-		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
+		DEFERRED_DATA.xyzw = vec4(
+			encodeVec2(Albedo.x,data1.x),
+			encodeVec2(Albedo.y,data1.y),
+			encodeVec2(Albedo.z,data1.z),
+			encodeVec2(data1.w,Albedo.w)
+			);
 
 	#endif
 }
