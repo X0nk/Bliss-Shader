@@ -637,6 +637,7 @@ void main() {
 	vec3 indirectLightColor = averageSkyCol / 1200.0;
 	vec3 indirectLightColor_dynamic = averageSkyCol_Clouds / 1200.0;
 	
+    vec3 indirectLight = indirectLightColor_dynamic * ambient_brightness; 
 	float minimumLightAmount = 0.02*nightVision + 0.005 * mix(MINIMUM_INDOOR_LIGHT, MINIMUM_OUTDOOR_LIGHT, clamp(eyeBrightnessSmooth.y/240.0 + lightmap.y,0.0,1.0));
 
     vec3 indirectLight_fog = indirectLightColor  * ambient_brightness; 
