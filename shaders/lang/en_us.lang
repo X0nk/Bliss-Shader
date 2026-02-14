@@ -322,7 +322,7 @@ screen.Resource_Pack_Support = Materials / Resource Pack Support
     option.NORMAL_MAP_MULT = Normal map multiplier
     value.NORMAL_MAP_MULT.1.0 = Default 1.0 §aresourcepacks expect this value
     suffix.NORMAL_MAP_MULT = §c ⚠ resourcepacks DO NOT expect this value
-    option.RESOURCEPACK_SKY = Resource Pack Sky §c⚠ READ DESCRIPTION§r
+    option.RESOURCEPACK_SKY = Resource Pack Sky
         value.RESOURCEPACK_SKY.0 = Do not use
         value.RESOURCEPACK_SKY.1 = Sky + Shader sun/moon
         value.RESOURCEPACK_SKY.2 = Full sky
@@ -378,7 +378,7 @@ screen.Resource_Pack_Support = Materials / Resource Pack Support
     option.FAKE_REFRACTION_AMOUNT.comment = Configure the amount of distortion refraction will do. §bⓘ What is this?§r you could think of refraction as light bending when going through water or glass, making the things viewed through them look stretched, squished, distorted. §a⚠ PERFORMANCE COST:§r very low
     option.FAKE_DISPERSION_AMOUNT.comment = Configure the amount of dispersion within the refraction. §bⓘ What is this?§r when refraction happens, the parts that get really distorted will get a "chromatic aberration", faking the look of a rainbow or light prism. §a⚠ PERFORMANCE COST:§r very low
     option.REFRACTION_SMUDGE_AMOUNT.comment = Configure the amount of smudge within the refraction. §bⓘ What is this?§r when refraction happens, the parts that get really distorted will get smudged. §cWill cause visaul noise within refraction. §a⚠ PERFORMANCE COST:§r very low
-    option.RESOURCEPACK_SKY.comment =§c⚠ This setting, IF USED, will cause broken rendering for: lead ropes, fishing lines, and possibly some entities!§r. Toggle resourcepack sky support. Configure settings to use the whole resourcepack sky, or keep the shader's sun and moon. §a⚠ PERFORMANCE COST:§r very low
+    option.RESOURCEPACK_SKY.comment =§bⓘ What is this?§r Toggle support for custom skybox images from a resourcepack/mod. Configure settings to use the whole resourcepack sky, or keep the shader's sun and moon. §a⚠ PERFORMANCE COST:§r very low
     option.MATERIAL_AO.comment = Toggle the use of ambient occlusion based on what the resourcepack provides. §a⚠ PERFORMANCE COST:§r very low
     option.SNELLS_WINDOW.comment = §bⓘ What is this?§r this is the dark reflective circle you see when under-water. This is an approximation of a thing that happens in reality known as "total internal reflection". §a⚠ PERFORMANCE COST:§r very very very small.
     
