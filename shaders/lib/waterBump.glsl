@@ -17,6 +17,7 @@ float waterCaustics(vec3 worldPos, vec3 sunVec, float surfacePos) {
 
 	float largeWaves = texture(noisetex, pos / 600.0 ).b;
 	float largeWavesCurved = pow(1.0-pow(1.0-largeWaves,2.5),4.5);
+	largeWavesCurved = mix(1.0-largeWavesCurved, largeWavesCurved, PATCHY_WAVE_BLEND);
 
 	float heightSum = 0.0;
 	for (int i = 0; i < 3; i++){
@@ -57,11 +58,14 @@ vec3 getWaveNormal(vec3 waterPos, vec3 playerpos, bool isLOD){
 	
 	float largeWaves = texture(noisetex, waterPos.xy / 600.0 ).b;
 	float largeWavesCurved = pow(1.0-pow(1.0-largeWaves,2.5),4.5);
+
+	largeWavesCurved = mix(1.0-largeWavesCurved, largeWavesCurved, PATCHY_WAVE_BLEND);
+	
 	
 	#ifdef HYPER_DETAILED_WAVES
 		float deltaPos = 0.025;
 	#else
-		float deltaPos = mix(1.0, 0.15, largeWavesCurved);
+		float deltaPos = mix(WAVES_A_RADIUS, WAVES_B_RADIUS, largeWavesCurved);
 		// reduce high frequency detail as distance increases. reduces noise on waves. why have more details than pixels?
 		float range = min(length(playerpos) / (16.0*24.0), 3.0);
 		deltaPos += range;
