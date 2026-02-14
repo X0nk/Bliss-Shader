@@ -405,7 +405,7 @@ vec4 waterVolumetrics_outsidePOV( vec3 rayStart, vec3 rayEnd, float estEndDepth,
 	#endif
 	
 	float thing = -normalize(dVWorld).y;
-	thing = clamp(thing - 0.333,0.0,1.0);
+	thing = clamp(thing ,0.0,1.0);
 	thing = pow(1.0-pow(1.0-thing,2.0),2.0);
 	thing *= 15.0;
 
@@ -582,25 +582,6 @@ void main() {
 	ivec2 texcoord_cast = ivec2(texcoord);
 	// vec2 tc = floor(gl_FragCoord.xy)/VL_RENDERING_RESOLUTION_SCALE*texelSize + 0.5*texelSize;
 
-	vec2 lightmap = decodeVec2(texelFetch(colortex14,texcoord_cast,0).a);
-	lightmap.xy = min(max(lightmap.xy - 0.05,0.0)*1.06,1.0);
-
-	#if !defined OVERWORLD_SHADER
-		lightmap.y = 1.0;
-	#endif
-
-	vec2 curvedLightmaps = lightmap;
-    float lightmapBrightspot = min(max(lightmap.x-0.7,0.0)*3.3333,1.0);
-    lightmapBrightspot *= lightmapBrightspot*lightmapBrightspot;
-    float lightmapLight = 1.0-sqrt(1.0-lightmap.x);
-    lightmapLight *= lightmapLight;
-    curvedLightmaps.x = mix(lightmapLight, 2.5, lightmapBrightspot);
-    curvedLightmaps.y = (pow(lightmap.y,15.0)*2.0 + lightmap.y*lightmap.y)/3.0;
-
-	// #ifdef DISTANT_HORIZONS
-	// 	if(z >= 1.0) lightmap.y = 0.99;
-	// #endif
-
 	float alpha = texelFetch(colortex7,texcoord_cast,0).a;
 	float blendedAlpha = texelFetch(colortex2, texcoord_cast,0).a;
 
@@ -632,16 +613,32 @@ void main() {
 	vec3 totEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
 	vec3 scatterCoef = dirtAmount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / 3.14;
 
+	vec2 lightmap = decodeVec2(texelFetch(colortex14,texcoord_cast,0).a);
+	lightmap.xy = min(max(lightmap.xy - 0.05,0.0)*1.06,1.0);
+
+	#if !defined OVERWORLD_SHADER
+		lightmap.y = 1.0;
+	#endif
+	
+	#ifdef USING_LOD_MOD
+		if(z0 >= 1.0) lightmap = vec2(0.0,1.0);
+	#endif
+
+	vec2 curvedLightmaps = lightmap;
+    float lightmapBrightspot = min(max(lightmap.x-0.7,0.0)*3.3333,1.0);
+    lightmapBrightspot *= lightmapBrightspot*lightmapBrightspot;
+    float lightmapLight = 1.0-sqrt(1.0-lightmap.x);
+    lightmapLight *= lightmapLight;
+    curvedLightmaps.x = mix(lightmapLight, 2.5, lightmapBrightspot);
+    curvedLightmaps.y = (pow(lightmap.y,15.0)*2.0 + lightmap.y*lightmap.y)/3.0;
+
+
 	vec3 directLightColor = lightCol.rgb / 2400.0;
 	vec3 indirectLightColor = averageSkyCol / 1200.0;
 	vec3 indirectLightColor_dynamic = averageSkyCol_Clouds / 1200.0;
 	
-    vec3 indirectLight = indirectLightColor_dynamic * curvedLightmaps.y * ambient_brightness; 
-    
 	float minimumLightAmount = 0.02*nightVision + 0.005 * mix(MINIMUM_INDOOR_LIGHT, MINIMUM_OUTDOOR_LIGHT, clamp(eyeBrightnessSmooth.y/240.0 + lightmap.y,0.0,1.0));
-    indirectLight += vec3(1.0) * minimumLightAmount;
-	indirectLight += vec3(TORCH_R, TORCH_G, TORCH_B) * curvedLightmaps.x;
-	
+
     vec3 indirectLight_fog = indirectLightColor  * ambient_brightness; 
     indirectLight_fog += vec3(1.0) * (0.02*nightVision + 0.005 * mix(MINIMUM_INDOOR_LIGHT, MINIMUM_OUTDOOR_LIGHT, skyLightLevelSmooth));
 	
@@ -727,7 +724,7 @@ void main() {
 		gl_FragData[1] = clamp(VolumetricFog, 0.0, 65000.0);
 
 		if(iswater && isEyeInWater != 1){
-			vec4 underWaterVL = waterVolumetrics_outsidePOV(viewPos0, viewPos1, estimatedDepth, estimatedSunDepth, Vdiff, noise_1, totEpsilon, scatterCoef, indirectLight, directLightColor, dot(normalize(viewPos0), normalize(sunVec*lightCol.a)));
+			vec4 underWaterVL = waterVolumetrics_outsidePOV(viewPos0, viewPos1, estimatedDepth, estimatedSunDepth, Vdiff, noise_1, totEpsilon, scatterCoef, indirectLight*curvedLightmaps.y + vec3(TORCH_R, TORCH_G, TORCH_B) * curvedLightmaps.x + vec3(1.0) * minimumLightAmount, directLightColor, dot(normalize(viewPos0), normalize(sunVec*lightCol.a)));
 			gl_FragData[1] = clamp(underWaterVL, 0.0, 65000.0);
 		}
 	}
