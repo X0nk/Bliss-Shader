@@ -460,6 +460,7 @@ vec4 waterVolumetrics_outsidePOV( vec3 rayStart, vec3 rayEnd, float estEndDepth,
 	
     return vec4(vL, dot(absorbance,vec3(0.333333)));
 }
+
 float fogPhase2(float lightPoint){
 	float linear = 1.0 - clamp(lightPoint*0.5+0.5,0.0,1.0);
 	float linear2 = 1.0 - clamp(lightPoint,0.0,1.0);
@@ -640,7 +641,7 @@ void main() {
     vec3 indirectLight = indirectLightColor_dynamic * ambient_brightness; 
 	float minimumLightAmount = 0.02*nightVision + 0.005 * mix(MINIMUM_INDOOR_LIGHT, MINIMUM_OUTDOOR_LIGHT, clamp(eyeBrightnessSmooth.y/240.0 + lightmap.y,0.0,1.0));
 
-    vec3 indirectLight_fog = indirectLightColor  * ambient_brightness; 
+    vec3 indirectLight_fog = indirectLightColor * skyLightLevelSmooth * ambient_brightness; 
     indirectLight_fog += vec3(1.0) * (0.02*nightVision + 0.005 * mix(MINIMUM_INDOOR_LIGHT, MINIMUM_OUTDOOR_LIGHT, skyLightLevelSmooth));
 	
 	float cloudPlaneDistance = 0.0;
@@ -670,7 +671,7 @@ void main() {
   		  }
   		#endif
 
-		vec4 VolumetricFog = GetVolumetricFog(viewPos0, vec2(noise_1), WsunVec, directLightColor, indirectLight_fog, indirectLight, cloudPlaneDistance);
+		vec4 VolumetricFog = GetVolumetricFog(viewPos0, vec2(noise_1), WsunVec, directLightColor, indirectLight_fog, indirectLight*skyLightLevelSmooth, cloudPlaneDistance);
 
 		#if defined LPV_VL_FOG_ILLUMINATION
 			VolumetricFog.a *= LPV_ILLUMINATION.a;
@@ -711,7 +712,7 @@ void main() {
 		gl_FragData[1] = vec4(0.0,0.0,0.0,1.0);	
 
 		#if defined OVERWORLD_SHADER
-			VolumetricClouds = GetVolumetricClouds(viewPos1, vec2(noise_1), WsunVec, directLightColor, indirectLightColor, cloudPlaneDistance);
+			VolumetricClouds = GetVolumetricClouds(viewPos1, vec2(noise_1), WsunVec, directLightColor, indirectLightColor*skyLightLevelSmooth, cloudPlaneDistance);
 	
 			VolumetricFog = GetVolumetricFog(viewPos1, vec2(noise_1), WsunVec, directLightColor, indirectLight_fog, indirectLight, cloudPlaneDistance);
 
