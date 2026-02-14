@@ -769,7 +769,7 @@
 #define PARTICLE_RENDERING_FIX
 #define OLD_CAVE_DETECTION
 #define FORCE_TRANSLUCENT_GLASS
-#define SCALE_MIPMAP_WITH_RESOLUTION
+// #define SCALE_MIPMAP_WITH_RESOLUTION
 // #define ambientLight_only // THIS IS A DEBUG VIEW. turn the sunlight off. DOES NOT increase performance, the shadows are still working in the background
 // #define WhiteWorld // THIS IS A DEBUG VIEW. uses to see AO easier. used to see fake GI better (green light)
 // #define display_LUT
@@ -902,4 +902,6 @@
 #ifdef HANDHELD_LIGHTSOURCE_SPECULAR
 #endif
 #ifdef HANDHELD_LIGHTSOURCE_SSRT_SHADOWS
+#endif
+#ifdef SCALE_MIPMAP_WITH_RESOLUTION
 #endif
