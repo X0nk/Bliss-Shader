@@ -303,7 +303,7 @@
 
 	// #define SSR_SELF_REFLECT_FIX
 	#if defined VOXY || defined DISTANT_HORIZONS
-		#define TERRIBLE_SSR_LOD_FALLBACK
+		// #define TERRIBLE_SSR_LOD_FALLBACK
 	#endif
 #endif
 
