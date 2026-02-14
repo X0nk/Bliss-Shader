@@ -7,22 +7,22 @@ const int colortex4Format = RGBA16F;				// LUT - light values and skyboxes (ever
 const int colortex6Format = R11F_G11F_B10F;			// additional buffer for bloom (composite3->final)
 const int colortex7Format = RGBA8;					// Final output, transparencies id (gbuffer->composite4)
 const int colortex8Format = RGBA16;					// ENCODE Specular + geonormal + vanilla AO
-const int colortex9Format = RGBA16F;				// rain in alpha
-const int colortex10Format = RGBA16F;				// resourcepack Skies
+const int colortex9Format = RGBA16F;				// resourcepack sky -> cleared in deferred -> rain in alpha
+const int colortex10Format = RGBA16F;				// history buffer for volumetric fog and clouds
 const int colortex11Format = RGBA16; 				// unchanged translucents albedo, alpha and tangent normals
 const int colortex12Format = RGBA16F;				// DISTANT HORIZONS + VANILLA MIXED DEPTHs
 const int colortex13Format = RGBA16F;				// low res VL (composite5->composite15)
-const int colortex14Format = RGBA16;				// rg = SSAO and SS-SSS. a = skylightmap for translucents.
+const int colortex14Format = RGBA16;				// alpha = lightmaps from translucents -> (composite) .xy = SSAO/SS -> (composite2)
 const int colortex15Format = RGBA8;					// empty
 */
 
 #ifdef SCREENSHOT_MODE
 	/*
-	const int colortex5Format = RGBA32F;			//TAA buffer (everything)
+	const int colortex5Format = RGBA32F;			//TAA history buffer
 	*/
 #else
 	/*
-	const int colortex5Format = RGBA16F;			//TAA buffer (everything)
+	const int colortex5Format = RGBA16F;			//TAA history buffer
 	*/
 #endif
 

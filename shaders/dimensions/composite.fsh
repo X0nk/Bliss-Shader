@@ -376,7 +376,7 @@ float ld(float dist) {
 
 void main() {
 
-	gl_FragData[1] = vec4(0.0,0.0,0.0, texelFetch(colortex14,ivec2((floor(gl_FragCoord.xy)/VL_RENDERING_RESOLUTION_SCALE*texelSize+0.5*texelSize)/texelSize),0).a);
+	gl_FragData[1] = vec4(0.0,0.0,0.0,texelFetch(colortex14,ivec2(gl_FragCoord.xy),0).a);
 
 	vec2 texcoord = gl_FragCoord.xy*texelSize;
 	float noise = R2_dither();
