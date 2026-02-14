@@ -28,7 +28,7 @@
 void main() {
 
 	#if RESOURCEPACK_SKY != 0
-		/* RENDERTARGETS:2 */
+		/* RENDERTARGETS:9 */
 
 		vec4 COLOR = texture(texture, texcoord.xy) * color;
 
@@ -43,7 +43,6 @@ void main() {
 		#if RESOURCEPACK_SKY == 3
 			if(isSkyBox) { discard; return; }
 		#endif
-
 
 		vec3 NEWCOLOR = COLOR.rgb;
 
