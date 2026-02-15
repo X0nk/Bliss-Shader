@@ -17,8 +17,9 @@ uniform vec2 texelSize;
 	uniform float far;
 	#include "/lib/bokeh.glsl"
 #endif
+
 uniform vec3 cameraPosition;
-uniform int frameTimeCounter;
+uniform float frameTimeCounter;
 uniform mat4 dhProjection;
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;

@@ -29,7 +29,7 @@ uniform float screenBrightness;
 #endif
 
 
-uniform int frameTimeCounter;
+uniform float frameTimeCounter;
 
 #include "/lib/TAA_jitter.glsl"
 #include "/lib/vertex_displacement.glsl"

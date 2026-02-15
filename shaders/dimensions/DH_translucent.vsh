@@ -44,7 +44,7 @@ uniform float far;
 #endif
 
 
-uniform int frameTimeCounter;
+uniform float frameTimeCounter;
 
 
 #include "/lib/TAA_jitter.glsl"
