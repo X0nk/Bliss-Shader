@@ -303,7 +303,12 @@ vec4 GetVolumetricFog(
 		vec3 airDensity = kill*(rayleigh + mie);
 		vec3 airDensityPhased = rayleighPhase*rayleigh + sunPhase*mie;
 		vec3 airVolumeCoeff = exp(-airDensity*dd*rayLength);
-		vec3 airLighting = LightColor*shadows*sunPhase * airDensityPhased + AveragedAmbientColor*0.666*airDensity;
+
+		#ifdef AERIAL_PERSPECTIVE_TEST
+			vec3 airLighting = LightColor*shadows*sunPhase * airDensityPhased;
+		#else
+			vec3 airLighting = LightColor*shadows*sunPhase * airDensityPhased + AveragedAmbientColor*0.666*airDensity;
+		#endif
 		
 		#if defined LIGHTNING_FLASH && defined LIGHTNINGFLASH_VL
 			airLighting += lightningFlash*airDensity;
@@ -344,7 +349,12 @@ vec4 GetVolumetricFog(
 		
 		localAbsorbance *= localFogVolumeCoeff;
 		airAbsorbance *= airVolumeCoeff*fogVolumeCoeff*localFogVolumeCoeff;
-		absorbance *= fogVolumeCoeff*localFogVolumeCoeff*dot(airVolumeCoeff,vec3(0.33333));
+		
+		#ifdef AERIAL_PERSPECTIVE_TEST
+			absorbance *= fogVolumeCoeff*localFogVolumeCoeff;
+		#else
+			absorbance *= fogVolumeCoeff*localFogVolumeCoeff*dot(airVolumeCoeff,vec3(0.33333));
+		#endif
 	}
 	return vec4(color, absorbance);
 }

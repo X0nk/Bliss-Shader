@@ -1,7 +1,7 @@
 #define ALTOSTRATUS_LAYER 2
 #define LARGECUMULUS_LAYER 1
 #define SMALLCUMULUS_LAYER 0
-
+float curvatureoffset = 0.04;
 uniform int worldDay;
 uniform int worldTime;
 float cloud_movement = (worldTime  + mod(worldDay,100)*24000.0) / 24.0 * Cloud_Speed;
@@ -331,12 +331,22 @@ vec4 raymarchCloud(
 			vec3 lighting = getCloudLighting(shapeWithDensity, shapeWithDensity, sunShadowMask, sunScattering, indirectShadowMask, skyScattering, backScatterPhase, phaseLevels);
 
 			vec3 newPos = rayPosition - cameraPosition;
-			newPos.xz /= max(newPos.y,0.0)*0.0025 + 1.0;
-			newPos.y = min(newPos.y,0.0);
+			
+			#ifdef AERIAL_PERSPECTIVE_TEST
+      			float skydensity = exp(-0.00035*length(newPos));
+				float ifAboveOrBelowPlane = mix(-1.0, 1.0, clamp(cameraPosition.y - minHeight,0.0,1.0)) ;
 
-			float distancefog = exp(-0.00025*length(newPos));
-			vec3 atmosphereHaze = (sampledSkyCol - sampledSkyCol * distancefog);
-			lighting = lighting * distancefog + atmosphereHaze;
+      			vec3 samplesky = skyFromTex(clamp(normalize(vec3(newPos.x,ifAboveOrBelowPlane*newPos.y,newPos.z)) - vec3(0,curvatureoffset - 0.005,0),-1,1) , colortex4).rgb/1200.0;
+
+				lighting = lighting * skydensity + (samplesky - samplesky * skydensity);
+			#else
+				newPos.xz /= max(newPos.y,0.0)*0.0025 + 1.0;
+				newPos.y = min(newPos.y,0.0);
+
+				float distancefog = exp(-(0.00035 + rainStrength * 0.0015) * length(newPos));
+				vec3 atmosphereHaze = (sampledSkyCol - sampledSkyCol * distancefog);
+				lighting = lighting * distancefog + atmosphereHaze;
+			#endif
 
 			float densityCoeff = exp(-distanceFactor*shapeWithDensity);			
 			color += (lighting - lighting * densityCoeff) * totalAbsorbance;
@@ -405,12 +415,23 @@ vec4 raymarchCloud(
 					#endif
 
 					vec3 newPos = rayPosition - cameraPosition;
-					newPos.xz /= max(newPos.y,0.0)*0.0025 + 1.0;
-					newPos.y = min(newPos.y,0.0);
 
-					float distancefog = exp(-(0.00035 + rainStrength * 0.0015) * length(newPos));
-					vec3 atmosphereHaze = (sampledSkyCol - sampledSkyCol * distancefog);
-					lighting = lighting * distancefog + atmosphereHaze;
+					#ifdef AERIAL_PERSPECTIVE_TEST
+      					float skydensity = exp(-0.00035*length(newPos));
+						float ifAboveOrBelowPlane = mix(-1.0, 1.0, clamp(cameraPosition.y - minHeight,0.0,1.0)) ;
+
+      					vec3 samplesky = skyFromTex(clamp(normalize(vec3(newPos.x,ifAboveOrBelowPlane*newPos.y,newPos.z)) - vec3(0,curvatureoffset - 0.005,0),-1,1) , colortex4).rgb/1200.0;
+
+						lighting = lighting * skydensity + (samplesky - samplesky * skydensity);
+					#else
+						newPos.xz /= max(newPos.y,0.0)*0.0025 + 1.0;
+						newPos.y = min(newPos.y,0.0);
+
+						float distancefog = exp(-(0.00035 + rainStrength * 0.0015) * length(newPos));
+						vec3 atmosphereHaze = (sampledSkyCol - sampledSkyCol * distancefog);
+						lighting = lighting * distancefog + atmosphereHaze;
+					#endif
+					
 
 					float densityCoeff = exp(-distanceFactor*shapeWithDensityFaded);
 					color += (lighting - lighting * densityCoeff) * totalAbsorbance;
@@ -560,9 +581,9 @@ vec4 GetVolumetricClouds(
 	vec3 unignedSunVec = sunVector;// * (float(sunElevation > 1e-5)*2.0-1.0);
 	float SdotV = dot(unignedSunVec, NormPlayerPos.xyz);
 	
-	#ifdef SKY_GROUND
-		NormPlayerPos.y += 0.03;
-	#endif
+	// #ifdef SKY_GROUND
+		NormPlayerPos.y += curvatureoffset;
+	// #endif
 
 	float maxSamples = 15.0;
 	float minSamples = 10.0;

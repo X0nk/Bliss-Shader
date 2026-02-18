@@ -588,8 +588,21 @@ void main() {
   // blend forward rendered programs onto the color.
   blendForwardRendering(color, TranslucentShader);
 
-  #if defined BorderFog && defined OVERWORLD_SHADER
+  #if defined BorderFog && defined OVERWORLD_SHADER && !defined AERIAL_PERSPECTIVE_TEST
     color = mix(color, borderFog.rgb, getBorderFogDensity(linearDistance_cylinder, playerPos_normalized, swappedDepth >= 1.0));
+  #endif
+
+  #ifdef AERIAL_PERSPECTIVE_TEST
+    vec3 testPos = playerPos_normalized;
+    float density = exp(-AERIAL_PERSPECTIVE_DENSITY*0.00045*length(playerPos));
+
+	  float position = clamp(density*256.0,1.5,257.0);
+	  // vec3 samplesky = texture(colortex4, vec2(16.5, position)*texelSize).rgb / 1200.0 ;
+    vec3 samplesky = skyFromTex(mix(testPos, vec3(testPos.x,-1.0,testPos.z),  density), colortex4).rgb/1200.0;
+
+
+    if(!isSky) color.rgb = color.rgb * density + (samplesky - samplesky * density);
+    // color.rgb = samplesky;
   #endif
   
   // tweaks to VL for nametag rendering
