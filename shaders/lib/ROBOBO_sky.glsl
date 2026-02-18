@@ -94,7 +94,7 @@ vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 s
 	const int jSteps = 4;
 
 	float planetOffset = 0.998;
-	vec3 viewPosition = (sky_planetRadius + 750.0 + max(eyeAltitude - 319.0, 0.0)*100.0 ) * upVector;
+	vec3 viewPosition = (sky_planetRadius + 750.0 + max(eyeAltitude - PLANET_EXIT_ALTITUDE, 0.0)*100.0 ) * upVector;
 
 	vec2 aid = rsi(viewPosition, viewVector, sky_atmosphereRadius);
 	if (aid.y < 0.0) {transmittance = vec3(1.0); return vec3(0.0);}
