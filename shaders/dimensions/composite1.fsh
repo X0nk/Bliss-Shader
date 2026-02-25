@@ -1028,8 +1028,11 @@ void main() {
 			
 		} else {
 			// use hardcoded gradient position if the water surface normal does not face upwards.
-	    	vec3 waterNormal = clamp(normalize(cross(dFdx(playerPos0), dFdy(playerPos0))),0,1); // it uses depth that has POM written to it.
-			percievedWaterDepth = mix(-(feetPlayerPos.y + cameraPosition.y), percievedWaterDepth, waterNormal.y);
+			// vec3 waterNormal = clamp(normalize(cross(dFdx(playerPos0), dFdy(playerPos0))),0,1); // it uses depth that has POM written to it.
+			// percievedWaterDepth = mix( -(feetPlayerPos.y + cameraPosition.y),percievedWaterDepth, waterNormal.y);
+			
+			// artifacts too obvious unfortunately, go back to hardcoded
+			percievedWaterDepth = -(feetPlayerPos.y + cameraPosition.y);
 		}
 
 		DirectLightColor *= sunlightAbsorbtion;
