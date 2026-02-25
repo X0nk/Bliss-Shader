@@ -94,10 +94,19 @@ uniform bool firstPersonCamera;
 #endif
 
 #ifdef IS_LPV_ENABLED
-    vec4 getHandheldLightData(int ID){
+    #ifdef INTEL_HANDHELDLIGHT_CRASH_FIX
+        // layout(rg32ui) uniform readonly uimage1D imgBlockData; <- kept erroring for some reasonnn
+        layout(rg32ui) uniform uimage1D imgBlockData;
+    #endif
 
-        uvec2 blockData = texelFetch(texBlockData, ID, 0).rg;
-        vec4 lightColorRange = unpackUnorm4x8(blockData.r);
+    vec4 getHandheldLightData(int ID){
+        #ifdef INTEL_HANDHELDLIGHT_CRASH_FIX
+            uint blockData = imageLoad(imgBlockData, ID).r;
+        #else
+            uint blockData = texelFetch(texBlockData, ID, 0).r;
+        #endif
+
+        vec4 lightColorRange = unpackUnorm4x8(blockData);
         vec3 lightColor = srgbToLinear(lightColorRange.rgb);
         float lightRange = lightColorRange.a * 255.0;
 

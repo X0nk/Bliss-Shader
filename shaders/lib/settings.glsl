@@ -783,6 +783,7 @@
 // #define WhiteWorld // THIS IS A DEBUG VIEW. uses to see AO easier. used to see fake GI better (green light)
 // #define display_LUT
 // #define SSS_view
+#define INTEL_HANDHELDLIGHT_CRASH_FIX
 #define debug_OFF 0
 #define debug_SHADOWMAP 1
 #define debug_NORMALS 2
@@ -818,6 +819,8 @@
 #endif
 
 // fix settings
+#ifdef INTEL_HANDHELDLIGHT_CRASH_FIX
+#endif
 #ifdef ISOLATE_RESOURCEPACK_SKY
 #endif
 #ifdef DH_TAA_JITTER
