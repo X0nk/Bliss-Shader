@@ -151,13 +151,13 @@ void main() {
  
   // pass texcoords through various functions modifying it, so that they are able to stack together
   vec2 texcoord_offset = gl_FragCoord.xy*texelSize;
-  
+
   #if PIXEL_ZOOM > 0
 	  texcoord_offset = 0.5 + (texcoord_offset-0.5) - (texcoord_offset-0.5) * (float(PIXEL_ZOOM)/100.0f);
 	#endif
 
   #if WATER_ON_CAMERA_EFFECT_AMOUNT > 0
-    if(waterInteract > 0.0001) getWaterDistortionEffects(texcoord_offset);
+    if(waterInteract > 0.0001 && isEyeInWater < 2) getWaterDistortionEffects(texcoord_offset);
   #endif
 
   #if ON_FIRE_DISTORT_EFFECT_AMOUNT > 0
