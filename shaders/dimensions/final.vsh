@@ -1,8 +1,5 @@
 #include "/lib/settings.glsl"
 
-varying vec2 texcoord;
-
-
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -11,9 +8,5 @@ varying vec2 texcoord;
 
 void main() {
 	gl_Position = ftransform();
-	texcoord = gl_MultiTexCoord0.xy;
 
-	#if PIXEL_ZOOM > 0
-		texcoord = 0.5 + (texcoord-0.5) - (texcoord-0.5) * (float(PIXEL_ZOOM)/100.0f);
-	#endif
 }

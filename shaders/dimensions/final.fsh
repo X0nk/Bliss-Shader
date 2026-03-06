@@ -1,11 +1,13 @@
 #define GAMEPLAY_EFFECTS_RELATED_SETTINGS
 #define ANTIALIASING_RELATED_SETTINGS
 #define POST_PROCESSING_RELATED_SETTINGS
+#define SHADOWMAP_CONSTANT_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 
 uniform sampler2D colortex7;
 uniform sampler2D colortex5;
 uniform sampler2D colortex6;
+uniform sampler2D colortex4;
 uniform sampler2D colortex14;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
@@ -13,7 +15,6 @@ uniform sampler2D depthtex2;
 uniform sampler2D noisetex;
 uniform sampler2D shadowcolor1;
 
-varying vec2 texcoord;
 uniform vec2 texelSize;
 uniform float frameTimeCounter;
 uniform int frameCounter;
@@ -34,12 +35,17 @@ uniform mat4 gbufferPreviousModelView;
 #include "/lib/color_dither.glsl"
 #include "/lib/res_params.glsl"
 
+#include "/lib/Shadow_Params.glsl"
+
 uniform float near;
-uniform float far;
+// uniform float far;
 float ld(float dist) {
     return (2.0 * near) / (far + near - dist * (far - near));
 }
 
+// float calcDistort(vec2 worldpos){
+//   return 1.0/(log(length(worldpos)*b+a)*k);
+// }
 /*
 from https://blog.demofox.org/2022/01/01/interleaved-gradient-noise-a-different-kind-of-low-discrepancy-sequence/
 Copyright 2019 Alan Wolfe
@@ -90,7 +96,7 @@ void doCameraGridLines(inout vec3 color, vec2 UV){
   color = mix(color, vec3(1.0),  gridLines);
 }
 
-vec3 doMotionBlur(vec2 texcoord, float depth, float noise, bool hand){
+vec3 doMotionBlur(inout vec2 texcoord, float depth, float noise, bool hand){
   
   float samples = 4.0;
   vec3 color = vec3(0.0);
@@ -121,7 +127,6 @@ vec3 doMotionBlur(vec2 texcoord, float depth, float noise, bool hand){
     color += texture(colortex7, clamp(texcoord,screenEdges,1.0-screenEdges)).rgb;
 
   }
-
   return color / samples;
 }
 
@@ -143,21 +148,36 @@ float doVignette( in vec2 texcoord, in float noise){
 void main() {
   
   float noise = interleaved_gradientNoise();
-  vec2 texcoord_offset = texcoord;
+ 
+  // pass texcoords through various functions modifying it, so that they are able to stack together
+  vec2 texcoord_offset = gl_FragCoord.xy*texelSize;
+  
+  #if PIXEL_ZOOM > 0
+	  texcoord_offset = 0.5 + (texcoord_offset-0.5) - (texcoord_offset-0.5) * (float(PIXEL_ZOOM)/100.0f);
+	#endif
 
+  #if WATER_ON_CAMERA_EFFECT_AMOUNT > 0
+    if(waterInteract > 0.0001) getWaterDistortionEffects(texcoord_offset);
+  #endif
+
+  #if ON_FIRE_DISTORT_EFFECT_AMOUNT > 0
+    if(fireLavaInteract > 0.0) getFireDistortionEffects(texcoord_offset);
+  #endif
+
+  // for motion blur and distortion effects to exist, use the distorted texcoord
   #if MOTION_BLUR_AMOUNT > 0
     float depth = texture(depthtex0, texcoord_offset*RENDER_SCALE).r;
     bool hand = depth < 0.56;
     float depth2 = convertHandDepth_2(depth, hand);
 
-    vec3 COLOR = doMotionBlur(texcoord, depth2, noise, hand);
+    vec3 COLOR = doMotionBlur(texcoord_offset, depth2, noise, hand);
   #else
-    vec3 COLOR = texture2D(colortex7,texcoord).rgb;
+    vec3 COLOR = texture(colortex7, texcoord_offset).rgb;
   #endif
   
-  #if defined LOW_HEALTH_EFFECT || defined DAMAGE_TAKEN_EFFECT || defined WATER_ON_CAMERA_EFFECT  
-    // for making the fun, more fun
-    applyGameplayEffects(COLOR, texcoord, noise);
+  #if (LOW_HEALTH_EFFECT_START > 0 || CRITICALLY_LOW_HEALTH_EFFECT_START > 0 || MINOR_DAMAGE_TAKEN_EFFECT_START > 0 || CRITICAL_DAMAGE_TAKEN_EFFECT_START > 0)
+    // this has red vignette effects so it needs to be done at the end. nothing can happen
+    COLOR = getHealthStatusColorEffects(COLOR, texcoord_offset, noise);
   #endif
   
   #if VIGNETTE_AMOUNT > 0
@@ -169,21 +189,25 @@ void main() {
   #endif
 
   #if DEBUG_VIEW == debug_SHADOWMAP
-    vec2 shadowUV = texcoord * vec2(2.0, 1.0) ;
-
-    // shadowUV -= vec2(0.5,0.0);
-    // float zoom = 0.1;
-    // shadowUV = ((shadowUV-0.5) - (shadowUV-0.5)*zoom) + 0.5;
-
-    if(shadowUV.x < 1.0 && shadowUV.y < 1.0 && hideGUI == 1) COLOR = texture2D(shadowcolor1,shadowUV).rgb;
+    vec2 shadowUV = gl_FragCoord.xy*texelSize;
+	  #if PIXEL_ZOOM > 0
+	  	shadowUV = 0.5 + (shadowUV-0.5) - (shadowUV-0.5) * (float(PIXEL_ZOOM)/100.0f);
+	  #endif
+    shadowUV.xy -= vec2(0.5,0.5);
+    shadowUV.xy *= vec2(2.0, 1.0);
+    shadowUV.xy *= 5.0;
+		float distortFactor = calcDistort(shadowUV.xy);
+    shadowUV.xy *= distortFactor;
+    shadowUV.xy = shadowUV.xy * 0.5 + 0.5;
+      
+    if(shadowUV.x < 1.0 && shadowUV.y < 1.0 && shadowUV.x > 0.0 && shadowUV.y > 0.0 && hideGUI == 0) COLOR = texture(shadowcolor1,shadowUV).rgb;
   #endif
   #if DEBUG_VIEW == debug_DEPTHTEX0
-    COLOR = vec3(ld(texture2D(depthtex0, texcoord*RENDER_SCALE).r));
+    COLOR = vec3(ld(texture(depthtex0, texcoord*RENDER_SCALE).r));
   #endif
   #if DEBUG_VIEW == debug_DEPTHTEX1
-    COLOR = vec3(ld(texture2D(depthtex1, texcoord*RENDER_SCALE).r));
+    COLOR = vec3(ld(texture(depthtex1, texcoord*RENDER_SCALE).r));
   #endif
-
 
   gl_FragColor.rgb = COLOR;
 }

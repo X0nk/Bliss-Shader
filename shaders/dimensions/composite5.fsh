@@ -25,17 +25,13 @@ uniform mat4 gbufferPreviousModelViewInverse;
 
 uniform int hideGUI;
 
-#ifdef DAMAGE_TAKEN_EFFECT
+#if CRITICAL_DAMAGE_TAKEN_EFFECT_START > 0
 	uniform float CriticalDamageTaken;
 #endif
 
 #include "/lib/util.glsl"
 #include "/lib/projections.glsl"
-
-
-
 #include "/lib/TAA_jitter.glsl"
-
 #include "/lib/macro_lod_mod.glsl"
 
 uniform float near;
@@ -309,9 +305,13 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		vec3 currentFrame = texelFetch(colortex3, ivec2(adjTC_noJitter/texelSize), 0).rgb;
 	#endif
 
-	//reject history if off-screen and early exit
-	if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0) return vec4(currentFrame, 1.0);
-
+	#if CRITICAL_DAMAGE_TAKEN_EFFECT_START > 0
+		if (CriticalDamageTaken < 0.001 && (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0)) return vec4(currentFrame, 1.0);
+	#else
+		//reject history if off-screen and early exit
+		if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0) return vec4(currentFrame, 1.0);
+	#endif
+	
 	#if TAA_MODE == 3
 		// Interpolating neighboorhood clampling boundaries between pixels
 		vec3 colMax = texture(colortex0, adjTC).rgb;
@@ -335,13 +335,14 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		colMax = 0.5 * (colMax + max(col0,max(col5,max(col6,max(col7,col8)))));
 	#endif
 	
-    #ifdef DAMAGE_TAKEN_EFFECT
+	#if CRITICAL_DAMAGE_TAKEN_EFFECT_START > 0
 		////// when this triggers, use current frame UV to sample history, for a funny trailing effect.
-		if(CriticalDamageTaken > 0.01) previousPosition.xy = texcoord;
+		if(CriticalDamageTaken > 0.001) previousPosition.xy = mix(previousPosition.xy, texcoord, pow(CriticalDamageTaken,0.3));
 	#endif
 
-	vec3 frameHistory = max(FastCatmulRom(colortex5, previousPosition.xy, vec4(texelSize, 1.0/texelSize), 0.75).xyz,0.0);
+	vec3 frameHistory = max(FastCatmulRom(colortex5, previousPosition.xy, vec4(texelSize, 1.0/texelSize), 0.75).xyz,1e-7);
 	vec3 clampedframeHistory = clamp(frameHistory, colMin, colMax);
+	
 
 	float blendingFactor = BLEND_FACTOR;
 	// reduce history usage if the camera moves to reduce artifacts in motion.
@@ -352,16 +353,18 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		if(hand) blendingFactor = clamp(cameraMovement, blendingFactor, 1.0);
 	#endif
 	
+	#if CRITICAL_DAMAGE_TAKEN_EFFECT_START > 0
+		if(CriticalDamageTaken > 0.001){
+			clampedframeHistory = mix(clampedframeHistory, frameHistory, pow(CriticalDamageTaken,0.3));
+			blendingFactor *= 0.5;
+		}
+	#endif
 	////// Increases blending factor when far from AABB, reduces ghosting
 	blendingFactor = clamp(blendingFactor + luma(abs(clampedframeHistory - frameHistory)/clampedframeHistory),0.0,1.0);
 
 	////// Blend current pixel with clamped history, apply fast tonemap beforehand to reduce flickering
 	vec3 finalResult = invTonemap(mix(tonemap(clampedframeHistory), tonemap(currentFrame), blendingFactor));
-   
-    #ifdef DAMAGE_TAKEN_EFFECT
-		////// when this triggers, do a funny trailing effect.
-		if(CriticalDamageTaken > 0.01) finalResult = mix(finalResult, frameHistory, sqrt(CriticalDamageTaken)*0.8);
-	#endif
+
 	#ifdef SCREENSHOT_MODE
 		// when this is on, do "infinite frame accumulation	"
 		if (hideGUI == 0) return vec4(finalResult, 1.0);

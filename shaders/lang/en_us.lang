@@ -436,13 +436,29 @@ screen.Post_Processing = Post Processing
     screen.FLASHLIGHT_SETTING = Flashlight Settings
     screen.GAMEPLAY_EFFECTS = Gameplay Screen Effects
     option.MOTION_AMOUNT = The Motion Amount In All Gameplay Effects
-    option.WATER_ON_CAMERA_EFFECT = Enter/Exit Water Effect
-    option.DAMAGE_TAKEN_EFFECT = Damage Taken Effect
-    option.ON_FIRE_DISTORT_EFFECT = On-Fire effect
-    option.ON_FIRE_DISTORT_EFFECT_STRENGTH = On-Fire effect Amount
-    option.LOW_HEALTH_EFFECT = Low Health Effects
+    option.WATER_ON_CAMERA_EFFECT_AMOUNT = Enter/Exit Water Effect Amount
+        suffix.WATER_ON_CAMERA_EFFECT_AMOUNT =%
+        value.WATER_ON_CAMERA_EFFECT_AMOUNT.0 = §cOFF
+
+    option.ON_FIRE_DISTORT_EFFECT_AMOUNT = On-Fire Effect Amount
+        suffix.ON_FIRE_DISTORT_EFFECT_AMOUNT =%
+        value.ON_FIRE_DISTORT_EFFECT_AMOUNT.0 = §cOFF
+
     option.LOW_HEALTH_EFFECT_START = Minimum Health Needed For Low Health Effect
+        suffix.LOW_HEALTH_EFFECT_START = §r Health
+        value.LOW_HEALTH_EFFECT_START.0 = §cOFF
+
     option.CRITICALLY_LOW_HEALTH_EFFECT_START = Minimum Health Needed For Critically Low Health Effect
+        suffix.CRITICALLY_LOW_HEALTH_EFFECT_START = §r Health
+        value.CRITICALLY_LOW_HEALTH_EFFECT_START.0 = §cOFF
+
+    option.MINOR_DAMAGE_TAKEN_EFFECT_START = Health Loss Needed For Minor Damage Effect
+        suffix.MINOR_DAMAGE_TAKEN_EFFECT_START = §r Health Lost
+        value.MINOR_DAMAGE_TAKEN_EFFECT_START.0 = §cOFF
+
+    option.CRITICAL_DAMAGE_TAKEN_EFFECT_START = Health Loss Needed For Critical Damage Effect
+        suffix.CRITICAL_DAMAGE_TAKEN_EFFECT_START = §r Health Lost
+        value.CRITICAL_DAMAGE_TAKEN_EFFECT_START.0 = §cOFF
 
  ###################################################### ↑↑↑ THIS SUBMENU'S DESCRIPTIONS
 
@@ -456,7 +472,7 @@ screen.Post_Processing = Post Processing
     screen.TAA_OPTIONS.comment = Configure settings related to anti-aliasing.
     option.SCREENSHOT_MODE.comment = §aTHIS DOES NOT CHANGE GRAPHICS QUALITY IN ANY WAY§r. Toggle frame accumulation to get a low noise image. §bⓘ What is this?§r It stacks frames that happend onto the next frame that is generated, so it is like a long exposure photo.
     option.TAA.comment = Toggle temporal anti-aliasing. This removes all jagged edges on things, softens the image, and helps remove noise for many effects. This will cause ghosting or trailing because it uses past frames for extra information on the world. §a⚠ PERFORMANCE COST:§r low
-    option.BLEND_FACTOR.comment = Configure how much of frame history is used. high numbers means it relies less on frame history, so it may look flickery and noisy. low numbers rely more on frame history, so it may look less moisy, but more smudged with more trailing.
+    option.BLEND_FACTOR.comment = Configure how much of frame history is used. high numbers means it relies less on frame history, so it may look flickery and noisy. low numbers rely more on frame history, so it may look less noisy, but more smudged with more trailing.
     option.TAA_UPSCALING.comment = Toggle temporal upscaling. This retains a good amount of quality from a lower resolution image when it upscales. so you can still have a high looking resolution compared to typical upsampling and still have better performance.
     option.SCALE_FACTOR.comment = Configure from what fraction of your resolution to upscale from - §abelow 0.50x is not recommend, it is only allowed for fun!§r
 
@@ -470,6 +486,14 @@ screen.Post_Processing = Post Processing
     option.VIGNETTE_AMOUNT.comment = §bⓘ What is this?§r This effect makes the edges of the screen increasingly dark the closer to the edges it gets. §a⚠ PERFORMANCE COST:§r very very low
     option.FILM_GRAIN_AMOUNT.comment = §bⓘ What is this?§r This adds a "graininess" or "static" to the screen. §a⚠ PERFORMANCE COST:§r very very low
     
+    option.WATER_ON_CAMERA_EFFECT_AMOUNT.comment = §bⓘ What is this?§r This is the effect that looks like water drops or a rush of water as you enter or exit the water. §a⚠ PERFORMANCE COST:§r very very low
+    option.ON_FIRE_DISTORT_EFFECT_AMOUNT.comment = §bⓘ What is this?§r This is the effect of heat distortion when you are on fire or swimming in lava. §a⚠ PERFORMANCE COST:§r very very low
+
+    option.LOW_HEALTH_EFFECT_START.comment = §bⓘ What is this?§r This is the pulsing red color effect that happens when health is low. Configure what health level you need to be below for this screen effect to activate. §a⚠ PERFORMANCE COST:§r very very low
+    option.CRITICALLY_LOW_HEALTH_EFFECT_START.comment =§bⓘ What is this?§r This is the grayscale color effect that happens when health is REALLY low. Configure what health level you need to be below for this screen effect to activate. §a⚠ PERFORMANCE COST:§r very very low.
+    option.MINOR_DAMAGE_TAKEN_EFFECT_START.comment = §bⓘ What is this?§r This is the flash of red color that happens when damage is taken.  Configure what amount of sudden health loss needs to be had for this screen effect to activate. §a⚠ PERFORMANCE COST:§r very very low
+    option.CRITICAL_DAMAGE_TAKEN_EFFECT_START.comment = §bⓘ What is this?§r This is the intense red colored trailing effect that happens when A LOT of damage is taken. Configure what amount of sudden health loss needs to be had for this screen effect to activate. §a⚠ PERFORMANCE COST:§r very very low
+
  ###################################################### ↓↓↓ THIS SUBMENU'S LABELS
 screen.Color_Processing = Color Processing
     
