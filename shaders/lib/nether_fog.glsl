@@ -12,9 +12,10 @@ float densityAtPosFog(in vec3 pos){
 	return mix(xy.r,xy.g, f.y);
 }
 
-float cloudVol(in vec3 pos){
+float cloudVol(in vec3 pos, in float clearArea){
 	vec3 samplePos = pos*vec3(1.0,1./48.,1.0);
 
+    // float Wind = pow(max(pos.y-30,0.0) / 15.0,2.1);
     float Wind = pow(max(pos.y-30,0.0) / 15.0,2.1);
 
 	float Plumes = texture(noisetex, (samplePos.xz + Wind)/256.0).b;
@@ -24,10 +25,10 @@ float cloudVol(in vec3 pos){
 	float Erosion = densityAtPosFog(samplePos * 400	- frameTimeCounter*10 - Wind*10) *0.7+0.3 ;
 
     float RoofToFloorDensityFalloff = exp(max(100-pos.y,0.0) / -15);
-	float FloorDensityFalloff = pow(exp(max(pos.y-31,0.0) / -3.0),2);
+	float FloorDensityFalloff = pow(exp(max(pos.y-31,0.0) / -3.0),2)*clearArea;
 	float RoofDensityFalloff = exp(max(120-pos.y,0.0) / -10);
 
-	float Output = max((RoofToFloorDensityFalloff - Plumes * (1.0-Erosion)) * 2.0,	clamp((FloorDensityFalloff - floorPlumes*0.5) * Erosion ,0.0,1.0) );
+	float Output = max((RoofToFloorDensityFalloff - Plumes * (1.0-Erosion)) * 2.0,	clamp( (FloorDensityFalloff - floorPlumes*0.5) * Erosion,0.0,1.0) );
     
 	return Output;
 }
@@ -70,8 +71,8 @@ vec4 GetVolumetricFog(
 		
 		progressW = gbufferModelViewInverse[3].xyz + cameraPosition + d*dVWorld;
 
-		float densityVol = cloudVol(progressW);
 		float clearArea = 1.0 - min(max(1.0 - length(progressW - cameraPosition) / 24.0,0.0),1.0);
+		float densityVol = cloudVol(progressW, clearArea);
 
 		//------ PLUME EFFECT
 			float plumeDensity = min(densityVol * pow(min(max(100.0-progressW.y,0.0)/30.0,1.0),4.0), pow(clamp(1.0 - length(progressW-cameraPosition)/far,0.0,1.0),5.0));
