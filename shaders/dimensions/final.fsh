@@ -79,23 +79,6 @@ float convertHandDepth_2(in float depth, bool hand) {
 
 #include "/lib/gameplay_effects.glsl"
 
-void doCameraGridLines(inout vec3 color, vec2 UV){
-
-  float lineThicknessY = 0.001;
-  float lineThicknessX = lineThicknessY/aspectRatio;
-  
-  float horizontalLines = abs(UV.x-0.33);
-  horizontalLines = min(abs(UV.x-0.66), horizontalLines);
-
-  float verticalLines = abs(UV.y-0.33);
-  verticalLines = min(abs(UV.y-0.66), verticalLines);
-
-  float gridLines = horizontalLines < lineThicknessX || verticalLines < lineThicknessY ? 1.0 : 0.0;
-
-  if(hideGUI > 0.0) gridLines = 0.0;
-  color = mix(color, vec3(1.0),  gridLines);
-}
-
 vec3 doMotionBlur(inout vec2 texcoord, float depth, float noise, bool hand){
   
   float samples = 4.0;
@@ -145,9 +128,9 @@ float doVignette( in vec2 texcoord, in float noise){
   return mix(1.0, vignette, float(VIGNETTE_AMOUNT)/100.0);
 }
 
-void doCinematicBorders( inout vec3 color ){
+void doCinematicBorders( inout vec3 color, in vec2 texcoord){
   // center + absolute value so you can check both directions at once.
-  vec2 uv = abs(gl_FragCoord.xy*texelSize - 0.5) * 2.0;
+  vec2 uv = abs(texcoord - 0.5) * 2.0;
   // lol
   #if CINEMATIC_BORDER_COVERAGE_VERTICAL > 0 || CINEMATIC_BORDER_COVERAGE_HORIZONTAL > 0
     if(
@@ -164,12 +147,30 @@ void doCinematicBorders( inout vec3 color ){
   #endif
 }
 
+void doCameraGridLines(inout vec3 color, in vec2 texcoord){
+
+  float lineThicknessY = 0.001;
+  float lineThicknessX = lineThicknessY/aspectRatio;
+  
+  float horizontalLines = abs(texcoord.x-0.33);
+  horizontalLines = min(abs(texcoord.x-0.66), horizontalLines);
+
+  float verticalLines = abs(texcoord.y-0.33);
+  verticalLines = min(abs(texcoord.y-0.66), verticalLines);
+
+  float gridLines = horizontalLines < lineThicknessX || verticalLines < lineThicknessY ? 1.0 : 0.0;
+
+  if(hideGUI > 0.0) gridLines = 0.0;
+  color = mix(color, vec3(1.0),  gridLines);
+}
+
 void main() {
   
   float noise = interleaved_gradientNoise();
  
   // pass texcoords through various functions modifying it, so that they are able to stack together
-  vec2 texcoord_offset = gl_FragCoord.xy*texelSize;
+  vec2 texcoord = gl_FragCoord.xy*texelSize;
+  vec2 texcoord_offset = texcoord;
 
   #if PIXEL_ZOOM > 0
 	  texcoord_offset = 0.5 + (texcoord_offset-0.5) - (texcoord_offset-0.5) * (float(PIXEL_ZOOM)/100.0f);
@@ -204,7 +205,7 @@ void main() {
   #endif
   
   #if CINEMATIC_BORDER_COVERAGE_VERTICAL > 0 || CINEMATIC_BORDER_COVERAGE_HORIZONTAL > 0
-    doCinematicBorders(COLOR);
+    doCinematicBorders(COLOR, texcoord);
   #endif
 
   #ifdef CAMERA_GRIDLINES
