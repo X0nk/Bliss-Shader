@@ -145,6 +145,25 @@ float doVignette( in vec2 texcoord, in float noise){
   return mix(1.0, vignette, float(VIGNETTE_AMOUNT)/100.0);
 }
 
+void doCinematicBorders( inout vec3 color ){
+  // center + absolute value so you can check both directions at once.
+  vec2 uv = abs(gl_FragCoord.xy*texelSize - 0.5) * 2.0;
+  // lol
+  #if CINEMATIC_BORDER_COVERAGE_VERTICAL > 0 || CINEMATIC_BORDER_COVERAGE_HORIZONTAL > 0
+    if(
+      #if CINEMATIC_BORDER_COVERAGE_VERTICAL > 0
+        uv.y > 1.0 - float(CINEMATIC_BORDER_COVERAGE_VERTICAL)/100.0
+      #endif
+      #if CINEMATIC_BORDER_COVERAGE_VERTICAL > 0 && CINEMATIC_BORDER_COVERAGE_HORIZONTAL > 0
+        ||
+      #endif
+      #if CINEMATIC_BORDER_COVERAGE_HORIZONTAL > 0
+        uv.x > 1.0 - float(CINEMATIC_BORDER_COVERAGE_HORIZONTAL)/100.0
+      #endif
+    ) color = vec3(0.0);
+  #endif
+}
+
 void main() {
   
   float noise = interleaved_gradientNoise();
@@ -182,6 +201,10 @@ void main() {
   
   #if VIGNETTE_AMOUNT > 0
     COLOR *= doVignette(texcoord, noise);
+  #endif
+  
+  #if CINEMATIC_BORDER_COVERAGE_VERTICAL > 0 || CINEMATIC_BORDER_COVERAGE_HORIZONTAL > 0
+    doCinematicBorders(COLOR);
   #endif
 
   #ifdef CAMERA_GRIDLINES

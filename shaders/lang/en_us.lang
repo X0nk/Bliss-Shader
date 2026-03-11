@@ -444,19 +444,19 @@ screen.Post_Processing = Post Processing
         suffix.ON_FIRE_DISTORT_EFFECT_AMOUNT =%
         value.ON_FIRE_DISTORT_EFFECT_AMOUNT.0 = §cOFF
 
-    option.LOW_HEALTH_EFFECT_START = Minimum Health Needed For Low Health Effect
+    option.LOW_HEALTH_EFFECT_START = Minimum Health Needed For The Low Health Effect
         suffix.LOW_HEALTH_EFFECT_START = §r Health
         value.LOW_HEALTH_EFFECT_START.0 = §cOFF
 
-    option.CRITICALLY_LOW_HEALTH_EFFECT_START = Minimum Health Needed For Critically Low Health Effect
+    option.CRITICALLY_LOW_HEALTH_EFFECT_START = Minimum Health Needed For The Critically Low Health Effect
         suffix.CRITICALLY_LOW_HEALTH_EFFECT_START = §r Health
         value.CRITICALLY_LOW_HEALTH_EFFECT_START.0 = §cOFF
 
-    option.MINOR_DAMAGE_TAKEN_EFFECT_START = Health Loss Needed For Minor Damage Effect
+    option.MINOR_DAMAGE_TAKEN_EFFECT_START = Health Loss Needed For The Minor Damage Effect
         suffix.MINOR_DAMAGE_TAKEN_EFFECT_START = §r Health Lost
         value.MINOR_DAMAGE_TAKEN_EFFECT_START.0 = §cOFF
 
-    option.CRITICAL_DAMAGE_TAKEN_EFFECT_START = Health Loss Needed For Critical Damage Effect
+    option.CRITICAL_DAMAGE_TAKEN_EFFECT_START = Health Loss Needed For The Critical Damage Effect
         suffix.CRITICAL_DAMAGE_TAKEN_EFFECT_START = §r Health Lost
         value.CRITICAL_DAMAGE_TAKEN_EFFECT_START.0 = §cOFF
 
@@ -564,6 +564,14 @@ screen.Camera_Settings = Camera Settings
     		value.FOCUS_LASER_COLOR.4=Yellow
     		value.FOCUS_LASER_COLOR.5=White
 
+    option.CINEMATIC_BORDER_COVERAGE_VERTICAL = Cinematic Border §bⓘ Vertical
+        suffix.CINEMATIC_BORDER_COVERAGE_VERTICAL = % Screen Coverage
+        value.CINEMATIC_BORDER_COVERAGE_VERTICAL.0 = §cOFF
+
+    option.CINEMATIC_BORDER_COVERAGE_HORIZONTAL = Cinematic Border §bⓘ Horizontal
+        suffix.CINEMATIC_BORDER_COVERAGE_HORIZONTAL = % Screen Coverage
+        value.CINEMATIC_BORDER_COVERAGE_HORIZONTAL.0 = §cOFF
+
  ###################################################### ↑↑↑ THIS SUBMENU'S DESCRIPTIONS
 
     option.DOF_QUALITY.comment= §bⓘ What is this?§r This is the "un-focus" blur in the background and foreground when a camera focuses its lense on something, sometimes referred to as "bokeh". §a⚠ PERFORMANCE COST:§r low to high
@@ -573,6 +581,8 @@ screen.Camera_Settings = Camera Settings
     option.FAR_BLUR_ONLY.comment = §bⓘ What is this?§r make it such that it cannot do an unfocus blur on objects near you, only objects far away.
     option.REMOVE_HAND_BLUR.comment = §bⓘ What is this?§r remove all blurring on your hand.
     option.DOF_DISPERSION_MULT.comment = §bⓘ What is this?§r This adds a color offset for red and blue, for a cool effect.
+    option.CINEMATIC_BORDER_COVERAGE_VERTICAL.comment = §bⓘ What is this?§r This is the black bars on the top and bottom of the screen you might have seen in a movie. §a⚠ PERFORMANCE COST:§r basically nothing
+    option.CINEMATIC_BORDER_COVERAGE_HORIZONTAL.comment = §bⓘ What is this?§r This is the black bars on the left and right of the screen you might have seen in a movie. §a⚠ PERFORMANCE COST:§r basically nothing
 
  ###################################################### ↓↓↓ THIS SUBMENU'S LABELS
 screen.Fog = Fog Settings
