@@ -138,7 +138,6 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 			return vec3(0.0);
 		#endif
 
-		int SAMPLECOUNT = 8;
 		vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
 		vec3 LPVrayStartPos = playerPos - gbufferModelViewInverse[3].xyz;
 		
@@ -157,6 +156,15 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 		vec4 color = vec4(0.0,0.0,0.0,1.0);
 		float expFactor = 11.0;
 
+		// Set sample count with correction for the LPV size
+		#if LPV_SIZE == 8
+			int SAMPLECOUNT = 16;
+		#elif LPV_SIZE == 7
+			int SAMPLECOUNT = 10;
+		#elif LPV_SIZE == 6
+			int SAMPLECOUNT = 6;
+		#endif
+
 		for (int i = 0; i < SAMPLECOUNT; i++) {
 			float d = (pow(expFactor, float(i+dither)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
 			float dd = pow(expFactor, float(i+dither)/float(SAMPLECOUNT)) * log(expFactor) / float(SAMPLECOUNT)/(expFactor-1.0);
@@ -166,17 +174,20 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 			vec3 lpvPos = GetLpvPosition(LPVrayProgress);
 
         	float fadeLength = 10.0; // in blocks
-        	vec3 cubicRadius = clamp(	min(((LpvSize3-1.0) - lpvPos)/fadeLength,      lpvPos/fadeLength) ,0.0,1.0);
+        	vec3 cubicRadius = clamp(min(((LpvSize3-1.0) - lpvPos)/fadeLength, lpvPos/fadeLength), 0.0, 1.0);
         	float LpvFadeF = cubicRadius.x*cubicRadius.y*cubicRadius.z;
 
 			if(LpvFadeF < 0.01) break;
 
 			vec3 sampleColor = SampleLpvLinear(lpvPos).rgb;
+
 			#ifdef VANILLA_LIGHTMAP_MASK
-				vec3 lighting = sampleColor * LPV_VL_FOG_ILLUMINATION_BRIGHTNESS * 25. * exp(-10 * (1.0-luma(sampleColor)));
+				// No idea why but power of 4 works very nicely
+				float exponent = mix(-5, -10, pow(LPV_VANILLA_LIGHMAP_MASK_STRENGTH, 4.0));
 			#else
-				vec3 lighting = sampleColor * LPV_VL_FOG_ILLUMINATION_BRIGHTNESS * 25. * exp(-5 * (1.0-luma(sampleColor)));
+				int exponent = -5;
 			#endif
+			vec3 lighting = sampleColor * LPV_VL_FOG_ILLUMINATION_BRIGHTNESS * 25. * exp(exponent * (1.0-luma(sampleColor)));
 
 			float density = 0.0001;
 			float volumeCoeff = exp(-dd*density*LPVRayLength);
