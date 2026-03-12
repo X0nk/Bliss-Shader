@@ -16,7 +16,7 @@ uniform bool isInNoRainFallEnviornment;
 uniform int worldTime;
 
 #define DECLARE_UNIFORMS_OR_WRITE_FUNCTIONS_FOR_CUSTOM_SCENE_CONTROLLER_PROFILES
-#include /CUSTOM_SCENE_PARAMETERS.glsl
+#include "/CUSTOM_SCENE_PARAMETERS.glsl"
 
 // https://www.shadertoy.com/view/llGSzw
 float hash11( uint n ) 
@@ -587,7 +587,8 @@ if(rainStrength > 0.0001){
 
 
 #define WRITE_CUSTOM_SCENE_CONTROLLER_PROFILES
-#include /CUSTOM_SCENE_PARAMETERS.glsl
+#undef DECLARE_UNIFORMS_OR_WRITE_FUNCTIONS_FOR_CUSTOM_SCENE_CONTROLLER_PROFILES
+#include "/CUSTOM_SCENE_PARAMETERS.glsl"
 
 }
 #endif
@@ -657,11 +658,11 @@ void readSceneControllerParameters(
     
     // in colortex4, read the data stored within the 3 components of the sampled pixels, and pass it to the fragment stage
     // 4th compnent/alpha is storing 1/4 res depth so i cant store there lol
-	vec3 data1 = texelFetch2D(colortex,ivec2(1,3),0).rgb/150.0;
-	vec3 data2 = texelFetch2D(colortex,ivec2(2,3),0).rgb/150.0;
-	vec3 data3 = texelFetch2D(colortex,ivec2(3,3),0).rgb/150.0;
-	float data4 = texelFetch2D(colortex,ivec2(1,2),0).r/150.0;
-	vec3 data5 = texelFetch2D(colortex,ivec2(2,2),0).rgb/150.0; // this samples a color
+	vec3 data1 = texelFetch(colortex,ivec2(1,3),0).rgb/150.0;
+	vec3 data2 = texelFetch(colortex,ivec2(2,3),0).rgb/150.0;
+	vec3 data3 = texelFetch(colortex,ivec2(3,3),0).rgb/150.0;
+	float data4 = texelFetch(colortex,ivec2(1,2),0).r/150.0;
+	vec3 data5 = texelFetch(colortex,ivec2(2,2),0).rgb/150.0; // this samples a color
 
 	smallCumulus = vec2(data1.x,data1.y);
 	largeCumulus = vec2(data1.z,data2.x);

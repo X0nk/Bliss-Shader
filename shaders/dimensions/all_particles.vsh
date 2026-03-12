@@ -1,5 +1,6 @@
 #define HANDHELD_LIGHTSOURCE_RELATED_SETTINGS
 #define ANTIALIASING_RELATED_SETTINGS
+#define GEOMETRY_ANIMATION_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/items.glsl"
@@ -33,7 +34,7 @@ uniform vec3 sunPosition;
 uniform float sunElevation;
 
 uniform vec2 texelSize;
-uniform int framemod8;
+
 uniform float frameTimeCounter;
 uniform vec3 cameraPosition;
 uniform mat4 gbufferModelViewInverse;
@@ -42,18 +43,15 @@ uniform ivec2 eyeBrightnessSmooth;
 
 uniform int heldItemId;
 uniform int heldItemId2;
-flat varying float HELD_ITEM_BRIGHTNESS;
 
 #include "/lib/TAA_jitter.glsl"
+#include "/lib/vertex_displacement.glsl"
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 vec4 toClipSpace3(vec3 viewSpacePosition) {
     return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
 }		
-
-
-
 
 #ifdef DAMAGE_BLOCK_EFFECT
 	varying vec4 vtexcoordam; // .st for add, .pq for mul
@@ -73,7 +71,7 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
 
 void main() {
 
-	lmtexcoord.xy = (gl_MultiTexCoord0).xy;
+	lmtexcoord.xy = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
 	vec2 lmcoord = gl_MultiTexCoord1.xy / 240.0;
 	lmtexcoord.zw = lmcoord;
 
@@ -88,14 +86,6 @@ void main() {
 		
 		normalMat = vec4(normalize(gl_NormalMatrix * gl_Normal), 1.0);
 	#endif
-
-
-	HELD_ITEM_BRIGHTNESS = 0.0;
-
-	#ifdef Hand_Held_lights
-		if(heldItemId > 999 || heldItemId2 > 999) HELD_ITEM_BRIGHTNESS = 0.9;
-	#endif
-
 
 	#if defined WEATHER || defined LINES
 		vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
@@ -112,9 +102,8 @@ void main() {
 			}
 		#endif
 		
-		#if defined LINES && defined PLANET_CURVATURE
-			float curvature = length(worldpos) / (16*8);
-			worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
+		#if defined LINES && CURVATURE_AMOUNT !=  0
+			applyWorldCurvature(worldpos);
 		#endif
 
 		position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
@@ -132,9 +121,9 @@ void main() {
 	#endif
 	
 	#ifdef OVERWORLD_SHADER
-		lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
+		lightCol.rgb = texelFetch(colortex4,ivec2(6,37),0).rgb;
 		lightCol.a = float(sunElevation > 1e-5)*2.0 - 1.0;
-		averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+		averageSkyCol_Clouds = texelFetch(colortex4,ivec2(0,37),0).rgb;
 		WsunVec = lightCol.a * normalize(mat3(gbufferModelViewInverse) * sunPosition);
 
 		#define READ_SCENE_CONTROLLER_PARAMETERS
@@ -148,7 +137,7 @@ void main() {
 	#endif
 	#ifndef WEATHER
 		#if TAA_MODE > 0
-			gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+			gl_Position.xy += taaJitter * gl_Position.w*texelSize;
 		#endif
 	#endif
 }

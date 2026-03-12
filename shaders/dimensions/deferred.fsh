@@ -9,16 +9,22 @@
 #define VOLUMETRIC_CLOUD_RELATED_SETTINGS
 #define VOLUMETRIC_FOG_RELATED_SETTINGS
 #include "/lib/settings.glsl"
+#include "/lib/macro_lod_mod.glsl"
 
+// this is an emergency plain text that will be visible as an the log error when a user tries to use voxy and DH both at once.
+#if defined VOXY && defined DISTANT_HORIZONS 
+float errortext = THIS_IS_NOT_A_BUG_____YOU_CANNOT_USE_VOXY_AND_DISTANT_HORIZIONS_TOGETHER_____USE_ONE_OR_THE_OTHER;
+#endif
+
+#define DHVLFOG
 #define ReflectedFog
 
 flat varying vec3 averageSkyCol_Clouds;
 flat varying vec3 averageSkyCol;
-
 flat varying vec3 lightSourceColor;
 flat varying vec3 sunColor;
+flat varying vec3 sunColor2;
 flat varying vec3 moonColor;
-
 flat varying float exposure;
 flat varying float avgBrightness;
 flat varying float rodExposure;
@@ -26,17 +32,7 @@ flat varying float avgL2;
 flat varying float centerDepth;
 
 uniform sampler2D noisetex;
-
 uniform sampler2D colortex1;
-
-vec2 decodeVec2(float a){
-    const vec2 constant1 = 65535. / vec2( 256., 65536.);
-    const float constant2 = 256. / 255.;
-    return fract( a * constant1 ) * constant2 ;
-}
-vec3 toLinear(vec3 sRGB){
-	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
-}
 
 uniform float frameTime;
 uniform int frameCounter;
@@ -67,12 +63,7 @@ uniform float dayChangeSmooth;
 uniform bool worldTimeChangeCheck;
 
 uniform int hideGUI;
-
 uniform float near;
-uniform float dhFarPlane;
-uniform float dhNearPlane;
-
-vec4 lightCol = vec4(lightSourceColor, float(sunElevation > 1e-5)*2-1.);
 
 #include "/lib/util.glsl"
 #include "/lib/ROBOBO_sky.glsl"
@@ -80,8 +71,19 @@ vec4 lightCol = vec4(lightSourceColor, float(sunElevation > 1e-5)*2-1.);
 #include "/lib/Shadow_Params.glsl"
 // #include "/lib/waterBump.glsl"
 
+vec4 lightCol = vec4(lightSourceColor, float(sunElevation > 1e-5)*2-1.);
 vec3 WsunVec = mat3(gbufferModelViewInverse)*sunVec;
 // vec3 WsunVec = normalize(LightDir);
+
+vec2 decodeVec2(float a){
+    const vec2 constant1 = 65535. / vec2( 256., 65536.);
+    const float constant2 = 256. / 255.;
+    return fract( a * constant1 ) * constant2 ;
+}
+
+vec3 toLinear(vec3 sRGB){
+	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
+}
 
 vec3 toShadowSpaceProjected(vec3 p3){
     p3 = mat3(gbufferModelViewInverse) * p3 + gbufferModelViewInverse[3].xyz;
@@ -103,10 +105,9 @@ float R2_dither(){
 	return fract(alpha.x * gl_FragCoord.x + alpha.y * gl_FragCoord.y + 1.0/1.6180339887 * frameCounter) ;
 }
 float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+  return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
 
-#define DHVLFOG
 // #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 // #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
@@ -117,33 +118,24 @@ vec3 toScreenSpace(vec3 p) {
     return viewPos.xyz / viewPos.w;
 }
 
-
-
 #include "/lib/DistantHorizons_projections.glsl"
 
 vec3 DH_toScreenSpace(vec3 p) {
-	vec4 iProjDiag = vec4(dhProjectionInverse[0].x, dhProjectionInverse[1].y, dhProjectionInverse[2].zw);
+	vec4 iProjDiag = vec4(LOD_PROJECTION_INVERSE[0].x, LOD_PROJECTION_INVERSE[1].y, LOD_PROJECTION_INVERSE[2].zw);
     vec3 feetPlayerPos = p * 2. - 1.;
-    vec4 viewPos = iProjDiag * feetPlayerPos.xyzz + dhProjectionInverse[3];
+    vec4 viewPos = iProjDiag * feetPlayerPos.xyzz + LOD_PROJECTION_INVERSE[3];
     return viewPos.xyz / viewPos.w;
 }
 
 vec3 DH_toClipSpace3(vec3 viewSpacePosition) {
-    return projMAD(dhProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
+    return projMAD(LOD_PROJECTION, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 }
-
-// float DH_ld(float dist) {
-//     return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
-// }
-// float DH_invLinZ (float lindepth){
-// 	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
-// }
 
 float DH_ld(float dist) {
-    return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
+    return (2.0 * LOD_NEARPLANE) / (LOD_FARPLANE + LOD_NEARPLANE - dist * (LOD_FARPLANE - LOD_NEARPLANE));
 }
 float DH_inv_ld (float lindepth){
-	return -((2.0*dhNearPlane/lindepth)-dhFarPlane-dhNearPlane)/(dhFarPlane-dhNearPlane);
+	return -((2.0*LOD_NEARPLANE/lindepth)-LOD_FARPLANE-LOD_NEARPLANE)/(LOD_FARPLANE-LOD_NEARPLANE);
 }
 
 float linearizeDepthFast(const in float depth, const in float near, const in float far) {
@@ -171,7 +163,6 @@ float invLinZ (float lindepth){
 		uniform sampler2DShadow shadowtex1;
 	#endif
 
-	// #define TEST
 	#define TIMEOFDAYFOG
 
 	#include "/lib/scene_controller.glsl"
@@ -275,21 +266,21 @@ float mixhistory = 0.06;
 		}
 	#endif
 
-	#if defined FLASHLIGHT && defined FLASHLIGHT_BOUNCED_INDIRECT
-		// sample center pixel of albedo color, and interpolate it overtime.
-		if (gl_FragCoord.x > 15 && gl_FragCoord.x < 16 && gl_FragCoord.y > 2 && gl_FragCoord.y < 3){
+	// #if defined FLASHLIGHT && defined FLASHLIGHT_BOUNCED_INDIRECT
+	// 	// sample center pixel of albedo color, and interpolate it overtime.
+	// 	if (gl_FragCoord.x > 15 && gl_FragCoord.x < 16 && gl_FragCoord.y > 2 && gl_FragCoord.y < 3){
 			
-			mixhistory = 0.01;
+	// 		mixhistory = 0.01;
 
-			vec3 data = texelFetch2D(colortex1, ivec2(0.5/texelSize), 0).rgb;
-			vec3 decodeAlbedo = vec3(decodeVec2(data.x).x,decodeVec2(data.y).x, decodeVec2(data.z).x);
-			vec3 albedo = toLinear(decodeAlbedo);
+	// 		vec3 data = texelFetch(colortex1, ivec2(0.5/texelSize), 0).rgb;
+	// 		vec3 decodeAlbedo = vec3(decodeVec2(data.x).x,decodeVec2(data.y).x, decodeVec2(data.z).x);
+	// 		vec3 albedo = toLinear(decodeAlbedo);
 			
-			albedo = normalize(albedo + 1e-7) * (dot(albedo,vec3(0.21, 0.72, 0.07))*0.5+0.5);
+	// 		albedo = normalize(albedo + 1e-7) * (dot(albedo,vec3(0.21, 0.72, 0.07))*0.5+0.5);
 			
-			gl_FragData[0] = vec4(albedo,1.0);
-		}
-	#endif
+	// 		gl_FragData[0] = vec4(albedo,1.0);
+	// 	}
+	// #endif
 ////////////////////////////////
 /// --- ATMOSPHERE IMAGE --- ///
 ////////////////////////////////
@@ -336,7 +327,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 
 	WsunVec = mix(WmoonVec, WsunVec, clamp(float(sunElevation > 1e-5)*2.0-1.0 ,0,1));
 
-	vec3 sky = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150.0;	
+	vec3 sky = texelFetch(colortex4,ivec2(gl_FragCoord.xy)-ivec2(257,0),0).rgb/150.0;	
 	sky = mix(averageSkyCol_Clouds * AmbientLightTint * 0.25, sky,  pow(clamp(viewVector.y+1.0,0.0,1.0),5.0));
 	
 	vec3 suncol = lightSourceColor;
@@ -356,6 +347,27 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 
 	if(worldTimeChangeCheck) mixhistory = 1.0;
 }
+
+#ifdef FAKE_PLANET
+	vec2 pixelPos2 = vec2(16,1);
+	if (gl_FragCoord.x > pixelPos2.x && gl_FragCoord.x < pixelPos2.x + 1 && gl_FragCoord.y > pixelPos2.y){
+		if(worldTimeChangeCheck) mixhistory = 1.0;
+
+		vec3 pos = vec3(0.0);
+		pos.y = clamp(gl_FragCoord.y/256.0,0.0,1.0);
+
+		// approximate how much atmosphere the sun is travelling through and scale abso
+		pos.y = pos.y / (1.0/abs(WsunVec.y))*5.0;
+
+		vec2 variable = vec2(0);
+		vec3 absorb = vec3(0.0);
+		vec3 transmittance = calculateAtmosphere(vec3(0.0), pos, vec3(0.0,1.0,0.0), pos, vec3(0.0), variable, absorb, 25, 0.0);
+		transmittance = min(sunColor2 * absorb, sunColor2);
+
+		gl_FragData[0] = vec4(transmittance, 1.0);
+	}
+#endif
+
 #endif
 
 #if defined NETHER_SHADER || defined END_SHADER
@@ -384,7 +396,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	float flash = 0.0;
 	float maxWaitTime = 5;
 
-	float Timer = texelFetch2D(colortex4, ivec2(3,1), 0).x/150.0;
+	float Timer = texelFetch(colortex4, ivec2(3,1), 0).x/150.0;
 	Timer -= frameTime;
 
 	if(Timer <= 0.0){
@@ -413,7 +425,7 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	if (gl_FragCoord.x > pixelPos2.x && gl_FragCoord.x < pixelPos2.x + 1 && gl_FragCoord.y > pixelPos2.y && gl_FragCoord.y < pixelPos2.y + 1){
 		mixhistory = clamp(500.0 * frameTime,0.0,1.0);
 
-		vec3 LastPos = (texelFetch2D(colortex4,ivec2(2,1),0).xyz/150.0) * 2.0 - 1.0;
+		vec3 LastPos = (texelFetch(colortex4,ivec2(2,1),0).xyz/150.0) * 2.0 - 1.0;
 		
 		LastPos += (hash31(frameCounter / 50) * 2.0 - 1.0);
 		LastPos = LastPos * 0.5 + 0.5;
@@ -426,9 +438,10 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	}
 
 #endif
+// 
 
 //Temporally accumulate sky and light values
-vec3 frameHistory = texelFetch2D(colortex4,ivec2(gl_FragCoord.xy),0).rgb;
+vec3 frameHistory = texelFetch(colortex4,ivec2(gl_FragCoord.xy),0).rgb;
 vec3 currentFrame = gl_FragData[0].rgb*150.;
 
 

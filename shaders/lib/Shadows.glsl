@@ -13,14 +13,10 @@ void GriAndEminShadowFix(
 	if(zoomLevel > 0.001 && isEyeInWater != 1) WorldPos = WorldPos - (	fract(WorldPos+cameraPosition - WorldPos*0.0001)*zoomLevel - zoomLevel*0.5);
 }
 
-void applyShadowBias(inout vec3 projectedShadowPosition, in vec3 playerPos, in vec3 geoNormals, float POM_DEEPNESS){
+void applyShadowBias(inout vec3 projectedShadowPosition, in vec3 playerPos, in vec3 geoNormals){
 
 	// Calculate the bias size according to the 1:1 ratio of one shadow texel to one full block
-	#if defined POM_OFFSET_SHADOW_BIAS
-		float biasSize = (shadowDistance / shadowMapResolution*2.0) * (2.0 + POM_DEEPNESS*(1.0+POM_DEPTH*3.0));
-	#else
-		float biasSize = (shadowDistance / shadowMapResolution*2.0) * 2.0;
-	#endif
+	float biasSize = (shadowDistance / shadowMapResolution*2.0) * 2.0;
 
 	float biasDistanceFactor = length(projectedShadowPosition.xy);
 

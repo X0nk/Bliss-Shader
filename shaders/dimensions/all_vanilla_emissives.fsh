@@ -21,7 +21,7 @@ vec3 toLinear(vec3 sRGB){
 
 void main() {
 
-	vec4 Albedo = texture2D(texture, texcoord);
+	vec4 Albedo = texture(texture, texcoord);
 	Albedo.rgb = toLinear(Albedo.rgb * color.rgb);
 
     #if defined BEACON_BEAM
@@ -52,7 +52,7 @@ void main() {
             vec3 GlintColor = vec3(0.0);
             Albedo.a = 0.0;
         #else
-            vec3 GlintColor = Albedo.rgb * 0.2 * Emissive_Brightness * ENCHANT_GLINT_BRIGHTNESS;
+            vec3 GlintColor = Albedo.rgb * color.a * 0.2 * Emissive_Brightness * ENCHANT_GLINT_BRIGHTNESS;
         #endif
 
 	    gl_FragData[0] = vec4(GlintColor*0.1, 0.000001);

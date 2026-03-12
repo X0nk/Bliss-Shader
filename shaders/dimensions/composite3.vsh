@@ -21,9 +21,7 @@ uniform float dhNearPlane;
 uniform mat4 gbufferModelViewInverse;
 uniform vec3 sunPosition;
 uniform float sunElevation;
-flat varying vec2 TAA_Offset;
-uniform int framemod8;
-#include "/lib/TAA_jitter.glsl"
+
 
 
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -36,16 +34,11 @@ void main() {
 
 	#ifdef OVERWORLD_SHADER
 		#ifdef BorderFog
-			skyGroundColor = texelFetch2D(colortex4,ivec2(1,37),0).rgb / 1200.0 * Sky_Brightness;
+			skyGroundColor = texelFetch(colortex4,ivec2(1,37),0).rgb / 1200.0 * Sky_Brightness;
 		#endif
 		WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
 	#endif
 
-	#if TAA_MODE > 0
-		TAA_Offset = offsets[framemod8];
-	#else
-		TAA_Offset = vec2(0.0);
-	#endif
 	zMults = vec3(1.0/(far * near),far+near,far-near);
 
 	gl_Position = ftransform();

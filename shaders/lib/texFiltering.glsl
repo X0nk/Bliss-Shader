@@ -5,7 +5,7 @@ vec4 smoothfilter(in sampler2D tex, in vec2 uv, in vec2 textureResolution)
 	vec2 fuv = fract( uv );
 	uv = iuv + (fuv*fuv)*(3.0-2.0*fuv); 
 	uv = uv/textureResolution - 0.5/textureResolution;
-	return texture2D( tex, uv);
+	return texture( tex, uv);
 }
 
 float shadowsmoothfilter(in sampler2DShadow tex, in vec3 uv,in float textureResolution)

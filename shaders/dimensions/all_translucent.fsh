@@ -11,6 +11,8 @@
 #define WATER_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 
+#include "/lib/macro_lod_mod.glsl"
+
 #undef FLASHLIGHT_BOUNCED_INDIRECT
 
 // #if defined END_SHADER || defined NETHER_SHADER
@@ -54,12 +56,6 @@ flat varying float HELD_ITEM_BRIGHTNESS;
 uniform sampler2D noisetex;
 uniform sampler2D depthtex1;
 uniform sampler2D depthtex0;
-
-#ifdef DISTANT_HORIZONS
-	uniform sampler2D dhDepthTex1;
-	uniform sampler2D dhDepthTex0;
-#endif
-
 uniform sampler2D colortex7;
 uniform sampler2D colortex12;
 uniform sampler2D colortex13;
@@ -102,7 +98,7 @@ uniform float nightVision;
 uniform int frameCounter;
 uniform float frameTimeCounter;
 uniform vec2 texelSize;
-uniform int framemod8;
+
 uniform float viewWidth;
 uniform float viewHeight;
 
@@ -140,9 +136,12 @@ uniform float waterEnteredAltitude;
 	#include "/lib/end_fog.glsl"
 #endif
 
+uniform int heldItemId;
+uniform int heldItemId2;
+uniform int heldBlockLightValue;
+uniform int heldBlockLightValue2;
+
 #ifdef IS_LPV_ENABLED
-	uniform int heldItemId;
-	uniform int heldItemId2;
 
 	#include "/lib/hsv.glsl"
 	#include "/lib/lpv_common.glsl"
@@ -185,9 +184,9 @@ float R2_dither(){
 
 float blueNoise(){
 	#if TAA_MODE > 0
-  		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+  		return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 	#else
-		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
+		return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
 	#endif
 }
 
@@ -196,7 +195,7 @@ float blueNoise(){
 varying vec3 viewVector;
 vec3 getParallaxDisplacement(vec3 waterPos, vec3 playerPos) {
 
-	float largeWaves = texture2D(noisetex, waterPos.xy / 600.0 ).b;
+	float largeWaves = texture(noisetex, waterPos.xy / 600.0 ).b;
 	float largeWavesCurved = pow(1.0-pow(1.0-largeWaves,2.5),4.5);
 
 	float waterHeight = getWaterHeightmap(waterPos.xy, largeWaves, largeWavesCurved);
@@ -298,7 +297,7 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 	// setup shadow projection
 	vec3 projectedShadowPosition = mat3(shadowModelView) * playerPos + shadowModelView[3].xyz;
 
-	applyShadowBias(projectedShadowPosition, playerPos, geoNormals, 0.0);
+	applyShadowBias(projectedShadowPosition, playerPos, geoNormals);
 
 	projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
@@ -340,7 +339,7 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 			shadowmap += max(opaqueShadow, shadowDepthDiff);
 
 			// get translucent shadow data
-			vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
+			vec4 translucentShadow = texture(shadowcolor0, projectedShadowPosition.xy);
 
 			// this curve simply looked the nicest. it has no other meaning.
 			float shadowAlpha = pow(1.0 - pow(translucentShadow.a,5.0),0.2);
@@ -384,7 +383,6 @@ void Emission(
 	if( Emission < 254.5/255.0) Lighting = mix(Lighting, Albedo * 5.0 * Emissive_Brightness, pow(Emission, Emissive_Curve));
 }
 
-uniform vec3 eyePosition;
 float bias(){
 	#ifdef SCALE_MIPMAP_WITH_RESOLUTION
 		// bias mipmapping as window resolution and / or render scale changes.
@@ -413,7 +411,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	float mipmapBias = bias();
 
 	#if TAA_MODE > 0
-		vec2 tempOffset = offsets[framemod8];
+		vec2 tempOffset = taaJitter;
 		vec3 viewPos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
 	#else
 		vec3 viewPos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0));
@@ -447,7 +445,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 /////////////////////////////////// ALBEDO /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-	gl_FragData[0] = texture2D(texture, lmtexcoord.xy, mipmapBias) * color;
+	gl_FragData[0] = texture(texture, lmtexcoord.xy, mipmapBias) * color;
 
 	float UnchangedAlpha = gl_FragData[0].a;
 
@@ -489,7 +487,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#if defined PHYSICSMOD_OCEAN_SHADER && defined PHYSICS_OCEAN
 		WavePixelData wave = physics_wavePixel(physics_localPosition.xz, physics_localWaviness, physics_iterationsNormal, physics_gameTime);
 		
-		#if defined DISTANT_HORIZONS
+		#ifdef USING_LOD_MOD
 			float PHYSICS_OCEAN_TRANSITION = 1.0-pow(1.0-pow(1.0-clamp(1.0-length(feetPlayerPos.xz)/max(far,0.0),0,1),5),5);
 		#else
 			float PHYSICS_OCEAN_TRANSITION = 0.0;
@@ -521,7 +519,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 						  tangent.z, tangent2.z, normal.z);
 
 
-	vec3 NormalTex = vec3(texture2D(normals, lmtexcoord.xy, mipmapBias).xy,0.0);
+	vec3 NormalTex = vec3(texture(normals, lmtexcoord.xy, mipmapBias).xy,0.0);
 	NormalTex.xy = NormalTex.xy*2.0-1.0;
 	NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0);
 
@@ -576,7 +574,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 ////////////////////////////////////////////////////////////////////////////////
 
 
-	vec3 SpecularTex = texture2D(specular, lmtexcoord.xy, mipmapBias).rga;
+	vec3 SpecularTex = texture(specular, lmtexcoord.xy, mipmapBias).rga;
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// DIFFUSE LIGHTING //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -587,20 +585,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	
 	#ifndef OVERWORLD_SHADER
 		lightmap.y = 1.0;
-	#endif
-	
-	#if defined Hand_Held_lights && !defined LPV_ENABLED
-		#ifdef IS_IRIS
-			vec3 playerCamPos = eyePosition;
-		#else
-			vec3 playerCamPos = cameraPosition;
-		#endif
-		
-		if(HELD_ITEM_BRIGHTNESS > 0.0){ 
-			float pointLight = clamp(1.0-length((feetPlayerPos+cameraPosition)-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0,1.0);
-			lightmap.x  = mix(lightmap.x , HELD_ITEM_BRIGHTNESS, pointLight*pointLight);
-		}
-
 	#endif
 
 	vec3 Indirect_lighting = vec3(0.0);
@@ -669,7 +653,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
         vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds);
 
-		float lightningflash = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
+		float lightningflash = texelFetch(colortex4,ivec2(1,1),0).x/150.0;
 		vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
 		
 		float end_NdotL = clamp(dot(worldSpaceNormal, normalize(-lightPos))*0.5+0.5,0.0,1.0);
@@ -707,10 +691,18 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, feetPlayerPos, lpvPos);
 	
-	vec4 flashLightSpecularData = vec4(0.0);
+	vec3 mainHandPos = vec3(0.0);
+	vec3 mainHandCol = vec3(0.0);
+	vec3 offHandPos = vec3(0.0);
+	vec3 offHandCol = vec3(0.0);
 
-	#ifdef FLASHLIGHT
-		Indirect_lighting += calculateFlashlight(FragCoord.xy*texelSize/RENDER_SCALE, viewPos, vec3(0.0), worldSpaceNormal, flashLightSpecularData, false);
+	#if HANDHELD_LIGHTSOURCE_MODE > 0
+		doHandHeldLight(
+			viewPos, worldSpaceNormal
+			,mainHandPos, mainHandCol, offHandPos, offHandCol
+		);
+
+		Indirect_lighting += mainHandCol + offHandCol;
 	#endif
 
 	#if defined LIGHTNING_FLASH
@@ -768,7 +760,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 				float Shadows = 0.0;
 			#endif
 			
-			vec3 specularReflections = specularReflections(viewPos, normalize(feetPlayerPos), WsunVec, vec3(blueNoise(), vec2(interleaved_gradientNoise_temporal())), worldSpaceNormal, roughness, f0, Albedo, FinalColor*gl_FragData[0].a, DirectLightColor * Shadows, lightmap.y, isHand, isWater, reflectance, flashLightSpecularData);
+			vec3 specularReflections = specularReflections(viewPos, normalize(feetPlayerPos), WsunVec, vec3(blueNoise(), vec2(interleaved_gradientNoise_temporal())), worldSpaceNormal, roughness, f0, Albedo, FinalColor*gl_FragData[0].a, DirectLightColor * Shadows, lightmap.y, isHand, isWater, reflectance, normalize(mainHandPos), mainHandCol, normalize(offHandPos), offHandCol);
 			
 			gl_FragData[0].a = gl_FragData[0].a + (1.0-gl_FragData[0].a) * reflectance;
 		
@@ -797,11 +789,11 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			float maxOverdrawDistance = OVERDRAW_MAX_DISTANCE;
 		#endif
 
-		bool WATER = texture2D(colortex7, gl_FragCoord.xy*texelSize).a > 0.0 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance) && texture2D(depthtex1, gl_FragCoord.xy*texelSize).x >= 1.0;
-		// bool WATER =  length(feetPlayerPos) > clamp(far-16*4, 17.5, maxOverdrawDistance) && texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x >= 1.0 || texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x < gl_FragCoord.z;
-		// float depth = texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x;
-		// bool WATER = (abs(depth - texelFetch2D(dhDepthTex0, ivec2(gl_FragCoord.xy), 0).x) > 0.23 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance)) || (length(feetPlayerPos) > clamp(far-16*4, 20, maxOverdrawDistance) && depth >= 1.0);// && texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x < 1.0;
-		// bool WATER = texelFetch2D(dhDepthTex0, ivec2(gl_FragCoord.xy),0).x == texelFetch2D(depthtex1, ivec2(gl_FragCoord.xy), 0).x;
+		bool WATER = texture(colortex7, gl_FragCoord.xy*texelSize).a > 0.0 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance) && texture(depthtex1, gl_FragCoord.xy*texelSize).x >= 1.0;
+		// bool WATER =  length(feetPlayerPos) > clamp(far-16*4, 17.5, maxOverdrawDistance) && texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x >= 1.0 || texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x < gl_FragCoord.z;
+		// float depth = texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x;
+		// bool WATER = (abs(depth - texelFetch(dhDepthTex0, ivec2(gl_FragCoord.xy), 0).x) > 0.23 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance)) || (length(feetPlayerPos) > clamp(far-16*4, 20, maxOverdrawDistance) && depth >= 1.0);// && texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x < 1.0;
+		// bool WATER = texelFetch(dhDepthTex0, ivec2(gl_FragCoord.xy),0).x == texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x;
 
 		if(WATER) {
 			gl_FragData[0].a = 0.0;
@@ -837,7 +829,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0] = vec4(lmtexcoord.z*0.1,lmtexcoord.w*0.1,0.0,1.0);
 	#endif
 
-	gl_FragData[3] = vec4(encodeVec2(lightmap.x, lightmap.y), 1, 1, 1);
+	gl_FragData[3] = vec4(0.0,0.0,0.0, clamp(encodeVec2(lightmap.x, lightmap.y),0.0,1.0));
 
 	#if defined ENTITIES && defined IS_IRIS
 		if(NAMETAG > 0) {

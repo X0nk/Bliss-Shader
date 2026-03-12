@@ -122,7 +122,7 @@ float calculate_maximum_horizon_angle(
 
 
 	for (int i = 0; i < GTAO_HORIZON_STEPS; ++i, ray_pos += ray_step) {
-		float depth = texelFetch2D(depthtex1, ivec2(clamp(ray_pos,0.0,1.0) * view_res * taau_render_scale - 0.5), 0).x;
+		float depth = texelFetch(depthtex1, ivec2(clamp(ray_pos,0.0,1.0) * view_res * taau_render_scale - 0.5), 0).x;
 
 		if (depth == 1.0 || depth < hand_depth || depth == screen_pos.z) continue;
 

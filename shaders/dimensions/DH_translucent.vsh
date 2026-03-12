@@ -1,5 +1,6 @@
 #define ANTIALIASING_RELATED_SETTINGS
 #define DEPTH_OF_FIELD_RELATED_SETTINGS
+#define GEOMETRY_ANIMATION_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 
@@ -31,7 +32,7 @@ uniform vec3 sunPosition;
 uniform float sunElevation;
 
 uniform vec2 texelSize;
-uniform int framemod8;
+
 
 #if DOF_QUALITY == 5
 uniform int hideGUI;
@@ -43,9 +44,11 @@ uniform float far;
 #endif
 
 
-uniform int framemod4_DH;
-#define DH_TAA_OVERRIDE
+uniform float frameTimeCounter;
+
+
 #include "/lib/TAA_jitter.glsl"
+#include "/lib/vertex_displacement.glsl"
 
 uniform vec3 cameraPosition;
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
@@ -61,12 +64,10 @@ void main() {
    	
 	vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
 	
-	// worldpos.y -= length(worldpos)/(16*2);
-
-	#ifdef PLANET_CURVATURE
-		float curvature = length(worldpos) / (16*8);
-		worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
+	#if CURVATURE_AMOUNT !=  0
+		applyWorldCurvature(worldpos);
 	#endif
+	
 	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 
 	gl_Position = toClipSpace3(position);
@@ -96,10 +97,10 @@ void main() {
 	lightmapCoords = gl_MultiTexCoord1.xy;
 
 
-	lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
+	lightCol.rgb = texelFetch(colortex4,ivec2(6,37),0).rgb;
 	lightCol.a = float(sunElevation > 1e-5)*2.0 - 1.0;
 
-	averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+	averageSkyCol_Clouds = texelFetch(colortex4,ivec2(0,37),0).rgb;
 	
 	#ifdef OVERWORLD_SHADER
 		#define READ_SCENE_CONTROLLER_PARAMETERS
@@ -116,7 +117,7 @@ void main() {
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
     #if TAA_MODE > 0 && defined DH_TAA_JITTER
-		gl_Position.xy += offsets[framemod4_DH] * gl_Position.w*texelSize;
+		gl_Position.xy += taaJitter * gl_Position.w*texelSize;
 	#endif
 
 	#if DOF_QUALITY == 5

@@ -1,5 +1,4 @@
 uniform float far;
-uniform int dhRenderDistance;
 
 const float k = 1.8;
 const float d0 = 0.04 + (1.0-clamp(shadowDistance-64.0, 0.0,1.0)) * 0.1;

@@ -40,57 +40,6 @@ vec2 SpiralSample(
 /////////////////////////////	SSAO 	////////////////////////
 ////////////////////////////////////////////////////////////////
 
-vec4 BilateralUpscale_SSAO(sampler2D tex, sampler2D depth, vec2 coord, float referenceDepth){
-	ivec2 scaling = ivec2(1.0);
-	ivec2 posDepth  = ivec2(coord) * scaling;
-	ivec2 posColor  = ivec2(coord);
-  	ivec2 pos = ivec2(gl_FragCoord.xy*texelSize + 1);
-
-	ivec2 getRadius[4] = ivec2[](
-   	 	ivec2(-2,-2),
-	  	ivec2(-2, 0),
-		ivec2( 0, 0),
-		ivec2( 0,-2)
-  	);
-	// ivec2 getRadius3x3[8] = ivec2[](
-   	// 	ivec2(-2,-2),
-	// 	ivec2(-2, 0),
-	// 	ivec2( 0, 0),
-	// 	ivec2( 0,-2),
-    // 	ivec2(-2,-1),
-	// 	ivec2(-1,-2),
-	// 	ivec2(0,-1),
-	// 	ivec2(-1,0)
-	// );
-	#ifdef DISTANT_HORIZONS
-		float diffThreshold = 0.0005 ;
-	#else
-		float diffThreshold = 0.005;
-	#endif
-
-	vec4 RESULT = vec4(0.0);
-	float SUM = 0.0;
-
-	for (int i = 0; i < 4; i++) {
-		
-		ivec2 radius = getRadius[i];
-		#ifdef DISTANT_HORIZONS
-			float offsetDepth = sqrt(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling,0).a/65000.0);
-		#else
-			float offsetDepth = ld(texelFetch2D(depth, posDepth + radius * scaling + pos * scaling, 0).r);
-		#endif
-
-		float EDGES = abs(offsetDepth - referenceDepth) < diffThreshold ? 1.0 : 1e-5;
-		
-		RESULT += texelFetch2D(tex, posColor + radius + pos, 0) * EDGES;
-		
-		SUM += EDGES;
-	}
-
-	// return vec4(1,1,1,1) * SUM/4;
-
-	return RESULT / SUM;
-}
 
 ////////////////////////////////////////////////////////////////////
 /////////////////////////////	RTAO/SSGI 	////////////////////////
@@ -118,7 +67,7 @@ vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 	// spos += stepv*0.3;
 
 	#if defined DEFERRED_SPECULAR && TAA_MODE > 0
-		spos.xy += TAA_Offset*texelSize*0.5/RENDER_SCALE;
+		spos.xy += taaJitter*texelSize*0.5/RENDER_SCALE;
 	#endif
 
 	float minZ = spos.z - biasAmount / linZ(spos.z);
@@ -127,13 +76,14 @@ vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
   	for (int i = 0; i <= int(quality); i++) {
 
 		#ifdef UseQuarterResDepth
-			float sampleDepth = sqrt(texelFetch2D(colortex4,ivec2(spos.xy/texelSize/4.0),0).a/65000.0);
+			float sampleDepth = sqrt(texelFetch(colortex4,ivec2(spos.xy/texelSize/4.0),0).a/65000.0);
 		#else
-			float sampleDepth = linZ(texelFetch2D(depthtex1,ivec2(spos.xy/ texelSize),0).r);
+			float sampleDepth = linZ(texelFetch(depthtex1,ivec2(spos.xy/ texelSize),0).r);
 		#endif
 		float sp = invLinZ(sampleDepth) ;
 
 		if( (sp < max(minZ, maxZ) && sp > min(minZ, maxZ))) return vec3(spos.xy/RENDER_SCALE,sp);
+		
 		minZ = maxZ - biasAmount / linZ(spos.z);
 		maxZ += stepv.z;
 
@@ -180,8 +130,8 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 	stepv.xy *= RENDER_SCALE;
 
 	vec3 spos = clipPosition + stepv*noise;
-	spos += stepv*0.3;
-	spos.xy += TAA_Offset*texelSize*0.5*RENDER_SCALE;
+	// spos += stepv*0.3;
+	spos.xy += taaJitter*texelSize*0.5*RENDER_SCALE;
 	
 
 	float minZ = spos.z - biasamount / linZ(spos.z);
@@ -195,9 +145,9 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 		if (spos.x < 0.0 || spos.y < 0.0 || spos.z < 0.0 || spos.x > 1.0 || spos.y > 1.0 || spos.z > 1.0) return vec3(1.1);
 		
 		#ifdef UseQuarterResDepth
-			float sp = invLinZ(sqrt(texelFetch2D(colortex4,ivec2(spos.xy/ texelSize/4),0).w/65000.0));
+			float sp = invLinZ(sqrt(texelFetch(colortex4,ivec2(spos.xy/ texelSize/4),0).w/65000.0));
 		#else
-			float sp = texelFetch2D(depthtex1,ivec2(spos.xy/texelSize),0).r;
+			float sp = texelFetch(depthtex1,ivec2(spos.xy/texelSize),0).r;
 		#endif
 
 		float currZ = linZ(spos.z);
@@ -205,8 +155,7 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 
 		if(nextZ < currZ && (sp <= max(minZ,maxZ) && sp >= min(minZ,maxZ))) return vec3(spos.xy/RENDER_SCALE,sp);
 		
-
-		minZ = maxZ-biasamount / currZ;
+		minZ = maxZ - biasamount / currZ;
 		maxZ += stepv.z;
 
 		spos += stepv;
@@ -241,46 +190,47 @@ vec3 ApplySSRT(
 	vec3 skycontribution2 = unchangedIndirect;
 	float CURVE = 1.0;
 	vec3 bouncedLight = vec3(0.0);
+	
 	for (int i = 0; i < nrays; i++){
 		int seed = (frameCounter%40000)*nrays+i;
 		vec2 ij = fract(R2_samples(seed) + noise.xy);
 		vec3 rayDir = TangentToWorld(normal, normalize(cosineHemisphereSample(ij)));
 
-		#ifdef HQ_SSGI
+		#ifdef LONG_RANGE_SSRT
 			vec3 rayHit = rayTrace_GI( mat3(gbufferModelView) * rayDir, viewPos, noise.z, 50.); // ssr rt
 		#else
 			vec3 rayHit = RT_alternate(mat3(gbufferModelView)*rayDir, viewPos, noise.z, 10., isLOD, CURVE);  // choc sspt 
-
-
+			
 			/// RAAAAAAAAAAAAAAAAAAAAAAAAGHH
 			// CURVE = (1.0-exp(-5.0*(1.0-CURVE)));
 			CURVE = 1.0-pow(1.0-pow(1.0-CURVE,2.0),5.0);
 		#endif
-
+		
 		#ifdef SKY_CONTRIBUTION_IN_SSRT
 			#ifdef OVERWORLD_SHADER
-				// skycontribution = doIndirectLighting(pow(skyCloudsFromTexLOD(rayDir, colortex4, 0).rgb/1200.0, vec3(0.7)) * 2.5, minimumLightColor, lightmap) + blockLightColor;
 				skycontribution = doIndirectLighting(skyCloudsFromTex(rayDir, colortex4).rgb/1200.0, minimumLightColor, lightmap) + blockLightColor;
 			#else
 				skycontribution = volumetricsFromTex(rayDir, colortex4, 6).rgb / 1200.0 + blockLightColor;
 			#endif
 		#else
 			#ifdef OVERWORLD_SHADER
-				skycontribution = unchangedIndirect * (max(rayDir.y,pow(1.0-lightmap,2))*0.95+0.05);
+				skycontribution = unchangedIndirect * (max(rayDir.y,pow(1.0-lightmap,2))*0.95+0.05) * 1.25;
 			#endif
 		#endif
 
 		radiance += skycontribution;
 		radiance2 += skycontribution2;
 
-		if (rayHit.z < 1.0){
+		if (rayHit.z < 0.9999 && distance(gl_FragCoord.xy*texelSize, rayHit.xy) > 0.001){
 			#if indirect_effect == SSRT_AO_GI
 				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
 				previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
 				previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
 
 				if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.y < 1.0){
-					bouncedLight = texture2D(colortex5, previousPosition.xy).rgb * GI_Strength * CURVE;	
+					bouncedLight = texelFetch(colortex5, ivec2(previousPosition.xy/texelSize),0).rgb * GI_Strength * CURVE;
+					// bouncedLight = texture(colortex5, previousPosition.xy).rgb * GI_Strength * CURVE;
+					
 
 					radiance += bouncedLight;
 					radiance2 += bouncedLight;

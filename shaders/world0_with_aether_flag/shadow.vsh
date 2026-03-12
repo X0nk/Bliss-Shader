@@ -1,5 +1,10 @@
 #version 120
+
+#define GEOMETRY_ANIMATION_RELATED_SETTINGS
+#define SHADOWMAP_CONSTANT_RELATED_SETTINGS
 #include "/lib/settings.glsl"
+#include "/lib/macro_lod_mod.glsl"
+
 #ifdef IS_LPV_ENABLED
 	#extension GL_ARB_explicit_attrib_location: enable
 	#extension GL_ARB_shader_image_load_store: enable
@@ -228,7 +233,7 @@ void main() {
 	int blockId = int(mc_Entity.x + 0.5);
 
 	vec3 worldpos = playerpos;
-	#ifdef WAVY_PLANTS
+	#if FOLIAGE_ANIMATION_AMOUNT > 0
 		// also use normal, so up/down facing geometry does not get detatched from its model parts.
 		bool InterpolateFromBase = gl_MultiTexCoord0.t < max(mc_midTexCoord.t, abs(viewToWorld(normalize(gl_NormalMatrix * gl_Normal)).y));
 
@@ -255,10 +260,10 @@ void main() {
 		}
 	#endif
 
-	#ifdef PLANET_CURVATURE
-		float curvature = length(worldpos) / (16*8);
-		worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
+	#if CURVATURE_AMOUNT !=  0
+		applyWorldCurvature(worldpos);
 	#endif
+	
 
 	position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz;
 

@@ -5,6 +5,8 @@
 #define INDIRECT_EFFECT_RELATED_SETTINGS
 #define AMBIENT_LIGHT_RELATED_SETTINGS
 #include "/lib/settings.glsl"
+#include "/lib/macro_lod_mod.glsl"
+#include "/lib/TAA_jitter.glsl"
 
 #ifndef DH_AMBIENT_OCCLUSION
 	#undef DISTANT_HORIZONS
@@ -12,18 +14,12 @@
 
 
 flat varying vec3 WsunVec;
-flat varying vec2 TAA_Offset;
+
 
 #include "/lib/res_params.glsl"
 
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
-
-#ifdef DISTANT_HORIZONS
-	uniform sampler2D dhDepthTex;
-	uniform sampler2D dhDepthTex1;
-#endif
-
 uniform sampler2D colortex1;
 uniform sampler2D colortex3; // Noise
 uniform sampler2D colortex6; // Noise
@@ -33,7 +29,6 @@ uniform sampler2D colortex14; // Noise
 uniform sampler2D colortex10; // Noise
 uniform sampler2D colortex12; // Noise
 uniform sampler2D colortex13; // Noise
-uniform sampler2D colortex15; // Noise
 uniform int isEyeInWater;
 uniform sampler2D shadow;
 
@@ -133,6 +128,11 @@ vec2 decodeVec2(float a){
     return fract( a * constant1 ) * constant2 ;
 }
 
+float IGN(){
+	vec2 coord = gl_FragCoord.xy + 5.588238 * float(frameCounter%64);
+	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y)) ;
+	return noise;
+}
 
 float interleaved_gradientNoise_temporal(){
 	vec2 coord = gl_FragCoord.xy;
@@ -156,17 +156,17 @@ float R2_dither(){
 	#endif
 	
 	vec2 alpha = vec2(0.75487765, 0.56984026);
-	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
+	return fract(alpha.x * coord.x + alpha.y * coord.y) ;
 }
 float blueNoise(){
 	#if TAA_MODE > 0
-  		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+  		return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 	#else
-		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
+		return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
 	#endif
 }
 vec4 blueNoise(vec2 coord){
-  return texelFetch2D(colortex6, ivec2(coord)%512 , 0) ;
+  return texelFetch(colortex6, ivec2(coord)%512 , 0) ;
 }
 vec2 R2_samples(int n){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
@@ -260,8 +260,30 @@ float convertHandDepth_2(in float depth, bool hand) {
     return ndcDepth * 0.5 + 0.5;
 }
 
+vec3 toScreenSpace_LOD_TEST( in vec2 texcoord, in float depth) {
+
+	vec4 viewPos = vec4(0.0);
+	vec3 feetPlayerPos = vec3(0.0);
+	vec4 iProjDiag = vec4(0.0);
+
+    if (depth < 1.0) {
+		iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
+    	feetPlayerPos = vec3(texcoord, depth) * 2.0 - 1.0;
+    	viewPos = iProjDiag * feetPlayerPos.xyzz + gbufferProjectionInverse[3];
+		viewPos.xyz /= viewPos.w;
+	} else {
+		depth = texelFetch(LOD_DEPTHTEX1, ivec2(texcoord/texelSize), 0).x;
+		iProjDiag = vec4(LOD_PROJECTION_INVERSE[0].x, LOD_PROJECTION_INVERSE[1].y, LOD_PROJECTION_INVERSE[2].zw);
+    	feetPlayerPos = vec3(texcoord, depth) * 2.0 - 1.0;
+    	viewPos = iProjDiag * feetPlayerPos.xyzz + LOD_PROJECTION_INVERSE[3];
+		viewPos.xyz /= viewPos.w;
+	}
+
+    return viewPos.xyz;
+}
+
 vec2 SSAO(
-	vec3 viewPos, vec3 normal, vec3 flatnormal, bool hand, float noise
+	vec3 viewPos, vec3 normal, vec3 flatnormal, bool hand, float noise, bool isLOD
 ){
 	int samples = 7;
 	
@@ -272,7 +294,7 @@ vec2 SSAO(
 	float occlusion = 0.0; 
 	float sss = 0.0;
 
-	vec2 jitterOffsets = TAA_Offset*texelSize*0.5 * RENDER_SCALE - texelSize*0.5;
+	vec2 jitterOffsets = taaJitter*texelSize*0.5 * RENDER_SCALE - texelSize*0.5;
 
 	// scale the offset radius down as distance increases.
 	float linearViewDistance = length(viewPos);
@@ -291,12 +313,12 @@ vec2 SSAO(
 
 		if (offsetUV.x >= 0 && offsetUV.y >= 0 && offsetUV.x < viewWidth*RENDER_SCALE.x && offsetUV.y < viewHeight*RENDER_SCALE.y ) {
 			
-			float sampleDepth = convertHandDepth_2(texelFetch2D(depthtex1, offsetUV, 0).x, hand);
 
-			#ifdef DISTANT_HORIZONS
-				float sampleDHDepth = texelFetch2D(dhDepthTex1, offsetUV, 0).x;
-				vec3 offsetViewPos = toScreenSpace_DH((offsetUV*texelSize - jitterOffsets) * (1.0/RENDER_SCALE), sampleDepth, sampleDHDepth);
+			#ifdef USING_LOD_MOD
+				float sampleDepth = convertHandDepth_2(texelFetch(depthtex1, offsetUV, 0).x, hand);
+				vec3 offsetViewPos = toScreenSpace_LOD_TEST((offsetUV*texelSize - jitterOffsets) * (1.0/RENDER_SCALE), sampleDepth);
 			#else
+				float sampleDepth = convertHandDepth_2(texelFetch(depthtex1, offsetUV, 0).x, hand);
 				vec3 offsetViewPos = toScreenSpace(vec3((offsetUV*texelSize - jitterOffsets) * (1.0/RENDER_SCALE), sampleDepth));
 			#endif
 
@@ -354,57 +376,65 @@ float ld(float dist) {
 
 void main() {
 
-	float noise = R2_dither();
-	vec2 texcoord = gl_FragCoord.xy*texelSize;
+	gl_FragData[1] = vec4(0.0,0.0,0.0,texelFetch(colortex14,ivec2(gl_FragCoord.xy),0).a);
 
-	
-	vec4 data = texelFetch2D(colortex1,ivec2(gl_FragCoord.xy),0);
+	vec2 texcoord = gl_FragCoord.xy*texelSize;
+	float noise = R2_dither();
+
+	vec4 data = texelFetch(colortex1,ivec2(gl_FragCoord.xy),0);
 	vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y));
 	vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w));
-	vec3 normal = mat3(gbufferModelViewInverse) * clamp(worldToView( decode(dataUnpacked0.yw) ),-1.,1.);
+	vec3 normal = decode(dataUnpacked0.yw);
+	
 	vec2 lightmap = dataUnpacked1.yz;
-
-
 	float lightLeakFix = clamp(pow(eyeBrightnessSmooth.y/240. + lightmap.y,2.0) ,0.0,1.0);
 
-	gl_FragData[1] = vec4(0.0,0.0,0.0, texelFetch2D(colortex14,ivec2((floor(gl_FragCoord.xy)/VL_RENDERING_RESOLUTION_SCALE*texelSize+0.5*texelSize)/texelSize),0).a);
+	vec4 specdata = texelFetch(colortex8, ivec2(gl_FragCoord.xy), 0);
+	
+	vec4 specdataUnpacked0 = vec4(decodeVec2(specdata.x),decodeVec2(specdata.y));
+	vec4 specdataUnpacked1 = vec4(decodeVec2(specdata.z),decodeVec2(specdata.w));
 
+	vec4 SpecularTex = vec4(specdataUnpacked0.xz, specdataUnpacked1.xz);
+	vec3 FlatNormals = normalize(vec3(specdataUnpacked0.yw,specdataUnpacked1.y) * 2.0 - 1.0);
+	// float vanilla_AO = min(max(specdataUnpacked1.w-0.005,0.0)/0.995,1.0);
+	float LabSSS = clamp((-65.0 + SpecularTex.z * 255.0) / 190.0 ,0.0,1.0);	
 
 	// bool lightningBolt = abs(dataUnpacked1.w-0.5) <0.01;
-	bool isLeaf = abs(dataUnpacked1.w-0.55) <0.01;
+	// bool isLeaf = abs(dataUnpacked1.w-0.55) < 0.01;
 	// bool translucent2 = abs(dataUnpacked1.w-0.6) <0.01;	// Weak translucency
 	// bool translucent4 = abs(dataUnpacked1.w-0.65) <0.01;	// Weak translucency
-	bool entities = abs(dataUnpacked1.w-0.45) < 0.01;	
+	// bool entities = abs(dataUnpacked1.w-0.45) < 0.01;	
 	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
 	// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
 
-	float z = convertHandDepth_2(texelFetch2D(depthtex1,ivec2(gl_FragCoord.xy),0).x,hand);
+	float z = convertHandDepth_2(texelFetch(depthtex1,ivec2(gl_FragCoord.xy),0).x, hand);
 	
-	#ifdef DISTANT_HORIZONS
-		float DH_depth1 = texelFetch2D(dhDepthTex1,ivec2(gl_FragCoord.xy),0).x;
+	if(z >= 1.0) normal = viewToWorld(normal);
+	
+	#ifdef USING_LOD_MOD
+		float DH_depth1 = texelFetch(LOD_DEPTHTEX1,ivec2(gl_FragCoord.xy),0).x;
 		float swappedDepth = z >= 1.0 ? DH_depth1 : z;
 	#else
 		float DH_depth1 = 1.0;
 		float swappedDepth = z;
 	#endif
 
-
-	vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE - TAA_Offset*texelSize*0.5, z, DH_depth1);
+	vec3 viewPos = toScreenSpace_DH(texcoord/RENDER_SCALE - taaJitter*texelSize*0.5, z, DH_depth1);
 	vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos;
 	
 	float depth = z;
 
-	#ifdef DISTANT_HORIZONS
+	#ifdef USING_LOD_MOD
 	    float _near = near;
 	    float _far = far*4.0;
 	    if (depth >= 1.0) {
 	        depth = DH_depth1;
-	        _near = dhNearPlane;
-	        _far = dhFarPlane;
+	        _near = LOD_NEARPLANE;
+	        _far = LOD_FARPLANE;
 	    }
 
 	    depth = linearizeDepthFast(depth, _near, _far);
-	    depth = depth / dhFarPlane;
+	    depth = depth / LOD_FARPLANE;
 
 		if(depth < 1.0){
    			gl_FragData[2] = vec4(vec3(0.0), depth * depth * 65000.0);
@@ -413,12 +443,11 @@ void main() {
 		}
 	#endif
 
-	vec3 FlatNormals = normalize(texture2D(colortex15,texcoord).rgb * 2.0 - 1.0);
-	
-	#if defined indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ
+
+	#if indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ
 		if(z >= 1.0) FlatNormals = normal;
 
-		vec2 SSAO_SSS = SSAO(viewPos, worldToView(normal), worldToView(FlatNormals), hand, noise);
+		vec2 SSAO_SSS = SSAO(viewPos, worldToView(normal), worldToView(FlatNormals), hand, noise, z >= 1.0);
 		
 		SSAO_SSS.y = clamp(SSAO_SSS.y + 0.5 * lightmap.y*lightmap.y,0.0,1.0);
 
@@ -427,31 +456,17 @@ void main() {
 		gl_FragData[1].xy = SSAO_SSS;
 	#endif
 
-
-
 	/*------------- VOLUMETRICS BEHIND TRANSLUCENTS PASS-THROUGH -------------*/
 	// colortex10 is the history buffer used in reprojection of volumetrics, i can just hijack that.
-	gl_FragData[3] = texture2D(colortex10, texcoord);
-	
-	// if(texture2D(colortex7,texcoord).a > 0.0) {
-	// 	vec4 VL = BilateralUpscale_VLFOG(colortex13, depthtex1, gl_FragCoord.xy - 1.5, ld(z));
-		
-	// 	// gl_FragData[3].rgb += VL.rgb * gl_FragData[3].a;
-	// 	// gl_FragData[3].a *= VL.a; 
-	// }
-
-
-
+	gl_FragData[3] = texture(colortex10, texcoord);
 
 #ifdef OVERWORLD_SHADER
-	float SpecularTex = texture2D(colortex8,texcoord).z;
-	float LabSSS = clamp((-64.0 + SpecularTex * 255.0) / 191.0 ,0.0,1.0);
+if (z < 1.0){
 
 	float NdotL = clamp(dot(normal,WsunVec),0.0,1.0);
-	float vanillAO = clamp(texture2D(colortex15,texcoord).a,0.0,1.0)  ;
-
 	float minshadowfilt = Min_Shadow_Filter_Radius;
 	float maxshadowfilt = Max_Shadow_Filter_Radius;
+	// float newnoise = IGN();
 
 	#ifdef BASIC_SHADOW_FILTER
 		if (LabSSS > 0.0 && NdotL < 0.001){  
@@ -460,82 +475,74 @@ void main() {
 		 }
 	#endif
 
-	// if (z < 1.0){
-
 		gl_FragData[0] = vec4(minshadowfilt, 0.0, 0.0, 0.0);
 
 		#ifdef Variable_Penumbra_Shadows
-			// if (LabSSS > -1) {
+			vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
+			
+			#if LIGHTLEAKFIX_MODE == 1
+				if(!hand) GriAndEminShadowFix(feetPlayerPos, FlatNormals, lightLeakFix);
+			#endif
+
+			vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos  + shadowModelView[3].xyz;
+			projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
+			
+			//apply distortion
+			#ifdef DISTORT_SHADOWMAP
+				float distortFactor = calcDistort(projectedShadowPosition.xy);
+				projectedShadowPosition.xy *= distortFactor;
+			#else
+				float distortFactor = 1.0;
+			#endif
+
+			//do shadows only if on shadow map
+			if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0 ){
 				
-				vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
+				projectedShadowPosition.z += shadowProjection[3].z * 0.0013;
 				
-				#if LIGHTLEAKFIX_MODE == 1
-					if(!hand) GriAndEminShadowFix(feetPlayerPos, FlatNormals, lightLeakFix);
-				#endif
+				const float threshMul = max(2048.0/shadowMapResolution*shadowDistance/128.0,0.95);
+				float distortThresh = (sqrt(1.0-NdotL*NdotL)/NdotL+0.7)/distortFactor;
+				float diffthresh = distortThresh/6000.0*threshMul;
+				projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5,0.5,0.5);
 
-				vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos  + shadowModelView[3].xyz;
-				projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
+				float mult = maxshadowfilt;
+				float avgBlockerDepth = 0.0;
+				vec2 scales = vec2(0.0, Max_Filter_Depth);
+				float blockerCount = 0.0;
+				float rdMul = distortFactor*(1.0+mult)*d0*k/shadowMapResolution;
+				float diffthreshM = diffthresh*mult*d0*k/20.;
+				float avgDepth = 0.0;
+
+				for(int i = 0; i < VPS_Search_Samples; i++){
+
+					vec2 offsetS = CleanSample(i, VPS_Search_Samples - 1, noise) * 0.5;
 				
-				//apply distortion
-				#ifdef DISTORT_SHADOWMAP
-					float distortFactor = calcDistort(projectedShadowPosition.xy);
-					projectedShadowPosition.xy *= distortFactor;
-				#else
-					float distortFactor = 1.0;
-				#endif
-
-
-				//do shadows only if on shadow map
-				if (abs(projectedShadowPosition.x) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.y) < 1.0-1.5/shadowMapResolution && abs(projectedShadowPosition.z) < 6.0 ){
+					float weight = 3.0 + i * rdMul/SHADOW_FILTER_SAMPLE_COUNT*shadowMapResolution*distortFactor/2.7;
 					
-					projectedShadowPosition.z += shadowProjection[3].z * 0.0013;
-					
-					const float threshMul = max(2048.0/shadowMapResolution*shadowDistance/128.0,0.95);
-					float distortThresh = (sqrt(1.0-NdotL*NdotL)/NdotL+0.7)/distortFactor;
-					float diffthresh = distortThresh/6000.0*threshMul;
-					projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5,0.5,0.5);
+					float d = texelFetch(shadow, ivec2((projectedShadowPosition.xy+offsetS*rdMul)*shadowMapResolution),0).x;
+					float b = smoothstep(weight*diffthresh/2.0, weight*diffthresh, projectedShadowPosition.z - d);
 
-					float mult = maxshadowfilt;
-					float avgBlockerDepth = 0.0;
-					vec2 scales = vec2(0.0, Max_Filter_Depth);
-					float blockerCount = 0.0;
-					float rdMul = distortFactor*(1.0+mult)*d0*k/shadowMapResolution;
-					float diffthreshM = diffthresh*mult*d0*k/20.;
-					float avgDepth = 0.0;
+					blockerCount += b;
 
-					for(int i = 0; i < VPS_Search_Samples; i++){
+					#ifdef DISTANT_HORIZONS_SHADOWMAP
+						avgDepth += max(projectedShadowPosition.z - d, 0.0)*10000.0;
+					#else
+						avgDepth += max(projectedShadowPosition.z - d, 0.0)*1000.0;
+					#endif
 
-						vec2 offsetS = CleanSample(i, VPS_Search_Samples - 1, noise) * 0.5;
-					
-						float weight = 3.0 + (i+noise) * rdMul/SHADOW_FILTER_SAMPLE_COUNT*shadowMapResolution*distortFactor/2.7;
-						
-						float d = texelFetch2D(shadow, ivec2((projectedShadowPosition.xy+offsetS*rdMul)*shadowMapResolution),0).x;
-						float b = smoothstep(weight*diffthresh/2.0, weight*diffthresh, projectedShadowPosition.z - d);
-
-						blockerCount += b;
-
-						#ifdef DISTANT_HORIZONS_SHADOWMAP
-							avgDepth += max(projectedShadowPosition.z - d, 0.0)*10000.0;
-						#else
-							avgDepth += max(projectedShadowPosition.z - d, 0.0)*1000.0;
-						#endif
-
-						avgBlockerDepth += d * b;
-					}
-
-						gl_FragData[0].g = avgDepth / VPS_Search_Samples;
-
-						gl_FragData[0].b = blockerCount / VPS_Search_Samples;
-
-						if (blockerCount >= 0.9){
-							avgBlockerDepth /= blockerCount;
-							float ssample = max(projectedShadowPosition.z - avgBlockerDepth,0.0)*1500.0;
-							gl_FragData[0].r = clamp(ssample, scales.x, scales.y)/(scales.y)*(mult-minshadowfilt)+minshadowfilt;
-						}
-
+					avgBlockerDepth += d * b;
 				}
-			// }
+
+				gl_FragData[0].g = avgDepth / VPS_Search_Samples;
+				gl_FragData[0].b = blockerCount / VPS_Search_Samples;
+
+				if (blockerCount >= 0.9){
+					avgBlockerDepth /= blockerCount;
+					float ssample = max(projectedShadowPosition.z - avgBlockerDepth,0.0)*1500.0;
+					gl_FragData[0].r = clamp(ssample, scales.x, scales.y)/(scales.y)*(mult-minshadowfilt)+minshadowfilt;
+				}
+			}
 		#endif
-	// }
+}
 #endif
 }
