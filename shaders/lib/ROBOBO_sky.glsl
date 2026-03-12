@@ -18,8 +18,6 @@ const float ozoneNumberDensity = airNumberDensity * ozoneConcentrationPeak;
 
 
 #define sky_coefficientRayleigh vec3(sky_coefficientRayleighR*1e-6, sky_coefficientRayleighG*1e-5, sky_coefficientRayleighB*1e-5)
-
-
 #define sky_coefficientMie vec3(sky_coefficientMieR*1e-6, sky_coefficientMieG*1e-6, sky_coefficientMieB*1e-6) // Should be >= 2e-6
 const vec3 sky_coefficientOzone = (ozoneCrossSection * (ozoneNumberDensity * 0.2e-6)); // ozone cross section * (ozone number density * (cm ^ 3))
 
@@ -87,7 +85,7 @@ vec3 sky_opticalDepth(vec3 position, vec3 direction, const float steps) {
 }
 
 vec3 sky_transmittance(vec3 position, vec3 direction, const float steps) {
-	return exp(-sky_opticalDepth(position, direction, steps) * rLOG2);
+	return exp2(-sky_opticalDepth(position, direction, steps) * rLOG2);
 }
 
 
@@ -95,87 +93,64 @@ vec3 sky_transmittance(vec3 position, vec3 direction, const float steps) {
 vec3 calculateAtmosphere(vec3 background, vec3 viewVector, vec3 upVector, vec3 sunVector, vec3 moonVector, out vec2 pid, out vec3 transmittance, const int iSteps, float noise) {
 	const int jSteps = 4;
 
-	#ifdef SKY_GROUND
-		float planetGround = exp(-100 * pow(max(-viewVector.y*5 + 0.1,0.0),2)); // darken the ground in the sky.
-	#else
-		float planetGround = pow(clamp(viewVector.y+1.0,0.0,1.0),2); // darken the ground in the sky.
-	#endif
-	
-	float GroundDarkening = max(planetGround * 0.7+0.3,clamp(sunVector.y*2.0,0.0,1.0));
+	float planetOffset = 0.998;
+	vec3 viewPosition = (sky_planetRadius + 750.0 + max(eyeAltitude - PLANET_EXIT_ALTITUDE, 0.0)*100.0 ) * upVector;
 
-	vec3 viewPos = (sky_planetRadius + 1.0 + max(eyeAltitude-300.0,0.0)*1.0) * upVector;
-
-	vec2 aid = rsi(viewPos, viewVector, sky_atmosphereRadius);
+	vec2 aid = rsi(viewPosition, viewVector, sky_atmosphereRadius);
 	if (aid.y < 0.0) {transmittance = vec3(1.0); return vec3(0.0);}
 
-	pid = rsi(viewPos, viewVector, sky_planetRadius * 0.998);
-	bool planetIntersected = pid.y > 0.0;
+	pid = rsi(viewPosition, viewVector, sky_planetRadius*planetOffset );
+	bool planetIntersected = pid.y >= 0.0;
 
 	vec2 sd = vec2((planetIntersected && pid.x < 0.0) ? pid.y : max(aid.x, 0.0), (planetIntersected && pid.x > 0.0) ? pid.x : aid.y);
-// 	vec2 sd = vec2(
-// (planetIntersected && pid.x < 0.0) ? pid.y : clamp(aid.x,0.0,99999.9),
-// (planetIntersected && pid.x > 0.0) ? pid.x : clamp(aid.y,0.0,99999.9)
-// );
-//  vec2 sd = vec2(
-// 	(planetIntersected && pid.x < 0.0) ? pid.y : clamp(aid.x,0.0,99999.9),
-//  	(planetIntersected && pid.x > 0.0) ? pid.x : clamp(aid.y,0.0,99999.9)
-// );
-//  vec2 sd = vec2(
-// 	clamp(aid.x,0.0,99999.9),
-//  	clamp(aid.y,0.0,99999.9)
-// );
-
-	float stepSize  = (sd.y - sd.x) * (1.0 /iSteps);
+	
+	float stepSize  = (sd.y - sd.x) * (1.0 / iSteps);
 	vec3  increment = viewVector * stepSize;
-	vec3  position  = viewVector * sd.x + viewPos;
+	vec3  position  = viewVector * sd.x + viewPosition;
 	position += increment * (0.34*noise);
-
-	vec2 phaseSun = sky_phase(dot(viewVector, sunVector), 0.8);
-	vec2 phaseMoon = sky_phase(dot(viewVector, moonVector), 0.8) ;
+	vec2 phaseSun  = sky_phase(dot(viewVector, sunVector ), 0.8);
+	vec2 phaseMoon = sky_phase(dot(viewVector, moonVector), 0.8);
 
 	vec3 scatteringSun     = vec3(0.0);
 	vec3 scatteringMoon    = vec3(0.0);
 	vec3 scatteringAmbient = vec3(0.0);
-
 	transmittance = vec3(1.0);
 
 	float high_sun = clamp(pow(sunVector.y+0.6,5),0.0,1.0) * 3.0; // make sunrise less blue, and allow sunset to be bluer
 	float low_sun = clamp(((1.0-abs(sunVector.y))*3.) - high_sun,1.0,2.0) ;
-	
-	#if defined OVERWORLD_SHADER && defined TWILIGHT_FOREST_FLAG
-		low_sun = 2.5;
+	#if defined SKY_GROUND && !defined AERIAL_PERSPECTIVE_TEST
+		float planetGround = exp(-100 * pow(max(-viewVector.y*5 + 0.1,0.0),2)); // darken the ground in the sky.
+	#else
+		float planetGround = 1.0;
 	#endif
-
+	
 	for (int i = 0; i < iSteps; ++i, position += increment) {
-		vec3 density = sky_density(length(position)) ;
+		vec3 density          = sky_density(length(position));
 		if (density.y > 1e35) break;
+		
 
-		vec3 stepAirmass      = density * stepSize ;
+		vec3 stepAirmass      = density * stepSize;
 		vec3 stepOpticalDepth = sky_coefficientsAttenuation * stepAirmass;
 
 		vec3 stepTransmittance       = exp2(-stepOpticalDepth * rLOG2);
-		vec3 stepTransmittedFraction = clamp01((stepTransmittance - 1.0) / -stepOpticalDepth) ;
-		vec3 stepScatteringVisible   = transmittance * stepTransmittedFraction ;
-		
-		#ifdef ORIGINAL_CHOCAPIC_SKY
-			scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun) * stepScatteringVisible * sky_transmittance(position, sunVector,  jSteps) ;
-		#else
-			scatteringSun  += sky_coefficientsScattering  * (stepAirmass.xy * phaseSun) * stepScatteringVisible * sky_transmittance(position, sunVector,  jSteps) *planetGround;
-		#endif
+		vec3 stepTransmittedFraction = clamp01((stepTransmittance - 1.0) / -stepOpticalDepth);
+		vec3 stepScatteringVisible   = transmittance * stepTransmittedFraction;
+		vec3 sunContribution = sky_coefficientsScattering * (stepAirmass.xy * phaseSun ) * stepScatteringVisible;
 
-		scatteringMoon += sky_coefficientsScattering * (stepAirmass.xy * phaseMoon) * stepScatteringVisible * sky_transmittance(position, moonVector, jSteps) ;
+		if (sunContribution.g > 1e-5)
+			scatteringSun  += sunContribution * sky_transmittance(position, sunVector,  jSteps)*planetGround;
+
+		vec3 moonContribution = sky_coefficientsScattering * (stepAirmass.xy * phaseMoon) * stepScatteringVisible;
+		if (moonContribution.g > 1e-5)
+			scatteringMoon += moonContribution* sky_transmittance(position, moonVector, jSteps);
 		
 		// Nice way to fake multiple scattering.
-		#ifdef ORIGINAL_CHOCAPIC_SKY
-			scatteringAmbient += sky_coefficientsScattering * stepAirmass.xy * stepScatteringVisible;
-		#else
-			scatteringAmbient += sky_coefficientsScattering * stepAirmass.xy * stepScatteringVisible * low_sun;
-		#endif
-		
+		scatteringAmbient += sky_coefficientsScattering * stepAirmass.xy * stepScatteringVisible*low_sun;
+
 		transmittance *= stepTransmittance;
 	}
-	
-	vec3 scattering = scatteringAmbient * background+ scatteringSun * sunColorBase + scatteringMoon*moonColorBase * 0.5;
+
+	vec3 scattering = scatteringSun * sunColorBase + scatteringAmbient * background + scatteringMoon*moonColorBase*0.5;
 
 	return scattering;
 }

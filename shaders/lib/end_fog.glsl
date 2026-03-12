@@ -82,7 +82,7 @@ vec3 LightSourcePosition(vec3 worldPos, vec3 cameraPos, float vortexBounds){
     lightningPos += fract(cameraPos/cellSize)*cellSize - cellSize*0.5;
 
 	// make the position offset to random places (RNG.xyz from non-clearing buffer).
-	vec3 randomOffset = (texelFetch2D(colortex4,ivec2(2,1),0).xyz / 150.0) * 2.0 - 1.0;
+	vec3 randomOffset = (texelFetch(colortex4,ivec2(2,1),0).xyz / 150.0) * 2.0 - 1.0;
 	lightningPos -= randomOffset * 2.5;
 	
 	#ifdef THE_ORB
@@ -106,7 +106,7 @@ float densityAtPosFog(in vec3 pos){
 	f = (f*f) * (3.-2.*f);
 	vec2 uv =  p.xz + f.xz + p.y * vec2(0.0,193.0);
 	vec2 coord =  uv / 512.0;
-	vec2 xy = texture2D(noisetex, coord).yx;
+	vec2 xy = texture(noisetex, coord).yx;
 	return mix(xy.r,xy.g, f.y);
 }
 
@@ -257,7 +257,7 @@ vec4 GetVolumetricFog(
 
 	vec3 hazeColor = normalize(gl_Fog.color.rgb + 1e-6) * 0.1;
     
-	float lightningflash = texelFetch2D(colortex4,ivec2(1,1),0).x/150.0;
+	float lightningflash = texelFetch(colortex4,ivec2(1,1),0).x/150.0;
 	
 	for (int i = 0; i < SAMPLECOUNT; i++) {
 		float d = (pow(expFactor, float(i+dither)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
@@ -304,21 +304,21 @@ vec4 GetVolumetricFog(
 			color += (hazeLighting - hazeLighting*exp(-hazeDensity*dd*dL)) * absorbance;
 
 
-		#if defined FLASHLIGHT && defined FLASHLIGHT_FOG_ILLUMINATION
-			vec3 shiftedViewPos = mat3(gbufferModelView)*(progressW-cameraPosition) + vec3(-0.25, 0.2, 0.0);
-			vec3 shiftedPlayerPos = mat3(gbufferModelViewInverse) * shiftedViewPos;
-			vec2 scaledViewPos = shiftedViewPos.xy / max(-shiftedViewPos.z - 0.5, 1e-7);
-			float linearDistance = length(shiftedPlayerPos);
-			float shiftedLinearDistance = length(scaledViewPos);
+		// #if defined FLASHLIGHT && defined FLASHLIGHT_FOG_ILLUMINATION
+		// 	vec3 shiftedViewPos = mat3(gbufferModelView)*(progressW-cameraPosition) + vec3(-0.25, 0.2, 0.0);
+		// 	vec3 shiftedPlayerPos = mat3(gbufferModelViewInverse) * shiftedViewPos;
+		// 	vec2 scaledViewPos = shiftedViewPos.xy / max(-shiftedViewPos.z - 0.5, 1e-7);
+		// 	float linearDistance = length(shiftedPlayerPos);
+		// 	float shiftedLinearDistance = length(scaledViewPos);
 
-			float lightFalloff = 1.0 - clamp(1.0-linearDistance/FLASHLIGHT_RANGE, -0.999,1.0);
-			lightFalloff = max(exp(-30.0 * lightFalloff),0.0);
-			float projectedCircle = clamp(1.0 - shiftedLinearDistance*FLASHLIGHT_SIZE,0.0,1.0);
+		// 	float lightFalloff = 1.0 - clamp(1.0-linearDistance/FLASHLIGHT_RANGE, -0.999,1.0);
+		// 	lightFalloff = max(exp(-30.0 * lightFalloff),0.0);
+		// 	float projectedCircle = clamp(1.0 - shiftedLinearDistance*FLASHLIGHT_SIZE,0.0,1.0);
 
-			vec3 flashlightGlow = vec3(FLASHLIGHT_R,FLASHLIGHT_G,FLASHLIGHT_B) * lightFalloff * projectedCircle * 0.5;
+		// 	vec3 flashlightGlow = vec3(FLASHLIGHT_R,FLASHLIGHT_G,FLASHLIGHT_B) * lightFalloff * projectedCircle * 0.5;
 
-			color += (flashlightGlow - flashlightGlow * exp(-max(stormDensity,0.005)*dd*dL)) * absorbance;
-		#endif
+		// 	color += (flashlightGlow - flashlightGlow * exp(-max(stormDensity,0.005)*dd*dL)) * absorbance;
+		// #endif
 	}
 	return vec4(color, absorbance);
 }

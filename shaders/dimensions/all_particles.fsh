@@ -3,6 +3,7 @@
 #define AMBIENT_LIGHT_RELATED_SETTINGS
 #define VOLUMETRIC_CLOUD_RELATED_SETTINGS
 #define WATER_RELATED_SETTINGS
+#define ANTIALIASING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 
 // #if defined END_SHADER || defined NETHER_SHADER
@@ -41,6 +42,7 @@ varying vec4 color;
 
 uniform int renderStage;
 uniform int isEyeInWater;
+uniform float alphaTestRef;
 
 uniform sampler2D texture;
 uniform sampler2D noisetex;
@@ -69,7 +71,6 @@ uniform float rainStrength;
 uniform float nightVision;
 uniform float waterEnteredAltitude;
 
-
 flat varying float HELD_ITEM_BRIGHTNESS;
 
 uniform mat4 gbufferPreviousModelView;
@@ -88,9 +89,12 @@ uniform vec3 previousCameraPosition;
 #endif
 
 
+uniform int heldItemId;
+uniform int heldItemId2;
+uniform int heldBlockLightValue;
+uniform int heldBlockLightValue2;
+
 #ifdef IS_LPV_ENABLED
-	uniform int heldItemId;
-	uniform int heldItemId2;
 	uniform int frameCounter;
 
 	#include "/lib/hsv.glsl"
@@ -99,6 +103,7 @@ uniform vec3 previousCameraPosition;
 #endif
 
 #include "/lib/diffuse_lighting.glsl"
+
 #include "/lib/sky_gradient.glsl"
 
 vec3 toLinear(vec3 sRGB){
@@ -114,7 +119,7 @@ vec3 toLinear(vec3 sRGB){
 //     return fragposition.xyz / fragposition.w;
 // }
 
-uniform int framemod8;
+
 
 #include "/lib/TAA_jitter.glsl"
 
@@ -171,7 +176,7 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 		shadowmap += max(opaqueShadow, shadowDepthDiff);
 
 		// get translucent shadow data
-		vec4 translucentShadow = texture2D(shadowcolor0, projectedShadowPosition.xy);
+		vec4 translucentShadow = texture(shadowcolor0, projectedShadowPosition.xy);
 
 		// this curve simply looked the nicest. it has no other meaning.
 		float shadowAlpha = pow(1.0 - pow(translucentShadow.a,5.0),0.2);
@@ -262,7 +267,7 @@ vec4 texture2D_POMSwitch(
 float luma(vec3 color) {
 	return dot(color,vec3(0.21, 0.72, 0.07));
 }
-uniform vec3 eyePosition;
+// uniform vec3 eyePosition;
 
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -297,6 +302,9 @@ void main() {
 		float dist = length(fragpos);
 
 		float maxdist = MAX_OCCLUSION_DISTANCE;
+		
+		float pomdepth = (float(POM_DEPTH)/100.0);
+
 		if (dist < maxdist) {
 
 			float depthmap = readNormal(vtexcoord.st).a;
@@ -305,17 +313,17 @@ void main() {
 	 		if ( viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
 
 				#ifdef Adaptive_Step_length
-					vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * POM_DEPTH) * clamp(1.0-pow(depthmap,2),0.1,1.0);
+					vec3 interval = (viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS * pomdepth) * clamp(1.0-pow(depthmap,2),0.1,1.0);
 					used_POM_DEPTH = 1.0;
 				#else
-					vec3 interval = viewVector.xyz/-viewVector.z/ MAX_OCCLUSION_POINTS*POM_DEPTH;
+					vec3 interval = viewVector.xyz/-viewVector.z/ MAX_OCCLUSION_POINTS*pomdepth;
 				#endif
 				vec3 coord = vec3(vtexcoord.st, 1.0);
 
 				coord += interval * used_POM_DEPTH;
 
 				float sumVec = 0.5;
-				for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - POM_DEPTH + POM_DEPTH * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
+				for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - pomdepth + pomdepth * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
 					coord = coord + interval * used_POM_DEPTH; 
 					sumVec += used_POM_DEPTH; 
 				}
@@ -333,14 +341,16 @@ void main() {
 
 		vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy));
 	#else
-		vec4 Albedo = texture2D(texture, adjustedTexCoord.xy);
+		vec4 Albedo = texture(texture, adjustedTexCoord.xy);
 	#endif
+
+	if(Albedo.a < alphaTestRef){discard; return;}
 	
 	Albedo.rgb = toLinear(Albedo.rgb);
 
 	// if(dot(Albedo.rgb, vec3(0.33333)) < 1.0/255.0 || Albedo.a < 0.01 ) { discard; return; }
-	if(Albedo.a < 0.01 ) { discard; return; }
-	
+	// if(Albedo.a < 0.01 ) { discard; return; }
+
 	gl_FragData[0] = vec4(encodeVec2(vec2(0.5)), encodeVec2(Albedo.rg), encodeVec2(vec2(Albedo.b,0.02)), 1.0);
 #endif
 
@@ -354,12 +364,14 @@ void main() {
 		#endif
 	#endif
 
-	vec2 tempOffset = offsets[framemod8];
+	vec2 tempOffset = taaJitter;
 	vec3 viewPos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
 	vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
 	vec3 feetPlayerPos_normalized = normalize(feetPlayerPos);
 
-	vec4 TEXTURE = texture2D(texture, lmtexcoord.xy)*color;
+	vec4 TEXTURE = texture(texture, lmtexcoord.xy);
+	if(TEXTURE.a < alphaTestRef){discard; return;}
+	TEXTURE *= color;
 	
 	#ifdef WhiteWorld
 		TEXTURE.rgb = vec3(1.0);
@@ -369,23 +381,8 @@ void main() {
 	
 	vec2 lightmap = clamp(lmtexcoord.zw,0.0,1.0);
 
-
 	#ifndef OVERWORLD_SHADER
 		lightmap.y = 1.0;
-	#endif
-
-	#if defined Hand_Held_lights && !defined LPV_ENABLED
-		#ifdef IS_IRIS
-			vec3 playerCamPos = eyePosition;
-		#else
-			vec3 playerCamPos = cameraPosition;
-		#endif
-		// lightmap.x = max(lightmap.x, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length((feetPlayerPos+cameraPosition) - playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
-		if(HELD_ITEM_BRIGHTNESS > 0.0){ 
-			float pointLight = clamp(1.0-(length((feetPlayerPos+cameraPosition)-playerCamPos)-1.0)/HANDHELD_LIGHT_RANGE,0.0,1.0);
-			lightmap.x = mix(lightmap.x, HELD_ITEM_BRIGHTNESS, pointLight*pointLight);
-		}
-	
 	#endif
 
 	#ifdef WEATHER
@@ -491,9 +488,15 @@ void main() {
 			gl_FragData[0].rgb = (Indirect_lighting + Direct_lighting) * Albedo;
 		#endif
 
-		// distance fade targeting the world border...
-		if(TEXTURE.a < 0.7 && TEXTURE.a > 0.2) gl_FragData[0] *= clamp(1.0 - length(feetPlayerPos) / 100.0 ,0.0,1.0);
-		
+		if(renderStage == MC_RENDER_STAGE_WORLD_BORDER){
+			// distance fade targeting the world border...
+			float gradientPos = (feetPlayerPos+cameraPosition).y;
+			float fadeGradient = clamp(min(1.0 - (gradientPos - 319.0)/800.0,(gradientPos + 1000.0)/800.0),0.0,1.0);
+			fadeGradient *= fadeGradient*fadeGradient;
+
+			gl_FragData[0].rgba = vec4(Albedo.rgb, TEXTURE.a) * fadeGradient;
+		}
+	
 		#if DEBUG_VIEW == debug_LIGHTMAPS
 			gl_FragData[0].rgb = vec3(lmtexcoord.z,lmtexcoord.w,0.0)*0.1;
 		#endif

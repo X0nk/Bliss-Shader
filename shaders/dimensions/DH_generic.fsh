@@ -41,7 +41,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			float maxOverdrawDistance = OVERDRAW_MAX_DISTANCE;
 		#endif
 
-        if(length(playerPos) < clamp(far-16*4, 16, maxOverdrawDistance) || texture2D(depthtex1, gl_FragCoord.xy*texelSize).x < 1.0){ discard; return;}
+        if(length(playerPos) < clamp(far-16*4, 16, maxOverdrawDistance) || texture(depthtex1, gl_FragCoord.xy*texelSize).x < 1.0){ discard; return;}
     #endif
 
 	

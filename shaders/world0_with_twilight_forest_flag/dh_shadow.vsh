@@ -8,6 +8,8 @@ Read the terms of modification and sharing before changing something below pleas
 */
 #include "/lib/settings.glsl"
 
+#include "/lib/macro_lod_mod.glsl"
+
 #define SHADOW_MAP_BIAS 0.5
 const float PI = 3.1415927;
 varying vec2 texcoord;

@@ -70,7 +70,7 @@ uniform sampler2D noisetex;
 uniform int frameCounter;
 uniform float frameTimeCounter;
 float blueNoise(){
-  return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+  return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 }
 float interleaved_gradientNoise_temporal(){
 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
@@ -96,7 +96,7 @@ float densityAtPos(in vec3 pos){
 	vec2 coord =  uv / 512.0;
 	
 	//The y channel has an offset to avoid using two textures fetches
-	vec2 xy = texture2D(noisetex, coord).yx;
+	vec2 xy = texture(noisetex, coord).yx;
 
 	return mix(xy.r,xy.g, f.y);
 }
@@ -172,14 +172,14 @@ void main() {
         }
     #endif
 
-    vec3 normals = (normals_and_materials.xyz);
+    vec3 normals = normalize(normals_and_materials.xyz); // normals in viewspace by default
     float materials = normals_and_materials.a;
 	vec2 PackLightmaps = lightmapCoords;
 
     // PackLightmaps.y *= 1.05;
     PackLightmaps = min(max(PackLightmaps,0.0)*1.05,1.0);
     
-    vec4 data1 = clamp( encode(viewToWorld(normals), PackLightmaps), 0.0, 1.0);
+    vec4 data1 = encode(normals, PackLightmaps);
     
     // alpha is material masks, set it to 0.65 to make a DH LODs mask. 
 	#ifdef DH_NOISE_TEXTURE
@@ -187,14 +187,6 @@ void main() {
 	#else
 		vec4 Albedo = vec4(gcolor.rgb, 1.0);
 	#endif
-    // vec3 worldPos = mat3(gbufferModelViewInverse)*pos.xyz + cameraPosition;
-    // worldPos = (worldPos*vec3(1.0,1./48.,1.0)/4) ;
-    // worldPos = floor(worldPos * 4.0 + 0.001) / 32.0;
-    // float noiseTexture = densityAtPos(worldPos* 5000 ) +0.5;
-
-    // float noiseFactor = max(1.0 - 0.3 * dot(Albedo.rgb, Albedo.rgb),0.0);
-    // Albedo.rgb *= pow(noiseTexture, 0.6 * noiseFactor);
-    // Albedo.rgb *= (noiseTexture*noiseTexture)*0.5 + 0.5;
 
 	#ifdef AEROCHROME_MODE
 		if(dh_material_id == DH_BLOCK_LEAVES || dh_material_id == DH_BLOCK_WATER) { // leaves and waterlogged blocks
@@ -222,22 +214,39 @@ void main() {
 		Albedo.rgb = vec3(lightmapCoords.z,lightmapCoords.w,0.0);
 	#endif
 
-    gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w, materials));
+    Albedo = clamp(Albedo,0.0,1.0);
+    data1 = clamp(data1,0.0,1.0);
+
+    gl_FragData[0] = vec4(
+        encodeVec2(Albedo.x,data1.x),
+        encodeVec2(Albedo.y,data1.y),
+        encodeVec2(Albedo.z,data1.z),
+        encodeVec2(data1.w, materials) );
     
 	gl_FragData[1].a = 0.0;
     
-	gl_FragData[2] = vec4(0.0,0.0,0.0,0.0);
-	
+    vec4 specularData = vec4(0.0,0.0,0.0,0.0);
+    vec4 otherData = vec4(normals.xyz * 0.5 + 0.5,1.0);
+
     #if EMISSIVE_TYPE == 0
-		gl_FragData[2].a = 0.0;
+		specularData.a = 0.0;
 	#else
-		gl_FragData[2].a = EMISSIVE;
+		specularData.a = EMISSIVE;
 	#endif
 
 	#if SSS_TYPE == 0
-		gl_FragData[2].b = 0.0;
+		specularData.b = 0.0;
 	#else
-		gl_FragData[2].b = SSSAMOUNT;
+		specularData.b = SSSAMOUNT;
 	#endif
-    
+
+    specularData = clamp(specularData,0.0,1.0);
+    otherData = clamp(otherData,0.0,1.0);
+
+	gl_FragData[2].xyzw = vec4(
+		encodeVec2(specularData.x, otherData.x),
+		encodeVec2(specularData.y, otherData.y),
+		encodeVec2(specularData.z, otherData.z),
+		encodeVec2(specularData.w, otherData.w) );
+
 }

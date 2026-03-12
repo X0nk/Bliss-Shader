@@ -3,70 +3,52 @@
 #define DEPTH_OF_FIELD_RELATED_SETTINGS
 #define GEOMETRY_ANIMATION_RELATED_SETTINGS
 #define SEASONS_RELATED_SETTINGS
+#define SUB_SURFACE_SCATTERING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 #include "/lib/bokeh.glsl"
 #include "/lib/blocks.glsl"
 #include "/lib/entities.glsl"
 #include "/lib/items.glsl"
+#include "/lib/TAA_jitter.glsl"
 
-/*
-!! DO NOT REMOVE !!
-This code is from Chocapic13' shaders
-Read the terms of modification and sharing before changing something below please !
-!! DO NOT REMOVE !!
-*/
-
-
-#ifdef HAND
-#undef POM
+#if defined HAND
+	#undef POM
 #endif
 
-#ifndef MC_NORMAL_MAP
-#undef POM
-#endif
-
-#ifdef POM
-#define MC_NORMAL_MAP
-#endif
-
-
-varying vec4 color;
-varying float VanillaAO;
-
-varying vec4 lmtexcoord;
-varying vec4 normalMat;
-
-// #ifdef POM
-	varying vec4 vtexcoordam; // .st for add, .pq for mul
-	varying vec4 vtexcoord;
-// #endif
-
-#ifdef MC_NORMAL_MAP
-	varying vec4 tangent;
-	attribute vec4 at_tangent;
-	varying vec3 FlatNormals;
-#endif
-
-uniform float frameTimeCounter;
-const float PI48 = 150.796447372*WAVY_SPEED;
-float pi2wt = PI48*frameTimeCounter;
-
+attribute vec4 at_tangent;
 attribute vec4 mc_Entity;
 attribute vec4 mc_midTexCoord;
 
 uniform int blockEntityId;
 uniform int entityId;
-flat varying float blockID;
-
 uniform int heldItemId;
 uniform int heldItemId2;
-flat varying float HELD_ITEM_BRIGHTNESS;
 
+varying vec4 color;
+varying float VanillaAO;
+varying vec4 lmtexcoord;
+varying vec4 normalMat;
+varying vec4 vtexcoordam; // .st for add, .pq for mul
+varying vec4 vtexcoord;
+varying vec4 tangent;
+varying vec3 FlatNormals;
 
-
+flat varying float SSSAMOUNT;
+flat varying float EMISSIVE;
+flat varying int LIGHTNING;
+flat varying int PORTAL;
+flat varying int SIGN;
+flat varying int SHADOWBIAS_OFFSET_MASK;
+flat varying float blockID;
 flat varying int NameTags;
 
+uniform mat4 gbufferModelView;
+uniform mat4 gbufferModelViewInverse;
+uniform vec3 cameraPosition;
+uniform vec2 texelSize;
+
+uniform float nightVision;
 uniform int frameCounter;
 uniform float far;
 uniform float aspectRatio;
@@ -75,85 +57,35 @@ uniform float viewWidth;
 uniform int hideGUI;
 uniform float screenBrightness;
 uniform int isEyeInWater;
+uniform float frameTimeCounter;
 
-flat varying float SSSAMOUNT;
-flat varying float EMISSIVE;
-flat varying int LIGHTNING;
-flat varying int PORTAL;
-flat varying int SIGN;
+uniform sampler2D noisetex;//depth
 
-// in vec3 at_velocity;
-// out vec3 velocity;
 
-uniform float nightVision;
-
-uniform mat4 gbufferModelView;
-uniform mat4 gbufferModelViewInverse;
-uniform vec3 cameraPosition;
-uniform vec2 texelSize;
-uniform int framemod8;
+#include "/lib/vertex_displacement.glsl"
 
 #if defined HAND
-uniform mat4 gbufferPreviousModelView;
-uniform vec3 previousCameraPosition;
+	uniform mat4 gbufferPreviousModelView;
+	uniform vec3 previousCameraPosition;
 
-float detectCameraMovement(){
-	// simply get the difference of modelview matrices and cameraPosition across a frame.
-	vec3 fakePos = vec3(0.5,0.5,0.0);
-	vec3 hand_playerPos = mat3(gbufferModelViewInverse) * fakePos + (cameraPosition - previousCameraPosition);
-	vec3 previousPosition = mat3(gbufferPreviousModelView) * hand_playerPos;
-	float detectMovement = 1.0 - clamp(distance(previousPosition, fakePos)/texelSize.x,0.0,1.0);
-	
-	return detectMovement;
-}
+	float detectCameraMovement(){
+		// simply get the difference of modelview matrices and cameraPosition across a frame.
+		vec3 fakePos = vec3(0.5,0.5,0.0);
+		vec3 hand_playerPos = mat3(gbufferModelViewInverse) * fakePos + (cameraPosition - previousCameraPosition);
+		vec3 previousPosition = mat3(gbufferPreviousModelView) * hand_playerPos;
+		float detectMovement = 1.0 - clamp(distance(previousPosition, fakePos)/texelSize.x,0.0,1.0);
+
+		return detectMovement;
+	}
 #endif
-
-#include "/lib/TAA_jitter.glsl"
-
-
 							
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+
 vec4 toClipSpace3(vec3 viewSpacePosition) {
     return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
 }
 
-vec2 calcWave(in vec3 pos) {
-
-    float magnitude = abs(sin(dot(vec4(frameTimeCounter, pos),vec4(1.0,0.005,0.005,0.005)))*0.5+0.72)*0.013;
-	vec2 ret = (sin(pi2wt*vec2(0.0063,0.0015)*4. - pos.xz + pos.y*0.05)+0.1)*magnitude;
-
-    return ret;
-}
-
-vec3 calcMovePlants(in vec3 pos) {
-    vec2 move1 = calcWave(pos );
-	float move1y = -length(move1);
-   return vec3(move1.x,move1y,move1.y)*5.*WAVY_STRENGTH;
-}
-
-vec3 calcWaveLeaves(in vec3 pos, in float fm, in float mm, in float ma, in float f0, in float f1, in float f2, in float f3, in float f4, in float f5) {
-
-    float magnitude = abs(sin(dot(vec4(frameTimeCounter, pos),vec4(1.0,0.005,0.005,0.005)))*0.5+0.72)*0.013;
-	vec3 ret = (sin(pi2wt*vec3(0.0063,0.0224,0.0015)*1.5 - pos))*magnitude;
-
-    return ret;
-}
-
-vec3 calcMoveLeaves(in vec3 pos, in float f0, in float f1, in float f2, in float f3, in float f4, in float f5, in vec3 amp1, in vec3 amp2) {
-    vec3 move1 = calcWaveLeaves(pos      , 0.0054, 0.0400, 0.0400, 0.0127, 0.0089, 0.0114, 0.0063, 0.0224, 0.0015) * amp1;
-    return move1*5.*WAVY_STRENGTH;
-}
-
-// float luma(vec3 color) {
-// 	return dot(color,vec3(0.21, 0.72, 0.07));
-// }
-
-#define SEASONS_VSH
-#include "/lib/climate_settings.glsl"
-
-
-uniform sampler2D noisetex;//depth
 float densityAtPos(in vec3 pos){
 	pos /= 18.;
 	pos.xz *= 0.5;
@@ -167,9 +99,11 @@ float densityAtPos(in vec3 pos){
 
 	return mix(xy.r,xy.g, f.y);
 }
+
 float luma(vec3 color) {
 	return dot(color,vec3(0.21, 0.72, 0.07));
 }
+
 vec3 viewToWorld(vec3 viewPos) {
     vec4 pos;
     pos.xyz = viewPos;
@@ -177,11 +111,21 @@ vec3 viewToWorld(vec3 viewPos) {
     pos = gbufferModelViewInverse * pos;
     return pos.xyz;
 }
+
+#define SEASONS_VSH
+#include "/lib/climate_settings.glsl"
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
+/*
+!! DO NOT REMOVE !!
+This code is from Chocapic13' shaders
+Read the terms of modification and sharing before changing something below please !
+!! DO NOT REMOVE !!
+*/
 
 void main() {
 
@@ -200,8 +144,6 @@ void main() {
 	VanillaAO = 1.0 - clamp(color.a,0,1);
 	if (color.a < 0.3) color.a = 1.0; // fix vanilla ao on some custom block models.
 	
-
-
     /////// ----- RANDOM STUFF ----- ///////
 	// gl_TextureMatrix[0] for animated things like charged creepers
 	lmtexcoord.xy = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
@@ -214,29 +156,21 @@ void main() {
 	vtexcoord.xy    = sign(texcoordminusmid)*0.5+0.5;
 	// #endif
 
-
 	vec2 lmcoord = max(gl_MultiTexCoord1.xy - 8.0, 0.0) / (240.0-8.0);
 	lmtexcoord.zw = lmcoord;
 
-
-
-	#ifdef MC_NORMAL_MAP
-		vec3 alterTangent = at_tangent.rgb;
-
-		tangent = vec4(normalize(gl_NormalMatrix * alterTangent.rgb), at_tangent.w);
-	#endif
-
+	vec3 alterTangent = at_tangent.rgb;
+	tangent = vec4(normalize(gl_NormalMatrix * alterTangent.rgb), at_tangent.w);
 	normalMat = vec4(normalize(gl_NormalMatrix * gl_Normal), 1.0);
-	
 	FlatNormals = normalMat.xyz;
 
 	blockID = mc_Entity.x ;
 
 	if(blockID == BLOCK_GROUND_WAVING_VERTICAL || blockID == BLOCK_GRASS_SHORT || blockID == BLOCK_GRASS_TALL_LOWER || blockID == BLOCK_GRASS_TALL_UPPER ) normalMat.a = 0.60;
 
-
 	PORTAL = 0;
 	SIGN = 0;
+	SHADOWBIAS_OFFSET_MASK = 0;
 
 	#if defined WORLD && !defined HAND
 		if(blockEntityId == BLOCK_SIGN) SIGN = 1;
@@ -247,11 +181,8 @@ void main() {
 	NameTags = 0;
 
 #ifdef ENTITIES
-
 	// disallow POM to work on item frames.
 	if(entityId == ENTITY_ITEM_FRAME) SIGN = 1;
-
-
 	// try and single out nametag text and then discard nametag background
 	// if( dot(gl_Color.rgb, vec3(1.0/3.0)) < 1.0) NameTags = 1;
 	// if(gl_Color.a < 1.0) NameTags = 1;
@@ -267,11 +198,6 @@ void main() {
 		LIGHTNING = 0;
 	// if(NameTags > 0) EMISSIVE = 0.9;
 
-	HELD_ITEM_BRIGHTNESS = 0.0;
-	#ifdef Hand_Held_lights
-		if(heldItemId > 999 || heldItemId2 > 999 ) HELD_ITEM_BRIGHTNESS = 0.9;
-	#endif
-
 	// normal block lightsources		
 	if(mc_Entity.x >= 100 && mc_Entity.x < 300) EMISSIVE = 0.5;
 	
@@ -286,7 +212,7 @@ void main() {
     /////// ----- SSS STUFF ----- ///////
 		SSSAMOUNT = 0.0;
 
-#ifdef WORLD
+#if defined WORLD || defined ENTITIES
     /////// ----- SSS ON BLOCKS ----- ///////
 	// strong
 	if (
@@ -341,12 +267,11 @@ void main() {
 		if(blockEntityId == BLOCK_SSS_WEAK_3) SSSAMOUNT = 0.4;
 
 		// low
-
 	#endif
 
    	vec3 worldpos = mat3(gbufferModelViewInverse) * position + gbufferModelViewInverse[3].xyz;
 
-	#ifdef WAVY_PLANTS
+	#if FOLIAGE_ANIMATION_AMOUNT > 0
 		// also use normal, so up/down facing geometry does not get detatched from its model parts.
 		bool InterpolateFromBase = gl_MultiTexCoord0.t < max(mc_midTexCoord.t, abs(viewToWorld(FlatNormals).y));
 
@@ -375,15 +300,15 @@ void main() {
 		}
 	#endif
 	
-	#ifdef PLANET_CURVATURE
-		float curvature = length(worldpos) / (16*8);
-		worldpos.y -= curvature*curvature * CURVATURE_AMOUNT;
+	#if CURVATURE_AMOUNT !=  0
+		applyWorldCurvature(worldpos);
 	#endif
-
+	
 	position = mat3(gbufferModelView) * worldpos + gbufferModelView[3].xyz;
 	
 	// ensure hand/entities have the same transformations as the spidereyes and enchant glint programs.
-	#if !defined ENTITIES && !defined HAND
+	// will do world curvature here soon, needs the same transformations as enchant glint to avoid zfighting
+	#if !defined HAND && !defined ENTITIES
 		gl_Position = toClipSpace3(position);
 	#endif
 #endif
@@ -396,7 +321,7 @@ void main() {
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
 	#if TAA_MODE > 0
-		gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+		gl_Position.xy += taaJitter * gl_Position.w*texelSize;
 	#endif
 
 

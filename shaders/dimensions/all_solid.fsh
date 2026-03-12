@@ -9,67 +9,41 @@
 #include "/lib/blocks.glsl"
 #include "/lib/entities.glsl"
 #include "/lib/items.glsl"
+#include "/lib/res_params.glsl"
+#include "/lib/TAA_jitter.glsl"
 
-flat varying int NameTags;
-
-#ifdef HAND
-#undef POM
+#if defined HAND
+	#undef POM
 #endif
 
-#ifndef MC_NORMAL_MAP
-#undef POM
-#endif
-
-#ifdef POM
-#define MC_NORMAL_MAP
-#endif
-
-
+varying vec4 lmtexcoord;
+varying vec4 color;
+varying vec4 normalMat;
+varying vec4 tangent;
+varying vec3 FlatNormals;
 varying float VanillaAO;
 
-const float mincoord = 1.0/4096.0;
-const float maxcoord = 1.0-mincoord;
-
-const float MAX_OCCLUSION_DISTANCE = MAX_DIST;
-const float MIX_OCCLUSION_DISTANCE = MAX_DIST*0.9;
-const int   MAX_OCCLUSION_POINTS   = MAX_ITERATIONS;
-
-uniform vec2 texelSize;
-uniform int framemod8;
-
-// #ifdef POM
-varying vec4 vtexcoordam; // .st for add, .pq for mul
-varying vec4 vtexcoord;
-
-vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq);
-vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq);
-// #endif
-
-#include "/lib/res_params.glsl"
-varying vec4 lmtexcoord;
-
-varying vec4 color;
-
-uniform float far;
-
-
-uniform float wetness;
-varying vec4 normalMat;
-
-
-#ifdef MC_NORMAL_MAP
-	uniform sampler2D normals;
-	varying vec4 tangent;
-	varying vec3 FlatNormals;
-#endif
-
-
-uniform sampler2D specular;
-
-
+flat varying int NameTags;
+flat varying float blockID;
+flat varying float SSSAMOUNT;
+flat varying float EMISSIVE;
+flat varying int LIGHTNING;
+flat varying int PORTAL;
+flat varying int SIGN;
+// flat varying float HELD_ITEM_BRIGHTNESS;
 
 uniform sampler2D texture;
+uniform sampler2D normals;
+uniform sampler2D specular;
 uniform sampler2D colortex1;//albedo(rgb),material(alpha) RGBA16
+uniform sampler2D depthtex0;
+uniform sampler2D noisetex;//depth
+
+uniform vec2 texelSize;
+uniform float alphaTestRef;
+uniform float near;
+uniform float far;
+uniform float wetness;
 uniform float frameTimeCounter;
 uniform int frameCounter;
 uniform mat4 gbufferProjectionInverse;
@@ -78,8 +52,9 @@ uniform mat4 gbufferProjection;
 uniform mat4 gbufferModelViewInverse;
 uniform vec3 cameraPosition;
 uniform float rainStrength;
-uniform sampler2D noisetex;//depth
-uniform sampler2D depthtex0;
+uniform vec4 entityColor;
+uniform float nightVision;
+uniform vec3 eyePosition;
 
 #if defined VIVECRAFT
 	uniform bool vivecraftIsVR;
@@ -89,25 +64,19 @@ uniform sampler2D depthtex0;
 	uniform mat4 vivecraftRelativeOffHandRot;
 #endif
 
-uniform vec4 entityColor;
+const float mincoord = 1.0/4096.0;
+const float maxcoord = 1.0-mincoord;
 
-// in vec3 velocity;
+const float MAX_OCCLUSION_DISTANCE = MAX_DIST;
+const float MIX_OCCLUSION_DISTANCE = MAX_DIST*0.9;
+const int   MAX_OCCLUSION_POINTS   = MAX_ITERATIONS;
 
-flat varying float blockID;
-
-flat varying float SSSAMOUNT;
-flat varying float EMISSIVE;
-flat varying int LIGHTNING;
-flat varying int PORTAL;
-flat varying int SIGN;
-
-
-flat varying float HELD_ITEM_BRIGHTNESS;
-uniform float nightVision;
-
-// float interleaved_gradientNoise(){
-// 	return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y)+frameTimeCounter*51.9521);
-// }
+// #ifdef POM
+varying vec4 vtexcoordam; // .st for add, .pq for mul
+varying vec4 vtexcoord;
+vec2 dcdx = dFdx(vtexcoord.st*vtexcoordam.pq);
+vec2 dcdy = dFdy(vtexcoord.st*vtexcoordam.pq);
+// #endif
 
 float interleaved_gradientNoise_temporal(){
 	#if TAA_MODE > 0
@@ -116,11 +85,13 @@ float interleaved_gradientNoise_temporal(){
 		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
 	#endif
 }
+
 float interleaved_gradientNoise(){
 	vec2 coord = gl_FragCoord.xy;
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y));
 	return noise;
 }
+
 float R2_dither(){
 	vec2 coord = gl_FragCoord.xy ;
 
@@ -131,11 +102,12 @@ float R2_dither(){
 	vec2 alpha = vec2(0.75487765, 0.56984026);
 	return fract(alpha.x * coord.x + alpha.y * coord.y ) ;
 }
+
 float blueNoise(){
 	#if TAA_MODE > 0
-  		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
+  		return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
 	#else
-		return fract(texelFetch2D(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
+		return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887);
 	#endif
 }
 
@@ -162,11 +134,13 @@ vec3 viewToWorld(vec3 viewPosition) {
     pos = gbufferModelViewInverse * pos;
     return pos.xyz;
 }
+
 vec3 worldToView(vec3 worldPos) {
     vec4 pos = vec4(worldPos, 0.0);
     pos = gbufferModelView * pos;
     return pos.xyz;
 }
+
 vec4 encode (vec3 n, vec2 lightmaps){
 	n.xy = n.xy / dot(abs(n), vec3(1.0));
 	n.xy = n.z <= 0.0 ? (1.0 - abs(n.yx)) * sign(n.xy) : n.xy;
@@ -175,6 +149,13 @@ vec4 encode (vec3 n, vec2 lightmaps){
     return vec4(encn,vec2(lightmaps.x,lightmaps.y));
 }
 
+vec2 encode_normal (vec3 n){
+	n.xy = n.xy / dot(abs(n), vec3(1.0));
+	n.xy = n.z <= 0.0 ? (1.0 - abs(n.yx)) * sign(n.xy) : n.xy;
+    vec2 encn = clamp(n.xy * 0.5 + 0.5,-1.0,1.0);
+	
+    return encn;
+}
 //encoding by jodie
 float encodeVec2(vec2 a){
     const vec2 constant1 = vec2( 1., 256.) / 65535.;
@@ -185,14 +166,11 @@ float encodeVec2(float x,float y){
     return encodeVec2(vec2(x,y));
 }
 
-#ifdef MC_NORMAL_MAP
-	vec3 applyBump(mat3 tbnMatrix, vec3 bump){
-		float bumpmult = NORMAL_MAP_MULT;
-		bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
-		return normalize(bump*tbnMatrix);
-	}
-#endif
-
+vec3 applyBump(mat3 tbnMatrix, vec3 bump){
+	float bumpmult = NORMAL_MAP_MULT;
+	bump = bump * vec3(bumpmult, bumpmult, bumpmult) + vec3(0.0f, 0.0f, 1.0f - bumpmult);
+	return normalize(bump*tbnMatrix);
+}
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
@@ -203,82 +181,35 @@ vec3 toScreenSpace(vec3 p) {
     vec4 fragposition = iProjDiag * p3.xyzz + gbufferProjectionInverse[3];
     return fragposition.xyz / fragposition.w;
 }
+
 vec3 toClipSpace3(vec3 viewSpacePosition) {
     return projMAD(gbufferProjection, viewSpacePosition) / -viewSpacePosition.z * 0.5 + 0.5;
 }
 
 #ifdef POM
-	vec4 readNormal(in vec2 coord)
-	{
+	vec4 readNormal(in vec2 coord){
 		return texture2DGradARB(normals,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
 	}
-	vec4 readTexture(in vec2 coord)
-	{
+	vec4 readTexture(in vec2 coord){
 		return texture2DGradARB(texture,fract(coord)*vtexcoordam.pq+vtexcoordam.st,dcdx,dcdy);
 	}
 #endif
 
-
 float luma(vec3 color) {
 	return dot(color,vec3(0.21, 0.72, 0.07));
 }
-
 
 vec3 toLinear(vec3 sRGB){
 	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
 }
 
 
-const vec2[8] offsets = vec2[8](vec2(1./8.,-3./8.),
-									vec2(-1.,3.)/8.,
-									vec2(5.0,1.)/8.,
-									vec2(-3,-5.)/8.,
-									vec2(-5.,5.)/8.,
-									vec2(-7.,-1.)/8.,
-									vec2(3,7.)/8.,
-									vec2(7.,-7.)/8.);
-
-
-uniform float near;
-
-
 float ld(float dist) {
     return (2.0 * near) / (far + near - dist * (far - near));
 }
 
-
 vec4 readNoise(in vec2 coord){
-	// return texture2D(noisetex,coord*vtexcoordam.pq+vtexcoord.st);
-		return texture2DGradARB(noisetex,coord*vtexcoordam.pq + vtexcoordam.st,dcdx,dcdy);
-}
-float EndPortalEffect(
-	inout vec4 ALBEDO,
-	vec3 FragPos,
-	vec3 WorldPos,
-	mat3 tbnMatrix
-){	
-
-	int maxdist = 25;
-	int quality = 35;
-
-	vec3 viewVec = normalize(tbnMatrix*FragPos);
-	if ( viewVec.z < 0.0 && length(FragPos) < maxdist) {
-		float endportalGLow = 0.0;
-		float Depth = 0.3;
-		vec3 interval = (viewVec.xyz /-viewVec.z/quality*Depth) * (0.7 + (blueNoise()-0.5)*0.1);
-
-		vec3 coord = vec3(WorldPos.xz , 1.0);
-		coord += interval;
-
-		for (int loopCount = 0; (loopCount < quality) && (1.0 - Depth + Depth * ( 1.0-readNoise(coord.st).r - readNoise(-coord.st*3).b*0.2 ) ) < coord.p  && coord.p >= 0.0; ++loopCount) {
-			coord = coord+interval ; 
-			endportalGLow += (0.3/quality);
-		}
-
-  		ALBEDO.rgb = vec3(0.5,0.75,1.0) * sqrt(endportalGLow);
-
-		return clamp(pow(endportalGLow*3.5,3),0,1);
-	}
+	return texture2DGradARB(noisetex,coord*vtexcoordam.pq + vtexcoordam.st,dcdx,dcdy);
 }
 
 float bias(){
@@ -293,6 +224,7 @@ float bias(){
 		return 0.0;
 	#endif
 }
+
 vec4 texture2D_POMSwitch(
 	sampler2D sampler, 
 	vec2 lightmapCoord,
@@ -303,11 +235,9 @@ vec4 texture2D_POMSwitch(
 	if(ifPOM){
 		return texture2DGradARB(sampler, lightmapCoord, dcdxdcdy.xy, dcdxdcdy.zw);
 	}else{
-		return texture2D(sampler, lightmapCoord, LOD);
+		return texture(sampler, lightmapCoord, LOD);
 	}
 }
-
-uniform vec3 eyePosition;
 
 void convertHandDepth(inout float depth) {
     float ndcDepth = depth * 2.0 - 1.0;
@@ -322,9 +252,17 @@ void convertHandDepth(inout float depth) {
 //////////////////////////////VOID MAIN//////////////////////////////
 
 #if defined HAND || defined ENTITIES || defined BLOCKENTITIES
-	/* RENDERTARGETS:1,8,15,2 */
+	/* RENDERTARGETS:1,8,2 */
+	
+	layout(location = 0) out vec4 DEFERRED_DATA;
+	layout(location = 1) out vec4 SPECULAR_DATA;
+	layout(location = 2) out vec4 EXTRA_STUFF;
+
 #else
-	/* RENDERTARGETS:1,8,15 */
+	/* RENDERTARGETS:1,8 */
+
+	layout(location = 0) out vec4 DEFERRED_DATA;
+	layout(location = 1) out vec4 SPECULAR_DATA;
 #endif
 
 void main() {
@@ -341,58 +279,31 @@ void main() {
 		ifPOM = true;
 	#endif
 
+	#ifdef HAND
+		ifPOM = false;
+	#endif
+
 	if(SIGN > 0) ifPOM = false;
 
 	vec3 normal = normalMat.xyz;
 
-	#ifdef MC_NORMAL_MAP
-		vec3 binormal = normalize(cross(tangent.rgb,normal)*tangent.w);
-		mat3 tbnMatrix = mat3(tangent.x, binormal.x, normal.x,
+	vec3 binormal = normalize(cross(tangent.rgb,normal)*tangent.w);
+	mat3 tbnMatrix = mat3(tangent.x, binormal.x, normal.x,
 							  tangent.y, binormal.y, normal.y,
 							  tangent.z, binormal.z, normal.z);
-	#endif
 
-	vec2 tempOffset = offsets[framemod8];
+	vec2 tempOffset = taaJitter;
 
 	vec3 fragpos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
 	vec3 playerpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz;
 	vec3 worldpos = playerpos + cameraPosition;
-
-	float torchlightmap = lmtexcoord.z;
-
-	#if defined Hand_Held_lights && !defined LPV_ENABLED
-		#ifdef IS_IRIS
-			vec3 playerCamPos = eyePosition;
-		#else
-			vec3 playerCamPos = cameraPosition;
-		#endif
-
-		#ifdef VIVECRAFT
-        	if (vivecraftIsVR) { 
-				playerCamPos = cameraPosition - vivecraftRelativeMainHandPos;
-			}
-		#endif
-
-		// if(HELD_ITEM_BRIGHTNESS > 0.0) torchlightmap = max(torchlightmap, HELD_ITEM_BRIGHTNESS * clamp( pow(max(1.0-length(worldpos-playerCamPos)/HANDHELD_LIGHT_RANGE,0.0),1.5),0.0,1.0));
-		if(HELD_ITEM_BRIGHTNESS > 0.0){ 
-			
-			float pointLight = clamp(1.0-(length(worldpos-playerCamPos)-1)/HANDHELD_LIGHT_RANGE,0.0,1.0);
-			
-			torchlightmap = mix(torchlightmap, HELD_ITEM_BRIGHTNESS, pointLight);
-		}
-
-		#ifdef HAND
-			torchlightmap *= 0.9;
-		#endif
-	#endif
 	
 	float lightmap = clamp( (lmtexcoord.w-0.9) * 10.0,0.,1.);
-
 	vec2 adjustedTexCoord = lmtexcoord.xy;
-
 	float saveDepth = 0.0;
+
 #if defined POM && defined WORLD && !defined ENTITIES && !defined HAND
-	// vec2 tempOffset=offsets[framemod8];
+	// vec2 tempOffset=taaJitter;
 	adjustedTexCoord = fract(vtexcoord.st)*vtexcoordam.pq+vtexcoordam.st;
 	// vec3 fragpos = toScreenSpace(gl_FragCoord.xyz*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5,0.0));
 	vec3 viewVector = normalize(tbnMatrix*fragpos);
@@ -407,7 +318,6 @@ void main() {
 	float maxdist = MAX_OCCLUSION_DISTANCE;
 	if(!ifPOM) maxdist = 0.0;
 
-
 	#if defined DEPTH_WRITE_POM
 		gl_FragDepth = gl_FragCoord.z;
 	#endif
@@ -415,33 +325,30 @@ void main() {
 	if (falloff > 0.0) {
 
 		float depthmap = readNormal(vtexcoord.st).a;
-		float used_POM_DEPTH = 1.0;
-		float pomdepth = POM_DEPTH*falloff;
+		float pomdepth = (float(POM_DEPTH)/100.0)*falloff;
 
  		if ( viewVector.z < 0.0 && depthmap < 0.9999 && depthmap > 0.00001) {	
 			float noise = blueNoise();
 			#ifdef Adaptive_Step_length
 				vec3 interval = (viewVector.xyz / -viewVector.z / MAX_OCCLUSION_POINTS * pomdepth) * clamp(1.0-pow(depthmap,2),0.1,1.0);
-				used_POM_DEPTH = 1.0;
 			#else
-				vec3 interval = viewVector.xyz /-viewVector.z/MAX_OCCLUSION_POINTS*pomdepth;
+				vec3 interval = viewVector.xyz / -viewVector.z / MAX_OCCLUSION_POINTS*pomdepth;
 			#endif
 			vec3 coord = vec3(vtexcoord.st , 1.0);
 
-			coord += interval * noise * used_POM_DEPTH;
+			coord += interval * noise;
 
 			float sumVec = noise;
 			for (int loopCount = 0; (loopCount < MAX_OCCLUSION_POINTS) && (1.0 - pomdepth + pomdepth * readNormal(coord.st).a  ) < coord.p  && coord.p >= 0.0; ++loopCount) {
-				coord = coord + interval  * used_POM_DEPTH; 
-				sumVec += used_POM_DEPTH;
+				coord = coord + interval ; 
+				sumVec += 1.0;
 
 				#if defined POM_OFFSET_SHADOW_BIAS
-					// absolutely disgusting but works for now
-					if(loopCount > MAX_OCCLUSION_POINTS*0.01 * POM_DEPTH * 30.0) saveDepth = max(0.20,saveDepth);
-					if(loopCount > MAX_OCCLUSION_POINTS*0.02 * POM_DEPTH * 30.0) saveDepth = max(0.25,saveDepth);
-					if(loopCount > MAX_OCCLUSION_POINTS*0.03 * POM_DEPTH * 30.0) saveDepth = max(0.30,saveDepth);
-					if(loopCount > MAX_OCCLUSION_POINTS*0.05 * POM_DEPTH * 30.0) saveDepth = max(0.35,saveDepth);
-					if(loopCount > MAX_OCCLUSION_POINTS*0.06 * POM_DEPTH * 30.0) saveDepth = max(0.40,saveDepth);
+					#ifdef Adaptive_Step_length
+						saveDepth += clamp((1.0/MAX_OCCLUSION_POINTS)*clamp(1.0-pow(depthmap,2),0.1,1.0),0.0,1.0);
+					#else
+						saveDepth += clamp(1.0/MAX_OCCLUSION_POINTS,0.0,1.0);
+					#endif
 				#endif
 			}
 	
@@ -465,20 +372,19 @@ void main() {
 
 	if(!ifPOM) adjustedTexCoord = lmtexcoord.xy;
 	
-
 	//////////////////////////////// 				////////////////////////////////
 	////////////////////////////////	ALBEDO		////////////////////////////////
 	//////////////////////////////// 				//////////////////////////////// 
 	float textureLOD = bias();
-	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD) * color;
+	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD);
 
-	#if defined HAND
-		if (Albedo.a < 0.1) discard;
-	#endif
+	if(Albedo.a < alphaTestRef){discard; return;}
 
-	if(LIGHTNING > 0) Albedo = vec4(1);
+	Albedo *= color;
 
-	#if  defined WORLD && !defined ENTITIES && !defined HAND
+	if(LIGHTNING > 0) Albedo = vec4(1.0);
+
+	#if defined WORLD && !defined ENTITIES && !defined HAND
 	float endPortalEmission = 0.0;
 	if(PORTAL > 0) {
 		float steps = 20;
@@ -517,7 +423,7 @@ void main() {
 			float verticalGradient = (i + blueNoise())/steps ;
 			float verticalGradient2 = exp(-7*(1-verticalGradient*verticalGradient));
 		
-			float density = max(max(verticalGradient - texture2D(noisetex, uv/256.0 + animation.xy).b*0.5,0.0) - (1.0-texture2D(noisetex, uv/32.0 + animation.xx).r) * (0.4 + 0.1 * (texture2D(noisetex, uv/10.0 - animation.yy).b)),0.0);
+			float density = max(max(verticalGradient - texture(noisetex, uv/256.0 + animation.xy).b*0.5,0.0) - (1.0-texture(noisetex, uv/32.0 + animation.xx).r) * (0.4 + 0.1 * (texture(noisetex, uv/10.0 - animation.yy).b)),0.0);
 		
 			float volumeCoeff = exp(-density*(i+1));
 			
@@ -538,6 +444,7 @@ void main() {
 	#ifdef WhiteWorld
 		Albedo.rgb = vec3(1.0);
 	#endif	
+	
 	#ifdef AEROCHROME_MODE
 		float gray = dot(Albedo.rgb, vec3(0.2, 1.0, 0.07));
 		if (
@@ -571,21 +478,21 @@ void main() {
 		if (Albedo.a > 0.1) Albedo.a = normalMat.a;
 		else Albedo.a = 0.0;
 		
-		#if defined POM_OFFSET_SHADOW_BIAS && !defined HAND
-			if(saveDepth > 0) Albedo.a = min(saveDepth,Albedo.a);
+		#if !defined HAND && !defined ENTITIES && defined POM && defined POM_OFFSET_SHADOW_BIAS
+			if(saveDepth > 0) Albedo.a = clamp(saveDepth*0.45,0.0,Albedo.a);
 		#endif
 	#endif
 
 	#ifdef HAND
 		if (Albedo.a > 0.1){
 			Albedo.a = 0.75;
-			gl_FragData[3] = vec4(0.0);
+			EXTRA_STUFF.xyzw = vec4(0.0);
 		} else {
 			Albedo.a = 1.0;
 		}
 	#endif
 	#if defined PARTICLE_RENDERING_FIX && (defined ENTITIES || defined BLOCKENTITIES)
-		gl_FragData[3] = vec4(0.0);
+		EXTRA_STUFF.xyzw = vec4(0.0);
 	#endif
 
 	
@@ -593,7 +500,7 @@ void main() {
 	////////////////////////////////	NORMAL		////////////////////////////////
 	//////////////////////////////// 				//////////////////////////////// 
 
-	#if defined WORLD && defined MC_NORMAL_MAP
+	#if defined WORLD
 		vec4 NormalTex = texture2D_POMSwitch(normals, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM,textureLOD).xyzw;
 		
 		#ifdef MATERIAL_AO
@@ -615,60 +522,47 @@ void main() {
 	#ifdef WORLD
 		vec4 SpecularTex = texture2D_POMSwitch(specular, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM,textureLOD);
 
-		// SpecularTex.r = max(SpecularTex.r, rainfall);
-		// SpecularTex.g = max(SpecularTex.g, max(Puddle_shape*0.02,0.02));
-
-		gl_FragData[1] = vec4(0.0,0.0,0.0,0.0);
-		gl_FragData[1].rg = SpecularTex.rg;
+		vec4 specularData = vec4(0.0);
+		
+		specularData.rg = SpecularTex.rg;
 
 		#if EMISSIVE_TYPE == 0
-			gl_FragData[1].a = 0.0;
-		#endif
-
-		#if EMISSIVE_TYPE == 1
-			gl_FragData[1].a = EMISSIVE;
-		#endif
-
-		#if EMISSIVE_TYPE == 2
-			gl_FragData[1].a = SpecularTex.a;
-			if(SpecularTex.a <= 0.0) gl_FragData[1].a = EMISSIVE;
-		#endif
-
-		#if EMISSIVE_TYPE == 3		
-			gl_FragData[1].a = SpecularTex.a;
+			specularData.a = 0.0;
+		#elif EMISSIVE_TYPE == 1
+			specularData.a = EMISSIVE;
+		#elif EMISSIVE_TYPE == 2
+			if(SpecularTex.a > 0.0) {
+				specularData.a = EMISSIVE;
+			}else{
+				specularData.a = SpecularTex.a;
+			}
+		#elif EMISSIVE_TYPE == 3		
+			specularData.a = SpecularTex.a;
 		#endif
 		
-		#if  defined WORLD && !defined ENTITIES && !defined HAND
-			if(PORTAL > 0) gl_FragData[1].a = endPortalEmission;
+		#if defined WORLD && !defined ENTITIES && !defined HAND
+			if(PORTAL > 0) specularData.a = endPortalEmission;
 		#endif
 
 		#if SSS_TYPE == 0
-			gl_FragData[1].b = 0.0;
+			specularData.b = 0.0;
+		#elif SSS_TYPE == 1
+			specularData.b = SSSAMOUNT;
+		#elif SSS_TYPE == 2
+			specularData.b = SpecularTex.b;
+			if(SpecularTex.b < 65.0/255.0) specularData.b = SSSAMOUNT;
+		#elif SSS_TYPE == 3		
+			specularData.b = SpecularTex.b;
 		#endif
 
-		#if SSS_TYPE == 1
-			gl_FragData[1].b = SSSAMOUNT;
-		#endif
+		vec4 otherData = clamp(vec4(viewToWorld(FlatNormals) * 0.5 + 0.5, VanillaAO),0.0,1.0);
 
-		#if SSS_TYPE == 2
-			gl_FragData[1].b = SpecularTex.b;
-			if(SpecularTex.b < 65.0/255.0) gl_FragData[1].b = SSSAMOUNT;
-		#endif
-
-		#if SSS_TYPE == 3		
-			gl_FragData[1].b = SpecularTex.b;
-		#endif
-
-
-		#if DEBUG_VIEW == debug_MATERIAL_SSS
-			Albedo.rgb = vec3(0.1);
-			if(SSSAMOUNT > 0.0) Albedo.rgb = vec3(0.0,SSSAMOUNT,0.0);
-		#endif
-		#if DEBUG_VIEW == debug_MATERIAL_EMISSION
-			Albedo.rgb = vec3(0.1);
-			if(EMISSIVE > 0.0) Albedo.rgb = vec3(0.0,EMISSIVE,0.0);
-			if(EMISSIVE >= 1.0) Albedo.rgb = vec3(1.0,0.0,0.0);
-		#endif
+		SPECULAR_DATA.xyzw = vec4(
+			encodeVec2(specularData.x, otherData.x),
+			encodeVec2(specularData.y, otherData.y),
+			encodeVec2(specularData.z, otherData.z),
+			encodeVec2(specularData.w, otherData.w)
+			);
 	#endif
 
 	// hit glow effect...
@@ -685,7 +579,7 @@ void main() {
 	#endif
 
 	#ifdef WORLD
-		vec2 PackLightmaps = vec2(torchlightmap, lmtexcoord.w);
+		vec2 PackLightmaps = vec2(lmtexcoord.z, lmtexcoord.w);
 		
 		// special curve to give more precision on high/low values of the gradient. this curve will be inverted after sampling and decoding.
 		// PackLightmaps = pow(1.0-pow(1.0-PackLightmaps,vec2(0.5)),vec2(0.5));
@@ -695,11 +589,17 @@ void main() {
 			PackLightmaps = clamp( PackLightmaps + PackLightmaps * (interleaved_gradientNoise()-0.5)*0.005,0,1);
 		#endif
 
-		vec4 data1 = clamp( encode(viewToWorld(normal), PackLightmaps), 0.0, 1.0);
+		vec4 data1 = clamp(encode(viewToWorld(normal), PackLightmaps), 0.0, 1.0);
 
-		gl_FragData[0] = vec4(encodeVec2(Albedo.x,data1.x),	encodeVec2(Albedo.y,data1.y),	encodeVec2(Albedo.z,data1.z),	encodeVec2(data1.w,Albedo.w));
+		Albedo = clamp(Albedo,0,1);
+		data1 = clamp(data1,0,1);
 
-		gl_FragData[2] = vec4(viewToWorld(FlatNormals) * 0.5 + 0.5, VanillaAO);	
+		DEFERRED_DATA.xyzw = vec4(
+			encodeVec2(Albedo.x,data1.x),
+			encodeVec2(Albedo.y,data1.y),
+			encodeVec2(Albedo.z,data1.z),
+			encodeVec2(data1.w,Albedo.w)
+			);
+
 	#endif
-	
 }

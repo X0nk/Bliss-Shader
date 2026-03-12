@@ -9,7 +9,7 @@ float densityAtPosFog(in vec3 pos){
 	f = (f*f) * (3.-2.*f);
 	vec2 uv =  p.xz + f.xz + p.y * vec2(0.0,193.0);
 	vec2 coord =  uv / 512.0;
-	vec2 xy = texture2D(noisetex, coord).yx;
+	vec2 xy = texture(noisetex, coord).yx;
 	return mix(xy.r,xy.g, f.y);
 }
 
@@ -58,7 +58,7 @@ vec3 sampleShadowmapVL(vec3 start, vec3 shadowMapRayStartPos, vec3 shadowMapRayP
 			shadowColor = vec3(shadow2D(shadowtex0, shadowPos).x);
 
 			if(shadow2D(shadowtex1, shadowPos).x > shadowPos.z && shadowColor.x < 1.0){
-				vec4 translucentShadow = texture2D(shadowcolor0, shadowPos.xy);
+				vec4 translucentShadow = texture(shadowcolor0, shadowPos.xy);
 				if(translucentShadow.a < 0.9) shadowColor = normalize(translucentShadow.rgb+0.0001);
 			}
 		#else
@@ -224,8 +224,8 @@ vec4 GetVolumetricFog(
 
 	float rayLength = length(rayStartPos);
 
-	#ifdef DISTANT_HORIZONS
-		float maxLength = min(rayLength, max(far, dhRenderDistance))/rayLength;
+	#ifdef USING_LOD_MOD
+		float maxLength = min(rayLength, max(far, LOD_RENDERDISTANCE))/rayLength;
 	#else
 		float maxLength = min(rayLength, far)/rayLength;
 	#endif
@@ -282,6 +282,10 @@ vec4 GetVolumetricFog(
 		rayProgress = gbufferModelViewInverse[3].xyz + cameraPosition + d*rayStartPos;
 		localRayProgress = gbufferModelViewInverse[3].xyz + cameraPosition + d*localRayStartPos;
 		
+		#ifdef FAKE_PLANET
+			LightColor = getPlanetAbsorb(rayProgress, WsunVec, colortex4);
+		#endif
+
 		vec3 shadows = getShadows(mix(rayProgress, localRayProgress, localFogExists), sunVector, d, start, shadowMapRayStartPos, shadowMapRayProgress, flatPhase, sunPhase);
 		
 		#if defined LIGHTNING_FLASH && defined LIGHTNINGFLASH_VL
@@ -289,13 +293,22 @@ vec4 GetVolumetricFog(
 		#endif
 		/// ATMOSOPHERE
 		float planetVolume = clamp(1.0 - length((rayProgress-cameraPosition) - vec3(0.0, 250.0, 0.0)) / 2500.0, 0.0,1.0);
-		vec2 airCoef = exp2(-max(rayProgress.y-62.0,0.0)/vec2(8.0e3, 1.2e3)*vec2(6.,7.0)) * planetVolume * 25.0 * Haze_amount;
+		#ifdef USING_LOD_MOD
+			vec2 airCoef = exp2(-max(rayProgress.y-62.0,0.0)/vec2(8.0e3, 1.2e3)*vec2(6.,7.0)) * planetVolume * 12.5 * Haze_amount;
+		#else
+			vec2 airCoef = exp2(-max(rayProgress.y-62.0,0.0)/vec2(8.0e3, 1.2e3)*vec2(6.,7.0)) * planetVolume * 25.0 * Haze_amount;
+		#endif
 		vec3 rayleigh = rayleighCoeffs*airCoef.x;
 		vec3 mie = mieCoeffs*(airCoef.y + min(Haze_amount,1.0));
 		vec3 airDensity = kill*(rayleigh + mie);
 		vec3 airDensityPhased = rayleighPhase*rayleigh + sunPhase*mie;
 		vec3 airVolumeCoeff = exp(-airDensity*dd*rayLength);
-		vec3 airLighting = LightColor*shadows*sunPhase * airDensityPhased + AveragedAmbientColor*0.666*airDensity;
+
+		#ifdef AERIAL_PERSPECTIVE_TEST
+			vec3 airLighting = LightColor*shadows*sunPhase * airDensityPhased;
+		#else
+			vec3 airLighting = LightColor*shadows*sunPhase * airDensityPhased + AveragedAmbientColor*0.666*airDensity;
+		#endif
 		
 		#if defined LIGHTNING_FLASH && defined LIGHTNINGFLASH_VL
 			airLighting += lightningFlash*airDensity;
@@ -336,7 +349,12 @@ vec4 GetVolumetricFog(
 		
 		localAbsorbance *= localFogVolumeCoeff;
 		airAbsorbance *= airVolumeCoeff*fogVolumeCoeff*localFogVolumeCoeff;
-		absorbance *= fogVolumeCoeff*localFogVolumeCoeff*dot(airVolumeCoeff,vec3(0.33333));
+		
+		#ifdef AERIAL_PERSPECTIVE_TEST
+			absorbance *= fogVolumeCoeff*localFogVolumeCoeff;
+		#else
+			absorbance *= fogVolumeCoeff*localFogVolumeCoeff*dot(airVolumeCoeff,vec3(0.33333));
+		#endif
 	}
 	return vec4(color, absorbance);
 }

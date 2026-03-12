@@ -1,6 +1,5 @@
 #define ANTIALIASING_RELATED_SETTINGS
 #define SHADOWMAP_CONSTANT_RELATED_SETTINGS
-
 #include "/lib/settings.glsl"
 #include "/lib/util.glsl"
 #include "/lib/res_params.glsl"
@@ -25,11 +24,6 @@ uniform vec3 moonPosition;
 uniform mat4 gbufferModelViewInverse;
 uniform int frameCounter;
 
-
-flat varying vec2 TAA_Offset;
-uniform int framemod8;
-#include "/lib/TAA_jitter.glsl"
-
 uniform float frameTimeCounter;
 #include "/lib/Shadow_Params.glsl"
 #include "/lib/sky_gradient.glsl"
@@ -48,11 +42,11 @@ void main() {
 
 	
 	#ifdef OVERWORLD_SHADER
-		lightCol.rgb = texelFetch2D(colortex4,ivec2(6,37),0).rgb;
-		averageSkyCol = texelFetch2D(colortex4,ivec2(1,37),0).rgb;
-		averageSkyCol_Clouds = texelFetch2D(colortex4,ivec2(0,37),0).rgb;
+		lightCol.rgb = texelFetch(colortex4,ivec2(6,37),0).rgb;
+		averageSkyCol = texelFetch(colortex4,ivec2(1,37),0).rgb;
+		averageSkyCol_Clouds = texelFetch(colortex4,ivec2(0,37),0).rgb;
 
-				#define READ_SCENE_CONTROLLER_PARAMETERS
+		#define READ_SCENE_CONTROLLER_PARAMETERS
 		#include "/lib/scene_controller.glsl"
 		// readSceneControllerParameters(colortex4, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog);
 	#endif
@@ -79,10 +73,4 @@ void main() {
 	WsunVec = mix(WmoonVec, WsunVec, clamp(lightCol.a,0,1));
 
 	refractedSunVec = refract(lightCol.a*WsunVec, -vec3(0.0,1.0,0.0), 1.0/1.33333);
-
-	#if TAA_MODE > 0
-		TAA_Offset = offsets[framemod8];
-	#else
-		TAA_Offset = vec2(0.0);
-	#endif
 }

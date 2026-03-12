@@ -2,6 +2,9 @@
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
 
+// will do soon, needs the same transformations as entities so that enchant glint does not zfight
+// #include "/lib/vertex_displacement.glsl"
+
 /*
 !! DO NOT REMOVE !!
 This code is from Chocapic13' shaders
@@ -13,7 +16,7 @@ varying vec4 color;
 varying vec2 texcoord;
 
 uniform vec2 texelSize;
-uniform int framemod8;
+
 #include "/lib/TAA_jitter.glsl"
 					
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -39,6 +42,6 @@ void main() {
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
 	#if TAA_MODE > 0
-	    gl_Position.xy += offsets[framemod8] * gl_Position.w*texelSize;
+	    gl_Position.xy += taaJitter * gl_Position.w*texelSize;
 	#endif
 }
