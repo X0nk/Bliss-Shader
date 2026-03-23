@@ -381,8 +381,14 @@ void main() {
 	
 	vec2 lightmap = clamp(lmtexcoord.zw,0.0,1.0);
 
-	#ifndef OVERWORLD_SHADER
-		lightmap.y = 1.0;
+	#if MC_VERSION < 12109
+		#if !defined OVERWORLD_SHADER
+			lightmap.y = 1.0;
+		#endif
+	#else
+		#if !defined OVERWORLD_SHADER && !defined END_SHADER
+			lightmap.y = 1.0;
+		#endif
 	#endif
 
 	#ifdef WEATHER
@@ -460,7 +466,9 @@ void main() {
 		#endif
 
 		#ifdef END_SHADER
-			Indirect_lighting = vec3(0.3,0.6,1.0) * 0.1;
+			Indirect_lighting = vec3(0.3,0.6,1.0);
+			Indirect_lighting *= 0.035 * lightmap.y*lightmap.y;
+			Indirect_lighting += MinimumLightColor * (MIN_LIGHT_AMOUNT * 0.02 * 0.2 + nightVision*0.02);
 		#endif
 
 	///////////////////////// BLOCKLIGHT LIGHTING OR LPV LIGHTING OR FLOODFILL COLORED LIGHTING

@@ -583,8 +583,14 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	// lightmap.y = 1.0;
 	
-	#ifndef OVERWORLD_SHADER
-		lightmap.y = 1.0;
+	#if MC_VERSION < 12109
+		#if !defined OVERWORLD_SHADER
+			lightmap.y = 1.0;
+		#endif
+	#else
+		#if !defined OVERWORLD_SHADER && !defined END_SHADER
+			lightmap.y = 1.0;
+		#endif
 	#endif
 
 	vec3 Indirect_lighting = vec3(0.0);
@@ -664,10 +670,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		Direct_lighting += lightColors * endPhase * end_NdotL * fogShadow;
 
-		vec3 AmbientLightColor = vec3(0.3,0.6,1.0) ;
-			
-		Indirect_lighting = AmbientLightColor + 0.7 * AmbientLightColor * dot(worldSpaceNormal, normalize(feetPlayerPos));
-		Indirect_lighting *= 0.1;
+		vec3 AmbientLightColor = vec3(0.3,0.6,1.0);
+		
+		Indirect_lighting = Indirect_lighting + 0.7 * Indirect_lighting * dot(worldSpaceNormal, normalize(feetPlayerPos));
+		Indirect_lighting *= 0.035 * lightmap.y*lightmap.y;
+
+		Indirect_lighting += MinimumLightColor * (MIN_LIGHT_AMOUNT * 0.02 * 0.2 + nightVision*0.02);
 	#endif
 
 	///////////////////////// BLOCKLIGHT LIGHTING OR LPV LIGHTING OR FLOODFILL COLORED LIGHTING
