@@ -51,7 +51,11 @@ vec3 doBlockLightLighting(
         voxelRangeFalloff = 1.0 - pow(1.0-pow(voxelRangeFalloff,1.5),3.0);
         
         // outside the voxel volume, lerp to vanilla lighting as a fallback
-        blockLight = mix(blockLight, lpvSample.rgb + lightColor * 2.5 * min(max(lightmap-0.999,0.0)/(1.0-0.999),1.0), voxelRangeFalloff);
+        #ifdef TORCH_LIGHTMAP_EMISSION_WORKAROUND
+            blockLight = mix(blockLight, max(lpvSample.rgb, lightColor * 0.5 * min(max(lightmap-0.999,0.0)/(1.0-0.999),1.0)), voxelRangeFalloff);
+        #else
+            blockLight = mix(blockLight, lpvSample.rgb, voxelRangeFalloff);
+        #endif
     #endif
 
     return blockLight * TORCH_AMOUNT;

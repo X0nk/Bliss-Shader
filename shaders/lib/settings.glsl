@@ -760,6 +760,7 @@
 
 // ruining parts of the effect to make it more like vanilla floodfill
 // #define VANILLA_LIGHTMAP_MASK
+#define TORCH_LIGHTMAP_EMISSION_WORKAROUND
 
 ////////////////////////////////
 // ----- DEBUG SETTINGS ----- //
