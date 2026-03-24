@@ -559,7 +559,7 @@ void main() {
         }
 
         if (blockId == BLOCK_LANTERN || blockId == ITEM_LANTERN) {
-            lightColor = vec3(1.0, 0.55, 0.20);
+            lightColor = vec3(1.0, 0.55, 0.2);
             lightRange = 15.0;
             mixWeight = 0.8;
         }
