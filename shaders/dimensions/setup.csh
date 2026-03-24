@@ -519,17 +519,17 @@ void main() {
         }
 
         if (blockId == BLOCK_FROGLIGHT_OCHRE || blockId == ITEM_FROGLIGHT_OCHRE) {
-            lightColor = vec3(0.768, 0.648, 0.108);
+            lightColor = vec3(0.768, 0.60, 0.0);
             lightRange = 15.0;
         }
 
         if (blockId == BLOCK_FROGLIGHT_PEARLESCENT || blockId == ITEM_FROGLIGHT_PEARLESCENT) {
-            lightColor = vec3(0.737, 0.435, 0.658);
+            lightColor = vec3(0.737, 0.435, 0.858);
             lightRange = 15.0;
         }
 
         if (blockId == BLOCK_FROGLIGHT_VERDANT || blockId == ITEM_FROGLIGHT_VERDANT) {
-            lightColor = vec3(0.463, 0.763, 0.409);
+            lightColor = vec3(0.463, 0.963, 0.509);
             lightRange = 15.0;
         }
 
@@ -559,7 +559,7 @@ void main() {
         }
 
         if (blockId == BLOCK_LANTERN || blockId == ITEM_LANTERN) {
-            lightColor = vec3(0.839, 0.541, 0.2);
+            lightColor = vec3(1.0, 0.6, 0.25);
             lightRange = 15.0;
             mixWeight = 0.8;
         }
@@ -796,9 +796,7 @@ void main() {
             mixWeight = 0.8;
         }
 
-        if (blockId == BLOCK_TORCH || blockId == ITEM_TORCH ||
-            blockId == BLOCK_LANTERN || blockId == ITEM_LANTERN
-        ) {
+        if (blockId == BLOCK_TORCH || blockId == ITEM_TORCH) {
             lightColor = vec3(TORCH_R, TORCH_G, TORCH_B);
             lightRange = 14.0;
             mixWeight = 0.8;
