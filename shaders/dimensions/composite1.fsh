@@ -1218,7 +1218,7 @@ void main() {
 
 				float SkylightDir = indirectNormal.y;
 
-				if(isGrass) SkylightDir = 1.0;
+				if(isGrass || opaqueParticles) SkylightDir = 1.0;
 				SkylightDir = clamp(SkylightDir*0.7+0.3, 0.0, pow(1-pow(1-SSAO_SSS.x, 0.5),4.0) * 0.7 + 0.3);
 
 				skylight = mix(0.08 + 0.92*(1.0-lightmap.y), 1.0, SkylightDir);
