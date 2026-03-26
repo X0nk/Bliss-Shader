@@ -1083,6 +1083,11 @@ void main() {
 
 		// NdotL = 1;
 		float flatNormNdotL = clamp((-15 + dot((FlatNormals), WsunVec)*255.0) / 240.0  ,0.0,1.0);
+
+		if(opaqueParticles){
+			NdotL = 0.75;
+			flatNormNdotL = 0.75;
+		}
 		
 	////////////////////////////////	SHADOWMAP		////////////////////////////////
 		// setup shadow projection

@@ -288,20 +288,18 @@ float luma(vec3 color) {
 
 	void main() {
 		vec4 Albedo = texture(texture, lmtexcoord.xy) * color;
-	
 		if(Albedo.a < alphaTestRef){discard; return;}
 
 		// particles are billboards so all i need is the opposite direction the camera is pointing.
-		vec3 normal = clamp(normalize(vec3(-playerLookVector.x,1.0,-playerLookVector.z)),-1.0,1.0);
-		
+		vec3 normal = clamp(-normalize(playerLookVector),-1.0,1.0);
 		vec2 lightmap = clamp(lmtexcoord.zw,0.0,1.0);
-		
+
 		vec4 data1 = encode(normal, lightmap);
 
 		#ifdef WhiteWorld
 			Albedo.rgb = vec3(1.0);
 		#endif
-
+		
 		Albedo = clamp(vec4(Albedo.rgb,0.8),0.0,1.0);
 		data1 = clamp(data1,0.0,1.0);
 
