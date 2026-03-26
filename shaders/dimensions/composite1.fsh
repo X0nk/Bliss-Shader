@@ -899,7 +899,7 @@ void main() {
 		bool isGrass = abs(opaqueMasks-0.60) < 0.01;
 		bool hand = abs(opaqueMasks-0.75) < 0.01 && z < 1.0;
 		// bool handwater = abs(translucentMasks-0.3) < 0.01 ;
-		// bool blocklights = abs(opaqueMasks-0.8) <0.01;
+		bool opaqueParticles = abs(opaqueMasks-0.8) < 0.01;
 
 		if(hand){
 			convertHandDepth(z);
@@ -1153,7 +1153,7 @@ void main() {
 			#ifdef SCREENSPACE_CONTACT_SHADOWS
 				vec2 SS_directLight = SSRT_Shadows(toScreenSpace_DH(texcoord/RENDER_SCALE, z, DH_depth1), isDHrange, normalize(WsunVec*mat3(gbufferModelViewInverse)), ig_noise, sunSSS_density > 0.0 && shadowMapFalloff2 < 1.0, hand);
 				// combine shadowmap with screenspace shadows.
-				shadowColor *= SS_directLight.r;
+				if(!opaqueParticles) shadowColor *= SS_directLight.r;
 			#else
 				vec2 SS_directLight = vec2(1,0);
 				ShadowBlockerDepth = max(ShadowBlockerDepth, (1.0-shadowMapFalloff2) * 10.0);

@@ -405,7 +405,7 @@ void main() {
 	// bool translucent4 = abs(dataUnpacked1.w-0.65) <0.01;	// Weak translucency
 	// bool entities = abs(dataUnpacked1.w-0.45) < 0.01;	
 	bool hand = abs(dataUnpacked1.w-0.75) < 0.01;
-	// bool blocklights = abs(dataUnpacked1.w-0.8) <0.01;
+	bool opaqueParticles = abs(dataUnpacked1.w-0.8) < 0.01;
 
 	float z = convertHandDepth_2(texelFetch(depthtex1,ivec2(gl_FragCoord.xy),0).x, hand);
 	
@@ -451,7 +451,7 @@ void main() {
 		
 		SSAO_SSS.y = clamp(SSAO_SSS.y + 0.5 * lightmap.y*lightmap.y,0.0,1.0);
 
-		if(swappedDepth >= 1.0) SSAO_SSS = vec2(1.0,0.0);
+		if(swappedDepth >= 1.0 || opaqueParticles) SSAO_SSS = vec2(1.0,0.0);
 
 		gl_FragData[1].xy = SSAO_SSS;
 	#endif
