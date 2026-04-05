@@ -334,7 +334,7 @@ float swapperlinZ(float depth, float _near, float _far) {
 
 }
 
-vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, bool isSSS, bool hand){
+vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, bool isSSS, bool hand, in float NdotL){
 
 	// return 1.0;
 
@@ -355,7 +355,7 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 	float rayLength = ((viewPos.z + lightDir.z * _far * sqrt(3.)) > -_near) ? (-_near - viewPos.z) / lightDir.z : _far * sqrt(3.);
 
     vec3 direction = toClipSpace3_DH(viewPos + lightDir*rayLength, depthCheck) - position;
-    direction.xyz = direction.xyz / max(max(abs(direction.x)/0.0005, abs(direction.y)/0.0005),400.0);	//fixed step size
+	direction.xyz = direction.xyz / max(max(abs(direction.x)/0.0005, abs(direction.y)/0.0005),400.0);	//fixed step size
 	direction *= 6.0;
 
 	position.xy *= RENDER_SCALE;
@@ -365,10 +365,10 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 	// literally shadow bias to fight shadow acne due to precision problems when comparing sampled depth and marched position
 	newPos += direction*0.3;
 
-	float SSSdistanceScale = 1.0 / (1.0 + swapperlinZ(position.z, _near, _far)*32.0);
-	float distanceScale2 = 1.0 + length(mat3(gbufferModelViewInverse) * viewPos) / 150.0;
+	float distanceScale2 = 1.0 + length(viewPos) / 100.0;
+	float SSSdistanceScale = 1.0 / distanceScale2;
 
-	for (int i = 0; i < int(samples); i++) { 
+	for (int i = 0; i < int(samples); i++) {
 		if(newPos.x < 0 || newPos.x > 1 || newPos.y < 0 || newPos.y > 1) break;
 		
 		#ifdef USING_LOD_MOD
@@ -382,23 +382,19 @@ vec2 SSRT_Shadows(vec3 viewPos, bool depthCheck, vec3 lightDir, float noise, boo
 			float sampleDepth = convertHandDepth_2(texelFetch(depthtex1, ivec2(newPos.xy/texelSize),0).x,hand);
 		#endif
 
-		if(sampleDepth < newPos.z){
-			float linearCurrentPos = swapperlinZ(newPos.z, _near, _far);
-			float linearSampledDepth = swapperlinZ(sampleDepth, _near, _far);
-
-			float dist = abs(linearSampledDepth - linearCurrentPos) / linearCurrentPos;
-			
-			// if (dist < 0.035){
-			if (dist < 0.035/(1.0+linearCurrentPos)) shadows = 0.0;
-
-			// if (dist < 0.3/(1.0+linearCurrentPos)) SSS += distanceScale2;
-			if (dist < SSSdistanceScale) SSS += distanceScale2;
-		}
-
-		newPos += direction;
+		float linearCurrentPos = swapperlinZ(newPos.z, _near, _far);
+		float linearSampledDepth = swapperlinZ(sampleDepth, _near, _far);
+		float dist = abs(linearSampledDepth - linearCurrentPos) / linearCurrentPos;
 		
+		if(sampleDepth < newPos.z){
+			if (dist < 0.035/(1.0+linearCurrentPos)) shadows = 0.0;
+			if (dist < SSSdistanceScale) SSS += distanceScale2;
+		}else{
+			if (dist < SSSdistanceScale*0.05) SSS += distanceScale2 * NdotL;
+		}
+		newPos += direction;
 	}
-	return vec2(shadows, SSS / samples );
+	return vec2(shadows, SSS / samples);
 }
 #if HANDHELD_LIGHTSOURCE_SSRT_SHADOWS > 0
 float handHeldLight_SSRT_Shadows(vec3 viewPos, vec3 shadowHandPos, float noise){
@@ -1156,7 +1152,7 @@ void main() {
 			#endif
 			
 			#ifdef SCREENSPACE_CONTACT_SHADOWS
-				vec2 SS_directLight = SSRT_Shadows(toScreenSpace_DH(texcoord/RENDER_SCALE, z, DH_depth1), isDHrange, normalize(WsunVec*mat3(gbufferModelViewInverse)), ig_noise, sunSSS_density > 0.0 && shadowMapFalloff2 < 1.0, hand);
+				vec2 SS_directLight = SSRT_Shadows(toScreenSpace_DH(texcoord/RENDER_SCALE, z, DH_depth1), isDHrange, normalize(WsunVec*mat3(gbufferModelViewInverse)), ig_noise, sunSSS_density > 0.0 && shadowMapFalloff2 < 1.0, hand, clamp(-dot(feetPlayerPos_normalized, WsunVec),0,1) * (NdotL));
 				// combine shadowmap with screenspace shadows.
 				if(!opaqueParticles) shadowColor *= SS_directLight.r;
 			#else
