@@ -1152,7 +1152,7 @@ void main() {
 			#endif
 			
 			#ifdef SCREENSPACE_CONTACT_SHADOWS
-				vec2 SS_directLight = SSRT_Shadows(toScreenSpace_DH(texcoord/RENDER_SCALE, z, DH_depth1), isDHrange, normalize(WsunVec*mat3(gbufferModelViewInverse)), ig_noise, sunSSS_density > 0.0 && shadowMapFalloff2 < 1.0, hand, clamp(-dot(feetPlayerPos_normalized, WsunVec),0,1) * (NdotL));
+				vec2 SS_directLight = SSRT_Shadows(toScreenSpace_DH(texcoord/RENDER_SCALE, z, DH_depth1), isDHrange, normalize(WsunVec*mat3(gbufferModelViewInverse)), ig_noise, sunSSS_density > 0.0 && shadowMapFalloff2 < 1.0, hand, clamp(-dot(feetPlayerPos_normalized, WsunVec),0,1) * flatNormNdotL);
 				// combine shadowmap with screenspace shadows.
 				if(!opaqueParticles) shadowColor *= SS_directLight.r;
 			#else
