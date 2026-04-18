@@ -88,6 +88,7 @@ vec3 doIndirectLighting(
 uniform vec3 relativeEyePosition;
 uniform vec3 playerLookVector;
 uniform bool firstPersonCamera;
+uniform float flickerLight;
 
 #if defined VIVECRAFT
 	uniform bool vivecraftIsVR;
@@ -192,6 +193,10 @@ void calculateFinishedPointLight(
         
         // combine ndotl, attentuation, color, and pass it on.
         lighting *= createHandheldPointlight(handPos, normal, max(lightRange + 2,1e-6));
+
+        #if HANDHELD_LIGHTSOURCE_FLICKER_MODE > 0
+            lighting *= flickerLight;
+        #endif
         
         #if HANDHELD_LIGHTSOURCE_MODE > 1
             /// previous frame data to lag the light behind to seem handheld.

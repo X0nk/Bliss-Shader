@@ -185,7 +185,7 @@ screen.Ambient_light = Ambient Light
         option.AmbientLight_G = ↑ Light Color G
         option.AmbientLight_B = ↑ Light Color B
     
-        option.TORCH_AMOUNT = Torch Light Brightness
+        option.TORCH_AMOUNT = Block Light Brightness
         option.TORCH_R = ↑ Light Color R
         option.TORCH_G = ↑ Light Color G
         option.TORCH_B = ↑ Light Color B
@@ -219,6 +219,11 @@ screen.Ambient_light = Ambient Light
         option.FLASHLIGHT_BRIGHTNESS_MULT = (Flashlight) Brightness Multiplier
         option.FLASHLIGHT_SIZE = (Flashlight) Flashlight Size
         option.FLASHLIGHT_BRIGHTNESS_FALLOFF_MULT = (Flashlight) Range Falloff Multiplier
+
+        option.HANDHELD_LIGHTSOURCE_FLICKER_MODE = Light Flickering Mode
+            value.HANDHELD_LIGHTSOURCE_FLICKER_MODE.0 = §cOFF
+            value.HANDHELD_LIGHTSOURCE_FLICKER_MODE.1 = Candle Flame
+            value.HANDHELD_LIGHTSOURCE_FLICKER_MODE.2 = Failing Flashlight
 
  ###################################################### ↑↑↑ THIS SUBMENU'S DESCRIPTIONS
     
