@@ -276,22 +276,26 @@ screen.Resource_Pack_Support = Materials / Resource Pack Support
         option.Emissive_Brightness = Emission Multiplier
         option.Emissive_Curve = Emission Curve
         option.EMISSIVE_TYPE = Mode
-            value.EMISSIVE_TYPE.0 = No emission
-            value.EMISSIVE_TYPE.1 = Hardcoded only
-            value.EMISSIVE_TYPE.2 = Hardcoded + Lab Emission
-            value.EMISSIVE_TYPE.3 = Lab Emission only
+            value.EMISSIVE_TYPE.0 = §cOFF§r
+            value.EMISSIVE_TYPE.1 = Built-In only
+            value.EMISSIVE_TYPE.2 = Built-In + LabPBR Emission
+            value.EMISSIVE_TYPE.3 = LabPBR Emission only
 
     screen.Subsurface_Scattering = Sub-Surface Scattering
-        option.LabSSS_Curve = LabSSS Curve
+        option.LabSSS_Curve = LabPBR SSS Curve
         option.MISC_BLOCK_SSS = SSS for random blocks
         option.MOB_SSS = SSS for mobs
         option.Ambient_SSS = SSS from the sky
         option.ambientsss_brightness = Sky SSS Brightness
         option.SSS_TYPE = Mode
-            value.SSS_TYPE.0 = None
-            value.SSS_TYPE.1 = Hardcoded only
-            value.SSS_TYPE.2 = Hardcoded + LabSSS
-            value.SSS_TYPE.3 = LabSSS only
+            value.SSS_TYPE.0 = §cOFF§r
+            value.SSS_TYPE.1 = Built-In only
+            value.SSS_TYPE.2 = Built-In + LabPBR SSS
+            value.SSS_TYPE.3 = LabPBR SSS only
+
+        option.sss_density_multiplier = SSS Density Multiplier
+        option.sss_absorbance_multiplier = SSS Saturation Multiplier
+        option.SCREENSPACE_DIRECT_SSS_BLENDING = Screen-Space Direct SSS Blending
 
     screen.POM = Parallax Occlusion Mapping / POM
         option.POM = Parallax Occlusion Mapping / POM
@@ -348,7 +352,7 @@ screen.Resource_Pack_Support = Materials / Resource Pack Support
     option.SUN_SPECULAR_MULT.comment = Toggle the reflection of the sun or moon, or make them brighter. §bThis remains visible even if both environment and background reflections are disabled§r. §a⚠ PERFORMANCE COST:§r very low
 
     screen.Subsurface_Scattering.comment = §bⓘ What is this?§r Sub-surface scattering is what happens when you put a bright light on your hand, and it starts to glow. The sun actually does the same thing to plants, cloth, skin, and other things.
-    option.SSS_TYPE.comment = Configure how the sub-surface scattering is applied to the world.  §bHardcoded:§r The shader decides what gets it. §bLabSSS:§r The resourcepack decides what gets it. §a⚠ PERFORMANCE COST:§r very low
+    option.SSS_TYPE.comment = Configure how the sub-surface scattering is applied to the world.  §bBuilt-In:§r The shader decides what gets it. §bLabPBR SSS:§r The resourcepack decides what gets it. §a⚠ PERFORMANCE COST:§r very low
     option.MOB_SSS.comment = Toggle sub-surface scattering for mobs. players are included. §a⚠ PERFORMANCE COST:§r very low
     option.MISC_BLOCK_SSS.comment = Toggle sub-surface scattering for random blocks it may not fit. this is for grass and sand mostly. §a⚠ PERFORMANCE COST:§r very low
     option.Ambient_SSS.comment = §bⓘ What is this?§r sub-surface scattering from light coming from the sky, instead of the sun. §a⚠ PERFORMANCE COST:§r very low to medium; if SSAO is enabled this costs very little, but costs more if SSAO is off
@@ -356,7 +360,7 @@ screen.Resource_Pack_Support = Materials / Resource Pack Support
 
     screen.Emissives.comment = §bⓘ What is this?§r Emissiveness is just how much light something is letting off, or how much something is glowing.
     option.Emissive_Brightness.comment = Configure how bright the texture emission should be.
-    option.EMISSIVE_TYPE.comment = Configure how texture emission is applied to the world.  §bHardcoded:§r The shader decides what gets it. §bLabSSS:§r The resourcepack decides what gets it. §a⚠ PERFORMANCE COST:§r very low
+    option.EMISSIVE_TYPE.comment = Configure how texture emission is applied to the world.  §bBuilt-In:§r The shader decides what gets it. §bLabPBR SSS:§r The resourcepack decides what gets it. §a⚠ PERFORMANCE COST:§r very low
     option.Emissive_Curve.comment = This determines how quickly the emissive texture reaches its brightest point. 1.0 is linear.
 
     screen.POM.comment = Configure settings related to parallax occlusion mapping that uses information provided by a resourcepack.
@@ -675,7 +679,7 @@ screen.Clouds = Cloud Settings
     
     screen.DAILY_WEATHER = Daily Weather Presets
     option.USE_CUSTOM_DAILY_WEATHER_PROFILE = Daily Weather Mode
-        value.USE_CUSTOM_DAILY_WEATHER_PROFILE.0 = Hardcoded
+        value.USE_CUSTOM_DAILY_WEATHER_PROFILE.0 = Built-In
         value.USE_CUSTOM_DAILY_WEATHER_PROFILE.1 =§f↓§r Only Use Preset 1 §f↓§r
         value.USE_CUSTOM_DAILY_WEATHER_PROFILE.2 =§f↓§r Use Presets 1 to 2 §f↓§r
         value.USE_CUSTOM_DAILY_WEATHER_PROFILE.3 =§f↓§r Use Presets 1 to 3 §f↓§r
@@ -692,7 +696,7 @@ screen.Clouds = Cloud Settings
 
     screen.RAINY_WEATHER = Rainy Weather Presets
     option.USE_CUSTOM_DAILY_RAIN_PROFILE = Rainy Weather Mode
-        value.USE_CUSTOM_DAILY_RAIN_PROFILE.0 = Hardcoded
+        value.USE_CUSTOM_DAILY_RAIN_PROFILE.0 = Built-In
         value.USE_CUSTOM_DAILY_RAIN_PROFILE.1 =§f↓§r Only Use Preset 1 §f↓§r
         value.USE_CUSTOM_DAILY_RAIN_PROFILE.2 =§f↓§r Use Presets 1 to 2 §f↓§r
         value.USE_CUSTOM_DAILY_RAIN_PROFILE.3 =§f↓§r Use Presets 1 to 3 §f↓§r
@@ -820,7 +824,7 @@ screen.Clouds = Cloud Settings
 option.USE_CUSTOM_HOT_BIOME_RAIN_PROFILE = Hot Biome Rainy Weather Mode
 
     value.USE_CUSTOM_HOT_BIOME_RAIN_PROFILE.-1 = §cOFF
-    value.USE_CUSTOM_HOT_BIOME_RAIN_PROFILE.0 = Hardcoded
+    value.USE_CUSTOM_HOT_BIOME_RAIN_PROFILE.0 = Built-In
     value.USE_CUSTOM_HOT_BIOME_RAIN_PROFILE.1 = §f↓§r Only Use Preset 1 §f↓§r
     value.USE_CUSTOM_HOT_BIOME_RAIN_PROFILE.2 = §f↓§r Use Presets 1 to 2 §f↓§r
     value.USE_CUSTOM_HOT_BIOME_RAIN_PROFILE.3 = §f↓§r Use Presets 1 to 3 §f↓§r
@@ -834,7 +838,7 @@ option.USE_CUSTOM_HOT_BIOME_RAIN_PROFILE = Hot Biome Rainy Weather Mode
 option.USE_CUSTOM_COLD_BIOME_RAIN_PROFILE = Cold Biome Rainy Weather Mode
 
     value.USE_CUSTOM_COLD_BIOME_RAIN_PROFILE.-1 = §cOFF
-    value.USE_CUSTOM_COLD_BIOME_RAIN_PROFILE.0 = Hardcoded
+    value.USE_CUSTOM_COLD_BIOME_RAIN_PROFILE.0 = Built-In
     value.USE_CUSTOM_COLD_BIOME_RAIN_PROFILE.1 = §f↓§r Only Use Preset 1 §f↓§r
     value.USE_CUSTOM_COLD_BIOME_RAIN_PROFILE.2 = §f↓§r Use Presets 1 to 2 §f↓§r
     value.USE_CUSTOM_COLD_BIOME_RAIN_PROFILE.3 = §f↓§r Use Presets 1 to 3 §f↓§r
@@ -876,13 +880,13 @@ option.USE_CUSTOM_COLD_BIOME_RAIN_PROFILE = Cold Biome Rainy Weather Mode
 
     option.USE_CUSTOM_SWAMP_CATEGORY_PROFILE = Swamp Biome Mode
     value.USE_CUSTOM_SWAMP_CATEGORY_PROFILE.-1 = §cOFF
-    value.USE_CUSTOM_SWAMP_CATEGORY_PROFILE.0 = Hardcoded
+    value.USE_CUSTOM_SWAMP_CATEGORY_PROFILE.0 = Built-In
     value.USE_CUSTOM_SWAMP_CATEGORY_PROFILE.1 = §f↓§r Use Custom Preset §f↓§r
     screen.CUSTOM_SWAMP_CATEGORY_PROFILE_1 = Custom Preset
 
     option.USE_CUSTOM_JUNGLE_CATEGORY_PROFILE = Jungle Biome Mode
     value.USE_CUSTOM_JUNGLE_CATEGORY_PROFILE.-1 = §cOFF
-    value.USE_CUSTOM_JUNGLE_CATEGORY_PROFILE.0 = Hardcoded
+    value.USE_CUSTOM_JUNGLE_CATEGORY_PROFILE.0 = Built-In
     value.USE_CUSTOM_JUNGLE_CATEGORY_PROFILE.1 = §f↓§r Use Custom Preset §f↓§r
     screen.CUSTOM_JUNGLE_CATEGORY_PROFILE_1 = Custom Preset
 
