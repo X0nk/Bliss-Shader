@@ -198,6 +198,11 @@ vec2 R2_samples(float n){
 }
 
 
+float HG_phase(float x, float g){
+    float gg = g * g;
+    return (gg * -0.25 + 0.25) * pow(-2.0 * (g * x) + (gg + 1.0), -1.5) / 3.14;
+}
+
 
 void main() {
 /* RENDERTARGETS:4 */
@@ -335,10 +340,14 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	#ifdef ambientLight_only
 		suncol = vec3(0.0);
 	#endif
+	// the idea is to interpolate between 4 HG function calls with different G parameters
+	float SdotV = dot(WsunVec, normalize(mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz));
+	float backScatterPhase = HG_phase(-SdotV, 0.25) * 2.0;
+	vec4 phaseLevels = vec4(HG_phase(SdotV, 0.80), HG_phase(SdotV, 0.55), HG_phase(SdotV, 0.35), HG_phase(SdotV, 0.10));
 
 	float cloudPlaneDistance = 0.0;
-	vec4 volumetricClouds = GetVolumetricClouds(viewPos, vec2(noise, 1.0-noise), WsunVec, suncol*2.5, skyGroundCol/30.0, cloudPlaneDistance);
-	vec4 volumetricFog = GetVolumetricFog(viewPos,vec2(noise, 1.0-noise),  WsunVec,    suncol*2.5, skyGroundCol/30.0, averageSkyCol_Clouds*5.0, cloudPlaneDistance);
+	vec4 volumetricClouds = GetVolumetricClouds(viewPos, vec2(noise, 1.0-noise), WsunVec, suncol*2.5, skyGroundCol/30.0, cloudPlaneDistance, phaseLevels, backScatterPhase);
+	vec4 volumetricFog = GetVolumetricFog(viewPos,vec2(noise, 1.0-noise),  WsunVec,    suncol*2.5, skyGroundCol/30.0, averageSkyCol_Clouds*5.0, cloudPlaneDistance, phaseLevels, backScatterPhase);
 
 	sky = sky * volumetricClouds.a + volumetricClouds.rgb / 5.0;
 	sky = sky * volumetricFog.a + volumetricFog.rgb / 5.0;

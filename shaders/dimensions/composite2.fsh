@@ -555,6 +555,11 @@ float godrayTest( in vec3 viewPos, in vec3 lightDir, float noise, float vanillad
 	return godrays/samples;
 }
 
+float HG_phase(float x, float g){
+    float gg = g * g;
+    return (gg * -0.25 + 0.25) * pow(-2.0 * (g * x) + (gg + 1.0), -1.5) / 3.14;
+}
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -644,6 +649,12 @@ void main() {
     vec3 indirectLight_fog = indirectLightColor * skyLightLevelSmooth * ambient_brightness; 
     indirectLight_fog += vec3(1.0) * (0.02*nightVision + 0.005 * mix(MINIMUM_INDOOR_LIGHT, MINIMUM_OUTDOOR_LIGHT, skyLightLevelSmooth));
 	
+	// the idea is to interpolate between 4 HG function calls with different G parameters
+	float SdotV = dot(WsunVec, playerPos_normalized);
+	float backScatterPhase = HG_phase(-SdotV, 0.25) * 2.0;
+	vec4 phaseLevels = vec4(HG_phase(SdotV, 0.80), HG_phase(SdotV, 0.55), HG_phase(SdotV, 0.35), HG_phase(SdotV, 0.10));
+
+
 	float cloudPlaneDistance = 0.0;
 	
 	// #ifdef DISTANT_HORIZONS
@@ -661,7 +672,7 @@ void main() {
 	float passAbsorbance = 1.0;
 
 	#if defined OVERWORLD_SHADER
-		vec4 VolumetricClouds = GetVolumetricClouds(viewPos0, BN, WsunVec, directLightColor, indirectLightColor, cloudPlaneDistance);
+		vec4 VolumetricClouds = GetVolumetricClouds(viewPos0, BN, WsunVec, directLightColor, indirectLightColor, cloudPlaneDistance, phaseLevels, backScatterPhase);
 	  	
   		#if defined OVERWORLD_SHADER && defined CAVE_FOG && defined CAVE_FOG_DARKEN_SKY
   		  if (isEyeInWater == 0 && eyeAltitude < 1500){
@@ -670,8 +681,8 @@ void main() {
 			VolumetricClouds.a = mix(VolumetricClouds.a, 1.0, skyhole);
   		  }
   		#endif
-
-		vec4 VolumetricFog = GetVolumetricFog(viewPos0, vec2(noise_1), WsunVec, directLightColor, indirectLight_fog, indirectLight*skyLightLevelSmooth, cloudPlaneDistance);
+		
+		vec4 VolumetricFog = GetVolumetricFog(viewPos0, vec2(noise_1), WsunVec, directLightColor, indirectLight_fog, indirectLight*skyLightLevelSmooth, cloudPlaneDistance, phaseLevels, backScatterPhase);
 
 		#if defined LPV_VL_FOG_ILLUMINATION
 			VolumetricFog.a *= LPV_ILLUMINATION.a;
@@ -712,9 +723,9 @@ void main() {
 		gl_FragData[1] = vec4(0.0,0.0,0.0,1.0);	
 
 		#if defined OVERWORLD_SHADER
-			VolumetricClouds = GetVolumetricClouds(viewPos1, vec2(noise_1), WsunVec, directLightColor, indirectLightColor*skyLightLevelSmooth, cloudPlaneDistance);
+			VolumetricClouds = GetVolumetricClouds(viewPos1, vec2(noise_1), WsunVec, directLightColor, indirectLightColor, cloudPlaneDistance, phaseLevels, backScatterPhase);
 	
-			VolumetricFog = GetVolumetricFog(viewPos1, vec2(noise_1), WsunVec, directLightColor, indirectLight_fog, indirectLight, cloudPlaneDistance);
+			VolumetricFog = GetVolumetricFog(viewPos1, vec2(noise_1), WsunVec, directLightColor, indirectLight_fog, indirectLight, cloudPlaneDistance, phaseLevels, backScatterPhase);
 
 			VolumetricFog = vec4(VolumetricClouds.rgb*VolumetricFog.a + VolumetricFog.rgb, VolumetricFog.a*VolumetricClouds.a);
 		#endif

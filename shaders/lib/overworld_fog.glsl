@@ -199,6 +199,9 @@ vec4 GetVolumetricFog(
 	// #if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
 	// 	,in vec3 LPV_ILLUMINATION
 	// #endif
+
+	,in vec4 phaseLevels 
+	,in float backScatterPhase
 ){
 	#ifndef TOGGLE_VL_FOG
 		return vec4(0.0,0.0,0.0,1.0);
@@ -318,12 +321,17 @@ vec4 GetVolumetricFog(
 
 		/// GLOBAL FOG
 		float fogDensity = kill*getFogDensities(rayProgress, 0.0);
-		float fogVolumeCoeff = exp(-fogDensity*dd*rayLength);
-		vec3 fogLighting = LightColor*sunPhase*shadows + AmbientColor*skyPhase;
 
-		// #if defined LPV_VL_FOG_ILLUMINATION && defined EXCLUDE_WRITE_TO_LUT
-		// 	color += LPV_ILLUMINATION;
-		// #endif
+
+		float fogVolumeCoeff = exp(-fogDensity*dd*rayLength); 
+
+
+		float beerCoef = -4.0;
+		float powder = min(exp(beerCoef*exp(beerCoef*fogDensity)) * 3.5, 1);
+		float backscatter = powder * backScatterPhase;
+		float forwardscatter = mix(mix(phaseLevels.x, phaseLevels.y, powder), mix(phaseLevels.z, phaseLevels.w, powder), powder);
+		vec3 fogLighting = (6.28 * LightColor * (forwardscatter + backscatter))*shadows + AmbientColor*skyPhase;
+		// vec3 fogLighting = LightColor*sunPhase*shadows + AmbientColor*skyPhase;
 		
 		#if defined LIGHTNING_FLASH && defined LIGHTNINGFLASH_VL
 			fogLighting += lightningFlash;
@@ -343,7 +351,11 @@ vec4 GetVolumetricFog(
 		#endif
 
 		float localFogVolumeCoeff = exp(-localEffectDensity*dd*localRayLength);
-		vec3 localFogLighting = localFogColor_lightCol*shadows*sunPhase + localFogColor_ambientCol*skyPhase;
+		float localpowder = min(exp(beerCoef*exp(beerCoef*localEffectDensity)) * 3.5, 1);
+		float localbackscatter = localpowder * backScatterPhase;
+		float localforwardscatter = mix(mix(phaseLevels.x, phaseLevels.y, localpowder), mix(phaseLevels.z, phaseLevels.w, localpowder), localpowder);
+		vec3 localFogLighting = (6.28 * localFogColor_lightCol * (localforwardscatter + localbackscatter))*shadows + localFogColor_ambientCol*skyPhase;
+		// vec3 localFogLighting = localFogColor_lightCol*shadows*sunPhase + localFogColor_ambientCol*skyPhase;
 		
 		color += (localFogLighting - localFogLighting * localFogVolumeCoeff) * localAbsorbance;
 		

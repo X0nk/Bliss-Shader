@@ -540,6 +540,8 @@ vec4 GetVolumetricClouds(
 	vec3 indirectLightCol,
 
 	inout float cloudPlaneDistance
+	,in vec4 phaseLevels 
+	,in float backScatterPhase
 ){	
 	#if !(defined CloudLayer0 || defined CloudLayer1 || defined CloudLayer2)
 		return vec4(0.0,0.0,0.0,1.0);
@@ -622,8 +624,8 @@ vec4 GetVolumetricClouds(
 
 	///------- do color stuff outside of the raymarcher loop
 	// the idea is to interpolate between 4 HG function calls with different G parameters
-	float backScatterPhase = phaseCloud(-SdotV, 0.25) * 2.0;
-	vec4 phaseLevels = vec4(phaseCloud(SdotV, 0.80), phaseCloud(SdotV, 0.55), phaseCloud(SdotV, 0.35), phaseCloud(SdotV, 0.10));
+	// float backScatterPhase = phaseCloud(-SdotV, 0.25) * 2.0;
+	// vec4 phaseLevels = vec4(phaseCloud(SdotV, 0.80), phaseCloud(SdotV, 0.55), phaseCloud(SdotV, 0.35), phaseCloud(SdotV, 0.10));
 
 	// backScatterPhase = SdotV;
 
