@@ -200,12 +200,19 @@ void doCameraGridLines(inout vec3 color, in vec2 texcoord){
     if(linearDistance > 0.0) color = vec3(COLOR_KEY_R,COLOR_KEY_G,COLOR_KEY_B);
 
   #else
-      // composite
-  	  #ifdef USING_LOD_MOD
-  	  	if(min(texelFetch(LOD_DEPTHTEX0,ivec2(gl_FragCoord.xy),0).r,texelFetch(depthtex0,ivec2(gl_FragCoord.xy),0).r) >= 1.0) color = vec3(COLOR_KEY_R,COLOR_KEY_G,COLOR_KEY_B);
+      #ifdef COLOR_KEY_INVERT
+  	    #ifdef USING_LOD_MOD
+  	    	if(min(texelFetch(LOD_DEPTHTEX0,ivec2(gl_FragCoord.xy),0).r,texelFetch(depthtex0,ivec2(gl_FragCoord.xy),0).r) < 1.0) color = vec3(COLOR_KEY_R,COLOR_KEY_G,COLOR_KEY_B);
+        #else
+          if(texelFetch(depthtex0,ivec2(gl_FragCoord.xy),0).r < 1.0) color = vec3(COLOR_KEY_R,COLOR_KEY_G,COLOR_KEY_B);
+  	    #endif
       #else
-        if(texelFetch(depthtex0,ivec2(gl_FragCoord.xy),0).r >= 1.0) color = vec3(COLOR_KEY_R,COLOR_KEY_G,COLOR_KEY_B);
-  	  #endif
+  	    #ifdef USING_LOD_MOD
+  	    	if(min(texelFetch(LOD_DEPTHTEX0,ivec2(gl_FragCoord.xy),0).r,texelFetch(depthtex0,ivec2(gl_FragCoord.xy),0).r) >= 1.0) color = vec3(COLOR_KEY_R,COLOR_KEY_G,COLOR_KEY_B);
+        #else
+          if(texelFetch(depthtex0,ivec2(gl_FragCoord.xy),0).r >= 1.0) color = vec3(COLOR_KEY_R,COLOR_KEY_G,COLOR_KEY_B);
+  	    #endif
+      #endif
   #endif
   }
 #endif
