@@ -228,7 +228,11 @@ void main() {
 
 	viewVector = normalize(tbnMatrix * viewVector);
 
-	color = vec4(gl_Color.rgb, 1.0);
+	#if defined ENTITIES
+		color = gl_Color;
+	#else
+		color = vec4(gl_Color.rgb, 1.0);
+	#endif
 
 	#ifdef OVERWORLD_SHADER
 		lightCol.rgb = texelFetch(colortex4,ivec2(6,37),0).rgb;
