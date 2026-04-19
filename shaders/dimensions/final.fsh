@@ -34,7 +34,6 @@ uniform mat4 gbufferPreviousModelView;
 #include "/lib/color_transforms.glsl"
 #include "/lib/color_dither.glsl"
 #include "/lib/res_params.glsl"
-
 #include "/lib/Shadow_Params.glsl"
 
 uniform float near;
@@ -169,6 +168,8 @@ void doCameraGridLines(inout vec3 color, in vec2 texcoord){
 #ifdef COLOR_KEYING
   void doColorKeying(inout vec3 color){
     // get distance from the camera in meters
+    
+  #if COLOR_KEY_RANGE > -1
   	#ifdef USING_LOD_MOD
   		float linearDistance = length(mat3(gbufferModelViewInverse)*toScreenSpace_DH(gl_FragCoord.xy*texelSize, texelFetch(depthtex0,ivec2(gl_FragCoord.xy),0).r, texelFetch(LOD_DEPTHTEX0,ivec2(gl_FragCoord.xy),0).r));
     #else
@@ -197,6 +198,15 @@ void doCameraGridLines(inout vec3 color, in vec2 texcoord){
 
     // composite
     if(linearDistance > 0.0) color = vec3(COLOR_KEY_R,COLOR_KEY_G,COLOR_KEY_B);
+
+  #else
+      // composite
+  	  #ifdef USING_LOD_MOD
+  	  	if(min(texelFetch(LOD_DEPTHTEX0,ivec2(gl_FragCoord.xy),0).r,texelFetch(depthtex0,ivec2(gl_FragCoord.xy),0).r) >= 1.0) color = vec3(COLOR_KEY_R,COLOR_KEY_G,COLOR_KEY_B);
+      #else
+        if(texelFetch(depthtex0,ivec2(gl_FragCoord.xy),0).r >= 1.0) color = vec3(COLOR_KEY_R,COLOR_KEY_G,COLOR_KEY_B);
+  	  #endif
+  #endif
   }
 #endif
 

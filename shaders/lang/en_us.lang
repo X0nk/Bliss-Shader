@@ -588,6 +588,7 @@ screen.Camera_Settings = Camera Settings
     option.COLOR_KEY_B = Blue Amount
     option.COLOR_KEY_INVERT = Invert Colored Area
     option.COLOR_KEY_RANGE = Distance From Camera
+        value.COLOR_KEY_RANGE.-1 = §bⓘ Infinite Distance
         suffix.COLOR_KEY_RANGE=m
     option.COLOR_KEY_WIDTH = Width of Colored Area
         value.COLOR_KEY_WIDTH.0 = §bⓘ Start At Set Distance
