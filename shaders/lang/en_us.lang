@@ -580,6 +580,18 @@ screen.Camera_Settings = Camera Settings
     option.CINEMATIC_BORDER_COVERAGE_HORIZONTAL = Cinematic Border §bⓘ Horizontal
         suffix.CINEMATIC_BORDER_COVERAGE_HORIZONTAL = % Screen Coverage
         value.CINEMATIC_BORDER_COVERAGE_HORIZONTAL.0 = §cOFF
+    
+    screen.COLOR_KEYING_SETTINGS = Color Key / Green-Screen
+    option.COLOR_KEYING = Color Key / Green-Screen
+    option.COLOR_KEY_R = Red Amount
+    option.COLOR_KEY_G = Green Amount
+    option.COLOR_KEY_B = Blue Amount
+    option.COLOR_KEY_INVERT = Invert Colored Area
+    option.COLOR_KEY_RANGE = Distance From Camera
+        suffix.COLOR_KEY_RANGE=m
+    option.COLOR_KEY_WIDTH = Width of Colored Area
+        value.COLOR_KEY_WIDTH.0 = §bⓘ Start At Set Distance
+        suffix.COLOR_KEY_WIDTH=m
 
  ###################################################### ↑↑↑ THIS SUBMENU'S DESCRIPTIONS
 

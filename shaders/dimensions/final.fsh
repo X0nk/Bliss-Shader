@@ -76,6 +76,8 @@ float convertHandDepth_2(in float depth, bool hand) {
 
 #include "/lib/util.glsl"
 #include "/lib/projections.glsl"
+#include "/lib/macro_lod_mod.glsl"
+#include "/lib/DistantHorizons_projections.glsl"
 
 #include "/lib/gameplay_effects.glsl"
 
@@ -164,6 +166,38 @@ void doCameraGridLines(inout vec3 color, in vec2 texcoord){
   color = mix(color, vec3(1.0),  gridLines);
 }
 
+void doColorKeying(inout vec3 color){
+  // get distance from the camera in meters
+	#ifdef USING_LOD_MOD
+		float linearDistance = length(mat3(gbufferModelViewInverse)*toScreenSpace_DH(gl_FragCoord.xy*texelSize, texelFetch(depthtex0,ivec2(gl_FragCoord.xy),0).r, texelFetch(LOD_DEPTHTEX0,ivec2(gl_FragCoord.xy),0).r));
+  #else
+    float linearDistance = length(mat3(gbufferModelViewInverse)*toScreenSpace(vec3(gl_FragCoord.xy*texelSize, texelFetch(depthtex0,ivec2(gl_FragCoord.xy),0).r)));
+	#endif
+
+  // set range(s)
+  linearDistance = linearDistance - COLOR_KEY_RANGE;
+  
+  // configure width n shiz
+  #if COLOR_KEY_WIDTH > 0
+    linearDistance /= COLOR_KEY_WIDTH*0.5;
+    #ifdef COLOR_KEY_INVERT
+      linearDistance = -1.0 + abs(linearDistance);
+    #else
+      linearDistance = 1.0 - abs(linearDistance);
+    #endif
+    linearDistance *= COLOR_KEY_WIDTH*0.5;
+  #else
+    #ifdef COLOR_KEY_INVERT
+      linearDistance = 1.0 - linearDistance;
+    #else
+      linearDistance = -1.0 + linearDistance;
+    #endif
+  #endif
+  
+  // composite
+  if(linearDistance > 0.0) color = vec3(COLOR_KEY_R,COLOR_KEY_G,COLOR_KEY_B);
+}
+
 void main() {
   
   float noise = interleaved_gradientNoise();
@@ -231,6 +265,10 @@ void main() {
   #endif
   #if DEBUG_VIEW == debug_DEPTHTEX1
     COLOR = vec3(ld(texture(depthtex1, texcoord*RENDER_SCALE).r));
+  #endif
+
+  #ifdef COLOR_KEYING
+    doColorKeying(COLOR);
   #endif
 
   gl_FragColor.rgb = COLOR;
