@@ -1354,6 +1354,10 @@ void main() {
 		// RTAO and/or SSGI
 		#if indirect_effect == SSRT_AO || indirect_effect == SSRT_AO_GI
 			if(!hand) Indirect_lighting = ApplySSRT(Indirect_lighting, blockLightColor, MinimumLightColor, viewPos, normal, vec3(bnoise, noise_2), lightmap.y, isGrass, isDHrange);
+			
+			#ifdef SKY_CONTRIBUTION_IN_SSRT
+				Indirect_lighting += mainHandCol + offHandCol;
+			#endif
 		#endif
 
 
