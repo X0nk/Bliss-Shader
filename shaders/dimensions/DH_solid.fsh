@@ -230,7 +230,7 @@ void main() {
 	gl_FragData[1].a = 0.0;
     
     vec4 specularData = vec4(0.0,0.0,0.0,0.0);
-    vec4 otherData = vec4(normals.xyz * 0.5 + 0.5,1.0);
+    vec4 otherData = vec4(normals.xyz * 0.5 + 0.5,0.0);
 
     #if EMISSIVE_TYPE == 0
 		specularData.a = 0.0;

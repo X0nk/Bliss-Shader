@@ -106,7 +106,7 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
     #endif
     
     vec4 specularData = vec4(0.0,0.0,subSurfaceScattering,0.0);
-    vec4 otherData = vec4(normal.xyz * 0.5 + 0.5,1.0);
+    vec4 otherData = vec4(normal.xyz * 0.5 + 0.5,0.0);
 
     specularData = clamp(specularData,0.0,1.0);
     otherData = clamp(otherData,0.0,1.0);
