@@ -26,7 +26,6 @@ uniform sampler2D colortex6; // Noise
 uniform sampler2D colortex7; // Noise
 uniform sampler2D colortex8; // Noise
 uniform sampler2D colortex14; // Noise
-uniform sampler2D colortex10; // Noise
 uniform sampler2D colortex12; // Noise
 uniform sampler2D colortex13; // Noise
 uniform int isEyeInWater;
@@ -372,7 +371,7 @@ float ld(float dist) {
 
 #include "/lib/sky_gradient.glsl"
 
-/* RENDERTARGETS:3,14,12,10*/
+/* RENDERTARGETS:3,14,12*/
 
 void main() {
 
@@ -455,10 +454,6 @@ void main() {
 
 		gl_FragData[1].xy = SSAO_SSS;
 	#endif
-
-	/*------------- VOLUMETRICS BEHIND TRANSLUCENTS PASS-THROUGH -------------*/
-	// colortex10 is the history buffer used in reprojection of volumetrics, i can just hijack that.
-	gl_FragData[3] = texture(colortex10, texcoord);
 
 #ifdef OVERWORLD_SHADER
 if (z < 1.0){
