@@ -12,6 +12,7 @@ uniform sampler2D depthtex1;
 uniform mat4 gbufferModelViewInverse;
 uniform float far;
 uniform int frameCounter;
+uniform vec3 OVERDRAW_PREVENTION_SCALE;
 
 vec3 toLinear(vec3 sRGB){
 	return sRGB * (sRGB * (sRGB * 0.305306011 + 0.682171111) + 0.012522878);
@@ -40,12 +41,14 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		#else
 			float maxOverdrawDistance = OVERDRAW_MAX_DISTANCE;
 		#endif
+		
+        float velocity = clamp(1.0 - length(OVERDRAW_PREVENTION_SCALE),1e-6,1.0);
+        if(length(playerPos) < clamp(far-16*4, 16, maxOverdrawDistance)*velocity || texture(depthtex1, gl_FragCoord.xy*texelSize).x < 1.0){ discard; return;}
+    #else
+		if(texture(depthtex1, gl_FragCoord.xy*texelSize).x < 1.0){ discard; return;}
+	#endif
 
-        if(length(playerPos) < clamp(far-16*4, 16, maxOverdrawDistance) || texture(depthtex1, gl_FragCoord.xy*texelSize).x < 1.0){ discard; return;}
-    #endif
-
-	
-	vec3 Albedo = toLinear(gcolor.rgb)  ;
+	vec3 Albedo = toLinear(gcolor.rgb);
 
 	gl_FragData[0] = vec4(Albedo * Emissive_Brightness * 0.1, gcolor.a);
 }

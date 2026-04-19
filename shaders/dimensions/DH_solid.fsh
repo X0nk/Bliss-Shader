@@ -18,6 +18,8 @@ uniform float nightVision;
 uniform mat4 gbufferModelView;
 uniform mat4 gbufferModelViewInverse;
 
+uniform vec3 OVERDRAW_PREVENTION_SCALE;
+
 vec3 viewToWorld(vec3 viewPosition) {
     vec4 pos;
     pos.xyz = viewPosition;
@@ -166,7 +168,9 @@ void main() {
 			float maxOverdrawDistance = OVERDRAW_MAX_DISTANCE;
 		#endif
 
-        if(clamp(1.0-length(localPos.xyz)/clamp(far - 32.0,32.0,maxOverdrawDistance),0.0,1.0) > 0.0 ){
+        float velocity = clamp(1.0 - length(OVERDRAW_PREVENTION_SCALE),1e-6,1.0);
+
+        if(clamp(1.0-length(localPos.xyz)/(clamp(far - 32.0,32.0,maxOverdrawDistance)*velocity),0.0,1.0) > 0.0 ){
             discard;
             return;
         }
