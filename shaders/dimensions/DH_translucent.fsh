@@ -246,6 +246,7 @@ vec3 applyBump(mat3 tbnMatrix, vec3 bump, float puddle_values){
 	return normalize(bump*tbnMatrix);
 }
 
+
 #define FORWARD_SPECULAR
 #define FORWARD_SSR_QUALITY 30 // [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100 200 300 400 500]
 #define FORWARD_BACKGROUND_REFLECTION
@@ -274,8 +275,9 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		#else
 			float maxOverdrawDistance = OVERDRAW_MAX_DISTANCE;
 		#endif
+        float velocity = clamp(1.0 - length(OVERDRAW_PREVENTION_SCALE),1e-6,1.0);
 
-        if(length(playerPos) < clamp(far-16*4, 16, maxOverdrawDistance) ){ discard; return;}
+        if(length(playerPos) < clamp(far-16*4, 16, maxOverdrawDistance)*velocity ){ discard; return;}
     #endif
 
 	vec3 waterNormals = worldSpaceNormals;
@@ -434,7 +436,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		// gl_FragData[0].rgb = normals*0.1;
     
     #ifdef DH_OVERDRAW_PREVENTION
-        float velocity = clamp(1.0 - length(OVERDRAW_PREVENTION_SCALE),1e-6,1.0);
         float distancefade = min(max(1.0 - length(playerPos)/(clamp(far-16*4, 16, maxOverdrawDistance)*velocity),0.0)*5,1.0);
 
         if(texture(depthtex0, gl_FragCoord.xy*texelSize).x < 1.0 || distancefade > 0.0){
