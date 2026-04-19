@@ -257,6 +257,10 @@ void main() {
     COLOR *= doVignette(texcoord, noise);
   #endif
   
+  #ifdef COLOR_KEYING
+    doColorKeying(COLOR);
+  #endif
+
   #if CINEMATIC_BORDER_COVERAGE_VERTICAL > 0 || CINEMATIC_BORDER_COVERAGE_HORIZONTAL > 0
     doCinematicBorders(COLOR, texcoord);
   #endif
@@ -284,10 +288,6 @@ void main() {
   #endif
   #if DEBUG_VIEW == debug_DEPTHTEX1
     COLOR = vec3(ld(texture(depthtex1, texcoord*RENDER_SCALE).r));
-  #endif
-
-  #ifdef COLOR_KEYING
-    doColorKeying(COLOR);
   #endif
 
   gl_FragColor.rgb = COLOR;
