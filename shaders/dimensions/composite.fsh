@@ -71,11 +71,19 @@ uniform float near;
 uniform float dhFarPlane;
 uniform float dhNearPlane;
 
+
+#include "/lib/sky_gradient.glsl"
+#include "/lib/Shadow_Params.glsl"
 #include "/lib/Shadows.glsl"
 
 #define ffstep(x,y) clamp((y - x) * 1e35,0.0,1.0)
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
+
+#include "/lib/DistantHorizons_projections.glsl"
+
+#include "/lib/PhotonGTAO.glsl"
+
 vec3 toScreenSpace(vec3 p) {
 	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
     vec3 p3 = p * 2. - 1.;
@@ -128,7 +136,7 @@ vec2 decodeVec2(float a){
 }
 
 float IGN(){
-	vec2 coord = gl_FragCoord.xy + 5.588238 * float(frameCounter%64);
+	vec2 coord = gl_FragCoord.xy + 5.588238 * float(frameCounter%64) ;
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y)) ;
 	return noise;
 }
@@ -172,13 +180,6 @@ vec2 R2_samples(int n){
 	return fract(alpha * n);
 }
 
-
-
-
-
-
-
-
 vec3 viewToWorld(vec3 viewPos) {
     vec4 pos;
     pos.xyz = viewPos;
@@ -187,10 +188,6 @@ vec3 viewToWorld(vec3 viewPos) {
     return pos.xyz;
 }
 
-#include "/lib/Shadow_Params.glsl"
-
-
-const float PI = 3.141592653589793238462643383279502884197169;
 vec2 SpiralSample(
 	int samples, int totalSamples, float rotation, float Xi
 ){
@@ -222,17 +219,13 @@ vec2 CleanSample(
     float spiralShape = variedSamples / (totalSamples + variance);
 
 	float shape = 2.26;
-    float theta = variedSamples * (PI * shape);
+    float theta = variedSamples * (pi * shape);
 
 	float x =  cos(theta) * spiralShape;
 	float y =  sin(theta) * spiralShape;
 
     return vec2(x, y);
 }
-
-
-
-#include "/lib/DistantHorizons_projections.glsl"
 
 float DH_ld(float dist) {
     return (2.0 * dhNearPlane) / (dhFarPlane + dhNearPlane - dist * (dhFarPlane - dhNearPlane));
@@ -333,9 +326,7 @@ vec2 SSAO(
 				
 				#ifdef Ambient_SSS
 					sss += clamp(-dot(normalize(viewPosDiff), flatnormal) - occlusion/n,0.0,1.0) * 0.25 + (normalize(mat3(gbufferModelViewInverse) * -viewPosDiff).y - occlusion/n) * threshHold;
-					// sss += (normalize(mat3(gbufferModelViewInverse) * -viewPosDiff).y - (occlusion/n)*0.5) * threshHold;
 				#endif
-
 			}
 		}
 	}
@@ -369,7 +360,6 @@ float ld(float dist) {
 }
 
 
-#include "/lib/sky_gradient.glsl"
 
 /* RENDERTARGETS:3,14,12*/
 
@@ -407,12 +397,14 @@ void main() {
 	// bool opaqueParticles = abs(dataUnpacked1.w-0.8) < 0.01;
 
 	float z = convertHandDepth_2(texelFetch(depthtex1,ivec2(gl_FragCoord.xy),0).x, hand);
+
+	bool isLOD = z >= 1.0;
 	
-	if(z >= 1.0) normal = viewToWorld(normal);
+	if(isLOD) normal = viewToWorld(normal);
 	
 	#ifdef USING_LOD_MOD
 		float DH_depth1 = texelFetch(LOD_DEPTHTEX1,ivec2(gl_FragCoord.xy),0).x;
-		float swappedDepth = z >= 1.0 ? DH_depth1 : z;
+		float swappedDepth =isLOD ? DH_depth1 : z;
 	#else
 		float DH_depth1 = 1.0;
 		float swappedDepth = z;
@@ -444,16 +436,29 @@ void main() {
 
 
 	#if indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ
-		if(z >= 1.0) FlatNormals = normal;
-
-		vec2 SSAO_SSS = SSAO(viewPos, worldToView(normal), worldToView(FlatNormals), hand, noise, z >= 1.0);
+		if(isLOD) FlatNormals = normal;
 		
-		SSAO_SSS.y = clamp(SSAO_SSS.y + 0.5 * lightmap.y*lightmap.y,0.0,1.0);
+		vec2 SSAO_SSS = vec2(1.0,0.0);
 
-		if(swappedDepth >= 1.0) SSAO_SSS = vec2(1.0,0.0);
+		if(swappedDepth < 1.0){
+			SSAO_SSS = SSAO(viewPos, worldToView(normal), worldToView(FlatNormals), hand, noise, isLOD);
+			SSAO_SSS.y = clamp(SSAO_SSS.y + 0.5 * lightmap.y*lightmap.y,0.0,1.0);
+		}
+
+		gl_FragData[1].xy = SSAO_SSS;
+
+	#elif indirect_effect == GTAO
+		vec2 SSAO_SSS = vec2(1.0,0.0);
+		
+		if(swappedDepth < 1.0){
+			vec2 r2 = fract(R2_samples(frameCounter*8%40000) + blueNoise(gl_FragCoord.xy).rg);
+			float getGTAO = !hand ? ambient_occlusion(toClipSpace3_DH(viewPos,  isLOD) , viewPos, worldToView(normal), r2, isLOD) : 1.0;
+			SSAO_SSS = vec2(getGTAO, 0.0);
+		}
 
 		gl_FragData[1].xy = SSAO_SSS;
 	#endif
+
 
 #ifdef OVERWORLD_SHADER
 if (z < 1.0){
@@ -481,6 +486,8 @@ if (z < 1.0){
 
 			vec3 projectedShadowPosition = mat3(shadowModelView) * feetPlayerPos  + shadowModelView[3].xyz;
 			projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
+			
+			// float shadowMapBounds = shadowMapBounds(projectedShadowPosition);
 			
 			//apply distortion
 			#ifdef DISTORT_SHADOWMAP
@@ -534,7 +541,7 @@ if (z < 1.0){
 				if (blockerCount >= 0.9){
 					avgBlockerDepth /= blockerCount;
 					float ssample = max(projectedShadowPosition.z - avgBlockerDepth,0.0)*1500.0;
-					gl_FragData[0].r = clamp(ssample, scales.x, scales.y)/(scales.y)*(mult-minshadowfilt)+minshadowfilt;
+					gl_FragData[0].r = clamp(ssample, scales.x, scales.y)/scales.y*(mult-minshadowfilt)+minshadowfilt;
 				}
 			}
 		#endif

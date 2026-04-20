@@ -449,7 +449,6 @@ void Emission(
 }
 
 #include "/lib/indirect_lighting_effects.glsl"
-#include "/lib/PhotonGTAO.glsl"
 
 void doEdgeAwareBlur(
 	sampler2D tex1, sampler2D tex2, sampler2D depth,
@@ -490,6 +489,8 @@ void doEdgeAwareBlur(
 
 		#if indirect_effect == SSAO_FILTERED
 			ssao_RESULT += texelFetch(tex2, UV + offset + UV_NOISE, 0).rg*edgeDiff;
+		#elif indirect_effect == GTAO
+			ssao_RESULT.x += texelFetch(tex2, UV + offset + UV_NOISE, 0).r*edgeDiff;
 		#endif
 
 		edgeSum += edgeDiff;
@@ -499,7 +500,10 @@ void doEdgeAwareBlur(
 	
 	#if indirect_effect == SSAO_FILTERED
 		ambientEffects = ssao_RESULT/edgeSum * 0.8 + 0.2 * texture(tex2, texelSize*gl_FragCoord.xy).rg;
+	#elif indirect_effect == GTAO
+		ambientEffects.x = ssao_RESULT.x/edgeSum * 0.8 + 0.2 * texture(tex2, texelSize*gl_FragCoord.xy).r;
 	#endif
+	
 	#if indirect_effect == SSAO_HQ
 		ambientEffects = texture(tex2, texelSize*gl_FragCoord.xy).rg;
 	#endif
@@ -1337,17 +1341,11 @@ void main() {
 			// AO = vec3( min(vanillaAO_curve, SSAO_curve) );
 			AO = vec3( SSAO_curve );
 			Indirect_lighting *= AO;
-		#endif
+		
+		#elif indirect_effect == GTAO
 
-		// // GTAO... this is so dumb but whatevverrr
-		#if indirect_effect == GTAO
 			float vanillaAO_curve = pow(1.0 - vanilla_AO*vanilla_AO,5.0);
-
-			vec2 r2 = fract(R2_samples((frameCounter%40000) + frameCounter*2) + bnoise);
-			float getGTAO = !hand ? ambient_occlusion(vec3(texcoord/RENDER_SCALE-taaJitter*texelSize*0.5, z), viewPos, worldToView(slopednormal), r2) : 1.0;
-			
-			AO = vec3(min(vanillaAO_curve,getGTAO));
-			
+			AO = vec3(min(vanillaAO_curve,SSAO_SSS.x));
 			Indirect_lighting *= AO;
 		#endif
 
