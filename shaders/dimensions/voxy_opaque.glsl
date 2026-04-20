@@ -72,6 +72,7 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
 	#endif
 
     vec2 lightMaps = parameters.lightMap.xy;
+    lightMaps.y = clamp(lightMaps.y*1.04,0.0,1.0);
     vec4 data1 = encode(worldToView(normal), lightMaps);
     
     Albedo = clamp(Albedo,0.0,1.0);
