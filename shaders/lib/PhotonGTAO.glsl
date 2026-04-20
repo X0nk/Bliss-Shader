@@ -112,21 +112,33 @@ float calculate_maximum_horizon_angle(
 	vec3 screen_pos,
 	vec3 view_pos,
 	float dither
+	,bool isLOD
 ) {
 	const float step_size = GTAO_RADIUS * rcp(float(GTAO_HORIZON_STEPS));
 
 	float max_cos_theta = -1.0;
 
-	vec2 ray_step = (view_to_screen_space(view_pos + view_slice_dir * step_size, true) - screen_pos).xy;
+	#ifdef USING_LOD_MOD
+		vec2 ray_step = (toClipSpace3_DH(view_pos + view_slice_dir * step_size, isLOD) - screen_pos).xy + taaJitter*texelSize*0.5;
+	#else
+		vec2 ray_step = (view_to_screen_space(view_pos + view_slice_dir * step_size, true) - screen_pos).xy + taaJitter*texelSize*0.5;
+	#endif
+
 	vec2 ray_pos = screen_pos.xy + ray_step * (dither + max_of(view_pixel_size) * rcp_length(ray_step));
 
-
 	for (int i = 0; i < GTAO_HORIZON_STEPS; ++i, ray_pos += ray_step) {
-		float depth = texelFetch(depthtex1, ivec2(clamp(ray_pos,0.0,1.0) * view_res * taau_render_scale - 0.5), 0).x;
-
-		if (depth == 1.0 || depth < hand_depth || depth == screen_pos.z) continue;
-
-		vec3 offset = screen_to_view_space(vec3(ray_pos, depth), true) - view_pos;
+		#ifdef USING_LOD_MOD
+			float depth = texelFetch(depthtex1, ivec2(clamp(ray_pos,0.0,1.0) * view_res * taau_render_scale - 0.5), 0).x;
+			float depth2 = texelFetch(LOD_DEPTHTEX1, ivec2(clamp(ray_pos,0.0,1.0) * view_res * taau_render_scale - 0.5), 0).x;
+			if ((depth == 1.0 || depth < hand_depth || depth == screen_pos.z) && (depth2 == 1.0 || depth2 < hand_depth || depth2 == screen_pos.z)) continue;
+		
+			vec3 offset = toScreenSpace_DH(ray_pos - taaJitter*texelSize*0.5, depth, depth2) - view_pos;
+		#else
+			float depth = texelFetch(depthtex1, ivec2(clamp(ray_pos,0.0,1.0) * view_res * taau_render_scale - 0.5), 0).x;
+			if (depth == 1.0 || depth < hand_depth || depth == screen_pos.z) continue;
+		
+			vec3 offset = screen_to_view_space(vec3(ray_pos - taaJitter*texelSize*0.5, depth), true) - view_pos;
+		#endif
 
 		float len_sq = length_squared(offset);
 		float norm = inversesqrt(len_sq);
@@ -142,7 +154,7 @@ float calculate_maximum_horizon_angle(
 	return fast_acos(clamp(max_cos_theta, -1.0, 1.0));
 }
 
-float ambient_occlusion(vec3 screen_pos, vec3 view_pos, vec3 view_normal, vec2 dither) {
+float ambient_occlusion(vec3 screen_pos, vec3 view_pos, vec3 view_normal, vec2 dither, bool isLOD) {
 	float ao = 0.0;
 
 	// Construct local working space
@@ -170,8 +182,8 @@ float ambient_occlusion(vec3 screen_pos, vec3 view_pos, vec3 view_normal, vec2 d
 		float gamma = sgn_gamma * fast_acos(cos_gamma);
 
 		vec2 max_horizon_angles;
-		max_horizon_angles.x = calculate_maximum_horizon_angle(-view_slice_dir, viewer_dir, screen_pos, view_pos, dither.y);
-		max_horizon_angles.y = calculate_maximum_horizon_angle( view_slice_dir, viewer_dir, screen_pos, view_pos, dither.y);
+		max_horizon_angles.x = calculate_maximum_horizon_angle(-view_slice_dir, viewer_dir, screen_pos, view_pos, dither.y, isLOD);
+		max_horizon_angles.y = calculate_maximum_horizon_angle( view_slice_dir, viewer_dir, screen_pos, view_pos, dither.y, isLOD);
 
 		max_horizon_angles = gamma + clamp(vec2(-1.0, 1.0) * max_horizon_angles - gamma, -half_pi, half_pi) ;
 
