@@ -1409,7 +1409,7 @@ void main() {
 		#if defined DEFERRED_SPECULAR	
 			vec3 specularNoises = vec3(vec2(blueNoise(), ig_noise), ig_noise);
     		// vec3 specularNormal = normal;
-			FINAL_COLOR = specularReflections(viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, normal, SpecularTex.r, SpecularTex.g, albedo, FINAL_COLOR, DirectLightColor*shadowColor, lightmap.y, hand, mainHandPos, mainHandCol, offHandPos, offHandCol);
+			FINAL_COLOR = specularReflections(viewPos, feetPlayerPos_normalized, WsunVec, specularNoises, normal, SpecularTex.r, SpecularTex.g, albedo, FINAL_COLOR, DirectLightColor*shadowColor, lightmap.y, hand, normalize(mainHandPos), mainHandCol, normalize(offHandPos), offHandCol);
 		#endif
 
 		gl_FragData[0].rgb = FINAL_COLOR;
