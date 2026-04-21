@@ -17,8 +17,7 @@
         "noisetex",
         "colortex4",
         "colortex5",
-        "vxDepthTexOpaque",
-        "depthtex1"
+        "vxDepthTexOpaque"
     ],
     "uniforms": [
         "vxRenderDistance",
