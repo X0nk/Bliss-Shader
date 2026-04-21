@@ -277,7 +277,7 @@ float luma(vec3 color) {
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
-#if defined PARTICLES_OPAQUE
+#if defined PARTICLES_OPAQUE && defined DEFERRED_OPAQUE_PARTICLES
 	/* RENDERTARGETS:1,8 */
 	layout(location = 0) out vec4 DEFERRED_DATA;
 	layout(location = 1) out vec4 SPECULAR_DATA;
