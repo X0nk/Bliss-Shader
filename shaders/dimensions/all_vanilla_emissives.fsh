@@ -20,17 +20,19 @@ vec3 toLinear(vec3 sRGB){
 
 /* RENDERTARGETS:2 */
 
+layout(location = 0) out vec4 FORWARD_RENDERED_COLOR;
+
 void main() {
 
 	vec4 Albedo = texture(texture, texcoord);
 	Albedo.rgb = toLinear(Albedo.rgb * color.rgb);
 
     #if defined BEACON_BEAM
-	    gl_FragData[0] = vec4(Albedo.rgb*Albedo.rgb * 0.1 * 5.0 * Emissive_Brightness, Albedo.a*color.a);
+	    FORWARD_RENDERED_COLOR = vec4(Albedo.rgb*Albedo.rgb * 0.1 * 5.0 * Emissive_Brightness, Albedo.a*color.a);
     #endif
 
     #if defined LIGHTNING_AND_DRAGON_DEATH_BEAMS
-        gl_FragData[0] = vec4(Albedo.rgb * pow(1.0-pow(1.0-color.a,2),2) * 5.0 * 0.1, color.a);
+        FORWARD_RENDERED_COLOR = vec4(Albedo.rgb * pow(1.0-pow(1.0-color.a,2),2) * 5.0 * 0.1, color.a);
     #endif
 
     #if defined SPIDER_EYES || defined GLOWING 
@@ -44,7 +46,7 @@ void main() {
             vec3 emissiveColor = Albedo.rgb * Albedo.a * Emissive_Brightness;
         #endif
         
-	    gl_FragData[0] = vec4(emissiveColor*0.1, 0.000001);
+	    FORWARD_RENDERED_COLOR = vec4(emissiveColor*0.1, 0.000001);
     #endif
 
     #if defined ENCHANT_GLINT
@@ -56,6 +58,6 @@ void main() {
             vec3 GlintColor = Albedo.rgb * color.a * 0.2 * Emissive_Brightness * ENCHANT_GLINT_BRIGHTNESS;
         #endif
 
-	    gl_FragData[0] = vec4(GlintColor*0.1, 0.000001);
+	    FORWARD_RENDERED_COLOR = vec4(GlintColor*0.1, 0.000001);
     #endif
 }
