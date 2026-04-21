@@ -854,7 +854,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0] = vec4(lmtexcoord.z*0.1,lmtexcoord.w*0.1,0.0,1.0);
 	#endif
 
-	gl_FragData[3] = vec4(0.0,0.0,0.0, clamp(encodeVec2(lightmap.x, lightmap.y),0.0,1.0));
+	// gl_FragData[3] = vec4(0.0,0.0,0.0, clamp(encodeVec2(lightmap.x, lightmap.y),0.0,1.0));
+	gl_FragData[3] = vec4(0.0,0.0,clamp(lightmap.xy,0.0,1.0));
 
 	#if defined ENTITIES && defined IS_IRIS
 		if(NAMETAG > 0) {

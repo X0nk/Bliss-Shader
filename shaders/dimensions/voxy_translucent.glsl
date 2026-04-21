@@ -327,6 +327,4 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
 	#if DEBUG_VIEW == debug_ALBEDO
 		FORWARD_RENDERED_COLOR.rgba = unalteredAlbedo;
 	#endif
-    
-    // if(texelFetch(depthtex0, ivec2(gl_FragCoord.xy),0).r < 1.0) FORWARD_RENDERED_COLOR.a = 0.0;
 }

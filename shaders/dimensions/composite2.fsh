@@ -619,7 +619,8 @@ void main() {
 	vec3 totEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
 	vec3 scatterCoef = dirtAmount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / 3.14;
 
-	vec2 lightmap = decodeVec2(texelFetch(colortex14,texcoord_cast,0).a);
+	// vec2 lightmap = decodeVec2(texelFetch(colortex14,texcoord_cast,0).a);
+	vec2 lightmap = texelFetch(colortex14,texcoord_cast,0).ba;
 	lightmap.xy = min(max(lightmap.xy - 0.05,0.0)*1.06,1.0);
 
 	#if !defined OVERWORLD_SHADER

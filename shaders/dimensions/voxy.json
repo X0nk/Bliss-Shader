@@ -8,7 +8,7 @@
     "version": 1,
     "excludeLodsFromVanillaDepth": true,
     "opaqueDrawBuffers": [1,8],
-    "translucentDrawBuffers": [2,7],
+    "translucentDrawBuffers": [14,7],
     "blending": { 
         -1: "off", 
         0: "SRC_ALPHA ONE_MINUS_SRC_ALPHA ONE_MINUS_DST_ALPHA ONE"

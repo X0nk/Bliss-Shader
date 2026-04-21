@@ -12,8 +12,8 @@ const int colortex10Format = RGBA16F;				// history buffer for volumetric fog an
 const int colortex11Format = RGBA16; 				// unchanged translucents albedo, alpha and tangent normals
 const int colortex12Format = RGBA16F;				// DISTANT HORIZONS + VANILLA MIXED DEPTHs
 const int colortex13Format = RGBA16F;				// low res VL (composite5->composite15)
-const int colortex14Format = RGBA16;				// alpha = lightmaps from translucents -> (composite) .xy = SSAO/SS -> (composite2)
-const int colortex15Format = RGBA8;					// empty
+const int colortex14Format = RGBA16F;				// alpha = lightmaps from translucents -> (composite) .xy = SSAO/SS -> (composite2)
+const int colortex15Format = RGBA8;
 */
 
 #ifdef SCREENSHOT_MODE
