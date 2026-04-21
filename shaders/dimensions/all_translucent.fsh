@@ -15,11 +15,7 @@
 
 #undef FLASHLIGHT_BOUNCED_INDIRECT
 
-// #if defined END_SHADER || defined NETHER_SHADER
-// 	#undef IS_LPV_ENABLED
-// #endif
-
-#ifdef IS_LPV_ENABLED
+#if defined IS_LPV_ENABLED && !defined COLORWHEEL
 	#extension GL_ARB_shader_image_load_store: enable
 	#extension GL_ARB_shading_language_packing: enable
 #endif
@@ -445,7 +441,20 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 /////////////////////////////////// ALBEDO /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-	gl_FragData[0] = texture(texture, lmtexcoord.xy, mipmapBias) * color;
+	vec2 lightmap = lmtexcoord.zw;
+	
+	#ifdef COLORWHEEL
+		vec4 col = texture(texture, lmtexcoord.xy, mipmapBias);
+    	float ao;
+    	vec4 overlayColor;
+
+    	clrwl_computeFragment(col, col, lightmap, ao, overlayColor);
+		
+		gl_FragData[0] = col;
+
+	#else
+		gl_FragData[0] = texture(texture, lmtexcoord.xy, mipmapBias) * color;
+	#endif
 
 	float UnchangedAlpha = gl_FragData[0].a;
 
@@ -579,7 +588,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 //////////////////////////////// DIFFUSE LIGHTING //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-	vec2 lightmap = lmtexcoord.zw;
 
 	// lightmap.y = 1.0;
 	

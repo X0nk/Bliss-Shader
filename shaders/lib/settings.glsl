@@ -740,6 +740,14 @@
 	#define VOXY_SCREENSPACE_REFLECTIONS
 #endif
 
+/////////////////////////////////////
+// ----- COLORWHEEL SETTINGS ----- //
+/////////////////////////////////////
+#ifdef HAS_COLORWHEEL
+#define COLORWHEEL_SHADOWMAP
+#define COLORWHEEL_OIT
+#endif
+
 ///////////////////////////////////////////
 // ----- FLOODFILL [LPV] SETTINGS ----- //
 ///////////////////////////////////////////
@@ -931,4 +939,10 @@
 #ifdef SCALE_MIPMAP_WITH_RESOLUTION
 #endif
 #if HANDHELD_LIGHTSOURCE_FLICKER_MODE > 0 
+#endif
+#ifdef COLORWHEEL_SHADOWMAP
+#endif
+#ifdef COLORWHEEL_OIT
+#endif
+#ifdef DEFERRED_OPAQUE_PARTICLES
 #endif

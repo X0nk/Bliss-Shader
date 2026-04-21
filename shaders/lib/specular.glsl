@@ -33,9 +33,11 @@ vec2 R2_Sample(int n){
 	return fract(alpha * n);
 }
 
-float fma(float a,float b,float c){
- return a * b + c;
-}
+#if !defined COLORWHEEL // built in function on newer ogl version
+	float fma(float a,float b,float c){
+ 		return a * b + c;
+	}
+#endif
 
 vec3 SampleVNDFGGX(
     vec3 viewerDirection, // Direction pointing towards the viewer, oriented such that +Z corresponds to the surface normal

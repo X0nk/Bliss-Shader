@@ -269,6 +269,10 @@ void main() {
 		
 	vec3 FragCoord = gl_FragCoord.xyz;
 
+	#ifdef WORLD
+		vec2 PackLightmaps = vec2(lmtexcoord.z, lmtexcoord.w);
+	#endif
+
 	#ifdef HAND
 		convertHandDepth(FragCoord.z);
 	#endif
@@ -377,10 +381,11 @@ void main() {
 	//////////////////////////////// 				//////////////////////////////// 
 	float textureLOD = bias();
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD);
-
-	if(Albedo.a < alphaTestRef){discard; return;}
-
-	Albedo *= color;
+	
+	#ifndef COLORWHEEL
+		Albedo *= color;
+		if(Albedo.a < alphaTestRef){discard; return;}
+	#endif
 
 	if(LIGHTNING > 0) Albedo = vec4(1.0);
 
@@ -515,6 +520,13 @@ void main() {
 		normal = applyBump(tbnMatrix, NormalTex.xyz);
 	#endif
 	
+	#ifdef COLORWHEEL
+    	float ao;
+    	vec4 overlayColor;
+
+    	clrwl_computeFragment(Albedo, Albedo, PackLightmaps, ao, overlayColor);
+	#endif
+
 	//////////////////////////////// 				////////////////////////////////
 	////////////////////////////////	SPECULAR	////////////////////////////////
 	//////////////////////////////// 				//////////////////////////////// 
@@ -579,11 +591,6 @@ void main() {
 	#endif
 
 	#ifdef WORLD
-		vec2 PackLightmaps = vec2(lmtexcoord.z, lmtexcoord.w);
-		
-		// special curve to give more precision on high/low values of the gradient. this curve will be inverted after sampling and decoding.
-		// PackLightmaps = pow(1.0-pow(1.0-PackLightmaps,vec2(0.5)),vec2(0.5));
-		
 		#if defined WORLD && !defined HAND && !defined ENTITIES
 			// some dither to lightmaps to reduce banding.
 			PackLightmaps = clamp( PackLightmaps + PackLightmaps * (interleaved_gradientNoise()-0.5)*0.005,0,1);

@@ -6,11 +6,7 @@
 #define ANTIALIASING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 
-// #if defined END_SHADER || defined NETHER_SHADER
-// 	#undef IS_LPV_ENABLED
-// #endif
-
-#ifdef IS_LPV_ENABLED
+#if defined IS_LPV_ENABLED && !defined COLORWHEEL
 	#extension GL_ARB_shader_image_load_store: enable
 	#extension GL_ARB_shading_language_packing: enable
 #endif

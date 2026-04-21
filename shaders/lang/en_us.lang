@@ -1111,6 +1111,8 @@ screen.MOD_SETTINGS = Supported Mods
 
     screen.PHYSICS_MOD_OCEAN = Physics Mod §c⚠ READ DESCRIPTION§r
 
+    screen.COLORWHEEL_SETTINGS = Colorwheel Settings §cⓘ IRIS REQUIRED§r
+
  ###################################################### ↑↑↑ THIS SUBMENU'S DESCRIPTIONS
 
     option.TOGGLE_VL_FOG.comment = one big button to just turn all the fog off.
