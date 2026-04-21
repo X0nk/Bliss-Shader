@@ -228,6 +228,10 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
     // colors
     vec4 Albedo = parameters.sampledColour * parameters.tinting;
 
+	#if DEBUG_VIEW == debug_ALBEDO
+		vec4 unalteredAlbedo = Albedo;
+	#endif
+	
     if(isWater) {
         Albedo = vec4(0.0);
         FORWARD_RENDERED_COLOR.a = 0.0;
@@ -318,5 +322,9 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
     #if DEBUG_VIEW == debug_NORMALS
 		FORWARD_RENDERED_COLOR.rgb = normal.xyz * 0.1;
 		FORWARD_RENDERED_COLOR.a = 1.0;
+	#endif
+    
+	#if DEBUG_VIEW == debug_ALBEDO
+		FORWARD_RENDERED_COLOR.rgba = unalteredAlbedo;
 	#endif
 }

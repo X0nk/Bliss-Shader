@@ -805,22 +805,23 @@
 #define INTEL_HANDHELDLIGHT_CRASH_FIX
 #define debug_OFF 0
 #define debug_SHADOWMAP 1
-#define debug_NORMALS 2
-#define debug_SPECULAR 3
-#define debug_INDIRECT 4
-#define debug_DIRECT 5
-#define debug_VIEW_POSITION 6
-#define debug_DH_WATER_BLENDING 7
-#define debug_FILTERED_STUFF 8
-#define debug_DEPTHTEX0 9
-#define debug_DEPTHTEX1 10
-#define debug_MATERIAL_SSS 11
-#define debug_MATERIAL_EMISSION 12
-#define debug_LIGHTMAPS 13
-#define debug_FORWARD_RENDERING 14
-#define debug_FORWARD_COLOR_TINT 15
-#define debug_DEFERRED_RENDERING 16
-#define DEBUG_VIEW debug_OFF // [debug_OFF debug_SHADOWMAP debug_NORMALS debug_SPECULAR debug_INDIRECT debug_DIRECT debug_VIEW_POSITION debug_DH_WATER_BLENDING debug_FILTERED_STUFF debug_DEPTHTEX0 debug_DEPTHTEX1 debug_MATERIAL_SSS debug_MATERIAL_EMISSION debug_LIGHTMAPS debug_FORWARD_RENDERING debug_FORWARD_COLOR_TINT debug_DEFERRED_RENDERING]
+#define debug_ALBEDO 2
+#define debug_NORMALS 3
+#define debug_SPECULAR 4
+#define debug_INDIRECT 5
+#define debug_DIRECT 6
+#define debug_VIEW_POSITION 7
+#define debug_DH_WATER_BLENDING 8
+#define debug_FILTERED_STUFF 9
+#define debug_DEPTHTEX0 10
+#define debug_DEPTHTEX1 11
+#define debug_MATERIAL_SSS 12
+#define debug_MATERIAL_EMISSION 13
+#define debug_LIGHTMAPS 14
+#define debug_FORWARD_RENDERING 15
+#define debug_FORWARD_COLOR_TINT 16
+#define debug_DEFERRED_RENDERING 17
+#define DEBUG_VIEW debug_OFF // [debug_OFF debug_SHADOWMAP debug_ALBEDO debug_NORMALS debug_SPECULAR debug_INDIRECT debug_DIRECT debug_VIEW_POSITION debug_DH_WATER_BLENDING debug_FILTERED_STUFF debug_DEPTHTEX0 debug_DEPTHTEX1 debug_MATERIAL_SSS debug_MATERIAL_EMISSION debug_LIGHTMAPS debug_FORWARD_RENDERING debug_FORWARD_COLOR_TINT debug_DEFERRED_RENDERING]
 
 // #define THE_ORB
 #ifdef THE_ORB

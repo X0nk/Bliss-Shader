@@ -394,6 +394,9 @@ float luma(vec3 color) {
 
 		Albedo.rgb = toLinear(Albedo.rgb);
 
+		#if DEBUG_VIEW == debug_ALBEDO
+			vec4 unalteredAlbedo = Albedo;
+		#endif
 		// if(dot(Albedo.rgb, vec3(0.33333)) < 1.0/255.0) { discard; return; }
 		// if(Albedo.a < 0.01 ) { discard; return; }
 
@@ -424,6 +427,10 @@ float luma(vec3 color) {
 		#endif
 
 		vec3 Albedo = toLinear(TEXTURE.rgb);
+
+		#if DEBUG_VIEW == debug_ALBEDO
+			vec4 unalteredAlbedo = vec4(Albedo,TEXTURE.a);
+		#endif
 
 		vec2 lightmap = clamp(lmtexcoord.zw,0.0,1.0);
 
@@ -554,7 +561,9 @@ float luma(vec3 color) {
 			#if DEBUG_VIEW == debug_LIGHTMAPS
 				gl_FragData[0].rgb = vec3(lmtexcoord.z,lmtexcoord.w,0.0)*0.1;
 			#endif
-
+			#if DEBUG_VIEW == debug_ALBEDO
+				gl_FragData[0] = unalteredAlbedo;
+			#endif
 			gl_FragData[0].rgb *= 0.1;
 		#endif
 	#endif

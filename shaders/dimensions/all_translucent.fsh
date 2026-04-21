@@ -456,6 +456,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0] = texture(texture, lmtexcoord.xy, mipmapBias) * color;
 	#endif
 
+	#if DEBUG_VIEW == debug_ALBEDO
+		vec4 unalteredAlbedo = vec4(toLinear(gl_FragData[0].rgb),gl_FragData[0].a);
+	#endif
+	
 	float UnchangedAlpha = gl_FragData[0].a;
 
 	#ifdef WhiteWorld
@@ -821,6 +825,9 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	#if DEBUG_VIEW == debug_DH_WATER_BLENDING
 		if(gl_FragCoord.x*texelSize.x < 0.47) gl_FragData[0] = vec4(0.0);
+	#endif
+	#if DEBUG_VIEW == debug_ALBEDO
+		gl_FragData[0] = unalteredAlbedo;
 	#endif
 	#if DEBUG_VIEW == debug_NORMALS
 		gl_FragData[0].rgb = worldSpaceNormal.xyz * 0.1;

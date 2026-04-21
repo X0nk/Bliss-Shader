@@ -1481,6 +1481,9 @@ void main() {
 		if(dot(feetPlayerPos_normalized, unsigned_WsunVec) > 0.999 ) gl_FragData[0].rgb = vec3(10,10,0);
 		if(dot(feetPlayerPos_normalized, -WmoonVec) > 0.999 ) gl_FragData[0].rgb = vec3(1,1,10);
 	#endif
+	#if DEBUG_VIEW == debug_ALBEDO
+		gl_FragData[0].rgb = albedo;
+	#endif
 	#if DEBUG_VIEW == debug_NORMALS
 		if(swappedDepth >= 1.0) Direct_lighting = vec3(1.0);
 		gl_FragData[0].rgb = (hideGUI == 1 ? normal : -normal);// * vec3(0,1,0);

@@ -300,6 +300,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
     gl_FragData[0] = gcolor;
     // float UnchangedAlpha = gl_FragData[0].a;
 
+	#if DEBUG_VIEW == debug_ALBEDO
+		vec4 unalteredAlbedo = vec4(toLinear(gl_FragData[0].rgb),gl_FragData[0].a);
+	#endif
+	
 	#ifdef WhiteWorld
 		gl_FragData[0].rgb = vec3(1.0);
 		gl_FragData[0].a = 1.0;
@@ -441,17 +445,26 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
         if(texture(depthtex0, gl_FragCoord.xy*texelSize).x < 1.0 || distancefade > 0.0){
             gl_FragData[0].a = 0.0;
             material = 0.0;
+			#if DEBUG_VIEW == debug_ALBEDO
+				unalteredAlbedo.a = 0.0;
+			#endif
         }
 	#else
         if(texture(depthtex0, gl_FragCoord.xy*texelSize).x < 1.0){
             gl_FragData[0].a = 0.0;
             material = 0.0;
+			#if DEBUG_VIEW == debug_ALBEDO
+				unalteredAlbedo.a = 0.0;
+			#endif
         }
     #endif
 	
     #if DEBUG_VIEW == debug_DH_WATER_BLENDING
         if(gl_FragCoord.x*texelSize.x > 0.53) gl_FragData[0] = vec4(0.0);
     #endif
+	#if DEBUG_VIEW == debug_ALBEDO
+		gl_FragData[0] = unalteredAlbedo;
+	#endif
    	// #if DEBUG_VIEW == debug_MATERIAL_SSS
 	// 	Albedo.rgb = vec3(0.1);
 	// 	if(SSSAMOUNT > 0.0) Albedo.rgb = vec3(0.0,SSSAMOUNT,0.0);
