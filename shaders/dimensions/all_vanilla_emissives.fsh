@@ -4,6 +4,7 @@
 varying vec4 color;
 varying vec2 texcoord;
 uniform sampler2D texture;
+uniform float alphaTestRef;
 
 
 //faster and actually more precise than pow 2.2
@@ -34,7 +35,7 @@ void main() {
 
     #if defined SPIDER_EYES || defined GLOWING 
 
-        if(Albedo.a < 1.0/255.0 || dot(Albedo.rgb, vec3(0.33333)) < 1.0/255.0) { discard; return; }
+        if(Albedo.a < alphaTestRef || dot(Albedo.rgb, vec3(0.33333)) < 1.0/255.0) { discard; return; }
 
         #ifdef DISABLE_VANILLA_EMISSIVES
             vec3 emissiveColor = vec3(0.0);
