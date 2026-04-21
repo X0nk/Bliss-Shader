@@ -136,6 +136,7 @@ uniform int heldItemId;
 uniform int heldItemId2;
 uniform int heldBlockLightValue;
 uniform int heldBlockLightValue2;
+uniform vec3 OVERDRAW_PREVENTION_SCALE;
 
 #ifdef IS_LPV_ENABLED
 
@@ -808,8 +809,9 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		#else
 			float maxOverdrawDistance = OVERDRAW_MAX_DISTANCE;
 		#endif
+        float velocity = clamp(1.0 - length(OVERDRAW_PREVENTION_SCALE),1e-6,1.0);
 
-		bool WATER = texture(colortex7, gl_FragCoord.xy*texelSize).a > 0.0 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance) && texture(depthtex1, gl_FragCoord.xy*texelSize).x >= 1.0;
+		bool WATER = texture(colortex7, gl_FragCoord.xy*texelSize).a > 0.0 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance)*velocity && texture(depthtex1, gl_FragCoord.xy*texelSize).x >= 1.0;
 		// bool WATER =  length(feetPlayerPos) > clamp(far-16*4, 17.5, maxOverdrawDistance) && texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x >= 1.0 || texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x < gl_FragCoord.z;
 		// float depth = texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x;
 		// bool WATER = (abs(depth - texelFetch(dhDepthTex0, ivec2(gl_FragCoord.xy), 0).x) > 0.23 && length(feetPlayerPos) > clamp(far-16*4, 16, maxOverdrawDistance)) || (length(feetPlayerPos) > clamp(far-16*4, 20, maxOverdrawDistance) && depth >= 1.0);// && texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x < 1.0;
