@@ -1340,7 +1340,7 @@ void main() {
 
 		#if indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ
 			// float vanillaAO_curve = pow(1.0 - vanilla_AO*vanilla_AO,5.0);
-			// float SSAO_curve = pow(SSAO_SSS.x,4.0);
+			float SSAO_curve = pow(SSAO_SSS.x,4.0);
 			// use the min of vanilla ao so they dont overdarken eachother
 			// AO = vec3( min(vanillaAO_curve, SSAO_curve) );
 			AO = vec3( SSAO_curve );
