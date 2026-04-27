@@ -1219,7 +1219,12 @@ void main() {
 				float SkylightDir = indirectNormal.y;
 
 				if(isGrass || opaqueParticles) SkylightDir = 1.0;
-				SkylightDir = clamp(SkylightDir*0.7+0.3, 0.0, pow(1-pow(1-SSAO_SSS.x, 0.5),4.0) * 0.7 + 0.3);
+
+				#if indirect_effect == VANILLA_AO
+					SkylightDir = clamp(SkylightDir*0.7+0.3, 0.0, pow(1-pow(vanilla_AO, 2),4) * 0.7 + 0.3);
+				#else
+					SkylightDir = clamp(SkylightDir*0.7+0.3, 0.0, pow(1-pow(1-SSAO_SSS.x, 0.5),4.0) * 0.7 + 0.3);
+				#endif
 
 				skylight = mix(0.08 + 0.92*(1.0-lightmap.y), 1.0, SkylightDir);
 
@@ -1334,9 +1339,8 @@ void main() {
 		#endif
 
 		#if indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ
-			float vanillaAO_curve = pow(1.0 - vanilla_AO*vanilla_AO,5.0);
-			float SSAO_curve = pow(SSAO_SSS.x,4.0);
-
+			// float vanillaAO_curve = pow(1.0 - vanilla_AO*vanilla_AO,5.0);
+			// float SSAO_curve = pow(SSAO_SSS.x,4.0);
 			// use the min of vanilla ao so they dont overdarken eachother
 			// AO = vec3( min(vanillaAO_curve, SSAO_curve) );
 			AO = vec3( SSAO_curve );
