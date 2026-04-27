@@ -383,8 +383,8 @@ void main() {
 	vec4 Albedo = texture2D_POMSwitch(texture, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM, textureLOD);
 	
 	#ifndef COLORWHEEL
-		Albedo *= color;
 		if(Albedo.a < alphaTestRef){discard; return;}
+		Albedo *= color;
 	#endif
 
 	if(LIGHTNING > 0) Albedo = vec4(1.0);
