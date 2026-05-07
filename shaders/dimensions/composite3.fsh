@@ -588,7 +588,7 @@ void main() {
     vec3 samplesky = skyFromTex(mix(testPos, vec3(testPos.x,-1.0,testPos.z),  density), colortex4).rgb/1200.0;
 
 
-    if(!isSky) color.rgb = color.rgb * density + (samplesky - samplesky * density);
+    if(!isSky && isEyeInWater == 0) color.rgb = color.rgb * density + (samplesky - samplesky * density);
     // color.rgb = samplesky;
   #endif
   
