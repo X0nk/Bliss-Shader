@@ -182,6 +182,7 @@ float convertHandDepth_2(in float depth, bool hand) {
 #include "/lib/diffuse_lighting.glsl"
 #include "/lib/end_fog.glsl"
 #include "/lib/DistantHorizons_projections.glsl"
+#include "/lib/water_absorbance_effects.glsl"
 
 float ld(float dist) {
     return (2.0 * near) / (far + near - dist * (far - near));
@@ -912,8 +913,8 @@ void main() {
 			vec3 viewPos = toScreenSpace(vec3(texcoord/RENDER_SCALE - taaJitter*texelSize*0.5, z));
 		#endif
 		
-		vec3 feetPlayerPos = mat3(gbufferModelViewInverse) * viewPos;
-		vec3 feetPlayerPos_normalized = normalize(feetPlayerPos);
+		vec3 feetPlayerPos  = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
+		vec3 feetPlayerPos_normalized = normalize(feetPlayerPos );
 
 		#ifdef POM
 			#ifdef Horrible_slope_normals
@@ -971,95 +972,23 @@ void main() {
 	////////////////////////////////	UNDER WATER SHADING		////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////
 
-
  	if ((isEyeInWater == 0 && isWater) || (isEyeInWater == 1 && !isWater)){
-		
-		feetPlayerPos += gbufferModelViewInverse[3].xyz;
-		
+
 		#ifdef USING_LOD_MOD
 			vec3 playerPos0 = mat3(gbufferModelViewInverse) *  toScreenSpace_DH(texcoord/RENDER_SCALE-taaJitter*texelSize*0.5, z0, DH_depth0) + gbufferModelViewInverse[3].xyz;
 		#else
 			vec3 playerPos0 = mat3(gbufferModelViewInverse) * toScreenSpace(vec3(texcoord/RENDER_SCALE-taaJitter*texelSize*0.5,z0)) + gbufferModelViewInverse[3].xyz;
 		#endif
 
-		float Vdiff = distance(feetPlayerPos, playerPos0);
-		float estimatedDepth = Vdiff* abs(feetPlayerPos_normalized.y);// assuming water plane
-		
-
-		// vec3 waterNormal = clamp(normalize(cross(dFdx(playerPos0), dFdy(playerPos0))),-1,1); // it uses depth that has POM written to it.	
-		// vec3 absPlayerPosNorm = abs(feetPlayerPos_normalized);
-		// estimatedDepth = mix(estimatedDepth, Vdiff*absPlayerPosNorm.y, max(waterNormal.y,0));
-		// estimatedDepth = mix(estimatedDepth, Vdiff*absPlayerPosNorm.y, max(-waterNormal.y,0));
-		// estimatedDepth = mix(estimatedDepth, Vdiff*absPlayerPosNorm.z, max(waterNormal.z,0));
-		// estimatedDepth = mix(estimatedDepth, Vdiff*absPlayerPosNorm.z, max(-waterNormal.z,0));
-		// estimatedDepth = mix(estimatedDepth, Vdiff*absPlayerPosNorm.x, max(waterNormal.x,0));
-		// estimatedDepth = mix(estimatedDepth, Vdiff*absPlayerPosNorm.x, max(-waterNormal.x,0));
-
-		// force the absorbance to start way closer to the water surface in low light areas, so the water is visible in caves and such.
-		#if MINIMUM_WATER_ABSORBANCE > -1
-			float minimumAbsorbance = MINIMUM_WATER_ABSORBANCE*0.1;
-		#else
-			float minimumAbsorbance	= (1.0 - lightLeakFix);
-		#endif
-		
-		Absorbtion = exp(-totEpsilon * max(Vdiff, minimumAbsorbance));
-
-		// things to note about sunlight in water
-		// sunlight gets absorbed by water on the way down to the floor, and on the way back up to your eye. im gonna ingore the latter part lol
-		// based on the angle of the sun, sunlight will travel through more/less water to reach the same spot. scale absorbtion depth accordingly
-		vec3 sunlightAbsorbtion = exp(-totEpsilon * (estimatedDepth/abs(WsunVec.y)));
-		float percievedWaterDepth = estimatedDepth;
-
-		
-		if (isEyeInWater == 1){
-			
-			estimatedDepth = 1.0;
-
-			// viewerWaterDepth = max(0.9-lightmap.y,0.0)*3.0;
-	  		float distanceFromWaterSurface = -(feetPlayerPos.y + (cameraPosition.y - waterEnteredAltitude));//max(-(feetPlayerPos.y + (cameraPosition.y - waterEnteredAltitude)),0.0) ;
-			
-			percievedWaterDepth = distanceFromWaterSurface;
-
-			distanceFromWaterSurface = max(distanceFromWaterSurface,0.0);
-			
-			Absorbtion = exp(-totEpsilon * distanceFromWaterSurface);
-			
-			sunlightAbsorbtion = exp(-totEpsilon * (distanceFromWaterSurface/abs(WsunVec.y)));
-			
-		} else {
-			// use hardcoded gradient position if the water surface normal does not face upwards.
-			// vec3 waterNormal = clamp(normalize(cross(dFdx(playerPos0), dFdy(playerPos0))),0,1); // it uses depth that has POM written to it.
-			// percievedWaterDepth = mix( -(feetPlayerPos.y + cameraPosition.y),percievedWaterDepth, waterNormal.y);
-			
-			// artifacts too obvious unfortunately, go back to hardcoded
-			percievedWaterDepth = -(feetPlayerPos.y + cameraPosition.y);
-		}
-
-		DirectLightColor *= sunlightAbsorbtion;
-
-		if( nightVision > 0.0 ) Absorbtion += exp(-totEpsilon * 25.0) * nightVision;
-
-		// apply caustics to the lighting, and make sure they dont look weird
-		vec3 pos = feetPlayerPos + cameraPosition;
-		vec2 causticPos = pos.xz;
-		causticPos = mix(causticPos, pos.xz, max(FlatNormals.y,0));
-		// causticPos = mix(causticPos, pos.xy, max(-FlatNormals.y,0));
-		causticPos = mix(causticPos, pos.zy, max(FlatNormals.x,0));
-		causticPos = mix(causticPos, pos.xy, max(-FlatNormals.z,0));
-		// causticPos = mix(causticPos, pos.xy, max(FlatNormals.x,0));
-		// causticPos = mix(causticPos, pos.xy, max(-FlatNormals.x,0));
-
-
-		DirectLightColor *= pow(mix(1.0, waterCaustics(feetPlayerPos + cameraPosition, WsunVec, percievedWaterDepth)*WATER_CAUSTICS_BRIGHTNESS, clamp(estimatedDepth,0,1)), WATER_CAUSTICS_POWER);
-	
+		underWaterAbsorbance_outsidePOV(
+    		playerPos0, feetPlayerPos , feetPlayerPos_normalized,
+    		WsunVec, // (normalize(cross(dFdx(feetPlayerPos ), dFdy(feetPlayerPos ))).y > 0.01 ? 1.0 : 0.0),
+    		totEpsilon, Absorbtion, DirectLightColor, lightLeakFix
+		);
 	}
-		
-		// albedo *= waterCaustics(feetPlayerPos + cameraPosition, WsunVec);
 
 	if (swappedDepth < 1.0) {
 
-		// idk why this do
-		feetPlayerPos += gbufferModelViewInverse[3].xyz;
 	////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////	    FILTER STUFF      //////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////

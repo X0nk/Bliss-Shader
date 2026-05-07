@@ -227,6 +227,7 @@ uniform sampler2D colortex4;
 #ifdef END_SHADER
 uniform sampler2D colortex4;
 	#include "/lib/end_fog.glsl"
+	// #include "/lib/end_volumetrics.glsl"
 #endif
 
 #define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
@@ -350,8 +351,8 @@ vec4 waterVolumetrics_insidePOV(vec3 rayStart, vec3 rayEnd, float rayLength, vec
 		float bubble = exp2(-10.0 * clamp(1.0 - length(d*dVWorld) / 16.0, 0.0,1.0));
 		float caustics = max(max(waterCaustics(progressW, WsunVec, -(progressW.y - waterEnteredAltitude)), phase*0.5) * mix(0.5, 1.5, bubble), phase);
 
-		vec3 sunAbsorbance = exp(-waterCoefs * (distanceFromWaterSurface/abs(WsunVec.y)));
-		vec3 WaterAbsorbance = exp(-waterCoefs * (distanceFromWaterSurface + thing));
+		vec3 sunAbsorbance = exp(-waterCoefs * (distanceFromWaterSurface/abs(WsunVec.y)) * WATER_DEPTH_FREQUENCY_DIRECTLIGHT);
+		vec3 WaterAbsorbance = exp(-waterCoefs * (distanceFromWaterSurface + thing) * WATER_DEPTH_FREQUENCY_INDIRECTLIGHT);
 
 		vec3 Directlight = lightSource * sh * phase * caustics * sunAbsorbance;
 		vec3 Indirectlight = ambient * WaterAbsorbance;
@@ -445,8 +446,8 @@ vec4 waterVolumetrics_outsidePOV( vec3 rayStart, vec3 rayEnd, float estEndDepth,
 			}
 		#endif
 
-		vec3 sunAbsorbance = exp(-waterCoefs * estSunDepth * d);
-		vec3 ambientAbsorbance = exp(-waterCoefs * (estEndDepth * d + thing));
+		vec3 sunAbsorbance = exp(-waterCoefs * estSunDepth * d * WATER_DEPTH_FREQUENCY_DIRECTLIGHT);
+		vec3 ambientAbsorbance = exp(-waterCoefs * (estEndDepth * d + thing) * WATER_DEPTH_FREQUENCY_INDIRECTLIGHT);
 
 		vec3 Directlight = lightSource * sh * cloudShadow * phase * sunAbsorbance;
 		vec3 Indirectlight = ambient * ambientAbsorbance;

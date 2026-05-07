@@ -77,6 +77,7 @@ uniform float eyeAltitude;
 #endif
 
 #include "/lib/sky_gradient.glsl"
+#include "/lib/water_absorbance_effects.glsl"
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
@@ -385,22 +386,8 @@ void blendAllFogTypes( inout vec3 color, inout float bloomyFogMult, vec4 volumet
   #endif
 
   /// water absorption; it is completed when volumetrics are blended.
-  if(isEyeInWater == 1){
-    vec3 totEpsilon = vec3(Water_Absorb_R, Water_Absorb_G, Water_Absorb_B);
-		vec3 scatterCoef = Dirt_Amount * vec3(Dirt_Scatter_R, Dirt_Scatter_G, Dirt_Scatter_B) / 3.14;
-
-	  float distanceFromWaterSurface = playerPos.y + 1.0 + (cameraPosition.y - waterEnteredAltitude)/waterEnteredAltitude;
-    distanceFromWaterSurface = clamp(distanceFromWaterSurface,0,1);
-
-    vec3 transmittance = exp(-totEpsilon * linearDistance);
-    color.rgb *= transmittance;
-
-    vec3 transmittance2 = exp(-totEpsilon * 50.0);
-    float fogfade = 1.0 - max((1.0 - linearDistance / min(far, 16.0*7.0) ),0);
-    color.rgb += (transmittance2 * scatterCoef) * fogfade;
-    
-    bloomyFogMult *= dot(transmittance,vec3(0.3333))*0.75 + 0.25;
-  }
+  if(isEyeInWater == 1) underWaterAbsorbance_insidePOV(linearDistance, color, bloomyFogMult);
+  
   /// blend volumetrics
   color = color * volumetrics.a + volumetrics.rgb;
   
