@@ -287,16 +287,29 @@ screen.Resource_Pack_Support = Materials / Resource Pack Support
             value.EMISSIVE_TYPE.3 = LabPBR Emission only
 
     screen.Subsurface_Scattering = Sub-Surface Scattering
-        option.LabSSS_Curve = LabPBR SSS Curve
-        option.MISC_BLOCK_SSS = SSS for random blocks
-        option.MOB_SSS = SSS for mobs
-        option.Ambient_SSS = SSS from the sky
-        option.ambientsss_brightness = Sky SSS Brightness
-        option.SSS_TYPE = Mode
+        option.SSS_TYPE = Sub-Surface Scattering Mode
             value.SSS_TYPE.0 = §cOFF§r
             value.SSS_TYPE.1 = Built-In only
             value.SSS_TYPE.2 = Built-In + LabPBR SSS
             value.SSS_TYPE.3 = LabPBR SSS only
+        option.LabSSS_Curve = LabPBR SSS Curve
+        option.MISC_BLOCK_SSS = SSS for random blocks
+        option.MOB_SSS = SSS for mobs
+        option.DIRECT_SSS_DENSITY_MULT = SSS Density Multiplier
+            suffix.DIRECT_SSS_DENSITY_MULT =x
+        option.Ambient_SSS = Indirect Light SSS
+        option.ambientsss_brightness = Indirect Light SSS Brightness
+            suffix.ambientsss_brightness =x
+        option.INDIRECT_SSS_ABSORBANCE_AMOUNT  = Indirect Light SSS Saturation Boost
+            suffix.INDIRECT_SSS_ABSORBANCE_AMOUNT =%
+            value.INDIRECT_SSS_ABSORBANCE_AMOUNT.0 = §cOFF
+        option.DIRECT_SSS_BRIGHTNESS = Direct Light SSS Brightness
+            suffix.DIRECT_SSS_BRIGHTNESS =x
+        option.DIRECT_SSS_ABSORBANCE_AMOUNT = Direct Light SSS Saturation Boost
+            suffix.DIRECT_SSS_ABSORBANCE_AMOUNT =%
+            value.DIRECT_SSS_ABSORBANCE_AMOUNT.0 = §cOFF
+        option.DISTANT_SSS = Screen-Space Shadow SSS
+        option.SCREENSPACE_DIRECT_SSS_BLENDING = Screen-Space Shadow SSS Blending §bⓘ Only within the shadowMap
 
         option.sss_density_multiplier = SSS Density Multiplier
         option.sss_absorbance_multiplier = SSS Saturation Multiplier
@@ -358,11 +371,16 @@ screen.Resource_Pack_Support = Materials / Resource Pack Support
 
     screen.Subsurface_Scattering.comment = §bⓘ What is this?§r Sub-surface scattering is what happens when you put a bright light on your hand, and it starts to glow. The sun actually does the same thing to plants, cloth, skin, and other things.
     option.SSS_TYPE.comment = Configure how the sub-surface scattering is applied to the world.  §bBuilt-In:§r The shader decides what gets it. §bLabPBR SSS:§r The resourcepack decides what gets it. §a⚠ PERFORMANCE COST:§r very low
-    option.MOB_SSS.comment = Toggle sub-surface scattering for mobs. players are included. §a⚠ PERFORMANCE COST:§r very low
-    option.MISC_BLOCK_SSS.comment = Toggle sub-surface scattering for random blocks it may not fit. this is for grass and sand mostly. §a⚠ PERFORMANCE COST:§r very low
+    option.MOB_SSS.comment = §bⓘ What is this?§r Toggle sub-surface scattering for mobs. players are included. §a⚠ PERFORMANCE COST:§r very low
+    option.MISC_BLOCK_SSS.comment = §bⓘ What is this?§r Toggle sub-surface scattering for random blocks it may not fit. this is for grass and sand mostly. §a⚠ PERFORMANCE COST:§r very low
     option.Ambient_SSS.comment = §bⓘ What is this?§r sub-surface scattering from light coming from the sky, instead of the sun. §a⚠ PERFORMANCE COST:§r very low to medium; if SSAO is enabled this costs very little, but costs more if SSAO is off
-    option.ambientsss_brightness.comment = Configure the brightness of sub-surface scattering from the sky's light
-
+    option.ambientsss_brightness.comment = §bⓘ What is this?§r Configure the brightness of sub-surface scattering from the sky's light
+    option.DIRECT_SSS_DENSITY_MULT.comment = §bⓘ What is this?§r Configure how deep the light can penetrate the blocks when scattering through them. §a⚠ PERFORMANCE COST:§r none
+    option.SCREENSPACE_DIRECT_SSS_BLENDING.comment = §bⓘ What is this?§r Configure how much the screen-space shadows can blend with the shadowMap within the SSS. §a⚠ PERFORMANCE COST:§r none
+    option.DIRECT_SSS_ABSORBANCE_AMOUNT.comment = §bⓘ What is this?§r Configure how colorful the lighting gets as the light penetrates deeper into the block. §a⚠ PERFORMANCE COST:§r none
+    option.INDIRECT_SSS_ABSORBANCE_AMOUNT.comment = §bⓘ What is this?§r Configure how colorful the lighting gets as the light penetrates deeper into the block. §a⚠ PERFORMANCE COST:§r none
+    option.DIRECT_SSS_BRIGHTNESS.comment = §bⓘ What is this?§r Configure the brightness of sub-surface scattering from the sun/moon's light.
+    
     screen.Emissives.comment = §bⓘ What is this?§r Emissiveness is just how much light something is letting off, or how much something is glowing.
     option.Emissive_Brightness.comment = Configure how bright the texture emission should be.
     option.EMISSIVE_TYPE.comment = Configure how texture emission is applied to the world.  §bBuilt-In:§r The shader decides what gets it. §bLabPBR SSS:§r The resourcepack decides what gets it. §a⚠ PERFORMANCE COST:§r very low

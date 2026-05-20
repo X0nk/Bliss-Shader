@@ -452,104 +452,67 @@ void Emission(
 #include "/lib/indirect_lighting_effects.glsl"
 
 void doEdgeAwareBlur(
-	sampler2D tex1, sampler2D tex2, sampler2D depth,
 	float referenceDepth, bool hand,
-	inout vec2 ambientEffects, inout vec3 filteredShadow
+	ivec2 UV_NOISE = ivec2(gl_FragCoord.xy*texelSize + 1);
+	sampler2D colortex_A, sampler2D colortex_B, sampler2D depth
+	
+	,float referenceDepth, bool hand
+	
+	,out vec2 ambientEffects, out vec3 filteredShadow
+	// ,inout vec3 DEBUG
 ){
-	float threshold = clamp(referenceDepth*referenceDepth*0.5,0.0001,0.005);
-	vec3 shadow_RESULT = vec3(0.0);
-	vec2 ssao_RESULT = vec2(0.0);
-	float edgeSum = 0.0;
+  vec3 result_A = vec3(0.0);
+  vec2 result_B = vec2(0.0);
+  float sum = 0.0;
 
-	vec2 coord = gl_FragCoord.xy - 1.5;
-	ivec2 UV = ivec2(coord);
-	ivec2 UV_NOISE = ivec2(gl_FragCoord.xy*texelSize + 1);
+//   #ifdef USING_LOD_MOD
+//     float threshHold = referenceDepth*0.05 + 0.00001*0;
+//   #else
+//     float threshHold = referenceDepth*0.075 + 0.00001*0;
+//   #endif
 
-	ivec2 OFFSET[4] = ivec2[](
-	  ivec2(-1,-1),
-	  ivec2( 1, 1),
-	  ivec2(-1, 1),
-	  ivec2( 1,-1)
-	);
+  #ifdef USING_LOD_MOD
+    float threshHold = referenceDepth*0.05 + 0.00001*0;
+  #else
+    float threshHold = referenceDepth*0.0175 + 0.00001*0;
+  #endif
 
-	for(int i = 0; i < 4; i++) {
-		
-		ivec2 offset = OFFSET[i];
+  if(hand) threshHold = 0.00001;
 
-		#ifdef USING_LOD_MOD
-			float offsetDepth = sqrt(texelFetch(depth, UV + offset + UV_NOISE,0).a/65000.0);
-		#else
-			float offsetDepth = ld(convertHandDepth_2(texelFetch(depth, UV + offset + UV_NOISE, 0).r,hand));
-		#endif
+	vec2 offsets[4] = vec2[](
+    	vec2(-1.0,-1.0),
+		vec2(-1.0, 1.0),
+	 	vec2( 1.0, 1.0),
+		vec2( 1.0,-1.0)
+  );
 
-		float edgeDiff = abs(offsetDepth - referenceDepth) < threshold ? 1.0 : 1e-7;
+  float edgeArea = 0.0;
 
-		#ifdef Variable_Penumbra_Shadows
-			shadow_RESULT += texelFetch(tex1, UV + offset + UV_NOISE, 0).rgb*edgeDiff;
-		#endif
-
-		#if indirect_effect == SSAO_FILTERED
-			ssao_RESULT += texelFetch(tex2, UV + offset + UV_NOISE, 0).rg*edgeDiff;
-		#elif indirect_effect == GTAO
-			ssao_RESULT.x += texelFetch(tex2, UV + offset + UV_NOISE, 0).r*edgeDiff;
-		#endif
-
-		edgeSum += edgeDiff;
-	}
-	// sample without an offset with texture filtering to get a slightly blurred sample. make sure to average without skewing the rest of the average.
-	filteredShadow = shadow_RESULT/edgeSum * 0.8 + 0.2 * texture(tex1, texelSize*gl_FragCoord.xy).rgb;
-	
-	#if indirect_effect == SSAO_FILTERED
-		ambientEffects = ssao_RESULT/edgeSum * 0.8 + 0.2 * texture(tex2, texelSize*gl_FragCoord.xy).rg;
-	#elif indirect_effect == GTAO
-		ambientEffects.x = ssao_RESULT.x/edgeSum * 0.8 + 0.2 * texture(tex2, texelSize*gl_FragCoord.xy).r;
-	#endif
-	
-	#if indirect_effect == SSAO_HQ
-		ambientEffects = texture(tex2, texelSize*gl_FragCoord.xy).rg;
-	#endif
-
-}
-
-vec4 BilateralUpscale_VLFOG(sampler2D tex, sampler2D depth, float referenceDepth){
-
-	vec4 colorSum = vec4(0.0);
-	float edgeSum = 0.0;
-
+  for(int i = 0; i < 4; i++) {
+    
+    ivec2 offsetTC = ivec2(gl_FragCoord.xy + offsets[i]);
+    
 	#ifdef USING_LOD_MOD
-		float threshold = referenceDepth * mix(0.5,  0.05, min(max(0.1 - referenceDepth,0)/0.1,1));
-	#else
-		float threshold = referenceDepth * 0.05;
-	#endif
+		float depthSample = sqrt(texelFetch(depth, offsetTC,0).a/65000.0);
+    #else
+    	float depthSample = ld(texelFetch(depth, offsetTC,0).r);
+    #endif
 
-	vec2 coord = gl_FragCoord.xy - 1.5;
-	vec2 UV = coord;
-	const ivec2 SCALE = ivec2(1.0/VL_RENDERING_RESOLUTION_SCALE);
-	ivec2 UV_DEPTH = ivec2(UV*VL_RENDERING_RESOLUTION_SCALE)*SCALE;
-	ivec2 UV_COLOR = ivec2(UV*VL_RENDERING_RESOLUTION_SCALE);
-	ivec2 UV_NOISE = ivec2(gl_FragCoord.xy*texelSize + 1);
+    float w = abs(referenceDepth - depthSample) < threshHold ? 1.0 : 1e-7;
 
-	ivec2 OFFSET[5] = ivec2[](
-	  ivec2(-1,-1),
-	  ivec2( 1, 1),
-	  ivec2(-1, 1),
-	  ivec2( 1,-1),
-	  ivec2( 0, 0)
-	);
+    result_A += texelFetch(colortex_A, offsetTC,0).rgb*w;
+    result_B += texelFetch(colortex_B, offsetTC,0).rg*w;
 
-	for(int i = 0; i < 4; i++) {
-		#ifdef USING_LOD_MOD
-			float offsetDepth = sqrt(texelFetch(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE,0).a/65000.0);
-		#else
-			float offsetDepth = ld(texelFetch(depth, UV_DEPTH + (OFFSET[i] + UV_NOISE) * SCALE, 0).r);
-		#endif
+    sum += w;
+  }
 
-		float edgeDiff = abs(offsetDepth - referenceDepth) < threshold ? 1.0 : 1e-7;
-		vec4 offsetColor = texelFetch(tex, UV_COLOR + OFFSET[i] + UV_NOISE, 0).rgba;
-		colorSum += offsetColor*edgeDiff;
-		edgeSum += edgeDiff;
-	}
-	return colorSum/edgeSum;
+  filteredShadow = result_A/sum * 0.8 + 0.2 * texture(colortex_A,texelSize*gl_FragCoord.xy).rgb;
+  ambientEffects = result_B/sum * 0.8 + 0.2 * texture(colortex_B,texelSize*gl_FragCoord.xy).rg; 
+
+//   filteredShadow = texture(colortex_A,texelSize*gl_FragCoord.xy).rg;
+//   ambientEffects = texture(colortex_B,texelSize*gl_FragCoord.xy).rg;
+
+//   DEBUG = vec3(4.0-sum);
 }
 
 #ifdef OVERWORLD_SHADER
@@ -612,6 +575,10 @@ vec3 ComputeShadowMap_COLOR(in vec3 projectedShadowPosition, float distortFactor
 
 #endif
 
+float lumaSSS(vec3 color) {
+	return dot(color,vec3(0.07, 0.72, 0.3));
+}
+
 float CustomPhase(float LightPos){
 
 	float PhaseCurve = 1.0 - LightPos;
@@ -622,21 +589,33 @@ float CustomPhase(float LightPos){
 }
 
 vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, float lightPos, float SS_shadows, float distantSSS, bool hand){
-	
 	// Density = 1.0;
-	Scattering *= sss_density_multiplier;
-
+	Scattering *= DIRECT_SSS_DENSITY_MULT;
 	float density = 1e-6 + Density*2.0;
-	float scatterDepth = max(1.0 - Scattering/density, 0.0);
-	scatterDepth *= exp(-7.0 * (1.0-scatterDepth));
 
-	scatterDepth = scatterDepth * mix(exp(-4.0 * SS_shadows), 1.0, (1.0-SCREENSPACE_DIRECT_SSS_BLENDING) * scatterDepth * distantSSS);
-	
-	if(hand) scatterDepth = max(1.0 - Scattering*10.0, 0.0) * exp(-4.0 * SS_shadows);
+	#ifdef OLD_SSS_MODE
+		float scatterGradient = max(1.0 - Scattering/density, 0.0);
+		scatterGradient *= exp(-7.0 * (1.0-scatterGradient));
+		scatterGradient = scatterGradient * mix(exp(-4.0 * SS_shadows), 1.0, (1.0-SCREENSPACE_DIRECT_SSS_BLENDING) * scatterGradient * distantSSS);
+		if(hand) scatterGradient = max(1.0 - Scattering*10.0, 0.0) * exp(-4.0 * SS_shadows);
+		vec3 absorbColor = exp(max(luma(albedo) - albedo*vec3(1.0,1.1,1.2), 0.0) * -20.0);
+		vec3 scatter = scatterGradient*mix(absorbColor, vec3(1.0), scatterGradient);
+		scatter *= albedo;
+	#else
+		float scatterGradient = exp(-7.0 * (1.0-max(1.0 - Scattering/density, 0.0)));
+			// return vec3(scatterGradient);
+		vec3 absorbColor = max(albedo + (albedo - lumaSSS(albedo))*(1.0-scatterGradient) * (float(DIRECT_SSS_ABSORBANCE_AMOUNT)/100.0f),0.0);
+			// return vec3(absorbColor);
+		// SSS for screenspace shadows
+		#ifdef DISTANT_SSS
+			scatterGradient *= mix(exp(-6.0 * SS_shadows), 1.0, (1.0-SCREENSPACE_DIRECT_SSS_BLENDING) * distantSSS);
+		#endif
+		// SSS for screenspace shadows on the hand
+		if(hand) scatterGradient = max(1.0 - Scattering*10.0, 0.0) * exp(-4.0 * SS_shadows);
+		vec3 scatter = scatterGradient*absorbColor;
+	#endif
 
-	vec3 absorbColor = exp(max(luma(albedo) - albedo*vec3(1.0,1.1,1.2), 0.0) * -20.0 * sss_absorbance_multiplier);
-	vec3 scatter = scatterDepth * mix(absorbColor, vec3(1.0), scatterDepth);
-	
+
 	#if SSS_TYPE == 3
 		scatter *= pow(Density, LabSSS_Curve);
 	#else
@@ -645,7 +624,7 @@ vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, floa
 	
 	scatter *= 1.0 + CustomPhase(lightPos)*6.0; // ~10x brighter at the peak
 
-	return scatter;	
+	return scatter * DIRECT_SSS_BRIGHTNESS;	
 }
 
 float indirectSSS_phase(float LightPos){
@@ -656,7 +635,7 @@ float indirectSSS_phase(float LightPos){
 
 	curve *= curve;
 	curve = 1.0-curve;
-	curve *= curve;
+	curve *= curve*curve;
 	curve = 1.0-curve;
 
 	curve += 1.0;
@@ -667,12 +646,24 @@ float indirectSSS_phase(float LightPos){
 vec3 SubsurfaceScattering_sky(vec3 albedo, float Scattering, float Density, float lightPos){
 	// Density = 1.0;
 
-	float scatterDepth = pow(Scattering,3.5);
-	scatterDepth = 1.0-pow(1.0-scatterDepth,5.0);
-	
-	vec3 absorbColor = exp(max(luma(albedo) - albedo*vec3(1.0,1.1,1.2), 0.0) * -20.0 * sss_absorbance_multiplier);
-	vec3 scatter = scatterDepth * mix(absorbColor, vec3(1.0), scatterDepth);
-	
+	#ifdef OLD_SSS_MODE
+		float scatterDepth = pow(Scattering,3.5);
+		scatterDepth = 1.0-pow(1.0-scatterDepth,5.0);
+		vec3 absorbColor = exp(max(luma(albedo) - albedo*vec3(1.0,1.1,1.2), 0.0) * -20.0);
+		vec3 scatter = scatterDepth * mix(absorbColor, vec3(1.0), scatterDepth);
+		scatter *= albedo;
+	#else
+		//// curve making sins
+		float scatterDepth = exp(-7.0*(1.0-pow(1.0-pow(1.0-Scattering,4.0),5.0)))*1.25;
+			// return vec3(scatterDepth);
+		float saturationGradient = exp(-10.0*exp(-8.0*pow(1.0-Scattering,2.0)));
+			// return vec3(saturationGradient);
+		vec3 absorbColor = max(albedo + (albedo - lumaSSS(albedo)) * saturationGradient * (float(INDIRECT_SSS_ABSORBANCE_AMOUNT)/100.0f),0.0);
+			// return vec3(absorbColor);
+		vec3 scatter = scatterDepth*absorbColor;
+	#endif
+
+
 	#if SSS_TYPE == 3
 		scatter *= pow(Density, LabSSS_Curve);
 	#else
@@ -793,7 +784,7 @@ void main() {
 		bool isDHrange = z >= 1.0;
 
 		#ifdef USING_LOD_MOD
-			float DH_mixedLinearZ = sqrt(texture(colortex12,texcoord).a/65000.0);
+	  		float DH_mixedLinearZ = sqrt(texelFetch(colortex12,ivec2(gl_FragCoord.xy),0).a/65000.0);
 			float DH_depth0 = texture(LOD_DEPTHTEX0,texcoord).x;
 			float DH_depth1 = texture(LOD_DEPTHTEX1 ,texcoord).x;
 
@@ -989,14 +980,10 @@ void main() {
 
 	if (swappedDepth < 1.0) {
 
-	////////////////////////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////	    FILTER STUFF      //////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////
-
-		#if defined USING_LOD_MOD && defined DH_AMBIENT_OCCLUSION
-			doEdgeAwareBlur(colortex3,	colortex14, colortex12, DH_mixedLinearZ, hand, SSAO_SSS, filteredShadow);
+		#ifdef USING_LOD_MOD
+			doEdgeAwareBlur(colortex3,colortex14, colortex12, DH_mixedLinearZ, hand, SSAO_SSS, filteredShadow);
 		#else
-			doEdgeAwareBlur(colortex3,	colortex14, depthtex0, ld(z0), 	hand, SSAO_SSS, filteredShadow);
+			doEdgeAwareBlur(colortex3,colortex14, depthtex0, ld(z0), 	hand, SSAO_SSS, filteredShadow);
 		#endif
 		
 		float ShadowBlockerDepth = filteredShadow.y;
@@ -1098,9 +1085,9 @@ void main() {
 			#else
 				SSSColor = DirectLightColor;
 			#endif
-		
-			SSSColor = SubsurfaceScattering_sun(albedo, ShadowBlockerDepth, sunSSS_density, clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), SS_directLight.g, shadowMapFalloff2, hand);
 			
+			SSSColor = SubsurfaceScattering_sun(albedo, ShadowBlockerDepth, sunSSS_density, clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), SS_directLight.g, shadowMapBounds, hand);
+
 			if(isEyeInWater != 1) SSSColor *= lightLeakFix;
 		#endif
 
@@ -1140,6 +1127,7 @@ void main() {
 
 		#if defined OVERWORLD_SHADER
 			float skylight = 1.0;
+			float skylight2 = 1.0;
 		
 			#if indirect_effect == VANILLA_AO || indirect_effect == SSAO_FILTERED || indirect_effect == SSAO_HQ || indirect_effect == GTAO
 
@@ -1156,6 +1144,8 @@ void main() {
 				#endif
 
 				skylight = mix(0.08 + 0.92*(1.0-lightmap.y), 1.0, SkylightDir);
+				skylight2 = mix( 1.0-lightmap.y, 1.0, indirectNormal.y*0.7+0.3);
+				// skylight2 = mix( 1.0-lightmap.y, 1.0, SkylightDir);
 
 				// skylight = 1.0;
 			#endif
@@ -1164,8 +1154,6 @@ void main() {
 				skylight = 1.0;
 			#endif
 			
-			Indirect_lighting += doIndirectLighting(AmbientLightColor * skylight, MinimumLightColor, lightmap.y);
-
 		#endif
 
 		#ifdef NETHER_SHADER
@@ -1301,17 +1289,14 @@ void main() {
 
 			Indirect_SSS = SubsurfaceScattering_sky(albedo, SkySSS, LabSSS, feetPlayerPos_normalized.y);
 			Indirect_SSS *= lightmap.y;
+			Indirect_SSS *= ambientColor;
 
-			Indirect_lighting += Indirect_SSS * ambientColor;
+			// Indirect_lighting += Indirect_SSS * ambientColor;
 		#endif
 	
 	/////////////////////////////////////////////////////////////////////////
 	/////////////////////////////	FINALIZE	/////////////////////////////
 	/////////////////////////////////////////////////////////////////////////
-
-
-		// shadowColor *= 0.0;
-		// SSSColor *= 0.0;
 
 		#ifdef SSS_view
 			albedo = vec3(1.0);
@@ -1321,19 +1306,30 @@ void main() {
 		#if defined END_SHADER
 			Direct_lighting *= AO;
 		#endif
-		#ifdef OVERWORLD_SHADER
-			#ifdef AO_in_sunlight
-				Direct_lighting = DirectLightColor * mix(SSSColor, vec3(1.0), NdotL*shadowColor * (AO*0.7+0.3));
-			#else
-				Direct_lighting = DirectLightColor * mix(SSSColor, vec3(1.0), NdotL*shadowColor);
-			#endif
-		#endif
 
 		#if PUDDLE_MODE > 0 && defined OVERWORLD_SHADER && defined DEFERRED_SPECULAR
 			if(!hand && !entities) applyPuddles(feetPlayerPos + cameraPosition, FlatNormals, lightmap.y, isWater, albedo, normal, SpecularTex.r, SpecularTex.g);
 		#endif
 
-		vec3 FINAL_COLOR = (Indirect_lighting + Direct_lighting) * albedo;
+		#ifdef OVERWORLD_SHADER
+			vec3 FINAL_COLOR = (
+				#ifdef OLD_SSS_MODE
+				+ Indirect_SSS
+				+ Indirect_lighting * albedo
+				#else
+				+ Indirect_SSS * (1.0-skylight2*0.8) + Indirect_lighting * albedo
+				#endif
+				//  + DirectLightColor * albedo * NdotL*shadowColor * (AO*0.7+0.3)
+				//  + SSSColor
+				#ifdef AO_in_sunlight
+				+ DirectLightColor * mix(SSSColor, albedo, NdotL*shadowColor * (AO*0.7+0.3))
+				#else
+				+ DirectLightColor * mix(SSSColor, albedo, NdotL*shadowColor)
+				#endif
+			);
+		#else
+			vec3 FINAL_COLOR = (Indirect_lighting + Direct_lighting) * albedo;
+		#endif
 
 		Emission(FINAL_COLOR, albedo, SpecularTex.a);
 		

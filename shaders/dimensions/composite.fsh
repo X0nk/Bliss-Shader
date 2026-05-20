@@ -91,7 +91,6 @@ vec3 toScreenSpace(vec3 p) {
     return fragposition.xyz / fragposition.w;
 }
 
-
 vec3 worldToView(vec3 worldPos) {
     vec4 pos = vec4(worldPos, 0.0);
     pos = gbufferModelView * pos;
@@ -276,6 +275,7 @@ vec3 toScreenSpace_LOD_TEST( in vec2 texcoord, in float depth) {
 
 vec2 SSAO(
 	vec3 viewPos, vec3 normal, vec3 flatnormal, bool hand, float noise, bool isLOD
+	,float lightmap
 ){
 	int samples = 7;
 	
@@ -304,7 +304,6 @@ vec2 SSAO(
 		ivec2 offsetUV = ivec2(clamp((gl_FragCoord.xy + offsets*vec2(viewWidth, viewHeight*aspectRatio)*RENDER_SCALE)*texelSize,screenEdges,1.0-screenEdges)/texelSize);
 
 		if (offsetUV.x >= 0 && offsetUV.y >= 0 && offsetUV.x < viewWidth*RENDER_SCALE.x && offsetUV.y < viewHeight*RENDER_SCALE.y ) {
-			
 
 			#ifdef USING_LOD_MOD
 				float sampleDepth = convertHandDepth_2(texelFetch(depthtex1, offsetUV, 0).x, hand);
@@ -315,17 +314,22 @@ vec2 SSAO(
 			#endif
 
 			vec3 viewPosDiff = offsetViewPos - viewPos;
+			vec3 viewPosDiff_N = normalize(viewPosDiff);
 			float viewPosDiffSquared = dot(viewPosDiff, viewPosDiff);
 			
 			float threshHold = max(1.0 - viewPosDiffSquared/depthCancelation, 0.0);
 
 			if (viewPosDiffSquared > 1e-5){
 				n += 1.0;
-				float preAo = 1.0 - clamp(dot(normalize(viewPosDiff), flatnormal)*25.0,0.0,1.0);
-				occlusion += max(0.0, dot(normalize(viewPosDiff), normal) - preAo) * threshHold;
+				float viewDotFnorm = dot(viewPosDiff_N, flatnormal);
+				occlusion += max(0.0, dot(viewPosDiff_N, normal) - (1.0 - clamp(viewDotFnorm*25.0,0.0,1.0))) * threshHold;
 				
 				#ifdef Ambient_SSS
-					sss += clamp(-dot(normalize(viewPosDiff), flatnormal) - occlusion/n,0.0,1.0) * 0.25 + (normalize(mat3(gbufferModelViewInverse) * -viewPosDiff).y - occlusion/n) * threshHold;
+					#ifdef OLD_SSS_MODE
+						sss += clamp(-viewDotFnorm - occlusion/n,0.0,1.0) * 0.25 + ((mat3(gbufferModelViewInverse) * -viewPosDiff_N).y - occlusion/n) * threshHold;
+					#else
+						sss += ((mat3(gbufferModelViewInverse) * -viewPosDiff_N).y - lightmap)*threshHold - viewDotFnorm*0.25;
+					#endif
 				#endif
 			}
 		}
@@ -441,8 +445,12 @@ void main() {
 		vec2 SSAO_SSS = vec2(1.0,0.0);
 
 		if(swappedDepth < 1.0){
-			SSAO_SSS = SSAO(viewPos, worldToView(normal), worldToView(FlatNormals), hand, noise, isLOD);
-			SSAO_SSS.y = clamp(SSAO_SSS.y + 0.5 * lightmap.y*lightmap.y,0.0,1.0);
+			SSAO_SSS = SSAO(viewPos, worldToView(normal), worldToView(FlatNormals), hand, noise, isLOD, 1.0-pow(lightmap.y,1.5));
+			#ifdef OLD_SSS_MODE
+				SSAO_SSS.y = clamp(SSAO_SSS.y+0.5*lightmap.y*lightmap.y,0.0,1.0);
+			#else
+				SSAO_SSS.y = clamp(SSAO_SSS.y*0.5+0.5,0.0,1.0);
+			#endif
 		}
 
 		gl_FragData[1].xy = SSAO_SSS;
@@ -461,14 +469,14 @@ void main() {
 
 
 #ifdef OVERWORLD_SHADER
-if (z < 1.0){
+if (swappedDepth < 1.0){
 
-	float NdotL = clamp(dot(normal,WsunVec),0.0,1.0);
+	float NdotL = clamp(dot(FlatNormals,WsunVec),0.0,1.0);
 	float minshadowfilt = Min_Shadow_Filter_Radius;
 	float maxshadowfilt = Max_Shadow_Filter_Radius;
 	// float newnoise = IGN();
 
-	#ifdef BASIC_SHADOW_FILTER
+	#if defined BASIC_SHADOW_FILTER && !defined Variable_Penumbra_Shadows
 		if (LabSSS > 0.0 && NdotL < 0.001){  
 			minshadowfilt = 50;
 		//  maxshadowfilt = 50;
@@ -503,7 +511,9 @@ if (z < 1.0){
 				projectedShadowPosition.z += shadowProjection[3].z * 0.0013;
 				
 				const float threshMul = max(2048.0/shadowMapResolution*shadowDistance/128.0,0.95);
+
 				float distortThresh = (sqrt(1.0-NdotL*NdotL)/NdotL+0.7)/distortFactor;
+				// float distortThresh = 0.5/distortFactor;
 				float diffthresh = distortThresh/6000.0*threshMul;
 				projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5,0.5,0.5);
 
@@ -535,14 +545,15 @@ if (z < 1.0){
 					avgBlockerDepth += d * b;
 				}
 
-				gl_FragData[0].g = avgDepth / VPS_Search_Samples;
-				gl_FragData[0].b = blockerCount / VPS_Search_Samples;
 
 				if (blockerCount >= 0.9){
 					avgBlockerDepth /= blockerCount;
 					float ssample = max(projectedShadowPosition.z - avgBlockerDepth,0.0)*1500.0;
 					gl_FragData[0].r = clamp(ssample, scales.x, scales.y)/scales.y*(mult-minshadowfilt)+minshadowfilt;
 				}
+				gl_FragData[0].g = avgDepth / VPS_Search_Samples;
+				gl_FragData[0].b = blockerCount / VPS_Search_Samples;
+				// gl_FragData[0].b = (1.0-abs(blockerCount / VPS_Search_Samples*2.0-1.0));
 			}
 		#endif
 }
