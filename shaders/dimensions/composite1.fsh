@@ -452,8 +452,6 @@ void Emission(
 #include "/lib/indirect_lighting_effects.glsl"
 
 void doEdgeAwareBlur(
-	float referenceDepth, bool hand,
-	ivec2 UV_NOISE = ivec2(gl_FragCoord.xy*texelSize + 1);
 	sampler2D colortex_A, sampler2D colortex_B, sampler2D depth
 	
 	,float referenceDepth, bool hand
