@@ -1084,7 +1084,7 @@ void main() {
 				SSSColor = DirectLightColor;
 			#endif
 			
-			SSSColor = SubsurfaceScattering_sun(albedo, ShadowBlockerDepth, sunSSS_density, clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), SS_directLight.g, shadowMapBounds, hand);
+			SSSColor = SubsurfaceScattering_sun(albedo, ShadowBlockerDepth, sunSSS_density, clamp(dot(feetPlayerPos_normalized, WsunVec),0.0,1.0), SS_directLight.g, shadowMapFalloff, hand);
 
 			if(isEyeInWater != 1) SSSColor *= lightLeakFix;
 		#endif
