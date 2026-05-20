@@ -1152,6 +1152,7 @@ void main() {
 				skylight = 1.0;
 			#endif
 			
+			Indirect_lighting += doIndirectLighting(AmbientLightColor*skylight, MinimumLightColor, lightmap.y);
 		#endif
 
 		#ifdef NETHER_SHADER
