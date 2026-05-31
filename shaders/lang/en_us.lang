@@ -161,6 +161,8 @@ screen.Ambient_light = Ambient Light
         option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS = Fog Light Propagation Brightness
             suffix.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS=%
         option.VANILLA_LIGHTMAP_MASK = Vanilla Torch lightmap Mask
+        option.LPV_FRUSTUM_OFFSET = Shifting
+            suffix.LPV_FRUSTUM_OFFSET=%
 
     option.AO_in_sunlight = Apply AO to sunlight
     option.AO_Strength = AO Multiplier
@@ -251,6 +253,7 @@ screen.Ambient_light = Ambient Light
     option.LPV_NOSHADOW_HACK.comment = Fix for Iris 1.7.0 and lower! Allows floodfill to work in Nether & End, but disables entity & dropped item lights.
     option.LPV_VL_FOG_ILLUMINATION.comment = Allow the colored lighting to light up the air around it.
     option.LPV_VL_FOG_ILLUMINATION_BRIGHTNESS.comment = Configure the brightness of lit up fog.
+    option.LPV_FRUSTUM_OFFSET.comment = Increases visible lighting range by shifting the lighting volume in the direction the camera is looking.
 
  ###################################################### ↓↓↓ THIS SUBMENU'S LABELS
 screen.Resource_Pack_Support = Materials / Resource Pack Support

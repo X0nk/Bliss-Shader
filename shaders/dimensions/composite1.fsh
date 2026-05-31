@@ -173,7 +173,7 @@ float convertHandDepth_2(in float depth, bool hand) {
 
 #ifdef IS_LPV_ENABLED
 	#include "/lib/hsv.glsl"
-	#include "/lib/lpv_common.glsl"
+	#include "/lib/voxel_common.glsl"
 	#include "/lib/lpv_render.glsl"
 #endif
 
@@ -1190,7 +1190,7 @@ void main() {
 				normalOffset = mix(normalOffset, texNormalOffset, (LPV_NORMAL_STRENGTH*0.01));
 			#endif
 
-			vec3 lpvPos = GetLpvPosition(feetPlayerPos) + normalOffset;
+			vec3 lpvPos = GetVoxelPosition(feetPlayerPos) + normalOffset;
 		#else
 			const vec3 lpvPos = vec3(0.0);
 		#endif

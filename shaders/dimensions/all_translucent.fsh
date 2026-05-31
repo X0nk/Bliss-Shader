@@ -141,7 +141,7 @@ uniform vec3 OVERDRAW_PREVENTION_SCALE;
 #ifdef IS_LPV_ENABLED
 
 	#include "/lib/hsv.glsl"
-	#include "/lib/lpv_common.glsl"
+	#include "/lib/voxel_common.glsl"
 	#include "/lib/lpv_render.glsl"
 #endif
 
@@ -705,7 +705,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			}
 		#endif
 
-		vec3 lpvPos = GetLpvPosition(feetPlayerPos) + normalOffset;
+		vec3 lpvPos = GetVoxelPosition(feetPlayerPos) + normalOffset;
 	#else
 		const vec3 lpvPos = vec3(0.0);
 	#endif
