@@ -173,7 +173,7 @@ float convertHandDepth_2(in float depth, bool hand) {
 
 #ifdef IS_LPV_ENABLED
 	#include "/lib/hsv.glsl"
-	#include "/lib/lpv_common.glsl"
+	#include "/lib/voxel_common.glsl"
 	#include "/lib/lpv_render.glsl"
 #endif
 
@@ -699,6 +699,14 @@ void applyPuddles(
 
 	float noise = texture(noisetex, UV * 0.02).b;
 
+	#ifdef IS_LPV_ENABLED
+		vec3 lpvPos = GetVoxelPosition(worldPos - cameraPosition);
+		float skyLightMask = SampleLpvLinear(lpvPos).a;
+		float skyLightMax = 1.0 - (3./15.)*skyLightMask;
+
+		lightmap = min(lightmap, skyLightMax);
+	#endif
+
 	float lightmapMax = min(max(lightmap - 0.9,0.0) * 10.0,1.0) ;
 	float lightmapMin = min(max(lightmap - 0.8,0.0) * 5.0,1.0) ;
 	lightmap = clamp(lightmapMax + noise*lightmapMin*2.0,0.0,1.0);
@@ -1190,7 +1198,7 @@ void main() {
 				normalOffset = mix(normalOffset, texNormalOffset, (LPV_NORMAL_STRENGTH*0.01));
 			#endif
 
-			vec3 lpvPos = GetLpvPosition(feetPlayerPos) + normalOffset;
+			vec3 lpvPos = GetVoxelPosition(feetPlayerPos) + normalOffset;
 		#else
 			const vec3 lpvPos = vec3(0.0);
 		#endif

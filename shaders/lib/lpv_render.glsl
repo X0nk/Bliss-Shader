@@ -11,14 +11,14 @@ float lpvCurve(float values) {
 }
 
 vec4 SampleLpvLinear(const in vec3 lpvPos) {
-    vec3 texcoord = lpvPos / LpvSize3;
+    vec3 texcoord = lpvPos / VoxelSize3;
 
     vec4 lpvSample = (frameCounter % 2) == 0
         ? textureLod(texLpv1, texcoord, 0)
         : textureLod(texLpv2, texcoord, 0);
 
     vec3 hsv = RgbToHsv(lpvSample.rgb);
-    hsv.z = lpvCurve(hsv.b) * LpvBlockSkyRange.x;
+    hsv.z = lpvCurve(hsv.b) * LpvBlockRange;
     lpvSample.rgb = HsvToRgb(hsv);
     
     lpvSample.rgb = clamp(lpvSample.rgb/15.0,0.0,1.0);

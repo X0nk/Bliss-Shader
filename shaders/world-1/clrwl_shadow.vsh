@@ -20,6 +20,7 @@ Read the terms of modification and sharing before changing something below pleas
 	#endif
 	attribute vec3 vaPosition;
 
+	uniform mat4 gbufferModelViewInverse;
 	uniform mat4 shadowModelViewInverse;
 	
 	uniform int renderStage;
@@ -31,6 +32,7 @@ Read the terms of modification and sharing before changing something below pleas
 
 	#include "/lib/blocks.glsl"
 	#include "/lib/entities.glsl"
+	#include "/lib/voxel_buffer.glsl"
 	#include "/lib/voxel_common.glsl"
 	#include "/lib/voxel_write.glsl"
 #endif
