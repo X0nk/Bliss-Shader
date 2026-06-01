@@ -3,11 +3,15 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 const ivec3 workGroups = ivec3(6, 6, 1);
 
 #ifdef IS_LPV_ENABLED
+    uniform vec3 cameraPosition;
+    uniform mat4 gbufferModelViewInverse;
+
     #include "/lib/items.glsl"
     #include "/lib/blocks.glsl"
     #include "/lib/entities.glsl"
     #include "/lib/lpv_blocks.glsl"
-    
+    #include "/lib/voxel_common.glsl"
+
     // #define DOORS_BLOCK_LIGHT
     // #define TRAPDOORS_BLOCK_LIGHT
 
@@ -68,37 +72,36 @@ void main() {
 
         vec3 lightColor = vec3(0.0);
         float lightRange = 0.0;
-        float mixWeight = 0.0;
-        uint mixMask = 0xFFFF;
-        vec3 tintColor = vec3(1.0);
 
-        if (blockId == BLOCK_SSS_WEAK || blockId == BLOCK_SSS_WEAK_3 || blockId == BLOCK_SSS_STRONG) {
-            mixWeight = 1.0;
-        }
+        vec3 tintColor = vec3(1.0);
+        float tintF = 1.0;
+
+        uint mixMask = blockId == BLOCK_DEFAULT ? 0u : 0xFFFFu;
+
 
         switch (blockId) {
             case BLOCK_WATER:
-                mixWeight = 0.8;
+                tintF = 0.8;
                 break;
 
             case BLOCK_BAMBOO:
-                mixWeight = 0.8;
+                tintF = 0.8;
                 break;
 
             case BLOCK_GRASS_SHORT:
             case BLOCK_GRASS_TALL_UPPER:
             case BLOCK_GRASS_TALL_LOWER:
-                mixWeight = 0.85;
+                tintF = 0.85;
                 break;
 
             case BLOCK_GROUND_WAVING:
             case BLOCK_GROUND_WAVING_VERTICAL:
             case BLOCK_AIR_WAVING:
-                mixWeight = 0.9;
+                tintF = 0.9;
                 break;
 
             case BLOCK_SAPLING:
-                mixWeight = 0.9;
+                tintF = 0.9;
                 break;
         }
 
@@ -107,19 +110,19 @@ void main() {
         if (blockId == BLOCK_AMETHYST_BUD_LARGE || blockId == ITEM_AMETHYST_BUD_LARGE) {
             lightColor = LightColor_Amethyst;
             lightRange = 4.0;
-            mixWeight = 0.6;
+            tintF = 0.6;
         }
 
         if (blockId == BLOCK_AMETHYST_BUD_MEDIUM || blockId == ITEM_AMETHYST_BUD_MEDIUM) {
             lightColor = LightColor_Amethyst;
             lightRange = 2.0;
-            mixWeight = 0.8;
+            tintF = 0.8;
         }
 
         if (blockId == BLOCK_AMETHYST_CLUSTER || blockId == ITEM_AMETHYST_CLUSTER) {
             lightColor = LightColor_Amethyst;
             lightRange = 5.0;
-            mixWeight = 0.4;
+            tintF = 0.4;
         }
 
         if (blockId == BLOCK_BEACON || blockId == ITEM_BEACON) {
@@ -130,7 +133,7 @@ void main() {
         if (blockId == BLOCK_BREWING_STAND) {
             lightColor = vec3(0.636, 0.509, 0.179);
             lightRange = 1.0;
-            mixWeight = 0.8;
+            tintF = 0.8;
         }
 
         #ifdef LPV_COLORED_CANDLES
@@ -446,8 +449,6 @@ void main() {
                         break;
                 }
         #endif
-
-            mixWeight = 1.0;
         }
 
         if (blockId == ITEM_BLAZE_ROD) {
@@ -456,9 +457,7 @@ void main() {
 
         if (blockId == BLOCK_CAVE_VINE_BERRIES || blockId == ITEM_GLOW_BERRIES) {
             lightColor = vec3(0.9, 1.0, 0.2);
-            
             lightRange = 14.0;
-            mixWeight = 1.0;
         }
 
         #ifdef LPV_REDSTONE_LIGHTS
@@ -509,13 +508,11 @@ void main() {
         if (blockId == BLOCK_FIRE) {
             lightColor = vec3(0.9, 0.3, 0.0);
             lightRange = 15.0;
-            mixWeight = 1.0;
         }
 
         if (blockId == BLOCK_FIRE_FLIES) {
             lightColor = vec3(0.729, 0.639, 0.31);
             lightRange = 2.0;
-            mixWeight = 1.0;
         }
 
         if (blockId == BLOCK_FROGLIGHT_OCHRE || blockId == ITEM_FROGLIGHT_OCHRE) {
@@ -561,7 +558,7 @@ void main() {
         if (blockId == BLOCK_LANTERN || blockId == ITEM_LANTERN) {
             lightColor = vec3(1.0, 0.55, 0.2);
             lightRange = 15.0;
-            mixWeight = 0.8;
+            tintF = 0.8;
         }
 
         if (blockId == BLOCK_LAVA) {
@@ -575,7 +572,6 @@ void main() {
 
         if (blockId >= BLOCK_LIGHT_1 && blockId <= BLOCK_LIGHT_15) {
             lightColor = LightColor_LightBlock;
-            mixWeight = 1.0;
 
             switch (blockId) {
                 case BLOCK_LIGHT_1:
@@ -629,31 +625,31 @@ void main() {
         if (blockId == BLOCK_MAGMA || blockId == ITEM_MAGMA) {
             lightColor = vec3(1.0, 0.3, 0.0);
             lightRange = 3.0;
-            mixWeight = 0.0;
+            mixMask = 0u;
         }
 
         if (blockId == BLOCK_RAIL_POWERED_ON) {
             lightColor = LightColor_RedstoneTorch;
             lightRange = 7.0;
-            mixWeight = 0.9;
+            tintF = 0.9;
         }
 
         if (blockId == BLOCK_REDSTONE_LAMP_LIT) {
             lightColor = vec3(0.8,0.5,0.3);
             lightRange = 15.0;
-            mixWeight = 0.0;
+            mixMask = 0u;
         }
 
         if (blockId == BLOCK_REDSTONE_ORE_LIT || blockId == BLOCK_DEEPSLATE_REDSTONE_ORE_LIT) {
             lightColor = LightColor_RedstoneTorch;
             lightRange = 7.0;
-            mixWeight = 0.0;
+            mixMask = 0u;
         }
 
         if (blockId == BLOCK_REDSTONE_TORCH_LIT || blockId == ITEM_REDSTONE_TORCH) {
             lightColor = LightColor_RedstoneTorch;
             lightRange = 7.0;
-            mixWeight = 0.9;
+            tintF = 0.9;
         }
 
         switch (blockId) {
@@ -661,83 +657,67 @@ void main() {
             case BLOCK_REDSTONE_WIRE_1:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 0.5;
-                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_2:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 1.0;
-                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_3:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 1.5;
-                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_4:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 2.0;
-                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_5:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 2.5;
-                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_6:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 3.0;
-                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_7:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 3.5;
-                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_8:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 4.0;
-                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_9:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 4.5;
-                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_10:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 5.0;
-                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_11:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 5.5;
-                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_12:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 6.0;
-                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_13:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 6.5;
-                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_14:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 7.0;
-                mixWeight = 1.0;
                 break;
             case BLOCK_REDSTONE_WIRE_15:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 7.5;
-                mixWeight = 1.0;
                 break;
 
             case BLOCK_REPEATER_LIT:
                 lightColor = LightColor_RedstoneTorch;
                 lightRange = 4.0;
-                mixWeight = 1.0;
                 break;
         #endif
 
@@ -752,22 +732,18 @@ void main() {
             case BLOCK_SEA_PICKLE_WET_1:
                 lightColor = LightColor_SeaPickle;
                 lightRange = 6.0;
-                mixWeight = 1.0;
                 break;
             case BLOCK_SEA_PICKLE_WET_2:
                 lightColor = LightColor_SeaPickle;
                 lightRange = 9.0;
-                mixWeight = 1.0;
                 break;
             case BLOCK_SEA_PICKLE_WET_3:
                 lightColor = LightColor_SeaPickle;
                 lightRange = 12.0;
-                mixWeight = 1.0;
                 break;
             case BLOCK_SEA_PICKLE_WET_4:
                 lightColor = LightColor_SeaPickle;
                 lightRange = 15.0;
-                mixWeight = 1.0;
                 break;
         }
         
@@ -784,7 +760,6 @@ void main() {
         if (blockId == BLOCK_SOUL_FIRE) {
             lightColor = vec3(0.1, 0.6, 1.0);
             lightRange = 10.0;
-            mixWeight = 1.0;
         }
 
         if (
@@ -793,18 +768,18 @@ void main() {
         ) {
             lightColor = vec3(0.1, 0.6, 1.0);
             lightRange = 10.0;
-            mixWeight = 0.8;
+            tintF = 0.8;
         }
 
         if (blockId == BLOCK_TORCH || blockId == ITEM_TORCH) {
             lightColor = vec3(TORCH_R, TORCH_G, TORCH_B);
             lightRange = 14.0;
-            mixWeight = 0.8;
+            tintF = 0.8;
         }
 
         if (blockId >= BLOCK_LAMP_LIT_BLACK && blockId <= BLOCK_LAMP_LIT_YELLOW) {
             lightRange = 15.0;
-            mixWeight = 0.25;
+            tintF = 0.25;
 
             switch (blockId) {
                 case BLOCK_LAMP_LIT_BLACK:
@@ -863,189 +838,166 @@ void main() {
         switch (blockId) {
             case BLOCK_GLASS:
                 tintColor = vec3(1.0);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_BLACK:
                 tintColor = vec3(0.3);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_BLUE:
                 tintColor = vec3(0.1, 0.1, 0.98);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_BROWN:
                 tintColor = vec3(0.566, 0.388, 0.148);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_CYAN:
                 tintColor = vec3(0.082, 0.533, 0.763);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_GRAY:
                 tintColor = vec3(0.4, 0.4, 0.4);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_GREEN:
                 tintColor = vec3(0.125, 0.808, 0.081);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_LIGHT_BLUE:
                 tintColor = vec3(0.320, 0.685, 0.955);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_LIGHT_GRAY:
                 tintColor = vec3(0.7);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_LIME:
                 tintColor = vec3(0.633, 0.924, 0.124);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_MAGENTA:
                 tintColor = vec3(0.698, 0.298, 0.847);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_ORANGE:
                 tintColor = vec3(0.919, 0.586, 0.185);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_PINK:
                 tintColor = vec3(0.949, 0.274, 0.497);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_PURPLE:
                 tintColor = vec3(0.578, 0.170, 0.904);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_RED:
                 tintColor = vec3(0.999, 0.188, 0.188);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_WHITE:
                 tintColor = vec3(0.96, 0.96, 0.96);
-                mixWeight = 1.0;
                 break;
             case BLOCK_GLASS_YELLOW:
                 tintColor = vec3(0.965, 0.965, 0.123);
-                mixWeight = 1.0;
                 break;
             case BLOCK_HONEY:
                 tintColor = vec3(0.984, 0.733, 0.251);
-                mixWeight = 1.0;
                 break;
             case BLOCK_NETHER_PORTAL:
                 lightColor = vec3(0.502, 0.165, 0.831);
                 tintColor = vec3(0.502, 0.165, 0.831);
                 lightRange = 11.0;
-                mixWeight = 1.0;
                 break;
             case BLOCK_SLIME:
                 tintColor = vec3(0.408, 0.725, 0.329);
-                mixWeight = 1.0;
                 break;
 
         // LPV shapes
 
-            case BLOCK_LPV_IGNORE:
-                mixWeight = 1.00;
-                break;
             case BLOCK_LPV_MIN:
-                mixWeight = 0.75;
+                tintF = 0.75;
                 break;
             case BLOCK_LPV_MED:
-                mixWeight = 0.50;
+                tintF = 0.50;
                 break;
             case BLOCK_LPV_MAX:
-                mixWeight = 0.25;
+                tintF = 0.25;
                 break;
 
             case BLOCK_CARPET:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);
-                mixWeight = 0.9;
+                tintF = 0.9;
                 break;
 
             case BLOCK_DOOR_N:
                 #ifdef DOORS_BLOCK_LIGHT
                     mixMask = BuildLpvMask(0u, 1u, 1u, 1u, 1u, 1u);
                 #endif
-                mixWeight = 0.8;
+                tintF = 0.8;
                 break;
             case BLOCK_DOOR_E:
                 #ifdef DOORS_BLOCK_LIGHT
                     mixMask = BuildLpvMask(1u, 0u, 1u, 1u, 1u, 1u);
                 #endif
-                mixWeight = 0.8;
+                tintF = 0.8;
                 break;
             case BLOCK_DOOR_S:
                 #ifdef DOORS_BLOCK_LIGHT
                     mixMask = BuildLpvMask(1u, 1u, 0u, 1u, 1u, 1u);
                 #endif
-                mixWeight = 0.8;
+                tintF = 0.8;
                 break;
             case BLOCK_DOOR_W:
                 #ifdef DOORS_BLOCK_LIGHT
                     mixMask = BuildLpvMask(1u, 1u, 1u, 0u, 1u, 1u);
                 #endif
-                mixWeight = 0.8;
+                tintF = 0.8;
                 break;
 
             case BLOCK_PRESSURE_PLATE:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);
-                mixWeight = 0.9;
+                tintF = 0.9;
                 break;
 
             case BLOCK_SLAB_TOP:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 0u, 1u);
-                mixWeight = 0.5;
+                tintF = 0.5;
                 break;
             case BLOCK_SLAB_BOTTOM:
 
             case BLOCK_SNOW_LAYERS:
                 mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);
-                mixWeight = 0.5;
+                tintF = 0.5;
                 break;
 
             case BLOCK_TRAPDOOR_BOTTOM:
                 #ifdef TRAPDOORS_BLOCK_LIGHT
                     mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 1u, 0u);
                 #endif
-                mixWeight = 0.8;
+                tintF = 0.8;
                 break;
             case BLOCK_TRAPDOOR_TOP:
                 #ifdef TRAPDOORS_BLOCK_LIGHT
                     mixMask = BuildLpvMask(1u, 1u, 1u, 1u, 0u, 1u);
                 #endif
-                mixWeight = 0.8;
+                tintF = 0.8;
                 break;
             case BLOCK_TRAPDOOR_N:
                 #ifdef TRAPDOORS_BLOCK_LIGHT
                     mixMask = BuildLpvMask(0u, 1u, 1u, 1u, 1u, 1u);
                 #endif
-                mixWeight = 0.8;
+                tintF = 0.8;
                 break;
             case BLOCK_TRAPDOOR_E:
                 #ifdef TRAPDOORS_BLOCK_LIGHT
                     mixMask = BuildLpvMask(1u, 0u, 1u, 1u, 1u, 1u);
                 #endif
-                mixWeight = 0.8;
+                tintF = 0.8;
                 break;
             case BLOCK_TRAPDOOR_S:
                 #ifdef TRAPDOORS_BLOCK_LIGHT
                     mixMask = BuildLpvMask(1u, 1u, 0u, 1u, 1u, 1u);
                 #endif
-                mixWeight = 0.8;
+                tintF = 0.8;
                 break;
             case BLOCK_TRAPDOOR_W:
                 #ifdef TRAPDOORS_BLOCK_LIGHT
                     mixMask = BuildLpvMask(1u, 1u, 1u, 0u, 1u, 1u);
                 #endif
-                mixWeight = 0.8;
+                tintF = 0.8;
                 break;
         }
 
         // STAIRS
         if (blockId >= BLOCK_STAIRS_BOTTOM_N && blockId <= BLOCK_STAIRS_TOP_OUTER_S_W) {
-            mixWeight = 0.25;
+            tintF = 0.25;
 
             switch (blockId) {
                 case BLOCK_STAIRS_BOTTOM_N:
@@ -1112,7 +1064,7 @@ void main() {
 
         // WALL
         if (blockId >= BLOCK_WALL_MIN && blockId <= BLOCK_WALL_MAX) {
-            mixWeight = 0.25;
+            tintF = 0.25;
 
             if (blockId == BLOCK_WALL_POST_TALL_ALL || blockId == BLOCK_WALL_TALL_ALL
                   || blockId == BLOCK_WALL_POST_TALL_N_W_S
@@ -1120,7 +1072,7 @@ void main() {
                   || blockId == BLOCK_WALL_POST_TALL_W_N_E
                   || blockId == BLOCK_WALL_POST_TALL_W_S_E) {
                 mixMask = BuildLpvMask(0u, 0u, 0u, 0u, 1u, 1u);
-                mixWeight = 0.125;
+                tintF = 0.125;
             }
             else if (blockId == BLOCK_WALL_POST_TALL_N_S || blockId == BLOCK_WALL_TALL_N_S) {
                 mixMask = BuildLpvMask(1u, 0u, 1u, 0u, 1u, 1u);
@@ -1134,7 +1086,7 @@ void main() {
         // Misc
 
         if (blockId == BLOCK_SIGN) {
-            mixWeight = 0.9;
+            tintF = 0.9;
         }
 
         // Entities
@@ -1152,13 +1104,12 @@ void main() {
         if (blockId == ENTITY_FIREBALL_SMALL) {
             lightColor = vec3(0.000, 1.000, 0.000);
             lightRange = 8.0;
-            mixWeight = 1.0;
         }
 
         if (blockId == ENTITY_GLOW_SQUID) {
             lightColor = vec3(0.180, 0.675, 0.761);
             lightRange = 6.0;
-            mixWeight = 0.5;
+            tintF = 0.5;
         }
 
         if (blockId == ENTITY_MAGMA_CUBE) {
@@ -1174,7 +1125,6 @@ void main() {
         if (blockId == ENTITY_SPECTRAL_ARROW) {
             lightColor = vec3(0.839, 0.541, 0.2);
             lightRange = 8.0;
-            mixWeight = 1.0;
         }
 
 
@@ -1190,9 +1140,7 @@ void main() {
         const float tintSaturationF = LPV_TINT_SATURATION / 100.0;
         mat4 matTintSaturation = GetSaturationMatrix(tintSaturationF);
         tintColor = (matTintSaturation * vec4(tintColor, 1.0)).rgb;
-
-        // lazy fix for migrating from mixWeight to tintColor
-        tintColor *= mixWeight;
+        tintColor *= tintF;
 
         uint lightColorRange = packUnorm4x8(vec4(lightColor, lightRange/255.0));
         uint tintColorMask = packUnorm4x8(vec4(tintColor, 0.0));

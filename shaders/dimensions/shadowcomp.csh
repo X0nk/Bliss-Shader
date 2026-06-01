@@ -166,8 +166,7 @@ void main() {
         // set alpha=1 for glass to prevent rain
         int up_index = getSharedIndex(ivec3(gl_LocalInvocationID) + ivec3(1,2,1));
         lightValue.a = lpvSharedData[up_index].a;
-        // TODO: only check mask up & down flags
-        if (blockId == BLOCK_GLASS || mixMask == 0u) lightValue.a = 1.0;
+        if (blockId == BLOCK_GLASS || (mixMask & 12u) != 12u) lightValue.a = 1.0;
 
         // Convert back to linear RGB space
         vec3 hsv = RgbToHsv(lightValue.rgb);

@@ -1,4 +1,5 @@
 #define BLOCK_EMPTY 0
+#define BLOCK_DEFAULT 1
 
 const uint VoxelSize = uint(exp2(LPV_SIZE));
 const ivec3 VoxelSize3 = ivec3(VoxelSize);
