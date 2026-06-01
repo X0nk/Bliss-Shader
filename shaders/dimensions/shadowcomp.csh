@@ -165,7 +165,7 @@ void main() {
 
         // set alpha=1 for glass to prevent rain
         lightValue.a = lpvSharedData[getSharedIndex(ivec3(gl_LocalInvocationID) + ivec3(1,2,1))].a;
-        if (blockId == BLOCK_GLASS) lightValue.a = 1.0;
+        if (blockId == 0 || blockId == BLOCK_GLASS) lightValue.a = 1.0;
 
         // Convert back to linear RGB space
         vec3 hsv = RgbToHsv(lightValue.rgb);

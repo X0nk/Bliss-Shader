@@ -699,6 +699,12 @@ void applyPuddles(
 
 	float noise = texture(noisetex, UV * 0.02).b;
 
+	#ifdef IS_LPV_ENABLED
+		vec3 lpvPos = GetVoxelPosition(worldPos - cameraPosition);
+		float under_glass = SampleLpvLinear(lpvPos).a;
+		if (under_glass > 0.5) lightmap = min(lightmap, 13.0/16.0);
+	#endif
+
 	float lightmapMax = min(max(lightmap - 0.9,0.0) * 10.0,1.0) ;
 	float lightmapMin = min(max(lightmap - 0.8,0.0) * 5.0,1.0) ;
 	lightmap = clamp(lightmapMax + noise*lightmapMin*2.0,0.0,1.0);
