@@ -701,8 +701,10 @@ void applyPuddles(
 
 	#ifdef IS_LPV_ENABLED
 		vec3 lpvPos = GetVoxelPosition(worldPos - cameraPosition);
-		float under_glass = SampleLpvLinear(lpvPos).a;
-		if (under_glass > 0.5) lightmap = min(lightmap, 13.0/16.0);
+		float skyLightMask = SampleLpvLinear(lpvPos).a;
+		float skyLightMax = 1.0 - (3./15.)*skyLightMask;
+
+		lightmap = min(lightmap, skyLightMax);
 	#endif
 
 	float lightmapMax = min(max(lightmap - 0.9,0.0) * 10.0,1.0) ;

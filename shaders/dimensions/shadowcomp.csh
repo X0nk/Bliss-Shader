@@ -77,7 +77,7 @@ layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
     vec3 sampleShared(ivec3 pos, int mask_index) {
         int shared_index = getSharedIndex(pos + 1);
 
-        float mixWeight = 1.0;
+//        float mixWeight = 1.0;
         uint mask = 0xFFFF;
         uint blockId = voxelSharedData[shared_index];
         
@@ -134,7 +134,7 @@ void main() {
         vec3 lightColor = vec3(0.0);
         vec3 tintColor = vec3(1.0);
         float lightRange = 0.0;
-        uint mixMask = 0xFFFF;
+        uint mixMask = 0xFFFFu;
     
         // Decode light data for current voxel
         uint blockId = voxelSharedData[getSharedIndex(ivec3(gl_LocalInvocationID) + 1)];
@@ -164,8 +164,10 @@ void main() {
         }
 
         // set alpha=1 for glass to prevent rain
-        lightValue.a = lpvSharedData[getSharedIndex(ivec3(gl_LocalInvocationID) + ivec3(1,2,1))].a;
-        if (blockId == 0 || blockId == BLOCK_GLASS) lightValue.a = 1.0;
+        int up_index = getSharedIndex(ivec3(gl_LocalInvocationID) + ivec3(1,2,1));
+        lightValue.a = lpvSharedData[up_index].a;
+        // TODO: only check mask up & down flags
+        if (blockId == BLOCK_GLASS || mixMask == 0u) lightValue.a = 1.0;
 
         // Convert back to linear RGB space
         vec3 hsv = RgbToHsv(lightValue.rgb);
