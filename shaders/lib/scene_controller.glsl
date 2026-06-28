@@ -346,6 +346,8 @@ if(rainStrength > 0.0001){
                 smallCumulusDensity =  RAINY_PROFILE_1_LAYER0_DENSITY;
                 largeCumulusDensity =  RAINY_PROFILE_1_LAYER1_DENSITY;
                 altostratusDensity =   RAINY_PROFILE_1_LAYER2_DENSITY;
+	            uniformFogDensity =    RAINY_PROFILE_1_UNIFORM_FOG_DENSITY;
+                clumpyFogDensity =     RAINY_PROFILE_1_CLUMPY_FOG_DENSITY;
                 break;
             }
         #if USE_CUSTOM_DAILY_RAIN_PROFILE >= 2
@@ -356,6 +358,8 @@ if(rainStrength > 0.0001){
                 smallCumulusDensity =  RAINY_PROFILE_2_LAYER0_DENSITY;
                 largeCumulusDensity =  RAINY_PROFILE_2_LAYER1_DENSITY;
                 altostratusDensity =   RAINY_PROFILE_2_LAYER2_DENSITY;
+	            uniformFogDensity =    RAINY_PROFILE_2_UNIFORM_FOG_DENSITY;
+                clumpyFogDensity =     RAINY_PROFILE_2_CLUMPY_FOG_DENSITY;
                 break;
             }
         #endif
@@ -367,6 +371,8 @@ if(rainStrength > 0.0001){
                 smallCumulusDensity =  RAINY_PROFILE_3_LAYER0_DENSITY;
                 largeCumulusDensity =  RAINY_PROFILE_3_LAYER1_DENSITY;
                 altostratusDensity =   RAINY_PROFILE_3_LAYER2_DENSITY;
+	            uniformFogDensity =    RAINY_PROFILE_3_UNIFORM_FOG_DENSITY;
+                clumpyFogDensity =     RAINY_PROFILE_3_CLUMPY_FOG_DENSITY;
                 break;
             }
         #endif
@@ -378,6 +384,8 @@ if(rainStrength > 0.0001){
                 smallCumulusDensity =  RAINY_PROFILE_4_LAYER0_DENSITY;
                 largeCumulusDensity =  RAINY_PROFILE_4_LAYER1_DENSITY;
                 altostratusDensity =   RAINY_PROFILE_4_LAYER2_DENSITY;
+	            uniformFogDensity =    RAINY_PROFILE_4_UNIFORM_FOG_DENSITY;
+                clumpyFogDensity =     RAINY_PROFILE_4_CLUMPY_FOG_DENSITY;
                 break;
             }
         #endif
@@ -389,6 +397,8 @@ if(rainStrength > 0.0001){
                 smallCumulusDensity =  RAINY_PROFILE_5_LAYER0_DENSITY;
                 largeCumulusDensity =  RAINY_PROFILE_5_LAYER1_DENSITY;
                 altostratusDensity =   RAINY_PROFILE_5_LAYER2_DENSITY;
+	            uniformFogDensity =    RAINY_PROFILE_5_UNIFORM_FOG_DENSITY;
+                clumpyFogDensity =     RAINY_PROFILE_5_CLUMPY_FOG_DENSITY;
                 break;
             }
         #endif
@@ -400,6 +410,8 @@ if(rainStrength > 0.0001){
                 smallCumulusDensity =  RAINY_PROFILE_6_LAYER0_DENSITY;
                 largeCumulusDensity =  RAINY_PROFILE_6_LAYER1_DENSITY;
                 altostratusDensity =   RAINY_PROFILE_6_LAYER2_DENSITY;
+	            uniformFogDensity =    RAINY_PROFILE_6_UNIFORM_FOG_DENSITY;
+                clumpyFogDensity =     RAINY_PROFILE_6_CLUMPY_FOG_DENSITY;
                 break;
             }
         #endif

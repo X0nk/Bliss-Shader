@@ -311,9 +311,6 @@ screen.Resource_Pack_Support = Materials / Resource Pack Support
         option.DISTANT_SSS = Screen-Space Shadow SSS
         option.SCREENSPACE_DIRECT_SSS_BLENDING = Screen-Space Shadow SSS Blending §bⓘ Only within the shadowMap
 
-        option.sss_density_multiplier = SSS Density Multiplier
-        option.sss_absorbance_multiplier = SSS Saturation Multiplier
-        option.SCREENSPACE_DIRECT_SSS_BLENDING = Screen-Space Direct SSS Blending
 
     screen.POM = Parallax Occlusion Mapping / POM
         option.POM = Parallax Occlusion Mapping / POM
@@ -643,10 +640,10 @@ screen.Fog = Fog Settings
         option.Noon_Uniform_Fog = Noon Fog Density
         option.Evening_Uniform_Fog = Evening Fog Density
         option.Night_Uniform_Fog = Night Fog Density
-        option.Morning_Cloudy_Fog = Morning Cloudy Fog Density
-        option.Noon_Cloudy_Fog = Noon Cloudy Fog Density
-        option.Evening_Cloudy_Fog = Evening Cloudy Fog Density
-        option.Night_Cloudy_Fog = Night Cloudy Fog Density
+        option.Morning_Cloudy_Fog = Morning clumpy Fog Density
+        option.Noon_Cloudy_Fog = Noon clumpy Fog Density
+        option.Evening_Cloudy_Fog = Evening clumpy Fog Density
+        option.Night_Cloudy_Fog = Night clumpy Fog Density
 
         screen.BIOME_EFFECTS = Biome Effects
 
@@ -695,6 +692,9 @@ screen.Clouds = Cloud Settings
     value.CLOUD_SHADOW_AMOUNT.0 = §cOFF
     suffix.CLOUD_SHADOW_AMOUNT = %
     option.Cloud_Speed = Cloud Speed Multiplier
+    option.SCENE_CONTROLLER_TRANSITION_RATE = Preset Transition Rate
+        suffix.SCENE_CONTROLLER_TRANSITION_RATE = %
+        value.SCENE_CONTROLLER_TRANSITION_RATE.1001 = Instant Transition
 
     option.CloudLayer0 = Small Cumulus Clouds
     option.CloudLayer1 = Large Cumulus Clouds
@@ -795,6 +795,8 @@ screen.Clouds = Cloud Settings
     option.RAINY_PROFILE_1_LAYER1_DENSITY = Density
     option.RAINY_PROFILE_1_LAYER2_COVERAGE = Coverage
     option.RAINY_PROFILE_1_LAYER2_DENSITY = Density
+    option.RAINY_PROFILE_1_UNIFORM_FOG_DENSITY = Uniform Fog Density
+    option.RAINY_PROFILE_1_CLUMPY_FOG_DENSITY = Clumpy Fog Density
 
     option.RAINY_PROFILE_2_LAYER0_COVERAGE = Coverage
     option.RAINY_PROFILE_2_LAYER0_DENSITY = Density
@@ -802,6 +804,8 @@ screen.Clouds = Cloud Settings
     option.RAINY_PROFILE_2_LAYER1_DENSITY = Density
     option.RAINY_PROFILE_2_LAYER2_COVERAGE = Coverage
     option.RAINY_PROFILE_2_LAYER2_DENSITY = Density
+    option.RAINY_PROFILE_2_UNIFORM_FOG_DENSITY = Uniform Fog Density
+    option.RAINY_PROFILE_2_CLUMPY_FOG_DENSITY = Clumpy Fog Density
 
     option.RAINY_PROFILE_3_LAYER0_COVERAGE = Coverage
     option.RAINY_PROFILE_3_LAYER0_DENSITY = Density
@@ -809,6 +813,8 @@ screen.Clouds = Cloud Settings
     option.RAINY_PROFILE_3_LAYER1_DENSITY = Density
     option.RAINY_PROFILE_3_LAYER2_COVERAGE = Coverage
     option.RAINY_PROFILE_3_LAYER2_DENSITY = Density
+    option.RAINY_PROFILE_3_UNIFORM_FOG_DENSITY = Uniform Fog Density
+    option.RAINY_PROFILE_3_CLUMPY_FOG_DENSITY = Clumpy Fog Density
 
     option.RAINY_PROFILE_4_LAYER0_COVERAGE = Coverage
     option.RAINY_PROFILE_4_LAYER0_DENSITY = Density
@@ -816,6 +822,8 @@ screen.Clouds = Cloud Settings
     option.RAINY_PROFILE_4_LAYER1_DENSITY = Density
     option.RAINY_PROFILE_4_LAYER2_COVERAGE = Coverage
     option.RAINY_PROFILE_4_LAYER2_DENSITY = Density
+    option.RAINY_PROFILE_4_UNIFORM_FOG_DENSITY = Uniform Fog Density
+    option.RAINY_PROFILE_4_CLUMPY_FOG_DENSITY = Clumpy Fog Density
 
     option.RAINY_PROFILE_5_LAYER0_COVERAGE = Coverage
     option.RAINY_PROFILE_5_LAYER0_DENSITY = Density
@@ -823,6 +831,8 @@ screen.Clouds = Cloud Settings
     option.RAINY_PROFILE_5_LAYER1_DENSITY = Density
     option.RAINY_PROFILE_5_LAYER2_COVERAGE = Coverage
     option.RAINY_PROFILE_5_LAYER2_DENSITY = Density
+    option.RAINY_PROFILE_5_UNIFORM_FOG_DENSITY = Uniform Fog Density
+    option.RAINY_PROFILE_5_CLUMPY_FOG_DENSITY = Clumpy Fog Density
 
     option.RAINY_PROFILE_6_LAYER0_COVERAGE = Coverage
     option.RAINY_PROFILE_6_LAYER0_DENSITY = Density
@@ -830,6 +840,8 @@ screen.Clouds = Cloud Settings
     option.RAINY_PROFILE_6_LAYER1_DENSITY = Density
     option.RAINY_PROFILE_6_LAYER2_COVERAGE = Coverage
     option.RAINY_PROFILE_6_LAYER2_DENSITY = Density
+    option.RAINY_PROFILE_6_UNIFORM_FOG_DENSITY = Uniform Fog Density
+    option.RAINY_PROFILE_6_CLUMPY_FOG_DENSITY = Clumpy Fog Density
 
  ###################################################### ↑↑↑ THIS SUBMENU'S DESCRIPTIONS
 
@@ -986,7 +998,7 @@ screen.Climate = Climate Settings
     screen.SWAMP = Swamp
         option.SWAMP_ENV = Swamp Environment
         option.SWAMP_UNIFORM_DENSITY = Uniform Fog Density
-        option.SWAMP_CLOUDY_DENSITY = Cloudy Fog Density
+        option.SWAMP_CLOUDY_DENSITY = Clumpy Fog Density
         option.SWAMP_R = Red Amount
         option.SWAMP_G = Green Amount
         option.SWAMP_B = Blue Amount
@@ -994,7 +1006,7 @@ screen.Climate = Climate Settings
     screen.JUNGLE = Jungle
         option.JUNGLE_ENV = Jungle Environment
         option.JUNGLE_UNIFORM_DENSITY = Uniform Fog Density
-        option.JUNGLE_CLOUDY_DENSITY = Cloudy Fog Density
+        option.JUNGLE_CLOUDY_DENSITY = Clumpy Fog Density
         option.JUNGLE_R = Red Amount
         option.JUNGLE_G = Green Amount
         option.JUNGLE_B = Blue Amount
@@ -1002,7 +1014,7 @@ screen.Climate = Climate Settings
     screen.DARKFOREST = Dark Forest
         option.DARKFOREST_ENV = Dark Forest Environment
         option.DARKFOREST_UNIFORM_DENSITY = Uniform Fog Density
-        option.DARKFOREST_CLOUDY_DENSITY = Cloudy Fog Density
+        option.DARKFOREST_CLOUDY_DENSITY = Clumpy Fog Density
         option.DARKFOREST_R = Red Amount
         option.DARKFOREST_G = Green Amount
         option.DARKFOREST_B = Blue Amount

@@ -204,9 +204,16 @@ float HG_phase(float x, float g){
 }
 
 vec3 doPixelTimer(in vec3 targetValue, in vec3 prevFrameValue){
+	#if SCENE_CONTROLLER_TRANSITION_RATE > 1000
+		return targetValue;
+	#endif
+	// if the value is below the target value, add time. if the value is above the target value, subtract time.
+	// this polarity variable determines what direction on the numberline to go.
 	vec3 polarity = floor(clamp((targetValue - prevFrameValue)*65000.0,-1.0,1.0));
 
-	prevFrameValue += polarity * (frameTime/(15.0 * (1.0/clamp(targetValue,0.1,1.0))));
+	// values that are extremely small interpolate *too fast* with a constant rate. 
+	// so scale the rate to be slower when the target value is very small.
+	prevFrameValue += polarity * (frameTime/(15.0 * (1.0/clamp(targetValue,0.1,1.0)))) * (float(SCENE_CONTROLLER_TRANSITION_RATE)/100.0f);
 
 	return prevFrameValue;
 }
