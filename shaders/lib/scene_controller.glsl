@@ -480,7 +480,7 @@ if(rainStrength > 0.0001){
                 }
                 case 8: { // blizzard
                     LocalUniformFogDensity = 0.07;
-                    LocalClumpyFogDensity = 1.0;
+                    LocalClumpyFogDensity = 0.3;
                     localFogColor = vec3(0.4,0.6,1.0) * 5.0;
 
 	                uniformFogDensity = 0.0;
@@ -563,7 +563,7 @@ if(rainStrength > 0.0001){
         clumpyFogDensity = 0.0;
 
         LocalUniformFogDensity = 0.01;
-        LocalClumpyFogDensity = 0.1;
+        LocalClumpyFogDensity = 0.05;
         localFogColor = vec3(0.9,1.0,0.3);
     }
 #endif
