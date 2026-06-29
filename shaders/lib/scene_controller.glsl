@@ -8,6 +8,7 @@ uniform bool isInColdArea;
 uniform bool isInHotArea;
 uniform bool isInJungleBiomes;
 uniform bool isInSwampBiomes;
+uniform bool isInPaleGardenBiomes;
 uniform bool isInSpecialEnviornment;
 uniform bool isInSnowFallEnviornment;
 uniform bool isInRainFallEnviornment;
@@ -563,7 +564,7 @@ if(rainStrength > 0.0001){
 
         LocalUniformFogDensity = 0.01;
         LocalClumpyFogDensity = 0.1;
-        localFogColor = vec3(0.8,1.0,0.1);
+        localFogColor = vec3(0.9,1.0,0.3);
     }
 #endif
 #if USE_CUSTOM_SWAMP_CATEGORY_PROFILE == 1
@@ -571,9 +572,9 @@ if(rainStrength > 0.0001){
 	    uniformFogDensity = 0.0;
         clumpyFogDensity = 0.0;
 
-        LocalUniformFogDensity = CUSTOM_SWAMP_PROFILE_1_UNIFORM_FOG_DENSITY;
-        LocalClumpyFogDensity = CUSTOM_SWAMP_PROFILE_1_CLUMPY_FOG_DENSITY;
-        localFogColor = vec3(CUSTOM_SWAMP_PROFILE_1_FOG_COLOR_R, CUSTOM_SWAMP_PROFILE_1_FOG_COLOR_G, CUSTOM_SWAMP_PROFILE_1_FOG_COLOR_B);
+        LocalUniformFogDensity = CUSTOM_SWAMP_PROFILE_UNIFORM_FOG_DENSITY;
+        LocalClumpyFogDensity = CUSTOM_SWAMP_PROFILE_CLUMPY_FOG_DENSITY;
+        localFogColor = vec3(CUSTOM_SWAMP_PROFILE_FOG_COLOR_R, CUSTOM_SWAMP_PROFILE_FOG_COLOR_G, CUSTOM_SWAMP_PROFILE_FOG_COLOR_B);
     }
 #endif
 #if USE_CUSTOM_JUNGLE_CATEGORY_PROFILE == 0
@@ -591,9 +592,29 @@ if(rainStrength > 0.0001){
 	    uniformFogDensity = 0.0;
         clumpyFogDensity = 0.0;
 
-        LocalUniformFogDensity = CUSTOM_JUNGLE_PROFILE_1_UNIFORM_FOG_DENSITY;
-        LocalClumpyFogDensity = CUSTOM_JUNGLE_PROFILE_1_CLUMPY_FOG_DENSITY;
-        localFogColor = vec3(CUSTOM_JUNGLE_PROFILE_1_FOG_COLOR_R, CUSTOM_JUNGLE_PROFILE_1_FOG_COLOR_G, CUSTOM_JUNGLE_PROFILE_1_FOG_COLOR_B);
+        LocalUniformFogDensity = CUSTOM_JUNGLE_PROFILE_UNIFORM_FOG_DENSITY;
+        LocalClumpyFogDensity = CUSTOM_JUNGLE_PROFILE_CLUMPY_FOG_DENSITY;
+        localFogColor = vec3(CUSTOM_JUNGLE_PROFILE_FOG_COLOR_R, CUSTOM_JUNGLE_PROFILE_FOG_COLOR_G, CUSTOM_JUNGLE_PROFILE_FOG_COLOR_B);
+    }
+#endif
+#if USE_CUSTOM_PALE_GARDEN_PROFILE == 0
+    if(isInPaleGardenBiomes){
+	    uniformFogDensity = 0.0;
+        clumpyFogDensity = 0.0;
+        
+        LocalUniformFogDensity = 0.07;
+        LocalClumpyFogDensity = 0.0;
+        localFogColor = vec3(0.9,1.0,0.8)*0.2;
+    }
+#endif
+#if USE_CUSTOM_PALE_GARDEN_PROFILE == 1
+    if(isInPaleGardenBiomes){
+	    uniformFogDensity = 0.0;
+        clumpyFogDensity = 0.0;
+
+        LocalUniformFogDensity = CUSTOM_PALE_GARDEN_PROFILE_UNIFORM_FOG_DENSITY;
+        LocalClumpyFogDensity = CUSTOM_PALE_GARDEN_PROFILE_CLUMPY_FOG_DENSITY;
+        localFogColor = vec3(CUSTOM_PALE_GARDEN_PROFILE_FOG_COLOR_R, CUSTOM_PALE_GARDEN_PROFILE_FOG_COLOR_G, CUSTOM_PALE_GARDEN_PROFILE_FOG_COLOR_B);
     }
 #endif
 

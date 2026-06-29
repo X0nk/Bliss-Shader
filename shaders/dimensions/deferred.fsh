@@ -204,9 +204,7 @@ float HG_phase(float x, float g){
 }
 
 vec3 doPixelTimer(in vec3 targetValue, in vec3 prevFrameValue){
-	#if SCENE_CONTROLLER_TRANSITION_RATE > 1000
-		return targetValue;
-	#endif
+
 	// if the value is below the target value, add time. if the value is above the target value, subtract time.
 	// this polarity variable determines what direction on the numberline to go.
 	vec3 polarity = floor(clamp((targetValue - prevFrameValue)*65000.0,-1.0,1.0));
@@ -240,7 +238,11 @@ float mixhistory = 0.06;
 		
 		vec3 targetParameterValues = writeSceneControllerParameters(gl_FragCoord.xy, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog, parameters.localFog, parameters.localFogColor);
 		
-		gl_FragData[0].rgb = doPixelTimer(targetParameterValues, frameHistory/150.0);
+		#if SCENE_CONTROLLER_TRANSITION_RATE > 1000
+			gl_FragData[0].rgb = targetParameterValues;
+		#elif SCENE_CONTROLLER_TRANSITION_RATE <= 1000
+			gl_FragData[0].rgb = doPixelTimer(targetParameterValues, frameHistory/150.0);
+		#endif
 	}
 
 	///////////////////////////////
