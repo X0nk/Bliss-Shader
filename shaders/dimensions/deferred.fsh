@@ -61,7 +61,7 @@ uniform int isEyeInWater;
 
 uniform float dayChangeSmooth;
 uniform bool worldTimeChangeCheck;
-
+uniform bool windowResizeCheck;
 uniform int hideGUI;
 uniform float near;
 
@@ -204,7 +204,9 @@ float HG_phase(float x, float g){
 }
 
 vec3 doPixelTimer(in vec3 targetValue, in vec3 prevFrameValue){
-
+	// do not transition if the shader has just loaded or if the window resized.
+	if(frameCounter < 2 || windowResizeCheck) return targetValue;
+	
 	// if the value is below the target value, add time. if the value is above the target value, subtract time.
 	// this polarity variable determines what direction on the numberline to go.
 	vec3 polarity = floor(clamp((targetValue - prevFrameValue)*65000.0,-1.0,1.0));
