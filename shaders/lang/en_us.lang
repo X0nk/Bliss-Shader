@@ -717,6 +717,10 @@ screen.VOLUMETRICS = Volumetrics
    
  ###################################################### ↓↓↓ THIS SUBMENU'S LABELS
 screen.ATMOSPHERICS = Atmospherics
+    option.WIND_SYSTEM_MODE = Wind System
+        value.WIND_SYSTEM_MODE.-1 = §cOFF§r
+        value.WIND_SYSTEM_MODE.0 = §bⓘ ON + Exclude Foliage
+        value.WIND_SYSTEM_MODE.1 = §bⓘ ON
 
     screen.DAILY_WEATHER = Daily Weather Presets
     option.USE_CUSTOM_DAILY_WEATHER_PROFILE = Daily Weather Mode

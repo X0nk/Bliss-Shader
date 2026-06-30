@@ -814,6 +814,8 @@
 // #define VANILLA_LIGHTMAP_MASK
 #define TORCH_LIGHTMAP_EMISSION_WORKAROUND
 
+#define WIND_SYSTEM_MODE 0 // [-1 0 1]
+
 
 ////////////////////////////////
 // ----- DEBUG SETTINGS ----- //

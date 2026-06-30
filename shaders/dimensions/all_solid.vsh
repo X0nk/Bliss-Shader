@@ -59,7 +59,7 @@ uniform float screenBrightness;
 uniform int isEyeInWater;
 uniform float frameTimeCounter;
 
-uniform sampler2D noisetex;//depth
+// uniform sampler2D noisetex;//depth
 
 
 #include "/lib/vertex_displacement.glsl"
@@ -86,19 +86,19 @@ vec4 toClipSpace3(vec3 viewSpacePosition) {
     return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
 }
 
-float densityAtPos(in vec3 pos){
-	pos /= 18.;
-	pos.xz *= 0.5;
-	vec3 p = floor(pos);
-	vec3 f = fract(pos);
-	vec2 uv =  p.xz + f.xz + p.y * vec2(0.0,193.0);
-	vec2 coord =  uv / 512.0;
+// float densityAtPos(in vec3 pos){
+// 	pos /= 18.;
+// 	pos.xz *= 0.5;
+// 	vec3 p = floor(pos);
+// 	vec3 f = fract(pos);
+// 	vec2 uv =  p.xz + f.xz + p.y * vec2(0.0,193.0);
+// 	vec2 coord =  uv / 512.0;
 	
-	//The y channel has an offset to avoid using two textures fetches
-	vec2 xy = texture2D(noisetex, coord).yx;
+// 	//The y channel has an offset to avoid using two textures fetches
+// 	vec2 xy = texture2D(noisetex, coord).yx;
 
-	return mix(xy.r,xy.g, f.y);
-}
+// 	return mix(xy.r,xy.g, f.y);
+// }
 
 float luma(vec3 color) {
 	return dot(color,vec3(0.21, 0.72, 0.07));
@@ -286,7 +286,7 @@ void main() {
 				// these wave off of the air. they wave uniformly
 				|| (mc_Entity.x == BLOCK_GRASS_TALL_UPPER || mc_Entity.x == BLOCK_AIR_WAVING)
 
-			) && abs(position.z) < 64.0
+			) && abs(position.z) < 64.0 && (lmcoord.y > 0.8)
 		){
 			vec3 UnalteredWorldpos = worldpos;
 

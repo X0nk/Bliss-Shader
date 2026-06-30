@@ -2,10 +2,12 @@
 #define LARGECUMULUS_LAYER 1
 #define SMALLCUMULUS_LAYER 0
 float curvatureoffset = 0.04;
-
+uniform vec2 windDirection;
+// uniform float animation;
 #if CLOUD_ANIMATION_MODE == 0
 	uniform int worldDay;
 	uniform int worldTime;
+	// uniform float worldTimeAnimation;
 	float cloud_movement = (worldTime  + mod(worldDay,100)*24000.0) / 24.0 * Cloud_Speed;
 #elif CLOUD_ANIMATION_MODE == 1
 // uniform float frameTimeCounter;
@@ -55,8 +57,10 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
         case SMALLCUMULUS_LAYER: {
 			coverage = parameters.smallCumulus.x;
 
-			largeCloud = texture(noisetex, (samplePos.xz + cloud_movement)/5000.0 * CloudLayer0_scale).b;
-			smallCloud = 1.0-texture(noisetex, (samplePos.xz - cloud_movement)/500.0 * CloudLayer0_scale).r;
+			vec2 animatedPos = samplePos.xz + windDirection/4.0 * Cloud_Speed;
+
+			largeCloud = texture(noisetex, animatedPos/5000.0 * CloudLayer0_scale).b;
+			smallCloud = 1.0-texture(noisetex,animatedPos/500.0 * CloudLayer0_scale).r;
 			smallCloud = abs(largeCloud-0.6) + smallCloud*smallCloud;
 
 			shape = min(max(coverage - smallCloud,0.0)/(1e-6+sqrt(coverage)),1.0) ;
@@ -64,9 +68,10 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 
         case LARGECUMULUS_LAYER: {
 			coverage = parameters.largeCumulus.x;
-
-			largeCloud = texture(noisetex, (samplePos.zx + cloud_movement*3.0)/10000.0 * CloudLayer1_scale).b;
-			smallCloud = texture(noisetex, (samplePos.zx - cloud_movement*3.0)/2500.0 * CloudLayer1_scale).b;
+			
+			vec2 animatedPos = samplePos.zx + windDirection* Cloud_Speed;
+			largeCloud = texture(noisetex, animatedPos/10000.0 * CloudLayer1_scale).b;
+			smallCloud = texture(noisetex, animatedPos/2500.0 * CloudLayer1_scale).b;
 			smallCloud = abs(largeCloud* -0.7) + smallCloud;
 
 			shape = min(max(coverage - smallCloud,0.0)/(1e-6+sqrt(coverage)),1.0) ;
@@ -75,8 +80,9 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 	    case ALTOSTRATUS_LAYER: {
 			coverage = parameters.altostratus.x;
 
-			largeCloud = texture(noisetex, (position.xz + cloud_movement*20.0)/100000. * CloudLayer2_scale).b;
-			smallCloud = 1.0 - texture(noisetex, ((position.xz + vec2(-cloud_movement,cloud_movement)*20.0)/7500. - vec2(1.0-largeCloud, -largeCloud)/5.0) * CloudLayer2_scale).b;
+			vec2 animatedPos = samplePos.xz + windDirection * 10.0 * Cloud_Speed;
+			largeCloud = texture(noisetex, animatedPos/100000. * CloudLayer2_scale).b;
+			smallCloud = 1.0 - texture(noisetex, (animatedPos/7500. - vec2(1.0-largeCloud, -largeCloud)/5.0) * CloudLayer2_scale).b;
 			smallCloud = largeCloud + smallCloud * 0.4 * clamp(1.5-largeCloud,0.0,1.0);
 
 			shape = min(max(coverage - smallCloud,0.0) / (1e-6+sqrt(coverage)),1.0);
@@ -104,15 +110,16 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
 		// shrink the coverage slightly so it is a similar shape to clouds with erosion. this helps cloud lighting and cloud shadows.
 		if (LOD < 1) return max(shape - 0.27*erodeAmount,0.0);
 
-		samplePos.xz += cloud_movement/4.0;
-		samplePos.xz += pow( max(position.y - (minHeight+20.0), 0.0) / (max(maxHeight-minHeight,1.0)*0.20), 1.5);
-
  		float erosion = 0.0;
 
 		switch (LayerIndex){  
     	    default : { break; }
 
     	    case SMALLCUMULUS_LAYER: {
+				
+				samplePos.xz += windDirection/2.0* Cloud_Speed;
+				samplePos.xz += (-vec2(-windDirection.y, windDirection.x)/1500.0)*pow( max(position.y - (minHeight+20.0), 0.0) / (max(maxHeight-minHeight,1.0)*0.20), 1.5);
+
 				erosion += (1.0-densityAtPos(samplePos * 200.0 * CloudLayer0_scale)) * sqrt(1.0-shape);
 
 				float falloff = 1.0 - clamp((maxHeight - position.y)/100.0,0.0,1.0);
@@ -122,6 +129,10 @@ float getCloudShape(int LayerIndex, int LOD, in vec3 position, float minHeight, 
     	    break; }
 
     	    case LARGECUMULUS_LAYER: {
+				
+				samplePos.zx += windDirection*1.74* Cloud_Speed;
+				samplePos.zx += (-vec2(-windDirection.y, windDirection.x)/1500.0)*pow( abs(position.y - (minHeight+20.0)) / (max(maxHeight-minHeight,1.0)*0.20), 1.75);
+
 				erosion += (1.0 - densityAtPos(samplePos * 70.0 * CloudLayer1_scale)) * sqrt(1.0-shape);
 
 				float falloff = 1.0 - clamp((maxHeight - position.y)/200.0,0.0,1.0);

@@ -100,7 +100,10 @@ float getLocalEffectDensity(
 	if(parameters.localFog.y > 0.0){
 		vec3 pos = playerPos;
 		vec3 samplePos = playerPos * vec3(1.0,1.0/48.0,1.0) * 24.0 * 7.0;
-		samplePos += vec3(1.0, -0.01, 1.0)*frameTimeCounter*1500.0;
+		// samplePos += vec3(1.0, -0.01, 1.0)*frameTimeCounter*1500.0;
+		
+		samplePos.y += -0.01*frameTimeCounter*1500.0;
+		samplePos.xz += windDirection*1000.0;
 
 		float clumpyFog = min(max(densityAtPosFog(samplePos) - 0.2,0.0)/0.8,1.0);
 
@@ -120,11 +123,13 @@ float getFogDensities(
 	fogResult = pow(parameters.fog.x,3);
 	
 	if(parameters.fog.y > 0.0){
-		vec3 movement = vec3(1.0, -0.01, 1.0)*frameTimeCounter;
+		
 		vec3 pos = playerPos;
-		vec3 samplePos = playerPos * vec3(1.0,1.0/24.0,1.0) + movement;
-		vec3 samplePos2 = playerPos * vec3(1.0,1.0/48.0,1.0) + movement;
-
+		vec3 samplePos = playerPos * vec3(1.0,1.0/24.0,1.0);
+		vec3 samplePos2 = playerPos * vec3(1.0,1.0/48.0,1.0);
+		samplePos.xz += windDirection;
+		samplePos2.xz += windDirection;
+		
 		float shape = 1.0 - densityAtPosFog(samplePos * 24.0);
 		float shape2 = 1.0 - densityAtPosFog(samplePos2 * 200.0 - vec3(min(max(shape - 0.6 ,0.0) * 2.0 ,1.0)*200.0));
 		float finalShape = max(min(max(shape - 0.6 ,0.0) * 2.0 ,1.0) - shape2 * 0.4, 0.0) * exp(-0.05 * max(pos.y - 60,0.0));
