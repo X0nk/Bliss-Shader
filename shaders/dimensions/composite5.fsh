@@ -260,11 +260,12 @@ vec3 closestToCamera5taps_DH(vec2 texcoord, sampler2D depth, sampler2D dhDepth, 
 
 	return dmin;
 }
+uniform bool windowResizeCheck;
+uniform int frameCounter;
 
 vec4 computeTAA(vec2 texcoord, bool hand){
-
 	vec2 jitter = taaJitter*texelSize*0.5;
-	vec2 adjTC = clamp(texcoord*RENDER_SCALE - texelSize*0.5, vec2(0.0), RENDER_SCALE- texelSize*1.5);
+	vec2 adjTC = clamp(texcoord*RENDER_SCALE - texelSize*0.5, vec2(0.0), RENDER_SCALE - texelSize*1.5);
 	vec2 adjTC_noJitter = adjTC + jitter;
 
 	// get previous frames position stuff for UV	
@@ -277,7 +278,7 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		vec3 closestToCamera = closestToCamera5taps(adjTC, depthtex0);
 		vec3 viewPos = toScreenSpace(closestToCamera);
 	#endif
-	
+
 	vec3 playerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
 	vec3 previousPosition = mat3(gbufferPreviousModelView) * playerPos + gbufferPreviousModelView[3].xyz;
 	
@@ -291,9 +292,11 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	
 	previousPosition.xy = texcoord + (hand ? vec2(0.0) : velocity);
 
+	float cameraMovement = length(velocity/texelSize);
+
 	// adjust clamping radius when motion is detected to reduce ghosting further without needing to change blend factor
 	#if NEIGHBORHOOD_CLAMP_RADIUS_MULT_DURING_MOVEMENT < 100
-		float clampRadius = mix(1.0, float(NEIGHBORHOOD_CLAMP_RADIUS_MULT_DURING_MOVEMENT)/100.0f, clamp(length(velocity/texelSize),0.0,1.0)	);
+		float clampRadius = mix(1.0, float(NEIGHBORHOOD_CLAMP_RADIUS_MULT_DURING_MOVEMENT)/100.0f, clamp(cameraMovement,0.0,1.0)	);
 	#else
 		float clampRadius = 1.0;
 	#endif
@@ -318,7 +321,7 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		vec3 colMin = texture(colortex6, adjTC).rgb;
 	#else
 		//Assuming the history color is a blend of the 3x3 neighborhood, we clamp the history to the min and max of each channel in the 3x3 neighborhood
-		vec3 col0 = currentFrame; // can use this because its the center sample.
+		vec3 col0 = texture(colortex3, adjTC_noJitter).rgb;
 		vec3 col1 = texture(colortex3, adjTC_noJitter + vec2( texelSize.x,	 texelSize.y)*clampRadius).rgb;
 		vec3 col2 = texture(colortex3, adjTC_noJitter + vec2( texelSize.x,	-texelSize.y)*clampRadius).rgb;
 		vec3 col3 = texture(colortex3, adjTC_noJitter + vec2(-texelSize.x,	-texelSize.y)*clampRadius).rgb;
@@ -327,12 +330,22 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		vec3 col6 = texture(colortex3, adjTC_noJitter + vec2( 0.0,			-texelSize.y)*clampRadius).rgb;
 		vec3 col7 = texture(colortex3, adjTC_noJitter + vec2(-texelSize.x,	 		 0.0)*clampRadius).rgb;
 		vec3 col8 = texture(colortex3, adjTC_noJitter + vec2( texelSize.x,	 		 0.0)*clampRadius).rgb;
-
-		vec3 colMax = max(col0,max(col1,max(col2,max(col3, max(col4, max(col5, max(col6, max(col7, col8))))))));
-		vec3 colMin = min(col0,min(col1,min(col2,min(col3, min(col4, min(col5, min(col6, min(col7, col8))))))));
 		
-		colMin = 0.5 * (colMin + min(col0,min(col5,min(col6,min(col7,col8)))));
-		colMax = 0.5 * (colMax + max(col0,max(col5,max(col6,max(col7,col8)))));
+		// variance clip: https://developer.download.nvidia.com/gameworks/events/GDC2016/msalvi_temporal_supersampling.pdf
+		float tuner = 1.25;
+		vec3 momentsA = (col0+col1+col2+col3+col4+col5+col6+col7+col8)/9.0;
+		vec3 momentsB = (col0*col0+col1*col1+col2*col2+col3*col3+col4*col4+col5*col5+col6*col6+col7*col7+col8*col8)/9.0;
+		vec3 standardDev = max(sqrt(momentsB - momentsA*momentsA),0.0);
+
+		vec3 colMin = momentsA - tuner*standardDev;
+		vec3 colMax = momentsA + tuner*standardDev;
+		
+		// colMax = max(col0,max(col1,max(col2,max(col3, max(col4, max(col5, max(col6, max(col7, col8))))))));
+		// colMin = min(col0,min(col1,min(col2,min(col3, min(col4, min(col5, min(col6, min(col7, col8))))))));
+		// colMin = 0.5 * (colMin + min(col0,min(col5,min(col6,min(col7,col8)))));
+		// colMax = 0.5 * (colMax + max(col0,max(col5,max(col6,max(col7,col8)))));
+		// return vec4(colMin,1.0);
+		// return vec4(colMax,1.0);
 	#endif
 	
 	#if CRITICAL_DAMAGE_TAKEN_EFFECT_START > 0
@@ -340,18 +353,16 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		if(CriticalDamageTaken > 0.001) previousPosition.xy = mix(previousPosition.xy, texcoord, pow(CriticalDamageTaken,0.3));
 	#endif
 
-	vec3 frameHistory = max(FastCatmulRom(colortex5, previousPosition.xy, vec4(texelSize, 1.0/texelSize), 0.75).xyz,1e-7);
+	vec3 frameHistory = FastCatmulRom(colortex5, previousPosition.xy, vec4(texelSize, 1.0/texelSize), 0.75).xyz;
 	vec3 clampedframeHistory = clamp(frameHistory, colMin, colMax);
-	
 
 	float blendingFactor = BLEND_FACTOR;
 	// reduce history usage if the camera moves to reduce artifacts in motion.
-	float cameraMovement = length(velocity/texelSize);
 	blendingFactor = clamp(cameraMovement, blendingFactor, BLEND_FACTOR_DURING_MOVEMENT);
-	
-	#if NEIGHBORHOOD_CLAMP_RADIUS_MULT_DURING_MOVEMENT > 99
-		if(hand) blendingFactor = clamp(cameraMovement, blendingFactor, 1.0);
-	#endif
+
+	// #if NEIGHBORHOOD_CLAMP_RADIUS_MULT_DURING_MOVEMENT > 99
+	// 	if(hand) blendingFactor = clamp(cameraMovement, blendingFactor, 1.0);
+	// #endif
 	
 	#if CRITICAL_DAMAGE_TAKEN_EFFECT_START > 0
 		if(CriticalDamageTaken > 0.001){
@@ -359,12 +370,13 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 			blendingFactor *= 0.5;
 		}
 	#endif
+
 	////// Increases blending factor when far from AABB, reduces ghosting
 	blendingFactor = clamp(blendingFactor + luma(abs(clampedframeHistory - frameHistory)/clampedframeHistory),0.0,1.0);
-
+	
 	////// Blend current pixel with clamped history, apply fast tonemap beforehand to reduce flickering
 	vec3 finalResult = invTonemap(mix(tonemap(clampedframeHistory), tonemap(currentFrame), blendingFactor));
-
+	
 	#ifdef SCREENSHOT_MODE
 		// when this is on, do "infinite frame accumulation	"
 		if (hideGUI == 0) return vec4(finalResult, 1.0);
@@ -383,9 +395,10 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 void main() {
 /* RENDERTARGETS:5 */
 	#if TAA_MODE > 0
-		vec2 taauTC = clamp(texcoord*RENDER_SCALE, vec2(0.0), RENDER_SCALE - texelSize*2.0);
+		// vec2 taauTC = clamp(texcoord*RENDER_SCALE, vec2(0.0), RENDER_SCALE - texelSize*2.0) + taaJitter*texelSize*0.5;
+		vec2 taauTC = clamp(texcoord*RENDER_SCALE - texelSize*0.5, vec2(0.0), RENDER_SCALE - texelSize*1.5);
 		
-		float dataUnpacked = decodeVec2(texelFetch(colortex1,ivec2(gl_FragCoord.xy*RENDER_SCALE),0).w).y; 
+		float dataUnpacked = decodeVec2(texelFetch(colortex1,ivec2(gl_FragCoord.xy*RENDER_SCALE + taaJitter*0.5),0).w).y; 
 		
 		bool hand = abs(dataUnpacked-0.75) < 0.01 && texture(depthtex1,taauTC).x < 1.0;
 		
