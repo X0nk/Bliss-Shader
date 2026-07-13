@@ -353,7 +353,7 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		if(CriticalDamageTaken > 0.001) previousPosition.xy = mix(previousPosition.xy, texcoord, pow(CriticalDamageTaken,0.3));
 	#endif
 
-	vec3 frameHistory = FastCatmulRom(colortex5, previousPosition.xy, vec4(texelSize, 1.0/texelSize), 0.75).xyz;
+	vec3 frameHistory = max(FastCatmulRom(colortex5, previousPosition.xy, vec4(texelSize, 1.0/texelSize), 0.75).xyz,1e-7);
 	vec3 clampedframeHistory = clamp(frameHistory, colMin, colMax);
 
 	float blendingFactor = BLEND_FACTOR;
