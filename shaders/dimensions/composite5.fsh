@@ -315,10 +315,19 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		if (previousPosition.x < 0.0 || previousPosition.y < 0.0 || previousPosition.x > 1.0 || previousPosition.y > 1.0) return vec4(currentFrame, 1.0);
 	#endif
 	
+	// variance clip: https://developer.download.nvidia.com/gameworks/events/GDC2016/msalvi_temporal_supersampling.pdf
 	#if TAA_MODE == 3
 		// Interpolating neighboorhood clampling boundaries between pixels
-		vec3 colMax = texture(colortex0, adjTC_noJitter).rgb;
-		vec3 colMin = texture(colortex6, adjTC_noJitter).rgb;
+		// vec3 colMax = texture(colortex0, adjTC_noJitter).rgb;
+		// vec3 colMin = texture(colortex6, adjTC_noJitter).rgb;
+		
+		float tuner = 1.25;
+		vec3 momentsA = texture(colortex0, adjTC_noJitter).rgb;
+		vec3 momentsB = texture(colortex6, adjTC_noJitter).rgb;
+		vec3 standardDev = sqrt(max(momentsB - momentsA*momentsA,0.0));
+
+		vec3 colMin = momentsA - tuner*standardDev;
+		vec3 colMax = momentsA + tuner*standardDev;
 	#else
 		//Assuming the history color is a blend of the 3x3 neighborhood, we clamp the history to the min and max of each channel in the 3x3 neighborhood
 		vec3 col0 = texture(colortex3, adjTC_noJitter).rgb;
@@ -331,7 +340,6 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		vec3 col7 = texture(colortex3, adjTC_noJitter + vec2(-texelSize.x,	 		 0.0)*clampRadius).rgb;
 		vec3 col8 = texture(colortex3, adjTC_noJitter + vec2( texelSize.x,	 		 0.0)*clampRadius).rgb;
 		
-		// variance clip: https://developer.download.nvidia.com/gameworks/events/GDC2016/msalvi_temporal_supersampling.pdf
 		float tuner = 1.25;
 		vec3 momentsA = (col0+col1+col2+col3+col4+col5+col6+col7+col8)/9.0;
 		vec3 momentsB = (col0*col0+col1*col1+col2*col2+col3*col3+col4*col4+col5*col5+col6*col6+col7*col7+col8*col8)/9.0;
@@ -339,11 +347,6 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		
 		vec3 colMin = momentsA - tuner*standardDev;
 		vec3 colMax = momentsA + tuner*standardDev;
-		
-		// colMax = max(col0,max(col1,max(col2,max(col3, max(col4, max(col5, max(col6, max(col7, col8))))))));
-		// colMin = min(col0,min(col1,min(col2,min(col3, min(col4, min(col5, min(col6, min(col7, col8))))))));
-		// colMin = 0.5 * (colMin + min(col0,min(col5,min(col6,min(col7,col8)))));
-		// colMax = 0.5 * (colMax + max(col0,max(col5,max(col6,max(col7,col8)))));
 	#endif
 	
 	#if CRITICAL_DAMAGE_TAKEN_EFFECT_START > 0
@@ -355,11 +358,7 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	vec3 clampedframeHistory = clamp(frameHistory, colMin, colMax);
 	
 	// return the first moments instead of history if the difference across frames in the neighborhood is enough for it. helps reduces ghosting without looking too grainy/flickery
-	#if TAA_MODE == 3
-		clampedframeHistory = mix(clampedframeHistory, currentFrame, clamp(abs(clampedframeHistory - frameHistory)/clampedframeHistory,0.0,1.0));
-	#else
-		clampedframeHistory = mix(clampedframeHistory, momentsA, clamp(abs(clampedframeHistory - frameHistory)/clampedframeHistory,0.0,1.0));
-	#endif
+	clampedframeHistory = mix(clampedframeHistory, momentsA, clamp(abs(clampedframeHistory - frameHistory)/clampedframeHistory,0.0,1.0));
 
 	float blendingFactor = BLEND_FACTOR;
 	// reduce history usage if the camera moves to reduce artifacts in motion.
