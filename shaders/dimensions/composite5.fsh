@@ -317,8 +317,8 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	
 	#if TAA_MODE == 3
 		// Interpolating neighboorhood clampling boundaries between pixels
-		vec3 colMax = texture(colortex0, adjTC).rgb;
-		vec3 colMin = texture(colortex6, adjTC).rgb;
+		vec3 colMax = texture(colortex0, adjTC_noJitter).rgb;
+		vec3 colMin = texture(colortex6, adjTC_noJitter).rgb;
 	#else
 		//Assuming the history color is a blend of the 3x3 neighborhood, we clamp the history to the min and max of each channel in the 3x3 neighborhood
 		vec3 col0 = texture(colortex3, adjTC_noJitter).rgb;
@@ -353,9 +353,13 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 
 	vec3 frameHistory = max(FastCatmulRom(colortex5, previousPosition.xy, vec4(texelSize, 1.0/texelSize), 0.75).xyz,1e-7);
 	vec3 clampedframeHistory = clamp(frameHistory, colMin, colMax);
-
+	
 	// return the first moments instead of history if the difference across frames in the neighborhood is enough for it. helps reduces ghosting without looking too grainy/flickery
-	clampedframeHistory = mix(clampedframeHistory, momentsA, clamp(abs(clampedframeHistory - frameHistory)/clampedframeHistory,0.0,1.0));
+	#if TAA_MODE == 3
+		clampedframeHistory = mix(clampedframeHistory, currentFrame, clamp(abs(clampedframeHistory - frameHistory)/clampedframeHistory,0.0,1.0));
+	#else
+		clampedframeHistory = mix(clampedframeHistory, momentsA, clamp(abs(clampedframeHistory - frameHistory)/clampedframeHistory,0.0,1.0));
+	#endif
 
 	float blendingFactor = BLEND_FACTOR;
 	// reduce history usage if the camera moves to reduce artifacts in motion.
