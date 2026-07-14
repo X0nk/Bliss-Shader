@@ -335,8 +335,8 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		float tuner = 1.25;
 		vec3 momentsA = (col0+col1+col2+col3+col4+col5+col6+col7+col8)/9.0;
 		vec3 momentsB = (col0*col0+col1*col1+col2*col2+col3*col3+col4*col4+col5*col5+col6*col6+col7*col7+col8*col8)/9.0;
-		vec3 standardDev = max(sqrt(momentsB - momentsA*momentsA),0.0);
-
+		vec3 standardDev = sqrt(max(momentsB - momentsA*momentsA,0.0));
+		
 		vec3 colMin = momentsA - tuner*standardDev;
 		vec3 colMax = momentsA + tuner*standardDev;
 		
@@ -344,8 +344,6 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		// colMin = min(col0,min(col1,min(col2,min(col3, min(col4, min(col5, min(col6, min(col7, col8))))))));
 		// colMin = 0.5 * (colMin + min(col0,min(col5,min(col6,min(col7,col8)))));
 		// colMax = 0.5 * (colMax + max(col0,max(col5,max(col6,max(col7,col8)))));
-		// return vec4(colMin,1.0);
-		// return vec4(colMax,1.0);
 	#endif
 	
 	#if CRITICAL_DAMAGE_TAKEN_EFFECT_START > 0
@@ -355,6 +353,9 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 
 	vec3 frameHistory = max(FastCatmulRom(colortex5, previousPosition.xy, vec4(texelSize, 1.0/texelSize), 0.75).xyz,1e-7);
 	vec3 clampedframeHistory = clamp(frameHistory, colMin, colMax);
+
+	// return the first moments instead of history if the difference across frames in the neighborhood is enough for it. helps reduces ghosting without looking too grainy/flickery
+	clampedframeHistory = mix(clampedframeHistory, momentsA, clamp(abs(clampedframeHistory - frameHistory)/clampedframeHistory,0.0,1.0));
 
 	float blendingFactor = BLEND_FACTOR;
 	// reduce history usage if the camera moves to reduce artifacts in motion.
@@ -371,12 +372,9 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 		}
 	#endif
 
-	////// Increases blending factor when far from AABB, reduces ghosting
-	blendingFactor = clamp(blendingFactor + luma(abs(clampedframeHistory - frameHistory)/clampedframeHistory),0.0,1.0);
-	
 	////// Blend current pixel with clamped history, apply fast tonemap beforehand to reduce flickering
 	vec3 finalResult = invTonemap(mix(tonemap(clampedframeHistory), tonemap(currentFrame), blendingFactor));
-	
+
 	#ifdef SCREENSHOT_MODE
 		// when this is on, do "infinite frame accumulation	"
 		if (hideGUI == 0) return vec4(finalResult, 1.0);
