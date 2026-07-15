@@ -770,6 +770,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		if(UnchangedAlpha <= 0.0 && !isReflective) f0 = 0.0;
 
+		if(SpecularTex.g == 0.0 && SpecularTex.r > 0.0) f0 = harcodedF0;
+
 		if (f0 > 0.0){
 			if(isReflective) f0 = max(f0, harcodedF0);
 			
