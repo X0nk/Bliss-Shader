@@ -217,9 +217,6 @@ vec4 screenSpaceReflections(
 	previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
 
 	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.y < 1.0) {
-		
-		if(raytracePos.z > 0.999999) backgroundReflectMask = 1.0;
-
 		#if defined OVERWORLD_SHADER 
 			reflection.a = raytracePos.z > 0.999999 ? (isHand || isEyeInWater == 1 ? 1.0 : 0.0) : 1.0;
 		#else
