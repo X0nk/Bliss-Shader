@@ -71,6 +71,8 @@ uniform sampler2D normals;
 	uniform sampler3D texLpv2;
 #endif
 
+uniform float alphaTestRef;
+
 varying vec4 tangent;
 varying vec4 normalMat;
 varying vec3 binormal;
@@ -454,11 +456,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0] = col;
 
 	#else
-		gl_FragData[0] = texture(texture, lmtexcoord.xy, mipmapBias) * color;
+		gl_FragData[0] = texture(texture, lmtexcoord.xy, mipmapBias);
+		gl_FragData[0].a *= color.a;
 	#endif
 
 	#if DEBUG_VIEW == debug_ALBEDO
-		vec4 unalteredAlbedo = vec4(toLinear(gl_FragData[0].rgb),gl_FragData[0].a);
+		vec4 unalteredAlbedo = vec4(toLinear(gl_FragData[0].rgb)*color.rgb,gl_FragData[0].a);
 	#endif
 	
 	float UnchangedAlpha = gl_FragData[0].a;
@@ -468,7 +471,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0].a = 1.0;
 	#endif
 
-	vec3 Albedo = toLinear(gl_FragData[0].rgb);
+	vec3 Albedo = toLinear(gl_FragData[0].rgb)*color.rgb;
+
 
 	#ifndef WhiteWorld
 		#ifdef Vanilla_like_water
@@ -480,6 +484,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			}
 		#endif
 	#endif
+
+	if(gl_FragData[0].a < alphaTestRef){discard; return;}
 
 	#ifdef ENTITIES
 		Albedo.rgb = mix(Albedo.rgb, entityColor.rgb, clamp(entityColor.a*1.5,0,1));
