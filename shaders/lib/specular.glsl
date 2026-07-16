@@ -206,6 +206,8 @@ vec4 screenSpaceReflections(
 		#endif
 	) return reflection;
 
+	if(raytracePos.z >= 1.0 && raytracePos.x > 0.0 && raytracePos.y > 0.0 && raytracePos.x < 1.0 && raytracePos.y < 1.0) backgroundReflectMask = 1.0;
+	
 	// use higher LOD as the reflection goes on, to blur it. this helps denoise a little.
 	reflectionLength = min(max(reflectionLength - 0.1, 0.0)/0.9, 1.0);
 	float LOD = mix(0.0, 6.0*(1.0-exp(-15.0*sqrt(roughness))), 1.0-pow(1.0-reflectionLength,5.0));
