@@ -199,11 +199,11 @@ vec4 screenSpaceReflections(
 	#endif
 
 	vec3 raytracePos = rayTraceSpeculars(reflectedVector, viewPos, noise, quality, isHand, reflectionLength, roughness);
-	
-	if (raytracePos.z > 1.0 
-	#ifdef SSR_SELF_REFLECT_FIX
-	|| distance(gl_FragCoord.xy*texelSize, raytracePos.xy) < 0.002
-	#endif
+
+	if ( (raytracePos.z > 1.0 && backgroundReflectMask > 0.999999)
+		#ifdef SSR_SELF_REFLECT_FIX
+		|| distance(gl_FragCoord.xy*texelSize, raytracePos.xy) < 0.002
+		#endif
 	) return reflection;
 
 	// use higher LOD as the reflection goes on, to blur it. this helps denoise a little.
