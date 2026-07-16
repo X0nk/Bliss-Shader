@@ -694,8 +694,8 @@ void applyPuddles(
 
 	vec2 driprate = vec2(0.0,frameTimeCounter)*0.05;
 
-	vec2 UV = mix(worldPos.xz, worldPos.xy*vec2(2.0, 0.5)+driprate, abs(flatNormals.z));
-	UV = mix(UV, worldPos.zy*vec2(2.0, 0.5)+driprate, abs(flatNormals.x));
+	vec2 UV = mix(worldPos.xz, worldPos.xy*vec2(2.0, 0.5)+driprate, pow(abs(flatNormals.z),2));
+	UV = mix(UV, worldPos.zy*vec2(2.0, 0.5)+driprate, pow(abs(flatNormals.x),2));
 
 	float noise = texture(noisetex, UV * 0.02).b;
 
