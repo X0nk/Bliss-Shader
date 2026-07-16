@@ -103,9 +103,17 @@ float shlickFresnelRoughness(float XdotN, float roughness){
 	return shlickFresnel;
 }
 
-vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, bool hand, inout float reflectionLength){
+vec3 rayTraceSpeculars(
+	vec3 dir,
+	vec3 position,
+	float dither,
+	float quality,
+	bool hand,
+	inout float reflectionLength
+	,in float roughness
+){
 
-	float biasAmount = 0.000075;
+	float biasAmount = mix(0.000075, 0.00035, roughness);
 
 	vec3 clipPosition = toClipSpace3(position);
 	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ? (-near -position.z) / dir.z : far*sqrt(3.);
@@ -124,7 +132,7 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
 	clipPosition.xy *= RENDER_SCALE;
 	stepv.xy *= RENDER_SCALE;
 
-	vec3 spos = clipPosition + stepv*dither;
+	vec3 spos = clipPosition + stepv*mix(dither, dither*0.5+0.5, roughness);
 	spos += vec3(0.5*texelSize,0.0); // small offsets to reduce artifacts from precision differences.
 	
 	#if defined DEFERRED_SPECULAR && TAA_MODE > 0
@@ -190,7 +198,7 @@ vec4 screenSpaceReflections(
 		quality = float(DEFERRED_SSR_QUALITY);
 	#endif
 
-	vec3 raytracePos = rayTraceSpeculars(reflectedVector, viewPos, noise, quality, isHand, reflectionLength);
+	vec3 raytracePos = rayTraceSpeculars(reflectedVector, viewPos, noise, quality, isHand, reflectionLength, roughness);
 	
 	if (raytracePos.z > 1.0 
 	#ifdef SSR_SELF_REFLECT_FIX
