@@ -443,6 +443,12 @@ screen.Post_Processing = Post Processing
         option.SCALE_FACTOR = Scale Factor §a(set TAA mode to "Temporal Upscaling")
             prefix.SCALE_FACTOR = §fUpscale from 
             suffix.SCALE_FACTOR = x §fof the window resolution
+        
+        option.TAA_TEXTURE_FILTERING_MODE = Sampler Filter Mode
+            value.TAA_TEXTURE_FILTERING_MODE.0 = Nearest Neighbor §bⓘ Sharpest but Grainy§r
+            value.TAA_TEXTURE_FILTERING_MODE.1 = Linear §bⓘ Cleanest but slightly blurry§r
+            value.TAA_TEXTURE_FILTERING_MODE.2 = Nearest (current frame) + Linear (neighborhood sampling)
+        option.VARIANCE_CLIP_GAMMA_VAR = Variance Clip Tuning
             
     option.MOTION_BLUR_AMOUNT =  Motion Blur Amount
         suffix.MOTION_BLUR_AMOUNT =%
@@ -517,6 +523,9 @@ screen.Post_Processing = Post Processing
     option.CRITICALLY_LOW_HEALTH_EFFECT_START.comment =§bⓘ What is this?§r This is the grayscale color effect that happens when health is REALLY low. Configure what health level you need to be below for this screen effect to activate. §a⚠ PERFORMANCE COST:§r very very low.
     option.MINOR_DAMAGE_TAKEN_EFFECT_START.comment = §bⓘ What is this?§r This is the flash of red color that happens when damage is taken.  Configure what amount of sudden health loss needs to be had for this screen effect to activate. §a⚠ PERFORMANCE COST:§r very very low
     option.CRITICAL_DAMAGE_TAKEN_EFFECT_START.comment = §bⓘ What is this?§r This is the intense red colored trailing effect that happens when A LOT of damage is taken. Configure what amount of sudden health loss needs to be had for this screen effect to activate. §a⚠ PERFORMANCE COST:§r very very low
+
+    option.TAA_TEXTURE_FILTERING_MODE.comment = §bⓘ What is this?§r Configure the texture filtering used for TAA. §a⚠ PERFORMANCE COST:§r basically none
+    option.VARIANCE_CLIP_GAMMA_VAR.comment = §bⓘ What is this?§r Variance Clipping restrics TAA history to reduce ghosting or trailing motion artifacts. Low values have less trailing artifacts, but flicker more and are blurrier. High values have a cleaner and more stable image, but more trailing motion artifacts. §a⚠ PERFORMANCE COST:§r basically none
 
  ###################################################### ↓↓↓ THIS SUBMENU'S LABELS
 screen.Color_Processing = Color Processing
