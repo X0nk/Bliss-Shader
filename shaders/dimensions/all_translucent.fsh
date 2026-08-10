@@ -461,7 +461,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	#if DEBUG_VIEW == debug_ALBEDO
-		vec4 unalteredAlbedo = vec4(toLinear(gl_FragData[0].rgb)*color.rgb,gl_FragData[0].a);
+		vec4 unalteredAlbedo = vec4(toLinear(gl_FragData[0].rgb*color.rgb),gl_FragData[0].a);
 	#endif
 	
 	float UnchangedAlpha = gl_FragData[0].a;
@@ -471,7 +471,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0].a = 1.0;
 	#endif
 
-	vec3 Albedo = toLinear(gl_FragData[0].rgb)*color.rgb;
+	vec3 Albedo = toLinear(gl_FragData[0].rgb*color.rgb);
 
 
 	#ifndef WhiteWorld
