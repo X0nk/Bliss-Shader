@@ -475,7 +475,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 
 	#ifndef WhiteWorld
-		#ifdef Vanilla_like_water
+		#ifdef USE_WATER_BLOCK_TEXTURE
 			if (isWater) Albedo *= sqrt(luma(Albedo));
 		#else
 			if (isWater){

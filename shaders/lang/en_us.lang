@@ -427,7 +427,7 @@ screen.Post_Processing = Post Processing
         suffix.SHARPENING_AMOUNT =%
     option.BLOOM_STRENGTH = Bloom Multiplier
     screen.TAA_OPTIONS = Anti-Aliasing Settings
-        option.SCREENSHOT_MODE = Screenshot Mode
+        option.SCREENSHOT_MODE = Screenshot Mode §bⓘ Hide the HUD/GUI to use§r
         option.TAA_MODE = TAA Mode
         value.TAA_MODE.0 = §cOFF
         value.TAA_MODE.1 = Standard
@@ -1063,12 +1063,14 @@ screen.Climate = Climate Settings
     
  ###################################################### ↓↓↓ THIS SUBMENU'S LABELS
 screen.Water = Water Settings
-    
-    option.FAKE_REFRACTION_EFFECT = Refraction In Water/Glass
-    option.Dirt_Amount = Dirt Amount
-    option.Water_Top_Layer = Ocean Y coordinate
-    option.WATER_WAVE_STRENGTH = Wave Strength
+
+    option.WATER_WAVE_STRENGTH = Total Wave Strength
+    option.WATER_WAVE_SPEED = Wave Animation Speed
+    option.WAVES_A_RADIUS = Wave Frequency §bⓘ Inner Patches
+    option.WAVES_B_RADIUS = Wave Frequency §bⓘ Outer Patches
+    option.PATCHY_WAVE_BLEND = Inner/Outer Patches Blending
     option.SNELLS_WINDOW = Snell's Window
+    option.USE_WATER_BLOCK_TEXTURE = Water Block Texture
     option.MINIMUM_WATER_ABSORBANCE = Minimum Water Absorbance
         value.MINIMUM_WATER_ABSORBANCE.-1 = AUTO
 
@@ -1084,21 +1086,47 @@ screen.Water = Water Settings
     value.REFRACTION_SMUDGE_AMOUNT.0 = §cOFF
     suffix.REFRACTION_SMUDGE_AMOUNT =%
 
-    screen.Water_fog_color = Water Fog Settings
-        option.Dirt_Scatter_R = Scatter Red (dirt)
-        option.Dirt_Scatter_G = Scatter Green (dirt)
-        option.Dirt_Scatter_B = Scatter Blue (dirt)
-        option.Dirt_Absorb_R = Absorb Red (dirt)
-        option.Dirt_Absorb_G = Absorb Green (dirt)
-        option.Dirt_Absorb_B = Absorb Blue (dirt)
-        option.Water_Absorb_R = Absorb Red (water)
-        option.Water_Absorb_G = Absorb Green (water)
-        option.Water_Absorb_B = Absorb Blue (water)
+    screen.WATER_DIRT_SETTINGS = Water Dirt Levels
+        option.Dirt_Amount = Dirt Levels
+        option.Dirt_Scatter_R = Scatter Red
+        option.Dirt_Scatter_G = Scatter Green
+        option.Dirt_Scatter_B = Scatter Blue
+        option.Dirt_Absorb_R = Absorb Red
+        option.Dirt_Absorb_G = Absorb Green
+        option.Dirt_Absorb_B = Absorb Blue
+    
+    screen.WATER_ABSORPTION_SETTINGS = Water Light Absorption
+        option.WATER_DEPTH_FREQUENCY_ALL_LIGHT = Absorption Rate §bⓘ All Light
+        option.WATER_DEPTH_FREQUENCY_DIRECTLIGHT = Absorption Rate §bⓘ Direct Light
+        option.WATER_DEPTH_FREQUENCY_INDIRECTLIGHT = Absorption Rate §bⓘ Ambient Light
+        option.MINIMUM_UNDERWATER_FOG_BRIGHTNESS = Minimum Underwater Fog Brightness
+        option.Water_Absorb_R = Absorb Red
+        option.Water_Absorb_G = Absorb Green
+        option.Water_Absorb_B = Absorb Blue
 
  ###################################################### ↑↑↑ THIS SUBMENU'S DESCRIPTIONS
 
-    option.WATER_WAVE_STRENGTH.comment = configure how strong the waves appear.
-    option.MINIMUM_WATER_ABSORBANCE.comment = §bⓘ What is this?§r This controls how "clear" the water is in shallow areas. AUTO allows water to be clear outdoors, but adjust to be at a minimum value of 7 when indoors, to make it clearly visible. §dTHIS SETTING DOES NOT IMPACT UNDER-WATER VISUALS.        
+    option.Dirt_Amount.comment = §bⓘ What is this?§r Control how much dirt is mixed inside the water. §a⚠ PERFORMANCE COST:§r none
+    option.Dirt_Scatter_R.comment = §bⓘ What is this?§r Think of this as how much color is "added" by the dirt.
+    option.Dirt_Scatter_G.comment = §bⓘ What is this?§r Think of this as how much color is "added" by the dirt.
+    option.Dirt_Scatter_B.comment = §bⓘ What is this?§r Think of this as how much color is "added" by the dirt.
+    option.Dirt_Absorb_R.comment = §bⓘ What is this?§r Think of this as how much light is "sucked up" by the dirt.
+    option.Dirt_Absorb_G.comment = §bⓘ What is this?§r Think of this as how much light is "sucked up" by the dirt.
+    option.Dirt_Absorb_B.comment = §bⓘ What is this?§r Think of this as how much light is "sucked up" by the dirt.
+    option.Water_Absorb_R.comment = §bⓘ What is this?§r Think of this as how much light is "sucked up" by the water.
+    option.Water_Absorb_G.comment = §bⓘ What is this?§r Think of this as how much light is "sucked up" by the water.
+    option.Water_Absorb_B.comment = §bⓘ What is this?§r Think of this as how much light is "sucked up" by the water.
+    option.WATER_DEPTH_FREQUENCY_ALL_LIGHT.comment = §bⓘ What is this?§r Configure how quickly water sucks light away over distance. High values = Light gets sucked away quickly, creating darker water with worse visibility. Low values = Light gets sucked away less, creating higher visibility as light can travel over distance freely.
+    option.WATER_DEPTH_FREQUENCY_DIRECTLIGHT.comment = §bⓘ What is this?§r Configure how quickly water sucks light away over distance. High values = Light gets sucked away quickly, creating darker water with worse visibility. Low values = Light gets sucked away less, creating higher visibility as light can travel over distance freely.
+    option.WATER_DEPTH_FREQUENCY_INDIRECTLIGHT.comment = §bⓘ What is this?§r Configure how quickly water sucks light away over distance. High values = Light gets sucked away quickly, creating darker water with worse visibility. Low values = Light gets sucked away less, creating higher visibility as light can travel over distance freely.
+    option.USE_WATER_BLOCK_TEXTURE.comment = §bⓘ What is this?§r Enable the Vanilla water block texture within the water. §a⚠ PERFORMANCE COST:§r none
+    option.PATCHY_WAVE_BLEND.comment =  §bⓘ What is this?§r Adjust how the inner and outer patches blend and transition into the other. §a⚠ PERFORMANCE COST:§r none
+    option.WAVES_A_RADIUS.comment = §bⓘ What is this?§r Configure how "busy" the waves are in the inner wave patches. §a⚠ PERFORMANCE COST:§r basically none
+    option.WAVES_B_RADIUS.comment = §bⓘ What is this?§r Configure how "busy" the waves are in the outer wave patches. §a⚠ PERFORMANCE COST:§r basically none
+    option.WATER_WAVE_SPEED.comment = §bⓘ What is this?§r Configure how quickly the waves move. §a⚠ PERFORMANCE COST:§r none
+    option.WATER_WAVE_STRENGTH.comment = §bⓘ What is this?§r configure how strong the waves appear overall. §a⚠ PERFORMANCE COST:§r none
+    option.MINIMUM_WATER_ABSORBANCE.comment = §bⓘ What is this?§r This controls how "clear" the water is in shallow areas. AUTO allows water to be clear outdoors, but adjusts to be at a minimum value of 7 when indoors, to make it clearly visible. §dTHIS SETTING DOES NOT IMPACT UNDER-WATER VISUALS. §a⚠ PERFORMANCE COST:§r none
+    option.MINIMUM_UNDERWATER_FOG_BRIGHTNESS.comment = §bⓘ What is this?§r configure the brightness of the under water fog that lingers in the background. mostly visible when the underwater fog is super dark.
 
 ###################################################### ↓↓↓ THIS SUBMENU'S LABELS
 screen.World = World
@@ -1125,8 +1153,6 @@ screen.World = World
 
     screen.World.comment = Configure settings for various things that happen in the world, from waving plants to water related settings.
     screen.Water.comment = Configure settings related to the water.
-    option.Dirt_Amount.comment = Configure how much dirt is in water. This controls how much fog is within water.
-    screen.Water_fog_color.comment = Configure colors of the water fog. 
     screen.Waving_Stuff.comment = Configure settings related to waving things.
     option.WAVY_PLANTS.comment = Toggle waving plants. §a⚠ PERFORMANCE COST:§r very low
     option.WAVY_STRENGTH.comment = Configure the amount the plants wave.
