@@ -349,8 +349,12 @@ vec4 raymarchCloud(
 
 			vec3 newPos = rayPosition - cameraPosition;
 			
-			#ifdef AERIAL_PERSPECTIVE_TEST
-      			float skydensity = exp(-0.00035*length(newPos));
+			#if defined AERIAL_PERSPECTIVE_TEST && !defined ReflectedFog
+      			// float skydensity = exp(-0.00035*length(newPos));
+				// float skydensity = exp(-0.00005*length(newPos));
+				float scalexz = max(newPos.y*0.005,1);
+      			float skydensity = exp(-0.00035*length(newPos / vec3(scalexz, 1.0, scalexz)));
+
 				float ifAboveOrBelowPlane = mix(-1.0, 1.0, clamp(cameraPosition.y - minHeight,0.0,1.0)) ;
 
       			vec3 samplesky = skyFromTex(clamp(normalize(vec3(newPos.x,ifAboveOrBelowPlane*newPos.y,newPos.z)) - vec3(0,curvatureoffset - 0.005,0),-1,1) , colortex4).rgb/1200.0;
@@ -433,8 +437,10 @@ vec4 raymarchCloud(
 
 					vec3 newPos = rayPosition - cameraPosition;
 
-					#ifdef AERIAL_PERSPECTIVE_TEST
-      					float skydensity = exp(-0.00035*length(newPos));
+					#if defined AERIAL_PERSPECTIVE_TEST && !defined ReflectedFog
+						float scalexz = max(newPos.y*0.005,1);
+      					float skydensity = exp(-0.00035*length(newPos / vec3(scalexz, 1.0, scalexz)));
+
 						float ifAboveOrBelowPlane = mix(-1.0, 1.0, clamp(cameraPosition.y - minHeight,0.0,1.0)) ;
 
       					vec3 samplesky = skyFromTex(clamp(normalize(vec3(newPos.x,ifAboveOrBelowPlane*newPos.y,newPos.z)) - vec3(0,curvatureoffset - 0.005,0),-1,1) , colortex4).rgb/1200.0;
