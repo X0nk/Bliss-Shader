@@ -217,17 +217,17 @@ vec3 closestToCamera5taps(vec2 texcoord, sampler2D depth)
 	vec2 du = vec2(texelSize.x*2., 0.0);
 	vec2 dv = vec2(0.0, texelSize.y*2.);
 
-	// vec3 dtl = vec3(texcoord,0.) + vec3(-texelSize, 				texture(depth, texcoord - dv - du).x);
-	// vec3 dtr = vec3(texcoord,0.) + vec3( texelSize.x, -texelSize.y, texture(depth, texcoord - dv + du).x);
-	// vec3 dmc = vec3(texcoord,0.) + vec3( 0.0, 0.0, 					texture(depth, texcoord).x);
-	// vec3 dbl = vec3(texcoord,0.) + vec3(-texelSize.x, texelSize.y, 	texture(depth, texcoord + dv - du).x);
-	// vec3 dbr = vec3(texcoord,0.) + vec3( texelSize.x, texelSize.y, 	texture(depth, texcoord + dv + du).x);
+	vec3 dtl = vec3(texcoord,0.) + vec3(-texelSize, 				texture(depth, texcoord - dv - du).x);
+	vec3 dtr = vec3(texcoord,0.) + vec3( texelSize.x, -texelSize.y, texture(depth, texcoord - dv + du).x);
+	vec3 dmc = vec3(texcoord,0.) + vec3( 0.0, 0.0, 					texture(depth, texcoord).x);
+	vec3 dbl = vec3(texcoord,0.) + vec3(-texelSize.x, texelSize.y, 	texture(depth, texcoord + dv - du).x);
+	vec3 dbr = vec3(texcoord,0.) + vec3( texelSize.x, texelSize.y, 	texture(depth, texcoord + dv + du).x);
 	
-	vec3 dtl = vec3(texcoord,0.) + vec3(-texelSize, 				texelFetch(depth, ivec2((texcoord - dv - du)/texelSize),0).x);
-	vec3 dtr = vec3(texcoord,0.) + vec3( texelSize.x, -texelSize.y, texelFetch(depth, ivec2((texcoord - dv + du)/texelSize),0).x);
-	vec3 dmc = vec3(texcoord,0.) + vec3( 0.0, 0.0, 					texelFetch(depth, ivec2(texcoord/texelSize),0).x);
-	vec3 dbl = vec3(texcoord,0.) + vec3(-texelSize.x, texelSize.y, 	texelFetch(depth, ivec2((texcoord + dv - du)/texelSize),0).x);
-	vec3 dbr = vec3(texcoord,0.) + vec3( texelSize.x, texelSize.y, 	texelFetch(depth, ivec2((texcoord + dv + du)/texelSize),0).x);
+	// vec3 dtl = vec3(texcoord,0.) + vec3(-texelSize, 				texelFetch(depth, ivec2((texcoord - dv - du)/texelSize),0).x);
+	// vec3 dtr = vec3(texcoord,0.) + vec3( texelSize.x, -texelSize.y, texelFetch(depth, ivec2((texcoord - dv + du)/texelSize),0).x);
+	// vec3 dmc = vec3(texcoord,0.) + vec3( 0.0, 0.0, 					texelFetch(depth, ivec2(texcoord/texelSize),0).x);
+	// vec3 dbl = vec3(texcoord,0.) + vec3(-texelSize.x, texelSize.y, 	texelFetch(depth, ivec2((texcoord + dv - du)/texelSize),0).x);
+	// vec3 dbr = vec3(texcoord,0.) + vec3( texelSize.x, texelSize.y, 	texelFetch(depth, ivec2((texcoord + dv + du)/texelSize),0).x);
 
 	vec3 dmin = dmc;
 	dmin = dmin.z > dtr.z ? dtr : dmin;
@@ -253,17 +253,17 @@ vec3 closestToCamera5taps_DH(vec2 texcoord, sampler2D depth, sampler2D dhDepth, 
 	vec3 dbl = vec3(texcoord,0.);
 	vec3 dbr = vec3(texcoord,0.);
 
-	// dtl += vec3(-texelSize, 					depthCheck ? texture(dhDepth, texcoord - dv - du).x	:	texture(depth, texcoord - dv - du).x);
-	// dtr += vec3( texelSize.x, -texelSize.y, 	depthCheck ? texture(dhDepth, texcoord - dv + du).x	:	texture(depth, texcoord - dv + du).x);
-	// dmc += vec3( 0.0, 0.0, 				   		depthCheck ? texture(dhDepth, texcoord).x				:	texture(depth, texcoord).x);
-	// dbl += vec3(-texelSize.x, texelSize.y, 		depthCheck ? texture(dhDepth, texcoord + dv - du).x	:	texture(depth, texcoord + dv - du).x);
-	// dbr += vec3( texelSize.x, texelSize.y, 		depthCheck ? texture(dhDepth, texcoord + dv + du).x	:	texture(depth, texcoord + dv + du).x);
+	dtl += vec3(-texelSize, 					depthCheck ? texture(dhDepth, texcoord - dv - du).x	:	texture(depth, texcoord - dv - du).x);
+	dtr += vec3( texelSize.x, -texelSize.y, 	depthCheck ? texture(dhDepth, texcoord - dv + du).x	:	texture(depth, texcoord - dv + du).x);
+	dmc += vec3( 0.0, 0.0, 				   		depthCheck ? texture(dhDepth, texcoord).x				:	texture(depth, texcoord).x);
+	dbl += vec3(-texelSize.x, texelSize.y, 		depthCheck ? texture(dhDepth, texcoord + dv - du).x	:	texture(depth, texcoord + dv - du).x);
+	dbr += vec3( texelSize.x, texelSize.y, 		depthCheck ? texture(dhDepth, texcoord + dv + du).x	:	texture(depth, texcoord + dv + du).x);
 	
-	dtl += vec3(-texelSize, 					depthCheck ? texelFetch(dhDepth, ivec2((texcoord - dv - du)/texelSize),0).x	:  texture(depth, ivec2((texcoord - dv - du)/texelSize),0).x);
-	dtr += vec3( texelSize.x, -texelSize.y, 	depthCheck ? texelFetch(dhDepth, ivec2((texcoord - dv + du)/texelSize),0).x	:  texture(depth, ivec2((texcoord - dv + du)/texelSize),0).x);
-	dmc += vec3( 0.0, 0.0, 				   		depthCheck ? texelFetch(dhDepth, ivec2(texcoord/texelSize		   	 ),0).x	:  texture(depth, ivec2(texcoord/texelSize)			   ,0).x);
-	dbl += vec3(-texelSize.x, texelSize.y, 		depthCheck ? texelFetch(dhDepth, ivec2((texcoord + dv - du)/texelSize),0).x	:  texture(depth, ivec2((texcoord + dv - du)/texelSize),0).x);
-	dbr += vec3( texelSize.x, texelSize.y, 		depthCheck ? texelFetch(dhDepth, ivec2((texcoord + dv + du)/texelSize),0).x	:  texture(depth, ivec2((texcoord + dv + du)/texelSize),0).x);
+	// dtl += vec3(-texelSize, 					depthCheck ? texelFetch(dhDepth, ivec2((texcoord - dv - du)/texelSize),0).x	:  texture(depth, ivec2((texcoord - dv - du)/texelSize),0).x);
+	// dtr += vec3( texelSize.x, -texelSize.y, 	depthCheck ? texelFetch(dhDepth, ivec2((texcoord - dv + du)/texelSize),0).x	:  texture(depth, ivec2((texcoord - dv + du)/texelSize),0).x);
+	// dmc += vec3( 0.0, 0.0, 				   		depthCheck ? texelFetch(dhDepth, ivec2(texcoord/texelSize		   	 ),0).x	:  texture(depth, ivec2(texcoord/texelSize)			   ,0).x);
+	// dbl += vec3(-texelSize.x, texelSize.y, 		depthCheck ? texelFetch(dhDepth, ivec2((texcoord + dv - du)/texelSize),0).x	:  texture(depth, ivec2((texcoord + dv - du)/texelSize),0).x);
+	// dbr += vec3( texelSize.x, texelSize.y, 		depthCheck ? texelFetch(dhDepth, ivec2((texcoord + dv + du)/texelSize),0).x	:  texture(depth, ivec2((texcoord + dv + du)/texelSize),0).x);
 	
 	vec3 dmin = dmc;
 	dmin = dmin.z > dtr.z ? dtr : dmin;
