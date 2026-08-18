@@ -141,7 +141,7 @@ float densityAtPosFog(in vec3 pos){
 // Create a rising swirl centered around some origin.
 void SwirlAroundOrigin(inout vec3 alteredOrigin, vec3 origin){
 
-	float radiance = 2.39996 + alteredOrigin.y/1.5 + frameTimeCounter/50*0;
+	float radiance = 2.39996 + alteredOrigin.y/1.5 + frameTimeCounter/50;
 	mat2 rotationMatrix  = mat2(vec2(cos(radiance),  -sin(radiance)),  vec2(sin(radiance),  cos(radiance)));
 
     // make the swirl only happen within a radius
@@ -186,7 +186,7 @@ float fogShape(in vec3 pos){
     SwirlAroundOrigin(samplePos, pos);
 	
 	float noise = densityAtPosFog(samplePos * 12.0);
-    float erosion = 1.0-densityAtPosFog((samplePos - frameTimeCounter/20*0) * (124 + (1-noise)*7));
+    float erosion = 1.0-densityAtPosFog((samplePos - frameTimeCounter/20) * (124 + (1-noise)*7));
     
 
 	float clumpyFog = max(exp(noise * -mix(10,4,vortexBounds))*mix(2,1,vortexBounds) - erosion*0.3, 0.0);
