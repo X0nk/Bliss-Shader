@@ -1104,9 +1104,8 @@ void main() {
 			float vortexBounds = 1.0;
 		#endif
 		
-        vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds);
-
-		float lightningflash = texelFetch(colortex4,ivec2(1,1),0).x/150.0;
+		float lightningflash = 0.0;
+        vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds, lightningflash);
 		vec3 lightColors = pow(lightmap.y,8) * LightSourceColors(vortexBounds, lightningflash);
 		
 		float end_NdotL = clamp(dot(slopednormal, normalize(-lightPos))*0.5+0.5,0.0,1.0);

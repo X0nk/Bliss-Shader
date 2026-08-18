@@ -421,62 +421,32 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	}
 #endif
 
-#ifdef END_SHADER
-	/* ---------------------- TIMER ---------------------- */
-
-	float flash = 0.0;
-	float maxWaitTime = 5;
-
-	float Timer = texelFetch(colortex4, ivec2(3,1), 0).x/150.0;
-	Timer -= frameTime;
-
-	if(Timer <= 0.0){
-		flash = 1.0;
-
-		Timer = pow(hash11(frameCounter), 5) * maxWaitTime;
-	}
-
-	vec2 pixelPos0 = vec2(3,1);
-	if (gl_FragCoord.x > pixelPos0.x && gl_FragCoord.x < pixelPos0.x + 1 && gl_FragCoord.y > pixelPos0.y && gl_FragCoord.y < pixelPos0.y + 1){
-		mixhistory = 1.0;
-		gl_FragData[0] = vec4(Timer, 0.0, 0.0, 1.0);
-	}
-
-	/* ---------------------- FLASHING ---------------------- */
-
-	vec2 pixelPos1 = vec2(1,1);
-	if (gl_FragCoord.x > pixelPos1.x && gl_FragCoord.x < pixelPos1.x + 1 && gl_FragCoord.y > pixelPos1.y && gl_FragCoord.y < pixelPos1.y + 1){
-		mixhistory = clamp(4.0 * frameTime,0.0,1.0);
-		gl_FragData[0] = vec4(flash, 0.0, 0.0, 1.0);
-	}
-
-	/* ---------------------- POSITION ---------------------- */
-
-	vec2 pixelPos2 = vec2(2,1);
-	if (gl_FragCoord.x > pixelPos2.x && gl_FragCoord.x < pixelPos2.x + 1 && gl_FragCoord.y > pixelPos2.y && gl_FragCoord.y < pixelPos2.y + 1){
-		mixhistory = clamp(500.0 * frameTime,0.0,1.0);
-
-		vec3 LastPos = (texelFetch(colortex4,ivec2(2,1),0).xyz/150.0) * 2.0 - 1.0;
-		
-		LastPos += (hash31(frameCounter / 50) * 2.0 - 1.0);
-		LastPos = LastPos * 0.5 + 0.5;
-
-		if(Timer > maxWaitTime * 0.7 ){ 
-			LastPos = vec3(0.0);
-		}
-
-		gl_FragData[0] = vec4(LastPos, 1.0);
-	}
-
-#endif
-
 vec3 currentFrame = gl_FragData[0].rgb*150.0;
-
 gl_FragData[0].rgb = clamp(mix(frameHistory, currentFrame, clamp(mixhistory,0.0,1.0)),0.0,65000.0);
 
-//Exposure values
-if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(exposure, avgBrightness, avgL2,1.0);
-if (gl_FragCoord.x > 14. && gl_FragCoord.x < 15.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-gl_FragData[0] = vec4(rodExposure, centerDepth,0.0, 1.0);
+#ifdef END_SHADER
+	/* ---------------------- POSITION ---------------------- */
+	vec2 pixelPos2 = vec2(2,1);
+	if (gl_FragCoord.x > pixelPos2.x && gl_FragCoord.x < pixelPos2.x + 1 && gl_FragCoord.y > pixelPos2.y && gl_FragCoord.y < pixelPos2.y + 1){
+		
+		vec3 PrevPos = frameHistory*2.0-1.0;
+		float travelledDist = length(PrevPos.xyz);
+		vec3 randomDir = normalize(randomPosXYZ.xyz);
+		
+		// guide the bolt back to the origin with randomized jagged movement.
+		float heuristic = clamp(dot(-randomDir,PrevPos),-1.0,1.0) * (1.0-clamp(10.0-travelledDist,0.0,1.0));
+		float rate = frameTime*500.0;
+		vec3 CurrPos = PrevPos + randomDir * rate * heuristic;
+
+		if(travelledDist > 384.0 || (travelledDist < 10.0 && randomPosXYZ.w > 0.8) ) CurrPos = randomDir*384.0;
+	
+		gl_FragData[0] = vec4(CurrPos*0.5+0.5, 1.0);
+	}
+#endif
+
+	//Exposure values
+	if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
+	gl_FragData[0] = vec4(exposure, avgBrightness, avgL2, 1.0);
+	if (gl_FragCoord.x > 14. && gl_FragCoord.x < 15.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
+	gl_FragData[0] = vec4(rodExposure, centerDepth, 0.0, 1.0);
 }
