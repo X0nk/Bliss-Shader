@@ -1106,7 +1106,7 @@ void main() {
 		
 		float lightningflash = 0.0;
         vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds, lightningflash);
-		vec3 lightColors = pow(lightmap.y,8) * LightSourceColors(vortexBounds, lightningflash);
+		vec3 lightColors = pow(lightmap.y,5) * LightSourceColors(vortexBounds, lightningflash);
 		
 		float end_NdotL = clamp(dot(slopednormal, normalize(-lightPos))*0.5+0.5,0.0,1.0);
 		end_NdotL *= end_NdotL;

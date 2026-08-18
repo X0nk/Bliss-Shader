@@ -686,7 +686,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		float fogShadow = GetEndFogShadow(feetPlayerPos+cameraPosition, lightPos);
 		float endPhase = endFogPhase(lightPos);
 
-		Direct_lighting += lightColors * endPhase * end_NdotL * fogShadow;
+		Direct_lighting += pow(lightmap.y,5) *lightColors * endPhase * end_NdotL * fogShadow;
 
 		vec3 AmbientLightColor = vec3(0.3,0.6,1.0);
 		

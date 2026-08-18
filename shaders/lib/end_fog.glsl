@@ -95,7 +95,7 @@ vec3 LightSourcePosition(vec3 worldPos, vec3 cameraPos, float vortexBounds, out 
 
 	#ifdef THE_ORB
 		cellSize = 200.0;
-    	vec3 orbpos = (worldPos - cameraPos - ManualLightPos) - lightningBoltPos;
+    	vec3 orbpos = (worldPos - cameraPos - ManualLightPos);
     	orbpos += fract(cameraPos/cellSize)*cellSize - cellSize*0.5;
 
 		return orbpos;
@@ -119,7 +119,7 @@ vec3 LightSourcePosition_VL(vec3 worldPos, vec3 cameraPos, vec3 lightningBoltPos
 	#ifdef THE_ORB
 		cellSize = 200.0;
     	// vec3 orbpos = worldPos - cameraPos - ManualLightPos;// - vec3(sin(frameTimeCounter), cos(frameTimeCounter), cos(frameTimeCounter))*100;
-    	vec3 orbpos = (worldPos - cameraPos - ManualLightPos) - lightningBoltPos;// - vec3(sin(frameTimeCounter), cos(frameTimeCounter), cos(frameTimeCounter))*100;
+    	vec3 orbpos = (worldPos - cameraPos - ManualLightPos);// - vec3(sin(frameTimeCounter), cos(frameTimeCounter), cos(frameTimeCounter))*100;
     	orbpos += fract(cameraPos/cellSize)*cellSize - cellSize*0.5;
 
 		return orbpos;
@@ -225,7 +225,7 @@ vec3 LightSourceColors(float vortexBounds, float lightningflash){
     vec3 lightningColor = vec3(END_LIGHTNING_COL_R,END_LIGHTNING_COL_G,END_LIGHTNING_COL_B) * lightningflash;
 
 	#ifdef THE_ORB
-		return vec3(ORB_R, ORB_G, ORB_B) * ORB_ColMult * lightningflash;
+		return vec3(ORB_R, ORB_G, ORB_B) * ORB_ColMult;
 	#else
 		return mix(lightningColor, vortexColor, vortexBounds);
 	#endif
