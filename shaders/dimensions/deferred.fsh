@@ -434,7 +434,8 @@ gl_FragData[0].rgb = clamp(mix(frameHistory, currentFrame, clamp(mixhistory,0.0,
 		vec3 randomDir = normalize(randomPosXYZ.xyz);
 		
 		// guide the bolt back to the origin with randomized jagged movement.
-		float heuristic = clamp(dot(-randomDir,PrevPos),-1.0,1.0) * (1.0-clamp(10.0-travelledDist,0.0,1.0));
+		float heuristic = clamp(dot(-randomDir,normalize(PrevPos)),-1.0,1.0) * (1.0-clamp(10.0-travelledDist,0.0,1.0));
+
 		float rate = frameTime*500.0;
 		vec3 CurrPos = PrevPos + randomDir * rate * heuristic;
 
