@@ -63,6 +63,7 @@ SOFTWARE.*/
 //----------------------------------------------------------------------------------------
 
 uniform vec4 randomPosXYZ;
+uniform vec3 snapToGrid;
 
 // vec3 RandomPosition = hash31(frameTimeCounter);
 float vortexBoundRange = 300.0;
@@ -84,8 +85,7 @@ vec3 LightSourcePosition(vec3 worldPos, vec3 cameraPos, float vortexBounds, out 
     vec3 lightningPos = worldPos - cameraPos - ManualLightPos;
     
 	// snap-to coordinates in worldspace.
-	float cellSize = 200.0;
-    lightningPos += fract(cameraPos/cellSize)*cellSize - cellSize*0.5;
+    lightningPos += snapToGrid;
 
 	// make the position offset to random places (RNG.xyz from non-clearing buffer).
 	vec3 lightningBoltPos = texelFetch(colortex4,ivec2(2,1),0).xyz * 2.0 - 1.0;
@@ -94,9 +94,8 @@ vec3 LightSourcePosition(vec3 worldPos, vec3 cameraPos, float vortexBounds, out 
 	
 
 	#ifdef THE_ORB
-		cellSize = 200.0;
-    	vec3 orbpos = (worldPos - cameraPos - ManualLightPos);
-    	orbpos += fract(cameraPos/cellSize)*cellSize - cellSize*0.5;
+    	vec3 orbpos = (worldPos - cameraPos - ManualLightPos) - lightningBoltPos;
+    	orbpos += snapToGrid;
 
 		return orbpos;
 	#else
@@ -112,15 +111,12 @@ vec3 LightSourcePosition_VL(vec3 worldPos, vec3 cameraPos, vec3 lightningBoltPos
     vec3 lightningPos = worldPos - cameraPos - ManualLightPos;
     
 	// snap-to coordinates in worldspace.
-	float cellSize = 200.0;
-    lightningPos += fract(cameraPos/cellSize)*cellSize - cellSize*0.5;
+    lightningPos += snapToGrid;
 	lightningPos -= lightningBoltPos;
 	
 	#ifdef THE_ORB
-		cellSize = 200.0;
-    	// vec3 orbpos = worldPos - cameraPos - ManualLightPos;// - vec3(sin(frameTimeCounter), cos(frameTimeCounter), cos(frameTimeCounter))*100;
-    	vec3 orbpos = (worldPos - cameraPos - ManualLightPos);// - vec3(sin(frameTimeCounter), cos(frameTimeCounter), cos(frameTimeCounter))*100;
-    	orbpos += fract(cameraPos/cellSize)*cellSize - cellSize*0.5;
+    	vec3 orbpos = (worldPos - cameraPos - ManualLightPos) - lightningBoltPos;
+    	orbpos += snapToGrid;
 
 		return orbpos;
 	#else
