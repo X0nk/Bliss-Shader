@@ -4,15 +4,15 @@
 float curvatureoffset = 0.04;
 uniform vec2 windDirection;
 // uniform float animation;
-#if CLOUD_ANIMATION_MODE == 0
-	uniform int worldDay;
-	uniform int worldTime;
-	// uniform float worldTimeAnimation;
-	float cloud_movement = (worldTime  + mod(worldDay,100)*24000.0) / 24.0 * Cloud_Speed;
-#elif CLOUD_ANIMATION_MODE == 1
-// uniform float frameTimeCounter;
-	float cloud_movement = frameTimeCounter * Cloud_Speed;
-#endif
+// #if CLOUD_ANIMATION_MODE == 0
+// 	uniform int worldDay;
+// 	uniform int worldTime;
+// 	// uniform float worldTimeAnimation;
+// 	float cloud_movement = (worldTime  + mod(worldDay,100)*24000.0) / 24.0 * Cloud_Speed;
+// #elif CLOUD_ANIMATION_MODE == 1
+// // uniform float frameTimeCounter;
+// 	float cloud_movement = frameTimeCounter * Cloud_Speed;
+// #endif
 
 float densityAtPos(in vec3 pos){
 	pos /= 18.;

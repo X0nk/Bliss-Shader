@@ -86,7 +86,7 @@ vec3 getShadows(
 	return shadows;
 }
 
-uniform bool isInSpecialEnviornment;
+// uniform bool isInSpecialEnviornment;
 uniform vec3 exitedBiomePos;
 // uniform float fadeAwayLocalEffect;
 

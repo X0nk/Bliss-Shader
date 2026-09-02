@@ -2,6 +2,7 @@
 #if defined USE_SCENE_CONTROLLER_SETTINGS
 
 uniform int worldDay;
+uniform int worldTime;
 uniform ivec3 cameraPositionInt;
 
 uniform bool isInColdArea;
@@ -14,25 +15,27 @@ uniform bool isInSnowFallEnviornment;
 uniform bool isInRainFallEnviornment;
 uniform bool isInNoRainFallEnviornment;
 
-uniform int worldTime;
 
 #define DECLARE_UNIFORMS_OR_WRITE_FUNCTIONS_FOR_CUSTOM_SCENE_CONTROLLER_PROFILES
 #include "/CUSTOM_SCENE_PARAMETERS.glsl"
 
 // https://www.shadertoy.com/view/llGSzw
-float hash11( uint n ) 
+float hash11(float p)
 {
-    // integer hash copied from Hugo Elias
-	n = (n << 13U) ^ n;
-    n = n * (n * n * 15731U + 789221U) + 1376312589U;
-    return float( n & uint(0x7fffffffU))/float(0x7fffffff);
+    p = fract(p * .1031);
+    p *= p + 33.33;
+    p *= p + p;
+    return fract(p);
 }
+
 bool playerIsWithinArea(in vec3 positionA, in vec3 positionB){
     return cameraPositionInt.x > positionA.x && cameraPositionInt.y > positionA.y && cameraPositionInt.z > positionA.z && cameraPositionInt.x < positionB.x && cameraPositionInt.y < positionB.y && cameraPositionInt.z < positionB.z; 
 }
+
 bool playerIsOutsideArea(in vec3 positionA, in vec3 positionB){
     return !(cameraPositionInt.x > positionA.x && cameraPositionInt.y > positionA.y && cameraPositionInt.z > positionA.z && cameraPositionInt.x < positionB.x && cameraPositionInt.y < positionB.y && cameraPositionInt.z < positionB.z); 
 }
+
 vec4 timesOfDay(){
 
 	float time = float(worldTime%24000);
@@ -45,6 +48,7 @@ vec4 timesOfDay(){
 
     return (float(TOD_FOG_AMOUNT) / 100.0) * vec4(morning, noon, evening, night);
 }
+
 void applySceneControllerParameters(
 	out float smallCumulusCoverage, out float smallCumulusDensity,
 	out float largeCumulusCoverage, out float largeCumulusDensity,
@@ -64,7 +68,7 @@ void applySceneControllerParameters(
     clumpyFogDensity = 0.0;
     LocalUniformFogDensity = 0.0;
     LocalClumpyFogDensity = 0.0;
-    localFogColor = vec3(1.0);
+    localFogColor = vec3(0.0);
 
 #if TOD_FOG_AMOUNT > 0
     vec4 timesOfDay = timesOfDay();
@@ -74,7 +78,8 @@ void applySceneControllerParameters(
 
 // the seed is the in-game day counter. 
 // give a random value within the range 0.0-1.0 which is scaled up to the wanted range, and then quantized to choose a profile
-float RNG = hash11(worldDay + 0.2);
+float midDayReroll = floor(worldTime/24000.0 * 4.0);
+float RNG = hash11(float(worldDay + midDayReroll + 0.2));
 
 #if USE_CUSTOM_DAILY_WEATHER_PROFILE == 0
     int dailyWeatherProfile = int(RNG * 11.0);
@@ -688,14 +693,13 @@ void readSceneControllerParameters(
     out vec2 localFog,
     out vec3 localFogColor
 ){
-    
     // in colortex4, read the data stored within the 3 components of the sampled pixels, and pass it to the fragment stage
     // 4th compnent/alpha is storing 1/4 res depth so i cant store there lol
-	vec3 data1 = texelFetch(colortex,ivec2(1,3),0).rgb/150.0;
-	vec3 data2 = texelFetch(colortex,ivec2(2,3),0).rgb/150.0;
-	vec3 data3 = texelFetch(colortex,ivec2(3,3),0).rgb/150.0;
-	float data4 = texelFetch(colortex,ivec2(1,2),0).r/150.0;
-	vec3 data5 = texelFetch(colortex,ivec2(2,2),0).rgb/150.0; // this samples a color
+	vec3 data1 = texelFetch(colortex,ivec2(1,3),0).rgb;///150.0;
+	vec3 data2 = texelFetch(colortex,ivec2(2,3),0).rgb;///150.0;
+	vec3 data3 = texelFetch(colortex,ivec2(3,3),0).rgb;///150.0;
+	float data4 = texelFetch(colortex,ivec2(1,2),0).r ;///150.0;
+	vec3 data5 = texelFetch(colortex,ivec2(2,2),0).rgb;///150.0; // this samples a color
 
 	smallCumulus = vec2(data1.x,data1.y);
 	largeCumulus = vec2(data1.z,data2.x);

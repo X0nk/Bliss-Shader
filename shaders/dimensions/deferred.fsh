@@ -8,6 +8,7 @@
 #define SEASONS_RELATED_SETTINGS
 #define VOLUMETRIC_CLOUD_RELATED_SETTINGS
 #define VOLUMETRIC_FOG_RELATED_SETTINGS
+#define SCENE_CONTROLLER_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/macro_lod_mod.glsl"
 
@@ -165,6 +166,7 @@ float invLinZ (float lindepth){
 
 	#define TIMEOFDAYFOG
 
+	#define USE_SCENE_CONTROLLER_SETTINGS
 	#include "/lib/scene_controller.glsl"
 
 
@@ -227,26 +229,11 @@ gl_FragData[0] = vec4(0.0);
 vec3 frameHistory = texelFetch(colortex4,ivec2(gl_FragCoord.xy),0).rgb;
 float mixhistory = 0.06;
 
+if(windowResizeCheck || frameCounter < 2){
+	mixhistory = 1.0;
+}
 
 #ifdef OVERWORLD_SHADER
-
-	//////////////////////////////////////////////
-	/// --- STORE DAILY WEATHER PARAMETERS --- ///
-	//////////////////////////////////////////////
-
-	// the idea is to store the 8 values, coverage + density of 3 cloud layers and 2 fog density values.
-	if (gl_FragCoord.x > 1 && gl_FragCoord.x < 4 && gl_FragCoord.y > 1 && gl_FragCoord.y < 4){
-		mixhistory = 1.0; // doing custom interpolation on these pixels. turn blending off
-		
-		vec3 targetParameterValues = writeSceneControllerParameters(gl_FragCoord.xy, parameters.smallCumulus, parameters.largeCumulus, parameters.altostratus, parameters.fog, parameters.localFog, parameters.localFogColor);
-		
-		#if SCENE_CONTROLLER_TRANSITION_RATE > 1000
-			gl_FragData[0].rgb = targetParameterValues;
-		#elif SCENE_CONTROLLER_TRANSITION_RATE <= 1000
-			gl_FragData[0].rgb = doPixelTimer(targetParameterValues, frameHistory/150.0);
-		#endif
-	}
-
 	///////////////////////////////
 	/// --- STORE COLOR LUT --- ///
 	///////////////////////////////
@@ -421,8 +408,54 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	}
 #endif
 
+/// resolve
 vec3 currentFrame = gl_FragData[0].rgb*150.0;
 gl_FragData[0].rgb = clamp(mix(frameHistory, currentFrame, clamp(mixhistory,0.0,1.0)),0.0,65000.0);
+
+//////////////////////////////////////////////
+/// --- STORE DAILY WEATHER PARAMETERS --- ///
+//////////////////////////////////////////////
+#if defined OVERWORLD_SHADER
+// the idea is to store the 8 values, coverage + density of 3 cloud layers and 2 fog density values.
+if (gl_FragCoord.x > 1 && gl_FragCoord.x < 4 && gl_FragCoord.y > 1 && gl_FragCoord.y < 4){
+	
+	struct sceneControlleree {
+	  vec2 smallCumulus_N;
+	  vec2 largeCumulus_N;
+	  vec2 altostratus_N;
+	  vec2 fog_N;
+	  vec2 localFog_N;
+	  vec3 localFogColor_N;
+	} parameters_new;
+
+	applySceneControllerParameters(
+		parameters_new.smallCumulus_N.x, parameters_new.smallCumulus_N.y, 
+		parameters_new.largeCumulus_N.x, parameters_new.largeCumulus_N.y,
+		parameters_new.altostratus_N.x, parameters_new.altostratus_N.y,
+		parameters_new.fog_N.x, parameters_new.fog_N.y, 
+		parameters_new.localFog_N.x, parameters_new.localFog_N.y, parameters_new.localFogColor_N.rgb
+	);
+
+	vec3 targetParameterValues = writeSceneControllerParameters(
+		gl_FragCoord.xy, 
+		parameters_new.smallCumulus_N, 
+		parameters_new.largeCumulus_N, 
+		parameters_new.altostratus_N, 
+		parameters_new.fog_N, 
+		parameters_new.localFog_N, 
+		parameters_new.localFogColor_N
+	);
+
+	#if SCENE_CONTROLLER_TRANSITION_RATE > 1000
+		gl_FragData[0].rgb = targetParameterValues;
+	#elif SCENE_CONTROLLER_TRANSITION_RATE <= 1000
+		gl_FragData[0].rgb = doPixelTimer(targetParameterValues, frameHistory);
+	#endif
+}
+#endif
+//////////////////////////////////////////////
+//////////// --- END STUFF --- ///////////////
+//////////////////////////////////////////////
 
 #ifdef END_SHADER
 	/* ---------------------- POSITION ---------------------- */
