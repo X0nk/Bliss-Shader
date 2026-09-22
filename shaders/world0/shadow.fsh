@@ -2,8 +2,10 @@
 #define DIRECT_LIGHT_RELATED_SETTINGS
 #define SHADOWMAP_CONSTANT_RELATED_SETTINGS
 #include "/lib/settings.glsl"
+#include "/lib/blocks.glsl"
 
 varying vec4 color;
+varying float shadowBlockId;
 
 varying vec2 texcoord;
 uniform sampler2D tex;
@@ -20,6 +22,7 @@ float blueNoise(){
 }
 
 void main() {
+	if (!gl_FrontFacing && shadowBlockId >= float(BLOCK_GLASS) && shadowBlockId <= float(BLOCK_GLASS_YELLOW)) discard;
 	
 	vec4 shadowColor = vec4(texture(tex,texcoord.xy).rgb * color.rgb,  texture2DLod(tex, texcoord.xy, 0).a);
 
