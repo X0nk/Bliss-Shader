@@ -573,7 +573,6 @@ void main() {
   vec2 refractedCoord = texcoord;
   
   #if FAKE_REFRACTION_AMOUNT > 0 
-    vec3 color = doRefractionEffect(refractedCoord, viewPos, tangentNormals.xyz, testingthing > 0.01 ? 1.0 : 0.0);
     vec3 color = doRefractionEffect(refractedCoord, viewPos, tangentNormals.xyz, testingthing > 0.01 && albedo.a > 0.01 ? 1.0 : 0.0);
     // vec3 color = doRefractionEffect(refractedCoord, viewPos, tangentNormals.xyz, linearDistance, isReflectiveEntity, isWater && isEyeInWater == 1, TranslucentShader.a>0.01, testingthing);
   #else
