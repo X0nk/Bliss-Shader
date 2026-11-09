@@ -394,13 +394,9 @@ float bias(){
 		return 0.0;
 	#endif
 }
-vec2 allocatePrecision_TangentNormal(vec2 normals){
 	
-  	vec2 newNormal = normals;
 vec3 allocatePrecision_TangentNormal(vec3 normals){
-	// return normals;
   	vec3 newNormal = normals;
-	// return clamp(newNormal + newNormal*interleaved_gradientNoise_temporal()*0.025,-1.0,1.0);
 	
 	if(normals.x < 0.0) {
 		newNormal.x = -pow(1.0-pow(1.0-clamp(-newNormal.x,0.0,1.0),2),0.5);
