@@ -457,6 +457,11 @@ vec3 allocatePrecision_TangentNormal(vec3 normals){
 }
 
 
+void convertHandDepth(inout float depth) {
+    float ndcDepth = depth * 2.0 - 1.0;
+    ndcDepth /= MC_HAND_DEPTH;
+    depth = ndcDepth * 0.5 + 0.5;
+}
 void main() {
   /* RENDERTARGETS:7,3,10 */
 
