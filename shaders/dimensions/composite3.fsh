@@ -188,65 +188,68 @@ vec2 clampUV(in vec2 uv, vec2 texcoord){
   vignette = max((uv.x-1.0) * (texcoord.x-1.0), vignette);
   vignette = max((uv.y-1.0) * (texcoord.y-1.0), vignette);
 
-  vignette *= vignette*vignette*vignette*vignette;
+  vignette *= vignette*vignette*vignette*vignette*vignette*vignette;
 
   return clamp(mix(uv, texcoord, vignette),0.0,0.9999999);
 }
 
-vec3 doRefractionEffect( inout vec2 passTexcoord, vec2 normal, float linearDistance, bool isReflectiveEntity, bool underwater){
-  // correct normal directions to match texcoord directions (right facing X, up facing Y)
-  normal.y = -normal.y;
-  vec2 texcoord = passTexcoord;
+vec3 projectanddivide(mat4 projectionMatrix, vec3 position){
+	vec4 homopos = projectionMatrix *vec4(position,1.0);
 
-  vec3 color = vec3(0.0);
+	return homopos.xyz / homopos.w;
+}
 
-  float refractAmount = float(FAKE_REFRACTION_AMOUNT)/50.0;
+vec3 doRefractionEffect( inout vec2 passTexcoord, vec3 viewPos, vec3 normal, float refractAmount){
+  // settings
+  refractAmount *= float(FAKE_REFRACTION_AMOUNT)/50.0;
   float dispersionAmount = float(FAKE_DISPERSION_AMOUNT)/50.0;
   float smudgeAmount = float(REFRACTION_SMUDGE_AMOUNT)/50.0;
 
-  refractAmount *= 0.5 / (1.0 + pow(linearDistance,0.8) * (underwater ? 0.1 : 1.0));
-  if(isReflectiveEntity) refractAmount *= 0.5;
+  // GRAAAAAAAAAAAAH
+  vec3 incidentRay = refract(normalize(viewPos), normal.xyz, 0.5) * refractAmount;
 
-  dispersionAmount *= 0.035;
-  smudgeAmount *= 0.035;
-
-  vec2 dispersion = (clamp(normal, -0.2, 0.2) / 0.2);
-  
   #if REFRACTION_SMUDGE_AMOUNT > 0
-    vec2 smudge = smudgeAmount * dispersion * (blueNoise()-0.5);
-  #else
-    vec2 smudge = vec2(0.0, 0.0);
+    incidentRay += incidentRay*(blueNoise()-0.5)*smudgeAmount;
   #endif
 
-  dispersion *= dispersionAmount;
+  // RAYTRACINNG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! RTX!!!!!!!!!!
+  vec3 refractedPos = viewPos + incidentRay;
+	vec2 refractedTexcoord = projectanddivide(gbufferProjection, refractedPos).xy*0.5+0.5;
+
+  // lerp to undistorted tc when out of screen bounds
+  // make sure the origin is the center of the screen
+  refractedTexcoord = clampUV(refractedTexcoord, passTexcoord);
 
   #if FAKE_DISPERSION_AMOUNT > 0
-    // do not offset texcoord if alpha is 1.0
-    refractAmount *= min(  decodeVec2(texelFetch(colortex11, ivec2(clampUV(texcoord - ((normal + dispersion) + smudge)*refractAmount, texcoord)/texelSize),0).b).g,
-                           decodeVec2(texelFetch(colortex11, ivec2(clampUV(texcoord - ((normal - dispersion) + smudge)*refractAmount, texcoord)/texelSize),0).b).g  ) > 0.0 ? 1.0 : 0.0;
+    // make sure tc is centered on screen
+    refractedTexcoord -= 0.5;
+    passTexcoord -= 0.5;
+    // fake dispersion
+    vec2 dispersion =  refractedTexcoord - passTexcoord;
+    dispersion /= (1.0+dot(dispersion,dispersion)*1000.0) * 6.0;
+    dispersion *= dispersionAmount;
 
-    // create offsets
-    vec2 offsetTexcoord = clampUV(texcoord - (normal + smudge)*refractAmount, texcoord);
-    passTexcoord = offsetTexcoord;
+    // force back to undistorted tc when occluded by opaque geometry
+    float alphaCheck = min( decodeVec2(texelFetch(colortex11, ivec2((refractedTexcoord - dispersion + 0.5)/texelSize),0).a).r,
+                            decodeVec2(texelFetch(colortex11, ivec2((refractedTexcoord + dispersion + 0.5)/texelSize),0).a).r
+                          ) > 0.0 ? 1.0 : 0.0;
 
-    // sample color with offsetted texcoord. in this case, the red and blue channels have offsets in opposite directions for a dispersion effect.
-    color.g = texture(colortex3, offsetTexcoord).g;
+    refractedTexcoord = mix(passTexcoord, refractedTexcoord, alphaCheck);
 
-    offsetTexcoord = clampUV(texcoord - ((normal + dispersion) + smudge)*refractAmount, texcoord);
-    color.r = texture(colortex3, offsetTexcoord).r;
+    vec3 color = vec3(0.0);
+    color.r = texture(colortex3, refractedTexcoord + dispersion  + 0.5).r;
+    color.b = texture(colortex3, refractedTexcoord - dispersion  + 0.5).b;
+    color.g = texture(colortex3, refractedTexcoord + 0.5).g;
 
-    offsetTexcoord = clampUV(texcoord - ((normal - dispersion) + smudge)*refractAmount, texcoord);
-    color.b = texture(colortex3, offsetTexcoord).b;
+    passTexcoord = refractedTexcoord+0.5;
   #else
-    // do not offset texcoord if alpha is 1.0
-    refractAmount *= decodeVec2(texelFetch(colortex11, ivec2(clampUV(texcoord - (normal + smudge)*refractAmount, texcoord)/texelSize),0).b).g > 0.0 ? 1.0 : 0.0; 
+    float alphaCheck = decodeVec2(texelFetch(colortex11, ivec2(refractedTexcoord/texelSize),0).a).r > 0.0 ? 1.0 : 0.0;
+    
+    refractedTexcoord = mix(passTexcoord, refractedTexcoord, alphaCheck);
 
-    // create offsets
-    vec2 offsetTexcoord = clampUV(texcoord - (normal + smudge)*refractAmount, texcoord);
-    passTexcoord = offsetTexcoord;
-
-    // sample color with distorted texcoords
-    color.rgb = texture(colortex3, offsetTexcoord).rgb;
+    vec3 color = texture(colortex3, refractedTexcoord).rgb;
+    
+    passTexcoord = refractedTexcoord;
   #endif
 
   return color;
@@ -430,9 +433,9 @@ float getBorderFogDensity(float linearDistance, vec3 playerPos, bool sky){
   return borderFogDensity;
 }
 
-vec2 allocatePrecision_TangentNormal(vec2 normals){
-	
-  vec2 newNormal = normals;
+vec3 allocatePrecision_TangentNormal(vec3 normals){
+	// return normals;
+  vec3 newNormal = normals;
 
   if(normals.x < 0.0) {
 		newNormal.x = -(1.0-pow(1-pow(clamp(-newNormal.x,0.0,1.0),2),0.5));
@@ -443,6 +446,11 @@ vec2 allocatePrecision_TangentNormal(vec2 normals){
 		newNormal.y = -(1.0-pow(1-pow(clamp(-newNormal.y,0.0,1.0),2),0.5));
 	}else{
 		newNormal.y =  (1.0-pow(1-pow(clamp( newNormal.y,0.0,1.0),2),0.5));
+  }
+  if(normals.z < 0.0) {
+		newNormal.z = -(1.0-pow(1-pow(clamp(-newNormal.z,0.0,1.0),2),0.5));
+	}else{
+		newNormal.z =  (1.0-pow(1-pow(clamp( newNormal.z,0.0,1.0),2),0.5));
   }
 
 	return newNormal;
@@ -465,6 +473,12 @@ void main() {
   bool hand = depth < 0.56;
   float z = depth;
   float z2 = texelFetch(depthtex1, ivec2(gl_FragCoord.xy),0).x;
+  
+		if(hand){
+			convertHandDepth(z);
+			convertHandDepth(z2);
+		}
+    
   float frDepth = linearize(z);
 
 	float swappedDepth = z;
@@ -502,6 +516,7 @@ void main() {
 	float lightleakfix = clamp(pow(eyeBrightnessSmooth.y/240.,2) ,0.0,1.0);
 	float lightleakfixfast = clamp(eyeBrightness.y/240.,0.0,1.0);
 
+  float testingthing = distance(viewPos,viewPos_alt);
 	////// --------------- UNPACK OPAQUE GBUFFERS --------------- //////
 	// float opaqueMasks = decodeVec2(texture(colortex1,texcoord).a).y;
 	// bool isOpaque_entity = abs(opaqueMasks-0.45) < 0.01;
@@ -511,17 +526,18 @@ void main() {
 	vec4 unpack0 = vec4(decodeVec2(data.r),decodeVec2(data.g)) ;
 	vec4 unpack1 = vec4(decodeVec2(data.b),decodeVec2(data.a)) ;
 	
-	vec4 albedo = vec4(unpack0.ba,unpack1.rg);
+	vec4 albedo = vec4(unpack0.a,unpack1.rgb);
 
-	vec2 tangentNormals = unpack0.xy* 2.0 - 1.0;
+	vec3 tangentNormals = unpack0.xyz* 2.0 - 1.0;
 	// this was written with a curve applied to the normal to put denser bits where finer detail is needed. this is the inverse.
-  tangentNormals = allocatePrecision_TangentNormal(tangentNormals);
+  tangentNormals.xyz = allocatePrecision_TangentNormal(tangentNormals.xyz);
+  // if(hand) tangentNormals.z = abs(tangentNormals.z);
 
   
 	bool nameTagMask = abs(unpack1.a - 0.1) < 0.01;
   float nametagbackground = nameTagMask ? 0.25 : 1.0;
 
-  if(albedo.a < 0.01) tangentNormals = vec2(0.0);
+  // if(albedo.a < 0.01) tangentNormals = vec3(0.0);
 
 	////// --------------- UNPACK MISC --------------- //////
 	// 1.0 = water mask
@@ -551,8 +567,9 @@ void main() {
 
   vec2 refractedCoord = texcoord;
   
-  #if FAKE_REFRACTION_AMOUNT > 0
-    vec3 color = doRefractionEffect(refractedCoord, tangentNormals.xy, linearDistance, isReflectiveEntity, isWater && isEyeInWater == 1);
+  #if FAKE_REFRACTION_AMOUNT > 0 
+    vec3 color = doRefractionEffect(refractedCoord, viewPos, tangentNormals.xyz, testingthing > 0.01 ? 1.0 : 0.0);
+    // vec3 color = doRefractionEffect(refractedCoord, viewPos, tangentNormals.xyz, linearDistance, isReflectiveEntity, isWater && isEyeInWater == 1, TranslucentShader.a>0.01, testingthing);
   #else
     vec3 color = texture(colortex3, texcoord).rgb;
   #endif

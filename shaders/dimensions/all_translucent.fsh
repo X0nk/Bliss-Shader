@@ -397,6 +397,10 @@ float bias(){
 vec2 allocatePrecision_TangentNormal(vec2 normals){
 	
   	vec2 newNormal = normals;
+vec3 allocatePrecision_TangentNormal(vec3 normals){
+	// return normals;
+  	vec3 newNormal = normals;
+	// return clamp(newNormal + newNormal*interleaved_gradientNoise_temporal()*0.025,-1.0,1.0);
 	
 	if(normals.x < 0.0) {
 		newNormal.x = -pow(1.0-pow(1.0-clamp(-newNormal.x,0.0,1.0),2),0.5);
@@ -407,6 +411,11 @@ vec2 allocatePrecision_TangentNormal(vec2 normals){
 		newNormal.y = -pow(1.0-pow(1.0-clamp(-newNormal.y,0.0,1.0),2),0.5);
 	}else{
 		newNormal.y =  pow(1.0-pow(1.0-clamp( newNormal.y,0.0,1.0),2),0.5);
+  	}
+	if(normals.z < 0.0) {
+		newNormal.z = -pow(1.0-pow(1.0-clamp(-newNormal.z,0.0,1.0),2),0.5);
+	}else{
+		newNormal.z =  pow(1.0-pow(1.0-clamp( newNormal.z,0.0,1.0),2),0.5);
   	}
 	
 	return clamp(newNormal + newNormal*interleaved_gradientNoise_temporal()*0.025,-1.0,1.0);
@@ -604,11 +613,16 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#if defined ENTITIES && defined IS_IRIS
 		if(NAMETAG > 0) nameTagMask = 0.1;
 	#endif
-
-	// write with a curve applied to the normal to put denser bits where finer detail is needed. and then dither
-	TangentNormal = allocatePrecision_TangentNormal(TangentNormal) * 0.5 + 0.5;
-
-	gl_FragData[2] = vec4(encodeVec2(TangentNormal), encodeVec2(GLASS_TINT_COLORS.rg), encodeVec2(GLASS_TINT_COLORS.ba), encodeVec2(0.0, nameTagMask));
+	
+	vec3 stupidshit = allocatePrecision_TangentNormal(-normalMat.xyz + (normal.xyz))*0.5+0.5;
+	// gl_FragData[2] = vec4(	encodeVec2(refractnormal.xy), 
+	// 						encodeVec2(GLASS_TINT_COLORS.rg), 
+	// 						encodeVec2(GLASS_TINT_COLORS.ba), 
+	// 						encodeVec2(0.0, nameTagMask));
+	gl_FragData[2] = vec4(	encodeVec2(stupidshit.xy), 
+							encodeVec2(vec2(stupidshit.z, GLASS_TINT_COLORS.r)), 
+							encodeVec2(GLASS_TINT_COLORS.gb), 
+							encodeVec2(GLASS_TINT_COLORS.a, nameTagMask));
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// SPECULARS /////////////////////////////////////
