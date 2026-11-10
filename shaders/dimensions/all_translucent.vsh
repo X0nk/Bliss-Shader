@@ -27,7 +27,7 @@ varying vec4 lmtexcoord;
 varying vec4 color;
 
 uniform sampler2D colortex4;
-uniform sampler2D noisetex;
+// uniform sampler2D noisetex;
 
 #ifdef OVERWORLD_SHADER
 	flat varying vec3 averageSkyCol_Clouds;

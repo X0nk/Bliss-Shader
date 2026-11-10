@@ -694,8 +694,8 @@ void applyPuddles(
 
 	vec2 driprate = vec2(0.0,frameTimeCounter)*0.05;
 
-	vec2 UV = mix(worldPos.xz, worldPos.xy*vec2(2.0, 0.5)+driprate, abs(flatNormals.z));
-	UV = mix(UV, worldPos.zy*vec2(2.0, 0.5)+driprate, abs(flatNormals.x));
+	vec2 UV = mix(worldPos.xz, worldPos.xy*vec2(2.0, 0.5)+driprate, pow(abs(flatNormals.z),2));
+	UV = mix(UV, worldPos.zy*vec2(2.0, 0.5)+driprate, pow(abs(flatNormals.x),2));
 
 	float noise = texture(noisetex, UV * 0.02).b;
 
@@ -1112,10 +1112,9 @@ void main() {
 			float vortexBounds = 1.0;
 		#endif
 		
-        vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds);
-
-		float lightningflash = texelFetch(colortex4,ivec2(1,1),0).x/150.0;
-		vec3 lightColors = pow(lightmap.y,8) * LightSourceColors(vortexBounds, lightningflash);
+		float lightningflash = 0.0;
+        vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds, lightningflash);
+		vec3 lightColors = pow(lightmap.y,5) * LightSourceColors(vortexBounds, lightningflash);
 		
 		float end_NdotL = clamp(dot(slopednormal, normalize(-lightPos))*0.5+0.5,0.0,1.0);
 		end_NdotL *= end_NdotL;

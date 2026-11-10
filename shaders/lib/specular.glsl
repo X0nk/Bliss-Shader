@@ -103,9 +103,17 @@ float shlickFresnelRoughness(float XdotN, float roughness){
 	return shlickFresnel;
 }
 
-vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, bool hand, inout float reflectionLength){
+vec3 rayTraceSpeculars(
+	vec3 dir,
+	vec3 position,
+	float dither,
+	float quality,
+	bool hand,
+	inout float reflectionLength
+	,in float roughness
+){
 
-	float biasAmount = 0.000075;
+	float biasAmount = mix(0.000075, 0.00035, roughness);
 
 	vec3 clipPosition = toClipSpace3(position);
 	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ? (-near -position.z) / dir.z : far*sqrt(3.);
@@ -124,7 +132,7 @@ vec3 rayTraceSpeculars(vec3 dir, vec3 position, float dither, float quality, boo
 	clipPosition.xy *= RENDER_SCALE;
 	stepv.xy *= RENDER_SCALE;
 
-	vec3 spos = clipPosition + stepv*(dither*0.5+0.5);
+	vec3 spos = clipPosition + stepv*mix(dither, dither*0.5+0.5, roughness);
 	spos += vec3(0.5*texelSize,0.0); // small offsets to reduce artifacts from precision differences.
 	
 	#if defined DEFERRED_SPECULAR && TAA_MODE > 0
@@ -190,14 +198,16 @@ vec4 screenSpaceReflections(
 		quality = float(DEFERRED_SSR_QUALITY);
 	#endif
 
-	vec3 raytracePos = rayTraceSpeculars(reflectedVector, viewPos, noise, quality, isHand, reflectionLength);
-	
-	if (raytracePos.z > 1.0 
-	#ifdef SSR_SELF_REFLECT_FIX
-	|| distance(gl_FragCoord.xy*texelSize, raytracePos.xy) < 0.002
-	#endif
+	vec3 raytracePos = rayTraceSpeculars(reflectedVector, viewPos, noise, quality, isHand, reflectionLength, roughness);
+
+	if ( (raytracePos.z > 1.0 && backgroundReflectMask > 0.999999)
+		#ifdef SSR_SELF_REFLECT_FIX
+		|| distance(gl_FragCoord.xy*texelSize, raytracePos.xy) < 0.002
+		#endif
 	) return reflection;
 
+	if(raytracePos.z >= 1.0 && raytracePos.x > 0.0 && raytracePos.y > 0.0 && raytracePos.x < 1.0 && raytracePos.y < 1.0) backgroundReflectMask = 1.0;
+	
 	// use higher LOD as the reflection goes on, to blur it. this helps denoise a little.
 	reflectionLength = min(max(reflectionLength - 0.1, 0.0)/0.9, 1.0);
 	float LOD = mix(0.0, 6.0*(1.0-exp(-15.0*sqrt(roughness))), 1.0-pow(1.0-reflectionLength,5.0));
@@ -207,9 +217,6 @@ vec4 screenSpaceReflections(
 	previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
 
 	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.y < 1.0) {
-		
-		if(raytracePos.z > 0.999999) backgroundReflectMask = 1.0;
-
 		#if defined OVERWORLD_SHADER 
 			reflection.a = raytracePos.z > 0.999999 ? (isHand || isEyeInWater == 1 ? 1.0 : 0.0) : 1.0;
 		#else
@@ -341,6 +348,9 @@ vec3 specularReflections(
 	// get reflected vector
 	mat3 basis = CoordBase(normal);
 	vec3 viewDir = -playerPos*basis;
+
+	// impossible normal viewing angle mitigation.
+	viewDir.z = abs(viewDir.z);
 
 	#if defined FORWARD_ROUGH_REFLECTION || defined DEFERRED_ROUGH_REFLECTION
 		vec3 samplePoints = SampleVNDFGGX(viewDir, roughness, noise.xy);

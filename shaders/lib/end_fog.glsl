@@ -62,6 +62,9 @@ SOFTWARE.*/
 
 //----------------------------------------------------------------------------------------
 
+uniform vec4 randomPosXYZ;
+uniform vec3 snapToGrid;
+
 // vec3 RandomPosition = hash31(frameTimeCounter);
 float vortexBoundRange = 300.0;
 #ifdef THE_ORB
@@ -70,7 +73,11 @@ float vortexBoundRange = 300.0;
 	vec3 ManualLightPos = vec3(0.0);
 #endif
 
-vec3 LightSourcePosition(vec3 worldPos, vec3 cameraPos, float vortexBounds){
+float DoEndFlashEffect(in vec3 lightningBoltPos){
+	return randomPosXYZ.w * pow(min(max(length(lightningBoltPos.xyz)-5.0,0.0)/200.0,1.0),3.0);
+}
+
+vec3 LightSourcePosition(vec3 worldPos, vec3 cameraPos, float vortexBounds, out float lightningflash){
 
 	// this is static so it can just sit in one place
 	vec3 vortexPos = worldPos - vec3(0.0,200.0,0.0);
@@ -78,17 +85,38 @@ vec3 LightSourcePosition(vec3 worldPos, vec3 cameraPos, float vortexBounds){
     vec3 lightningPos = worldPos - cameraPos - ManualLightPos;
     
 	// snap-to coordinates in worldspace.
-	float cellSize = 200.0;
-    lightningPos += fract(cameraPos/cellSize)*cellSize - cellSize*0.5;
+    lightningPos += snapToGrid;
 
 	// make the position offset to random places (RNG.xyz from non-clearing buffer).
-	vec3 randomOffset = (texelFetch(colortex4,ivec2(2,1),0).xyz / 150.0) * 2.0 - 1.0;
-	lightningPos -= randomOffset * 2.5;
+	vec3 lightningBoltPos = texelFetch(colortex4,ivec2(2,1),0).xyz * 2.0 - 1.0;
+	lightningflash = DoEndFlashEffect(lightningBoltPos.xyz);
+	lightningPos -= lightningBoltPos;
+	
+
+	#ifdef THE_ORB
+    	vec3 orbpos = (worldPos - cameraPos - ManualLightPos) - lightningBoltPos;
+    	orbpos += snapToGrid;
+
+		return orbpos;
+	#else
+		return mix(lightningPos, vortexPos, vortexBounds);
+	#endif
+}
+
+vec3 LightSourcePosition_VL(vec3 worldPos, vec3 cameraPos, vec3 lightningBoltPos, float vortexBounds){
+
+	// this is static so it can just sit in one place
+	vec3 vortexPos = worldPos - vec3(0.0,200.0,0.0);
+
+    vec3 lightningPos = worldPos - cameraPos - ManualLightPos;
+    
+	// snap-to coordinates in worldspace.
+    lightningPos += snapToGrid;
+	lightningPos -= lightningBoltPos;
 	
 	#ifdef THE_ORB
-		cellSize = 200.0;
-    	vec3 orbpos = worldPos - cameraPos - ManualLightPos;// - vec3(sin(frameTimeCounter), cos(frameTimeCounter), cos(frameTimeCounter))*100;
-    	orbpos += fract(cameraPos/cellSize)*cellSize - cellSize*0.5;
+    	vec3 orbpos = (worldPos - cameraPos - ManualLightPos) - lightningBoltPos;
+    	orbpos += snapToGrid;
 
 		return orbpos;
 	#else
@@ -183,6 +211,7 @@ float endFogPhase(vec3 LightPos){
     return (mie*10.0)*(mie*10.0);
 }
 
+
 vec3 LightSourceColors(float vortexBounds, float lightningflash){
 
     // vec3 vortexColor = vec3(0.7,0.88,1.0); 
@@ -228,14 +257,13 @@ vec4 GetVolumetricFog(
 		return vec4(0.0,0.0,0.0,1.0);
 	#endif
 
-
 	/// -------------  RAYMARCHING STUFF ------------- \\\
 
 	vec3 wpos = mat3(gbufferModelViewInverse) * viewPosition + gbufferModelViewInverse[3].xyz;
 	vec3 dVWorld = (wpos-gbufferModelViewInverse[3].xyz);
 	vec3 progressW = vec3(0.0);
 
-	float maxLength = min(length(dVWorld),32.0 * 12.0)/length(dVWorld);
+	float maxLength = min(length(dVWorld),384.0)/length(dVWorld);
 	
 	dVWorld *= maxLength;
 
@@ -251,17 +279,18 @@ vec4 GetVolumetricFog(
 
 	float CenterdotV = dot(normalize(vec3(0,100,0)-cameraPosition), normalize(wpos + cameraPosition));
 
-	// float phsething = phaseEND(CenterdotV, 0.35) + phaseEND(CenterdotV, 0.85) ;
-
 	float skyPhase = (0.5 + pow(clamp(normalize(wpos).y*0.5+0.5,0.0,1.0),4.0)*5.0) * 0.1;
 
 	vec3 hazeColor = normalize(gl_Fog.color.rgb + 1e-6) * 0.1;
     
-	float lightningflash = texelFetch(colortex4,ivec2(1,1),0).x/150.0;
+	// float lightningflash = texelFetch(colortex4,ivec2(1,1),0).x/150.0;
+	// make the position offset to random places (RNG.xyz from non-clearing buffer).
+	vec3 lightningBoltPos = texelFetch(colortex4,ivec2(2,1),0).xyz * 2.0 - 1.0;
+	float lightningflash = DoEndFlashEffect(lightningBoltPos.xyz);
 	
 	for (int i = 0; i < SAMPLECOUNT; i++) {
 		float d = (pow(expFactor, float(i+dither)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
-		float dd = pow(expFactor, float(i+dither2)/float(SAMPLECOUNT)) * log(expFactor) / float(SAMPLECOUNT)/(expFactor-1.0);
+		float dd = pow(expFactor, float(i+dither)/float(SAMPLECOUNT)) * log(expFactor) / float(SAMPLECOUNT)/(expFactor-1.0);
 
 		vec3 progressW = gbufferModelViewInverse[3].xyz+cameraPosition + d*dVWorld;
 		
@@ -275,8 +304,8 @@ vec4 GetVolumetricFog(
 				float vortexBounds = 1.0;
 			#endif
 
-        	vec3 lightPosition = LightSourcePosition(progressW, cameraPosition, vortexBounds);
-			vec3 lightColors = LightSourceColors(vortexBounds, lightningflash) * 0.25;
+        	vec3 lightPosition = LightSourcePosition_VL(progressW, cameraPosition, lightningBoltPos, vortexBounds);
+			vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
 
 			float volumeDensity = fogShape(progressW);
 			
@@ -290,7 +319,7 @@ vec4 GetVolumetricFog(
 			float volumeCoeff = exp(-stormDensity*dd*dL);
 
 			vec3 lightsources = LightSourceLighting(progressW, lightPosition, dither, volumeDensity, lightColors, vortexBounds);
-			vec3 indirect = vec3(0.5,0.75,1.0) * 0.2 * (exp((volumeDensity*volumeDensity) * -50) * 0.9 + 0.1) * 0.1;
+			vec3 indirect = vec3(0.5,0.75,1.0) * 0.1 * (exp((volumeDensity*volumeDensity) * -50) * 0.9 + 0.1) * 0.1;
 			
 			vec3 stormLighting = indirect + lightsources;
 			

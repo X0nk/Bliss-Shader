@@ -71,6 +71,8 @@ uniform sampler2D normals;
 	uniform sampler3D texLpv2;
 #endif
 
+uniform float alphaTestRef;
+
 varying vec4 tangent;
 varying vec4 normalMat;
 varying vec3 binormal;
@@ -392,6 +394,29 @@ float bias(){
 		return 0.0;
 	#endif
 }
+	
+vec3 allocatePrecision_TangentNormal(vec3 normals){
+  	vec3 newNormal = normals;
+	
+	if(normals.x < 0.0) {
+		newNormal.x = -pow(1.0-pow(1.0-clamp(-newNormal.x,0.0,1.0),2),0.5);
+	}else{
+		newNormal.x =  pow(1.0-pow(1.0-clamp( newNormal.x,0.0,1.0),2),0.5);
+	}
+	if(normals.y < 0.0) {
+		newNormal.y = -pow(1.0-pow(1.0-clamp(-newNormal.y,0.0,1.0),2),0.5);
+	}else{
+		newNormal.y =  pow(1.0-pow(1.0-clamp( newNormal.y,0.0,1.0),2),0.5);
+  	}
+	if(normals.z < 0.0) {
+		newNormal.z = -pow(1.0-pow(1.0-clamp(-newNormal.z,0.0,1.0),2),0.5);
+	}else{
+		newNormal.z =  pow(1.0-pow(1.0-clamp( newNormal.z,0.0,1.0),2),0.5);
+  	}
+	
+	return clamp(newNormal + newNormal*interleaved_gradientNoise_temporal()*0.025,-1.0,1.0);
+}
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -454,11 +479,12 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0] = col;
 
 	#else
-		gl_FragData[0] = texture(texture, lmtexcoord.xy, mipmapBias) * color;
+		gl_FragData[0] = texture(texture, lmtexcoord.xy, mipmapBias);
+		gl_FragData[0].a *= color.a;
 	#endif
 
 	#if DEBUG_VIEW == debug_ALBEDO
-		vec4 unalteredAlbedo = vec4(toLinear(gl_FragData[0].rgb),gl_FragData[0].a);
+		vec4 unalteredAlbedo = vec4(toLinear(gl_FragData[0].rgb*color.rgb),gl_FragData[0].a);
 	#endif
 	
 	float UnchangedAlpha = gl_FragData[0].a;
@@ -468,10 +494,11 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0].a = 1.0;
 	#endif
 
-	vec3 Albedo = toLinear(gl_FragData[0].rgb);
+	vec3 Albedo = toLinear(gl_FragData[0].rgb*color.rgb);
+
 
 	#ifndef WhiteWorld
-		#ifdef Vanilla_like_water
+		#ifdef USE_WATER_BLOCK_TEXTURE
 			if (isWater) Albedo *= sqrt(luma(Albedo));
 		#else
 			if (isWater){
@@ -480,6 +507,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			}
 		#endif
 	#endif
+
+	if(gl_FragData[0].a < alphaTestRef){discard; return;}
 
 	#ifdef ENTITIES
 		Albedo.rgb = mix(Albedo.rgb, entityColor.rgb, clamp(entityColor.a*1.5,0,1));
@@ -581,7 +610,15 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		if(NAMETAG > 0) nameTagMask = 0.1;
 	#endif
 	
-	gl_FragData[2] = vec4(encodeVec2(TangentNormal*0.5+0.5), encodeVec2(GLASS_TINT_COLORS.rg), encodeVec2(GLASS_TINT_COLORS.ba), encodeVec2(0.0, nameTagMask));
+	vec3 stupidshit = allocatePrecision_TangentNormal(-normalMat.xyz + (normal.xyz))*0.5+0.5;
+	// gl_FragData[2] = vec4(	encodeVec2(refractnormal.xy), 
+	// 						encodeVec2(GLASS_TINT_COLORS.rg), 
+	// 						encodeVec2(GLASS_TINT_COLORS.ba), 
+	// 						encodeVec2(0.0, nameTagMask));
+	gl_FragData[2] = vec4(	encodeVec2(stupidshit.xy), 
+							encodeVec2(vec2(stupidshit.z, GLASS_TINT_COLORS.r)), 
+							encodeVec2(GLASS_TINT_COLORS.gb), 
+							encodeVec2(GLASS_TINT_COLORS.a, nameTagMask));
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// SPECULARS /////////////////////////////////////
@@ -670,9 +707,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 			float vortexBounds = 1.0;
 		#endif
 
-        vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds);
-
-		float lightningflash = texelFetch(colortex4,ivec2(1,1),0).x/150.0;
+		float lightningflash = 0.0;
+        vec3 lightPos = LightSourcePosition(feetPlayerPos+cameraPosition, cameraPosition,vortexBounds,lightningflash);
 		vec3 lightColors = LightSourceColors(vortexBounds, lightningflash);
 		
 		float end_NdotL = clamp(dot(worldSpaceNormal, normalize(-lightPos))*0.5+0.5,0.0,1.0);
@@ -681,7 +717,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		float fogShadow = GetEndFogShadow(feetPlayerPos+cameraPosition, lightPos);
 		float endPhase = endFogPhase(lightPos);
 
-		Direct_lighting += lightColors * endPhase * end_NdotL * fogShadow;
+		Direct_lighting += pow(lightmap.y,5) *lightColors * endPhase * end_NdotL * fogShadow;
 
 		vec3 AmbientLightColor = vec3(0.3,0.6,1.0);
 		
@@ -769,6 +805,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		float roughness = specularValues.r; 
 
 		if(UnchangedAlpha <= 0.0 && !isReflective) f0 = 0.0;
+
+		if(SpecularTex.g == 0.0 && SpecularTex.r > 0.0) f0 = harcodedF0;
 
 		if (f0 > 0.0){
 			if(isReflective) f0 = max(f0, harcodedF0);

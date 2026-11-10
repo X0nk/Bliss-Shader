@@ -2,36 +2,40 @@
 #if defined USE_SCENE_CONTROLLER_SETTINGS
 
 uniform int worldDay;
+uniform int worldTime;
 uniform ivec3 cameraPositionInt;
 
 uniform bool isInColdArea;
 uniform bool isInHotArea;
 uniform bool isInJungleBiomes;
 uniform bool isInSwampBiomes;
+uniform bool isInPaleGardenBiomes;
 uniform bool isInSpecialEnviornment;
 uniform bool isInSnowFallEnviornment;
 uniform bool isInRainFallEnviornment;
 uniform bool isInNoRainFallEnviornment;
 
-uniform int worldTime;
 
 #define DECLARE_UNIFORMS_OR_WRITE_FUNCTIONS_FOR_CUSTOM_SCENE_CONTROLLER_PROFILES
 #include "/CUSTOM_SCENE_PARAMETERS.glsl"
 
 // https://www.shadertoy.com/view/llGSzw
-float hash11( uint n ) 
+float hash11(float p)
 {
-    // integer hash copied from Hugo Elias
-	n = (n << 13U) ^ n;
-    n = n * (n * n * 15731U + 789221U) + 1376312589U;
-    return float( n & uint(0x7fffffffU))/float(0x7fffffff);
+    p = fract(p * .1031);
+    p *= p + 33.33;
+    p *= p + p;
+    return fract(p);
 }
+
 bool playerIsWithinArea(in vec3 positionA, in vec3 positionB){
     return cameraPositionInt.x > positionA.x && cameraPositionInt.y > positionA.y && cameraPositionInt.z > positionA.z && cameraPositionInt.x < positionB.x && cameraPositionInt.y < positionB.y && cameraPositionInt.z < positionB.z; 
 }
+
 bool playerIsOutsideArea(in vec3 positionA, in vec3 positionB){
     return !(cameraPositionInt.x > positionA.x && cameraPositionInt.y > positionA.y && cameraPositionInt.z > positionA.z && cameraPositionInt.x < positionB.x && cameraPositionInt.y < positionB.y && cameraPositionInt.z < positionB.z); 
 }
+
 vec4 timesOfDay(){
 
 	float time = float(worldTime%24000);
@@ -44,6 +48,7 @@ vec4 timesOfDay(){
 
     return (float(TOD_FOG_AMOUNT) / 100.0) * vec4(morning, noon, evening, night);
 }
+
 void applySceneControllerParameters(
 	out float smallCumulusCoverage, out float smallCumulusDensity,
 	out float largeCumulusCoverage, out float largeCumulusDensity,
@@ -63,7 +68,7 @@ void applySceneControllerParameters(
     clumpyFogDensity = 0.0;
     LocalUniformFogDensity = 0.0;
     LocalClumpyFogDensity = 0.0;
-    localFogColor = vec3(1.0);
+    localFogColor = vec3(0.0);
 
 #if TOD_FOG_AMOUNT > 0
     vec4 timesOfDay = timesOfDay();
@@ -73,7 +78,8 @@ void applySceneControllerParameters(
 
 // the seed is the in-game day counter. 
 // give a random value within the range 0.0-1.0 which is scaled up to the wanted range, and then quantized to choose a profile
-float RNG = hash11(worldDay + 0.2);
+float midDayReroll = floor(worldTime/24000.0 * 4.0);
+float RNG = hash11(float(worldDay + midDayReroll + 0.2));
 
 #if USE_CUSTOM_DAILY_WEATHER_PROFILE == 0
     int dailyWeatherProfile = int(RNG * 11.0);
@@ -346,6 +352,8 @@ if(rainStrength > 0.0001){
                 smallCumulusDensity =  RAINY_PROFILE_1_LAYER0_DENSITY;
                 largeCumulusDensity =  RAINY_PROFILE_1_LAYER1_DENSITY;
                 altostratusDensity =   RAINY_PROFILE_1_LAYER2_DENSITY;
+	            uniformFogDensity =    RAINY_PROFILE_1_UNIFORM_FOG_DENSITY;
+                clumpyFogDensity =     RAINY_PROFILE_1_CLUMPY_FOG_DENSITY;
                 break;
             }
         #if USE_CUSTOM_DAILY_RAIN_PROFILE >= 2
@@ -356,6 +364,8 @@ if(rainStrength > 0.0001){
                 smallCumulusDensity =  RAINY_PROFILE_2_LAYER0_DENSITY;
                 largeCumulusDensity =  RAINY_PROFILE_2_LAYER1_DENSITY;
                 altostratusDensity =   RAINY_PROFILE_2_LAYER2_DENSITY;
+	            uniformFogDensity =    RAINY_PROFILE_2_UNIFORM_FOG_DENSITY;
+                clumpyFogDensity =     RAINY_PROFILE_2_CLUMPY_FOG_DENSITY;
                 break;
             }
         #endif
@@ -367,6 +377,8 @@ if(rainStrength > 0.0001){
                 smallCumulusDensity =  RAINY_PROFILE_3_LAYER0_DENSITY;
                 largeCumulusDensity =  RAINY_PROFILE_3_LAYER1_DENSITY;
                 altostratusDensity =   RAINY_PROFILE_3_LAYER2_DENSITY;
+	            uniformFogDensity =    RAINY_PROFILE_3_UNIFORM_FOG_DENSITY;
+                clumpyFogDensity =     RAINY_PROFILE_3_CLUMPY_FOG_DENSITY;
                 break;
             }
         #endif
@@ -378,6 +390,8 @@ if(rainStrength > 0.0001){
                 smallCumulusDensity =  RAINY_PROFILE_4_LAYER0_DENSITY;
                 largeCumulusDensity =  RAINY_PROFILE_4_LAYER1_DENSITY;
                 altostratusDensity =   RAINY_PROFILE_4_LAYER2_DENSITY;
+	            uniformFogDensity =    RAINY_PROFILE_4_UNIFORM_FOG_DENSITY;
+                clumpyFogDensity =     RAINY_PROFILE_4_CLUMPY_FOG_DENSITY;
                 break;
             }
         #endif
@@ -389,6 +403,8 @@ if(rainStrength > 0.0001){
                 smallCumulusDensity =  RAINY_PROFILE_5_LAYER0_DENSITY;
                 largeCumulusDensity =  RAINY_PROFILE_5_LAYER1_DENSITY;
                 altostratusDensity =   RAINY_PROFILE_5_LAYER2_DENSITY;
+	            uniformFogDensity =    RAINY_PROFILE_5_UNIFORM_FOG_DENSITY;
+                clumpyFogDensity =     RAINY_PROFILE_5_CLUMPY_FOG_DENSITY;
                 break;
             }
         #endif
@@ -400,6 +416,8 @@ if(rainStrength > 0.0001){
                 smallCumulusDensity =  RAINY_PROFILE_6_LAYER0_DENSITY;
                 largeCumulusDensity =  RAINY_PROFILE_6_LAYER1_DENSITY;
                 altostratusDensity =   RAINY_PROFILE_6_LAYER2_DENSITY;
+	            uniformFogDensity =    RAINY_PROFILE_6_UNIFORM_FOG_DENSITY;
+                clumpyFogDensity =     RAINY_PROFILE_6_CLUMPY_FOG_DENSITY;
                 break;
             }
         #endif
@@ -467,7 +485,7 @@ if(rainStrength > 0.0001){
                 }
                 case 8: { // blizzard
                     LocalUniformFogDensity = 0.07;
-                    LocalClumpyFogDensity = 1.0;
+                    LocalClumpyFogDensity = 0.3;
                     localFogColor = vec3(0.4,0.6,1.0) * 5.0;
 
 	                uniformFogDensity = 0.0;
@@ -550,8 +568,8 @@ if(rainStrength > 0.0001){
         clumpyFogDensity = 0.0;
 
         LocalUniformFogDensity = 0.01;
-        LocalClumpyFogDensity = 0.1;
-        localFogColor = vec3(0.8,1.0,0.1);
+        LocalClumpyFogDensity = 0.05;
+        localFogColor = vec3(0.9,1.0,0.3);
     }
 #endif
 #if USE_CUSTOM_SWAMP_CATEGORY_PROFILE == 1
@@ -559,9 +577,9 @@ if(rainStrength > 0.0001){
 	    uniformFogDensity = 0.0;
         clumpyFogDensity = 0.0;
 
-        LocalUniformFogDensity = CUSTOM_SWAMP_PROFILE_1_UNIFORM_FOG_DENSITY;
-        LocalClumpyFogDensity = CUSTOM_SWAMP_PROFILE_1_CLUMPY_FOG_DENSITY;
-        localFogColor = vec3(CUSTOM_SWAMP_PROFILE_1_FOG_COLOR_R, CUSTOM_SWAMP_PROFILE_1_FOG_COLOR_G, CUSTOM_SWAMP_PROFILE_1_FOG_COLOR_B);
+        LocalUniformFogDensity = CUSTOM_SWAMP_PROFILE_UNIFORM_FOG_DENSITY;
+        LocalClumpyFogDensity = CUSTOM_SWAMP_PROFILE_CLUMPY_FOG_DENSITY;
+        localFogColor = vec3(CUSTOM_SWAMP_PROFILE_FOG_COLOR_R, CUSTOM_SWAMP_PROFILE_FOG_COLOR_G, CUSTOM_SWAMP_PROFILE_FOG_COLOR_B);
     }
 #endif
 #if USE_CUSTOM_JUNGLE_CATEGORY_PROFILE == 0
@@ -579,9 +597,29 @@ if(rainStrength > 0.0001){
 	    uniformFogDensity = 0.0;
         clumpyFogDensity = 0.0;
 
-        LocalUniformFogDensity = CUSTOM_JUNGLE_PROFILE_1_UNIFORM_FOG_DENSITY;
-        LocalClumpyFogDensity = CUSTOM_JUNGLE_PROFILE_1_CLUMPY_FOG_DENSITY;
-        localFogColor = vec3(CUSTOM_JUNGLE_PROFILE_1_FOG_COLOR_R, CUSTOM_JUNGLE_PROFILE_1_FOG_COLOR_G, CUSTOM_JUNGLE_PROFILE_1_FOG_COLOR_B);
+        LocalUniformFogDensity = CUSTOM_JUNGLE_PROFILE_UNIFORM_FOG_DENSITY;
+        LocalClumpyFogDensity = CUSTOM_JUNGLE_PROFILE_CLUMPY_FOG_DENSITY;
+        localFogColor = vec3(CUSTOM_JUNGLE_PROFILE_FOG_COLOR_R, CUSTOM_JUNGLE_PROFILE_FOG_COLOR_G, CUSTOM_JUNGLE_PROFILE_FOG_COLOR_B);
+    }
+#endif
+#if USE_CUSTOM_PALE_GARDEN_PROFILE == 0
+    if(isInPaleGardenBiomes){
+	    uniformFogDensity = 0.0;
+        clumpyFogDensity = 0.0;
+        
+        LocalUniformFogDensity = 0.07;
+        LocalClumpyFogDensity = 0.0;
+        localFogColor = vec3(0.9,1.0,0.8)*0.2;
+    }
+#endif
+#if USE_CUSTOM_PALE_GARDEN_PROFILE == 1
+    if(isInPaleGardenBiomes){
+	    uniformFogDensity = 0.0;
+        clumpyFogDensity = 0.0;
+
+        LocalUniformFogDensity = CUSTOM_PALE_GARDEN_PROFILE_UNIFORM_FOG_DENSITY;
+        LocalClumpyFogDensity = CUSTOM_PALE_GARDEN_PROFILE_CLUMPY_FOG_DENSITY;
+        localFogColor = vec3(CUSTOM_PALE_GARDEN_PROFILE_FOG_COLOR_R, CUSTOM_PALE_GARDEN_PROFILE_FOG_COLOR_G, CUSTOM_PALE_GARDEN_PROFILE_FOG_COLOR_B);
     }
 #endif
 
@@ -655,14 +693,13 @@ void readSceneControllerParameters(
     out vec2 localFog,
     out vec3 localFogColor
 ){
-    
     // in colortex4, read the data stored within the 3 components of the sampled pixels, and pass it to the fragment stage
     // 4th compnent/alpha is storing 1/4 res depth so i cant store there lol
-	vec3 data1 = texelFetch(colortex,ivec2(1,3),0).rgb/150.0;
-	vec3 data2 = texelFetch(colortex,ivec2(2,3),0).rgb/150.0;
-	vec3 data3 = texelFetch(colortex,ivec2(3,3),0).rgb/150.0;
-	float data4 = texelFetch(colortex,ivec2(1,2),0).r/150.0;
-	vec3 data5 = texelFetch(colortex,ivec2(2,2),0).rgb/150.0; // this samples a color
+	vec3 data1 = texelFetch(colortex,ivec2(1,3),0).rgb;///150.0;
+	vec3 data2 = texelFetch(colortex,ivec2(2,3),0).rgb;///150.0;
+	vec3 data3 = texelFetch(colortex,ivec2(3,3),0).rgb;///150.0;
+	float data4 = texelFetch(colortex,ivec2(1,2),0).r ;///150.0;
+	vec3 data5 = texelFetch(colortex,ivec2(2,2),0).rgb;///150.0; // this samples a color
 
 	smallCumulus = vec2(data1.x,data1.y);
 	largeCumulus = vec2(data1.z,data2.x);

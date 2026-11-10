@@ -5,7 +5,7 @@
 #define SHADOWMAP_CONSTANT_RELATED_SETTINGS
 #define SEASONS_RELATED_SETTINGS
 #define VOLUMETRIC_FOG_RELATED_SETTINGS
-#define SCENE_CONTROLLER_RELATED_SETTINGS
+// #define SCENE_CONTROLLER_RELATED_SETTINGS
 #define ANTIALIASING_RELATED_SETTINGS
 #include "/lib/settings.glsl"
 #include "/lib/res_params.glsl"
@@ -79,13 +79,13 @@ float tanh(float x){
 float ld(float depth) {
     return (2.0 * near) / (far + near - depth * (far - near));		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
 }
-float hash11(float p)
-{
-    p = fract(p * .1031);
-    p *= p + 33.33;
-    p *= p + p;
-    return fract(p);
-}
+// float hash11(float p)
+// {
+//     p = fract(p * .1031);
+//     p *= p + 33.33;
+//     p *= p + p;
+//     return fract(p);
+// }
 
 #define USE_SCENE_CONTROLLER_SETTINGS
 #include "/lib/scene_controller.glsl"
@@ -182,13 +182,15 @@ void main() {
 ///////////////////////////////////////////
 
 	// components are split for readability/user friendliness within this function
-	applySceneControllerParameters(
-		parameters.smallCumulus.x, parameters.smallCumulus.y, 
-		parameters.largeCumulus.x, parameters.largeCumulus.y,
-		parameters.altostratus.x, parameters.altostratus.y,
-		parameters.fog.x, parameters.fog.y, 
-		parameters.localFog.x, parameters.localFog.y, parameters.localFogColor.rgb
-	);
+	// applySceneControllerParameters(
+	// 	parameters.smallCumulus.x, parameters.smallCumulus.y, 
+	// 	parameters.largeCumulus.x, parameters.largeCumulus.y,
+	// 	parameters.altostratus.x, parameters.altostratus.y,
+	// 	parameters.fog.x, parameters.fog.y, 
+	// 	parameters.localFog.x, parameters.localFog.y, parameters.localFogColor.rgb
+	// );
+	#define READ_SCENE_CONTROLLER_PARAMETERS
+	#include "/lib/scene_controller.glsl"
 
 //////////////////////////////
 /// --- EXPOSURE STUFF --- ///
