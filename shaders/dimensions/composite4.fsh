@@ -226,7 +226,7 @@ vec3 doRefractionEffect( inout vec2 passTexcoord, vec3 viewPos, vec3 normal, flo
 
   // RAYTRACINNG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! RTX!!!!!!!!!!
   vec3 refractedPos = viewPos + incidentRay;
-	vec2 refractedTexcoord = projectanddivide(gbufferProjection, refractedPos).xy*0.5+0.5;
+	vec2 refractedTexcoord = (projectanddivide(gbufferProjection, refractedPos).xy*0.5+0.5) *RENDER_SCALE;
 
   // lerp to undistorted tc when out of screen bounds
   // make sure the origin is the center of the screen
