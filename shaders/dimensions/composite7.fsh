@@ -52,18 +52,18 @@ gl_FragData[0] =  (invTonemap(texture(colortex5,quarterResTC-1.0*vec2(texelSize.
 gl_FragData[0] += (invTonemap(texture(colortex5,quarterResTC+1.0*vec2(texelSize.x,texelSize.y))         ))/4.*0.5;
 gl_FragData[0] += (invTonemap(texture(colortex5,quarterResTC+vec2(-1.0*texelSize.x,1.0*texelSize.y))    ))/4.*0.5;
 gl_FragData[0] += (invTonemap(texture(colortex5,quarterResTC+vec2(1.0*texelSize.x,-1.0*texelSize.y))    ))/4.*0.5;
-//0.25*65000.0
+//0.25
 gl_FragData[0] += (invTonemap(texture(colortex5,quarterResTC-2.0*vec2(texelSize.x,0.0))                 ))/2.*0.125;
 gl_FragData[0] += (invTonemap(texture(colortex5,quarterResTC+2.0*vec2(0.0,texelSize.y))                 ))/2.*0.125;
 gl_FragData[0] += (invTonemap(texture(colortex5,quarterResTC+2.0*vec2(0,-texelSize.y))                  ))/2*0.125;
 gl_FragData[0] += (invTonemap(texture(colortex5,quarterResTC+2.0*vec2(-texelSize.x,0.0))                ))/2*0.125;
-//0.125*65000.0
+//0.125
 gl_FragData[0] += (invTonemap(texture(colortex5,quarterResTC-2.0*vec2(texelSize.x,texelSize.y))         ))/4.*0.125;
 gl_FragData[0] += (invTonemap(texture(colortex5,quarterResTC+2.0*vec2(texelSize.x,texelSize.y))         ))/4.*0.125;
 gl_FragData[0] += (invTonemap(texture(colortex5,quarterResTC+vec2(-2.0*texelSize.x,2.0*texelSize.y))    ))/4.*0.125;
 gl_FragData[0] += (invTonemap(texture(colortex5,quarterResTC+vec2(2.0*texelSize.x,-2.0*texelSize.y))    ))/4.*0.125;
 //0.125
-gl_FragData[0] += (invTonemap(texture(colortex5,quarterResTC))/65000.0)       *0.125;
+gl_FragData[0] += (invTonemap(texture(colortex5,quarterResTC)))       *0.125;
 
 gl_FragData[0].rgb = clamp(gl_FragData[0].rgb,0.0,65000.);
 
