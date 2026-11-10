@@ -234,7 +234,7 @@ uniform sampler2D colortex4;
 	
 	#include "/lib/end_fog.glsl"
 
-	#include "/lib/end_volumetrics.glsl"
+	// #include "/lib/end_volumetrics.glsl"
 #endif
 
 #define fsign(a)  (clamp((a)*1e35,0.,1.)*2.-1.)
