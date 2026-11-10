@@ -446,7 +446,7 @@ float luma(vec3 color) {
 		#endif
 
 		#ifdef WEATHER
-			gl_FragData[1] = vec4(0.0,0.0,0.0,TEXTURE.a); // for bloomy rain and stuff
+			gl_FragData[1] = vec4(0.0,0.0,0.0,toLinear(vec3(TEXTURE.a)).x); // for bloomy rain and stuff
 		#endif
 
 		#ifndef WEATHER
