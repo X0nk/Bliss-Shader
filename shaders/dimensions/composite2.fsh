@@ -173,9 +173,9 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 
 			vec3 sampleColor = SampleLpvLinear(lpvPos).rgb;
 			#ifdef VANILLA_LIGHTMAP_MASK
-				vec3 lighting = sampleColor * LPV_VL_FOG_ILLUMINATION_BRIGHTNESS * 25. * exp(-10 * (1.0-luma(sampleColor)));
+				vec3 lighting = sampleColor * LPV_VL_FOG_ILLUMINATION_BRIGHTNESS * 25. * exp(-10 * (1.0-dot(sampleColor,vec3(0.21, 0.72, 0.07))));
 			#else
-				vec3 lighting = sampleColor * LPV_VL_FOG_ILLUMINATION_BRIGHTNESS * 25. * exp(-5 * (1.0-luma(sampleColor)));
+				vec3 lighting = sampleColor * LPV_VL_FOG_ILLUMINATION_BRIGHTNESS * 25. * exp(-5 * (1.0-dot(sampleColor,vec3(0.21, 0.72, 0.07))));
 			#endif
 
 			float density = 0.0001;
