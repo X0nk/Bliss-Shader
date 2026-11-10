@@ -18,7 +18,7 @@ Credit to the creators of code contributions, various code uses,  or code snippe
 Credit to the translators:
 
 	Nord / nordwhy (discord)
-	Ruri / nakiriruri (discord)
+	Ruri / https://github.com/NakiriRuri - Chinese Translation
 	YurgenS / yurgens (discord)
 	CReepa / _CReepa_ (discord)
 

@@ -1,5 +1,6 @@
 #version 120
 
+#define BLOCKENTITIES_TRANSLUCENT
 #define BLOCKENTITIES
 #define OVERWORLD_SHADER
 

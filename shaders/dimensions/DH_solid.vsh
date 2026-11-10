@@ -71,11 +71,6 @@ void main() {
     	gl_Position = dhProjection * viewPos;
 	#endif
 
-
-
-
-
-
 	#if TAA_MODE == 3
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif

@@ -48,9 +48,14 @@ uniform float shadowMaxProj;
 attribute vec4 mc_midTexCoord;
 varying vec4 color;
 
+varying float fresnel;
+
+
 attribute vec4 mc_Entity;
 uniform int blockEntityId;
 uniform int entityId;
+
+// flat varying int isWater;
 
 #include "/lib/Shadow_Params.glsl"
 #include "/lib/bokeh.glsl"
@@ -121,12 +126,17 @@ vec3 viewToWorld(vec3 viewPos) {
 
 // uniform mat4 gbufferModelViewInverse;
 void main() {
+	fresnel = 0.0;
+	
 	texcoord.xy = gl_MultiTexCoord0.xy;
 	color = gl_Color;
 
+	fresnel = clamp(dot(normalize(gl_NormalMatrix * gl_Normal), mat3(shadowModelView)*(mat3(gbufferModelViewInverse)*sunVec))*0.5+0.5,0.0,1.0);
+	fresnel = 1.0 - fresnel;
+	fresnel *= fresnel;
+	fresnel = 1.0 - fresnel;
+	
 	vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
-	
-	
 	// playerpos = vec4(0.0);
 	// playerpos = gbufferModelViewInverse * (gl_ModelViewMatrix * gl_Vertex);
 	
@@ -241,8 +251,8 @@ void main() {
 	position = mat3(shadowModelView) * worldpos + shadowModelView[3].xyz;
 
 	#ifdef DISTORT_SHADOWMAP
-		if (entityId == ENTITY_SSS_MEDIUM || entityId == ENTITY_SLIME)
-			position.xyz = position.xyz - normalize(gl_NormalMatrix * gl_Normal) * 0.25;
+		// if (entityId == ENTITY_SSS_MEDIUM || entityId == ENTITY_SLIME)
+		// 	position.xyz = position.xyz - normalize(gl_NormalMatrix * gl_Normal) * 0.25;
 
 		gl_Position = BiasShadowProjection(toClipSpace3(position));
 	#else
@@ -250,7 +260,12 @@ void main() {
 	#endif
  	
 
-	if (blockId == BLOCK_WATER) gl_Position.w = -1.0;
+	// isWater = 0;
+
+	if (blockId == BLOCK_WATER) {
+		gl_Position.w = -1.0;
+		// isWater = 1;
+	}
 
   	gl_Position.z /= 6.0;
 }

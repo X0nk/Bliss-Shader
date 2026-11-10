@@ -47,7 +47,7 @@ vec2 SpiralSample(
 
 vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 
-	float biasAmount = 0.0001;
+	float biasAmount = 0.00005;
 
 	vec3 clipPosition = toClipSpace3(position);
 
@@ -64,41 +64,44 @@ vec3 rayTrace_GI(vec3 dir,vec3 position,float dither, float quality){
 	stepv.xy *= RENDER_SCALE;
 
 	vec3 spos = clipPosition + stepv*dither;
-	// spos += stepv*0.3;
 
-	#if defined DEFERRED_SPECULAR && TAA_MODE > 0
-		spos.xy += taaJitter*texelSize*0.5/RENDER_SCALE;
-	#endif
+	spos.xy += taaJitter*texelSize*0.5/RENDER_SCALE;
 
 	float minZ = spos.z - biasAmount / linZ(spos.z);
 	float maxZ = spos.z;
 	
-  	for (int i = 0; i <= int(quality); i++) {
+	vec3 hitPos = vec3(1.1);
+
+	for (int i = 0; i <= int(quality); i++) {
 
 		#ifdef UseQuarterResDepth
-			float sampleDepth = sqrt(texelFetch(colortex4,ivec2(spos.xy/texelSize/4.0),0).a/65000.0);
+			// float sampleDepth = sqrt(texelFetch(colortex4,ivec2(spos.xy/texelSize/4.0),0).a/65000.0);
+			float sampleDepth = sqrt(texture(colortex4, spos.xy/4.0).a/65000.0);
 		#else
 			float sampleDepth = linZ(texelFetch(depthtex1,ivec2(spos.xy/ texelSize),0).r);
 		#endif
-		float sp = invLinZ(sampleDepth) ;
+		float sp = invLinZ(sampleDepth);
 
-		if( (sp < max(minZ, maxZ) && sp > min(minZ, maxZ))) return vec3(spos.xy/RENDER_SCALE,sp);
+		if( (sp < max(minZ, maxZ) && sp > min(minZ, maxZ))){
+			hitPos = vec3(spos.xy/RENDER_SCALE,sp);
+			break;
+		}
 		
 		minZ = maxZ - biasAmount / linZ(spos.z);
 		maxZ += stepv.z;
 
 		spos += stepv;
   	}
-  return vec3(1.1);
+	
+	if(
+	
+		abs(	invLinZ(sqrt(texture(colortex4, spos.xy/4.0).a/65000.0)) - texture(depthtex1, spos.xy).x	) > 0.0005
+	
+	) return vec3(1.1);
+
+	return hitPos;
 }
 
-float convertHandDepth_3(in float depth, bool hand) {
-    if(!hand) return depth;
-	
-	float ndcDepth = depth * 2.0 - 1.0;
-    ndcDepth /= MC_HAND_DEPTH;
-    return ndcDepth * 0.5 + 0.5;
-}
 
 vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool hand, inout float CURVE ){
 
@@ -115,7 +118,7 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 	float rayLength = ((position.z + dir.z * sqrt(3.0)*far) > -sqrt(3.0)*near) ?
 	   								(-sqrt(3.0)*near -position.z) / dir.z : sqrt(3.0)*far;
 	vec3 end = toClipSpace3(position+dir*rayLength) ;
-	vec3 direction = end-clipPosition ;  //convert to clip space
+	vec3 direction = end-clipPosition;  //convert to clip space
 
 	float len = max(abs(direction.x)/texelSize.x,abs(direction.y)/texelSize.y)/stepSize;
 	//get at which length the ray intersects with the edge of the screen
@@ -138,6 +141,8 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 	float maxZ = spos.z;
 	CURVE = 0.0;
 
+	vec3 hitPos = vec3(1.1);
+
   	for(int i = 0; i < iterations; i++){
 
 		spos.xy = clamp(spos.xy,screenEdges,1.0-screenEdges);
@@ -145,7 +150,8 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 		if (spos.x < 0.0 || spos.y < 0.0 || spos.z < 0.0 || spos.x > 1.0 || spos.y > 1.0 || spos.z > 1.0) return vec3(1.1);
 		
 		#ifdef UseQuarterResDepth
-			float sp = invLinZ(sqrt(texelFetch(colortex4,ivec2(spos.xy/ texelSize/4),0).w/65000.0));
+			// float sp = invLinZ(sqrt(texelFetch(colortex4,ivec2(spos.xy/ texelSize/4),0).w/65000.0));
+			float sp = invLinZ(sqrt(texture(colortex4, spos.xy/4.0).a/65000.0));
 		#else
 			float sp = texelFetch(depthtex1,ivec2(spos.xy/texelSize),0).r;
 		#endif
@@ -153,8 +159,10 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 		float currZ = linZ(spos.z);
 		float nextZ = linZ(sp);
 
-		if(nextZ < currZ && (sp <= max(minZ,maxZ) && sp >= min(minZ,maxZ))) return vec3(spos.xy/RENDER_SCALE,sp);
-		
+		if(nextZ < currZ && (sp <= max(minZ,maxZ) && sp >= min(minZ,maxZ))){
+			hitPos = vec3(spos.xy/RENDER_SCALE,sp);
+			break;
+		}
 		minZ = maxZ - biasamount / currZ;
 		maxZ += stepv.z;
 
@@ -162,7 +170,12 @@ vec3 RT_alternate(vec3 dir, vec3 position, float noise, float stepsizes, bool ha
 
 		CURVE += 1.0/iterations;
 	}
-	return vec3(1.1);
+	
+	if(
+		abs(	invLinZ(sqrt(texture(colortex4, spos.xy/4.0).a/65000.0)) - texture(depthtex1, spos.xy).x	) > 0.0005
+	) return vec3(1.1);
+
+	return hitPos;
 }
 
 vec3 ApplySSRT(
@@ -221,7 +234,7 @@ vec3 ApplySSRT(
 		radiance += skycontribution;
 		radiance2 += skycontribution2;
 
-		if (rayHit.z < 0.9999 && distance(gl_FragCoord.xy*texelSize, rayHit.xy) > 0.001){
+		if (rayHit.z < 0.9999 ){
 			#if indirect_effect == SSRT_AO_GI
 				vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(rayHit) + gbufferModelViewInverse[3].xyz + cameraPosition-previousCameraPosition;
 				previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
@@ -231,6 +244,11 @@ vec3 ApplySSRT(
 					bouncedLight = texelFetch(colortex5, ivec2(previousPosition.xy/texelSize),0).rgb * GI_Strength * CURVE;
 					// bouncedLight = texture(colortex5, previousPosition.xy).rgb * GI_Strength * CURVE;
 					
+					// previousPosition.xy = rayHit.xy;
+					// vec4 data = texelFetch(colortex1, ivec2(previousPosition.xy/texelSize), 0);
+					// vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y)); // albedo, masks
+					// vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w)); // normals, lightmaps
+					// bouncedLight = toLinear(vec3(dataUnpacked0.xz,dataUnpacked1.x));
 
 					radiance += bouncedLight;
 					radiance2 += bouncedLight;

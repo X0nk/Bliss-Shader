@@ -1,5 +1,6 @@
 #version 120
 
+#define ENTITIES_TRANSLUCENT
 #define ENTITIES
 #define OVERWORLD_SHADER
 

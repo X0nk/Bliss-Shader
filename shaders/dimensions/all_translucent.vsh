@@ -259,12 +259,12 @@ void main() {
 		gl_Position.xy = gl_Position.xy * RENDER_SCALE + RENDER_SCALE * gl_Position.w - gl_Position.w;
 	#endif
 	#if TAA_MODE > 0
-		#if defined ENTITIES && defined IS_IRIS
-		// remove jitter for nametags lol
-			if (entityId != 1600) gl_Position.xy += taaJitter * gl_Position.w*texelSize;
-		#else
+		// #if defined ENTITIES && defined IS_IRIS
+		// // remove jitter for nametags lol
+		// 	// if (entityId != 1600) gl_Position.xy += taaJitter * gl_Position.w*texelSize;
+		// #else
 			gl_Position.xy += taaJitter * gl_Position.w*texelSize;
-		#endif
+		// #endif
 	#endif
 
 	#if DOF_QUALITY == 5

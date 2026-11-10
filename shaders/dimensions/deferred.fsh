@@ -16,7 +16,6 @@
 #if defined VOXY && defined DISTANT_HORIZONS 
 float errortext = THIS_IS_NOT_A_BUG_____YOU_CANNOT_USE_VOXY_AND_DISTANT_HORIZIONS_TOGETHER_____USE_ONE_OR_THE_OTHER;
 #endif
-
 #define DHVLFOG
 #define ReflectedFog
 
@@ -153,10 +152,13 @@ float invLinZ (float lindepth){
 
 	// uniform sampler2D colortex4;
 	// uniform sampler2D colortex12;
-	// const bool shadowHardwareFiltering = true;
+	const bool shadowHardwareFiltering = true;
 	uniform sampler2DShadow shadow;
 
-	// #undef TRANSLUCENT_COLORED_SHADOWS
+	#ifdef IS_IRIS
+		uniform sampler2DShadow shadowtex0HW;
+		uniform sampler2DShadow shadowtex1HW;
+	#endif
 
 	#ifdef TRANSLUCENT_COLORED_SHADOWS
 		uniform sampler2D shadowcolor0;
@@ -168,7 +170,6 @@ float invLinZ (float lindepth){
 
 	#define USE_SCENE_CONTROLLER_SETTINGS
 	#include "/lib/scene_controller.glsl"
-
 
 	#define VL_CLOUDS_DEFERRED
 
@@ -199,7 +200,6 @@ vec2 R2_samples(float n){
 	return fract(alpha * n);
 }
 
-
 float HG_phase(float x, float g){
     float gg = g * g;
     return (gg * -0.25 + 0.25) * pow(-2.0 * (g * x) + (gg + 1.0), -1.5) / 3.14;
@@ -215,7 +215,7 @@ vec3 doPixelTimer(in vec3 targetValue, in vec3 prevFrameValue){
 
 	// values that are extremely small interpolate *too fast* with a constant rate. 
 	// so scale the rate to be slower when the target value is very small.
-	prevFrameValue += polarity * (frameTime/(15.0 * (1.0/clamp(targetValue,0.1,1.0)))) * (float(SCENE_CONTROLLER_TRANSITION_RATE)/100.0f);
+	prevFrameValue += polarity * (frameTime/(15.0 * (1.0/clamp(targetValue*targetValue,0.1,1.0)))) * (float(SCENE_CONTROLLER_TRANSITION_RATE)/100.0f);
 
 	return prevFrameValue;
 }
@@ -229,7 +229,7 @@ gl_FragData[0] = vec4(0.0);
 vec3 frameHistory = texelFetch(colortex4,ivec2(gl_FragCoord.xy),0).rgb;
 float mixhistory = 0.06;
 
-if(windowResizeCheck || frameCounter < 2){
+if(windowResizeCheck || frameCounter < 2 || worldTimeChangeCheck){
 	mixhistory = 1.0;
 }
 
@@ -241,17 +241,16 @@ if(windowResizeCheck || frameCounter < 2){
 	vec3 AmbientLightTint = vec3(AmbientLight_R, AmbientLight_G, AmbientLight_B);
 
 	// --- the color of the atmosphere + the average color of the atmosphere.
-	vec3 skyGroundCol = skyFromTex(vec3(0, -1 ,0), colortex4).rgb;// * clamp(WsunVec.y*2.0,0.2,1.0);
+	vec3 skyGroundCol = skyFromTex(vec3(0, -1 ,0), colortex4).rgb;
 
 	/// --- Save light values
 	if (gl_FragCoord.x < 1. && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 ){
 		gl_FragData[0] = vec4(averageSkyCol_Clouds * AmbientLightTint,1.0);
-		if(worldTimeChangeCheck) mixhistory = 1.0;
 	}
 
 	if (gl_FragCoord.x > 1. && gl_FragCoord.x < 2.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 ){
 		gl_FragData[0] = vec4((skyGroundCol/150.0) * AmbientLightTint,1.0);
-		if(worldTimeChangeCheck) mixhistory = 1.0;
+
 	}
 
 	#ifdef ambientLight_only
@@ -260,41 +259,53 @@ if(windowResizeCheck || frameCounter < 2){
 
 		if (gl_FragCoord.x > 8. && gl_FragCoord.x < 9.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 		gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);
-
+	
 		if (gl_FragCoord.x > 13. && gl_FragCoord.x < 14.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
 		gl_FragData[0] = vec4(0.0,0.0,0.0,1.0);
 	#else
 		if (gl_FragCoord.x > 6. && gl_FragCoord.x < 7.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 ){
 			gl_FragData[0] = vec4(lightSourceColor,1.0);
-			if(worldTimeChangeCheck) mixhistory = 1.0;
 		}
-
 		if (gl_FragCoord.x > 8. && gl_FragCoord.x < 9.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 ){
 			gl_FragData[0] = vec4(sunColor,1.0);
-			if(worldTimeChangeCheck) mixhistory = 1.0;
 		}
-
 		if (gl_FragCoord.x > 9. && gl_FragCoord.x < 10.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 ){
 			gl_FragData[0] = vec4(moonColor,1.0);
-			if(worldTimeChangeCheck) mixhistory = 1.0;
 		}
 	#endif
 
-	// #if defined FLASHLIGHT && defined FLASHLIGHT_BOUNCED_INDIRECT
-	// 	// sample center pixel of albedo color, and interpolate it overtime.
-	// 	if (gl_FragCoord.x > 15 && gl_FragCoord.x < 16 && gl_FragCoord.y > 2 && gl_FragCoord.y < 3){
+	#if defined FLASHLIGHT && defined FLASHLIGHT_BOUNCED_INDIRECT
+		// sample center pixel of albedo color, and interpolate it overtime.
+		if (gl_FragCoord.x > 15 && gl_FragCoord.x < 16 && gl_FragCoord.y > 2 && gl_FragCoord.y < 3){
 			
-	// 		mixhistory = 0.01;
+			mixhistory = 0.05;
 
-	// 		vec3 data = texelFetch(colortex1, ivec2(0.5/texelSize), 0).rgb;
-	// 		vec3 decodeAlbedo = vec3(decodeVec2(data.x).x,decodeVec2(data.y).x, decodeVec2(data.z).x);
-	// 		vec3 albedo = toLinear(decodeAlbedo);
+			vec3 data = texelFetch(colortex1, ivec2(vec2(0.5,0.5)/texelSize), 0).rgb;
+			vec3 decodeAlbedo = vec3(decodeVec2(data.x).x,decodeVec2(data.y).x, decodeVec2(data.z).x);
 			
-	// 		albedo = normalize(albedo + 1e-7) * (dot(albedo,vec3(0.21, 0.72, 0.07))*0.5+0.5);
+			float radius = 0.01;
+			vec3 data1 = texelFetch(colortex1, ivec2(vec2(0.5,0.5+radius)/texelSize), 0).rgb;
+			decodeAlbedo += vec3(decodeVec2(data1.x).x,decodeVec2(data1.y).x, decodeVec2(data1.z).x);
 			
-	// 		gl_FragData[0] = vec4(albedo,1.0);
-	// 	}
-	// #endif
+			vec3 data2 = texelFetch(colortex1, ivec2(vec2(0.5,0.5-radius)/texelSize), 0).rgb;
+			decodeAlbedo += vec3(decodeVec2(data2.x).x,decodeVec2(data2.y).x, decodeVec2(data2.z).x);
+			
+			vec3 data3 = texelFetch(colortex1, ivec2(vec2(0.5+radius,0.5)/texelSize), 0).rgb;
+			decodeAlbedo += vec3(decodeVec2(data3.x).x,decodeVec2(data3.y).x, decodeVec2(data3.z).x);
+			
+			vec3 data4 = texelFetch(colortex1, ivec2(vec2(0.5-radius,0.5)/texelSize), 0).rgb;
+			decodeAlbedo += vec3(decodeVec2(data4.x).x,decodeVec2(data4.y).x, decodeVec2(data4.z).x);
+
+			decodeAlbedo /=5.0;
+
+			vec3 albedo = decodeAlbedo;
+			
+			// albedo = normalize(albedo + 1e-7) * (dot(albedo,vec3(0.21, 0.72, 0.07))*0.5+0.5);
+			// albedo = albedo / (0.5+dot(albedo,vec3(0.21, 0.72, 0.07)));
+			
+			gl_FragData[0] = vec4(albedo,1.0);
+		}
+	#endif
 ////////////////////////////////
 /// --- ATMOSPHERE IMAGE --- ///
 ////////////////////////////////
@@ -321,8 +332,6 @@ if (gl_FragCoord.x > 18. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257){
 	#endif
 
 	gl_FragData[0] = vec4(sky / 4000.0 , 1.0);
-  
-	if(worldTimeChangeCheck) mixhistory = 1.0;
 }
 
 /// --- Sky + clouds + fog 
@@ -362,30 +371,27 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 	sky = sky * volumetricFog.a + volumetricFog.rgb / 5.0;
 
 	gl_FragData[0] = vec4(sky,1.0);
-
-	if(worldTimeChangeCheck) mixhistory = 1.0;
 }
 
-#ifdef FAKE_PLANET
+// #ifdef FAKE_PLANET
 	vec2 pixelPos2 = vec2(16,1);
-	if (gl_FragCoord.x > pixelPos2.x && gl_FragCoord.x < pixelPos2.x + 1 && gl_FragCoord.y > pixelPos2.y){
-		if(worldTimeChangeCheck) mixhistory = 1.0;
-
+	
+	if (gl_FragCoord.x > pixelPos2.x && gl_FragCoord.x < pixelPos2.x + 1.0  && gl_FragCoord.y > pixelPos2.y){
+		// if(worldTimeChangeCheck) mixhistory = 1.0;
 		vec3 pos = vec3(0.0);
-		pos.y = clamp(gl_FragCoord.y/256.0,0.0,1.0);
-
-		// approximate how much atmosphere the sun is travelling through and scale abso
-		pos.y = pos.y / (1.0/abs(WsunVec.y))*5.0;
+		// pos.y = 1.0-clamp(gl_FragCoord.y,0.0,256.0)/256.0;
+		pos.y = gl_FragCoord.y/256.0*1.0-0.01;
 
 		vec2 variable = vec2(0);
 		vec3 absorb = vec3(0.0);
-		vec3 transmittance = calculateAtmosphere(vec3(0.0), pos, vec3(0.0,1.0,0.0), pos, vec3(0.0), variable, absorb, 25, 0.0);
-		transmittance = min(sunColor2 * absorb, sunColor2);
+		vec3 transmittance = calculateAtmosphere(averageSkyCol*2000.0, pos, vec3(0.0,1.0,0.0), vec3(0,WsunVec.y,0), vec3(0.0), variable, absorb, 25, 0.0);
+		// transmittance = absorb;
+		// transmittance = min(sunColor2 * absorb, sunColor2);
+		transmittance /= 4000.0 ;
 
 		gl_FragData[0] = vec4(transmittance, 1.0);
 	}
-#endif
-
+// #endif
 #endif
 
 #if defined NETHER_SHADER || defined END_SHADER
@@ -404,54 +410,52 @@ if (gl_FragCoord.x > 18.+257. && gl_FragCoord.y > 1. && gl_FragCoord.x < 18+257+
 		BackgroundColor += VL_Fog.rgb;
 
 	  	gl_FragData[0] = vec4(BackgroundColor*8.0, 1.0);
-
 	}
 #endif
 
 /// resolve
-vec3 currentFrame = gl_FragData[0].rgb*150.0;
-gl_FragData[0].rgb = clamp(mix(frameHistory, currentFrame, clamp(mixhistory,0.0,1.0)),0.0,65000.0);
+gl_FragData[0].rgb = clamp(mix(frameHistory, gl_FragData[0].rgb*150.0, mixhistory),0.0,65000.0);
 
 //////////////////////////////////////////////
 /// --- STORE DAILY WEATHER PARAMETERS --- ///
 //////////////////////////////////////////////
 #if defined OVERWORLD_SHADER
-// the idea is to store the 8 values, coverage + density of 3 cloud layers and 2 fog density values.
-if (gl_FragCoord.x > 1 && gl_FragCoord.x < 4 && gl_FragCoord.y > 1 && gl_FragCoord.y < 4){
+	// the idea is to store the 8 values, coverage + density of 3 cloud layers and 2 fog density values.
+	if (gl_FragCoord.x > 1 && gl_FragCoord.x < 4 && gl_FragCoord.y > 1 && gl_FragCoord.y < 4){
+		
+		struct sceneControlleree {
+		  vec2 smallCumulus_N;
+		  vec2 largeCumulus_N;
+		  vec2 altostratus_N;
+		  vec2 fog_N;
+		  vec2 localFog_N;
+		  vec3 localFogColor_N;
+		} parameters_new;
 	
-	struct sceneControlleree {
-	  vec2 smallCumulus_N;
-	  vec2 largeCumulus_N;
-	  vec2 altostratus_N;
-	  vec2 fog_N;
-	  vec2 localFog_N;
-	  vec3 localFogColor_N;
-	} parameters_new;
-
-	applySceneControllerParameters(
-		parameters_new.smallCumulus_N.x, parameters_new.smallCumulus_N.y, 
-		parameters_new.largeCumulus_N.x, parameters_new.largeCumulus_N.y,
-		parameters_new.altostratus_N.x, parameters_new.altostratus_N.y,
-		parameters_new.fog_N.x, parameters_new.fog_N.y, 
-		parameters_new.localFog_N.x, parameters_new.localFog_N.y, parameters_new.localFogColor_N.rgb
-	);
-
-	vec3 targetParameterValues = writeSceneControllerParameters(
-		gl_FragCoord.xy, 
-		parameters_new.smallCumulus_N, 
-		parameters_new.largeCumulus_N, 
-		parameters_new.altostratus_N, 
-		parameters_new.fog_N, 
-		parameters_new.localFog_N, 
-		parameters_new.localFogColor_N
-	);
-
-	#if SCENE_CONTROLLER_TRANSITION_RATE > 1000
-		gl_FragData[0].rgb = targetParameterValues;
-	#elif SCENE_CONTROLLER_TRANSITION_RATE <= 1000
-		gl_FragData[0].rgb = doPixelTimer(targetParameterValues, frameHistory);
-	#endif
-}
+		applySceneControllerParameters(
+			parameters_new.smallCumulus_N.x, parameters_new.smallCumulus_N.y, 
+			parameters_new.largeCumulus_N.x, parameters_new.largeCumulus_N.y,
+			parameters_new.altostratus_N.x, parameters_new.altostratus_N.y,
+			parameters_new.fog_N.x, parameters_new.fog_N.y, 
+			parameters_new.localFog_N.x, parameters_new.localFog_N.y, parameters_new.localFogColor_N.rgb
+		);
+	
+		vec3 targetParameterValues = writeSceneControllerParameters(
+			gl_FragCoord.xy, 
+			parameters_new.smallCumulus_N, 
+			parameters_new.largeCumulus_N, 
+			parameters_new.altostratus_N, 
+			parameters_new.fog_N, 
+			parameters_new.localFog_N, 
+			parameters_new.localFogColor_N
+		);
+	
+		#if SCENE_CONTROLLER_TRANSITION_RATE > 1000
+			gl_FragData[0].rgb = targetParameterValues;
+		#elif SCENE_CONTROLLER_TRANSITION_RATE <= 1000
+			gl_FragData[0].rgb = doPixelTimer(targetParameterValues, frameHistory);
+		#endif
+	}
 #endif
 //////////////////////////////////////////////
 //////////// --- END STUFF --- ///////////////
@@ -472,15 +476,15 @@ if (gl_FragCoord.x > 1 && gl_FragCoord.x < 4 && gl_FragCoord.y > 1 && gl_FragCoo
 		float rate = frameTime*500.0;
 		vec3 CurrPos = PrevPos + randomDir * rate * heuristic;
 
-		if(travelledDist > 384.0 || (travelledDist < 10.0 && randomPosXYZ.w > 0.8) ) CurrPos = randomDir*384.0;
+		if(travelledDist > 384.0 || (travelledDist < 10.0 && randomPosXYZ.w > 0.8)) CurrPos = randomDir*384.0;
 	
 		gl_FragData[0] = vec4(CurrPos*0.5+0.5, 1.0);
 	}
 #endif
 
-	//Exposure values
-	if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-	gl_FragData[0] = vec4(exposure, avgBrightness, avgL2, 1.0);
-	if (gl_FragCoord.x > 14. && gl_FragCoord.x < 15.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
-	gl_FragData[0] = vec4(rodExposure, centerDepth, 0.0, 1.0);
+//Exposure values
+if (gl_FragCoord.x > 10. && gl_FragCoord.x < 11.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
+gl_FragData[0] = vec4(exposure, avgBrightness, avgL2, 1.0);
+if (gl_FragCoord.x > 14. && gl_FragCoord.x < 15.  && gl_FragCoord.y > 19.+18. && gl_FragCoord.y < 19.+18.+1 )
+gl_FragData[0] = vec4(rodExposure, centerDepth, 0.0, 1.0);
 }

@@ -46,7 +46,7 @@ void underWaterAbsorbance_outsidePOV(
         waterCaustics = mix(1.0, waterCaustics, clamp(estimatedWaterDepth,0.0,1.0));
         waterCaustics = pow(waterCaustics, WATER_CAUSTICS_POWER);
     
-    directLightColor *= directLightAbsorbance * waterCaustics;
+    directLightColor *= directLightAbsorbance*waterCaustics;
 }
 
 void underWaterAbsorbance_insidePOV(

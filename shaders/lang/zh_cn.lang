@@ -852,17 +852,17 @@ option.USE_CUSTOM_COLD_BIOME_RAIN_PROFILE= 寒冷群系雨天天气模式
     value.USE_CUSTOM_JUNGLE_CATEGORY_PROFILE.1= §f↓§r 使用自定义预设 §f↓§r
     screen.CUSTOM_JUNGLE_CATEGORY_PROFILE_1= 自定义预设
 
-    option.CUSTOM_SWAMP_PROFILE_1_UNIFORM_FOG_DENSITY= 雾气均匀密度
-    option.CUSTOM_SWAMP_PROFILE_1_CLUMPY_FOG_DENSITY= 团雾密度
-    option.CUSTOM_SWAMP_PROFILE_1_FOG_COLOR_R= 雾气颜色 - 红色
-    option.CUSTOM_SWAMP_PROFILE_1_FOG_COLOR_G= 雾气颜色 - 绿色
-    option.CUSTOM_SWAMP_PROFILE_1_FOG_COLOR_B= 雾气颜色 - 蓝色
+    option.CUSTOM_SWAMP_PROFILE_UNIFORM_FOG_DENSITY= 雾气均匀密度
+    option.CUSTOM_SWAMP_PROFILE_CLUMPY_FOG_DENSITY= 团雾密度
+    option.CUSTOM_SWAMP_PROFILE_FOG_COLOR_R= 雾气颜色 - 红色
+    option.CUSTOM_SWAMP_PROFILE_FOG_COLOR_G= 雾气颜色 - 绿色
+    option.CUSTOM_SWAMP_PROFILE_FOG_COLOR_B= 雾气颜色 - 蓝色
 
-    option.CUSTOM_JUNGLE_PROFILE_1_UNIFORM_FOG_DENSITY= 雾气均匀密度
-    option.CUSTOM_JUNGLE_PROFILE_1_CLUMPY_FOG_DENSITY= 团雾密度
-    option.CUSTOM_JUNGLE_PROFILE_1_FOG_COLOR_R= 雾气颜色 - 红色
-    option.CUSTOM_JUNGLE_PROFILE_1_FOG_COLOR_G= 雾气颜色 - 绿色
-    option.CUSTOM_JUNGLE_PROFILE_1_FOG_COLOR_B= 雾气颜色 - 蓝色
+    option.CUSTOM_JUNGLE_PROFILE_UNIFORM_FOG_DENSITY= 雾气均匀密度
+    option.CUSTOM_JUNGLE_PROFILE_CLUMPY_FOG_DENSITY= 团雾密度
+    option.CUSTOM_JUNGLE_PROFILE_FOG_COLOR_R= 雾气颜色 - 红色
+    option.CUSTOM_JUNGLE_PROFILE_FOG_COLOR_G= 雾气颜色 - 绿色
+    option.CUSTOM_JUNGLE_PROFILE_FOG_COLOR_B= 雾气颜色 - 蓝色
 
  ###################################################### ↓↓↓ 注释
 

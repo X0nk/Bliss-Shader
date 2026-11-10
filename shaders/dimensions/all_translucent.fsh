@@ -1,3 +1,4 @@
+#define SUB_SURFACE_SCATTERING_RELATED_SETTINGS
 #define NETHER_RELATED_SETTINGS
 #define END_RELATED_SETTINGS
 #define HANDHELD_LIGHTSOURCE_RELATED_SETTINGS
@@ -14,7 +15,7 @@
 #include "/lib/macro_lod_mod.glsl"
 
 #undef FLASHLIGHT_BOUNCED_INDIRECT
-
+uniform int hideGUI;
 #if defined IS_LPV_ENABLED && !defined COLORWHEEL
 	#extension GL_ARB_shader_image_load_store: enable
 	#extension GL_ARB_shading_language_packing: enable
@@ -28,14 +29,19 @@ uniform vec4 entityColor;
 
 #ifdef OVERWORLD_SHADER
 	const bool shadowHardwareFiltering = true;
-	uniform sampler2DShadow shadow;
+	uniform sampler2D shadow;
 	
+	#ifdef IS_IRIS
+		uniform sampler2DShadow shadowtex0HW;
+		uniform sampler2DShadow shadowtex1HW;
+	#endif
+
 	#ifdef TRANSLUCENT_COLORED_SHADOWS
 		uniform sampler2D shadowcolor0;
 		uniform sampler2DShadow shadowtex0;
 		uniform sampler2DShadow shadowtex1;
 	#endif
-
+	
 	uniform float lightSign;
 	flat varying vec3 WsunVec;
 
@@ -99,6 +105,7 @@ uniform vec2 texelSize;
 
 uniform float viewWidth;
 uniform float viewHeight;
+uniform float aspectRatio;
 
 uniform mat4 gbufferPreviousModelView;
 uniform vec3 previousCameraPosition;
@@ -200,6 +207,7 @@ vec3 getParallaxDisplacement(vec3 waterPos, vec3 playerPos) {
 	float waterHeight = getWaterHeightmap(waterPos.xy, largeWaves, largeWavesCurved);
 	// waterHeight = exp(-20.0*sqrt(waterHeight));
 	waterHeight = exp(-7.0*exp(-7.0*waterHeight)) * 0.25;
+	// waterHeight = pow(pow(waterHeight,0.2),2) *0.25;
 	
 	vec3 parallaxPos = waterPos;
 
@@ -289,18 +297,31 @@ uniform float dhFarPlane;
 
 #include "/lib/Shadows.glsl"
 
-float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDistFade, float noise, in vec3 geoNormals){
-
-	// if(maxDistFade <= 0.0) return 1.0;
+float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDistFade, float noise, in vec3 geoNormals, inout float shadowhitdepth){
 
 	// setup shadow projection
 	vec3 projectedShadowPosition = mat3(shadowModelView) * playerPos + shadowModelView[3].xyz;
 
-	applyShadowBias(projectedShadowPosition, playerPos, geoNormals);
+	// projection with NO BIAS for subsurface scattering depth difference.
+	#ifdef IS_IRIS
+		if(shadowhitdepth > 1e-6){
+			vec3 shadowProjectionPos = projectedShadowPosition;
+			shadowProjectionPos = diagonal3(shadowProjection) * shadowProjectionPos + shadowProjection[3].xyz;
+			// un-distort
+			#ifdef DISTORT_SHADOWMAP
+				shadowProjectionPos.xy *= calcDistort(shadowProjectionPos.xy);
+			#endif
+					shadowProjectionPos.z += shadowProjection[3].z * 0.0013;
+			shadowProjectionPos = shadowProjectionPos * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
+			shadowhitdepth = max(shadowProjectionPos.z - texture(shadow, shadowProjectionPos.xy).x, 0.0)*1000.0;
+		}else{
+			shadowhitdepth = 0.0;
+		}
+	#endif
 
+	applyShadowBias(projectedShadowPosition, playerPos, geoNormals);
 	projectedShadowPosition = diagonal3(shadowProjection) * projectedShadowPosition + shadowProjection[3].xyz;
 
-	// un-distort
 	#ifdef DISTORT_SHADOWMAP
 		float distortFactor = calcDistort(projectedShadowPosition.xy);
 		projectedShadowPosition.xy *= distortFactor;
@@ -309,12 +330,12 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 	#endif
 	
 	projectedShadowPosition.z += shadowProjection[3].z * 0.0012;
-
-	// hamburger
 	projectedShadowPosition = projectedShadowPosition * vec3(0.5,0.5,0.5/6.0) + vec3(0.5);
-	
+
 	float shadowmap = 0.0;
 	vec3 translucentTint = vec3(0.0);
+
+	float avgDepth = 0.0;
 
 	#ifdef BASIC_SHADOW_FILTER
 		int samples = int(SHADOW_FILTER_SAMPLE_COUNT * 0.5);
@@ -327,18 +348,16 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 		int samples = 1;
 	#endif
 	
-
 		#ifdef TRANSLUCENT_COLORED_SHADOWS
-
 			// determine when opaque shadows are overlapping translucent shadows by getting the difference of opaque depth and translucent depth
-			float shadowDepthDiff = pow(clamp((shadow2D(shadowtex1, projectedShadowPosition).x - projectedShadowPosition.z) * 2.0,0.0,1.0),2.0);
+			float shadowDepthDiff = pow(clamp((shadow2D(shadowtex1HW, projectedShadowPosition).x - projectedShadowPosition.z) * 2.0,0.0,1.0),2.0);
 
 			// get opaque shadow data to get opaque data from translucent shadows.
-			float opaqueShadow = shadow2D(shadowtex0, projectedShadowPosition).x;
+			float opaqueShadow = shadow2D(shadowtex0HW, projectedShadowPosition).x;
 			shadowmap += max(opaqueShadow, shadowDepthDiff);
 
 			// get translucent shadow data
-			vec4 translucentShadow = texture(shadowcolor0, projectedShadowPosition.xy);
+			vec4 translucentShadow = shadow2D(shadowcolor0, projectedShadowPosition.xy);
 
 			// this curve simply looked the nicest. it has no other meaning.
 			float shadowAlpha = pow(1.0 - pow(translucentShadow.a,5.0),0.2);
@@ -349,10 +368,10 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 
 			// make it such that full alpha areas that arent in a shadow have a value of 1.0 instead of 0.0
 			translucentTint += mix(translucentShadow.rgb, vec3(1.0),  opaqueShadow*shadowDepthDiff);
-
 		#else
-			shadowmap += shadow2D(shadow, projectedShadowPosition).x;
+			shadowmap += shadow2D(shadowtex0HW, projectedShadowPosition).x;
 		#endif
+
 
 	#ifdef BASIC_SHADOW_FILTER
 		}
@@ -362,6 +381,7 @@ float ComputeShadowMap(inout vec3 directLightColor, vec3 playerPos, float maxDis
 		// tint the lightsource color with the translucent shadow color
 		directLightColor *= mix(vec3(1.0), translucentTint.rgb / samples, maxDistFade);
 	#endif
+
 
 	return shadowmap / samples;
 	// return mix(1.0, shadowmap / samples, maxDistFade);
@@ -394,7 +414,49 @@ float bias(){
 		return 0.0;
 	#endif
 }
+
+float lumaSSS(vec3 color) {
+	return dot(color,vec3(0.07, 0.72, 0.3));
+}
+
+float CustomPhase(float LightPos){
+
+	float PhaseCurve = 1.0 - LightPos;
+	float Final = exp2(sqrt(PhaseCurve) * -25.0);
+	Final += exp(PhaseCurve * -10.0)*0.5;
+
+	return Final;
+}
+
+vec3 SubsurfaceScattering_sun(vec3 albedo, float Scattering, float Density, float lightPos){
+	// Density = 1.0;
+	Scattering *= DIRECT_SSS_DENSITY_MULT;
+	float density = 1e-6 + Density*2.0;
+
+	// #ifdef OLD_SSS_MODE
+	// 	float scatterGradient = max(1.0 - Scattering/density, 0.0);
+	// 	scatterGradient *= exp(-7.0 * (1.0-scatterGradient));
+	// 	vec3 absorbColor = exp(max(luma(albedo) - albedo*vec3(1.0,1.1,1.2), 0.0) * -20.0);
+	// 	vec3 scatter = scatterGradient*mix(absorbColor, vec3(1.0), scatterGradient);
+	// 	scatter *= albedo;
+	// #else
+		float scatterGradient = exp(-7.0 * (1.0-max(1.0 - Scattering/density, 0.0)));
+		vec3 absorbColor = max(albedo + (albedo - lumaSSS(albedo))*(1.0-scatterGradient) * (float(DIRECT_SSS_ABSORBANCE_AMOUNT)/100.0f),0.0);
+		vec3 scatter = scatterGradient*absorbColor;
+	// #endif
+
+
+	#if SSS_TYPE == 3
+		scatter *= pow(Density, LabSSS_Curve);
+	#else
+		if(Density < 0.01) scatter = vec3(0.0);
+	#endif
 	
+	scatter *= 1.0 + CustomPhase(lightPos)*6.0; // ~10x brighter at the peak
+
+	return scatter * DIRECT_SSS_BRIGHTNESS;	
+}
+
 vec3 allocatePrecision_TangentNormal(vec3 normals){
   	vec3 newNormal = normals;
 	
@@ -416,7 +478,15 @@ vec3 allocatePrecision_TangentNormal(vec3 normals){
 	
 	return clamp(newNormal + newNormal*interleaved_gradientNoise_temporal()*0.025,-1.0,1.0);
 }
+// vec4 toClipSpace3(vec3 viewSpacePosition) {
+//     return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);
+// }
+vec3 projectanddivide(mat4 projectionMatrix, vec3 position){
+	vec4 homopos = projectionMatrix *vec4(position,1.0);
 
+	return homopos.xyz / homopos.w;
+
+}
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -564,7 +634,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	vec3 NormalTex = vec3(texture(normals, lmtexcoord.xy, mipmapBias).xy,0.0);
 	NormalTex.xy = NormalTex.xy*2.0-1.0;
-	NormalTex.z = clamp(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)),0.0,1.0);
+	NormalTex.z = abs(sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy)));
 
 	#if !defined HAND
 		if (isWater){
@@ -590,7 +660,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	// tangent space normals for refraction
-	TangentNormal = NormalTex.xy;
+	TangentNormal = NormalTex.xy * vec2(1,-1);
 	
 	#if defined PHYSICSMOD_OCEAN_SHADER && defined PHYSICS_OCEAN
 		normal = applyBump(tbnMatrix, NormalTex.xyz, isWater ? PHYSICS_OCEAN_TRANSITION : NORMAL_MAP_MULT);
@@ -610,11 +680,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		if(NAMETAG > 0) nameTagMask = 0.1;
 	#endif
 	
-	vec3 stupidshit = allocatePrecision_TangentNormal(-normalMat.xyz + (normal.xyz))*0.5+0.5;
-	// gl_FragData[2] = vec4(	encodeVec2(refractnormal.xy), 
-	// 						encodeVec2(GLASS_TINT_COLORS.rg), 
-	// 						encodeVec2(GLASS_TINT_COLORS.ba), 
-	// 						encodeVec2(0.0, nameTagMask));
+	vec3 stupidshit = allocatePrecision_TangentNormal(-normalMat.xyz + normal.xyz)*0.5+0.5;
 	gl_FragData[2] = vec4(	encodeVec2(stupidshit.xy), 
 							encodeVec2(vec2(stupidshit.z, GLASS_TINT_COLORS.r)), 
 							encodeVec2(GLASS_TINT_COLORS.gb), 
@@ -624,14 +690,22 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 //////////////////////////////// SPECULARS /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+	vec4 SpecularTex = texture(specular, lmtexcoord.xy, mipmapBias).rgba;
+	
+		// gl_FragData[4].rgba = SpecularTex;
 
-	vec3 SpecularTex = texture(specular, lmtexcoord.xy, mipmapBias).rga;
+
+	float LabSSS = clamp((-65.0 + SpecularTex.b * 255.0) / 190.0 ,0.0,1.0);
+	
+	#ifdef ENTITIES
+		if(isReflectiveEntity) LabSSS = 0.5;
+	#endif
+	
+
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// DIFFUSE LIGHTING //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-
-	// lightmap.y = 1.0;
 	
 	#if MC_VERSION < 12109
 		#if !defined OVERWORLD_SHADER
@@ -645,7 +719,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	vec3 Indirect_lighting = vec3(0.0);
 	vec3 MinimumLightColor = vec3(1.0);
-
 	vec3 Direct_lighting = vec3(0.0);
 
 	#ifdef OVERWORLD_SHADER
@@ -671,21 +744,31 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 		float shadowMapFalloff = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / (shadowDistance+16),0.0)*5.0,1.0));
 		float shadowMapFalloff2 = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / shadowDistance,0.0)*5.0,1.0));
+		
+		#ifdef ENTITIES
+			float shadowMapFalloff_entities = smoothstep(0.0, 1.0, min(max(1.0 - length(feetPlayerPos) / (shadowDistance*entityShadowDistanceMul),0.0)*10.0,1.0));
+			
+			LabSSS *= shadowMapFalloff_entities;
+		#endif
 
 		float LM_shadowMapFallback = min(max(lightmap.y-0.8, 0.0) * 25,1.0);
 
 		vec3 shadowPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz;
-
-		Shadows = ComputeShadowMap(DirectLightColor, shadowPlayerPos, shadowMapFalloff, blueNoise(), geoNormals);
+		
+		float shadowhitdepth = LabSSS;
+		Shadows = ComputeShadowMap(DirectLightColor, shadowPlayerPos, shadowMapFalloff, blueNoise(), geoNormals,shadowhitdepth);
 
 		// Shadows = mix(LM_shadowMapFallback, Shadows, shadowMapFalloff2);
 		Shadows *= mix(LM_shadowMapFallback,1.0,shadowMapFalloff2);
 
-		Shadows *= GetCloudShadow(feetPlayerPos+cameraPosition, WsunVec);
-
+		float cloudShadows = GetCloudShadow(feetPlayerPos+cameraPosition, WsunVec);
+		Shadows *= cloudShadows;
 
 		Direct_lighting = DirectLightColor * NdotL * Shadows;
 
+		vec3 subSurfaceScattering = vec3(0.0);
+		if(LabSSS > 1e-6) subSurfaceScattering = SubsurfaceScattering_sun(Albedo, shadowhitdepth, LabSSS, clamp(dot(normalize(feetPlayerPos), WsunVec),0.0,1.0));
+		subSurfaceScattering *= cloudShadows*cloudShadows;
 		vec3 indirectNormal = worldSpaceNormal / dot(abs(worldSpaceNormal),vec3(1.0));
 		float SkylightDir = clamp(indirectNormal.y*0.7+0.3,0.0,1.0);
 
@@ -748,6 +831,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 
 	Indirect_lighting += doBlockLightLighting( vec3(TORCH_R,TORCH_G,TORCH_B), lightmap.x, feetPlayerPos, lpvPos);
 	
+	// turn into struct later
 	vec3 mainHandPos = vec3(0.0);
 	vec3 mainHandCol = vec3(0.0);
 	vec3 offHandPos = vec3(0.0);
@@ -767,9 +851,13 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	#endif
 
 	vec3 FinalColor = (Indirect_lighting + Direct_lighting) * Albedo;
+	#if defined OVERWORLD_SHADER
+		FinalColor = DirectLightColor * mix(subSurfaceScattering, Albedo, NdotL * Shadows);
+		FinalColor += Indirect_lighting* Albedo;
+	#endif
 
 	#if EMISSIVE_TYPE == 2 || EMISSIVE_TYPE == 3
-		Emission(FinalColor, Albedo, SpecularTex.b);
+		Emission(FinalColor, Albedo, SpecularTex.a);
 	#endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -787,7 +875,6 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		// if nothing is chosen, no smoothness and no reflectance
 		vec2 specularValues = vec2(1.0, 0.0); 
 
-		
 		// hardcode specular values for select blocks like glass, water, and slime
 		if(isReflective) specularValues = vec2(1.0, harcodedF0);
 
@@ -803,6 +890,8 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		#endif
 		
 		float roughness = specularValues.r; 
+		
+		// gl_FragData[4].r = isWater ? 1.0 : roughness;	
 
 		if(UnchangedAlpha <= 0.0 && !isReflective) f0 = 0.0;
 
@@ -867,7 +956,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		if(gl_FragCoord.x*texelSize.x < 0.47) gl_FragData[0] = vec4(0.0);
 	#endif
 	#if DEBUG_VIEW == debug_ALBEDO
-		gl_FragData[0] = unalteredAlbedo;
+		gl_FragData[0] = unalteredAlbedo * vec4(0.1,0.1,0.1,1.0);
 	#endif
 	#if DEBUG_VIEW == debug_NORMALS
 		gl_FragData[0].rgb = worldSpaceNormal.xyz * 0.1;

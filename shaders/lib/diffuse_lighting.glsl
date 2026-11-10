@@ -20,7 +20,6 @@
 //         return lightColor;
 //     }
 // #endif
-
 vec3 doBlockLightLighting(
     vec3 lightColor, float lightmap,
     vec3 playerPos, vec3 lpvPos
@@ -83,12 +82,14 @@ vec3 doIndirectLighting(
 
 // uniform int heldItemId;
 // uniform int heldItemId2;
-// uniform float centerDepthSmooth;
+uniform float centerDepthSmooth;
+// uniform float centerDepth;
 // uniform vec3 eyePosition;
 uniform vec3 relativeEyePosition;
 uniform vec3 playerLookVector;
 uniform bool firstPersonCamera;
 uniform float flickerLight;
+const float centerDepthHalflife = 0.2;
 
 #if defined VIVECRAFT
 	uniform bool vivecraftIsVR;
@@ -100,7 +101,7 @@ uniform float flickerLight;
 
 #ifdef IS_LPV_ENABLED
     #ifdef INTEL_HANDHELDLIGHT_CRASH_FIX
-        // layout(rg32ui) uniform readonly uimage1D imgBlockData; <- kept erroring for some reasonnn
+        // layout(rg32ui) uniform readonly uimage1D imgBlockData; <- kept erroring for some reasonn
         layout(rg32ui) uniform uimage1D imgBlockData;
     #endif
 
@@ -121,7 +122,7 @@ uniform float flickerLight;
 
 float createHandheldPointLightFalloff(in float linearDistance, in float range){
     
-    // float gradient = 1.0 - clamp(linearDistance/range, 0.0, 1.0);
+    // float gradient = clamp(1.0 - linearDistance/range, 0.0, 1.0);
     float gradient = 1.0 - clamp(1.0 - linearDistance/range, -0.999,1.0);
     gradient = max(exp(-10.0 * gradient),0.0);
 
@@ -136,7 +137,13 @@ float createHandheldPointlight(in vec3 position, in vec3 normal, in float range)
     
     return NdotL * falloff;
 }
-
+    // #ifdef VIVECRAFT
+    //     if (vivecraftIsVR) {
+	//         forwardOffset = 0.0;
+    //         shiftedPlayerPos = mat3(gbufferModelViewInverse) * viewPos + gbufferModelViewInverse[3].xyz + vivecraftRelativeMainHandPos;
+    //         shiftedViewPos = shiftedPlayerPos * mat3(vivecraftRelativeMainHandRot);
+    //     } else
+    // #endif
 void calculateFinishedPointLight(
     in vec3 viewPos, in vec3 normal, 
 
@@ -190,7 +197,8 @@ void calculateFinishedPointLight(
         #if HANDHELD_LIGHTSOURCE_RANGE > 0
             lightRange = float(HANDHELD_LIGHTSOURCE_RANGE);
         #endif
-        
+
+        vec3 unchangedLightColor = lighting;
         // combine ndotl, attentuation, color, and pass it on.
         lighting *= createHandheldPointlight(handPos, normal, max(lightRange + 2,1e-6));
 
@@ -211,10 +219,39 @@ void calculateFinishedPointLight(
     	    float lenseShape = (pow(abs(pow(abs(projectedCircle-1.0),2.0)*2.0 - 0.5),2.0) + lenseDirt*0.2) * 10.0;
 
             // for fake indirect bounce. makes the flashlight more usable.
-            float bounce = clamp(1.0 - length(handPos)/max(lightRange,16), 0.0,1.0);
+            // float bounce = clamp(1.0 - length(handPos)/max(lightRange,16), 0.0,1.0);
+
 
             // mask to point light
-    	    lighting *= pow(1.0-pow(1.0-projectedCircle,2),2) * lenseShape * FLASHLIGHT_BRIGHTNESS_MULT + bounce*0.005;
+    	    lighting *= pow(1.0-pow(1.0-projectedCircle,2),2) * lenseShape * FLASHLIGHT_BRIGHTNESS_MULT;// + bounce*0.005;
+
+            #if defined FLASHLIGHT_BOUNCED_INDIRECT
+                // float thingy = toScreenSpace(vec3(0.5,0.5,texelFetch(depthtex0,ivec2(0.5/texelSize),0).x)).z;
+                // float nearestSurface = toScreenSpace(vec3(0.5,0.5,centerDepthSmooth)).z;
+                // vec3 lookAtDist2 = playerLookVector*nearestSurface;
+                // vec3 raycastPos = handPos + playerLookVector*(0.3 + thingy);
+                // vec3 raycastPos = handPos + playerLookVector*(0.3 + nearestSurface);
+                
+                float nearestSurface = toScreenSpace(vec3(0.0,0.0,centerDepthSmooth)).z;
+                vec3 lookAtDist = playerLookVector*max(nearestSurface,-(lightRange+2));
+                // vec3 lookAtDist = playerLookVector*nearestSurface;
+                vec3 lookHitPos = mat3(gbufferModelViewInverse)*prevPos + lookAtDist;
+    
+		        vec3 bouncedIndirect = unchangedLightColor;
+                bouncedIndirect *= toLinear(texelFetch(colortex4,ivec2(15.5,2.5),0).rgb/150.0);
+    
+                // bouncedIndirect *= pow(clamp(1.0-length(lookHitPos)/(0.8+length(nearestSurface)),0,1),2);
+                // bouncedIndirect *= pow(clamp(1.0-length(lookHitPos)/max(length(nearestSurface)+5.0,1e-6),0,1),1);
+                
+                bouncedIndirect *= createHandheldPointLightFalloff(length(lookHitPos), length(nearestSurface*10.0));
+                bouncedIndirect *= createHandheldPointLightFalloff(length(lookAtDist), max(lightRange + 10,1e-6));
+    
+                // bouncedIndirect *= 5.0*createHandheldPointLightFalloff(length(handPos), max(lightRange + 2,1e-6));
+    
+                bouncedIndirect *= clamp(dot(-normal,normalize(lookHitPos)),0,1);
+                
+                lighting += bouncedIndirect;
+            #endif
 
             //#if defined FLASHLIGHT_SPECULAR && (defined DEFERRED_SPECULAR || defined FORWARD_SPECULAR)
             //  float flashLightSpecular = lightFalloff * exp2(-7.0*shiftedLinearDistance*shiftedLinearDistance) * FLASHLIGHT_BRIGHTNESS_MULT;

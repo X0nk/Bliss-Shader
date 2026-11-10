@@ -319,6 +319,7 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
     #else
         FORWARD_RENDERED_COLOR.rgba = vec4(FinalColor.rgb*0.1, FORWARD_RENDERED_COLOR.a);
     #endif
+
     #if DEBUG_VIEW == debug_NORMALS
 		FORWARD_RENDERED_COLOR.rgb = normal.xyz * 0.1;
 		FORWARD_RENDERED_COLOR.a = 1.0;

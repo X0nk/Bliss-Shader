@@ -8,6 +8,11 @@ varying vec4 color;
 varying vec2 texcoord;
 uniform sampler2D tex;
 uniform sampler2D noisetex;
+uniform vec2 texelSize;
+
+// flat varying int isWater;
+varying float fresnel;
+uniform float alphaTestRef;
 
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -21,9 +26,17 @@ float blueNoise(){
 
 void main() {
 	
-	vec4 shadowColor = vec4(texture(tex,texcoord.xy).rgb * color.rgb,  texture2DLod(tex, texcoord.xy, 0).a);
+	vec4 shadowColor = vec4(texture(tex,texcoord.xy).rgb* color.rgb,  texture2DLod(tex, texcoord.xy, 0).a) ;
+
+	#ifdef TRANSLUCENT_COLORED_SHADOWS
+		shadowColor.rgb *= mix(normalize(shadowColor.rgb+1e-7), vec3(1.0), min(max(0.1-shadowColor.a,0.0) * 10.0,1.0));
+		shadowColor.rgb *= 1.0-shadowColor.a;
+		shadowColor.rgb *= fresnel;
+	#endif
 
 	gl_FragData[0] = shadowColor;
+	
+	// if(shadowColor.a < alphaTestRef){discard; return;}
 
   	#if defined Stochastic_Transparent_Shadows
 		if(gl_FragData[0].a < blueNoise()) { discard; return;}

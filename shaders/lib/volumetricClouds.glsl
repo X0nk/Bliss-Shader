@@ -25,18 +25,32 @@ float densityAtPos(in vec3 pos){
 	//The y channel has an offset to avoid using two textures fetches
 	vec2 xy = texture(noisetex, coord).yx;
 
-	return mix(xy.r,xy.g, f.y);
+	return mix(xy.r, xy.g, f.y);
 }
 
 vec3 getPlanetAbsorb(in vec3 worldPos, in vec3 sunVector, sampler2D colortex){
 	
 	float position = clamp((worldPos.y - (FAKE_PLANET_START_HEIGHT + 1.0/abs(sunVector.y*0.1)))*256.0 / FAKE_PLANET_GRADIENT_LENGTH,0.0,257.0);
-	// float position = clamp((worldPos.y + 60.0)*256.0 / 1500.0,0.0,257.0);
+	// float position = clamp((worldPos.y + FAKE_PLANET_START_HEIGHT)*256.0 / FAKE_PLANET_GRADIENT_LENGTH,1.5,257.0);
 
 	vec3 skyAbsorb = texture(colortex, vec2(16.5, position)*texelSize).rgb / 2400.0;
 	
 	#ifdef ReflectedFog
 		return skyAbsorb*2400.0/150.0 * 2.5;
+	#else
+		return skyAbsorb;
+	#endif
+}
+
+vec3 getPlanetAbsorb_haze(float pos, sampler2D colortex){
+	
+	float position = clamp(pos*256.0 / (FAKE_PLANET_GRADIENT_LENGTH),1.5,256.0);
+	// float position = clamp((worldPos.y + FAKE_PLANET_START_HEIGHT)*256.0 / FAKE_PLANET_GRADIENT_LENGTH,1.5,257.0);
+
+	vec3 skyAbsorb = texture(colortex, vec2(16.5, position)*texelSize).rgb / 150.0;
+	
+	#ifdef ReflectedFog
+		return skyAbsorb;// * 2.5;
 	#else
 		return skyAbsorb;
 	#endif
@@ -225,7 +239,7 @@ float getCloudScattering(
 	// crazy mode
 	// samples = 10;
 	// LOD = 1;
-
+	// dither = 1.0;
 	if(LayerIndex == ALTOSTRATUS_LAYER) samples = 2;
 
 	float shadow = 0.0;
@@ -613,7 +627,7 @@ vec4 GetVolumetricClouds(
 	float maxSamples = 15.0;
 	float minSamples = 10.0;
 	int samples = int(clamp(maxSamples / sqrt(exp2(NormPlayerPos.y)), 1.0, minSamples));
-	// samples = 200;
+	// samples = 50;
    
    	///------- setup the ray
 	vec3 cloudDist = vec3(1.0);

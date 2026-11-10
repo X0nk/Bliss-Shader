@@ -16,7 +16,7 @@ screen.Sun_and_Moon_Colors = Цвет солнца/луны
 	
 	option.colortype.comment = 1 = RGB для цвета солнца/луны; 2 = черное тело
 
-screen.Misc_Settings = Разные настройки
+screen.DEBUG_SETTINGS = Разные настройки
 option.sunPathRotation = Угол наклона солнца/луны
 option.sun_illuminance = Свет Солнца
 option.moon_illuminance = Свет Луны
@@ -100,7 +100,7 @@ screen.Subsurface_Scattering = Поверхностное рассеивание
 screen.Ambient_light = Окружающий свет
     option.AO_Strength = Интенсивность AO
     option.GI_Strength = Интенсивность GI
-    option.HQ_SSGI = SSGI дальнего радиуса
+    option.LONG_RANGE_SSRT = SSGI дальнего радиуса
     option.Hand_Held_lights = Ручной свет
     option.SKY_CONTRIBUTION_IN_SSRT = Высокое качество света
     option.ambientOcclusionLevel = Интенсивность Vanilla AO
@@ -131,7 +131,7 @@ screen.Ambient_light = Окружающий свет
 	option.UseQuarterResDepth = Используйте четверть глубины разрешения
 
 screen.Fog = Туман
-    option.VL_RENDER_RESOLUTION = Разрешение объемного тумана
+    option.VL_RENDERING_RESOLUTION_SCALE = Разрешение объемного тумана
     option.VL_SAMPLES = Качество объемного тумана
     option.BLOOMY_FOG = Количество рассеянного тумана
     option.Haze_amount = Плотность атмосферной дымки
@@ -140,7 +140,7 @@ screen.Fog = Туман
     option.BorderFog = Граница тумана
 
     screen.TOD_fog = Дневной туман
-        option.TOD_Fog_mult = Плотности тумана
+        option.TOD_FOG_AMOUNT = Плотности тумана
         option.Morning_Uniform_Fog = Плотность утреннего тумана
         option.Noon_Uniform_Fog = Плотность полудневного тумана
         option.Evening_Uniform_Fog = Плотность вечернего тумана
@@ -171,7 +171,7 @@ screen.Clouds = Облака
     option.CLOUDS_SHADOWS = Тень от облаков
     option.Cloud_Speed = Скорость облаков
     option.Rain_coverage = Покрытие во время дождя
-    option.Daily_Weather = Ежедневная погода
+    option.DAILY_WEATHER_PROFILE = Ежедневная погода
 
     option.CloudLayer0          = Малые кучевые облака
     option.CloudLayer0_coverage = Покрытие
@@ -188,7 +188,7 @@ screen.Clouds = Облака
     option.CloudLayer2_density  = Плотность
     option.CloudLayer2_height   = Высота
 
-screen.DAILY_WEATHER = Дневная погода
+screen.DAILY_WEATHER_PROFILE = Дневная погода
     screen.DAY0_WEATHER = День 0 Погода
         option.DAY0_l0_coverage = Покрытие малых облаков
         option.DAY0_l0_density = Плотность малых облаков
@@ -381,8 +381,8 @@ screen.World = Мир
             option.Water_Absorb_G = Поглощ. зеленый (вода)
             option.Water_Absorb_B = Поглощ. синий (вода)
 			
-		option.Vanilla_like_water = Ванильная вода
-		option.Vanilla_like_water.comment = Влючите ваниильную текстуру воды
+		option.USE_WATER_BLOCK_TEXTURE = Ванильная вода
+		option.USE_WATER_BLOCK_TEXTURE.comment = Влючите ваниильную текстуру воды
 
 
 screen.Post_Processing = Постобработка
@@ -390,7 +390,7 @@ screen.Post_Processing = Постобработка
     screen.Exposure = Настройки экспозиции
     screen.DepthOfField = Настройки глубины резкости
     screen.Purkinje_effect = Настройки эффекта Пуркинье
-    option.SHARPENING = Степень контрастной адаптации
+    option.SHARPENING_AMOUNT = Степень контрастной адаптации
     option.BLOOM_STRENGTH = Степень размытия
     screen.TAA_OPTIONS = Настройки сглаживания
         option.SCREENSHOT_MODE = Режим скриншота
@@ -402,7 +402,7 @@ screen.Post_Processing = Постобработка
 		option.EXPOSURE_MULTIPLIER = Коэффициент экспозиции
 		option.Exposure_Speed = Скорость экспозиции
 		option.Manual_exposure_value = Значение ручной экспозиции
-		option.Purkinje_strength = Интенсивность Пуркинье
+		option.PURKINJE_AMOUNT = Интенсивность Пуркинье
 		option.Purkinje_R = Пуркинье красный
 		option.Purkinje_G = Пуркинье зеленый
 		option.Purkinje_B = Пуркинье синий
@@ -442,8 +442,8 @@ screen.Resource_Pack_Support = Эффекты LabPBR
         option.Rough_reflections = Детализированный объем
         option.Sky_reflection = Отражения Неба/Тумана
         option.Dynamic_SSR_quality = Динамическое качество SSR
-        option.Roughness_Threshold = Порог отражений
-        option.Sun_specular_Strength = Яркость отражений от солнца
+        option.ROUGHNESS_TRESHOLD = Порог отражений
+        option.SUN_SPECULAR_MULT = Яркость отражений от солнца
         option.reflection_quality = Качество SSR
 
     screen.Emissives = Излучаемый свет
@@ -548,7 +548,7 @@ option.DENOISE_SSS_AND_SSAO = Удаление шумов SSS и SSAO
 option.HYPER_DETAILED_WAVES = Сверхподобные
 
 
-screen.Misc_Settings.comment = Случайные настройки для ОТЛАДКИ или других забавных вещей
+screen.DEBUG_SETTINGS.comment = Случайные настройки для ОТЛАДКИ или других забавных вещей
 screen.Sun_and_Moon_Colors.comment = Настройте цвет солнца или луны
 option.sunPathRotation.comment = Настройте угол наклона солнца или луны
 option.sun_illuminance.comment = Настройте яркость солнца
@@ -574,7 +574,7 @@ screen.Shadows.comment = Настройте тени от солнца по св
 screen.Ambient_light.comment = Настройте параметры, связанные с освещением в затененных местах
     option.AO_Strength.comment = Настройте силу внешней окклюзии, создаваемой SSAO, GTAO, RTAO, и SSGI. §bЧто это?§r окружающая окклюзия - это небольшие мягкие тени в углах и тому подобное
     option.GI_Strength.comment = Настройте интенсивность глобального освещения, создаваемого SSGI. §bЧто это?§r глобальное освещение в данном раскладе конкретно представляет собой свет, отражающийся от поверхности и попадающий в какую-либо другую область
-    option.HQ_SSGI.comment = Переключить глобальное освещение экранного пространства на большие расстояния. §aНАГРУЗКА:§r очень высокая
+    option.LONG_RANGE_SSRT.comment = Переключить глобальное освещение экранного пространства на большие расстояния. §aНАГРУЗКА:§r очень высокая
     option.Hand_Held_lights.comment = Переключайте ручные источники света на стороне шейдера. §aНАГРУЗКА:§r очень низкая
     option.SKY_CONTRIBUTION_IN_SSRT.comment = Разрешите RTAO или SSGI учитывать все небо и туман, чтобы создать высококачественное освещение для затененных областей. Это может привести к увеличению шума. §aНАГРУЗКА:§r средняя
 
@@ -593,8 +593,8 @@ screen.Resource_Pack_Support.comment = Множество эффектов, ис
         option.Rough_reflections.comment = Переключите более детализированный объем для более качественного отражения. Это вызовет значительное количество видимых шумов. §aНАГРУЗКА:§r от средней до высокой
         option.Sky_reflection.comment = Переключайте отражения неба и тумана. §aНАГРУЗКА:§r от низкой до средней
         option.Dynamic_SSR_quality.comment = Это снижает качество отражений в пространстве экрана в зависимости от того, насколько они заметны. это может повысить производительность, но снизить качество
-        option.Roughness_Threshold.comment = Если объем достигает этого порога, все отражения, кроме солнечных, не отображаются. это может повысить производительность
-        option.Sun_specular_Strength.comment = Настройте, насколько ярким будет отражение солнца
+        option.ROUGHNESS_TRESHOLD.comment = Если объем достигает этого порога, все отражения, кроме солнечных, не отображаются. это может повысить производительность
+        option.SUN_SPECULAR_MULT.comment = Настройте, насколько ярким будет отражение солнца
         option.reflection_quality.comment = Настройте качество отражений в пространстве экрана
 
 screen.Subsurface_Scattering.comment = §bЧто это?§r Поверхностное рассеивание - это то, что происходит, когда вы направляете яркий свет на свою руку, и она начинает светиться. На самом деле солнце делает то же самое с растениями, тканью, кожей и другими вещами
@@ -623,7 +623,7 @@ screen.Porosity.comment = Настройка параметров, связан�
     option.Puddle_Size.comment = Настройте размер лужиц
 
 screen.Fog.comment = Настройте параметры, связанные с объемным туманом, нанесенным с помощью raymarched, или туманом, основанным на расстоянии
-    option.VL_RENDER_RESOLUTION.comment = Настройте разрешение объемного тумана. §aНАГРУЗКА:§r высокая
+    option.VL_RENDERING_RESOLUTION_SCALE.comment = Настройте разрешение объемного тумана. §aНАГРУЗКА:§r высокая
     option.VL_SAMPLES.comment = Настройте качество объемного тумана. §aНАГРУЗКА:§r высокая
     option.BLOOMY_FOG.comment = Настройте мягкость, применяемую к туману. §bЧто это?§r Этот эффект делает туман более мягким, а также помогает скрыть небольшие шумы; может вызвать некоторое видимое мерцание на детализированных краях. §aНАГРУЗКА:§r очень низкая
     option.Haze_amount.comment = Настройте, насколько плотной является атмосфера вокруг вас. §bЧто это?§r Это голубая дымка, которую вы видите вдалеке
@@ -632,7 +632,7 @@ screen.Fog.comment = Настройте параметры, связанные �
     option.BorderFog.comment = §bЧто это?§r Включите туман, который пытается скрыть загружаемые фрагменты; Но из-за того, что небо повсюду, это трудно сделать хорошо. §aНАГРУЗКА:§r очень, очень низкая
 
     screen.TOD_fog.comment = Настройте плотность тумана, которая появляется в определенное время суток
-        option.TOD_Fog_mult.comment = Настройте общее количество тумана, появляющегося в определенное время в течение дня. это не влияет на атмосферную дымку
+        option.TOD_FOG_AMOUNT.comment = Настройте общее количество тумана, появляющегося в определенное время в течение дня. это не влияет на атмосферную дымку
 
     screen.Cave_Fog.comment = Настройте параметры для тумана, который появляется, когда вы находитесь в очень темных местах, таких как пещеры
         option.Cave_Fog.comment = Отключите туман, который появляется в темных местах. Невозможно точно определить, когда вы находитесь в пещере с помощью шейдера, поэтому этот туман может появляться в местах, которые пещерой не являются. §aНАГРУЗКА:§r низкая
@@ -642,7 +642,7 @@ screen.Clouds.comment = Настройте параметры, относящи�
     option.VOLUMETRIC_CLOUDS.comment = Переключи облака. §aНАГРУЗКА:§r от средней до высокой
     option.CLOUDS_QUALITY.comment = Настройте разрешение объемных облаков. §aНАГРУЗКА:§r высокая
     option.CLOUDS_SHADOWS.comment = Переключайте тени, отбрасываемые облаками на землю, и туман под ними. §aНАГРУЗКА:§r от низкой до средней
-    option.Daily_Weather.comment = Переключите ежедневную погоду. Я установил 8 погодных профилей, которые шейдер циклически просматривает каждый день. Вы не можете изменить какие-либо настройки облачного покрытия, когда это включено. §aНАГРУЗКА:§r низкая
+    option.DAILY_WEATHER_PROFILE.comment = Переключите ежедневную погоду. Я установил 8 погодных профилей, которые шейдер циклически просматривает каждый день. Вы не можете изменить какие-либо настройки облачного покрытия, когда это включено. §aНАГРУЗКА:§r низкая
     option.Cloud_Speed.comment = Настройте, с какой скоростью движутся облака в течение дня
     option.Rain_coverage.comment = Настройте, какую долю неба закрывают облака во время дождя
 
@@ -691,7 +691,7 @@ screen.Post_Processing.comment = Настройте параметры для в
     screen.Exposure.comment = Настройте параметры, связанные с экспозицией
     screen.DepthOfField.comment = Настройте параметры, связанные с глубиной резкости
     screen.Purkinje_effect.comment = Настройте параметры, связанные с эффектом Пуркинье. §bЧто это?§r Это изменения цветового восприятия человеческим глазом при понижении освещённости объектов
-    option.SHARPENING.comment = Настройте степень контрастной адаптивной резкости, применяемой к изображению. Это действительно может выявить детали, утраченные в результате сглаживания или увеличения масштаба
+    option.SHARPENING_AMOUNT.comment = Настройте степень контрастной адаптивной резкости, применяемой к изображению. Это действительно может выявить детали, утраченные в результате сглаживания или увеличения масштаба
     option.BLOOM_STRENGTH.comment = Настройте степень размытия, которая будет применена к изображению. §bЧто это?§r Свечение - это мягкое свечение на всем, чтобы можно описать, является чем-то ярким или нет
     screen.TAA_OPTIONS.comment = Настройте параметры, связанные со сглаживанием
         option.SCREENSHOT_MODE.comment = Переключайте накопление кадров, чтобы получить изображение с низким уровнем шума и высоким качеством. §bЧто это?§r Он складывает кадры, которые произошли, в следующий сгенерированный кадр, так что это похоже на фотографию с длительной экспозицией

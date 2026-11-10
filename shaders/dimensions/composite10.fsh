@@ -1,380 +1,56 @@
-#define DEPTH_OF_FIELD_RELATED_SETTINGS
-#define POST_PROCESSING_RELATED_SETTINGS
-#define ANTIALIASING_RELATED_SETTINGS
-#include "/lib/settings.glsl"
-#include "/lib/res_params.glsl"
-#include "/lib/macro_lod_mod.glsl"
-
-
-
-flat varying vec4 exposure;
-flat varying vec2 rodExposureDepth;
-varying vec2 texcoord;
-
-#if DOF_QUALITY > -1
-	const bool colortex5MipmapEnabled = true;
-#endif
-
-// uniform sampler2D colortex4;
-uniform sampler2D colortex5;
-uniform sampler2D colortex3;
-// uniform sampler2D colortex6;
-uniform sampler2D colortex7;
-// uniform sampler2D colortex8; // specular
-uniform sampler2D colortex9; // specular
-uniform sampler2D depthtex0;
-uniform sampler2D depthtex1;
-uniform sampler2D noisetex;
+uniform sampler2D colortex6;
 uniform vec2 texelSize;
-
-uniform ivec2 eyeBrightnessSmooth;
+varying vec2 texcoord;
 uniform float viewWidth;
 uniform float viewHeight;
-uniform float frameTimeCounter;
-uniform int frameCounter;
-uniform int isEyeInWater;
-uniform float near;
-uniform float aspectRatio;
-uniform float far;
-uniform float rainStrength;
-uniform float screenBrightness;
-uniform vec4 Moon_Weather_properties; // R = cloud coverage 		G = fog density
-uniform int hideGUI;
-
-
-#include "/lib/TAA_jitter.glsl"
-
-
-uniform mat4 gbufferModelViewInverse;
-uniform mat4 gbufferProjectionInverse;
-vec4 Weather_properties = Moon_Weather_properties;
-
-#include "/lib/color_transforms.glsl"
-#include "/lib/color_dither.glsl"
-// #include "/lib/biome_specifics.glsl"
-#include "/lib/bokeh.glsl"
-
-float cdist(vec2 coord) {
-	return max(abs(coord.s-0.5),abs(coord.t-0.5))*2.0;
-}
-float blueNoise(){
-  return fract(texelFetch(noisetex, ivec2(gl_FragCoord.xy)%512, 0).a + 1.0/1.6180339887 * frameCounter);
-}
-float ld(float depth) {
-    return (2.0 * near) / (far + near - depth * (far - near));		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
-}
-
-// uniform float viewWidth;
-// uniform float viewHeight;
-
-// uniform sampler2D depthtex0;
-
-float linearizeDepthFast(const in float depth, const in float near, const in float far) {
-    return (near * far) / (depth * (near - far) + far);
-}
-
-float bloomWeight(){
-	
-	float weights[7] = float[](     1.0,    1.0/2.0,    1.0/3.0,    1.0/5.5,    1.0/8.0,    1.0/10.0,   1.0/12.0    );
-	// float weights[7] = float[](     0.7,    pow(0.5,2), pow(0.5,3),  pow(0.5,4),   pow(0.5,5),    pow(0.5,6), pow(0.5,7)	);
-
-	float result = 0.0;
-
-	for ( int i = 0; i < 7; i++) {
-		result += weights[i];
+vec2 resScale = vec2(1920.,1080.)/max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
+vec3 gauss1D(vec2 coord,vec2 dir,float alpha,int maxIT){
+	vec4 tot = vec4(0.);
+	float maxTC = 0.25*resScale.y;
+	float minTC = 0.;
+	for (int i = -maxIT;i<maxIT+1;i++){
+		float weight = exp(-i*i*alpha*4.0);
+		vec2 spCoord = coord+dir*texelSize*(2.0*i+0.5);
+		tot += vec4(texture(colortex6,spCoord).rgb,1.0)*weight*float(spCoord.y > minTC && spCoord.y < maxTC);
 	}
-
-	return result;
-}
-vec3 invTonemap(vec3 col){
-	return col/(1-luma(col));
-}
-#define linear_to_srgb(x) (pow(x, vec3(1.0/2.2)))
-
-uniform sampler2D colortex6;
-
-
-float w0(float a)
-{
-    return (1.0/6.0)*(a*(a*(-a + 3.0) - 3.0) + 1.0);
+	return  tot.rgb/max(1.0,tot.a);
 }
 
-float w1(float a)
-{
-    return (1.0/6.0)*(a*a*(3.0*a - 6.0) + 4.0);
-}
-
-float w2(float a)
-{
-    return (1.0/6.0)*(a*(a*(-3.0*a + 3.0) + 3.0) + 1.0);
-}
-
-float w3(float a)
-{
-    return (1.0/6.0)*(a*a*a);
-}
-
-float g0(float a)
-{
-    return w0(a) + w1(a);
-}
-
-float g1(float a)
-{
-    return w2(a) + w3(a);
-}
-
-float h0(float a)
-{
-    return -1.0 + w1(a) / (w0(a) + w1(a));
-}
-
-float h1(float a)
-{
-    return 1.0 + w3(a) / (w2(a) + w3(a));
-}
-
-vec4 texture2D_bicubic(sampler2D tex, vec2 uv)
-{
-	vec4 texelSize = vec4(texelSize,1.0/texelSize);
-	uv = uv*texelSize.zw;
-	vec2 iuv = floor( uv );
-	vec2 fuv = fract( uv );
-
-    float g0x = g0(fuv.x);
-    float g1x = g1(fuv.x);
-    float h0x = h0(fuv.x);
-    float h1x = h1(fuv.x);
-    float h0y = h0(fuv.y);
-    float h1y = h1(fuv.y);
-
-	vec2 p0 = (vec2(iuv.x + h0x, iuv.y + h0y) - 0.5) * texelSize.xy;
-	vec2 p1 = (vec2(iuv.x + h1x, iuv.y + h0y) - 0.5) * texelSize.xy;
-	vec2 p2 = (vec2(iuv.x + h0x, iuv.y + h1y) - 0.5) * texelSize.xy;
-	vec2 p3 = (vec2(iuv.x + h1x, iuv.y + h1y) - 0.5) * texelSize.xy;
-
-    return g0(fuv.y) * (g0x * texture(tex, p0)  +
-                        g1x * texture(tex, p1)) +
-           g1(fuv.y) * (g0x * texture(tex, p2)  +
-                        g1x * texture(tex, p3));
-}
-
-// vec3 lenseFlare(vec2 UV){
-//   float noise = blueNoise();
-
-//   float vignetteLength = 0.2;
-//   float vignette =  0.5+length(texcoord-0.5);//min(max(length(texcoord-0.5) - vignetteLength,0.0) / (1.0/(1.0-vignetteLength)),1.0);
-
-//   float aberrationStrength = vignette;//clamp(CHROMATIC_ABERRATION_STRENGTH * 0.01 * (1.0 - vignette),0.0,0.9) * vignette * 0.75;
-
-//   vec2 centeredUV = texcoord - 0.5;
-
-//   vec3 color = vec3(0.0);
-//   color = texture2D(colortex7, texcoord).rgb;
-
-//   vec2 distortedUV = (centeredUV -  (centeredUV ) * aberrationStrength) + 0.5;
-
-//   color += texture2D(colortex7,  distortedUV).rgb;
-//   // color.r = texture2D(colortex7, (centeredUV - (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).r;
-//   // color.g = texture2D(colortex7, texcoord).g;
-//   // color.b = texture2D(colortex7, (centeredUV + (centeredUV + centeredUV*noise) * aberrationStrength) + 0.5).b;
-
-//   return color;
-// }
-
-vec3 srgbToLinear(vec3 srgb){
-    return mix(
-        srgb / 12.92,
-        pow(.947867 * srgb + .0521327, vec3(2.4) ),
-        step( .04045, srgb )
-    );
-}
-vec3 blackbody(float Temp)
-{
-    float t = pow(Temp, -1.5);
-    float lt = log(Temp);
-
-    vec3 WB_temp = vec3(0.0);
-         WB_temp.r = 220000.0 * t + 0.58039215686;
-         WB_temp.g = 0.39231372549 * lt - 2.44549019608;
-         WB_temp.g = Temp > 6500. ? 138039.215686 * t + 0.72156862745 : WB_temp.g;
-         WB_temp.b = 0.76078431372 * lt - 5.68078431373;
-         WB_temp = clamp(WB_temp,0,1);
-         WB_temp = Temp < 1000. ? WB_temp * Temp * 0.001 : WB_temp;
-
-    return srgbToLinear(WB_temp);
-}
-
-// https://www.shadertoy.com/view/4djSRW
-vec3 hash32(vec2 p)
-{
-	vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973));
-    p3 += dot(p3, p3.yxz+33.33);
-    return fract((p3.xxy+p3.yzz)*p3.zyx);
-}
-
-void applyNoiseFilter(inout vec3 color){
-
-	vec3 filmgrain = hash32(gl_FragCoord.xy + (frameCounter%60) * 100) - 0.5; // 3 component
-	// vec3 filmgrain = hash12(gl_FragCoord.xy+frameCounter%16 * 100)-0.5 + vec3(0.0); // single component
-    
-	color += color * filmgrain * (float(FILM_GRAIN_AMOUNT)/50.0);
-}
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
+//////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-  /* RENDERTARGETS:7 */
-	float vignette = (1.5-dot(texcoord-0.5,texcoord-0.5)*2.);
+/* RENDERTARGETS:6 */
+vec2 texcoord = (gl_FragCoord.xy*vec2(2.0,4.0))*texelSize;
 
-	float bloomyFog_Mult = BLOOMY_FOG;
-	if(isEyeInWater == 1) bloomyFog_Mult = UNDERWATER_BLOOMY_FOG;
-	
-	#if DOF_QUALITY == -1 || DOF_QUALITY == 5
-		vec3 col = texture(colortex5,texcoord).rgb;
-	#endif
+vec2 gaussDir = vec2(0.0,1.0);
+gl_FragData[0].rgb = vec3(0.0);
+vec2 tc2 = texcoord*vec2(2.0,1.);
+if (tc2.x < 1.0*resScale.x && tc2.y <1.0*resScale.y)
+gl_FragData[0].xyz = gauss1D(texcoord/vec2(2.0,4.0),gaussDir,0.16,0);
 
-	#if DOF_QUALITY >= 0
-		/*--------------------------------*/
-		float z = ld(texture(depthtex1, texcoord.st*RENDER_SCALE).r)*far;
+vec2 tc4 = texcoord*vec2(4.0,2.)-vec2(0.5*resScale.x+4.0*texelSize.x,0.)*4.0;
+if (tc4.x > 0.0 && tc4.y > 0.0 && tc4.x < 1.0*resScale.x && tc4.y <1.0*resScale.y)
+gl_FragData[0].xyz = gauss1D(texcoord/vec2(2.0,2.0),gaussDir,0.16,3);
 
-		#if MANUAL_FOCUS == -2
-			float focus = rodExposureDepth.y*far;
-		#elif MANUAL_FOCUS == -1
-			float focus = mix(pow(512.0, screenBrightness), 512.0 * screenBrightness, 0.25);
-		#elif MANUAL_FOCUS > 0
-			float focus = MANUAL_FOCUS;
-		#endif
+vec2 tc8 = texcoord*vec2(8.0,4.)-vec2(0.75*resScale.x+8.*texelSize.x,0.)*8.0;
+if (tc8.x > 0.0 && tc8.y > 0.0 && tc8.x < 1.0*resScale.x && tc8.y <1.0*resScale.y)
+gl_FragData[0].xyz = gauss1D(texcoord*vec2(1.0,2.0)/vec2(2.0,2.0),gaussDir,0.035,6);
 
-		#if DOF_QUALITY < 5
-			float pcoc = min(abs(aperture * (focal/100.0 * (z - focus)) / (z * (focus - focal/100.0))),texelSize.x*15.0);
-			#ifdef FAR_BLUR_ONLY
-				pcoc *= float(z > focus);
-			#endif
-			#ifdef REMOVE_HAND_BLUR
-				pcoc *= float(z > 0.56);
-			#endif
+vec2 tc16 = texcoord*vec2(16.0,8.)-vec2(0.875*resScale.x+12.*texelSize.x,0.)*16.0;
+if (tc16.x > 0.0 && tc16.y > 0.0 && tc16.x < 1.0*resScale.x && tc16.y <1.0*resScale.y)
+gl_FragData[0].xyz = gauss1D(texcoord*vec2(1.0,4.0)/vec2(2.0,2.0),gaussDir,0.0085,12);
 
-			vec3 bcolor = vec3(0.);
-			float nb = 0.0;
-			vec2 bcoord = vec2(0.0);
-			/*--------------------------------*/
-			float dofLodLevel = pcoc * 200.0;
+vec2 tc32 = texcoord*vec2(32.0,16.)-vec2(0.9375*resScale.x+16.*texelSize.x,0.)*32.0;
+if (tc32.x > 0.0 && tc32.y > 0.0 && tc32.x < 1.0*resScale.x && tc32.y <1.0*resScale.y)
+gl_FragData[0].xyz = gauss1D(texcoord*vec2(1.0,8.0)/vec2(2.0,2.0),gaussDir,0.002,30);
 
-			vec2 dispersion = (texcoord - 0.5) * pcoc * 200.0 * DOF_DISPERSION_MULT;
+vec2 tc64 = texcoord*vec2(64.0,32.)-vec2(0.96875*resScale.x+20.*texelSize.x,0.)*64.0;
+if (tc64.x > 0.0 && tc64.y > 0.0 && tc64.x < 1.0*resScale.x && tc64.y <1.0*resScale.y)
+gl_FragData[0].xyz = gauss1D(texcoord*vec2(1.0,16.0)/vec2(2.0,2.0),gaussDir,0.0005,60);
 
-			for ( int i = 0; i < BOKEH_SAMPLES; i++) {
-				// bcolor += texture2DLod(colortex5, texcoord.xy + bokeh_offsets[i]*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).rgb;
-
-				vec2 bokeh_pos = bokeh_offsets[i];
-				bcolor.r += texture2DLod(colortex5, texcoord.xy + (bokeh_pos + dispersion)*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).r;
-				bcolor.g += texture2DLod(colortex5, texcoord.xy +  bokeh_pos*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).g;
-				bcolor.b += texture2DLod(colortex5, texcoord.xy + (bokeh_pos - dispersion)*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).b;
-			}
-			vec3 col = bcolor/BOKEH_SAMPLES;
-		#endif
-	#endif
-
-	vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
-
-	vec2 resScale = vec2(1920.,1080.)/clampedRes;
-	vec2 bloomTileUV = (((gl_FragCoord.xy)*2.0 + 0.5)*texelSize/2.0) / clampedRes*vec2(1920.,1080.);
-
-	vec3 bloomTile0 = texture2D_bicubic(colortex3, bloomTileUV/2.).rgb; //1/4 res
-	vec3 bloomTile1 = texture2D_bicubic(colortex6, bloomTileUV/4.).rgb; //1/8 res
-	vec3 bloomTile2 = texture2D_bicubic(colortex6, bloomTileUV/8.+vec2(0.25*resScale.x+2.5*texelSize.x,.0)).rgb;  //1/16 res
-	vec3 bloomTile3 = texture2D_bicubic(colortex6, bloomTileUV/16.+vec2(0.375*resScale.x+4.5*texelSize.x,.0)).rgb; //1/32 res
-	vec3 bloomTile4 = texture2D_bicubic(colortex6, bloomTileUV/32.+vec2(0.4375*resScale.x+6.5*texelSize.x,.0)).rgb; //1/64 res
-	vec3 bloomTile5 = texture2D_bicubic(colortex6, bloomTileUV/64.+vec2(0.46875*resScale.x+8.5*texelSize.x,.0)).rgb; //1/128 res
-	vec3 bloomTile6 = texture2D_bicubic(colortex6, bloomTileUV/128.+vec2(0.484375*resScale.x+10.5*texelSize.x,.0)).rgb; //1/256 res
-
-	#ifdef OLD_BLOOM
-		vec3 bloom = (bloomTile0 + bloomTile1 + bloomTile2 + bloomTile3 + bloomTile4 + bloomTile5 + bloomTile6) / 7.0;
-		vec3 fogBloom = bloom;
-		
-		float lightScat = clamp((BLOOM_STRENGTH+3) * 0.05 * pow(exposure.a, 0.2)  ,0.0,1.0) * vignette;
-	#else
-		float weights[7] = float[](     1.0,    1.0/2.0,    1.0/3.0,    1.0/5.5,    1.0/8.0,    1.0/10.0,   1.0/12.0    );
-		vec3 bloom = (bloomTile0*weights[0] + bloomTile1*weights[1] + bloomTile2*weights[2] + bloomTile3*weights[3] + bloomTile4*weights[4] + bloomTile5*weights[5] + bloomTile6*weights[6]) / bloomWeight();
-		vec3 fogBloom = (bloomTile0 + bloomTile1 + bloomTile2 + bloomTile3 + bloomTile4 + bloomTile5 + bloomTile6) / 7.0;
-		
-		float lightScat = clamp(BLOOM_STRENGTH * 0.3,0.0,1.0) * vignette;
-	#endif
-
- 	float VL_abs = texture(colortex7, texcoord*RENDER_SCALE).r;
-
-	#if PURKINJE_AMOUNT > 0
-		float pstrength = float(PURKINJE_AMOUNT) / 100.0;
-		
-		#ifdef AUTO_EXPOSURE
-			float purkinje = clamp(exposure.a*exposure.a,0.0,1.0) * clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*pstrength,0,1);
-		#else
-			float purkinje = clamp(rodExposureDepth.x/(1.0+rodExposureDepth.x)*pstrength,0,1);
-		#endif	
-		
-  		VL_abs = clamp((1.0-VL_abs)*bloomyFog_Mult,0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
-		col = (mix(col, fogBloom, VL_abs) + bloom*lightScat) * exposure.rgb;
-
-  		float lum = dot(col, vec3(0.15,0.3,0.55));
-		float lum2 = dot(col, vec3(0.85,0.7,0.45));
-		float rodLum = lum2*200.0;
-		float rodCurve = clamp(mix(1.0, rodLum/(2.5+rodLum), purkinje),0.0,1.0);
-
-		col = mix(lum * vec3(Purkinje_R, Purkinje_G, Purkinje_B) * Purkinje_Multiplier, col, rodCurve);
-	#else
-  		VL_abs = clamp((1.0-VL_abs)*bloomyFog_Mult*0.75*(1.0+rainStrength),0.0,1.0)*clamp(1.0-pow(cdist(texcoord.xy),15.0),0.0,1.0);
-		col = (mix(col, fogBloom, VL_abs) + bloom*lightScat) * exposure.rgb;
-	#endif
-	
-	#if WHITE_BALANCE != 6500
-		col *= blackbody(WHITE_BALANCE);
-	#endif
-
-	#if FILM_GRAIN_AMOUNT > 0
-    	applyNoiseFilter(col);
-	#endif
-
-	#ifndef USE_ACES_COLORSPACE_APPROXIMATION
-		col = LinearTosRGB(TONEMAP(col));
-	#else
-		col = col * ACESInputMat;
-		col = TONEMAP(col);
-
-		col = LinearTosRGB(clamp(col * ACESOutputMat, 0.0, 1.0));
-	#endif
-
-	gl_FragData[0].rgb = clamp(int8Dither(col,texcoord),0.0,1.0);
-	
-	#if DOF_QUALITY == 5
-		#if FOCUS_LASER_COLOR == 0 // Red
-		vec3 laserColor = vec3(25, 0, 0);
-		#elif FOCUS_LASER_COLOR == 1 // Green
-		vec3 laserColor = vec3(0, 25, 0);
-		#elif FOCUS_LASER_COLOR == 2 // Blue
-		vec3 laserColor = vec3(0, 0, 25);
-		#elif FOCUS_LASER_COLOR == 3 // Pink
-		vec3 laserColor = vec3(25, 10, 15);
-		#elif FOCUS_LASER_COLOR == 4 // Yellow
-		vec3 laserColor = vec3(25, 25, 0);
-		#elif FOCUS_LASER_COLOR == 5 // White
-		vec3 laserColor = vec3(25);
-		#endif
-		float depth = texture(depthtex0, texcoord).r;
-		
-		#ifdef USING_LOD_MOD
-		float _near = near;
-		float _far = far*4.0;
-
-		if (depth >= 1.0) {
-			depth = texture(LOD_DEPTHTEX0, texcoord).x;
-			_near = LOD_NEARPLANE;
-			_far = LOD_FARPLANE;
-		}
-
-		depth = linearizeDepthFast(depth, _near, _far);
-		#else
-		depth = linearizeDepthFast(depth, near, far);
-		#endif
-
-		// focus = gl_FragCoord.x * 0.1;
-		if( hideGUI < 1) gl_FragData[0].rgb += laserColor * pow( clamp( 	 1.0-abs(focus-abs(depth))		,0,1),25) ;
-	#endif
+gl_FragData[0].rgb = clamp(gl_FragData[0].rgb,0.0,65000.);
 }

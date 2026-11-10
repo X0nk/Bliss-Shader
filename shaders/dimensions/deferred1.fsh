@@ -6,11 +6,13 @@ uniform sampler2D colortex1;
 uniform sampler2D colortex12;
 
 uniform vec2 texelSize;
+uniform vec2 taaJitter;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 
 uniform float near;
 uniform float far;
+uniform int frameCounter;
 
 float linZ(float depth) {
     return (2.0 * near) / (far + near - depth * (far - near));
@@ -31,6 +33,14 @@ vec2 decodeVec2(float a){
     const float constant2 = 256. / 255.;
     return fract( a * constant1 ) * constant2 ;
 }
+float interleaved_gradientNoise_temporal(){
+	#if TAA_MODE > 0
+		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887 * frameCounter);
+	#else
+		return fract(52.9829189*fract(0.06711056*gl_FragCoord.x + 0.00583715*gl_FragCoord.y ) + 1.0/1.6180339887);
+	#endif
+}
+
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -42,7 +52,8 @@ void main() {
 
 
 	vec3 oldTex = texelFetch(colortex4, ivec2(gl_FragCoord.xy), 0).xyz;
-	float newTex = texelFetch(depthtex1, ivec2(gl_FragCoord.xy*4), 0).x;
+	float newTex = texelFetch(depthtex1, ivec2(gl_FragCoord.xy*4.0), 0).x;
+	// float newTex = texture(depthtex1, gl_FragCoord.xy*texelSize*4.0).x;
 
 	float dataUnpacked = decodeVec2(texelFetch(colortex1,ivec2(gl_FragCoord.xy*4),0).w).y; 
 	bool hand = abs(dataUnpacked-0.75) < 0.01;
@@ -56,5 +67,8 @@ void main() {
 	#endif
 	
 	newTex = linZ(newTex);
-	gl_FragData[0] = vec4(oldTex, newTex*newTex*65000.0);
+	newTex = newTex*newTex*65000.0;
+	// newTex = clamp(newTex + newTex*(interleaved_gradientNoise_temporal()-0.5)*0.5,0.0,65000.0);
+
+	gl_FragData[0] = vec4(oldTex, newTex);
 }

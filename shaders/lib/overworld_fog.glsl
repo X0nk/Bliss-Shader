@@ -32,11 +32,6 @@ float fogPhase(float lightPoint){
 	return exponential;
 }
 
-float phaseCloudFog(float x, float g){
-    float gg = g * g;
-    return (gg * -0.25 + 0.25) * pow(-2.0 * (g * x) + (gg + 1.0), -1.5) / 3.14;
-}
-
 vec3 sampleShadowmapVL(vec3 start, vec3 shadowMapRayStartPos, vec3 shadowMapRayProgress, float increment){
 	vec3 shadowColor = vec3(1.0);
 
@@ -50,19 +45,19 @@ vec3 sampleShadowmapVL(vec3 start, vec3 shadowMapRayStartPos, vec3 shadowMapRayP
 
 	vec3 shadowPos = vec3(shadowMapRayProgress.xy*distortFactor, shadowMapRayProgress.z);
 
-	if (abs(shadowPos.x) < 1.0-0.5/2048. && abs(shadowPos.y) < 1.0-0.5/2048){
+	if (abs(shadowPos.x) < 1.0-0.5/2048.0 && abs(shadowPos.y) < 1.0-0.5/2048.0){
 
 		shadowPos = shadowPos * vec3(0.5, 0.5, 0.5/6.0) + 0.5;
 
 		#ifdef TRANSLUCENT_COLORED_SHADOWS
-			shadowColor = vec3(shadow2D(shadowtex0, shadowPos).x);
+			shadowColor = vec3(shadow2D(shadowtex0HW, shadowPos).x);
 
-			if(shadow2D(shadowtex1, shadowPos).x > shadowPos.z && shadowColor.x < 1.0){
+			if(shadow2D(shadowtex1HW, shadowPos).x > shadowPos.z && shadowColor.x < 1.0){
 				vec4 translucentShadow = texture(shadowcolor0, shadowPos.xy);
 				if(translucentShadow.a < 0.9) shadowColor = normalize(translucentShadow.rgb+0.0001);
 			}
 		#else
-			float shadowMap = shadow2D(shadow, shadowPos).x;
+			float shadowMap = shadow2D(shadowtex0HW, shadowPos).x;
 			shadowColor = vec3(shadowMap);
 		#endif
 	}
@@ -138,57 +133,48 @@ float getFogDensities(
 	}
 	
 	return fogResult;
-
-	// FogDensities(medium_gradientFog, cloudyFog, rainyFog, maxDistance, dailyWeatherParams0.a, dailyWeatherParams1.a);
-
-	// return uniformFog + medium_gradientFog + cloudyFog + rainyFog;
-
-	// float fog = pow(parameters.fog.x,5);
-	// if(parameters.localFog.y > 0.0){
-	// }
-	// return fog;
-
-	// vec3 samplePos = playerPos * vec3(1.0,1.0/48.0,1.0) * 24.0 * 5;
-	// samplePos += vec3(1.0, -0.01, 1.0)*frameTimeCounter*1500.0;
-	// float clumpyFog = densityAtPosFog(samplePos);
-
-	// float localUniformFogDensity = pow(parameters.localFog.x,5.0);
-	// float localClumpyFogDensity = pow(parameters.localFog.y,5.0);
-	// float localFogEffects = localEffectRadius * (localUniformFogDensity + max(clumpyFog*localClumpyFogDensity - 0.3,0.0));
-
-	// return localFogEffects;
-
-	// float fogYstart = FOG_START_HEIGHT+3;
-	// vec3 samplePos = pos*vec3(1.0,1./24.,1.0);
-	// vec3 samplePos2 = pos*vec3(1.0,1./48.,1.0);
-	
-	// float uniformFog = 0.0;
-
-	// float low_gradientFog = exp2(-0.3 * max(pos.y - fogYstart,0.0));
-	// float medium_gradientFog = exp2(-0.15 * max(pos.y - fogYstart,0.0));
-	// float high_gradientFog = exp2(-0.06 * max(pos.y - fogYstart,0.0));
-	
-	// float fog_shape = 0.0;
-	// float fog_erosion = 0.0;
-	// if(sandStorm < 1.0 && snowStorm < 1.0){
-	// 	fog_shape = 1.0 - densityAtPosFog(samplePos * 24.0);
-	// 	fog_erosion = 1.0 - densityAtPosFog(samplePos2 * 200.0 - vec3(min(max(fog_shape - 0.6 ,0.0) * 2.0 ,1.0)*200.0));
-	// }
-	
-	// float cloudyFog = max(min(max(fog_shape - 0.6 ,0.0) * 2.0 ,1.0) - fog_erosion * 0.4	, 0.0)	*	exp(-0.05 * max(pos.y - (fogYstart+20),0.0));
-	// float rainyFog = (low_gradientFog * 0.5 + exp2(-0.06 * max(pos.y - fogYstart,0.0))) * rainStrength * NoRainFallEnviornmentSmooth;
-	
-	// if(sandStorm > 0.0 || snowStorm > 0.0){
-	// 	float IntenseFogs = pow(1.0 - densityAtPosFog( (samplePos2  - vec3(frameTimeCounter,0,frameTimeCounter)*15.0) * 100.0),2.0) * mix(1.0, high_gradientFog, snowStorm);
-	// 	cloudyFog = mix(cloudyFog, IntenseFogs, sandStorm+snowStorm);
-
-	// 	medium_gradientFog = 1.0;
-	// }
-
-	// FogDensities(medium_gradientFog, cloudyFog, rainyFog, maxDistance, 1.0, 1.0);
-
-	// return uniformFog + medium_gradientFog + cloudyFog;
 }
+
+
+#if defined ARDACRAFT_HEIGHTMAP
+uniform sampler2D ArdaCraftHeightMap;
+
+float ardaHeightMapFogDensity(in vec3 rayProgress){
+
+	float shape = 0.0;
+	vec3 heightPos = rayProgress - cameraPosition;
+
+	// the min/max Y coord of the lowest and highest points in the heightmap.
+	float minY = 19.0; float maxY = 453.0;
+	// the coordinates of the south-west (bottom-left) corner of the image
+	vec2 coordXZ = vec2(9727.0, 511.0);
+	// since the area is of a specific place of the world, i must offset the camera position to that position
+	heightPos += (cameraPosition - vec3(coordXZ.x, minY, coordXZ.y));
+	//and then scale UV by the resolution of the heightmap
+	heightPos.xz /= 2048.0; 
+
+	// check if ray is within heightmaps specified area
+	if(clamp(heightPos.x,0,clamp(heightPos.z+1.0,0,1)) * clamp(1-heightPos.x,0,clamp(0-heightPos.z,0,1)) > 0.0){
+		// sample, then convert from 0.0-1.0 to 0.0-maxY
+		float heightMap = texture(ArdaCraftHeightMap, heightPos.xz).r * maxY;
+		float noise = texture(noisetex, rayProgress.xz/512.0).r;
+
+		float gradient = 1.0 - clamp(((heightPos.y + noise*100.0) - heightMap*0.75)/100.0,0.0,1.0);
+		float gradient2 = 1.0 - clamp((heightPos.y - 50.0)/300.0,0.0,1.0);
+
+		float clumpy = densityAtPosFog((rayProgress * vec3(1.0,1.0/50.0,1.0)) * 16 + vec3(0,heightMap,0)/16);
+
+		// shape = ((gradient - clumpy*5) + gradient2) * (1.0-heightMap/maxY);
+		// shape = gradient * pow(1.0-heightMap/maxY,10) * 0.1;
+		shape = (gradient) * exp(-0.09*heightMap) * 0.5;
+		// shape = (gradient) * pow(heightMap/maxY,5) * 0.5;
+
+		shape = gradient * 0.01;
+		// shape = pow(gradient2wwwwwwwwwwwwwww,5) * 0.01;
+	}
+	return clamp(shape,0,1);
+}
+#endif
 
 vec4 GetVolumetricFog(
 	in vec3 viewPos,
@@ -258,11 +244,17 @@ vec4 GetVolumetricFog(
 	float localAbsorbance = 1.0;
 	float LPVAbsorb = 1.0;
 	vec3 airAbsorbance = vec3(1.0);
+	float skyAbsorbance = 1.0;
 	
 	float SdotV = dot(sunVector, normalize(playerPos));
 	float rayleighPhase = phaseRayleigh(SdotV);
 	float sunPhase = fogPhase(SdotV) * 5.0;
 	float flatPhase =  clamp(SdotV*0.5+0.5,0.0,1.0);
+
+	///------- do color stuff outside of the raymarcher loop
+	// the idea is to interpolate between 4 HG function calls with different G parameters
+	// float backScatterPhase = phaseCloudFog(-SdotV, 0.25) * 2.0;
+	// vec4 phaseLevels = vec4(phaseCloudFog(SdotV, 0.80), phaseCloudFog(SdotV, 0.55), phaseCloudFog(SdotV, 0.35), phaseCloudFog(SdotV, 0.10));
 
 	float skyPhase = 0.5 + pow(1.0-pow(1.0-clamp(normalize(playerPos).y*0.5+0.5,0.0,1.0),2.0),5.0)*2.0;
 
@@ -290,6 +282,7 @@ vec4 GetVolumetricFog(
 		rayProgress = gbufferModelViewInverse[3].xyz + cameraPosition + d*rayStartPos;
 		localRayProgress = gbufferModelViewInverse[3].xyz + cameraPosition + d*localRayStartPos;
 		
+	
 		#ifdef FAKE_PLANET
 			LightColor = getPlanetAbsorb(rayProgress, WsunVec, colortex4);
 		#endif
@@ -299,6 +292,7 @@ vec4 GetVolumetricFog(
 		#if defined LIGHTNING_FLASH && defined LIGHTNINGFLASH_VL
 			vec3 lightningFlash = createLightningPointLight(rayProgress - cameraPosition, lightningBoltPosition.xyz, 1.0, 1.0) * indoors;
 		#endif
+
 		/// ATMOSOPHERE
 		float planetVolume = clamp(1.0 - length((rayProgress-cameraPosition) - vec3(0.0, 250.0, 0.0)) / 2500.0, 0.0,1.0);
 		#ifdef USING_LOD_MOD
@@ -352,14 +346,14 @@ vec4 GetVolumetricFog(
 		float localEffectDensity = kill * getLocalEffectDensity(localRayProgress);
 
 		#ifdef EXCLUDE_WRITE_TO_LUT
-			localEffectDensity *= indoors;
+			// localEffectDensity *= indoors;
 		#endif
 
 		float localFogVolumeCoeff = exp(-localEffectDensity*dd*localRayLength);
 		float localpowder = min(exp(beerCoef*exp(beerCoef*localEffectDensity)) * 3.5, 1);
 		float localbackscatter = localpowder * backScatterPhase;
 		float localforwardscatter = mix(mix(phaseLevels.x, phaseLevels.y, localpowder), mix(phaseLevels.z, phaseLevels.w, localpowder), localpowder);
-		vec3 localFogLighting = (6.28 * localFogColor_lightCol * (localforwardscatter + localbackscatter))*shadows + localFogColor_ambientCol*skyPhase;
+		vec3 localFogLighting =  ((6.28 * localFogColor_lightCol * (localforwardscatter + localbackscatter))*shadows + localFogColor_ambientCol*skyPhase);
 		// vec3 localFogLighting = localFogColor_lightCol*shadows*sunPhase + localFogColor_ambientCol*skyPhase;
 		
 		color += (localFogLighting - localFogLighting * localFogVolumeCoeff) * localAbsorbance;

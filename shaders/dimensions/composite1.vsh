@@ -64,9 +64,9 @@ void main() {
 
 	averageSkyCol_Clouds = texelFetch(colortex4,ivec2(0,37),0).rgb;
 
-	unsigned_WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition);
+	unsigned_WsunVec = normalize(mat3(gbufferModelViewInverse) * sunPosition + gbufferModelViewInverse[3].xyz);
 	
-	vec3 moonVec = normalize(mat3(gbufferModelViewInverse) * moonPosition);
+	vec3 moonVec = normalize(mat3(gbufferModelViewInverse) * moonPosition + gbufferModelViewInverse[3].xyz);
 
 	WmoonVec = moonVec;
 	

@@ -1,6 +1,6 @@
 option.SHADER_VERSION_LABEL = Bliss In-Dev Commit Number
 
-screen.Misc_Settings = Configurações Diversas
+screen.DEBUG_SETTINGS = Configurações Diversas
      screen.the_orb = O Orb
      option.THE_ORB = O Orb
      option.ORB_X = Orb X
@@ -92,7 +92,7 @@ screen.Subsurface_Scattering = Espalhamento de Subsuperfície/SSS
 screen.Ambient_light = Luz Ambiente
     option.AO_Strength = Quantidade de AO
     option.GI_Strength = Quantidade de GI
-    option.HQ_SSGI = SSGI de Longo Alcance
+    option.LONG_RANGE_SSRT = SSGI de Longo Alcance
     option.Hand_Held_lights = Luz Portátil
     option.ambientOcclusionLevel = Quantidade de Vanilla AO
     option.ambient_brightness = Brilho da Luz Ambiente
@@ -120,7 +120,7 @@ screen.Ambient_light = Luz Ambiente
     
 
 screen.Fog = Ajustes da Névoa
-    option.VL_RENDER_RESOLUTION = Dimensionamento da Resolução da Névoa
+    option.VL_RENDERING_RESOLUTION_SCALE = Dimensionamento da Resolução da Névoa
     option.VL_SAMPLES = Amostragem de Névoa
     option.BLOOMY_FOG = Quantidade de Névoa Difusa
     option.Haze_amount = Densidade da Névoa Atmosférica
@@ -129,7 +129,7 @@ screen.Fog = Ajustes da Névoa
     option.BorderFog = Névoa na Borda dos Chunks
 
     screen.TOD_fog = Névoa por Horário
-        option.TOD_Fog_mult = Valor de Densidade da Névoa
+        option.TOD_FOG_AMOUNT = Valor de Densidade da Névoa
         option.Morning_Uniform_Fog = Densidade da Névoa de Manhã
         option.Noon_Uniform_Fog = Densidade da Névoa ao Meio-dia
         option.Evening_Uniform_Fog = Densidade da Névoa à Tarde 
@@ -153,7 +153,7 @@ screen.Clouds = Ajustes das Nuvens
     option.VOLUMETRIC_CLOUDS = Nuvens Volumétricas
     option.CLOUDS_QUALITY = Dimensionamento da Resolução das Nuvens
     option.CLOUDS_SHADOWS = Sombras da Nuvens
-    option.Daily_Weather = Tempo Diário
+    option.DAILY_WEATHER_PROFILE = Tempo Diário
     option.Cloud_Speed = Quantiade de Velociade das Nuvens
     option.Rain_coverage = Cobertura em Dias Chuvosos
 
@@ -246,12 +246,12 @@ screen.Post_Processing = Pós-processamento
         option.Manual_exposure_value = Valor Manual de Exposição
     screen.DepthOfField = Ajustes de Profundidade de Campo
     screen.Purkinje_effect = Ajustes da Mudança de Purkinje
-        option.Purkinje_strength = Intensidade do Purkinje
+        option.PURKINJE_AMOUNT = Intensidade do Purkinje
         option.Purkinje_R = Purkinje Vermelho
         option.Purkinje_G = Purkinje Verde
         option.Purkinje_B = Purkinje Azul
         option.Purkinje_Multiplier = Multiplicador de Purkinje
-    option.SHARPENING = Quantidade de Nitidez CAS
+    option.SHARPENING_AMOUNT = Quantidade de Nitidez CAS
     option.BLOOM_STRENGTH = Quantidade de Bloom
     screen.TAA_OPTIONS = Ajustes do Antisserrilhamento
         option.SCREENSHOT_MODE = Modo Screenshot
@@ -268,8 +268,8 @@ screen.Resource_Pack_Support = Resource_Pack_Support
         option.Rough_reflections = Rugosidade Detalhada
         option.Sky_reflection = Reflexos do Céu/Névoa
         option.Dynamic_SSR_quality = Qualidade Dinâmica do SSR
-        option.Roughness_Threshold = Nível do Reflexo
-        option.Sun_specular_Strength = Intensidade do Reflexo do Sol
+        option.ROUGHNESS_TRESHOLD = Nível do Reflexo
+        option.SUN_SPECULAR_MULT = Intensidade do Reflexo do Sol
         option.reflection_quality = Qualidade do SSR
 
     screen.Emissives = Emissivos 
@@ -335,7 +335,7 @@ option.AEROCHROME_WOOL_ENABLED.comment = A lã também deveria ser afetada, mas 
 
 
 
-screen.Misc_Settings.comment = Várias configurações para DEBUGGING ou outras coisas divertidas.
+screen.DEBUG_SETTINGS.comment = Várias configurações para DEBUGGING ou outras coisas divertidas.
 screen.Sun_and_Moon_Colors.comment = Ajuste as Cores do Sol/Lua
 option.sunPathRotation.comment = Ajuste o Ângulo do Sol/Lua
 option.sun_illuminance.comment = Ajuste o Brilho do Sol
@@ -362,7 +362,7 @@ screen.Shadows.comment = Ajuste as sombras do sol ao seu gosto.
 screen.Ambient_light.comment = Ajustes relacionados a luz em lugares sombreados
     option.AO_Strength.comment = Ajuste à força da oclusão ambiental gerada pelo SSAO, GTAO, RTAO, e SSGI. §bO Que é Isso?§r Oclusão ambiental é uma pequena sombra suave no canto das coisas.
     option.GI_Strength.comment = Ajuste à força da iluminação global gerada pelo SSGI. §bO Que é Isso?§r Nesse caso, é a luz quicando de uma superfície para outra área.
-    option.HQ_SSGI.comment = Habilite uma iluminação global de longo alcance. §aCUSTO DE PERFORMANCE:§r Muito Alto
+    option.LONG_RANGE_SSRT.comment = Habilite uma iluminação global de longo alcance. §aCUSTO DE PERFORMANCE:§r Muito Alto
     option.Hand_Held_lights.comment = Habilite uma luz portátil do próprio shaders. §aCUSTO DE PERFORMANCE:§r Muito Baixo
     option.ambientOcclusionLevel.comment = Ajuste à força da oclusão de ambiente vanilla do Minecraft. §bO Que é Isso?§r Essa é a oclusão de ambiente vanilla do Minecraft, mesmo sem shaders.
     option.ambient_brightness.comment = Ajuste o brilho da luz em locais sombreados.
@@ -379,8 +379,8 @@ screen.Resource_Pack_Support.comment = Um punhado de efeitos que usam informaç�
         option.Rough_reflections.comment = Habilita uma rugosidade mais detalhada para criar reflexos de qualidade mais alta. Isso causa uma quantidade vísivel de ruído. §aCUSTO DE PERFORMANCE:§r Médio para Alto
         option.Sky_reflection.comment = Habilita os reflexos do céu e da névoa. §aCUSTO DA PERFORMANCE:§r Baixo para Médio.
         option.Dynamic_SSR_quality.comment = Isso diminui a qualidade dos reflexos baseado na sua visibilidade. Pode aumentar a performance, mas diminui a qualidade. 
-        option.Roughness_Threshold.comment = Se a rugosidade atingir seu limite, todos os reflexos, por excessão do sol, não vão renderizar. Pode aumentar a performance.
-        option.Sun_specular_Strength.comment = Ajuste o quão brilhante o reflexo do sol é.
+        option.ROUGHNESS_TRESHOLD.comment = Se a rugosidade atingir seu limite, todos os reflexos, por excessão do sol, não vão renderizar. Pode aumentar a performance.
+        option.SUN_SPECULAR_MULT.comment = Ajuste o quão brilhante o reflexo do sol é.
         option.reflection_quality.comment = Ajuste a qualidade dos reflexos no espaço de tela.
 
 screen.Subsurface_Scattering.comment = §bO Que é Isso?§r O espalhamento de subsuperfície é aquele efeito quando você coloca uma luz no seu dedo e ele começa a brilhar. O sol causa esse efeito em várias coisas, como: plantas, tecido, pele e outras coisas.
@@ -409,7 +409,7 @@ screen.Porosity.comment = Ajustes relacionados à umidade e poças
     option.Puddle_Size.comment = Ajusta o tamanho das poças.
 
 screen.Fog.comment = Ajustes relacionados à névoa volumétrica ou névoa distante.
-    option.VL_RENDER_RESOLUTION.comment = Ajuste a resolução da névoa volumétrica. §aCUSTO DE PERFORMANCE:§r Alto
+    option.VL_RENDERING_RESOLUTION_SCALE.comment = Ajuste a resolução da névoa volumétrica. §aCUSTO DE PERFORMANCE:§r Alto
     option.VL_SAMPLES.comment = Ajuste a qualidade da névoa volumétrica. §aCUSTO DE PERFORMANCE:§r Alto
     option.BLOOMY_FOG.comment = Ajuste à força do bloom que é aplicada a névoa. §bO Que é Isso?§r Esse efeito faz a névoa ter um aspecto suave, isso ajuda a diminuir o ruído. Pode causar flick em bordas detalhadas. §aCUSTO DE PERFORMANCE:§r Muito Baixo
     option.Haze_amount.comment = Ajuste a densidade da atmosféra ao seu redor. §bO Que é Isso?§r É aquela névoa azul que você vê na distância. 
@@ -418,7 +418,7 @@ screen.Fog.comment = Ajustes relacionados à névoa volumétrica ou névoa dista
     option.BorderFog.comment = Habilita uma névoa que esconde chunks não carregados.
 
     screen.TOD_fog.comment = Ajusta a densidade da névoa que aparece em horários especifícos do dia.
-        option.TOD_Fog_mult.comment = Ajusta quantidade total de névoa que aparece em horários especifícos do dia. Isso não afeta a névoa atmosférica. 
+        option.TOD_FOG_AMOUNT.comment = Ajusta quantidade total de névoa que aparece em horários especifícos do dia. Isso não afeta a névoa atmosférica. 
 
         option.PER_BIOME_ENVIRONMENT.comment = Habilita uma névoa que apenas aparece em biomas especifícos. §aCUSTO DE PERFORMANCE:§r Baixo
 
@@ -431,7 +431,7 @@ screen.Clouds.comment = Ajustes relacionados a nuvens volumétricas.
     option.VOLUMETRIC_CLOUDS.comment = Habilita as nuvens. §aCUSTO DE PERFORMANCE:§r Médio para Alto
     option.CLOUDS_QUALITY.comment = Ajuste a resolução das nuvens volumétricas. §aCUSTO DE PERFORMANCE:§r Alto
     option.CLOUDS_SHADOWS.comment = Habilita sombras que são prjetadas pelas sombras no chão e a névoa em baixo. §aCUSTO DE PERFORMANCE:§r Baixo para Médio
-    option.Daily_Weather.comment = Habilita o clima diário. O shaders alterna entre 8 perfis. Você não pode mudar nenhuma configuração de cobertura quando isso estiver habilitado. §aCUSTO DE PERFORMANCE:§r Baixo
+    option.DAILY_WEATHER_PROFILE.comment = Habilita o clima diário. O shaders alterna entre 8 perfis. Você não pode mudar nenhuma configuração de cobertura quando isso estiver habilitado. §aCUSTO DE PERFORMANCE:§r Baixo
     option.Cloud_Speed.comment = Ajuste a velocidade que as nuvens se movem ao decorrer do dia.
     option.Rain_coverage.comment = Ajuste a cobertura das nuvens durante a chuva.
 
@@ -478,7 +478,7 @@ screen.Post_Processing.comment = Ajustes relacionados a todos os efeitos de pós
     screen.Exposure.comment = Ajustes relacionados a exposição.
     screen.DepthOfField.comment = Ajustes relacionados a profundidade de campo.
     screen.Purkinje_effect.comment = Ajustes relacionados a mudança purkinje.
-    option.SHARPENING.comment = Ajuste a quantidade de nitidez CAS que é aplicada à imagem. Isso traz devolta os detalhes perdidos do antisserrilhamento ou upscaling.
+    option.SHARPENING_AMOUNT.comment = Ajuste a quantidade de nitidez CAS que é aplicada à imagem. Isso traz devolta os detalhes perdidos do antisserrilhamento ou upscaling.
     option.BLOOM_STRENGTH.comment = Ajuste a quantidade de bloom que é aplicada à imagem. §bO Que é Isso?§r Bloom é o brilho suave em tudo, para descrever se algo é brilhante ou não.
     screen.TAA_OPTIONS.comment = Ajustes relacionados ao antisserrilhamento.
         option.SCREENSHOT_MODE.comment = Habilite a acumulação de frames para conseguir uma imagem de alta qualidade sem ruídos. §bO Que é Isso?§r Isso junta quadros que já aconteceram no próximo quadro gerado, essencialmente é como se fosse uma foto de longa exposição.

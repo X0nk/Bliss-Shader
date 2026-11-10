@@ -312,7 +312,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 	vec3 Albedo = toLinear(gl_FragData[0].rgb);
 
 	#ifndef WhiteWorld
-	    #ifndef Vanilla_like_water
+	    #ifndef USE_WATER_BLOCK_TEXTURE
 	    	if (iswater){
 	    		Albedo = vec3(0.0);
 	    		gl_FragData[0].a = 1.0/255.0;
@@ -394,6 +394,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		// f0 = 0.9;
 
         vec3 reflectedVector = reflect(normalize(viewPos), normals);
+		// reflectedVector.z = abs(reflectedVector.z);
 	    float normalDotEye = dot(normals, normalize(viewPos));
 
 	    float fresnel =  pow(clamp(1.0 + normalDotEye, 0.0, 1.0),5.0);
@@ -422,6 +423,10 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
             BackgroundReflection = skyCloudsFromTex(mat3(gbufferModelViewInverse) * reflectedVector, colortex4).rgb / 1200.0; 
         #endif
         #ifdef WATER_SUN_SPECULAR
+			roughness = 1.0-sqrt(roughness);
+			// roughness = mix(roughness, 0.6, pow(clamp(1.0 + normalDotEye, 0.0, 1.0),8.0));
+			roughness = mix( roughness, 0.6, pow(1-pow(1-clamp(length(viewPos)/1500.0, 0.0, 1.0),2),2));
+			roughness = pow(1.0-roughness,2.0);
             SunReflection = (DirectLightColor * Shadows) * GGX(normalize(normals), -normalize(viewPos), normalize(WsunVec2), roughness, f0) * (1.0-Reflections.a);
         #endif
 

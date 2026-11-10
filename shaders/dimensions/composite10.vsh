@@ -1,12 +1,6 @@
-#include "/lib/settings.glsl"
-
+uniform float viewWidth;
+uniform float viewHeight;
 varying vec2 texcoord;
-
-uniform sampler2D colortex4;
-
-flat varying vec4 exposure;
-flat varying vec2 rodExposureDepth;
-
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -14,11 +8,12 @@ flat varying vec2 rodExposureDepth;
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
-
+	vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.0));
 	gl_Position = ftransform();
-	texcoord = gl_MultiTexCoord0.xy;
+	//0-0.25
+	gl_Position.y = (gl_Position.y*0.5+0.5)*0.25/clampedRes.y*1080.0*2.0-1.0;
+	//0-0.5
+	gl_Position.x = (gl_Position.x*0.5+0.5)*0.5/clampedRes.x*1920.0*2.0-1.0;
+	texcoord = gl_MultiTexCoord0.xy/clampedRes*vec2(1920.,1080.);
 
-	exposure = vec4(vec3(texelFetch(colortex4,ivec2(10,37),0).r),texelFetch(colortex4,ivec2(10,37),0).r);
-	rodExposureDepth = texelFetch(colortex4,ivec2(14,37),0).rg;
-	rodExposureDepth.y = sqrt(rodExposureDepth.y/65000.0);
 }

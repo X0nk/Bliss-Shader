@@ -1,6 +1,7 @@
 #version 120
 
 
+#define ENTITIES_OPAQUE
 #define WORLD
 #define ENTITIES
 

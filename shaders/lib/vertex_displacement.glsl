@@ -29,6 +29,10 @@ vec3 calcMovePlants(in vec3 pos) {
         result.xz += windDirection_foliage*windForce/4000.0;
     #endif
 
+    // player to plant interaction
+    // vec3 playerPos = (pos-cameraPosition) * vec3(2,0.5,2);
+    // result += normalize(playerPos) * clamp(1.0-length(playerPos.xz)/1,0,1);
+
     return result;
 }
 

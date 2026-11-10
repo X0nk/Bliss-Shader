@@ -13,7 +13,7 @@ uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 uniform sampler2D depthtex2;
 uniform sampler2D noisetex;
-uniform sampler2D shadowcolor1;
+uniform sampler2D shadowcolor0;
 
 uniform vec2 texelSize;
 uniform float frameTimeCounter;
@@ -226,7 +226,7 @@ void main() {
   vec2 texcoord_offset = texcoord;
 
   #if PIXEL_ZOOM > 0
-	  texcoord_offset = 0.5 + (texcoord_offset-0.5) - (texcoord_offset-0.5) * (float(PIXEL_ZOOM)/100.0f);
+	  if(hideGUI == 0)texcoord_offset = 0.5 + (texcoord_offset-0.5) - (texcoord_offset-0.5) * (float(PIXEL_ZOOM)/100.0f);
 	#endif
 
   #if WATER_ON_CAMERA_EFFECT_AMOUNT > 0
@@ -281,7 +281,7 @@ void main() {
     shadowUV.xy *= distortFactor;
     shadowUV.xy = shadowUV.xy * 0.5 + 0.5;
       
-    if(shadowUV.x < 1.0 && shadowUV.y < 1.0 && shadowUV.x > 0.0 && shadowUV.y > 0.0 && hideGUI == 0) COLOR = texture(shadowcolor1,shadowUV).rgb;
+    if(shadowUV.x < 1.0 && shadowUV.y < 1.0 && shadowUV.x > 0.0 && shadowUV.y > 0.0 && hideGUI == 0) COLOR = texture(shadowcolor0,shadowUV).rgb;
   #endif
   #if DEBUG_VIEW == debug_DEPTHTEX0
     COLOR = vec3(ld(texture(depthtex0, texcoord*RENDER_SCALE).r));

@@ -116,6 +116,7 @@ vec3 rayTraceSpeculars(
 	float biasAmount = mix(0.000075, 0.00035, roughness);
 
 	vec3 clipPosition = toClipSpace3(position);
+	
 	float rayLength = ((position.z + dir.z * far*sqrt(3.)) > -near) ? (-near -position.z) / dir.z : far*sqrt(3.);
 	vec3 direction = toClipSpace3(position + dir*rayLength) - clipPosition;  //convert to clip space
 	vec3 reflectedTC = vec3((direction.xy + clipPosition.xy) * RENDER_SCALE, 0.999999);
@@ -132,32 +133,32 @@ vec3 rayTraceSpeculars(
 	clipPosition.xy *= RENDER_SCALE;
 	stepv.xy *= RENDER_SCALE;
 
-	vec3 spos = clipPosition + stepv*mix(dither, dither*0.5+0.5, roughness);
-	spos += vec3(0.5*texelSize,0.0); // small offsets to reduce artifacts from precision differences.
-	
-	#if defined DEFERRED_SPECULAR && TAA_MODE > 0
-		spos.xy += taaJitter*texelSize*0.5/RENDER_SCALE;
-	#endif
+	vec3 spos = clipPosition + stepv*dither;
 
-	float minZ = spos.z - 0.00025 / linZ(spos.z);
+	float minZ = spos.z - biasAmount / linZ(spos.z);
 	float maxZ = spos.z;
 	vec3 hitPos = vec3(1.1);
-
+	
   	for (int i = 0; i <= int(quality); i++) {
 		#if DEFERRED_SSR_QUALITY != 1
 			if(!hand && (spos.x < 0 || spos.x > 1 || spos.y < 0 || spos.y > 1)) return vec3(1.1);
 		#endif
 
-		float sampleDepth = sqrt(texelFetch(colortex4, ivec2(spos.xy/texelSize/4.0),0).a/65000.0);
+		#if defined SSR_PRECISION_MISSMATCH_FIX && DEFERRED_SSR_QUALITY > 1
+			float sampleDepth = clamp(sqrt(texture(colortex4, spos.xy/4.0).a/65000.0),0.0,1.0);
+		#else
+			float sampleDepth = sqrt(texelFetch(colortex4, ivec2(spos.xy/texelSize/4.0),0).a/65000.0);
+		#endif
 		
 		float sp = invLinZ(sampleDepth);
 
-
 		if(sp < max(minZ, maxZ) && sp > min(minZ, maxZ)) {
 			hitPos = vec3(spos.xy/RENDER_SCALE, sp);
+
 			#ifdef TERRIBLE_SSR_LOD_FALLBACK
 				if(sp > 0.99999) hitPos = reflectedTC;
 			#endif
+
 			break;
 		}
 		
@@ -169,15 +170,43 @@ vec3 rayTraceSpeculars(
 		reflectionLength += 1.0 / quality;
   	}
 
+	#if defined SSR_PRECISION_MISSMATCH_FIX && DEFERRED_SSR_QUALITY > 1
+		if(
+			abs(sqrt(texture(colortex4, spos.xy/4.0).a/65000.0) - linZ(texture(depthtex1, spos.xy).x)) > 0.05
+		) return vec3(1.1);
+	#endif
 
 	#if DEFERRED_SSR_QUALITY == 1
 		return reflectedTC;
 	#endif
 
 	if(hand) return reflectedTC;
+
 	return hitPos;
 }
+// vec3 invTonemap(vec3 col){
+// 	return col/(1.0-clamp(luma(col),0.0,1.0));
+// }
+// vec3 tonemap(vec3 col){
+// 	return col/(1+luma(col));
+// }
 
+
+float maxof3(vec3 color) {
+  return max(color.x, max(color.y, color.z));
+}
+
+float thercp(float color){
+  return 1.0 / color;
+}
+
+vec3 tonemap(vec3 c) {
+  return c * thercp(maxof3(c) + 1.0);
+}
+
+vec3 invTonemap(vec3 c) { 
+  return c * thercp(max(1.0 - maxof3(c),0.01));
+}
 vec4 screenSpaceReflections(
 	vec3 reflectedVector,
 	vec3 viewPos,
@@ -199,10 +228,10 @@ vec4 screenSpaceReflections(
 	#endif
 
 	vec3 raytracePos = rayTraceSpeculars(reflectedVector, viewPos, noise, quality, isHand, reflectionLength, roughness);
-
+	
 	if ( (raytracePos.z > 1.0 && backgroundReflectMask > 0.999999)
 		#ifdef SSR_SELF_REFLECT_FIX
-		|| distance(gl_FragCoord.xy*texelSize, raytracePos.xy) < 0.002
+		|| distance(gl_FragCoord.xy*texelSize, raytracePos.xy) < 0.0002
 		#endif
 	) return reflection;
 
@@ -212,29 +241,32 @@ vec4 screenSpaceReflections(
 	reflectionLength = min(max(reflectionLength - 0.1, 0.0)/0.9, 1.0);
 	float LOD = mix(0.0, 6.0*(1.0-exp(-15.0*sqrt(roughness))), 1.0-pow(1.0-reflectionLength,5.0));
 
-	vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(raytracePos) + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
-	previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
-	previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
+	if (raytracePos.x > 0.0 && raytracePos.y > 0.0 && raytracePos.x < 1.0 && raytracePos.y < 1.0) {
+		
+		vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(raytracePos) + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
+		previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
+		previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
 
-	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.y < 1.0) {
 		#if defined OVERWORLD_SHADER 
 			reflection.a = raytracePos.z > 0.999999 ? (isHand || isEyeInWater == 1 ? 1.0 : 0.0) : 1.0;
 		#else
 			reflection.a = 1.0;
 		#endif
-		
+
 		#ifdef FORWARD_SPECULAR
-			// vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
-			// vec2 resScale = vec2(1920.,1080.)/clampedRes;
-			// vec2 bloomTileUV = (((previousPosition.xy/texelSize)*2.0 + 0.5)*texelSize/2.0) / clampedRes*vec2(1920.,1080.);
-			// reflection.rgb = texture(colortex6, bloomTileUV / 4.0).rgb;
 			reflection.rgb = texture(colortex5, previousPosition.xy).rgb;
 		#else
 			reflection.rgb = texture2DLod(colortex5, previousPosition.xy, LOD).rgb;
+			// previousPosition.xy = raytracePos.xy;
+			// vec4 data = texelFetch(colortex1, ivec2(previousPosition.xy/texelSize), 0);
+			// vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y)); // albedo, masks
+			// vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w)); // normals, lightmaps
+			// reflection.rgb = toLinear(vec3(dataUnpacked0.xz,dataUnpacked1.x));
 		#endif
-	}
 
-	// reflection.rgb = vec3(LOD/6);
+		reflection.rgb = clamp(invTonemap(reflection.rgb/65000.0),0.0,65000.0);
+
+	}
 
 // vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
 // vec2 resScale = vec2(1920.,1080.)/clampedRes;
@@ -329,6 +361,13 @@ vec3 specularReflections(
 	,in vec3 mainHandCol
 	,in vec3 offHandPos
 	,in vec3 offHandCol
+	// #ifdef FORWARD_SPECULAR
+	// ,in float cloudShadow
+	// #endif
+	
+	#if defined DEFERRED_SSR_QUALITY > 0
+	,in float fullResDepth
+	#endif
 
 ){
 	lightmap = min(max(lightmap-0.9,0.0)/0.1,1.0); 
@@ -342,6 +381,10 @@ vec3 specularReflections(
 
 	// f0 = 0.9;
 	// roughness = 0.0;
+
+	// #ifdef FORWARD_SPECULAR
+	// f0 = 0.9;
+	// #endif
 
 	bool isMetal = f0 > 229.5/255.0;
 
@@ -361,7 +404,25 @@ vec3 specularReflections(
 		vec3 reflectedVector_L = reflect(playerPos, normal);
 	#endif
 	float VdotN = dot(-normalize(viewDir), vec3(0.0,0.0,1.0));
+
 	float shlickFresnel = shlickFresnelRoughness(VdotN, roughness);
+
+	#if DEFERRED_SSR_QUALITY > 0
+		vec3 viewPos_new = toScreenSpace(vec3(gl_FragCoord.xy*texelSize/RENDER_SCALE, min(invLinZ(sqrt(texture(colortex4, gl_FragCoord.xy*texelSize/4.0).a/65000.0)),fullResDepth)));
+		vec3 playerPos_new = mat3(gbufferModelViewInverse)*viewPos_new ;
+		vec3 viewDir_new = -playerPos_new*basis;
+		#if defined DEFERRED_ROUGH_REFLECTION
+			vec3 reflectedVector_L_new = basis * reflect(-normalize(viewDir_new), samplePoints);
+			reflectedVector_L_new = isHand ? reflect(playerPos_new, normal) : reflectedVector_L;
+		#else
+			vec3 reflectedVector_L_new = reflect(playerPos_new, normal);
+		#endif
+	#else
+		vec3 viewPos_new = viewPos;
+		vec3 playerPos_new = playerPos;
+		vec3 viewDir_new = viewDir;
+		vec3 reflectedVector_L_new = reflectedVector_L;
+	#endif
 
 	// F0 <  230 dialectrics
 	// F0 >= 230 hardcoded metal f0
@@ -408,7 +469,7 @@ vec3 specularReflections(
 			#endif
 
 			#if DEFERRED_SSR_QUALITY > 0 || FORWARD_SSR_QUALITY > 0
-				vec4 enviornmentReflection = screenSpaceReflections(mat3(gbufferModelView) * reflectedVector_L, viewPos, noise.z, isHand, roughness, backgroundReflectMask);
+				vec4 enviornmentReflection = screenSpaceReflections(mat3(gbufferModelView) * reflectedVector_L_new, viewPos_new, noise.z, isHand, roughness, backgroundReflectMask);
 				
 				// darkening for metals.
 				vec3 DarkenedDiffuseLighting = isMetal ? diffuseLighting * (1.0-enviornmentReflection.a) * (1.0-lightmap) : diffuseLighting;

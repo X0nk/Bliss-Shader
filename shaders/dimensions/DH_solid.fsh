@@ -60,6 +60,7 @@ float encodeVec2(float x,float y){
 uniform mat4 gbufferProjection;
 uniform mat4 gbufferProjectionInverse;
 uniform vec3 cameraPosition;
+uniform vec3 previousCameraPosition;
 
 vec3 toScreenSpace(vec3 p) {
 	vec4 iProjDiag = vec4(gbufferProjectionInverse[0].x, gbufferProjectionInverse[1].y, gbufferProjectionInverse[2].zw);
@@ -157,6 +158,7 @@ vec4 applyNoise(in vec4 fragColor, const in vec3 viewPos, const in float viewDis
 
     return vec4(newCol,1.0);
 }
+
 
 /* RENDERTARGETS:1,7,8 */
 void main() {

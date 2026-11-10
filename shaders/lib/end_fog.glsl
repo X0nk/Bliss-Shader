@@ -65,6 +65,13 @@ SOFTWARE.*/
 uniform vec4 randomPosXYZ;
 uniform vec3 snapToGrid;
 
+uniform vec3 endFlashPosition;
+uniform vec3 endFlashPositionWorldSpace;
+uniform vec3 endFlashPositionWorldSpaceSaved;
+
+uniform float endFlashIntensity;
+uniform float slowEndFlashIntensity;
+
 // vec3 RandomPosition = hash31(frameTimeCounter);
 float vortexBoundRange = 300.0;
 #ifdef THE_ORB
@@ -125,15 +132,16 @@ vec3 LightSourcePosition_VL(vec3 worldPos, vec3 cameraPos, vec3 lightningBoltPos
 }
 
 float densityAtPosFog(in vec3 pos){
+	pos -= 0.5;
 	pos /= 18.;
 	pos.xz *= 0.5;
 
 	vec3 p = floor(pos);
 	vec3 f = fract(pos);
 
-	f = (f*f) * (3.-2.*f);
+	f = (f*f) * (3.0 - 2.0*f);
 	vec2 uv =  p.xz + f.xz + p.y * vec2(0.0,193.0);
-	vec2 coord =  uv / 512.0;
+	vec2 coord =  (uv) / 512.0;
 	vec2 xy = texture(noisetex, coord).yx;
 	return mix(xy.r,xy.g, f.y);
 }
@@ -248,6 +256,11 @@ float phaseEND(float x, float g){
     float gg = g * g;
     return (gg * -0.25 + 0.25) * pow(-2.0 * (g * x) + (gg + 1.0), -1.5) / 3.14;
 }
+
+float luma2(vec3 color) {
+	return dot(color,vec3(0.21, 0.72, 0.07));
+}
+
 vec4 GetVolumetricFog(
 	vec3 viewPosition,
 	float dither,
@@ -281,12 +294,37 @@ vec4 GetVolumetricFog(
 
 	float skyPhase = (0.5 + pow(clamp(normalize(wpos).y*0.5+0.5,0.0,1.0),4.0)*5.0) * 0.1;
 
-	vec3 hazeColor = normalize(gl_Fog.color.rgb + 1e-6) * 0.1;
-    
+	// vec3 hazeColor = normalize(gl_Fog.color.rgb + 1e-6) * 0.1;
+	
 	// float lightningflash = texelFetch(colortex4,ivec2(1,1),0).x/150.0;
 	// make the position offset to random places (RNG.xyz from non-clearing buffer).
 	vec3 lightningBoltPos = texelFetch(colortex4,ivec2(2,1),0).xyz * 2.0 - 1.0;
 	float lightningflash = DoEndFlashEffect(lightningBoltPos.xyz);
+
+    /*
+	float newFlash = dot(normalize(wpos),normalize(endFlashPositionWorldSpace));
+	newFlash = clamp(mix(newFlash-1.0, newFlash*0.5+0.5, 1.0-pow(1.0-endFlashIntensity,3)),0.0,1.0);
+	newFlash = exp(-8.0*(1.0-newFlash));
+	// vec3 newFlashCol = mix(vec3(1.0,0.0,0.5), vec3(0.8,0.8,1.0) *2.0, newFlash*clamp(lightningflash*2.0+0.5,0,1)) * newFlash;
+	vec3 newFlashCol = vec3(1.0,0.0,1.0) * newFlash;
+	hazeColor += newFlashCol * (1.0+lightningflash);
+
+	
+	float afterGlow = dot(normalize(wpos),normalize(endFlashPositionWorldSpaceSaved));
+	// afterGlow = clamp(mix(afterGlow*0.5+0.5, afterGlow-1.0, endFlashIntensity),0.0,1.0);
+	// afterGlow = pow(1-pow(1-afterGlow,1),2);
+	// afterGlow = exp(-5.0*(1.0-afterGlow));
+	
+	afterGlow = (0.5 + pow(clamp(afterGlow*0.5+0.5,0.0,1.0),4.0)*5.0) * 0.1;
+	vec3 afterGlowCol = vec3(0.0,0.3,0.8) * 0.2 * afterGlow * slowEndFlashIntensity;
+	hazeColor += afterGlowCol;
+	
+	*/
+
+	// hazeColor = hazeColor + (hazeColor-luma2(hazeColor));
+
+	// hazeColor = hazeColor;
+
 	
 	for (int i = 0; i < SAMPLECOUNT; i++) {
 		float d = (pow(expFactor, float(i+dither)/float(SAMPLECOUNT))/expFactor - 1.0/expFactor)/(1-1.0/expFactor);
@@ -319,7 +357,7 @@ vec4 GetVolumetricFog(
 			float volumeCoeff = exp(-stormDensity*dd*dL);
 
 			vec3 lightsources = LightSourceLighting(progressW, lightPosition, dither, volumeDensity, lightColors, vortexBounds);
-			vec3 indirect = vec3(0.5,0.75,1.0) * 0.1 * (exp((volumeDensity*volumeDensity) * -50) * 0.9 + 0.1) * 0.1;
+			vec3 indirect = vec3(0.5,0.5,1.0) * 0.1 * (exp((volumeDensity*volumeDensity) * -50) * 0.9 + 0.1) * 0.1;
 			
 			vec3 stormLighting = indirect + lightsources;
 			
@@ -330,6 +368,7 @@ vec4 GetVolumetricFog(
 			// dont make haze contrube to absorbance.
 			float hazeDensity = 0.001 * END_HAZE_DENSTIY;
 			vec3 hazeLighting = vec3(0.3,0.6,1.0) * skyPhase * 0.5;
+			// vec3 hazeLighting = hazeColor;
 			color += (hazeLighting - hazeLighting*exp(-hazeDensity*dd*dL)) * absorbance;
 
 

@@ -48,7 +48,7 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		if(texture(depthtex1, gl_FragCoord.xy*texelSize).x < 1.0){ discard; return;}
 	#endif
 
-	vec3 Albedo = toLinear(gcolor.rgb);
+	vec3 Albedo = toLinear(gcolor.rgb)  ;
 
 	gl_FragData[0] = vec4(Albedo * Emissive_Brightness * 0.1, gcolor.a);
 }

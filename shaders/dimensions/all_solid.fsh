@@ -30,7 +30,7 @@ flat varying float EMISSIVE;
 flat varying int LIGHTNING;
 flat varying int PORTAL;
 flat varying int SIGN;
-// flat varying float HELD_ITEM_BRIGHTNESS;
+flat varying int SHADOWBIAS_OFFSET_MASK;
 
 uniform sampler2D texture;
 uniform sampler2D normals;
@@ -213,6 +213,8 @@ vec4 readNoise(in vec2 coord){
 }
 
 float bias(){
+		// return 0.0;
+		
 	#ifdef SCALE_MIPMAP_WITH_RESOLUTION
 		// bias mipmapping as window resolution and / or render scale changes.
 		#if TAA_MODE == 3
@@ -265,6 +267,7 @@ void convertHandDepth(inout float depth) {
 	layout(location = 1) out vec4 SPECULAR_DATA;
 #endif
 
+
 void main() {
 		
 	vec3 FragCoord = gl_FragCoord.xyz;
@@ -301,8 +304,7 @@ void main() {
 	vec3 fragpos = toScreenSpace(FragCoord*vec3(texelSize/RENDER_SCALE,1.0)-vec3(vec2(tempOffset)*texelSize*0.5, 0.0));
 	vec3 playerpos = mat3(gbufferModelViewInverse) * fragpos  + gbufferModelViewInverse[3].xyz;
 	vec3 worldpos = playerpos + cameraPosition;
-	
-	float lightmap = clamp( (lmtexcoord.w-0.9) * 10.0,0.,1.);
+
 	vec2 adjustedTexCoord = lmtexcoord.xy;
 	float saveDepth = 0.0;
 
@@ -373,6 +375,8 @@ void main() {
 		
 	}
 #endif
+	
+	// saveDepth = 0.01;
 
 	if(!ifPOM) adjustedTexCoord = lmtexcoord.xy;
 	
@@ -487,7 +491,7 @@ void main() {
 			if(saveDepth > 0) Albedo.a = clamp(saveDepth*0.45,0.0,Albedo.a);
 		#endif
 	#endif
-
+	
 	#ifdef HAND
 		if (Albedo.a > 0.1){
 			Albedo.a = 0.75;
@@ -496,6 +500,7 @@ void main() {
 			Albedo.a = 1.0;
 		}
 	#endif
+
 	#if defined PARTICLE_RENDERING_FIX && (defined ENTITIES || defined BLOCKENTITIES)
 		EXTRA_STUFF.xyzw = vec4(0.0);
 	#endif
@@ -515,7 +520,7 @@ void main() {
 		float Heightmap = 1.0 - NormalTex.w;
 
 		NormalTex.xy = NormalTex.xy * 2.0-1.0;
-		NormalTex.z = sqrt(max(1.0 - dot(NormalTex.xy, NormalTex.xy), 0.0));
+		NormalTex.z = sqrt(1.0 - dot(NormalTex.xy, NormalTex.xy));
 
 		normal = applyBump(tbnMatrix, NormalTex.xyz);
 	#endif
@@ -530,7 +535,7 @@ void main() {
 	//////////////////////////////// 				////////////////////////////////
 	////////////////////////////////	SPECULAR	////////////////////////////////
 	//////////////////////////////// 				//////////////////////////////// 
-	
+
 	#ifdef WORLD
 		vec4 SpecularTex = texture2D_POMSwitch(specular, adjustedTexCoord.xy, vec4(dcdx,dcdy), ifPOM,textureLOD);
 

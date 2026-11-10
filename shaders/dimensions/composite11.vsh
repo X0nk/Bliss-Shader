@@ -2,6 +2,10 @@
 
 varying vec2 texcoord;
 
+uniform sampler2D colortex4;
+
+flat varying vec4 exposure;
+flat varying vec2 rodExposureDepth;
 
 //////////////////////////////VOID MAIN//////////////////////////////
 //////////////////////////////VOID MAIN//////////////////////////////
@@ -10,6 +14,11 @@ varying vec2 texcoord;
 //////////////////////////////VOID MAIN//////////////////////////////
 
 void main() {
+
 	gl_Position = ftransform();
 	texcoord = gl_MultiTexCoord0.xy;
+
+	exposure = vec4(vec3(texelFetch(colortex4,ivec2(10,37),0).r),texelFetch(colortex4,ivec2(10,37),0).r);
+	rodExposureDepth = texelFetch(colortex4,ivec2(14,37),0).rg;
+	rodExposureDepth.y = sqrt(rodExposureDepth.y/65000.0);
 }

@@ -390,6 +390,7 @@ float luma(vec3 color) {
 			vec4 Albedo = texture(texture, adjustedTexCoord.xy);
 		#endif
 
+
 		if(Albedo.a < alphaTestRef){discard; return;}
 
 		Albedo.rgb = toLinear(Albedo.rgb);

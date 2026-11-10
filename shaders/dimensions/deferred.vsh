@@ -79,13 +79,7 @@ float tanh(float x){
 float ld(float depth) {
     return (2.0 * near) / (far + near - depth * (far - near));		// (-depth * (far - near)) = (2.0 * near)/ld - far - near
 }
-// float hash11(float p)
-// {
-//     p = fract(p * .1031);
-//     p *= p + 33.33;
-//     p *= p + p;
-//     return fract(p);
-// }
+uniform bool windowResizeCheck;
 
 #define USE_SCENE_CONTROLLER_SETTINGS
 #include "/lib/scene_controller.glsl"
@@ -144,12 +138,17 @@ void main() {
 
 	// luminance based reinhard is useful ouside of tonemapping too.
 	averageSkyCol_Clouds = 1.5 * (averageSkyCol_Clouds / (1.0+luma(averageSkyCol_Clouds)*0.2));
-	
 	averageSkyCol = max(averageSkyCol * PLANET_GROUND_BRIGHTNESS,0.0) ;
 
 	#ifdef USE_CUSTOM_SKY_GROUND_LIGHTING_COLORS
 		averageSkyCol = luma(averageSkyCol) * vec3(SKY_GROUND_R,SKY_GROUND_G,SKY_GROUND_B);
 	#endif
+
+	
+	// if(windowResizeCheck || frameCounter < 2 ){
+	//  averageSkyCol_Clouds *= 25555.0;
+	//  averageSkyCol *= 2555.0;
+	// }
 
 
 ////////////////////////////////////////
@@ -164,12 +163,12 @@ void main() {
 	vec3 skyAbsorb = vec3(0.0);
 	sunColor = calculateAtmosphere(vec3(0.0), sunVec, vec3(0.0,1.0,0.0), sunVec, -sunVec, planetSphere, skyAbsorb, 25,0.0);
 	sunColor = sunColorBase/4000.0 * skyAbsorb;
-	sunColor2 = sunColorBase/4000.0;
 	moonColor = moonColorBase/4000.0;
+
+	sunColor2 = (sunColorBase/4000.0);// * sunVis + moonColor * moonVis;
 
 	// lightSourceColor = sunVis >= 1e-5 ? sunColor * sunVis : moonColor * moonVis;
 	lightSourceColor = sunColor * sunVis + moonColor * moonVis;
-
 #endif
 
 #if defined OVERWORLD_SHADER && defined TWILIGHT_FOREST_FLAG
@@ -237,6 +236,7 @@ void main() {
 	centerDepth = centerDepth * centerDepth * 65000.0;
 
 	rodExposure = targetrodExposure;
+
 
 	#ifndef AUTO_EXPOSURE
 	 exposure = Manual_exposure_value;

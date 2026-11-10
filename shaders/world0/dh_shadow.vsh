@@ -7,12 +7,13 @@ Read the terms of modification and sharing before changing something below pleas
 !! DO NOT REMOVE !!
 */
 #include "/lib/settings.glsl"
-
 #include "/lib/macro_lod_mod.glsl"
-#ifdef USING_LOD_MOD
-	uniform sampler2D LOD_DEPTHTEX0;
-	uniform sampler2D LOD_DEPTHTEX1;
-#endif
+// #include "/lib/Shadow_Params.glsl"
+
+// #ifdef USING_LOD_MOD
+// 	uniform sampler2D LOD_DEPTHTEX0;
+// 	uniform sampler2D LOD_DEPTHTEX1;
+// #endif
 
 #define SHADOW_MAP_BIAS 0.5
 const float PI = 3.1415927;
@@ -29,12 +30,11 @@ flat varying int water;
 
 
 
-#include "/lib/Shadow_Params.glsl"
 
 #define diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
 #define  projMAD(m, v) (diagonal3(m) * (v) + (m)[3].xyz)
 
-// uniform float far;
+uniform float far;
 uniform float dhFarPlane;
 
 #include "/lib/DistantHorizons_projections.glsl"
