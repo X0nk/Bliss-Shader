@@ -257,6 +257,8 @@ screen.Ambient_light = Ambient Light
 
  ###################################################### ↓↓↓ THIS SUBMENU'S LABELS
 screen.Resource_Pack_Support = Materials / Resource Pack Support
+    profile.labPBR = §aUse LabPBR Materials: ✔
+    profile.built_in = §aUse Built-In Materials: ✔
 
     screen.SPECULAR = Specular Reflections
         option.DEFERRED_SPECULAR = Reflections on terrain
@@ -448,9 +450,8 @@ screen.Post_Processing = Post Processing
             suffix.SCALE_FACTOR = x §fof the window resolution
         
         option.TAA_TEXTURE_FILTERING_MODE = Sampler Filter Mode
-            value.TAA_TEXTURE_FILTERING_MODE.0 = Nearest Neighbor §bⓘ Sharpest but Grainy§r
-            value.TAA_TEXTURE_FILTERING_MODE.1 = Linear §bⓘ Cleanest but slightly blurry§r
-            value.TAA_TEXTURE_FILTERING_MODE.2 = Nearest (current frame) + Linear (neighborhood sampling)
+            value.TAA_TEXTURE_FILTERING_MODE.0 = Nearest Neighbor §bⓘ Sharpest visuals, but grainy§r
+            value.TAA_TEXTURE_FILTERING_MODE.1 = Linear §bⓘ Cleanest visuals, but is slightly blurry§r
         option.VARIANCE_CLIP_GAMMA_VAR = Variance Clip Tuning
             
     option.MOTION_BLUR_AMOUNT =  Motion Blur Amount
