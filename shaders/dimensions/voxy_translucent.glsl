@@ -178,7 +178,21 @@ float interleaved_gradientNoise_temporal(){
 	float noise = fract(52.9829189*fract(0.06711056*coord.x + 0.00583715*coord.y)) ;
 	return noise;
 }
+float maxof3(vec3 color) {
+  return max(color.x, max(color.y, color.z));
+}
 
+float thercp(float color){
+  return 1.0 / color;
+}
+
+vec3 tonemap(vec3 c) {
+  return c * thercp(maxof3(c) + 1.0);
+}
+
+vec3 invTonemap(vec3 c) { 
+  return c * thercp(1.0 - maxof3(c));
+}
 /*
 struct VoxyFragmentParameters {
     vec4 sampledColour;
@@ -294,7 +308,7 @@ void voxy_emitFragment(VoxyFragmentParameters parameters) {
             	previousPosition.xy = projMAD(vxProjPrev, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
             	if (previousPosition.x > 0.0 && previousPosition.y > 0.0 && previousPosition.x < 1.0 && previousPosition.y < 1.0) {
 	    			SSR.a = 1.0;
-	    			SSR.rgb = texture(colortex5, previousPosition.xy).rgb;
+	    			SSR.rgb = invTonemap(texture(colortex5, previousPosition.xy).rgb/65000.0);
             	}
             }
             

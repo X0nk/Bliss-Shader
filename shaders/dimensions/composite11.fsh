@@ -282,11 +282,12 @@ void main() {
 				// bcolor += texture2DLod(colortex5, texcoord.xy + bokeh_offsets[i]*pcoc*vec2(DOF_ANAMORPHIC_RATIO,aspectRatio), dofLodLevel).rgb;
 
 				vec2 bokeh_pos = bokeh_offsets[i];
-				bcolor.r += texture2DLod(colortex5, texcoord + (bokeh_pos + dispersion)*pcoc*vec2(DOF_ANAMORPHIC_RATIO*lensDistort,aspectRatio), dofLodLevel).r;
-				bcolor.g += texture2DLod(colortex5, texcoord +  bokeh_pos*pcoc*vec2(DOF_ANAMORPHIC_RATIO*lensDistort,aspectRatio), dofLodLevel).g;
-				bcolor.b += texture2DLod(colortex5, texcoord + (bokeh_pos - dispersion)*pcoc*vec2(DOF_ANAMORPHIC_RATIO*lensDistort,aspectRatio), dofLodLevel).b;
+				bcolor.r += textureLod(colortex5, texcoord + (bokeh_pos + dispersion)*pcoc*vec2(DOF_ANAMORPHIC_RATIO*lensDistort,aspectRatio), dofLodLevel).r;
+				bcolor.g += textureLod(colortex5, texcoord +  bokeh_pos*pcoc*vec2(DOF_ANAMORPHIC_RATIO*lensDistort,aspectRatio), dofLodLevel).g;
+				bcolor.b += textureLod(colortex5, texcoord + (bokeh_pos - dispersion)*pcoc*vec2(DOF_ANAMORPHIC_RATIO*lensDistort,aspectRatio), dofLodLevel).b;
 			}
 			vec3 col = bcolor/BOKEH_SAMPLES;
+			col = invTonemap(col/65000.0);
 		#endif
 	#endif
 
