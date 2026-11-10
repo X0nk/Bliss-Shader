@@ -461,22 +461,22 @@ vec3 allocatePrecision_TangentNormal(vec3 normals){
   	vec3 newNormal = normals;
 	
 	if(normals.x < 0.0) {
-		newNormal.x = -pow(1.0-pow(1.0-clamp(-newNormal.x,0.0,1.0),2),0.5);
+		newNormal.x = -sqrt(1.0-pow(1.0-clamp(-newNormal.x,0.0,1.0),2));
 	}else{
-		newNormal.x =  pow(1.0-pow(1.0-clamp( newNormal.x,0.0,1.0),2),0.5);
+		newNormal.x =  sqrt(1.0-pow(1.0-clamp( newNormal.x,0.0,1.0),2));
 	}
 	if(normals.y < 0.0) {
-		newNormal.y = -pow(1.0-pow(1.0-clamp(-newNormal.y,0.0,1.0),2),0.5);
+		newNormal.y = -sqrt(1.0-pow(1.0-clamp(-newNormal.y,0.0,1.0),2));
 	}else{
-		newNormal.y =  pow(1.0-pow(1.0-clamp( newNormal.y,0.0,1.0),2),0.5);
+		newNormal.y =  sqrt(1.0-pow(1.0-clamp( newNormal.y,0.0,1.0),2));
   	}
 	if(normals.z < 0.0) {
-		newNormal.z = -pow(1.0-pow(1.0-clamp(-newNormal.z,0.0,1.0),2),0.5);
+		newNormal.z = -sqrt(1.0-pow(1.0-clamp(-newNormal.z,0.0,1.0),2));
 	}else{
-		newNormal.z =  pow(1.0-pow(1.0-clamp( newNormal.z,0.0,1.0),2),0.5);
+		newNormal.z =  sqrt(1.0-pow(1.0-clamp( newNormal.z,0.0,1.0),2));
   	}
 	
-	return clamp(newNormal + newNormal*interleaved_gradientNoise_temporal()*0.025,-1.0,1.0);
+	return clamp(newNormal + newNormal*(interleaved_gradientNoise_temporal()-0.5)*0.015,-1.0,1.0);
 }
 // vec4 toClipSpace3(vec3 viewSpacePosition) {
 //     return vec4(projMAD(gl_ProjectionMatrix, viewSpacePosition),-viewSpacePosition.z);

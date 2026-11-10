@@ -493,19 +493,19 @@ vec3 allocatePrecision_TangentNormal(vec3 normals){
   vec3 newNormal = normals;
 
   if(normals.x < 0.0) {
-		newNormal.x = -(1.0-pow(1-pow(clamp(-newNormal.x,0.0,1.0),2),0.5));
+		newNormal.x = -(1.0-sqrt(1-pow(clamp(-newNormal.x,0.0,1.0),2)));
 	}else{
-		newNormal.x =  (1.0-pow(1-pow(clamp( newNormal.x,0.0,1.0),2),0.5));
+		newNormal.x =  (1.0-sqrt(1-pow(clamp( newNormal.x,0.0,1.0),2)));
   }
   if(normals.y < 0.0) {
-		newNormal.y = -(1.0-pow(1-pow(clamp(-newNormal.y,0.0,1.0),2),0.5));
+		newNormal.y = -(1.0-sqrt(1-pow(clamp(-newNormal.y,0.0,1.0),2)));
 	}else{
-		newNormal.y =  (1.0-pow(1-pow(clamp( newNormal.y,0.0,1.0),2),0.5));
+		newNormal.y =  (1.0-sqrt(1-pow(clamp( newNormal.y,0.0,1.0),2)));
   }
   if(normals.z < 0.0) {
-		newNormal.z = -(1.0-pow(1-pow(clamp(-newNormal.z,0.0,1.0),2),0.5));
+		newNormal.z = -(1.0-sqrt(1-pow(clamp(-newNormal.z,0.0,1.0),2)));
 	}else{
-		newNormal.z =  (1.0-pow(1-pow(clamp( newNormal.z,0.0,1.0),2),0.5));
+		newNormal.z =  (1.0-sqrt(1-pow(clamp( newNormal.z,0.0,1.0),2)));
   }
 
 	return newNormal;
