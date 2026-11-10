@@ -66,6 +66,7 @@ uniform int entityId;
     uniform int currentRenderedItemId;
 	uniform int renderStage;
 
+	#include "/lib/voxel_buffer.glsl"
 	#include "/lib/voxel_common.glsl"
 	#include "/lib/voxel_write.glsl"
 #endif

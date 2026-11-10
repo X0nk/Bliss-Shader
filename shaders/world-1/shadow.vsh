@@ -23,17 +23,19 @@ Read the terms of modification and sharing before changing something below pleas
 	#endif
 	attribute vec3 vaPosition;
 
+	uniform mat4 gbufferModelViewInverse;
 	uniform mat4 shadowModelViewInverse;
-	
+
 	uniform int renderStage;
 	uniform vec3 chunkOffset;
 	uniform vec3 cameraPosition;
-    uniform int currentRenderedItemId;
+	uniform int currentRenderedItemId;
 	uniform int blockEntityId;
 	uniform int entityId;
 
 	#include "/lib/blocks.glsl"
 	#include "/lib/entities.glsl"
+	#include "/lib/voxel_buffer.glsl"
 	#include "/lib/voxel_common.glsl"
 	#include "/lib/voxel_write.glsl"
 #endif

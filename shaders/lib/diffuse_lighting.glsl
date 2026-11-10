@@ -46,7 +46,7 @@ vec3 doBlockLightLighting(
 
         // create a smooth falloff at the edges of the voxel volume.
         float fadeLength = 10.0; // in meters
-        vec3 cubicRadius = clamp( min(((LpvSize3-1.0) - lpvPos)/fadeLength,      lpvPos/fadeLength) ,0.0,1.0);
+        vec3 cubicRadius = clamp( min(((VoxelSize3-1.0) - lpvPos)/fadeLength,      lpvPos/fadeLength) ,0.0,1.0);
         float voxelRangeFalloff = cubicRadius.x*cubicRadius.y*cubicRadius.z;
         voxelRangeFalloff = 1.0 - pow(1.0-pow(voxelRangeFalloff,1.5),3.0);
         

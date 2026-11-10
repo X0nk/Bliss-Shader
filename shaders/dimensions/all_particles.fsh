@@ -94,7 +94,7 @@ uniform int heldBlockLightValue2;
 	uniform int frameCounter;
 
 	#include "/lib/hsv.glsl"
-	#include "/lib/lpv_common.glsl"
+	#include "/lib/voxel_common.glsl"
 	#include "/lib/lpv_render.glsl"
 #endif
 
@@ -526,7 +526,7 @@ float luma(vec3 color) {
 
 		///////////////////////// BLOCKLIGHT LIGHTING OR LPV LIGHTING OR FLOODFILL COLORED LIGHTING
 			#ifdef IS_LPV_ENABLED
-				vec3 lpvPos = GetLpvPosition(feetPlayerPos);
+				vec3 lpvPos = GetVoxelPosition(feetPlayerPos);
 			#else
 				const vec3 lpvPos = vec3(0.0);
 			#endif

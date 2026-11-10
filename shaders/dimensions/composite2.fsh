@@ -127,7 +127,7 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 
 	#ifdef IS_LPV_ENABLED
 		#include "/lib/hsv.glsl"
-		#include "/lib/lpv_common.glsl"
+		#include "/lib/voxel_common.glsl"
 		#include "/lib/lpv_render.glsl"
 	#endif
 	vec4 raymarchLPV(
@@ -163,10 +163,10 @@ float linearizeDepthFast(const in float depth, const in float near, const in flo
 
 			LPVrayProgress = gbufferModelViewInverse[3].xyz + d*LPVrayStartPos;
 
-			vec3 lpvPos = GetLpvPosition(LPVrayProgress);
+			vec3 lpvPos = GetVoxelPosition(LPVrayProgress);
 
         	float fadeLength = 10.0; // in blocks
-        	vec3 cubicRadius = clamp(	min(((LpvSize3-1.0) - lpvPos)/fadeLength,      lpvPos/fadeLength) ,0.0,1.0);
+        	vec3 cubicRadius = clamp(	min(((VoxelSize3-1.0) - lpvPos)/fadeLength,      lpvPos/fadeLength) ,0.0,1.0);
         	float LpvFadeF = cubicRadius.x*cubicRadius.y*cubicRadius.z;
 
 			if(LpvFadeF < 0.01) break;
