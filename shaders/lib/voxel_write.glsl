@@ -60,6 +60,7 @@ void PopulateShadowVoxel(const in vec3 playerPos) {
 }
 
 #if defined FLOODFILL_VERTEX_COLOR_FALLBACK
+    uniform sampler2D gtexture;
 	uniform usampler1D texBlockData;
     mat4 GetSaturationMatrix(const in float saturation) {
         const vec3 luminance = vec3(0.3086, 0.6094, 0.0820);
@@ -80,8 +81,9 @@ void PopulateShadowVoxel(const in vec3 playerPos) {
 		vec3 storedColor = vec3(1.0);
 		float lightRange = 0.0;
 		if(blockId == BLOCK_EMISSIVE_FALLBACK) {
+			vec3 lightColor = texture(gtexure,mc_midTexCoord.xy).xyz * vertexColor;
 			lightRange = 15.0;
-			storedColor = (GetSaturationMatrix(LPV_SATURATION / 100.0) * vec4(vertexColor,1.0)).xyz;
+			storedColor = (GetSaturationMatrix(LPV_SATURATION / 100.0) * vec4(lightColor,1.0)).xyz;
 			packedVoxelData.x = packUnorm4x8(vec4(storedColor,lightRange/255.0));
 		}
 		imageAtomicMax(imgVoxelColor,voxelPos,packedVoxelData);
