@@ -49,8 +49,12 @@ void main() {
 			vec3 position = mat3(gl_ModelViewMatrix) * vec3(gl_Vertex) + gl_ModelViewMatrix[3].xyz;
 			vec3 playerpos = mat3(shadowModelViewInverse) * position + shadowModelViewInverse[3].xyz;
 		#endif
+		#if defined FLOODFILL_VERTEX_COLOR_FALLBACK
+			PopulateShadowVoxelVertexColor(playerpos,gl_Color.rgb);
+		#else
+			PopulateShadowVoxel(playerpos);
+		#endif
 
-		PopulateShadowVoxel(playerpos);
 	#endif
 
 	gl_Position = vec4(-1.0);

@@ -209,7 +209,11 @@ void main() {
 	// #endif
 
 	#if defined IS_LPV_ENABLED && defined MC_GL_ARB_shader_image_load_store
-		PopulateShadowVoxel(playerpos);
+		#if defined FLOODFILL_VERTEX_COLOR_FALLBACK
+			PopulateShadowVoxelVertexColor(playerpos,color.rgb);
+		#else
+			PopulateShadowVoxel(playerpos);
+		#endif
 	#endif
 
 	// #ifdef WAVY_PLANTS
