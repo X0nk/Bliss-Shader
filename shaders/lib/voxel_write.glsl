@@ -81,7 +81,7 @@ void PopulateShadowVoxel(const in vec3 playerPos) {
 		vec3 storedColor = vec3(1.0);
 		float lightRange = 0.0;
 		if(blockId == BLOCK_EMISSIVE_FALLBACK) {
-			vec3 lightColor = texture(gtexure,mc_midTexCoord.xy).xyz * vertexColor;
+			vec3 lightColor = texture(gtexture,mc_midTexCoord.xy).xyz * vertexColor;
 			lightRange = 15.0;
 			storedColor = (GetSaturationMatrix(LPV_SATURATION / 100.0) * vec4(lightColor,1.0)).xyz;
 			packedVoxelData.x = packUnorm4x8(vec4(storedColor,lightRange/255.0));
