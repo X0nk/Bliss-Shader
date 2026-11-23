@@ -347,7 +347,6 @@ vec3 specularReflections(
 	
 	#if defined DEFERRED_SSR_QUALITY > 0
 	,in float fullResDepth
-	,in vec3 FlatNormals
 	#endif
 
 ){
