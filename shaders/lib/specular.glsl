@@ -44,7 +44,7 @@ vec3 SampleVNDFGGX(
     float alpha, // Roughness parameter along X and Y of the distribution
     vec2 xy // Pair of uniformly distributed numbers in [0, 1)
 ) {
-
+	// xy = xy.yy;
     // Transform viewer direction to the hemisphere configuration
     viewerDirection = normalize(vec3( alpha * 0.5 * viewerDirection.xy, viewerDirection.z));
 
@@ -184,13 +184,6 @@ vec3 rayTraceSpeculars(
 
 	return hitPos;
 }
-// vec3 invTonemap(vec3 col){
-// 	return col/(1.0-clamp(luma(col),0.0,1.0));
-// }
-// vec3 tonemap(vec3 col){
-// 	return col/(1+luma(col));
-// }
-
 
 float maxof3(vec3 color) {
   return max(color.x, max(color.y, color.z));
@@ -207,6 +200,7 @@ vec3 tonemap(vec3 c) {
 vec3 invTonemap(vec3 c) { 
   return c * thercp(max(1.0 - maxof3(c),0.01));
 }
+
 vec4 screenSpaceReflections(
 	vec3 reflectedVector,
 	vec3 viewPos,
@@ -215,6 +209,8 @@ vec4 screenSpaceReflections(
 	bool isHand,
 	float roughness,
 	inout float backgroundReflectMask
+	
+	,inout float selfReflectionAngle
 ){
 	vec4 reflection = vec4(0.0);
 	float reflectionLength = 0.0;
@@ -228,14 +224,10 @@ vec4 screenSpaceReflections(
 	#endif
 
 	vec3 raytracePos = rayTraceSpeculars(reflectedVector, viewPos, noise, quality, isHand, reflectionLength, roughness);
-	
-	if ( (raytracePos.z > 1.0 && backgroundReflectMask > 0.999999)
-		#ifdef SSR_SELF_REFLECT_FIX
-		|| distance(gl_FragCoord.xy*texelSize, raytracePos.xy) < 0.0002
-		#endif
-	) return reflection;
 
-	if(raytracePos.z >= 1.0 && raytracePos.x > 0.0 && raytracePos.y > 0.0 && raytracePos.x < 1.0 && raytracePos.y < 1.0) backgroundReflectMask = 1.0;
+	if ( (raytracePos.z > 1.0 && backgroundReflectMask > 0.999999) ) return reflection;
+
+	if ( raytracePos.z >= 1.0 && raytracePos.x > 0.0 && raytracePos.y > 0.0 && raytracePos.x < 1.0 && raytracePos.y < 1.0 ) backgroundReflectMask = 1.0;
 	
 	// use higher LOD as the reflection goes on, to blur it. this helps denoise a little.
 	reflectionLength = min(max(reflectionLength - 0.1, 0.0)/0.9, 1.0);
@@ -243,46 +235,34 @@ vec4 screenSpaceReflections(
 
 	if (raytracePos.x > 0.0 && raytracePos.y > 0.0 && raytracePos.x < 1.0 && raytracePos.y < 1.0) {
 		
+		#if defined SSR_SELF_REFLECT_FIX && defined DEFERRED_SPECULAR
+			selfReflectionAngle = distance(gl_FragCoord.xy*texelSize-0.5, raytracePos.xy-0.5) > 0.005 ? 0.0 : 1.0;
+		#endif
+
 		vec3 previousPosition = mat3(gbufferModelViewInverse) * toScreenSpace(raytracePos) + gbufferModelViewInverse[3].xyz + (cameraPosition - previousCameraPosition);
 		previousPosition = mat3(gbufferPreviousModelView) * previousPosition + gbufferPreviousModelView[3].xyz;
 		previousPosition.xy = projMAD(gbufferPreviousProjection, previousPosition).xy / -previousPosition.z * 0.5 + 0.5;
+
+		// get reprojected hand position.
+		#ifdef DEFERRED_SPECULAR
+			float dataUnpacked = decodeVec2(texelFetch(colortex1,ivec2(previousPosition.xy/texelSize),0).w).y;
+			if(abs(dataUnpacked-0.75) < 0.01 || isHand) previousPosition.xy = raytracePos.xy;
+		#endif
 
 		#if defined OVERWORLD_SHADER 
 			reflection.a = raytracePos.z > 0.999999 ? (isHand || isEyeInWater == 1 ? 1.0 : 0.0) : 1.0;
 		#else
 			reflection.a = 1.0;
 		#endif
-
+		
 		#ifdef FORWARD_SPECULAR
 			reflection.rgb = texture(colortex5, previousPosition.xy).rgb;
 		#else
 			reflection.rgb = texture2DLod(colortex5, previousPosition.xy, LOD).rgb;
-			// previousPosition.xy = raytracePos.xy;
-			// vec4 data = texelFetch(colortex1, ivec2(previousPosition.xy/texelSize), 0);
-			// vec4 dataUnpacked0 = vec4(decodeVec2(data.x),decodeVec2(data.y)); // albedo, masks
-			// vec4 dataUnpacked1 = vec4(decodeVec2(data.z),decodeVec2(data.w)); // normals, lightmaps
-			// reflection.rgb = toLinear(vec3(dataUnpacked0.xz,dataUnpacked1.x));
 		#endif
 
 		reflection.rgb = clamp(invTonemap(reflection.rgb/65000.0),0.0,65000.0);
-
 	}
-
-// vec2 clampedRes = max(vec2(viewWidth,viewHeight),vec2(1920.0,1080.));
-// vec2 resScale = vec2(1920.,1080.)/clampedRes;
-// vec2 bloomTileUV = (((previousPosition.xy/texelSize)*2.0 + 0.5)*texelSize/2.0) / clampedRes*vec2(1920.,1080.);
-
-// vec2 bloomTileoffsetUV[6] = vec2[](
-//  	bloomTileUV / 4.,
-//  	bloomTileUV / 8.   + vec2(0.25*resScale.x+2.5*texelSize.x, 		.0),
-//  	bloomTileUV / 16.  + vec2(0.375*resScale.x+4.5*texelSize.x, 	.0),
-//  	bloomTileUV / 32.  + vec2(0.4375*resScale.x+6.5*texelSize.x, 	.0),
-//  	bloomTileUV / 64.  + vec2(0.46875*resScale.x+8.5*texelSize.x,  	.0),
-//  	bloomTileUV / 128. + vec2(0.484375*resScale.x+10.5*texelSize.x,	.0)
-// );
-// // reflectLength = pow(1-pow(1-reflectLength,2),5) * 6;
-// reflectLength = (exp(-4*(1-reflectLength))) * 6;
-// Reflections.rgb = texture(colortex6, bloomTileoffsetUV[0]).rgb;
 
 	return reflection;
 }
@@ -367,6 +347,7 @@ vec3 specularReflections(
 	
 	#if defined DEFERRED_SSR_QUALITY > 0
 	,in float fullResDepth
+	,in vec3 FlatNormals
 	#endif
 
 ){
@@ -381,10 +362,6 @@ vec3 specularReflections(
 
 	// f0 = 0.9;
 	// roughness = 0.0;
-
-	// #ifdef FORWARD_SPECULAR
-	// f0 = 0.9;
-	// #endif
 
 	bool isMetal = f0 > 229.5/255.0;
 
@@ -403,8 +380,8 @@ vec3 specularReflections(
 	#else
 		vec3 reflectedVector_L = reflect(playerPos, normal);
 	#endif
-	float VdotN = dot(-normalize(viewDir), vec3(0.0,0.0,1.0));
 
+	float VdotN = dot(-normalize(viewDir), vec3(0.0,0.0,1.0));
 	float shlickFresnel = shlickFresnelRoughness(VdotN, roughness);
 
 	#if DEFERRED_SSR_QUALITY > 0
@@ -449,7 +426,6 @@ vec3 specularReflections(
 	#endif
 
 	vec3 specularReflections = diffuseLighting;
-
 	float reflectionVisibilty = getReflectionVisibility(f0, roughness);
 
 	#if (defined DEFERRED_BACKGROUND_REFLECTION || defined FORWARD_BACKGROUND_REFLECTION) || (DEFERRED_SSR_QUALITY > 0 || FORWARD_SSR_QUALITY > 0)
@@ -469,7 +445,8 @@ vec3 specularReflections(
 			#endif
 
 			#if DEFERRED_SSR_QUALITY > 0 || FORWARD_SSR_QUALITY > 0
-				vec4 enviornmentReflection = screenSpaceReflections(mat3(gbufferModelView) * reflectedVector_L_new, viewPos_new, noise.z, isHand, roughness, backgroundReflectMask);
+				float selfReflectionAngle = 0.0;
+				vec4 enviornmentReflection = screenSpaceReflections(mat3(gbufferModelView) * reflectedVector_L_new, viewPos_new, noise.z, isHand, roughness, backgroundReflectMask, selfReflectionAngle);
 				
 				// darkening for metals.
 				vec3 DarkenedDiffuseLighting = isMetal ? diffuseLighting * (1.0-enviornmentReflection.a) * (1.0-lightmap) : diffuseLighting;
@@ -483,6 +460,9 @@ vec3 specularReflections(
 				specularReflections = mix(DarkenedDiffuseLighting, backgroundReflection, backgroundReflectMask);
 			#endif
 			#if DEFERRED_SSR_QUALITY > 0 || FORWARD_SSR_QUALITY > 0
+				#if defined SSR_SELF_REFLECT_FIX && defined DEFERRED_SPECULAR
+					enviornmentReflection.rgb = mix(enviornmentReflection.rgb, DarkenedDiffuseLighting, selfReflectionAngle);
+				#endif
 				specularReflections = mix(specularReflections, enviornmentReflection.rgb, enviornmentReflection.a);
 			#endif
 
@@ -490,7 +470,6 @@ vec3 specularReflections(
 
 			// lerp back to diffuse lighting if the reflection has not been deemed visible enough
 			specularReflections = mix(specularReflections, diffuseLighting, reflectionVisibilty);
-			
 		}
 	#endif
 
@@ -509,7 +488,6 @@ vec3 specularReflections(
 			if(heldBlockLightValue > 0) mainHandLightReflection = mainHandCol * GGX(normal, -mainHandPos, -mainHandPos, roughness, reflectance, metalAlbedoTint);
     		if(heldBlockLightValue2 > 0) offHandLightReflection = offHandCol * GGX(normal, -offHandPos, -offHandPos, roughness, reflectance, metalAlbedoTint);
     	#endif
-		
 		specularReflections += mainHandLightReflection + offHandLightReflection;
 	#endif
 

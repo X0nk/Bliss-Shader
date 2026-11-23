@@ -325,11 +325,11 @@
 		#endif
 	#endif
 
-	// #define SSR_SELF_REFLECT_FIX
 	#if defined VOXY || defined DISTANT_HORIZONS
 		// #define TERRIBLE_SSR_LOD_FALLBACK
 	#endif
 
+	#define SSR_SELF_REFLECT_FIX
 	#define SSR_PRECISION_MISSMATCH_FIX
 #endif
 
@@ -998,4 +998,6 @@
 #ifdef OLD_SSS_MODE
 #endif
 #ifdef SSR_PRECISION_MISSMATCH_FIX
+#endif
+#ifdef SSR_SELF_REFLECT_FIX
 #endif
