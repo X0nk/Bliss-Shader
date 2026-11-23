@@ -267,7 +267,7 @@ vec3 FastCatmulRom(sampler2D colorTex, vec2 texcoord, vec4 rtMetrics, float shar
 #define NEAREST_ONLY 0
 #define LINEAR_ONLY 1
 
-vec4 computeTAA(vec2 texcoord, bool hand){
+vec4 computeTAA(vec2 texcoord){
 
 // invertible tonemapping, a feeble attempt to do TAA in SDR in an HDR pipeline lol
 // catmull-rom sampling, so reprojected history is sharper in motion
@@ -306,7 +306,15 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	#endif
 
 	vec2 velocity = previousPosition.xy - closestToCamera.xy;
+	
+	// sample hand mask for current frame position and reprojected position, then force the texcoord to not use motion vectors.
+	// the hand would get the reprojected position of the terrain behind it otherwise.
+	float dataUnpacked = decodeVec2(texelFetch(colortex1,ivec2(gl_FragCoord.xy*RENDER_SCALE),0).w).y; 
+	float dataUnpacked2 = decodeVec2(texelFetch(colortex1,ivec2((previousPosition.xy/texelSize)*RENDER_SCALE),0).w).y; 	
+	bool hand = min(abs(dataUnpacked2-0.75), abs(dataUnpacked-0.75)) < 0.01;
+	
 	previousPosition.xy = texcoord + (hand ? vec2(0.0) : velocity);
+
 	float cameraMovement = length(velocity/texelSize);
 
 	// adjust clamping radius when motion is detected to reduce ghosting further without needing to change blend factor
@@ -382,9 +390,7 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	#endif
 
 	vec3 frameHistory = max(FastCatmulRom(colortex5, previousPosition.xy, vec4(texelSize, 1.0/texelSize), 0.75).xyz,0.0);
-
 	vec3 clampedframeHistory = clamp(frameHistory, colMin, colMax);
-	
 	
 	// return the first moments instead of history if the difference across frames in the neighborhood is enough for it. helps reduces ghosting without looking too grainy/flickery
 	clampedframeHistory = mix(clampedframeHistory, momentsA, clamp(abs(clampedframeHistory - frameHistory)/clampedframeHistory,0.0,1.0));
@@ -411,6 +417,7 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 
 		vec4 superSampledHistory = texture(colortex5, previousPosition.xy);
 		superSampledHistory.rgb /= 65000.0;
+		
 		vec3 superSampledResult = superSampledHistory.rgb * superSampledHistory.a + currentFrame;
 
 		return vec4((superSampledResult/(superSampledHistory.a+1.0))*65000.0, superSampledHistory.a+1.0);
@@ -419,26 +426,22 @@ vec4 computeTAA(vec2 texcoord, bool hand){
 	return vec4(finalResult, 1.0);
 }
 
-void main() {
 /* RENDERTARGETS:5 */
-	
-	#if TAA_MODE > 0
-		vec2 taauTC = clamp(texcoord*RENDER_SCALE - texelSize*0.5, vec2(0.0), RENDER_SCALE - texelSize*1.5);
-		
-		float dataUnpacked = decodeVec2(texelFetch(colortex1,ivec2(gl_FragCoord.xy*RENDER_SCALE + taaJitter*0.5),0).w).y; 
-		
-		bool hand = abs(dataUnpacked-0.75) < 0.01 && texture(depthtex1,taauTC).x < 1.0;
-		
-		vec4 color = computeTAA(texcoord, hand);
 
-		#ifdef SCREENSHOT_MODE
-			gl_FragData[0] = clamp(color, 0.0, 65000.0);
-		#else
-			// gl_FragData[0] = clamp(color, 0.0, 65000.0);
-			gl_FragData[0] = clamp(fp10Dither(color, triangularize(interleaved_gradientNoise_temporal2())), 0.0, 65000.0);
-		#endif
+void main() {
+
+#if TAA_MODE > 0
+	vec4 color = computeTAA(texcoord);
+
+	#ifdef SCREENSHOT_MODE
+		gl_FragData[0] = clamp(color, 0.0, 65000.0);
 	#else
-		vec3 color = clamp(fp10Dither(vec4(texture(colortex3,texcoord).rgb,1.0), triangularize(interleaved_gradientNoise())).rgb,0.0,65000.);
-		gl_FragData[0].rgb = color;
+		gl_FragData[0] = clamp(fp10Dither(color, triangularize(interleaved_gradientNoise_temporal2())), 0.0, 65000.0);
 	#endif
+#else
+	
+	vec3 color = clamp(fp10Dither(vec4(texture(colortex3,texcoord).rgb,1.0), triangularize(interleaved_gradientNoise())).rgb,0.0,65000.);
+	
+	gl_FragData[0].rgb = color;
+#endif
 }
