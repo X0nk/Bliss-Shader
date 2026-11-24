@@ -194,6 +194,15 @@ void main() {
 		vec4 Albedo = vec4(gcolor.rgb, 1.0);
 	#endif
 
+    #if defined DISTANT_HORIZONS_TEXTURES && defined DH_TEXTURE_SUPPORT
+    	if (dh_hasTexture()) {
+    	    vec4 that = dh_sampleTexture();
+    	    // vec3 clampedColor = clamp(color.rgb * (that.rgb * 2.0), 0.0, 1.0);
+    	    // color.rgb = mix(color.rgb, clampedColor, that.a);
+			Albedo.rgb = clamp(Albedo.rgb * (that.rgb * 2.0), 0.0, 1.0);
+    	}
+	#endif
+ 
 	#ifdef AEROCHROME_MODE
 		if(dh_material_id == DH_BLOCK_LEAVES || dh_material_id == DH_BLOCK_WATER) { // leaves and waterlogged blocks
 			float grey = dot(Albedo.rgb, vec3(0.2, 01.0, 0.07));

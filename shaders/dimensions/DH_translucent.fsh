@@ -324,9 +324,18 @@ if (gl_FragCoord.x * texelSize.x < 1.0  && gl_FragCoord.y * texelSize.y < 1.0 )	
 		gl_FragData[0].rgb = vec3(1.0);
 		gl_FragData[0].a = 1.0;
 	#endif
-    
-	vec3 Albedo = toLinear(gl_FragData[0].rgb);
 
+    #if defined DISTANT_HORIZONS_TEXTURES && defined DH_TEXTURE_SUPPORT
+    	if (dh_hasTexture()) {
+    	    vec4 that = dh_sampleTexture();
+    	    // vec3 clampedColor = clamp(color.rgb * (that.rgb * 2.0), 0.0, 1.0);
+    	    // color.rgb = mix(color.rgb, clampedColor, that.a);
+			gl_FragData[0].rgb = clamp(gl_FragData[0].rgb * (that.rgb * 2.0), 0.0, 1.0);
+    	}
+	#endif
+
+	vec3 Albedo = toLinear(gl_FragData[0].rgb);
+	
 	#ifndef WhiteWorld
 	    #ifndef USE_WATER_BLOCK_TEXTURE
 	    	if (iswater){
