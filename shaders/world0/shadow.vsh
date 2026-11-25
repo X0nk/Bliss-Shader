@@ -47,6 +47,7 @@ uniform vec3 shadowLightVec;
 uniform float shadowMaxProj;
 attribute vec4 mc_midTexCoord;
 varying vec4 color;
+varying float shadowBlockId;
 
 varying float fresnel;
 
@@ -215,6 +216,7 @@ void main() {
 	// #endif
 
 	int blockId = int(mc_Entity.x + 0.5);
+	shadowBlockId = float(blockId);
 
 	vec3 worldpos = playerpos;
 	#if FOLIAGE_ANIMATION_AMOUNT > 0
