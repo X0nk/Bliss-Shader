@@ -138,9 +138,15 @@ void main() {
     
         // Decode light data for current voxel
         uint blockId = voxelSharedData[getSharedIndex(ivec3(gl_LocalInvocationID) + 1)];
+        uvec2 blockData = uvec2(0u,0u);
 
         if (blockId > 0u) {
-            uvec2 blockData = imageLoad(imgBlockData, int(blockId)).rg;
+            #if defined FLOODFILL_VERTEX_COLOR_FALLBACK
+            blockData =   uvec2(imageLoad(imgVoxelColor,imgCoord).r,
+                                imageLoad(imgBlockData, int(blockId)).g);
+            #else
+            blockData = imageLoad(imgBlockData, int(blockId)).rg;
+            #endif
             vec4 lightColorRange = unpackUnorm4x8(blockData.r);
             lightColor = srgbToLinear(lightColorRange.rgb);
             lightRange = lightColorRange.a * 255.0;
